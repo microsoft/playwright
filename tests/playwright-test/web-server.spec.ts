@@ -735,7 +735,7 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
     `,
   }, { workers: 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   await testProcess.exited;
 
   const result = parseTestRunnerOutput(testProcess.output);

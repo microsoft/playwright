@@ -3,6 +3,8 @@ id: test-parallel
 title: "Parallelism"
 ---
 
+## Introduction
+
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
 
 - You can configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.

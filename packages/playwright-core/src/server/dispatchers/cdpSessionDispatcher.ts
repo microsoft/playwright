@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-import type { CRSession } from '../chromium/crConnection';
-import { CRSessionEvents } from '../chromium/crConnection';
+import { CDPSession } from '../chromium/crConnection';
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import type { BrowserDispatcher } from './browserDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionChannel, BrowserDispatcher | BrowserContextDispatcher> implements channels.CDPSessionChannel {
+export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSessionChannel, BrowserDispatcher | BrowserContextDispatcher> implements channels.CDPSessionChannel {
   _type_CDPSession = true;
 
-  constructor(scope: BrowserDispatcher | BrowserContextDispatcher, crSession: CRSession) {
-    super(scope, crSession, 'CDPSession', {});
-    crSession._eventListener = (method, params) => {
-      this._dispatchEvent('event', { method, params });
-    };
-    this.addObjectListener(CRSessionEvents.Disconnected, () => this._dispose());
+  constructor(scope: BrowserDispatcher | BrowserContextDispatcher, cdpSession: CDPSession) {
+    super(scope, cdpSession, 'CDPSession', {});
+    this.addObjectListener(CDPSession.Events.Event, ({ method, params }) => this._dispatchEvent('event', { method, params }));
+    this.addObjectListener(CDPSession.Events.Closed, () => this._dispose());
   }
 
   async send(params: channels.CDPSessionSendParams): Promise<channels.CDPSessionSendResult> {

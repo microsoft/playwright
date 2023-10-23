@@ -16,9 +16,11 @@
  */
 
 import { test as it, expect } from './pageTest';
+import type { Worker as PwWorker } from '@playwright/test';
 import { attachFrame } from '../config/utils';
 import type { ConsoleMessage } from 'playwright-core';
 import fs from 'fs';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 it('Page.workers @smoke', async function({ page, server }) {
   await Promise.all([
@@ -42,7 +44,8 @@ it('should emit created and destroyed events', async function({ page }) {
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);
   const error = await workerThisObj.getProperty('self').catch(error => error);
-  expect(error.message).toMatch(/jsHandle.getProperty: (Worker was closed|Target closed)/);
+  expect(error.message).toContain('jsHandle.getProperty');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('should report console logs', async function({ page }) {
@@ -191,4 +194,33 @@ it('should dispatch console messages when page has workers', async function({ pa
     page.evaluate(() => console.log('foo'))
   ]);
   expect(message.text()).toBe('foo');
+});
+
+it('should report and intercept network from nested worker', async function({ page, server, browserName }) {
+  it.fixme(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/27376');
+  await page.route('**/simple.json', async route => {
+    const json = { foo: 'not bar' };
+    await route.fulfill({ json });
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const url = server.PREFIX + '/simple.json';
+  const workers: PwWorker[] = [];
+  const messages: string[] = [];
+
+  page.on('worker', worker => workers.push(worker));
+  page.on('console', msg => messages.push(msg.text()));
+
+  await page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
+    fetch("${url}").then(response => response.text()).then(t => console.log(t.trim()));
+  `], { type: 'application/javascript' }))), url);
+  await expect.poll(() => workers.length).toBe(1);
+
+  await workers[0].evaluate(url => new Worker(URL.createObjectURL(new Blob([`
+    fetch("${url}").then(response => response.text()).then(t => console.log(t.trim()));
+  `], { type: 'application/javascript' }))), url);
+
+  await expect.poll(() => workers.length).toBe(2);
+
+  await expect.poll(() => messages).toEqual(['{"foo":"not bar"}', '{"foo":"not bar"}']);
 });

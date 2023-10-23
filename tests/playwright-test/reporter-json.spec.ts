@@ -18,7 +18,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
-test('should support spec.ok', async ({ runInlineTest }) => {
+test('should support spec.ok and stats', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -28,11 +28,18 @@ test('should support spec.ok', async ({ runInlineTest }) => {
       test('math fails!', async ({}) => {
         expect(1 + 1).toBe(3);
       });
+      test.skip('math skipped', async ({}) => {
+      });
     `
   }, { });
   expect(result.exitCode).toBe(1);
   expect(result.report.suites[0].specs[0].ok).toBe(true);
   expect(result.report.suites[0].specs[1].ok).toBe(false);
+  expect(result.report.suites[0].specs[2].ok).toBe(true);
+  expect(result.report.stats.expected).toEqual(1);
+  expect(result.report.stats.unexpected).toEqual(1);
+  expect(result.report.stats.flaky).toEqual(0);
+  expect(result.report.stats.skipped).toEqual(1);
 });
 
 test('should not report skipped due to sharding', async ({ runInlineTest }) => {
@@ -63,7 +70,7 @@ test('should not report skipped due to sharding', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
 });
 
-test('should report projects', async ({ runInlineTest }, testInfo) => {
+test('should report projects and stats', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -107,6 +114,9 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
 
   expect(result.report.suites[0].specs[0].tests[0].projectName).toBe('p1');
   expect(result.report.suites[0].specs[0].tests[1].projectName).toBe('p2');
+
+  expect(new Date(result.report.stats.startTime).valueOf()).not.toBeNaN();
+  expect(result.report.stats.duration).toEqual(expect.any(Number));
 });
 
 test('should show steps', async ({ runInlineTest }) => {

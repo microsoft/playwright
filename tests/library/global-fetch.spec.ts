@@ -166,7 +166,7 @@ it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, https
   expect(response.status()).toBe(200);
 });
 
-it('should resolve url relative to gobal baseURL option', async ({ playwright, server }) => {
+it('should resolve url relative to global baseURL option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);
@@ -428,5 +428,26 @@ it('should keep headers capitalization', async ({ playwright, server }) => {
   expect(response.ok()).toBeTruthy();
   expect(serverRequest.rawHeaders).toContain('X-fOo');
   expect(serverRequest.rawHeaders).toContain('vaLUE');
+  await request.dispose();
+});
+
+it('should serialize post data on the client', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const serverReq = server.waitForRequest('/empty.html');
+  let onStack: boolean = true;
+  const postReq = request.post(server.EMPTY_PAGE, {
+    data: {
+      toJSON() {
+        if (!onStack)
+          throw new Error('Should not be called on the server');
+        return { 'foo': 'bar' };
+      }
+    }
+  });
+  onStack = false;
+  await postReq;
+  const body = await (await serverReq).postBody;
+  expect(body.toString()).toBe('{"foo":"bar"}');
+  // expect(serverRequest.rawHeaders).toContain('vaLUE');
   await request.dispose();
 });

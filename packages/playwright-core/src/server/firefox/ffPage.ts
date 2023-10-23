@@ -25,7 +25,7 @@ import { Page, Worker } from '../page';
 import type * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
 import type { FFBrowserContext } from './ffBrowser';
-import { FFSession, FFSessionEvents } from './ffConnection';
+import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
@@ -35,6 +35,7 @@ import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
+import { TargetClosedError } from '../errors';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -100,10 +101,6 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
 
     ];
-    session.once(FFSessionEvents.Disconnected, () => {
-      this._markAsError(new Error('Page closed'));
-      this._page._didDisconnect();
-    });
     this._session.once('Page.ready', async () => {
       await this._page.initOpener(this._opener);
       if (this._initializationFailed)
@@ -346,6 +343,7 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
+    this._markAsError(new TargetClosedError());
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();

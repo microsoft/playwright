@@ -175,7 +175,7 @@ scheme.APIRequestContextFetchParams = tObject({
   method: tOptional(tString),
   headers: tOptional(tArray(tType('NameValue'))),
   postData: tOptional(tBinary),
-  jsonData: tOptional(tAny),
+  jsonData: tOptional(tString),
   formData: tOptional(tArray(tType('NameValue'))),
   multipartData: tOptional(tArray(tType('FormField'))),
   timeout: tOptional(tNumber),
@@ -217,7 +217,26 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
-scheme.LocalUtilsInitializer = tOptional(tObject({}));
+scheme.LocalUtilsInitializer = tObject({
+  deviceDescriptors: tArray(tObject({
+    name: tString,
+    descriptor: tObject({
+      userAgent: tString,
+      viewport: tObject({
+        width: tNumber,
+        height: tNumber,
+      }),
+      screen: tOptional(tObject({
+        width: tNumber,
+        height: tNumber,
+      })),
+      deviceScaleFactor: tNumber,
+      isMobile: tBoolean,
+      hasTouch: tBoolean,
+      defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
+    }),
+  })),
+});
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
@@ -298,25 +317,7 @@ scheme.PlaywrightInitializer = tObject({
   webkit: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
-  utils: tChannel(['LocalUtils']),
-  deviceDescriptors: tArray(tObject({
-    name: tString,
-    descriptor: tObject({
-      userAgent: tString,
-      viewport: tObject({
-        width: tNumber,
-        height: tNumber,
-      }),
-      screen: tOptional(tObject({
-        width: tNumber,
-        height: tNumber,
-      })),
-      deviceScaleFactor: tNumber,
-      isMobile: tBoolean,
-      hasTouch: tBoolean,
-      defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
-    }),
-  })),
+  utils: tOptional(tChannel(['LocalUtils'])),
   selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
   preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
@@ -587,7 +588,9 @@ scheme.BrowserInitializer = tObject({
   name: tString,
 });
 scheme.BrowserCloseEvent = tOptional(tObject({}));
-scheme.BrowserCloseParams = tOptional(tObject({}));
+scheme.BrowserCloseParams = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserCloseResult = tOptional(tObject({}));
 scheme.BrowserKillForTestsParams = tOptional(tObject({}));
 scheme.BrowserKillForTestsResult = tOptional(tObject({}));
@@ -717,6 +720,10 @@ scheme.BrowserNewContextForReuseParams = tObject({
 scheme.BrowserNewContextForReuseResult = tObject({
   context: tChannel(['BrowserContext']),
 });
+scheme.BrowserStopPendingOperationsParams = tObject({
+  reason: tString,
+});
+scheme.BrowserStopPendingOperationsResult = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
@@ -826,7 +833,9 @@ scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
-scheme.BrowserContextCloseParams = tOptional(tObject({}));
+scheme.BrowserContextCloseParams = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserContextCloseResult = tOptional(tObject({}));
 scheme.BrowserContextCookiesParams = tObject({
   urls: tArray(tString),
@@ -931,6 +940,7 @@ scheme.BrowserContextHarExportResult = tObject({
 });
 scheme.BrowserContextCreateTempFileParams = tObject({
   name: tString,
+  lastModifiedMs: tOptional(tNumber),
 });
 scheme.BrowserContextCreateTempFileResult = tObject({
   writableStream: tChannel(['WritableStream']),
@@ -995,6 +1005,7 @@ scheme.PageAddInitScriptParams = tObject({
 scheme.PageAddInitScriptResult = tOptional(tObject({}));
 scheme.PageCloseParams = tObject({
   runBeforeUnload: tOptional(tBoolean),
+  reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
 scheme.PageEmulateMediaParams = tObject({
@@ -2151,7 +2162,7 @@ scheme.ArtifactInitializer = tObject({
 });
 scheme.ArtifactPathAfterFinishedParams = tOptional(tObject({}));
 scheme.ArtifactPathAfterFinishedResult = tObject({
-  value: tOptional(tString),
+  value: tString,
 });
 scheme.ArtifactSaveAsParams = tObject({
   path: tString,
@@ -2167,7 +2178,7 @@ scheme.ArtifactFailureResult = tObject({
 });
 scheme.ArtifactStreamParams = tOptional(tObject({}));
 scheme.ArtifactStreamResult = tObject({
-  stream: tOptional(tChannel(['Stream'])),
+  stream: tChannel(['Stream']),
 });
 scheme.ArtifactCancelParams = tOptional(tObject({}));
 scheme.ArtifactCancelResult = tOptional(tObject({}));

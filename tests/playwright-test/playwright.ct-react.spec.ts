@@ -337,3 +337,127 @@ test('should bundle public folder', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should work with property expressions in JSX', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': `
+    `,
+    'src/button1.tsx': `
+      const Button = () => <button>Button 1</button>;
+      export const components1 = { Button };
+    `,
+    'src/button2.tsx': `
+      const Button = () => <button>Button 2</button>;
+      export default { Button };
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { components1 } from './button1';
+      import components2 from './button2';
+
+      test('pass 1', async ({ mount }) => {
+        const component = await mount(<components1.Button />);
+        await expect(component).toHaveText('Button 1');
+      });
+
+      test('pass 2', async ({ mount }) => {
+        const component = await mount(<components2.Button />);
+        await expect(component).toHaveText('Button 2');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should handle the baseUrl config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ use: { baseURL: 'http://127.0.0.1:8080' } });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:8080/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should handle the vite host config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ use: { ctViteConfig: { preview: { host: '127.0.0.1' } } } });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should prioritize the vite host config over the baseUrl config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({
+        use: {
+          baseURL: 'http://localhost:8080',
+          ctViteConfig: { preview: { host: '127.0.0.1' } }
+        },
+      });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:8080/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

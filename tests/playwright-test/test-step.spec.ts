@@ -17,6 +17,11 @@
 import { test, expect } from './playwright-test-fixtures';
 
 const stepHierarchyReporter = `
+const asciiRegex = new RegExp('[\\\\u001B\\\\u009B][[\\\\]()#;?]*(?:(?:(?:[a-zA-Z\\\\d]*(?:;[-a-zA-Z\\\\d\\\\/#&.:=?%@~_]*)*)?\\\\u0007)|(?:(?:\\\\d{1,4}(?:;\\\\d{0,4})*)?[\\\\dA-PR-TZcf-ntqry=><~]))', 'g');
+export function stripAnsi(str) {
+  return str.replace(asciiRegex, '');
+}
+
 class Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
@@ -31,11 +36,11 @@ class Reporter {
       data: undefined,
       location: step.location ? {
         file: step.location.file.substring(step.location.file.lastIndexOf(require('path').sep) + 1).replace('.js', '.ts'),
-        line: step.location.line ? typeof step.location.line : 0,
-        column: step.location.column ? typeof step.location.column : 0
+        line: step.location.line,
+        column: step.location.column
       } : undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
-      error: step.error ? '<error>' : undefined,
+      error: step.error ? stripAnsi(step.error.stack || '') : undefined,
     };
   }
 
@@ -131,26 +136,26 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       category: 'test.step',
       title: 'outer step 1',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
       steps: [
         {
           category: 'test.step',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           title: 'inner step 1.1',
         },
         {
           category: 'test.step',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           title: 'inner step 1.2',
         },
@@ -160,26 +165,26 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       category: 'test.step',
       title: 'outer step 2',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
       steps: [
         {
           category: 'test.step',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           title: 'inner step 2.1',
         },
         {
           category: 'test.step',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           title: 'inner step 2.2',
         },
@@ -226,16 +231,16 @@ test('should report before hooks step error', async ({ runInlineTest }) => {
     {
       category: 'hook',
       title: 'Before Hooks',
-      error: '<error>',
+      error: expect.any(String),
       steps: [
         {
           category: 'hook',
           title: 'beforeEach hook',
-          error: '<error>',
+          error: expect.any(String),
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
         }
       ],
@@ -308,9 +313,9 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
       category: 'test.step',
       title: 'my step',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
     },
     {
@@ -453,9 +458,9 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       category: 'expect',
       title: 'expect.toBeTruthy',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
     },
     {
@@ -531,21 +536,21 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
     {
       category: 'expect',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
       title: 'expect.toBeWithinRange',
     },
     {
       category: 'expect',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
       title: 'expect.toBeFailingAsync',
-      error: '<error>',
+      error: expect.any(String),
     },
     {
       category: 'hook',
@@ -606,27 +611,27 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
     {
       title: 'outer',
       category: 'test.step',
-      error: '<error>',
+      error: expect.any(String),
       steps: [{
         title: 'inner',
         category: 'test.step',
-        error: '<error>',
+        error: expect.any(String),
         steps: [
           {
             title: 'expect.soft.toBe',
             category: 'expect',
-            location: { file: 'a.test.ts', line: 'number', column: 'number' },
-            error: '<error>'
+            location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
+            error: expect.any(String)
           }
         ],
-        location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
       }],
-      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
     },
     {
       title: 'passing',
       category: 'test.step',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
     },
     { title: 'After Hooks', category: 'hook' }
   ]);
@@ -691,10 +696,10 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in beforeAll',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
         },
         {
           title: 'beforeEach hook',
@@ -703,10 +708,10 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in beforeEach',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
         },
         {
           category: 'fixture',
@@ -751,20 +756,20 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'child1',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
               steps: [
                 {
                   title: 'page.click(body)',
                   category: 'pw:api',
-                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                  location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
                 }
               ]
             }
           ],
           location: {
             file: 'a.test.ts',
-            line: 'number',
-            column: 'number'
+            line: expect.any(Number),
+            column: expect.any(Number)
           }
         },
         {
@@ -774,23 +779,23 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'child2',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
               steps: [
                 {
                   title: 'expect.toBeVisible',
                   category: 'expect',
-                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                  location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
                 }
               ]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
         }
       ],
       location: {
         file: 'a.test.ts',
-        line: 'number',
-        column: 'number'
+        line: expect.any(Number),
+        column: expect.any(Number)
       }
     },
     {
@@ -804,10 +809,10 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in afterEach',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
         },
         {
           category: 'fixture',
@@ -824,10 +829,10 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in afterAll',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
         },
       ]
     }
@@ -873,9 +878,9 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
           category: 'hook',
           title: 'beforeAll hook',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           steps: [
             {
@@ -889,9 +894,9 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
               category: 'pw:api',
               title: 'browser.newPage',
               location: {
-                column: 'number',
+                column: expect.any(Number),
                 file: 'a.test.ts',
-                line: 'number',
+                line: expect.any(Number),
               },
             },
           ],
@@ -902,20 +907,20 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
       category: 'pw:api',
       title: 'page.setContent',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
     },
     {
       category: 'pw:api',
       title: 'page.click(div)',
       location: {
-        column: 'number',
+        column: expect.any(Number),
         file: 'a.test.ts',
-        line: 'number',
+        line: expect.any(Number),
       },
-      error: '<error>',
+      error: expect.any(String),
     },
 
     {
@@ -926,18 +931,18 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
           category: 'hook',
           title: 'afterAll hook',
           location: {
-            column: 'number',
+            column: expect.any(Number),
             file: 'a.test.ts',
-            line: 'number',
+            line: expect.any(Number),
           },
           steps: [
             {
               category: 'pw:api',
               title: 'page.close',
               location: {
-                column: 'number',
+                column: expect.any(Number),
                 file: 'a.test.ts',
-                line: 'number',
+                line: expect.any(Number),
               },
             },
           ],
@@ -1003,17 +1008,17 @@ test('should nest page.continue inside page.goto steps', async ({ runInlineTest 
     {
       title: 'page.route',
       category: 'pw:api',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
     },
     {
       title: 'page.goto(http://localhost:1234)',
       category: 'pw:api',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
       steps: [
         {
           title: 'route.fulfill',
           category: 'pw:api',
-          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
         },
       ]
     },
@@ -1059,23 +1064,23 @@ test('should not propagate errors from within toPass', async ({ runInlineTest })
     {
       title: 'expect.toPass',
       category: 'expect',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
       steps: [
         {
           category: 'expect',
-          error: '<error>',
-          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          error: expect.any(String),
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
           title: 'expect.toBe',
         },
         {
           category: 'expect',
-          error: '<error>',
-          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          error: expect.any(String),
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
           title: 'expect.toBe',
         },
         {
           category: 'expect',
-          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
           title: 'expect.toBe',
         },
       ],
@@ -1111,13 +1116,13 @@ test('should show final toPass error', async ({ runInlineTest }) => {
     {
       title: 'expect.toPass',
       category: 'expect',
-      error: '<error>',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      error: expect.any(String),
+      location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
       steps: [
         {
           category: 'expect',
-          error: '<error>',
-          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          error: expect.any(String),
+          location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) },
           title: 'expect.toBe',
         },
       ],
@@ -1161,20 +1166,20 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'first outer',
-      error: '<error>',
-      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      error: expect.any(String),
+      location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
       steps: [
         {
           category: 'test.step',
           title: 'first inner',
-          error: '<error>',
-          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          error: expect.any(String),
+          location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
           steps: [
             {
               category: 'expect',
               title: 'expect.soft.toBe',
-              error: '<error>',
-              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              error: expect.any(String),
+              location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
             },
           ],
         },
@@ -1183,20 +1188,20 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'second outer',
-      error: '<error>',
-      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      error: expect.any(String),
+      location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
       steps: [
         {
           category: 'test.step',
           title: 'second inner',
-          error: '<error>',
-          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          error: expect.any(String),
+          location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
-              error: '<error>',
-              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              error: expect.any(String),
+              location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
             },
           ],
         },
@@ -1244,18 +1249,18 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'first outer',
-      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
       steps: [
         {
           category: 'test.step',
           title: 'first inner',
-          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
-              error: '<error>',
-              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              error: expect.any(String),
+              location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
             },
           ],
         },
@@ -1264,24 +1269,115 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'second outer',
-      error: '<error>',
-      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      error: expect.any(String),
+      location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
       steps: [
         {
           category: 'test.step',
           title: 'second inner',
-          error: '<error>',
-          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          error: expect.any(String),
+          location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
-              error: '<error>',
-              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              error: expect.any(String),
+              location: { column: expect.any(Number), file: 'a.test.ts', line: expect.any(Number) },
             },
           ],
         },
       ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});
+
+test('should step w/o box', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts':
+    ` /*1*/ import { test, expect } from '@playwright/test';
+      /*2*/ test('fail', async () => {
+      /*3*/   await test.step('boxed step', async () => {
+      /*4*/     expect(1).toBe(2);
+      /*5*/   });
+      /*6*/ });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      category: 'test.step',
+      error: expect.stringContaining('a.test.ts:4:27'),
+      location: {
+        column: 26,
+        file: 'a.test.ts',
+        line: 3,
+      },
+      steps: [
+        {
+          category: 'expect',
+          error: expect.stringContaining('a.test.ts:4:27'),
+          location: {
+            column: 27,
+            file: 'a.test.ts',
+            line: 4,
+          },
+          title: 'expect.toBe',
+        },
+      ],
+      title: 'boxed step',
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});
+
+test('should step w/ box', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts':
+    ` /*1*/ import { test, expect } from '@playwright/test';
+      /*2*/ test('fail', async () => {
+      /*3*/   const helper = async () => {
+      /*4*/     await test.step('boxed step', async () => {
+      /*5*/       await expect(page.locator('body')).toHaveText('Good page', { timeout: 1 });
+      /*6*/     }, { box: 'self' });
+      /*7*/   };
+      /*8*/   await helper();
+      /*9*/ });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      category: 'test.step',
+      error: expect.not.stringMatching(/a.test.ts:[^8]/),
+      location: {
+        column: 21,
+        file: 'a.test.ts',
+        line: 8,
+      },
+      title: 'boxed step',
     },
     {
       category: 'hook',

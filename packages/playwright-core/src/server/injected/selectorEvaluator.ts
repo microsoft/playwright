@@ -24,7 +24,7 @@ import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 type QueryContext = {
   scope: Element | Document;
   pierceShadow: boolean;
-  // When context expands to accomodate :scope matching, original scope is saved here.
+  // When context expands to accommodate :scope matching, original scope is saved here.
   originalScope?: Element | Document;
   // Place for more options, e.g. normalizing whitespace.
 };

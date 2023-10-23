@@ -15,24 +15,13 @@
  */
 
 import type * as channels from '@protocol/channels';
-import { TimeoutError } from '../common/errors';
+import { TimeoutError } from './errors';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
-import type { Size } from './types';
-
-type DeviceDescriptor = {
-  userAgent: string,
-  viewport: Size,
-  deviceScaleFactor: number,
-  isMobile: boolean,
-  hasTouch: boolean,
-  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
-};
-type Devices = { [name: string]: DeviceDescriptor };
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -40,7 +29,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
-  readonly devices: Devices;
+  readonly devices: any;
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
@@ -56,9 +45,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
-    this.devices = {};
-    for (const { name, descriptor } of initializer.deviceDescriptors)
-      this.devices[name] = descriptor;
+    this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors();
     this.errors = { TimeoutError };
 

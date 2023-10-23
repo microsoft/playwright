@@ -50,36 +50,7 @@ export class Dispatcher {
     this._failureTracker = failureTracker;
   }
 
-  private _processFullySkippedJobs() {
-    // If all the tests in a group are skipped, we report them immediately
-    // without sending anything to a worker. This avoids creating unnecessary worker processes.
-    //
-    // However, if there is at least one non-skipped test in a group, we'll send
-    // the whole group to the worker process and report tests in the natural order,
-    // with skipped tests mixed in-between non-skipped. This makes
-    // for a better reporter experience.
-    while (!this._isStopped && this._queue.length) {
-      const group = this._queue[0];
-      const allTestsSkipped = group.tests.every(test => test.expectedStatus === 'skipped');
-      if (!allTestsSkipped)
-        break;
-
-      for (const test of group.tests) {
-        const result = test._appendTestResult();
-        result.status = 'skipped';
-        this._reporter.onTestBegin(test, result);
-        this._reportTestEnd(test, result);
-      }
-      this._queue.shift();
-    }
-
-    // If all remaining tests were skipped, resolve finished state.
-    this._checkFinished();
-  }
-
   private async _scheduleJob() {
-    this._processFullySkippedJobs();
-
     // 1. Find a job to run.
     if (this._isStopped || !this._queue.length)
       return;
@@ -107,6 +78,11 @@ export class Dispatcher {
   }
 
   private async _startJobInWorker(index: number, job: TestGroup) {
+    const stopCallback = () => this.stop().catch(() => {});
+    const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
+    if (jobDispatcher.skipWholeJob())
+      return;
+
     let worker = this._workerSlots[index].worker;
 
     // 1. Restart the worker if it has the wrong hash or is being stopped already.
@@ -116,22 +92,25 @@ export class Dispatcher {
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }
+    this._workerSlots[index].jobDispatcher = jobDispatcher;
 
     // 2. Start the worker if it is down.
+    let startError;
     if (!worker) {
       worker = this._createWorker(job, index, serializeConfig(this._config));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.start();
+      startError = await worker.start();
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }
 
     // 3. Run the job.
-    const stopCallback = () => this.stop().catch(() => {});
-    const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
-    this._workerSlots[index].jobDispatcher = jobDispatcher;
-    const result = await jobDispatcher.runInWorker(worker);
+    if (startError)
+      jobDispatcher.onExit(startError);
+    else
+      jobDispatcher.runInWorker(worker);
+    const result = await jobDispatcher.jobResult;
     this._workerSlots[index].jobDispatcher = undefined;
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
@@ -161,11 +140,6 @@ export class Dispatcher {
     if (this._workerSlots.some(w => w.busy))
       return;
 
-    for (const test of this._allTests) {
-      // Emulate skipped test run if we have stopped early.
-      if (!test.results.length)
-        test._appendTestResult().status = 'skipped';
-    }
     this._finished.resolve();
   }
 
@@ -265,7 +239,8 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  private _jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
   private _remainingByTestId = new Map<string, TestCase>();
@@ -382,27 +357,29 @@ class JobDispatcher {
     data.result.attachments.push(attachment);
   }
 
-  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) {
+  private _failTestWithErrors(test: TestCase, errors: TestError[]) {
+    const runData = this._dataByTestId.get(test.id);
+    // There might be a single test that has started but has not finished yet.
+    let result: TestResult;
+    if (runData) {
+      result = runData.result;
+    } else {
+      result = test._appendTestResult();
+      this._reporter.onTestBegin(test, result);
+    }
+    result.errors = [...errors];
+    result.error = result.errors[0];
+    result.status = errors.length ? 'failed' : 'skipped';
+    this._reportTestEnd(test, result);
+    this._failedTests.add(test);
+  }
+
+  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[]) {
     for (const test of this._remainingByTestId.values()) {
       if (!testIds.has(test.id))
         continue;
       if (!this._failureTracker.hasReachedMaxFailures()) {
-        const runData = this._dataByTestId.get(test.id);
-        // There might be a single test that has started but has not finished yet.
-        let result: TestResult;
-        if (runData) {
-          result = runData.result;
-        } else {
-          if (onlyStartedTests && this._currentlyRunning)
-            continue;
-          result = test._appendTestResult();
-          this._reporter.onTestBegin(test, result);
-        }
-        result.errors = [...errors];
-        result.error = result.errors[0];
-        result.status = errors.length ? 'failed' : 'skipped';
-        this._reportTestEnd(test, result);
-        this._failedTests.add(test);
+        this._failTestWithErrors(test, errors);
         errors = []; // Only report errors for the first test.
       }
       this._remainingByTestId.delete(test.id);
@@ -426,15 +403,14 @@ class JobDispatcher {
       return;
     }
 
-    if (params.fatalUnknownTestIds) {
-      const titles = params.fatalUnknownTestIds.map(testId => {
-        const test = this._remainingByTestId.get(testId);
-        return test?.titlePath().slice(1).join(' > ');
-      }).filter(title => !!title);
-      this._massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
-        message: `Test(s) not found in the worker process. Make sure test titles do not change:\n${titles.join('\n')}`
-      }]);
+    for (const testId of params.fatalUnknownTestIds || []) {
+      const test = this._remainingByTestId.get(testId);
+      if (test) {
+        this._remainingByTestId.delete(testId);
+        this._failTestWithErrors(test, [{ message: `Test not found in the worker process. Make sure test title does not change.` }]);
+      }
     }
+
     if (params.fatalErrors.length) {
       // In case of fatal errors, report first remaining test as failing with these errors,
       // and all others as skipped.
@@ -442,9 +418,18 @@ class JobDispatcher {
     }
     // Handle tests that should be skipped because of the setup failure.
     this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
-    // Handle unexpected worker exit.
-    if (params.unexpectedExitError)
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError], true /* onlyStartedTests */);
+
+    if (params.unexpectedExitError) {
+      // When worker exits during a test, we blame the test itself.
+      //
+      // The most common situation when worker exits while not running a test is:
+      //   worker failed to require the test file (at the start) because of an exception in one of imports.
+      // In this case, "skip" all remaining tests, to avoid running into the same exception over and over.
+      if (this._currentlyRunning)
+        this._massSkipTestsFromRemaining(new Set([this._currentlyRunning.test.id]), [params.unexpectedExitError]);
+      else
+        this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
+    }
 
     const retryCandidates = new Set<TestCase>();
     const serialSuitesWithFailures = new Set<Suite>();
@@ -461,27 +446,18 @@ class JobDispatcher {
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 
-    // We have failed tests that belong to a serial suite.
-    // We should skip all future tests from the same serial suite.
-    for (const test of this._remainingByTestId.values()) {
+    // If we have failed tests that belong to a serial suite,
+    // we should skip all future tests from the same serial suite.
+    const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
       let parent: Suite | undefined = test.parent;
       while (parent && !serialSuitesWithFailures.has(parent))
         parent = parent.parent;
-
-      // Does not belong to the failed serial suite, keep it.
-      if (!parent)
-        continue;
-
-      // Emulate a "skipped" run, and drop this test from remaining.
-      const result = test._appendTestResult();
-      this._reporter.onTestBegin(test, result);
-      result.status = 'skipped';
-      this._reportTestEnd(test, result);
-      this._remainingByTestId.delete(test.id);
-    }
+      return !!parent;
+    });
+    this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
 
     for (const serialSuite of serialSuitesWithFailures) {
-      // Add all tests from faiiled serial suites for possible retry.
+      // Add all tests from failed serial suites for possible retry.
       // These will only be retried together, because they have the same
       // "retries" setting and the same number of previous runs.
       serialSuite.allTests().forEach(test => retryCandidates.add(test));
@@ -498,19 +474,19 @@ class JobDispatcher {
     this._finished({ didFail: true, newJob });
   }
 
-  private _onExit(data: ProcessExitData) {
+  onExit(data: ProcessExitData) {
     const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
-      message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
+      message: `Error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
     } : undefined;
     this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
   }
 
   private _finished(result: { newJob?: TestGroup, didFail: boolean }) {
     eventsHelper.removeEventListeners(this._listeners);
-    this._jobResult.resolve(result);
+    this.jobResult.resolve(result);
   }
 
-  async runInWorker(worker: WorkerHost): Promise<{ newJob?: TestGroup, didFail: boolean }> {
+  runInWorker(worker: WorkerHost) {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
@@ -529,9 +505,29 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
-      eventsHelper.addEventListener(worker, 'exit', this._onExit.bind(this)),
+      eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
     ];
-    return this._jobResult;
+  }
+
+  skipWholeJob(): boolean {
+    // If all the tests in a group are skipped, we report them immediately
+    // without sending anything to a worker. This avoids creating unnecessary worker processes.
+    //
+    // However, if there is at least one non-skipped test in a group, we'll send
+    // the whole group to the worker process and report tests in the natural order,
+    // with skipped tests mixed in-between non-skipped. This makes
+    // for a better reporter experience.
+    const allTestsSkipped = this._job.tests.every(test => test.expectedStatus === 'skipped');
+    if (allTestsSkipped && !this._failureTracker.hasReachedMaxFailures()) {
+      for (const test of this._job.tests) {
+        const result = test._appendTestResult();
+        this._reporter.onTestBegin(test, result);
+        result.status = 'skipped';
+        this._reportTestEnd(test, result);
+      }
+      return true;
+    }
+    return false;
   }
 
   currentlyRunning() {

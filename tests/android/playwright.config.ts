@@ -49,7 +49,7 @@ const metadata = {
   video: false,
 };
 
-config.projects.push({
+config.projects!.push({
   name: 'android',
   use: {
     loopback: '10.0.2.2',
@@ -60,7 +60,7 @@ config.projects.push({
   metadata,
 });
 
-config.projects.push({
+config.projects!.push({
   name: 'android',
   use: {
     loopback: '10.0.2.2',

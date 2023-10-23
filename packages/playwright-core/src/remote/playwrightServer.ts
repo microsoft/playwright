@@ -27,7 +27,7 @@ import { ManualPromise } from '../utils/manualPromise';
 import type { AndroidDevice } from '../server/android/android';
 import type { SocksProxy } from '../common/socksProxy';
 import { debugLogger } from '../common/debugLogger';
-import { createHttpServer } from '../utils';
+import { createHttpServer, userAgentVersionMatchesErrorMessage } from '../utils';
 import { perMessageDeflate } from '../server/transport';
 
 let lastConnectionId = 0;
@@ -45,6 +45,7 @@ type ServerOptions = {
 export class PlaywrightServer {
   private _preLaunchedPlaywright: Playwright | undefined;
   private _wsServer: WebSocketServer | undefined;
+  private _server: http.Server | undefined;
   private _options: ServerOptions;
 
   constructor(options: ServerOptions) {
@@ -69,6 +70,7 @@ export class PlaywrightServer {
       response.end('Running');
     });
     server.on('error', error => debugLogger.log('server', String(error)));
+    this._server = server;
 
     const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
@@ -84,8 +86,7 @@ export class PlaywrightServer {
 
     debugLogger.log('server', 'Listening at ' + wsEndpoint);
     this._wsServer = new wsServer({
-      server,
-      path: this._options.path,
+      noServer: true,
       perMessageDeflate,
     });
     const browserSemaphore = new Semaphore(this._options.maxConnections);
@@ -96,6 +97,23 @@ export class PlaywrightServer {
         headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
       });
     }
+    server.on('upgrade', (request, socket, head) => {
+      const pathname = new URL('http://localhost' + request.url!).pathname;
+      if (pathname !== this._options.path) {
+        socket.write(`HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n`);
+        socket.destroy();
+        return;
+      }
+
+      const uaError = userAgentVersionMatchesErrorMessage(request.headers['user-agent'] || '');
+      if (uaError) {
+        socket.write(`HTTP/${request.httpVersion} 428 Precondition Required\r\n\r\n${uaError}`);
+        socket.destroy();
+        return;
+      }
+
+      this._wsServer?.handleUpgrade(request, socket, head, ws => this._wsServer?.emit('connection', ws, request));
+    });
     this._wsServer.on('connection', (ws, request) => {
       debugLogger.log('server', 'Connected client ws.extension=' + ws.extensions);
       const url = new URL('http://localhost' + (request.url || ''));
@@ -137,7 +155,7 @@ export class PlaywrightServer {
       }
 
       const connection = new PlaywrightConnection(
-          semaphore.aquire(),
+          semaphore.acquire(),
           clientType, ws,
           { socksProxyPattern: proxyValue, browserName, launchOptions },
           {
@@ -171,20 +189,22 @@ export class PlaywrightServer {
     }));
     await waitForClose;
     debugLogger.log('server', 'closing http server');
-    await new Promise(f => server.options.server!.close(f));
+    if (this._server)
+      await new Promise(f => this._server!.close(f));
     this._wsServer = undefined;
+    this._server = undefined;
     debugLogger.log('server', 'closed server');
 
     debugLogger.log('server', 'closing browsers');
     if (this._preLaunchedPlaywright)
-      await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close()));
+      await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
     debugLogger.log('server', 'closed browsers');
   }
 }
 
 export class Semaphore {
   private _max: number;
-  private _aquired = 0;
+  private _acquired = 0;
   private _queue: ManualPromise[] = [];
 
   constructor(max: number) {
@@ -195,7 +215,7 @@ export class Semaphore {
     this._max = max;
   }
 
-  aquire(): Promise<void> {
+  acquire(): Promise<void> {
     const lock = new ManualPromise();
     this._queue.push(lock);
     this._flush();
@@ -203,13 +223,13 @@ export class Semaphore {
   }
 
   release() {
-    --this._aquired;
+    --this._acquired;
     this._flush();
   }
 
   private _flush() {
-    while (this._aquired < this._max && this._queue.length) {
-      ++this._aquired;
+    while (this._acquired < this._max && this._queue.length) {
+      ++this._acquired;
       this._queue.shift()!.resolve();
     }
   }

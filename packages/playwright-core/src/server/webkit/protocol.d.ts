@@ -5247,6 +5247,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Composition due to association with an element with a "blend-mode" style.
        */
       blending?: boolean;
+      /**
+       * Composition due to association with an element that is a backdrop root
+       */
+      backdropRoot?: boolean;
     }
     
     export type layerTreeDidChangePayload = void;
@@ -6538,10 +6542,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       modal?: boolean;
       /**
-       * Whether the node text input supports multiline.
-       */
-      multiline?: boolean;
-      /**
        * Whether more than one child can be selected.
        */
       multiselectable?: boolean;
@@ -7461,6 +7461,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type disableParameters = {
     }
     export type disableReturnValue = {
+    }
+    export type getInfoParameters = {
+    }
+    export type getInfoReturnValue = {
+      /**
+       * Name of the operating system where the browser is running (macOS, Linux or Windows).
+       */
+      os: string;
     }
     /**
      * Close browser.
@@ -9471,6 +9479,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.updateScrollingState": Page.updateScrollingStateParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
+    "Playwright.getInfo": Playwright.getInfoParameters;
     "Playwright.close": Playwright.closeParameters;
     "Playwright.createContext": Playwright.createContextParameters;
     "Playwright.deleteContext": Playwright.deleteContextParameters;
@@ -9781,6 +9790,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.updateScrollingState": Page.updateScrollingStateReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;
+    "Playwright.getInfo": Playwright.getInfoReturnValue;
     "Playwright.close": Playwright.closeReturnValue;
     "Playwright.createContext": Playwright.createContextReturnValue;
     "Playwright.deleteContext": Playwright.deleteContextReturnValue;

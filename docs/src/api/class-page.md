@@ -826,6 +826,12 @@ if [`option: runBeforeUnload`] is passed as true, a `beforeunload` dialog might 
 manually via [`event: Page.dialog`] event.
 :::
 
+### option: Page.close.reason
+* since: v1.40
+- `reason` <[string]>
+
+The reason to be reported to the operations interrupted by the page closure.
+
 ### option: Page.close.runBeforeUnload
 * since: v1.8
 - `runBeforeUnload` <[boolean]>
@@ -4791,8 +4797,8 @@ class FrameExamples
 * since: v1.32
 * langs: java
 
-The method will block until the codition returns true. All Playwright events will
-be dispatched while the method is waiting for the codition.
+The method will block until the condition returns true. All Playwright events will
+be dispatched while the method is waiting for the condition.
 
 **Usage**
 
@@ -4809,7 +4815,7 @@ page.waitForCondition(() -> messages.size() > 3);
 * since: v1.32
 - `condition` <[BooleanSupplier]>
 
-Codition to wait for.
+Condition to wait for.
 
 ### option: Page.waitForCondition.timeout = %%-wait-for-function-timeout-%%
 * since: v1.32

@@ -43,6 +43,7 @@ export type RunResult = {
   flaky: number,
   skipped: number,
   interrupted: number,
+  didNotRun: number,
   report: JSONReport,
   results: any[],
 };
@@ -217,7 +218,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
     PWTEST_BLOB_REPORT_NAME: undefined,
     TEST_WORKER_INDEX: undefined,
-    TEST_PARLLEL_INDEX: undefined,
+    TEST_PARALLEL_INDEX: undefined,
     NODE_OPTIONS: undefined,
     ...env,
   };
@@ -417,6 +418,7 @@ export function parseTestRunnerOutput(output: string) {
   const flaky = summary(/(\d+) flaky/g);
   const skipped = summary(/(\d+) skipped/g);
   const interrupted = summary(/(\d+) interrupted/g);
+  const didNotRun = summary(/(\d+) did not run/g);
 
   const strippedOutput = stripAnsi(output);
   return {
@@ -428,5 +430,6 @@ export function parseTestRunnerOutput(output: string) {
     flaky,
     skipped,
     interrupted,
+    didNotRun,
   };
 }

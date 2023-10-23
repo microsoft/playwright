@@ -55,6 +55,11 @@ export class CRServiceWorker extends Worker {
     });
   }
 
+  override didClose() {
+    this._session.dispose();
+    super.didClose();
+  }
+
   async updateOffline(initial: boolean): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;

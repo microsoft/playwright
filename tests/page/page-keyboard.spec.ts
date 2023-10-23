@@ -702,3 +702,14 @@ it('should type after context menu was opened', async ({ server, page, browserNa
 
   await expect.poll(() => page.evaluate('window.keys')).toEqual(['ArrowDown']);
 });
+
+it('should have correct Keydown/Keyup order when pressing Escape key', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27709' });
+
+  await page.goto(server.PREFIX + '/input/keyboard.html');
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate('getResult()')).toBe(`
+Keydown: Escape Escape 27 []
+Keyup: Escape Escape 27 []
+`.trim());
+});

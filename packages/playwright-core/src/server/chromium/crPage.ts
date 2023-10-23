@@ -34,7 +34,6 @@ import type * as channels from '@protocol/channels';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
-import { CRConnection, CRSessionEvents } from './crConnection';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
 import { CRExecutionContext } from './crExecutionContext';
@@ -46,6 +45,7 @@ import { platformToFontFamilies } from './defaultFontFamilies';
 import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
 import { BrowserContext } from '../browserContext';
+import { TargetClosedError } from '../errors';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -93,7 +93,6 @@ export class CRPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
-    client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
     if (opener && !browserContext._options.noDefaultViewport) {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
@@ -132,7 +131,7 @@ export class CRPage implements PageDelegate {
       if (frameSession._isMainFrame())
         return cb(frameSession);
       return cb(frameSession).catch(e => {
-        // Broadcasting a message to the closed iframe shoule be a noop.
+        // Broadcasting a message to the closed iframe should be a noop.
         if (e.message && e.message.includes('Target closed'))
           return;
         throw e;
@@ -407,6 +406,7 @@ class FrameSession {
   private _evaluateOnNewDocumentIdentifiers: string[] = [];
   private _exposedBindingNames: string[] = [];
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
+  private _workerSessions = new Map<string, CRSession>();
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -420,9 +420,6 @@ class FrameSession {
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
-    });
-    client.once(CRSessionEvents.Disconnected, () => {
-      this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
     });
   }
 
@@ -578,6 +575,7 @@ class FrameSession {
   }
 
   dispose() {
+    this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
     for (const childSession of this._childSessions)
       childSession.dispose();
     if (this._parentSession)
@@ -585,6 +583,7 @@ class FrameSession {
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
     this._crPage._sessions.delete(this._targetId);
+    this._client.dispose();
   }
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -670,7 +669,7 @@ class FrameSession {
 
   _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
     if (this._crPage._sessions.has(frameId)) {
-      // This is a local -> remote frame transtion, where
+      // This is a local -> remote frame transition, where
       // Page.frameDetached arrives after Target.attachedToTarget.
       // We've already handled the new target and frame reattach - nothing to do here.
       return;
@@ -719,7 +718,7 @@ class FrameSession {
   }
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
-    const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
+    const session = this._client.createChildSession(event.sessionId);
 
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
@@ -735,16 +734,14 @@ class FrameSession {
     }
 
     if (event.targetInfo.type !== 'worker') {
-      // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-        this._client._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
-      });
+      session.detach().catch(() => {});
       return;
     }
 
     const url = event.targetInfo.url;
     const worker = new Worker(this._page, url);
     this._page._addWorker(event.sessionId, worker);
+    this._workerSessions.set(event.sessionId, session);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
     });
@@ -752,6 +749,9 @@ class FrameSession {
     session._sendMayFail('Runtime.enable');
     session._sendMayFail('Network.enable');
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
+    session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+    session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
+    session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -763,7 +763,12 @@ class FrameSession {
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
     // This might be a worker...
-    this._page._removeWorker(event.sessionId);
+    const workerSession = this._workerSessions.get(event.sessionId);
+    if (workerSession) {
+      workerSession.dispose();
+      this._page._removeWorker(event.sessionId);
+      return;
+    }
 
     // ... or an oopif.
     const childFrameSession = this._crPage._sessions.get(event.targetId!);
@@ -777,7 +782,7 @@ class FrameSession {
     }
 
     // However, sometimes we get detachedFromTarget before frameAttached.
-    // In this case we don't know wheter this is a remote frame detach,
+    // In this case we don't know whether this is a remote frame detach,
     // or just a remote -> local transition. In the latter case, frameAttached
     // is already inflight, so let's make a safe roundtrip to ensure it arrives.
     this._client.send('Page.enable').catch(e => null).then(() => {
@@ -953,7 +958,7 @@ class FrameSession {
     this._videoRecorder = null;
     await this._stopScreencast(recorder);
     await recorder.stop().catch(() => {});
-    // Keep the video artifact in the map utntil encoding is fully finished, if the context
+    // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     video?.reportFinished();

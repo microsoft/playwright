@@ -16,12 +16,11 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should lead in uncaughtException when page.route raises', async ({ runInlineTest, server }) => {
+test('should produce uncaughtException when page.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
-        test.fail();
         await page.route('**/empty.html', route => {
           throw new Error('foobar');
         });
@@ -29,16 +28,15 @@ test('should lead in uncaughtException when page.route raises', async ({ runInli
       });
     `,
   }, { workers: 1 });
-  expect(result.interrupted).toBe(1);
+  expect(result.failed).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
-test('should lead in unhandledRejection when page.route raises', async ({ runInlineTest, server }) => {
+test('should produce unhandledRejection when page.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
-        test.fail();
         await page.route('**/empty.html', async route => {
           throw new Error('foobar');
         });
@@ -46,16 +44,15 @@ test('should lead in unhandledRejection when page.route raises', async ({ runInl
       });
     `,
   }, { workers: 1 });
-  expect(result.interrupted).toBe(1);
+  expect(result.failed).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
-test('should lead in uncaughtException when context.route raises', async ({ runInlineTest, server }) => {
+test('should produce uncaughtException when context.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ context, page }) => {
-        test.fail();
         await context.route('**/empty.html', route => {
           throw new Error('foobar');
         });
@@ -63,16 +60,15 @@ test('should lead in uncaughtException when context.route raises', async ({ runI
       });
     `,
   }, { workers: 1 });
-  expect(result.interrupted).toBe(1);
+  expect(result.failed).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
-test('should lead in unhandledRejection when context.route raises', async ({ runInlineTest, server }) => {
+test('should produce unhandledRejection when context.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ context, page }) => {
-        test.fail();
         await context.route('**/empty.html', async route => {
           throw new Error('foobar');
         });
@@ -80,6 +76,6 @@ test('should lead in unhandledRejection when context.route raises', async ({ run
       });
     `,
   }, { workers: 1 });
-  expect(result.interrupted).toBe(1);
+  expect(result.failed).toBe(1);
   expect(result.output).toContain('foobar');
 });

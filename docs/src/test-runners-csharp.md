@@ -3,6 +3,8 @@ id: test-runners
 title: "Test Runners"
 ---
 
+## Introduction
+
 While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience
 it works best with the built-in .NET test runner, and using NUnit as the test framework. NUnit is
 also what we use internally for [our tests](https://github.com/microsoft/playwright-dotnet/tree/main/src/Playwright.Tests).
@@ -108,7 +110,7 @@ dotnet test --filter "Name~Slogan"
 ### Running NUnit tests in Parallel
 
 By default NUnit will run all test files in parallel, while running tests inside each file sequentially (`ParallelScope.Self`). It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
-Running test in parallel using `ParallelScope.All` or `ParallelScope.Fixtures` is not supported.
+Only `ParallelScope.Self` is supported.
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
 

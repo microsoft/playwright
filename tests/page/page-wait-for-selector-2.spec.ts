@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame, detachFrame } from '../config/utils';
 
-const addElement = tag => document.body.appendChild(document.createElement(tag));
+const addElement = (tag: string) => document.body.appendChild(document.createElement(tag));
 
 it('should survive cross-process navigation', async ({ page, server }) => {
   let boxFound = false;
@@ -37,9 +37,9 @@ it('should wait for visible', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
   await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
   expect(divFound).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
+  await page.evaluate(() => document.querySelector('div')!.style.removeProperty('display'));
   expect(divFound).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
+  await page.evaluate(() => document.querySelector('div')!.style.removeProperty('visibility'));
   expect(await waitForSelector).toBe(true);
   expect(divFound).toBe(true);
 });
@@ -48,10 +48,10 @@ it('should not consider visible when zero-sized', async ({ page, server }) => {
   await page.setContent(`<div style='width: 0; height: 0;'>1</div>`);
   let error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
-  await page.evaluate(() => document.querySelector('div').style.width = '10px');
+  await page.evaluate(() => document.querySelector('div')!.style.width = '10px');
   error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
-  await page.evaluate(() => document.querySelector('div').style.height = '10px');
+  await page.evaluate(() => document.querySelector('div')!.style.height = '10px');
   expect(await page.waitForSelector('div', { timeout: 1000 })).toBeTruthy();
 });
 
@@ -60,9 +60,9 @@ it('should wait for visible recursively', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('div#inner').then(() => divVisible = true);
   await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
   expect(divVisible).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
+  await page.evaluate(() => document.querySelector('div')!.style.removeProperty('display'));
   expect(divVisible).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
+  await page.evaluate(() => document.querySelector('div')!.style.removeProperty('visibility'));
   expect(await waitForSelector).toBe(true);
   expect(divVisible).toBe(true);
 });
@@ -94,7 +94,7 @@ it('hidden should wait for hidden', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divHidden = true);
   await page.waitForSelector('div'); // do a round trip
   expect(divHidden).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.setProperty('visibility', 'hidden'));
+  await page.evaluate(() => document.querySelector('div')!.style.setProperty('visibility', 'hidden'));
   expect(await waitForSelector).toBe(true);
   expect(divHidden).toBe(true);
 });
@@ -105,7 +105,7 @@ it('hidden should wait for display: none', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divHidden = true);
   await page.waitForSelector('div'); // do a round trip
   expect(divHidden).toBe(false);
-  await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
+  await page.evaluate(() => document.querySelector('div')!.style.setProperty('display', 'none'));
   expect(await waitForSelector).toBe(true);
   expect(divHidden).toBe(true);
 });
@@ -116,7 +116,7 @@ it('hidden should wait for removal', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divRemoved = true);
   await page.waitForSelector('div'); // do a round trip
   expect(divRemoved).toBe(false);
-  await page.evaluate(() => document.querySelector('div').remove());
+  await page.evaluate(() => document.querySelector('div')!.remove());
   expect(await waitForSelector).toBe(true);
   expect(divRemoved).toBe(true);
 });
@@ -127,21 +127,21 @@ it('should return null if waiting to hide non-existing element', async ({ page, 
 });
 
 it('should respect timeout', async ({ page, playwright }) => {
-  let error = null;
+  let error: Error | undefined;
   await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
-  expect(error.message).toContain('waiting for locator(\'div\')');
+  expect(error!.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
+  expect(error!.message).toContain('waiting for locator(\'div\')');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should have an error message specifically for awaiting an element to be hidden', async ({ page, server }) => {
   await page.setContent(`<div>content</div>`);
-  let error = null;
+  let error: Error | undefined;
   await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
-  expect(error.message).toContain('waiting for locator(\'div\') to be hidden');
+  expect(error!.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
+  expect(error!.message).toContain('waiting for locator(\'div\') to be hidden');
 });
 
 it('should respond to node attribute mutation', async ({ page, server }) => {
@@ -149,7 +149,7 @@ it('should respond to node attribute mutation', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('.zombo', { state: 'attached' }).then(() => divFound = true);
   await page.setContent(`<div class='notZombo'></div>`);
   expect(divFound).toBe(false);
-  await page.evaluate(() => document.querySelector('div').className = 'zombo');
+  await page.evaluate(() => document.querySelector('div')!.className = 'zombo');
   expect(await waitForSelector).toBe(true);
 });
 
@@ -162,7 +162,7 @@ it('should return the element handle', async ({ page, server }) => {
 it('should have correct stack trace for timeout', async ({ page, server }) => {
   let error;
   await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
-  expect(error.stack).toContain('wait-for-selector');
+  expect(error!.stack).toContain('wait-for-selector');
 });
 
 it('should throw for unknown state option', async ({ page, server }) => {
@@ -199,7 +199,7 @@ it('should support >> selector syntax', async ({ page, server }) => {
   const watchdog = frame.waitForSelector('css=div >> css=span', { state: 'attached' });
   await frame.evaluate(addElement, 'br');
   await frame.evaluate(addElement, 'div');
-  await frame.evaluate(() => document.querySelector('div').appendChild(document.createElement('span')));
+  await frame.evaluate(() => document.querySelector('div')!.appendChild(document.createElement('span')));
   const eHandle = await watchdog;
   const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
   expect(tagName).toBe('SPAN');
@@ -229,11 +229,11 @@ it('should support some fancy xpath', async ({ page, server }) => {
 });
 
 it('should respect timeout xpath', async ({ page, playwright }) => {
-  let error = null;
+  let error: Error | undefined;
   await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
-  expect(error.message).toContain('waiting for locator(\'xpath=//div\')');
+  expect(error!.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
+  expect(error!.message).toContain('waiting for locator(\'//div\')');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
@@ -252,12 +252,12 @@ it('should run in specified frame xpath', async ({ page, server }) => {
 it('should throw when frame is detached xpath', async ({ page, server }) => {
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
-  let waitError = null;
+  let waitError: Error | undefined;
   const waitPromise = frame.waitForSelector('//*[@class="box"]').catch(e => waitError = e);
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError.message).toContain('frame.waitForSelector: Frame was detached');
+  expect(waitError!.message).toContain('frame.waitForSelector: Frame was detached');
 });
 
 it('should return the element handle xpath', async ({ page, server }) => {

@@ -3,6 +3,8 @@ id: test-cli
 title: "Command line"
 ---
 
+## Introduction
+
 Here are the most common options available in the command line.
 
 - Run all the tests
@@ -60,7 +62,7 @@ Here are the most common options available in the command line.
   npx playwright test --debug
   ```
 
-  -- Run tests in interactive UI mode, with a built-in watch mode (Preview)
+- Run tests in interactive UI mode, with a built-in watch mode (Preview)
   ```bash
   npx playwright test --ui
   ```

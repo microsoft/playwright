@@ -16,6 +16,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import type { Route } from '@playwright/test';
 
 it('should intercept', async ({ browser, server }) => {
   const context = await browser.newContext();
@@ -35,7 +36,7 @@ it('should intercept', async ({ browser, server }) => {
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.ok()).toBe(true);
+  expect(response!.ok()).toBe(true);
   expect(intercepted).toBe(true);
   await context.close();
 });
@@ -44,7 +45,7 @@ it('should unroute', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  let intercepted = [];
+  let intercepted: number[] = [];
   await context.route('**/*', route => {
     intercepted.push(1);
     void route.fallback();
@@ -57,7 +58,7 @@ it('should unroute', async ({ browser, server }) => {
     intercepted.push(3);
     void route.fallback();
   });
-  const handler4 = route => {
+  const handler4 = (route: Route) => {
     intercepted.push(4);
     void route.fallback();
   };
@@ -87,7 +88,7 @@ it('should yield to page.route', async ({ browser, server }) => {
   await page.route('**/empty.html', route => {
     void route.fulfill({ status: 200, body: 'page' });
   });
-  const response = await page.goto(server.EMPTY_PAGE);
+  const response = (await page.goto(server.EMPTY_PAGE))!;
   expect(response.ok()).toBe(true);
   expect(await response.text()).toBe('page');
   await context.close();
@@ -102,7 +103,7 @@ it('should fall back to context.route', async ({ browser, server }) => {
   await page.route('**/non-empty.html', route => {
     void route.fulfill({ status: 200, body: 'page' });
   });
-  const response = await page.goto(server.EMPTY_PAGE);
+  const response = (await page.goto(server.EMPTY_PAGE))!;
   expect(response.ok()).toBe(true);
   expect(await response.text()).toBe('context');
   await context.close();
@@ -178,7 +179,7 @@ it('should use Set-Cookie header in future requests', async ({ contextFactory, s
 
   let cookie = '';
   server.setRoute('/foo.html', (req, res) => {
-    cookie = req.headers.cookie;
+    cookie = req.headers.cookie!;
     res.end();
   });
   await page.goto(server.PREFIX + '/foo.html');
@@ -191,12 +192,12 @@ it('should work with ignoreHTTPSErrors', async ({ browser, httpsServer }) => {
 
   await page.route('**/*', route => route.continue());
   const response = await page.goto(httpsServer.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 
 it('should support the times parameter with route matching', async ({ context, page, server }) => {
-  const intercepted = [];
+  const intercepted: number[] = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
     void route.continue();
@@ -247,7 +248,7 @@ it('should overwrite post body with empty string', async ({ context, server, pag
 });
 
 it('should chain fallback', async ({ context, page, server }) => {
-  const intercepted = [];
+  const intercepted: number[] = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
     void route.fallback();
@@ -265,7 +266,7 @@ it('should chain fallback', async ({ context, page, server }) => {
 });
 
 it('should chain fallback w/ dynamic URL', async ({ context, page, server }) => {
-  const intercepted = [];
+  const intercepted: number[] = [];
   await context.route('**/bar', route => {
     intercepted.push(1);
     void route.fallback({ url: server.EMPTY_PAGE });
@@ -296,7 +297,7 @@ it('should not chain fulfill', async ({ context, page, server }) => {
     void route.fallback();
   });
   const response = await page.goto(server.EMPTY_PAGE);
-  const body = await response.body();
+  const body = await response!.body();
   expect(body.toString()).toEqual('fulfilled');
   expect(failed).toBeFalsy();
 });
@@ -318,7 +319,7 @@ it('should not chain abort', async ({ context, page, server }) => {
 });
 
 it('should chain fallback into page', async ({ context, page, server }) => {
-  const intercepted = [];
+  const intercepted: number[] = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
     void route.fallback();
@@ -348,7 +349,7 @@ it('should chain fallback into page', async ({ context, page, server }) => {
 });
 
 it('should fall back async', async ({ page, context, server }) => {
-  const intercepted = [];
+  const intercepted: number[] = [];
   await context.route('**/empty.html', async route => {
     intercepted.push(1);
     await new Promise(r => setTimeout(r, 100));

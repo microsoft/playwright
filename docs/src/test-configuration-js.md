@@ -3,6 +3,8 @@ id: test-configuration
 title: "Test configuration"
 ---
 
+## Introduction
+
 Playwright has many options to configure how your tests are run. You can specify these options in the configuration file. Note that test runner options are **top-level**, do not put them into the `use` section.
 
 ## Basic Configuration
@@ -153,62 +155,56 @@ export default defineConfig({
 
 You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
 
-In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+In this example we add a custom `toHaveAmount` function. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
 
-```js tab=js-js title="playwright.config.ts"
-const { expect, defineConfig } = require('@playwright/test');
+```js title="fixtures.ts"
+import { expect as baseExpect } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
-expect.extend({
-  toBeWithinRange(received, floor, ceiling) {
-    const pass = received >= floor && received <= ceiling;
-    if (pass) {
-      return {
-        message: () => 'passed',
-        pass: true,
-      };
-    } else {
-      return {
-        message: () => 'failed',
-        pass: false,
-      };
+export { test } from '@playwright/test';
+
+export const expect = baseExpect.extend({
+  async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+    let pass: boolean;
+    let matcherResult: any;
+    try {
+      await baseExpect(locator).toHaveAttribute('data-amount', String(expected), options);
+      pass = true;
+    } catch (e: any) {
+      matcherResult = e.matcherResult;
+      pass = false;
     }
+
+    const message = pass
+      ? () => this.utils.matcherHint('toHaveAmount', undefined, undefined, { isNot: this.isNot }) +
+          '\n\n' +
+          `Locator: ${locator}\n`,
+          `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
+      : () =>  this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
+          '\n\n' +
+          `Locator: ${locator}\n`,
+          `Expected: ${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '');
+
+    return {
+      message,
+      pass,
+      name: 'toHaveAmount',
+      expected,
+      actual: matcherResult?.actual,
+    };
   },
 });
-
-module.exports = defineConfig({});
 ```
 
-```js tab=js-ts title="playwright.config.ts"
-import { expect, defineConfig } from '@playwright/test';
-
-expect.extend({
-  toBeWithinRange(received: number, floor: number, ceiling: number) {
-    const pass = received >= floor && received <= ceiling;
-    if (pass) {
-      return {
-        message: () => 'passed',
-        pass: true,
-      };
-    } else {
-      return {
-        message: () => 'failed',
-        pass: false,
-      };
-    }
-  },
-});
-
-export default defineConfig({});
-```
-
-Now we can use `toBeWithinRange` in the test.
+Now we can use `toHaveAmount` in the test.
 
 ```js title="example.spec.ts"
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-test('numeric ranges', () => {
-  expect(100).toBeWithinRange(90, 110);
-  expect(101).not.toBeWithinRange(0, 100);
+test('amount', async () => {
+  await expect(page.locator('.cart')).toHaveAmount(4);
 });
 ```
 
@@ -216,18 +212,23 @@ test('numeric ranges', () => {
 Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
 :::
 
-For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `files`, `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
+### Combine custom matchers from multiple modules
 
-You don't need it for JavaScript.
+You can combine custom matchers from multiple files or modules.
 
-```js title="global.d.ts"
-export {};
+```js title="fixtures.ts"
+import { mergeTests, mergeExpects } from '@playwright/test';
+import { test as dbTest, expect as dbExpect } from 'database-test-utils';
+import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
 
-declare global {
- namespace PlaywrightTest {
-    interface Matchers<R, T> {
-      toBeWithinRange(a: number, b: number): R;
-    }
-  }
-}
+export const expect = mergeExpects(dbExpect, a11yExpect);
+export const test = mergeTests(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test, expect } from './fixtures';
+
+test('passes', async ({ database }) => {
+  await expect(database).toHaveDatabaseUser('admin');
+});
 ```

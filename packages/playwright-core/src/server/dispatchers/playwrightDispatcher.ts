@@ -20,7 +20,6 @@ import { GlobalAPIRequestContext } from '../fetch';
 import type { Playwright } from '../playwright';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
 import { SocksProxy } from '../../common/socksProxy';
-import type * as types from '../types';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { RootDispatcher } from './dispatcher';
@@ -40,9 +39,6 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
 
   constructor(scope: RootDispatcher, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser, prelaunchedAndroidDevice?: AndroidDevice) {
-    const descriptors = require('../deviceDescriptors') as types.Devices;
-    const deviceDescriptors = Object.entries(descriptors)
-        .map(([name, descriptor]) => ({ name, descriptor }));
     const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;
     const android = new AndroidDispatcher(scope, playwright.android);
     const prelaunchedAndroidDeviceDispatcher = prelaunchedAndroidDevice ? new AndroidDeviceDispatcher(android, prelaunchedAndroidDevice) : undefined;
@@ -52,8 +48,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
-      utils: new LocalUtilsDispatcher(scope, playwright),
-      deviceDescriptors,
+      utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,
       preConnectedAndroidDevice: prelaunchedAndroidDeviceDispatcher,

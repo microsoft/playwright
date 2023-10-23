@@ -18,8 +18,9 @@ import fs from 'fs';
 import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
+import { TargetClosedError } from './errors';
 
-type SaveCallback = (localPath: string, error?: string) => Promise<void>;
+type SaveCallback = (localPath: string, error?: Error) => Promise<void>;
 type CancelCallback = () => Promise<void>;
 
 export class Artifact extends SdkObject {
@@ -30,7 +31,7 @@ export class Artifact extends SdkObject {
   private _saveCallbacks: SaveCallback[] = [];
   private _finished: boolean = false;
   private _deleted = false;
-  private _failureError: string | null = null;
+  private _failureError: Error | undefined;
 
   constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback) {
     super(parent, 'artifact');
@@ -47,12 +48,12 @@ export class Artifact extends SdkObject {
     return this._localPath;
   }
 
-  async localPathAfterFinished(): Promise<string | null> {
+  async localPathAfterFinished(): Promise<string> {
     if (this._unaccessibleErrorMessage)
       throw new Error(this._unaccessibleErrorMessage);
     await this._finishedPromise;
     if (this._failureError)
-      return null;
+      throw this._failureError;
     return this._localPath;
   }
 
@@ -62,10 +63,10 @@ export class Artifact extends SdkObject {
     if (this._deleted)
       throw new Error(`File already deleted. Save before deleting.`);
     if (this._failureError)
-      throw new Error(`File not found on disk. Check download.failure() for details.`);
+      throw this._failureError;
 
     if (this._finished) {
-      saveCallback(this._localPath).catch(e => {});
+      saveCallback(this._localPath).catch(() => {});
       return;
     }
     this._saveCallbacks.push(saveCallback);
@@ -75,7 +76,7 @@ export class Artifact extends SdkObject {
     if (this._unaccessibleErrorMessage)
       return this._unaccessibleErrorMessage;
     await this._finishedPromise;
-    return this._failureError;
+    return this._failureError?.message || null;
   }
 
   async cancel(): Promise<void> {
@@ -102,14 +103,14 @@ export class Artifact extends SdkObject {
     this._deleted = true;
     if (!this._unaccessibleErrorMessage)
       await fs.promises.unlink(this._localPath).catch(e => {});
-    await this.reportFinished('File deleted upon browser context closure.');
+    await this.reportFinished(new TargetClosedError());
   }
 
-  async reportFinished(error?: string) {
+  async reportFinished(error?: Error) {
     if (this._finished)
       return;
     this._finished = true;
-    this._failureError = error || null;
+    this._failureError = error;
 
     if (error) {
       for (const callback of this._saveCallbacks)

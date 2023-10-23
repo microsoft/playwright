@@ -6,7 +6,7 @@ title: "CI GitHub Actions"
 ## Introduction
 * langs: js
 
-Playwright tests can be ran on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed [doc on Continuous Integration](./ci.md).
+Playwright tests can be run on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed [doc on Continuous Integration](./ci.md).
 
 When [installing Playwright](./intro.md) using the [VS Code extension](./getting-started-vscode.md) or with `npm init playwright@latest` you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.
 
@@ -101,7 +101,12 @@ jobs:
     - name: Ensure browsers are installed
       run: python -m playwright install --with-deps
     - name: Run your tests
-      run: pytest
+      run: pytest --tracing=retain-on-failure
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-traces
+        path: test-results/
 ```
 
 ```yml java title=".github/workflows/playwright.yml"

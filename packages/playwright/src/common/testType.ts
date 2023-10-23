@@ -54,10 +54,9 @@ export class TestTypeImpl {
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
-    test.step = wrapFunctionWithLocation(this._step.bind(this));
+    test.step = this._step.bind(this);
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
-    test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
       if (!result)
@@ -219,11 +218,11 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
+  async _step<T>(title: string, body: () => Promise<T>, options: { box?: boolean } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._runAsStep({ category: 'test.step', title, location }, async step => {
+    return testInfo._runAsStep({ category: 'test.step', title, box: options.box }, async () => {
       // Make sure that internal "step" is not leaked to the user callback.
       return await body();
     });
@@ -231,18 +230,9 @@ export class TestTypeImpl {
 
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
-      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
+      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call mergeTests()?`);
     const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
-  }
-
-  private _extendTest(location: Location, test: TestType<any, any>) {
-    const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
-    if (!testTypeImpl)
-      throw new Error(`test._extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
-    // Filter out common ancestor fixtures.
-    const newFixtures = testTypeImpl.fixtures.filter(theirs => !this.fixtures.find(ours => ours.fixtures === theirs.fixtures));
-    return new TestTypeImpl([...this.fixtures, ...newFixtures]).test;
   }
 }
 
@@ -258,3 +248,16 @@ function throwIfRunningInsideJest() {
 }
 
 export const rootTestType = new TestTypeImpl([]);
+
+export function mergeTests(...tests: TestType<any, any>[]) {
+  let result = rootTestType;
+  for (const t of tests) {
+    const testTypeImpl = (t as any)[testTypeSymbol] as TestTypeImpl;
+    if (!testTypeImpl)
+      throw new Error(`mergeTests() accepts "test" functions as parameters.\nDid you mean to call test.extend() with fixtures instead?`);
+    // Filter out common ancestor fixtures.
+    const newFixtures = testTypeImpl.fixtures.filter(theirs => !result.fixtures.find(ours => ours.fixtures === theirs.fixtures));
+    result = new TestTypeImpl([...result.fixtures, ...newFixtures]);
+  }
+  return result.test;
+}

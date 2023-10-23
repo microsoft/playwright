@@ -55,17 +55,20 @@ export class WorkerHost extends ProcessHost {
 
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
-    await this.startRunner(this._params, {
+    return await this.startRunner(this._params, {
       onStdOut: chunk => this.emit('stdOut', stdioChunkToParams(chunk)),
       onStdErr: chunk => this.emit('stdErr', stdioChunkToParams(chunk)),
     });
+  }
+
+  override async onExit() {
+    await removeFolders([this._params.artifactsDir]);
   }
 
   override async stop(didFail?: boolean) {
     if (didFail)
       this._didFail = true;
     await super.stop();
-    await removeFolders([this._params.artifactsDir]);
   }
 
   runTestGroup(runPayload: RunPayload) {

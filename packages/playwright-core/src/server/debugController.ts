@@ -98,7 +98,7 @@ export class DebugController extends SdkObject {
 
     if (params.mode === 'none') {
       for (const recorder of await this._allRecorders()) {
-        recorder.hideHighlightedSelecor();
+        recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
       this.setAutoCloseEnabled(true);
@@ -121,7 +121,7 @@ export class DebugController extends SdkObject {
     }
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
-      recorder.hideHighlightedSelecor();
+      recorder.hideHighlightedSelector();
       if (params.mode === 'recording')
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
@@ -153,7 +153,7 @@ export class DebugController extends SdkObject {
   async hideHighlight() {
     // Hide all active recorder highlights.
     for (const recorder of await this._allRecorders())
-      recorder.hideHighlightedSelecor();
+      recorder.hideHighlightedSelector();
     // Hide all locator.highlight highlights.
     await this._playwright.hideHighlight();
   }
@@ -172,7 +172,7 @@ export class DebugController extends SdkObject {
   }
 
   async closeAllBrowsers() {
-    await Promise.all(this.allBrowsers().map(browser => browser.close()));
+    await Promise.all(this.allBrowsers().map(browser => browser.close({ reason: 'Close all browsers requested' })));
   }
 
   private _emitSnapshot() {
@@ -210,10 +210,10 @@ export class DebugController extends SdkObject {
     for (const browser of this._playwright.allBrowsers()) {
       for (const context of browser.contexts()) {
         if (!context.pages().length)
-          await context.close(serverSideCallMetadata());
+          await context.close({ reason: 'Browser collected' });
       }
       if (!browser.contexts())
-        await browser.close();
+        await browser.close({ reason: 'Browser collected' });
     }
   }
 }

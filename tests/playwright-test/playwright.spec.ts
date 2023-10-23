@@ -328,10 +328,7 @@ test('should report error and pending operations on timeout', async ({ runInline
       import { test, expect } from '@playwright/test';
       test('timedout', async ({ page }) => {
         await page.setContent('<div>Click me</div>');
-        await Promise.all([
-          page.getByText('Missing').click(),
-          page.getByText('More missing').textContent(),
-        ]);
+        await page.getByText('Missing').click();
       });
     `,
   }, { workers: 1, timeout: 2000 });
@@ -339,11 +336,8 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- locator.click at a.test.ts:6:37');
-  expect(result.output).toContain('- locator.textContent at a.test.ts:7:42');
-  expect(result.output).toContain('waiting for');
-  expect(result.output).toContain(`7 |           page.getByText('More missing').textContent(),`);
+  expect(result.output).toContain('Error: locator.click: Test timeout of 2000ms exceeded.');
+  expect(result.output).toContain('a.test.ts:5:41');
 });
 
 test('should report error on timeout with shared page', async ({ runInlineTest }) => {
@@ -409,8 +403,8 @@ test('should not report waitForEventInfo as pending', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- page.click at a.test.ts:6:20');
+  expect(result.output).toContain('page.click');
+  expect(result.output).toContain('a.test.ts:6:20');
   expect(result.output).not.toContain('- page.waitForLoadState');
 });
 
@@ -447,7 +441,7 @@ test('should report click error on sigint', async ({ interactWithTestRunner }) =
     `,
   }, { workers: 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 

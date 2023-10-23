@@ -1568,7 +1568,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('0');
       });
 
-      test('labels whould be applied together with status filter', async ({ runInlineTest, showReport, page }) => {
+      test('labels should be applied together with status filter', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'a.test.js': `
             const { expect, test } = require('@playwright/test');

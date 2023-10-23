@@ -102,4 +102,11 @@
   line-height: normal;
   padding: 8px;
   font-family: monospace;
+  position: relative;
+}
+
+.attachment-body .copy-icon {
+  position: absolute;
+  right: 5px;
+  top: 5px;
 }

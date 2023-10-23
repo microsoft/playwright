@@ -111,7 +111,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
     for (const browser of browsers)
       await browser.close();
     for (const contextImpl of contextImpls)
-      await contextImpl._browser.close();
+      await contextImpl._browser.close({ reason: 'Trace viewer closed' });
   },
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {

@@ -103,7 +103,11 @@ export const UIModeView: React.FC<{}> = ({
     inputRef.current?.focus();
     setIsLoading(true);
     connect({ onEvent: dispatchEvent, onClose: () => setIsDisconnected(true) }).then(send => {
-      sendMessage = send;
+      sendMessage = async (method, params) => {
+        const logForTest = (window as any).__logForTest;
+        logForTest?.({ method, params });
+        await send(method, params);
+      };
       reloadTests();
     });
   }, [reloadTests]);
@@ -124,7 +128,7 @@ export const UIModeView: React.FC<{}> = ({
     setTestModel({ config, rootSuite, loadErrors });
     setProjectFilters(new Map(projectFilters));
     if (runningState && newProgress)
-      setProgress({ ...newProgress, total: runningState.testIds.size });
+      setProgress(newProgress);
     else if (!newProgress)
       setProgress(undefined);
   }, [projectFilters, runningState]);
@@ -153,7 +157,7 @@ export const UIModeView: React.FC<{}> = ({
 
       const time = '  [' + new Date().toLocaleTimeString() + ']';
       xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
-      setProgress({ total: testIds.size, passed: 0, failed: 0, skipped: 0 });
+      setProgress({ total: 0, passed: 0, failed: 0, skipped: 0 });
       setRunningState({ testIds });
 
       await sendMessage('run', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
@@ -498,7 +502,7 @@ const TestList: React.FC<{
     dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox ui-mode-list-item'>
-        <div className='ui-mode-list-item-title'>{treeItem.title}</div>
+        <div className='ui-mode-list-item-title' title={treeItem.title}>{treeItem.title}</div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
@@ -610,6 +614,8 @@ const TraceView: React.FC<{
 };
 
 let receiver: TeleReporterReceiver | undefined;
+let lastRunReceiver: TeleReporterReceiver | undefined;
+let lastRunTestCount: number;
 
 let throttleTimer: NodeJS.Timeout | undefined;
 let throttleData: { config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress } | undefined;
@@ -634,6 +640,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   let rootSuite: Suite;
   const loadErrors: TestError[] = [];
   const progress: Progress = {
+    total: 0,
     passed: 0,
     failed: 0,
     skipped: 0,
@@ -644,11 +651,22 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
 
     onConfigure: (c: FullConfig) => {
       config = c;
+      // TeleReportReceiver is merging everything into a single suite, so when we
+      // run one test, we still get many tests via rootSuite.allTests().length.
+      // To work around that, have a dedicated per-run receiver that will only have
+      // suite for a single test run, and hence will have correct total.
+      lastRunReceiver = new TeleReporterReceiver(pathSeparator, {
+        onBegin: (suite: Suite) => {
+          lastRunTestCount = suite.allTests().length;
+          lastRunReceiver = undefined;
+        }
+      }, false);
     },
 
     onBegin: (suite: Suite) => {
       if (!rootSuite)
         rootSuite = suite;
+      progress.total = lastRunTestCount;
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
@@ -725,6 +743,9 @@ const dispatchEvent = (method: string, params?: any) => {
     return;
   }
 
+  // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
+  // before we use it.
+  lastRunReceiver?.dispatch({ method, params })?.catch(() => {});
   receiver?.dispatch({ method, params })?.catch(() => {});
 };
 
@@ -760,6 +781,7 @@ const collectTestIds = (treeItem?: TreeItem): Set<string> => {
 };
 
 type Progress = {
+  total: number;
   passed: number;
   failed: number;
   skipped: number;

@@ -16,10 +16,11 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import type { Request, Response } from '@playwright/test';
 
 it('BrowserContext.Events.Request', async ({ context, server }) => {
   const page = await context.newPage();
-  const requests = [];
+  const requests: Request[] = [];
   context.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
@@ -38,7 +39,7 @@ it('BrowserContext.Events.Request', async ({ context, server }) => {
 
 it('BrowserContext.Events.Response', async ({ context, server }) => {
   const page = await context.newPage();
-  const responses = [];
+  const responses: Response[] = [];
   context.on('response', response => responses.push(response));
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
@@ -58,10 +59,10 @@ it('BrowserContext.Events.Response', async ({ context, server }) => {
 it('BrowserContext.Events.RequestFailed', async ({ context, server }) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
-    res.connection.destroy();
+    res.connection!.destroy();
   });
   const page = await context.newPage();
-  const failedRequests = [];
+  const failedRequests: Request[] = [];
   context.on('requestfailed', request => failedRequests.push(request));
   await page.goto(server.PREFIX + '/one-style.html');
   expect(failedRequests.length).toBe(1);
@@ -78,7 +79,7 @@ it('BrowserContext.Events.RequestFinished', async ({ context, server }) => {
     page.goto(server.EMPTY_PAGE),
     context.waitForEvent('requestfinished')
   ]);
-  const request = response.request();
+  const request = response!.request();
   expect(request.url()).toBe(server.EMPTY_PAGE);
   expect(await request.response()).toBeTruthy();
   expect(request.frame() === page.mainFrame()).toBe(true);
@@ -88,7 +89,7 @@ it('BrowserContext.Events.RequestFinished', async ({ context, server }) => {
 
 it('should fire events in proper order', async ({ context, server }) => {
   const page = await context.newPage();
-  const events = [];
+  const events: string[] = [];
   context.on('request', () => events.push('request'));
   context.on('response', () => events.push('response'));
   context.on('requestfinished', () => events.push('requestfinished'));
@@ -127,7 +128,7 @@ it('should not fire events for favicon or favicon redirects', async ({ context, 
 `);
   });
 
-  const events = [];
+  const events: string[] = [];
   context.on('request', req => events.push(req.url()));
   context.on('response', res => events.push(res.url()));
   context.on('requestfinished', req => events.push(req.url()));

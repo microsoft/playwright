@@ -20,13 +20,15 @@ import os from 'os';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent } from '../../packages/playwright-core/lib/utils/userAgent';
+import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
+import { kTargetClosedErrorMessage } from '../config/errors';
+import { RunServer } from '../config/remoteServer';
 
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
@@ -336,7 +338,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       expect(browser.isConnected()).toBe(false);
       const error = await page.waitForNavigation().catch(e => e);
-      expect(error.message).toContain('Navigation failed because page was closed');
+      expect(error.message).toContain(kTargetClosedErrorMessage);
     });
 
     test('should reject navigation when browser closes', async ({ connect, startRemoteServer, server }) => {
@@ -391,7 +393,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       for (let i = 0; i < 2; i++) {
         const message = results[i].message;
-        expect(message).toContain('Page closed');
+        expect(message).toContain(kTargetClosedErrorMessage);
         expect(message).not.toContain('Timeout');
       }
     });
@@ -549,16 +551,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await disconnectedPromise;
       expect(browser.isConnected()).toBe(false);
 
-      const navMessage = (await navigationPromise).message;
-      expect(navMessage).toContain('Connection closed');
-      expect(navMessage).toContain('Closed by');
-      expect(navMessage).toContain(__filename);
-      expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+      const navError = await navigationPromise;
+      expect(navError.message).toContain(kTargetClosedErrorMessage);
+      expect((await waitForNavigationPromise).message).toContain(kTargetClosedErrorMessage);
       expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
-      expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+      expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
     });
 
-    test('should be able to connect when the wsEndpont is passed as an option', async ({ browserType, startRemoteServer }) => {
+    test('should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await browserType.connect({
         wsEndpoint: remoteServer.wsEndpoint(),
@@ -696,6 +696,26 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(file1.originalFilename).toBe('200MB.zip');
       expect(file1.size).toBe(200 * 1024 * 1024);
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
+    });
+
+    test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.setContent(`<input type=file multiple=true/>`);
+      const input = page.locator('input');
+      const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
+      await input.setInputFiles(files.map(f => asset(f)));
+      expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
+      const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
+      const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
+      // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
+      // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
+      for (let i = 0; i < timestamps.length; i++)
+        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
     });
 
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
@@ -894,9 +914,9 @@ test.describe('launchServer only', () => {
     expect(browser.isConnected()).toBe(false);
 
     expect((await navigationPromise).message).toContain('has been closed');
-    expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+    expect((await waitForNavigationPromise).message).toContain(kTargetClosedErrorMessage);
     expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
-    expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+    expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
   });
 
   test('should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {
@@ -914,4 +934,14 @@ test.describe('launchServer only', () => {
       });
     }
   });
+});
+
+test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
+  const server = new RunServer();
+  await server.start(childProcess, 'default', { PW_VERSION_OVERRIDE: '1.2.3' });
+  const error = await connect(server.wsEndpoint()).catch(e => e);
+  await server.close();
+  expect(error.message).toContain('Playwright version mismatch');
+  expect(error.message).toContain('server version: v1.2');
+  expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });

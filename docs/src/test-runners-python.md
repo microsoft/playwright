@@ -3,6 +3,8 @@ id: test-runners
 title: "Pytest Plugin Reference"
 ---
 
+## Introduction
+
 Playwright provides a [Pytest](https://docs.pytest.org/en/stable/) plugin to write end-to-end tests. To get started with it, refer to the [getting started guide](./intro.md).
 
 ## Usage
@@ -23,6 +25,9 @@ addopts = --headed --browser firefox
 ```
 
 ## CLI arguments
+
+Note that CLI arguments are only applied to the default `browser`, `context` and `page` fixtures.
+If you create a browser, a context or a page with the API call like [`method: Browser.newContext`], the CLI arguments are not applied.
 
 - `--headed`: Run tests in headed mode (default: headless).
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
@@ -111,7 +116,7 @@ Run tests with slow mo with the `--slowmo` argument.
 pytest --slowmo 100
 ```
 
-Slows down Playwright operations by 100 milliseconds. 
+Slows down Playwright operations by 100 milliseconds.
 
 ### Skip test by browser
 

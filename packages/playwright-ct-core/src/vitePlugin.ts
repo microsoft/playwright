@@ -69,7 +69,7 @@ export function createPlugin(
       // - frameworks overrides (frameworkOverrides);
 
       const use = config.projects[0].use as CtConfig;
-      const port = use.ctPort || 3100;
+      const baseURL = new URL(use.baseURL || 'http://localhost');
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       // FIXME: use build plugin to determine html location to resolve this.
@@ -78,7 +78,7 @@ export function createPlugin(
       const templateDir = path.join(configDir, relativeTemplateDir);
 
       // Compose base config from the playwright config only.
-      const baseConfig = {
+      const baseConfig: InlineConfig = {
         root: configDir,
         configFile: false,
         define: {
@@ -91,7 +91,9 @@ export function createPlugin(
           outDir: use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache')
         },
         preview: {
-          port
+          https: baseURL.protocol.startsWith('https:'),
+          host: baseURL.hostname,
+          port: use.ctPort || Number(baseURL.port) || 3100
         },
         // Vite preview server will otherwise always return the index.html with 200.
         appType: 'custom',
@@ -209,7 +211,7 @@ export function createPlugin(
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
         const protocol = finalConfig.preview.https ? 'https:' : 'http:';
-        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//localhost:${address.port}`;
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//${finalConfig.preview.host}:${address.port}`;
       }
     },
 
@@ -300,6 +302,7 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
   const text = await fs.promises.readFile(testFile, 'utf-8');
   const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
   const componentUsages = collectComponentUsages(ast);
+  const componentNames = componentUsages.names;
   const result: ComponentInfo[] = [];
 
   traverse(ast, {
@@ -310,11 +313,13 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
           return;
 
         for (const specifier of importNode.specifiers) {
-          if (!componentUsages.names.has(specifier.local.name))
+          const specifierName = specifier.local.name;
+          const componentName = componentNames.has(specifierName) ? specifierName : [...componentNames].find(c => c.startsWith(specifierName + '.'));
+          if (!componentName)
             continue;
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          result.push(componentInfo(specifier, importNode.source.value, testFile));
+          result.push(componentInfo(specifier, importNode.source.value, testFile, componentName));
         }
       }
     }
@@ -366,9 +371,9 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
       for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
         if (value.importedName)
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName});`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName + (value.importedNameProperty || '')});`);
         else
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default);`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default${value.importedNameProperty || ''});`);
       }
 
       lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);

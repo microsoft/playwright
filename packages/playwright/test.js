@@ -15,12 +15,10 @@
  */
 
 const pwt = require('./lib/index');
-const { defineConfig } = require('./lib/common/configLoader');
 const playwright = require('./index');
 const combinedExports = {
   ...playwright,
   ...pwt,
-  defineConfig,
 };
 
 Object.defineProperty(combinedExports, '__esModule', { value: true });

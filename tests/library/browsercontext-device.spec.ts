@@ -36,8 +36,8 @@ it.describe('device', () => {
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/button.html');
     const button = await page.$('button');
-    await page.evaluate(button => button.style.marginTop = '200px', button);
-    await button.click();
+    await page.evaluate(button => button!.style.marginTop = '200px', button);
+    await button!.click();
     expect(await page.evaluate('result')).toBe('Clicked');
     await context.close();
   });
@@ -54,8 +54,8 @@ it.describe('device', () => {
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/scrollable.html');
     const element = await page.$('#button-91');
-    await element.click();
-    expect(await element.textContent()).toBe('clicked');
+    await element!.click();
+    expect(await element!.textContent()).toBe('clicked');
     await context.close();
   });
 

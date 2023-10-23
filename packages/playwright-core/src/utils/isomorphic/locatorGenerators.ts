@@ -21,6 +21,7 @@ import type { ParsedSelector } from './selectorParser';
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
+export type Quote = '\'' | '"' | '`';
 
 type LocatorOptions = {
   attrs?: { name: string, value: string | boolean | number }[],
@@ -38,16 +39,16 @@ export function asLocator(lang: Language, selector: string, isFrameLocator: bool
   return asLocators(lang, selector, isFrameLocator, playSafe)[0];
 }
 
-export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false, maxOutputSize = 20): string[] {
+export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
   if (playSafe) {
     try {
-      return innerAsLocators(generators[lang], parseSelector(selector), isFrameLocator, maxOutputSize);
+      return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
     } catch (e) {
       // Tolerate invalid input.
       return [selector];
     }
   } else {
-    return innerAsLocators(generators[lang], parseSelector(selector), isFrameLocator, maxOutputSize);
+    return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
   }
 }
 
@@ -203,7 +204,14 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       }
     }
 
-    tokens.push([locatorPart]);
+    // Selectors can be prefixed with engine name, e.g. xpath=//foo
+    let locatorPartWithEngine: string | undefined;
+    if (['xpath', 'css'].includes(part.name)) {
+      const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
+      locatorPartWithEngine = factory.generateLocator(base, locatorType, selectorPart);
+    }
+
+    tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
   }
 
   return combineTokens(factory, tokens, maxOutputSize);
@@ -249,6 +257,8 @@ function detectExact(text: string): { exact?: boolean, text: string | RegExp } {
 }
 
 export class JavaScriptLocatorFactory implements LocatorFactory {
+  constructor(private preferredQuote?: Quote) {}
+
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: LocatorOptions = {}): string {
     switch (kind) {
       case 'default':
@@ -336,7 +346,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
   }
 
   private quote(text: string) {
-    return escapeWithQuotes(text, '\'');
+    return escapeWithQuotes(text, this.preferredQuote ?? '\'');
   }
 }
 
@@ -658,12 +668,12 @@ export class JsonlLocatorFactory implements LocatorFactory {
   }
 }
 
-const generators: Record<Language, LocatorFactory> = {
-  javascript: new JavaScriptLocatorFactory(),
-  python: new PythonLocatorFactory(),
-  java: new JavaLocatorFactory(),
-  csharp: new CSharpLocatorFactory(),
-  jsonl: new JsonlLocatorFactory(),
+const generators: Record<Language, new (preferredQuote?: Quote) => LocatorFactory> = {
+  javascript: JavaScriptLocatorFactory,
+  python: PythonLocatorFactory,
+  java: JavaLocatorFactory,
+  csharp: CSharpLocatorFactory,
+  jsonl: JsonlLocatorFactory,
 };
 
 function isRegExp(obj: any): obj is RegExp {

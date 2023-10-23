@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame, verifyViewport } from '../config/utils';
+import type { Page } from '@playwright/test';
 
 it('should create new context @smoke', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
@@ -129,7 +131,7 @@ it('close() should abort waitForEvent', async ({ browser }) => {
   const promise = context.waitForEvent('page').catch(e => e);
   await context.close();
   const error = await promise;
-  expect(error.message).toContain('Context closed');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('close() should be callable twice', async ({ browser }) => {
@@ -153,7 +155,7 @@ it('should not report frameless pages on error', async ({ browser, server }) => 
   server.setRoute('/empty.html', (req, res) => {
     res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
   });
-  let popup;
+  let popup: Page | undefined;
   context.on('page', p => popup = p);
   await page.goto(server.EMPTY_PAGE);
   await page.click('"Click me"');
@@ -193,9 +195,9 @@ it('should disable javascript', async ({ browser, browserName }) => {
     let error = null;
     await page.evaluate('something').catch(e => error = e);
     if (browserName === 'webkit')
-      expect(error.message).toContain('Can\'t find variable: something');
+      expect(error!.message).toContain('Can\'t find variable: something');
     else
-      expect(error.message).toContain('something is not defined');
+      expect(error!.message).toContain('something is not defined');
     await context.close();
   }
 
@@ -239,7 +241,7 @@ it('should work with offline option', async ({ browser, server }) => {
   expect(error).toBeTruthy();
   await context.setOffline(false);
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 

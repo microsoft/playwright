@@ -99,7 +99,7 @@ it.describe('should proxy local network requests', () => {
           });
 
           const url = `http://${params.target}:${server.PORT}${path}`;
-          proxyServer.forwardTo(server.PORT, { skipConnectRequests: true });
+          proxyServer.forwardTo(server.PORT);
           const browser = await browserType.launch({
             proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
           });
@@ -188,32 +188,39 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
     proxy: { server: `localhost:${server.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
-  const page = await browser.newPage();
-  await page.goto('http://0.non.existent.domain.for.the.test/target.html');
-  expect(await page.title()).toBe('Served by the proxy');
+  {
+    const page = await browser.newPage();
+    await page.goto('http://0.non.existent.domain.for.the.test/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
+  }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://foo.is.the.another.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
-  // Make sure error page commits.
-  if (browserName === 'chromium')
-    await page.waitForURL('chrome-error://chromewebdata/');
-
   {
+    const page = await browser.newPage();
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
   }
 
   await browser.close();
@@ -293,6 +300,8 @@ async function setupSocksForwardingServer(port: number, forwardPort: number){
       socket.pipe(dstSock).pipe(socket);
       socket.on('close', () => dstSock.end());
       socket.on('end', () => dstSock.end());
+      dstSock.on('error', () => socket.end());
+      dstSock.on('end', () => socket.end());
       dstSock.setKeepAlive(false);
       dstSock.connect(forwardPort, '127.0.0.1');
     }

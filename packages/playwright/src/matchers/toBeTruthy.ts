@@ -48,5 +48,13 @@ export async function toBeTruthy(
     return matches ? `${header}Expected: not ${expected}\nReceived: ${expected}${logText}` :
       `${header}Expected: ${expected}\nReceived: ${unexpected}${logText}`;
   };
-  return { locator: receiver, message, pass: matches, actual, name: matcherName, expected, log };
+  return {
+    message,
+    pass: matches,
+    actual,
+    name: matcherName,
+    expected,
+    log,
+    timeout: timedOut ? timeout : undefined,
+  };
 }

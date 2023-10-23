@@ -148,7 +148,7 @@ class WKAXNode implements accessibility.AXNode {
     return this.isLeafNode() && !!name;
   }
 
-  _hasRendundantTextChild() {
+  _hasRedundantTextChild() {
     if (this._children.length !== 1)
       return false;
     const child = this._children[0];
@@ -162,7 +162,7 @@ class WKAXNode implements accessibility.AXNode {
     if (this._isTextControl())
       return true;
       // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
-    if (this._hasRendundantTextChild())
+    if (this._hasRedundantTextChild())
       return true;
     return false;
   }
@@ -210,14 +210,13 @@ class WKAXNode implements accessibility.AXNode {
       'expanded',
       'focused',
       'modal',
-      'multiline',
       'multiselectable',
       'readonly',
       'required',
       'selected',
     ];
     for (const booleanProperty of booleanProperties) {
-      // WebArea and ScorllArea treat focus differently than other nodes. They report whether their frame  has focus,
+      // WebArea and ScrollArea treat focus differently than other nodes. They report whether their frame  has focus,
       // not whether focus is specifically on the root node.
       if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
         continue;

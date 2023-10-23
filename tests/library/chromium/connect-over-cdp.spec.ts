@@ -199,7 +199,7 @@ test('should connect over a ws endpoint', async ({ browserType, server }, testIn
     expect(contexts.length).toBe(1);
     await cdpBrowser.close();
 
-    // also connect with the depercreated wsEndpoint option
+    // also connect with the deprecated wsEndpoint option
     const cdpBrowser2 = await browserType.connectOverCDP({
       wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
     });
@@ -442,6 +442,30 @@ test('emulate media should not be affected by second connectOverCDP', async ({ b
       browser1.close(),
       browser2.close()
     ]);
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should allow tracing over cdp session', async ({ browserType, trace }, testInfo) => {
+  test.skip(trace === 'on');
+
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const [context] = cdpBrowser.contexts();
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    const page = await context.newPage();
+    await page.evaluate(() => 2 + 2);
+    const traceZip = testInfo.outputPath('trace.zip');
+    await context.tracing.stop({ path: traceZip });
+    await cdpBrowser.close();
+    expect(fs.existsSync(traceZip)).toBe(true);
   } finally {
     await browserServer.close();
   }

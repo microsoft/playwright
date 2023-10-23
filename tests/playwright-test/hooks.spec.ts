@@ -276,7 +276,7 @@ test('run hooks after failure', async ({ runInlineTest }) => {
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
-        test('faled', ({}) => {
+        test('failed', ({}) => {
           console.log('\\n%%test');
           expect(1).toBe(2);
         });
@@ -370,7 +370,7 @@ test('max-failures should still run afterEach/afterAll', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'test',
     'afterEach',
@@ -660,7 +660,7 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Internal error: worker process exited unexpectedly');
+  expect(result.output).toContain('Error: worker process exited unexpectedly');
   expect(result.output).toContain('[1/1] a.spec.js:3:11 › failing due to afterall');
 });
 

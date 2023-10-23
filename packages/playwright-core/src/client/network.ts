@@ -610,7 +610,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
         waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
       if (event !== Events.WebSocket.Close)
         waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('Socket closed'));
-      waiter.rejectOnEvent(this._page, Events.Page.Close, new Error('Page closed'));
+      waiter.rejectOnEvent(this._page, Events.Page.Close, () => this._page._closeErrorWithReason());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

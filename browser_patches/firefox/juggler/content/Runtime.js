@@ -561,11 +561,8 @@ class ExecutionContext {
   }
 
   _getResult(completionValue, exceptionDetails = {}) {
-    if (!completionValue) {
-      exceptionDetails.text = 'Evaluation terminated!';
-      exceptionDetails.stack = '';
-      return {success: false, obj: null};
-    }
+    if (!completionValue)
+      throw new Error('evaluation terminated');
     if (completionValue.throw) {
       if (this._debuggee.executeInGlobalWithBindings('e instanceof Error', {e: completionValue.throw}).return) {
         exceptionDetails.text = this._debuggee.executeInGlobalWithBindings('e.message', {e: completionValue.throw}).return;

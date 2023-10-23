@@ -20,10 +20,11 @@ import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { formatCallLog } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
-import { calculateSha1, isRegExp, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -59,17 +60,6 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
     frames.push(frame);
   }
   return frames;
-}
-
-export function stringifyStackFrames(frames: StackFrame[]): string[] {
-  const stackLines: string[] = [];
-  for (const frame of frames) {
-    if (frame.function)
-      stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
-    else
-      stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
-  }
-  return stackLines;
 }
 
 export function serializeError(error: Error | any): TestInfoError {
@@ -224,14 +214,7 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function callLogText(log: string[] | undefined): string {
-  if (!log)
-    return '';
-  return `
-Call log:
-  ${colors.dim('- ' + (log || []).join('\n  - '))}
-`;
-}
+export const callLogText = formatCallLog;
 
 const folderToPackageJsonPath = new Map<string, string>();
 
@@ -340,7 +323,7 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
       if (fileExists(modified))
         return modified;
     }
-    break;  // Do not try '' when a more specific extesion like '.jsx' matched.
+    break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
 
   if (dirExists(resolved)) {

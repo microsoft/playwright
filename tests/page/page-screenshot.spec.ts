@@ -817,8 +817,8 @@ it.describe('page screenshot animations', () => {
     // Ensure CSS animation is finite.
     expect(await div.evaluate(async el => Number.isFinite(el.getAnimations()[0].effect.getComputedTiming().endTime))).toBe(true);
     await Promise.all([
-      page.screenshot({ animations: 'disabled' }),
       page.waitForEvent('console', msg => msg.text() === 'animationend'),
+      page.screenshot({ animations: 'disabled' }),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
       'onfinish', 'animationend'
@@ -882,5 +882,12 @@ it('page screenshot should capture css transform', async function({ page, browse
     </div>
   `);
 
+  await expect(page).toHaveScreenshot();
+});
+
+it('should capture css box-shadow', async ({ page, isElectron, isAndroid }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21620' });
+  it.fixme(isElectron || isAndroid, 'Returns screenshot of a different size.');
+  await page.setContent(`<div style="box-shadow: red 10px 10px 10px; width: 50px; height: 50px;"></div>`);
   await expect(page).toHaveScreenshot();
 });

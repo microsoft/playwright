@@ -55,11 +55,11 @@ class JSONReporter extends EmptyReporter {
   }
 
   override async onEnd(result: FullResult) {
-    await outputReport(this._serializeReport(), this.config, this._outputFile);
+    await outputReport(this._serializeReport(result), this.config, this._outputFile);
   }
 
-  private _serializeReport(): JSONReport {
-    return {
+  private _serializeReport(result: FullResult): JSONReport {
+    const report: JSONReport = {
       config: {
         ...removePrivateFields(this.config),
         rootDir: toPosixPath(this.config.rootDir),
@@ -79,8 +79,19 @@ class JSONReporter extends EmptyReporter {
         })
       },
       suites: this._mergeSuites(this.suite.suites),
-      errors: this._errors
+      errors: this._errors,
+      stats: {
+        startTime: result.startTime.toISOString(),
+        duration: result.duration,
+        expected: 0,
+        skipped: 0,
+        unexpected: 0,
+        flaky: 0,
+      },
     };
+    for (const test of this.suite.allTests())
+      ++report.stats[test.outcome()];
+    return report;
   }
 
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
@@ -194,7 +205,7 @@ class JSONReporter extends EmptyReporter {
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
-      startTime: result.startTime,
+      startTime: result.startTime.toISOString(),
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,

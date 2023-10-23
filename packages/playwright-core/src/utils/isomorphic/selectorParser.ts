@@ -123,11 +123,18 @@ function selectorPartsEqual(list1: ParsedSelectorPart[], list2: ParsedSelectorPa
   return stringifySelector({ parts: list1 }) === stringifySelector({ parts: list2 });
 }
 
-export function stringifySelector(selector: string | ParsedSelector): string {
+export function stringifySelector(selector: string | ParsedSelector, forceEngineName?: boolean): string {
   if (typeof selector === 'string')
     return selector;
   return selector.parts.map((p, i) => {
-    const prefix = p.name === 'css' ? '' : p.name + '=';
+    let includeEngine = true;
+    if (!forceEngineName && i !== selector.capture) {
+      if (p.name === 'css')
+        includeEngine = false;
+      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+        includeEngine = false;
+    }
+    const prefix = includeEngine ? p.name + '=' : '';
     return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
   }).join(' >> ');
 }
@@ -302,7 +309,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       if (next() === '\\') {
         source += eat1();
         if (EOL)
-          syntaxError('parsing regular expressiion');
+          syntaxError('parsing regular expression');
       } else if (inClass && next() === ']') {
         inClass = false;
       } else if (!inClass && next() === '[') {

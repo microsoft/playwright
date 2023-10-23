@@ -614,3 +614,18 @@ it('input should trigger events when files changed second time', async ({ page, 
   expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('pptr.png');
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
 });
+
+it('should preserve lastModified timestamp', async ({ page, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
+  await page.setContent(`<input type=file multiple=true/>`);
+  const input = page.locator('input');
+  const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
+  await input.setInputFiles(files.map(f => asset(f)));
+  expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
+  const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
+  const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
+  // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
+  // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
+  for (let i = 0; i < timestamps.length; i++)
+    expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+});

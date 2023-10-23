@@ -21,7 +21,7 @@ import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import type { LaunchOptions, BrowserContextOptions, HeadersArray } from './types';
-import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
+import { isTargetClosedError } from './errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
@@ -40,6 +40,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   // Used from @playwright/test fixtures.
   _connectHeaders?: HeadersArray;
+  _closeReason: string | undefined;
 
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
@@ -69,6 +70,12 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
         context._onClose();
       }
       return await this._innerNewContext(options, true);
+    }, true);
+  }
+
+  async _stopPendingOperations(reason: string) {
+    return await this._wrapApiCall(async () => {
+      await this._channel.stopPendingOperations({ reason });
     }, true);
   }
 
@@ -124,15 +131,16 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return buffer;
   }
 
-  async close(): Promise<void> {
+  async close(options: { reason?: string } = {}): Promise<void> {
+    this._closeReason = options.reason;
     try {
       if (this._shouldCloseConnectionOnClose)
-        this._connection.close(kBrowserClosedError);
+        this._connection.close();
       else
-        await this._channel.close();
+        await this._channel.close(options);
       await this._closedPromise;
     } catch (e) {
-      if (isSafeCloseError(e))
+      if (isTargetClosedError(e))
         return;
       throw e;
     }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../../config/errors';
 import { contextTest as it, expect } from '../../config/browserTest';
 import { browserTest } from '../../config/browserTest';
 
@@ -129,6 +130,19 @@ browserTest('should detach when page closes', async function({ browser }) {
   let error;
   await session.detach().catch(e => error = e);
   expect(error).toBeTruthy();
+  await context.close();
+});
+
+browserTest('should reject protocol calls when page closes', async function({ browser }) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const session = await context.newCDPSession(page);
+  const promise = session.send('Runtime.evaluate', { expression: 'new Promise(() => {})', awaitPromise: true }).catch(e => e);
+  await page.close();
+  const error1 = await promise;
+  expect(error1.message).toContain(kTargetClosedErrorMessage);
+  const error2 = await session.send('Runtime.evaluate', { expression: 'new Promise(() => {})', awaitPromise: true }).catch(e => e);
+  expect(error2.message).toContain('Target page, context or browser has been closed');
   await context.close();
 });
 

@@ -167,8 +167,8 @@ public:
          * amount of lines and columns to retain semantic of U and V planes which
          * contain only 1/4 of pixel information.
          */
-        int yuvTopOffset = m_margin.top & 1 ? m_margin.top + 1 : m_margin.top;
-        int yuvLeftOffset = m_margin.left & 1 ? m_margin.left + 1 : m_margin.left;
+        int yuvTopOffset = m_margin.top + (m_margin.top & 1);
+        int yuvLeftOffset = m_margin.left + (m_margin.left & 1);
 
         double src_width = src->width() - yuvLeftOffset;
         double src_height = src->height() - yuvTopOffset;

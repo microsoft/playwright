@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { ElementHandle } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
 it('should work with large DOM @smoke', async ({ page, server }) => {
@@ -90,10 +91,10 @@ it('should work for open shadow roots', async ({ page, server }) => {
   expect(await page.$eval(`css=section > div div span:nth-child(2)`, e => e.textContent)).toBe('Hello from root3 #2');
   expect(await page.$(`css=section div div div div`)).toBe(null);
 
-  const root2 = await page.$(`css=div div`);
+  const root2 = (await page.$(`css=div div`))!;
   expect(await root2.$eval(`css=#target`, e => e.textContent)).toBe('Hello from root2');
   expect(await root2.$(`css:light=#target`)).toBe(null);
-  const root2Shadow = await root2.evaluateHandle(r => r.shadowRoot);
+  const root2Shadow = (await root2.evaluateHandle(r => r.shadowRoot) as ElementHandle<ShadowRoot>)!;
   expect(await root2Shadow.$eval(`css:light=#target`, e => e.textContent)).toBe('Hello from root2');
   const root3 = (await page.$$(`css=div div`))[1];
   expect(await root3.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
@@ -178,7 +179,7 @@ it('should work with comma inside text', async ({ page }) => {
 
 it('should work with attribute selectors', async ({ page }) => {
   await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span"><span></span></div>`);
-  await page.evaluate(() => window['div'] = document.querySelector('div'));
+  await page.evaluate(() => (window as any)['div'] = document.querySelector('div'));
   const selectors = [
     `[attr="hello world"]`,
     `[attr = "hello world"]`,
@@ -194,10 +195,10 @@ it('should work with attribute selectors', async ({ page }) => {
     `[attr2 $="foo=bar[]"]`,
   ];
   for (const selector of selectors)
-    expect(await page.$eval(selector, e => e === window['div'])).toBe(true);
-  expect(await page.$eval(`[attr*=hello] span`, e => e.parentNode === window['div'])).toBe(true);
-  expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === window['div'])).toBe(true);
-  expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === window['div'])).toBe(true);
+    expect(await page.$eval(selector, e => e === (window as any)['div'])).toBe(true);
+  expect(await page.$eval(`[attr*=hello] span`, e => e.parentNode === (window as any)['div'])).toBe(true);
+  expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === (window as any)['div'])).toBe(true);
+  expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === (window as any)['div'])).toBe(true);
 });
 
 it('should not match root after >>', async ({ page, server }) => {
@@ -236,7 +237,7 @@ it('should work with *', async ({ page }) => {
   expect(await page.$$eval('div *', els => els.length)).toBe(2);
   expect(await page.$$eval('* > *', els => els.length)).toBe(6);
 
-  const body = await page.$('body');
+  const body = (await page.$('body')) as ElementHandle<HTMLBodyElement>;
   // Does not include html, head or body.
   expect(await body.$$eval('*', els => els.length)).toBe(4);
   expect(await body.$$eval('*#div1', els => els.length)).toBe(1);
@@ -386,7 +387,7 @@ it('should work with :scope', async ({ page, server }) => {
   // 'has' does change the scope, so it becomes the 'div' we are querying.
   expect(await page.$$eval(`css=div:has(:scope > #target)`, els => els.length)).toBe(1);
 
-  const handle = await page.$(`css=span`);
+  const handle = await page.$(`css=span`) as ElementHandle;
   for (const scope of [page, handle]) {
     expect(await scope.$$eval(`css=:scope`, els => els.length)).toBe(1);
     expect(await scope.$$eval(`css=* :scope`, els => els.length)).toBe(0);
@@ -439,7 +440,7 @@ it('css on the handle should be relative', async ({ page }) => {
   `);
   expect(await page.$eval(`.find-me`, e => e.id)).toBe('target1');
 
-  const div = await page.$('div');
+  const div = await page.$('div') as ElementHandle;
   expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
 });

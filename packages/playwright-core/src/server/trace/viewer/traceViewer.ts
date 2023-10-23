@@ -157,7 +157,7 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
     await syncLocalStorageWithSettings(page, 'traceviewer');
 
   if (isUnderTest())
-    page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
+    page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
 
   await page.mainFrame().goto(serverSideCallMetadata(), url);
   return page;

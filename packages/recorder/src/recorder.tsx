@@ -106,11 +106,10 @@ export const Recorder: React.FC<RecorderProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [paused]);
 
-  const onEditorChange = React.useCallback((text: string) => {
-    setLocator(text);
-    const source = sources.find(s => s.id === fileId);
-    window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source?.language || 'javascript' } });
-  }, [sources, fileId]);
+  const onEditorChange = React.useCallback((selector: string) => {
+    setLocator(selector);
+    window.dispatch({ event: 'selectorUpdated', params: { selector } });
+  }, []);
 
   return <div className='recorder'>
     <Toolbar>

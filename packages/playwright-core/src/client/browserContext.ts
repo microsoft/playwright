@@ -43,7 +43,7 @@ import { HarRouter } from './harRouter';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { WebError } from './webError';
-import { parseError } from '../protocol/serializers';
+import { TargetClosedError, parseError } from './errors';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -63,6 +63,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
   private _closeWasCalled = false;
+  private _closeReason: string | undefined;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -336,6 +337,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setNetworkInterceptionPatterns({ patterns });
   }
 
+  _effectiveCloseReason(): string | undefined {
+    return this._closeReason || this._browser?._closeReason;
+  }
+
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
@@ -343,7 +348,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
-        waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
+        waiter.rejectOnEvent(this, Events.BrowserContext.Close, () => new TargetClosedError(this._effectiveCloseReason()));
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -382,9 +387,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.emit(Events.BrowserContext.Close, this);
   }
 
-  async close(): Promise<void> {
+  async close(options: { reason?: string } = {}): Promise<void> {
     if (this._closeWasCalled)
       return;
+    this._closeReason = options.reason;
     this._closeWasCalled = true;
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
@@ -403,7 +409,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         await artifact.delete();
       }
     }, true);
-    await this._channel.close();
+    await this._channel.close(options);
     await this._closedPromise;
   }
 

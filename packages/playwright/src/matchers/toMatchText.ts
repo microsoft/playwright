@@ -99,13 +99,13 @@ export async function toMatchText(
     };
 
   return {
-    locator: receiver,
     name: matcherName,
     expected,
     message,
     pass,
     actual: received,
     log,
+    timeout: timedOut ? timeout : undefined,
   };
 }
 

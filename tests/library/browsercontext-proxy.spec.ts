@@ -97,7 +97,7 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
 it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux);
 
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` }
   });
@@ -216,7 +216,7 @@ it('should use proxy for https urls', async ({ contextFactory, httpsServer, prox
   httpsServer.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by https server via proxy</title></html>');
   });
-  proxyServer.forwardTo(httpsServer.PORT);
+  proxyServer.forwardTo(httpsServer.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     ignoreHTTPSErrors: true,
     proxy: { server: `localhost:${proxyServer.PORT}` }
@@ -319,7 +319,7 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
   }
 });
 
-it('should exclude patterns', async ({ contextFactory, server, browserName, headless, proxyServer }) => {
+it('should exclude patterns', async ({ contextFactory, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   // FYI: using long and weird domain names to avoid ATT DNS hijacking
   // that resolves everything to some weird search results page.
@@ -329,56 +329,53 @@ it('should exclude patterns', async ({ contextFactory, server, browserName, head
     proxy: { server: `localhost:${proxyServer.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
-  const page = await context.newPage();
-  await page.goto('http://0.non.existent.domain.for.the.test/target.html');
-  expect(proxyServer.requestUrls).toContain('http://0.non.existent.domain.for.the.test/target.html');
-  expect(await page.title()).toBe('Served by the proxy');
-  proxyServer.requestUrls = [];
-
   const nonFaviconUrls = () => {
     return proxyServer.requestUrls.filter(u => !u.includes('favicon'));
   };
 
   {
+    proxyServer.requestUrls = [];
+    const page = await context.newPage();
+    await page.goto('http://0.non.existent.domain.for.the.test/target.html');
+    expect(proxyServer.requestUrls).toContain('http://0.non.existent.domain.for.the.test/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
+  }
+
+  {
+    proxyServer.requestUrls = [];
+    const page = await context.newPage();
     const error = await page.goto('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
-
-    // Make sure error page commits.
-    if (browserName === 'chromium')
-      await page.waitForURL('chrome-error://chromewebdata/');
-    else if (browserName === 'firefox')
-      await page.waitForURL('http://1.non.existent.domain.for.the.test/target.html', { waitUntil: 'commit' });
+    await page.close();
   }
 
   {
+    proxyServer.requestUrls = [];
+    const page = await context.newPage();
     const error = await page.goto('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
-
-    // Make sure error page commits.
-    if (browserName === 'chromium')
-      await page.waitForURL('chrome-error://chromewebdata/');
-    else if (browserName === 'firefox')
-      await page.waitForURL('http://2.non.existent.domain.for.the.test/target.html', { waitUntil: 'commit' });
+    await page.close();
   }
 
   {
+    proxyServer.requestUrls = [];
+    const page = await context.newPage();
     const error = await page.goto('http://foo.is.the.another.test/target.html').catch(e => e);
     expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
-
-    // Make sure error page commits.
-    if (browserName === 'chromium')
-      await page.waitForURL('chrome-error://chromewebdata/');
-    else if (browserName === 'firefox')
-      await page.waitForURL('http://foo.is.the.another.test/target.html', { waitUntil: 'commit' });
+    await page.close();
   }
 
   {
+    proxyServer.requestUrls = [];
+    const page = await context.newPage();
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
     expect(nonFaviconUrls()).toContain('http://3.non.existent.domain.for.the.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
   }
 
   await context.close();

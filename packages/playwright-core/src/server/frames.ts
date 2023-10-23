@@ -41,7 +41,7 @@ import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
-import { TimeoutError } from '../common/errors';
+import { TimeoutError } from './errors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;
@@ -617,8 +617,7 @@ export class Frame extends SdkObject {
   async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
     return LongStandingScope.raceMultiple([
       this._detachedScope,
-      this._page._disconnectedScope,
-      this._page._crashedScope,
+      this._page.openScope,
     ], action().catch(e => {
       if (e instanceof NavigationAbortedError && e.documentId) {
         const data = this._redirectedNavigations.get(e.documentId);
@@ -835,7 +834,7 @@ export class Frame extends SdkObject {
   async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
+      throw new Error(`Failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpression(expression, { isFunction }, arg);
     handle.dispose();
     return result;
@@ -1055,8 +1054,7 @@ export class Frame extends SdkObject {
         // We need this to show expected/received values in time.
         const actionPromise = new Promise(f => setTimeout(f, timeout));
         await LongStandingScope.raceMultiple([
-          this._page._disconnectedScope,
-          this._page._crashedScope,
+          this._page.openScope,
           this._detachedScope,
         ], actionPromise);
       }
@@ -1534,7 +1532,7 @@ export class Frame extends SdkObject {
 
   _onDetached() {
     this._stopNetworkIdleTimer();
-    this._detachedScope.close('Frame was detached');
+    this._detachedScope.close(new Error('Frame was detached'));
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed('Frame was detached');
@@ -1704,8 +1702,7 @@ class SignalBarrier {
       return true;
     });
     await LongStandingScope.raceMultiple([
-      frame._page._disconnectedScope,
-      frame._page._crashedScope,
+      frame._page.openScope,
       frame._detachedScope,
     ], waiter.promise).catch(() => {});
     waiter.dispose();

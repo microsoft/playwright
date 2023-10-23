@@ -41,7 +41,7 @@ it.describe('mobile viewport', () => {
     await context.close();
 
     function dispatchTouch() {
-      let fulfill;
+      let fulfill!: (s: string) => void;
       const promise = new Promise(x => fulfill = x);
       window.ontouchstart = function(e) {
         fulfill('Received touch');
@@ -59,7 +59,7 @@ it.describe('mobile viewport', () => {
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/detect-touch.html');
-    expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
+    expect(await page.evaluate(() => document.body.textContent!.trim())).toBe('YES');
     await context.close();
   });
 
@@ -68,7 +68,7 @@ it.describe('mobile viewport', () => {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.addScriptTag({ url: server.PREFIX + '/modernizr.js' });
-    expect(await page.evaluate(() => window['Modernizr'].touchevents)).toBe(true);
+    expect(await page.evaluate(() => (window as any)['Modernizr'].touchevents)).toBe(true);
     await context.close();
   });
 
@@ -164,7 +164,7 @@ it.describe('mobile viewport', () => {
     await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
     await page.evaluate(() => {
       document.addEventListener('click', event => {
-        window['result'] = { x: event.clientX, y: event.clientY };
+        (window as any)['result'] = { x: event.clientX, y: event.clientY };
       });
     });
 
@@ -224,7 +224,7 @@ it.describe('mobile viewport', () => {
     });
     await page.goto('http://localhost/button.html');
     await page.getByText('Click me').click({ force: true });
-    const box = await page.locator('button').boundingBox();
+    const box = (await page.locator('button').boundingBox())!;
     const clicks = await page.evaluate(() => (window as any).clicks);
     expect(clicks.length).toBe(1);
     const [{ x, y }] = clicks;

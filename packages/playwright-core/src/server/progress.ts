@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from '../common/errors';
+import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
 import type { LogName } from '../common/debugLogger';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';

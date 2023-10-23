@@ -915,12 +915,31 @@ features, encourage the use of new ones, and provide general guidance.
        */
       failedRequestInfo?: FailedRequestInfo;
     }
+    export type PropertyRuleIssueReason = "InvalidSyntax"|"InvalidInitialValue"|"InvalidInherits"|"InvalidName";
+    /**
+     * This issue warns about errors in property rules that lead to property
+registrations being ignored.
+     */
+    export interface PropertyRuleIssueDetails {
+      /**
+       * Source code position of the property rule.
+       */
+      sourceCodeLocation: SourceCodeLocation;
+      /**
+       * Reason why the property rule was discarded.
+       */
+      propertyRuleIssueReason: PropertyRuleIssueReason;
+      /**
+       * The value of the property rule property that failed to parse
+       */
+      propertyValue?: string;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -944,6 +963,7 @@ add a new optional field to this type.
       federatedAuthRequestIssueDetails?: FederatedAuthRequestIssueDetails;
       bounceTrackingIssueDetails?: BounceTrackingIssueDetails;
       stylesheetLoadingIssueDetails?: StylesheetLoadingIssueDetails;
+      propertyRuleIssueDetails?: PropertyRuleIssueDetails;
       federatedAuthUserInfoRequestIssueDetails?: FederatedAuthUserInfoRequestIssueDetails;
     }
     /**
@@ -2805,6 +2825,20 @@ property
       value: string;
     }
     export type setEffectivePropertyValueForNodeReturnValue = {
+    }
+    /**
+     * Modifies the property rule property name.
+     */
+    export type setPropertyRulePropertyNameParameters = {
+      styleSheetId: StyleSheetId;
+      range: SourceRange;
+      propertyName: string;
+    }
+    export type setPropertyRulePropertyNameReturnValue = {
+      /**
+       * The resulting key text after modification.
+       */
+      propertyName: Value;
     }
     /**
      * Modifies the keyframe rule key text.
@@ -8306,11 +8340,11 @@ of the request to the endpoint that set the cookie.
     /**
      * Types of reasons why a cookie may not be stored from a response.
      */
-    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyBlockedInFirstPartySet"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"SamePartyConflictsWithOtherAttributes"|"NameValuePairExceedsMaxSize"|"DisallowedCharacter";
+    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"ThirdPartyBlockedInFirstPartySet"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"SamePartyConflictsWithOtherAttributes"|"NameValuePairExceedsMaxSize"|"DisallowedCharacter"|"NoCookieContent";
     /**
      * Types of reasons why a cookie may not be sent with a request.
      */
-    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyBlockedInFirstPartySet"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"NameValuePairExceedsMaxSize";
+    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"ThirdPartyBlockedInFirstPartySet"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"NameValuePairExceedsMaxSize";
     /**
      * A cookie which was not stored from a response with the corresponding reason.
      */
@@ -13195,12 +13229,12 @@ Tokens from that issuer.
     /**
      * Enum of interest group access types.
      */
-    export type InterestGroupAccessType = "join"|"leave"|"update"|"loaded"|"bid"|"win";
+    export type InterestGroupAccessType = "join"|"leave"|"update"|"loaded"|"bid"|"win"|"additionalBid"|"additionalBidWin"|"clear";
     /**
      * Ad advertising element inside an interest group.
      */
     export interface InterestGroupAd {
-      renderUrl: string;
+      renderURL: string;
       metadata?: string;
     }
     /**
@@ -13211,10 +13245,10 @@ Tokens from that issuer.
       name: string;
       expirationTime: Network.TimeSinceEpoch;
       joiningOrigin: string;
-      biddingUrl?: string;
-      biddingWasmHelperUrl?: string;
-      updateUrl?: string;
-      trustedBiddingSignalsUrl?: string;
+      biddingLogicURL?: string;
+      biddingWasmHelperURL?: string;
+      updateURL?: string;
+      trustedBiddingSignalsURL?: string;
       trustedBiddingSignalsKeys: string[];
       userBiddingSignals?: string;
       ads: InterestGroupAd[];
@@ -15928,7 +15962,7 @@ possible for mulitple rule sets and links to trigger a single attempt.
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled"|"HasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"ResourceLoadBlockedByClient"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"ResourceLoadBlockedByClient"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl";
     /**
      * Preloading status values, see also PreloadingTriggeringOutcome. This
 status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
@@ -15948,23 +15982,6 @@ filter out the ones that aren't necessary to the developers.
     }
     export type ruleSetRemovedPayload = {
       id: RuleSetId;
-    }
-    /**
-     * Fired when a prerender attempt is completed.
-     */
-    export type prerenderAttemptCompletedPayload = {
-      key: PreloadingAttemptKey;
-      /**
-       * The frame id of the frame initiating prerendering.
-       */
-      initiatingFrameId: Page.FrameId;
-      prerenderingUrl: string;
-      finalStatus: PrerenderFinalStatus;
-      /**
-       * This is used to give users more information about the name of the API call
-that is incompatible with prerender and has caused the cancellation of the attempt
-       */
-      disallowedApiMethod?: string;
     }
     /**
      * Fired when a preload enabled state is updated.
@@ -16033,7 +16050,7 @@ whether this account has ever been used to sign in to this RP before.
     /**
      * Whether the dialog shown is an account chooser or an auto re-authentication dialog.
      */
-    export type DialogType = "AccountChooser"|"AutoReauthn"|"ConfirmIdpSignin";
+    export type DialogType = "AccountChooser"|"AutoReauthn"|"ConfirmIdpLogin";
     /**
      * Corresponds to IdentityRequestAccount
      */
@@ -16044,7 +16061,7 @@ whether this account has ever been used to sign in to this RP before.
       givenName: string;
       pictureUrl: string;
       idpConfigUrl: string;
-      idpSigninUrl: string;
+      idpLoginUrl: string;
       loginState: LoginState;
       /**
        * These two are only set if the loginState is signUp
@@ -16086,13 +16103,13 @@ normally happen, if this is unimportant to what's being tested.
     export type selectAccountReturnValue = {
     }
     /**
-     * Only valid if the dialog type is ConfirmIdpSignin. Acts as if the user had
+     * Only valid if the dialog type is ConfirmIdpLogin. Acts as if the user had
 clicked the continue button.
      */
-    export type confirmIdpSigninParameters = {
+    export type confirmIdpLoginParameters = {
       dialogId: string;
     }
-    export type confirmIdpSigninReturnValue = {
+    export type confirmIdpLoginReturnValue = {
     }
     export type dismissDialogParameters = {
       dialogId: string;
@@ -17668,8 +17685,7 @@ other objects in their object group.
      */
     export type ScriptId = string;
     /**
-     * Represents options for serialization. Overrides `generatePreview`, `returnByValue` and
-`generateWebDriverValue`.
+     * Represents options for serialization. Overrides `generatePreview` and `returnByValue`.
      */
     export interface SerializationOptions {
       serialization: "deep"|"json"|"idOnly";
@@ -17688,7 +17704,7 @@ Values can be only of type string or integer.
      * Represents deep serialized value.
      */
     export interface DeepSerializedValue {
-      type: "undefined"|"null"|"string"|"number"|"boolean"|"bigint"|"regexp"|"date"|"symbol"|"array"|"object"|"function"|"map"|"set"|"weakmap"|"weakset"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"node"|"window";
+      type: "undefined"|"null"|"string"|"number"|"boolean"|"bigint"|"regexp"|"date"|"symbol"|"array"|"object"|"function"|"map"|"set"|"weakmap"|"weakset"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"node"|"window"|"generator";
       value?: any;
       objectId?: string;
       /**
@@ -17738,10 +17754,6 @@ property.
        * String representation of the object.
        */
       description?: string;
-      /**
-       * Deprecated. Use `deepSerializedValue` instead. WebDriver BiDi representation of the value.
-       */
-      webDriverValue?: DeepSerializedValue;
       /**
        * Deep serialized value.
        */
@@ -18280,15 +18292,8 @@ This is mutually exclusive with `executionContextId`.
        */
       uniqueContextId?: string;
       /**
-       * Deprecated. Use `serializationOptions: {serialization:"deep"}` instead.
-Whether the result should contain `webDriverValue`, serialized according to
-https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
-resulting `objectId` is still provided.
-       */
-      generateWebDriverValue?: boolean;
-      /**
        * Specifies the result serialization. If provided, overrides
-`generatePreview`, `returnByValue` and `generateWebDriverValue`.
+`generatePreview` and `returnByValue`.
        */
       serializationOptions?: SerializationOptions;
     }
@@ -18439,16 +18444,8 @@ This is mutually exclusive with `contextId`.
        */
       uniqueContextId?: string;
       /**
-       * Deprecated. Use `serializationOptions: {serialization:"deep"}` instead.
-Whether the result should contain `webDriverValue`, serialized
-according to
-https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
-resulting `objectId` is still provided.
-       */
-      generateWebDriverValue?: boolean;
-      /**
        * Specifies the result serialization. If provided, overrides
-`generatePreview`, `returnByValue` and `generateWebDriverValue`.
+`generatePreview` and `returnByValue`.
        */
       serializationOptions?: SerializationOptions;
     }
@@ -18922,7 +18919,6 @@ Error was thrown.
     "DeviceAccess.deviceRequestPrompted": DeviceAccess.deviceRequestPromptedPayload;
     "Preload.ruleSetUpdated": Preload.ruleSetUpdatedPayload;
     "Preload.ruleSetRemoved": Preload.ruleSetRemovedPayload;
-    "Preload.prerenderAttemptCompleted": Preload.prerenderAttemptCompletedPayload;
     "Preload.preloadEnabledStateUpdated": Preload.preloadEnabledStateUpdatedPayload;
     "Preload.prefetchStatusUpdated": Preload.prefetchStatusUpdatedPayload;
     "Preload.prerenderStatusUpdated": Preload.prerenderStatusUpdatedPayload;
@@ -19018,6 +19014,7 @@ Error was thrown.
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesParameters;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesParameters;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeParameters;
+    "CSS.setPropertyRulePropertyName": CSS.setPropertyRulePropertyNameParameters;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyParameters;
     "CSS.setMediaText": CSS.setMediaTextParameters;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextParameters;
@@ -19440,7 +19437,7 @@ Error was thrown.
     "FedCm.enable": FedCm.enableParameters;
     "FedCm.disable": FedCm.disableParameters;
     "FedCm.selectAccount": FedCm.selectAccountParameters;
-    "FedCm.confirmIdpSignin": FedCm.confirmIdpSigninParameters;
+    "FedCm.confirmIdpLogin": FedCm.confirmIdpLoginParameters;
     "FedCm.dismissDialog": FedCm.dismissDialogParameters;
     "FedCm.resetCooldown": FedCm.resetCooldownParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
@@ -19591,6 +19588,7 @@ Error was thrown.
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesReturnValue;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesReturnValue;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeReturnValue;
+    "CSS.setPropertyRulePropertyName": CSS.setPropertyRulePropertyNameReturnValue;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyReturnValue;
     "CSS.setMediaText": CSS.setMediaTextReturnValue;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextReturnValue;
@@ -20013,7 +20011,7 @@ Error was thrown.
     "FedCm.enable": FedCm.enableReturnValue;
     "FedCm.disable": FedCm.disableReturnValue;
     "FedCm.selectAccount": FedCm.selectAccountReturnValue;
-    "FedCm.confirmIdpSignin": FedCm.confirmIdpSigninReturnValue;
+    "FedCm.confirmIdpLogin": FedCm.confirmIdpLoginReturnValue;
     "FedCm.dismissDialog": FedCm.dismissDialogReturnValue;
     "FedCm.resetCooldown": FedCm.resetCooldownReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;

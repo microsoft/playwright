@@ -18,7 +18,6 @@
   font-family: var(--vscode-editor-font-family);
   font-weight: var(--vscode-editor-font-weight);
   font-size: var(--vscode-editor-font-size);
-  background-color: var(--vscode-inputValidation-errorBackground);
   white-space: pre-wrap;
   word-break: break-word;
   padding: 10px;

@@ -37,7 +37,7 @@ import { DialogDispatcher } from './dialogDispatcher';
 import type { Page } from '../page';
 import type { Dialog } from '../dialog';
 import type { ConsoleMessage } from '../console';
-import { serializeError } from '../../protocol/serializers';
+import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
@@ -182,7 +182,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await fs.promises.mkdir(tmpDir);
     this._context._tempDirs.push(tmpDir);
     const file = fs.createWriteStream(path.join(tmpDir, params.name));
-    return { writableStream: new WritableStreamDispatcher(this, file) };
+    return { writableStream: new WritableStreamDispatcher(this, file, params.lastModifiedMs) };
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
@@ -270,7 +270,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {
-    await this._context.close(metadata);
+    await this._context.close(params);
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {

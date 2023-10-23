@@ -15,17 +15,19 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { test as it, expect } from './pageTest';
 
-it('should reject all promises when page is closed', async ({ page, isWebView2 }) => {
+it('should reject all promises when page is closed', async ({ page, isWebView2, isAndroid }) => {
   it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+  it.fixme(isAndroid, '"Target crashed" instead of "Target closed"');
 
   let error = null;
   await Promise.all([
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
     page.close(),
   ]);
-  expect(error.message).toContain('Target closed');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('should set the page close state', async ({ page, isWebView2 }) => {
@@ -58,7 +60,7 @@ it('should terminate network waiters', async ({ page, server, isAndroid, isWebVi
   ]);
   for (let i = 0; i < 2; i++) {
     const message = results[i].message;
-    expect(message).toContain('Page closed');
+    expect(message).toContain(kTargetClosedErrorMessage);
     expect(message).not.toContain('Timeout');
   }
 });
@@ -141,7 +143,7 @@ it('should fail with error upon disconnect', async ({ page, isAndroid, isWebView
   const waitForPromise = page.waitForEvent('download').catch(e => error = e);
   await page.close();
   await waitForPromise;
-  expect(error.message).toContain('Page closed');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('page.url should work', async ({ page, server }) => {

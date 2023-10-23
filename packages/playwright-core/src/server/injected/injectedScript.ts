@@ -1206,7 +1206,9 @@ export class InjectedScript {
     {
       // Element state / boolean values.
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
-      if (expression === 'to.be.checked') {
+      if (expression === 'to.have.attribute') {
+        elementState = element.hasAttribute(options.expressionArg);
+      } else if (expression === 'to.be.checked') {
         elementState = this.elementState(element, 'checked');
       } else if (expression === 'to.be.unchecked') {
         elementState = this.elementState(element, 'unchecked');
@@ -1247,7 +1249,14 @@ export class InjectedScript {
     {
       // JS property
       if (expression === 'to.have.property') {
-        const received = (element as any)[options.expressionArg];
+        let target = element;
+        const properties = options.expressionArg.split('.');
+        for (let i = 0; i < properties.length - 1; i++) {
+          if (typeof target !== 'object' || !(properties[i] in target))
+            return { received: undefined, matches: false };
+          target = (target as any)[properties[i]];
+        }
+        const received = (target as any)[properties[properties.length - 1]];
         const matches = deepEquals(received, options.expectedValue);
         return { received, matches };
       }
@@ -1277,7 +1286,7 @@ export class InjectedScript {
     {
       // Single text value.
       let received: string | undefined;
-      if (expression === 'to.have.attribute') {
+      if (expression === 'to.have.attribute.value') {
         const value = element.getAttribute(options.expressionArg);
         if (value === null)
           return { received: null, matches: false };

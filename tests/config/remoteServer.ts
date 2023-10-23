@@ -24,10 +24,10 @@ export interface PlaywrightServer {
 }
 
 export class RunServer implements PlaywrightServer {
-  private _process: TestChildProcess;
-  _wsEndpoint: string;
+  private _process!: TestChildProcess;
+  _wsEndpoint!: string;
 
-  async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default') {
+  async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv) {
     const command = ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), 'run-server'];
     if (mode === 'extension')
       command.push('--mode=extension');
@@ -36,10 +36,11 @@ export class RunServer implements PlaywrightServer {
       env: {
         ...process.env,
         PWTEST_UNDER_TEST: '1',
+        ...env,
       },
     });
 
-    let wsEndpointCallback;
+    let wsEndpointCallback: (value: string) => void;
     const wsEndpointPromise = new Promise<string>(f => wsEndpointCallback = f);
     this._process.onOutput = data => {
       const prefix = 'Listening on ';
@@ -70,18 +71,15 @@ export type RemoteServerOptions = {
 };
 
 export class RemoteServer implements PlaywrightServer {
-  private _process: TestChildProcess;
-  _output: Map<string, string>;
-  _outputCallback: Map<string, () => void>;
-  _browserType: BrowserType;
-  _exitAndDisconnectPromise: Promise<any>;
-  _browser: Browser;
-  _wsEndpoint: string;
+  private _process!: TestChildProcess;
+  readonly _output = new Map<string, string>();
+  readonly _outputCallback = new Map<string, () => void>();
+  _browserType!: BrowserType;
+  _exitAndDisconnectPromise: Promise<any> | undefined;
+  _browser: Browser | undefined;
+  _wsEndpoint!: string;
 
   async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, remoteServerOptions: RemoteServerOptions = {}) {
-    this._output = new Map();
-    this._outputCallback = new Map();
-
     this._browserType = browserType;
     const browserOptions = (browserType as any)._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
@@ -113,7 +111,7 @@ export class RemoteServer implements PlaywrightServer {
         const key = match[1];
         const value = match[2];
         this._addOutput(key, value);
-        index += match.index + match[0].length;
+        index += match.index! + match[0].length;
       }
     };
 
@@ -134,10 +132,10 @@ export class RemoteServer implements PlaywrightServer {
       cb();
   }
 
-  async out(key: string) {
+  async out(key: string): Promise<string> {
     if (!this._output.has(key))
       await new Promise<void>(f => this._outputCallback.set(key, f));
-    return this._output.get(key);
+    return this._output.get(key)!;
   }
 
   wsEndpoint() {

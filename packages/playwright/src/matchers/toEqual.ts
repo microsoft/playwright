@@ -67,5 +67,12 @@ export async function toEqual<T>(
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message
-  return { locator: receiver, actual: received, expected, message, name: matcherName, pass, log };
+  return {
+    actual: received,
+    expected, message,
+    name: matcherName,
+    pass,
+    log,
+    timeout: timedOut ? timeout : undefined,
+  };
 }

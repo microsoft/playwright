@@ -22,7 +22,7 @@ it('should construct a new URL when a baseURL in browser.newContext is passed to
     baseURL: server.PREFIX,
   });
   const page = await context.newPage();
-  expect((await page.goto('/empty.html')).url()).toBe(server.EMPTY_PAGE);
+  expect((await page.goto('/empty.html'))!.url()).toBe(server.EMPTY_PAGE);
   await context.close();
 });
 
@@ -30,7 +30,7 @@ it('should construct a new URL when a baseURL in browser.newPage is passed to pa
   const page = await browser.newPage({
     baseURL: server.PREFIX,
   });
-  expect((await page.goto('/empty.html')).url()).toBe(server.EMPTY_PAGE);
+  expect((await page.goto('/empty.html'))!.url()).toBe(server.EMPTY_PAGE);
   await page.close();
 });
 
@@ -40,7 +40,7 @@ it('should construct a new URL when a baseURL in browserType.launchPersistentCon
     baseURL: server.PREFIX,
   });
   const page = await context.newPage();
-  expect((await page.goto('/empty.html')).url()).toBe(server.EMPTY_PAGE);
+  expect((await page.goto('/empty.html'))!.url()).toBe(server.EMPTY_PAGE);
   await context.close();
 });
 
@@ -48,9 +48,9 @@ it('should construct the URLs correctly when a baseURL without a trailing slash 
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction',
   });
-  expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
-  expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
-  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('mypage.html'))!.url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('./mypage.html'))!.url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('/mypage.html'))!.url()).toBe(server.PREFIX + '/mypage.html');
   await page.close();
 });
 
@@ -58,11 +58,11 @@ it('should construct the URLs correctly when a baseURL with a trailing slash in 
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction/',
   });
-  expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
-  expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
-  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
-  expect((await page.goto('.')).url()).toBe(server.PREFIX + '/url-construction/');
-  expect((await page.goto('/')).url()).toBe(server.PREFIX + '/');
+  expect((await page.goto('mypage.html'))!.url()).toBe(server.PREFIX + '/url-construction/mypage.html');
+  expect((await page.goto('./mypage.html'))!.url()).toBe(server.PREFIX + '/url-construction/mypage.html');
+  expect((await page.goto('/mypage.html'))!.url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('.'))!.url()).toBe(server.PREFIX + '/url-construction/');
+  expect((await page.goto('/'))!.url()).toBe(server.PREFIX + '/');
   await page.close();
 });
 
@@ -70,7 +70,7 @@ it('should not construct a new URL when valid URLs are passed', async function({
   const page = await browser.newPage({
     baseURL: 'http://microsoft.com',
   });
-  expect((await page.goto(server.EMPTY_PAGE)).url()).toBe(server.EMPTY_PAGE);
+  expect((await page.goto(server.EMPTY_PAGE))!.url()).toBe(server.EMPTY_PAGE);
 
   await page.goto('data:text/html,Hello world');
   expect(await page.evaluate(() => window.location.href)).toBe('data:text/html,Hello world');

@@ -64,13 +64,6 @@ export class WKInterceptableRequest {
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 
-  _routeForRedirectChain(): WKRouteImpl | null {
-    let request: WKInterceptableRequest = this;
-    while (request._redirectedFrom)
-      request = request._redirectedFrom;
-    return request._route;
-  }
-
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
@@ -101,7 +94,7 @@ export class WKInterceptableRequest {
         headers['Host'] = new URL(this.request.url()).host;
       this.request.setRawRequestHeaders(headersObjectToArray(headers));
     } else {
-      // No raw headers avaialable, use provisional ones.
+      // No raw headers available, use provisional ones.
       this.request.setRawRequestHeaders(null);
     }
     return response;

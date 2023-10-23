@@ -33,8 +33,9 @@ export class InProcessLoaderHost {
     this._poolBuilder = PoolBuilder.createForLoader();
   }
 
-  async start() {
+  async start(errors: TestError[]) {
     await initializeEsmLoader();
+    return true;
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
@@ -57,8 +58,15 @@ export class OutOfProcessLoaderHost {
     this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader', {});
   }
 
-  async start() {
-    await this._processHost.startRunner(serializeConfig(this._config));
+  async start(errors: TestError[]) {
+    const startError = await this._processHost.startRunner(serializeConfig(this._config));
+    if (startError) {
+      errors.push({
+        message: `Test loader process failed to start with code "${startError.code}" and signal "${startError.signal}"`,
+      });
+      return false;
+    }
+    return true;
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {

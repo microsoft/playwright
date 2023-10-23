@@ -20,7 +20,7 @@ import * as os from 'os';
 import childProcess from 'child_process';
 import * as utils from '../../utils';
 import { spawnAsync } from '../../utils/spawnAsync';
-import { hostPlatform } from '../../utils/hostPlatform';
+import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
 import { getPlaywrightVersion } from '../../utils/userAgent';
@@ -85,15 +85,13 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
   const libraries: string[] = [];
-  let platform = hostPlatform;
-  if (platform === 'generic-linux' || platform === 'generic-linux-arm64') {
-    console.warn('BEWARE: your OS is not officially supported by Playwright; installing dependencies for Ubuntu as a fallback.'); // eslint-disable-line no-console
-    platform = hostPlatform === 'generic-linux' ? 'ubuntu20.04' : 'ubuntu20.04-arm64';
-  }
+  const platform = hostPlatform;
+  if (!isOfficiallySupportedPlatform)
+    console.warn(`BEWARE: your OS is not officially supported by Playwright; installing dependencies for ${platform} as a fallback.`); // eslint-disable-line no-console
   for (const target of targets) {
     const info = deps[platform];
     if (!info) {
-      console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
+      console.warn(`Cannot install dependencies for ${platform}!`);  // eslint-disable-line no-console
       return;
     }
     libraries.push(...info[target]);

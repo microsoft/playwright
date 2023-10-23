@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line spaced-comment
-/// <reference path="./expect.d.ts" />
-
 import { _baseTest as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
-import { spawnAsync } from './spawnAsync';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
+import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
+import type { SpawnOptions } from 'child_process';
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 
 const debug = debugLogger('itest');
 
-_expect.extend({
+const expect = _expect.extend({
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
@@ -42,8 +40,12 @@ _expect.extend({
       downloaded.add(browser.toLowerCase());
 
     const expected = browsers;
-    if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser)))
-      return { pass: true };
+    if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser))) {
+      return {
+        pass: true,
+        message: () => 'Expected not to download browsers, but did.'
+      };
+    }
     return {
       pass: false,
       message: () => [
@@ -55,33 +57,32 @@ _expect.extend({
   }
 });
 
-const expect = _expect;
-
-type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
+type ExecOptions = SpawnOptions & { message?: string, expectToExitWithError?: boolean };
 type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 
 type NPMTestOptions = {
-  useRealCDN: boolean;
+  isolateBrowsers: boolean;
+  allowGlobalInstall: boolean;
 };
 
 type NPMTestFixtures = {
   _auto: void;
   _browsersPath: string;
   tmpWorkspace: string;
-  installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
-  writeConfig: (allowGlobal: boolean) => Promise<void>;
+  installedSoftwareOnDisk: () => Promise<string[]>;
   writeFiles: (nameToContents: Record<string, string>) => Promise<void>;
   exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
-  tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
+  tsc: (args: string) => Promise<string>;
   registry: Registry;
 };
 
 export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<NPMTestFixtures & NPMTestOptions>({
-      useRealCDN: [false, { option: true }],
+      isolateBrowsers: [false, { option: true }],
+      allowGlobalInstall: [false, { option: true }],
       _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
-      _auto: [async ({ tmpWorkspace, exec, _browsersPath, writeConfig }, use) => {
+      _auto: [async ({ tmpWorkspace, exec, _browsersPath, registry, allowGlobalInstall }, use, testInfo) => {
         await exec('npm init -y');
         const sourceDir = path.join(__dirname, 'fixture-scripts');
         const contents = await fs.promises.readdir(sourceDir);
@@ -93,7 +94,20 @@ export const test = _test
         packageJSON.pnpm = { overrides: prefixed };
         await fs.promises.writeFile(path.join(tmpWorkspace, 'package.json'), JSON.stringify(packageJSON, null, 2));
 
-        await writeConfig(false);
+        const yarnLines = [
+          `registry "${registry.url()}/"`,
+          `cache "${testInfo.outputPath('npm_cache')}"`,
+        ];
+        const npmLines = [
+          `registry = ${registry.url()}/`,
+          `cache = ${testInfo.outputPath('npm_cache')}`,
+        ];
+        if (!allowGlobalInstall) {
+          yarnLines.push(`prefix "${testInfo.outputPath('npm_global')}"`);
+          npmLines.push(`prefix = ${testInfo.outputPath('npm_global')}`);
+        }
+        await fs.promises.writeFile(path.join(tmpWorkspace, '.yarnrc'), yarnLines.join('\n'), 'utf-8');
+        await fs.promises.writeFile(path.join(tmpWorkspace, '.npmrc'), npmLines.join('\n'), 'utf-8');
 
         await use();
         if (test.info().status === test.info().expectedStatus) {
@@ -124,28 +138,12 @@ export const test = _test
         await use(registry);
         await registry.shutdown();
       },
-      writeConfig: async ({ tmpWorkspace, registry }, use, testInfo) => {
-        await use(async (allowGlobal: boolean) => {
-          const yarnLines = [
-            `registry "${registry.url()}/"`,
-            `cache "${testInfo.outputPath('npm_cache')}"`,
-          ];
-          const npmLines = [
-            `registry = ${registry.url()}/`,
-            `cache = ${testInfo.outputPath('npm_cache')}`,
-          ];
-          if (!allowGlobal) {
-            yarnLines.push(`prefix "${testInfo.outputPath('npm_global')}"`);
-            npmLines.push(`prefix = ${testInfo.outputPath('npm_global')}`);
-          }
-          await fs.promises.writeFile(path.join(tmpWorkspace, '.yarnrc'), yarnLines.join('\n'), 'utf-8');
-          await fs.promises.writeFile(path.join(tmpWorkspace, '.npmrc'), npmLines.join('\n'), 'utf-8');
-        });
+      installedSoftwareOnDisk: async ({ isolateBrowsers, _browsersPath }, use) => {
+        if (!isolateBrowsers)
+          throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
+        await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
       },
-      installedSoftwareOnDisk: async ({ _browsersPath }, use) => {
-        await use(async (registryPath?: string) => fs.promises.readdir(registryPath || _browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
-      },
-      exec: async ({ useRealCDN, tmpWorkspace, _browsersPath }, use, testInfo) => {
+      exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
           let args: string[] = [];
           let options: ExecOptions = {};
@@ -154,26 +152,26 @@ export const test = _test
 
           args = argsAndOrOptions as string[];
 
-          let result!: Awaited<ReturnType<typeof spawnAsync>>;
+          let result!: {stdout: string, stderr: string, code: number | null, error?: Error};
+          const cwd = options.cwd ?? tmpWorkspace;
+          // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
+          const PATH = sanitizeEnvPath(process.env.PATH || '');
+          const env = {
+            'PATH': PATH,
+            'DISPLAY': process.env.DISPLAY,
+            'XAUTHORITY': process.env.XAUTHORITY,
+            ...(isolateBrowsers ? { PLAYWRIGHT_BROWSERS_PATH: _browsersPath } : {}),
+            ...options.env,
+          };
           await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
-            result = await spawnAsync(cmd, args, {
-              shell: true,
-              cwd: options.cwd ?? tmpWorkspace,
-              // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
-              env: {
-                'PATH': process.env.PATH,
-                'DISPLAY': process.env.DISPLAY,
-                'XAUTHORITY': process.env.XAUTHORITY,
-                'PLAYWRIGHT_BROWSERS_PATH': _browsersPath,
-                ...(useRealCDN ? {} : { PLAYWRIGHT_DOWNLOAD_HOST: process.env.CDN_PROXY_HOST }),
-                ...options.env,
-              }
-            });
+            result = await spawnAsync(cmd, args, { shell: true, cwd, env });
           });
 
           const command = [cmd, ...args].join(' ');
           const stdio = result.stdout + result.stderr;
-          await testInfo.attach(command, { body: `COMMAND: ${command}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
+          const commandEnv = Object.entries(env).map(e => `${e[0]}=${e[1]}`).join(' ');
+          const fullCommand = `cd ${cwd} && ${commandEnv} ${command}`;
+          await testInfo.attach(command, { body: `COMMAND: ${fullCommand}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
 
           // This means something is really off with spawn
           if (result.error)
@@ -198,10 +196,15 @@ export const test = _test
         });
       },
       tsc: async ({ exec }, use) => {
-        await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
-        await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@3.8', 'tsc', ...args));
+        await exec('npm i typescript@5.2.2 @types/node@16');
+        await use((args: string) => exec('npx', 'tsc', args, { shell: process.platform === 'win32' }));
       },
     });
 
+function sanitizeEnvPath(value: string) {
+  if (process.platform === 'win32')
+    return value.split(';').filter(path => !path.endsWith('node_modules\\.bin')).join(';');
+  return value.split(':').filter(path => !path.endsWith('node_modules/.bin')).join(':');
+}
 
 export { expect };

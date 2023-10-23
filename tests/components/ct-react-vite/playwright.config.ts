@@ -25,6 +25,9 @@ export default defineConfig({
   use: {
     trace: 'on-first-retry',
     ctViteConfig: {
+      build: {
+        assetsInlineLimit: 0,
+      },
       resolve: {
         alias: {
           '@': resolve(__dirname, './src'),

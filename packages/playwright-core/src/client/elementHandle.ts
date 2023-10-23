@@ -152,9 +152,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
       throw new Error('Cannot set input files to detached element');
     const converted = await convertInputFiles(files, frame.page().context());
     if (converted.files) {
+      debugLogger.log('api', 'setting input buffers');
       await this._elementChannel.setInputFiles({ files: converted.files, ...options });
     } else {
-      debugLogger.log('api', 'switching to large files mode');
+      debugLogger.log('api', 'setting input file paths');
       await this._elementChannel.setInputFilePaths({ ...converted, ...options });
     }
   }
@@ -265,18 +266,13 @@ type InputFilesList = {
 export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<InputFilesList> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
-  const sizeLimit = 50 * 1024 * 1024;
-  const totalBufferSizeExceedsLimit = items.reduce((size, item) => size + ((typeof item === 'object' && item.buffer) ? item.buffer.byteLength : 0), 0) > sizeLimit;
-  if (totalBufferSizeExceedsLimit)
-    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
-
-  const stats = await Promise.all(items.filter(isString).map(item => fs.promises.stat(item as string)));
-  const totalFileSizeExceedsLimit = stats.reduce((acc, stat) => acc + stat.size, 0) > sizeLimit;
-  if (totalFileSizeExceedsLimit) {
+  if (items.some(item => typeof item === 'string')) {
+    if (!items.every(item => typeof item === 'string'))
+      throw new Error('File paths cannot be mixed with buffers');
     if (context._connection.isRemote()) {
-      const streams: channels.WritableStreamChannel[] = await Promise.all(items.map(async item => {
-        assert(isString(item));
-        const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item) });
+      const streams: channels.WritableStreamChannel[] = await Promise.all((items as string[]).map(async item => {
+        const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
+        const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item), lastModifiedMs });
         const writable = WritableStream.from(stream);
         await pipelineAsync(fs.createReadStream(item), writable.stream());
         return stream;
@@ -286,21 +282,13 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
   }
 
-  const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {
-    if (typeof item === 'string') {
-      return {
-        name: path.basename(item),
-        buffer: await fs.promises.readFile(item)
-      };
-    } else {
-      return {
-        name: item.name,
-        mimeType: item.mimeType,
-        buffer: item.buffer,
-      };
-    }
-  }));
-  return { files: filePayloads };
+  const payloads = items as FilePayload[];
+  const sizeLimit = 50 * 1024 * 1024;
+  const totalBufferSizeExceedsLimit = payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) > sizeLimit;
+  if (totalBufferSizeExceedsLimit)
+    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
+
+  return { files: payloads };
 }
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {

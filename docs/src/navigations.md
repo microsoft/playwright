@@ -3,6 +3,8 @@ id: navigations
 title: "Navigations"
 ---
 
+## Introduction
+
 Playwright can navigate to URLs and handle navigations caused by the page interactions.
 
 ## Basic navigation

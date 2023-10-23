@@ -2,11 +2,10 @@
 id: ci
 title: "Continuous Integration"
 ---
+## Introduction
 
 Playwright tests can be executed in CI environments. We have created sample
 configurations for common CI providers.
-
-## Introduction
 
 3 steps to get your tests running on CI:
 
@@ -435,7 +434,7 @@ pipeline {
    stages {
       stage('e2e-tests') {
          steps {
-            sh 'ci'
+            sh 'npm ci'
             sh 'npx playwright test'
          }
       }

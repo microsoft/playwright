@@ -25,7 +25,6 @@ import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
-import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
 
@@ -144,7 +143,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       connection.on('close', closePipe);
 
       let browser: Browser;
-      let closeError: string | undefined;
+      let closeError: Error | undefined;
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
@@ -153,7 +152,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           context._onClose();
         }
         browser?._didClose();
-        connection.close(closeError || kBrowserClosedError);
+        connection.close(closeError);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
@@ -162,7 +161,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         try {
           connection!.dispatch(message);
         } catch (e) {
-          closeError = e.toString();
+          closeError = e;
           closePipe();
         }
       });

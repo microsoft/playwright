@@ -184,7 +184,7 @@ class TargetRegistry {
         domWindow = appWindow;
         appWindow = null;
       }
-      if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
+      if (!domWindow.isChromeWindow)
         return;
       // In persistent mode, window might be opened long ago and might be
       // already initialized.
@@ -212,7 +212,7 @@ class TargetRegistry {
 
     const onCloseWindow = window => {
       const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
-      if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
+      if (!domWindow.isChromeWindow)
         return;
       if (!domWindow.gBrowser)
         return;

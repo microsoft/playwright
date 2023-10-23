@@ -84,8 +84,6 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   outputDir,
   expect: {
     timeout: 10000,
-    toHaveScreenshot: { _comparator: 'ssim-cie94' } as any,
-    toMatchSnapshot: { _comparator: 'ssim-cie94' } as any,
   },
   maxFailures: 200,
   timeout: video ? 60000 : 30000,

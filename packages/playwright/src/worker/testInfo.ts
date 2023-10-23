@@ -16,14 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
+import type { RunnableType, TimeSlot } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 
@@ -41,6 +42,7 @@ export interface TestStepInternal {
   params?: Record<string, any>;
   error?: TestInfoError;
   infectParentStepsWithError?: boolean;
+  box?: boolean;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -244,8 +246,12 @@ export class TestInfoImpl implements TestInfo {
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
+    const rawStack = data.box || !data.location || !parentStep ? captureRawStack() : null;
+    const filteredStack = rawStack ? filteredStackTrace(rawStack) : [];
     if (!parentStep)
-      parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack()) || undefined;
+      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
+    const boxedStack = data.box ? filteredStack.slice(1) : undefined;
+    const location = data.location || boxedStack?.[0] || filteredStack[0];
 
     // For out-of-stack calls, locate the enclosing step.
     let isLaxParent = false;
@@ -265,6 +271,7 @@ export class TestInfoImpl implements TestInfo {
     const step: TestStepInternal = {
       stepId,
       ...data,
+      location,
       laxParent: isLaxParent,
       steps: [],
       complete: result => {
@@ -274,6 +281,10 @@ export class TestInfoImpl implements TestInfo {
         let error: TestInfoError | undefined;
         if (result.error instanceof Error) {
           // Step function threw an error.
+          if (boxedStack) {
+            const errorTitle = `${result.error.name}: ${result.error.message}`;
+            result.error.stack = `${errorTitle}\n${stringifyStackFrames(boxedStack).join('\n')}`;
+          }
           error = serializeError(result.error);
         } else if (result.error) {
           // Internal API step reported an error.
@@ -308,9 +319,6 @@ export class TestInfoImpl implements TestInfo {
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
-    const hasLocation = data.location && !data.location.file.includes('@playwright');
-    // Sanitize location that comes from user land, it might have extra properties.
-    const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
     const payload: StepBeginPayload = {
       testId: this._test.id,
       stepId,
@@ -321,7 +329,7 @@ export class TestInfoImpl implements TestInfo {
       location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, location ? [location] : []);
     return step;
   }
 
@@ -348,6 +356,21 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
+  async _runAsStepWithRunnable<T>(
+    stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & {
+      wallTime?: number,
+      runnableType: RunnableType;
+      runnableSlot?: TimeSlot;
+    }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+    return await this._timeoutManager.withRunnable({
+      type: stepInfo.runnableType,
+      slot: stepInfo.runnableSlot,
+      location: stepInfo.location,
+    }, async () => {
+      return await this._runAsStep(stepInfo, cb);
+    });
+  }
+
   async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
     const step = this._addStep({ wallTime: Date.now(), ...stepInfo });
     return await zones.run('stepZone', step, async () => {
@@ -356,7 +379,7 @@ export class TestInfoImpl implements TestInfo {
         step.complete({});
         return result;
       } catch (e) {
-        step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
+        step.complete({ error: e instanceof SkipError ? undefined : e });
         throw e;
       }
     });
