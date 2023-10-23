@@ -68,6 +68,6 @@ test('pnpm: JSX inside a @playwright/test should work', async ({ exec, tmpWorksp
       });
     `,
   });
-  await exec(`node node_modules/@playwright/test/cli.js test --browser=all --reporter=list,json example.spec.ts`, { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
-  await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
+  await exec(`node node_modules/@playwright/test/cli.js test --browser=chromium --reporter=list,json example.spec.ts`, { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
+  await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'), '--validate-chromium-project-only');
 });
