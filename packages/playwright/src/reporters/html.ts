@@ -22,10 +22,10 @@ import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import { toPosixPath } from './json';
 import { codeFrameColumns } from '../transform/babelBundle';
-import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic } from '../../types/testReporter';
+import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic, TestError } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import { formatResultFailure, stripAnsiEscapes } from './base';
+import { formatError, formatResultFailure, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -64,6 +64,7 @@ class HtmlReporter extends EmptyReporter {
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
+  private _topLevelErrors: TestError[] = [];
 
   constructor(options: HtmlReporterOptions) {
     super();
@@ -111,11 +112,15 @@ class HtmlReporter extends EmptyReporter {
     };
   }
 
+  override onError(error: TestError): void {
+    this._topLevelErrors.push(error);
+  }
+
   override async onEnd(result: FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
-    this._buildResult = await builder.build(this.config.metadata, projectSuites, result);
+    this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
   override async onExit() {
@@ -217,8 +222,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult): Promise<{ ok: boolean, singleTestId: string | undefined }> {
-
+  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
       for (const fileSuite of projectSuite.suites) {
@@ -276,7 +280,8 @@ class HtmlBuilder {
       duration: result.duration,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: projectSuites.map(r => r.project()!.name),
-      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) }
+      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
+      errors: topLevelErrors.map(error => formatError(error, true).message),
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
