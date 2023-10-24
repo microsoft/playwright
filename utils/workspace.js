@@ -200,6 +200,11 @@ const workspace = new Workspace(ROOT_PATH, [
     files: ['LICENSE'],
   }),
   new PWPackage({
+    name: '@playwright/experimental-ct-angular',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-angular'),
+    files: ['LICENSE'],
+  }),
+  new PWPackage({
     name: '@playwright/experimental-ct-react',
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-react'),
     files: ['LICENSE'],
