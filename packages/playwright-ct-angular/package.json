@@ -1,0 +1,63 @@
+{
+  "name": "@playwright/experimental-ct-angular",
+  "version": "1.40.0-next",
+  "description": "Playwright Component Testing for Angular",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sand4rt/playwright-ct-angular.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=16"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./register": {
+      "types": "./register.d.ts",
+      "default": "./register.mjs"
+    },
+    "./hooks": {
+      "types": "./hooks.d.ts",
+      "default": "./hooks.mjs"
+    }
+  },
+  "dependencies": {
+    "@analogjs/vite-plugin-angular": "0.2.10",
+    "@angular-devkit/build-angular": "^16.1.0",
+    "@playwright/experimental-ct-core": "1.40.0-next",
+    "vite": "^4.4.9"
+  },
+  "devDependencies": {
+    "@angular/animations": "^16.1.7",
+    "@angular/common": "^16.1.7",
+    "@angular/compiler": "^16.1.7",
+    "@angular/compiler-cli": "^16.1.7",
+    "@angular/core": "^16.1.7",
+    "@angular/platform-browser": "^16.1.7",
+    "@angular/platform-browser-dynamic": "^16.1.7",
+    "@angular/router": "^16.1.7",
+    "@playwright/test": "1.38.1",
+    "rxjs": "~7.8.1",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4",
+    "zone.js": "~0.13.1"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.38.1",
+    "typescript": ">=4.9.3",
+    "@angular/common": ">=15.1.0 || >=16.0.0",
+    "@angular/platform-browser": ">=15.1.0 || >=16.0.0",
+    "@angular/router": ">=15.1.0 || >=16.0.0",
+    "@angular/core": ">=15.1.0 || >=16.0.0"
+  },
+  "bin": {
+    "playwright": "./cli.js"
+  }
+}
