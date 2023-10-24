@@ -15,7 +15,6 @@
 */
 
 import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
-import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './uiUtils';
@@ -25,6 +24,7 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from './imageDiffView';
 import { ImageDiffView } from './imageDiffView';
+import { TestErrorView } from './testErrorView';
 import './testResultView.css';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
@@ -94,7 +94,7 @@ export const TestResultView: React.FC<{
 
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
-      {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
+      {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
@@ -154,44 +154,7 @@ const StepTreeItem: React.FC<{
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.snippet)
-      children.unshift(<ErrorMessage key='line' error={step.snippet}></ErrorMessage>);
+      children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
-
-const ErrorMessage: React.FC<{
-  error: string;
-}> = ({ error }) => {
-  const html = React.useMemo(() => {
-    const config: any = {
-      bg: 'var(--color-canvas-subtle)',
-      fg: 'var(--color-fg-default)',
-    };
-    config.colors = ansiColors;
-    return new ansi2html(config).toHtml(escapeHTML(error));
-  }, [error]);
-  return <div className='test-result-error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
-};
-
-const ansiColors = {
-  0: '#000',
-  1: '#C00',
-  2: '#0C0',
-  3: '#C50',
-  4: '#00C',
-  5: '#C0C',
-  6: '#0CC',
-  7: '#CCC',
-  8: '#555',
-  9: '#F55',
-  10: '#5F5',
-  11: '#FF5',
-  12: '#55F',
-  13: '#F5F',
-  14: '#5FF',
-  15: '#FFF'
-};
-
-function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-}
