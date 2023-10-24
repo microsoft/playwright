@@ -38,6 +38,8 @@ import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
 import type { ActionTraceEvent } from '@trace/trace';
 import { connect } from './wsPort';
+import { testStatusIcon } from './testUtils';
+import type { UITestStatus } from './testUtils';
 
 let updateRootSuite: (config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
@@ -74,7 +76,7 @@ export const UIModeView: React.FC<{}> = ({
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
   const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined, loadErrors: [] });
   const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
-  const [selectedItem, setSelectedItem] = React.useState<{ testFile?: SourceLocation, testCase?: TestCase }>({});
+  const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
@@ -361,7 +363,7 @@ const TestList: React.FC<{
   setWatchedTreeIds: (ids: { value: Set<string> }) => void,
   isLoading?: boolean,
   setVisibleTestIds: (testIds: Set<string>) => void,
-  onItemSelected: (item: { testCase?: TestCase, testFile?: SourceLocation }) => void,
+  onItemSelected: (item: { treeItem?: TreeItem, testCase?: TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
 }> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
@@ -444,7 +446,7 @@ const TestList: React.FC<{
       selectedTest = selectedTreeItem.test;
     else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1)
       selectedTest = selectedTreeItem.tests[0];
-    onItemSelected({ testCase: selectedTest, testFile });
+    onItemSelected({ treeItem: selectedTreeItem, testCase: selectedTest, testFile });
     return { selectedTreeItem };
   }, [onItemSelected, selectedTreeItemId, testModel, treeItemMap]);
 
@@ -517,19 +519,7 @@ const TestList: React.FC<{
         </Toolbar>
       </div>;
     }}
-    icon={treeItem => {
-      if (treeItem.status === 'scheduled')
-        return 'codicon-clock';
-      if (treeItem.status === 'running')
-        return 'codicon-loading';
-      if (treeItem.status === 'failed')
-        return 'codicon-error';
-      if (treeItem.status === 'passed')
-        return 'codicon-check';
-      if (treeItem.status === 'skipped')
-        return 'codicon-circle-slash';
-      return 'codicon-circle-outline';
-    }}
+    icon={treeItem => testStatusIcon(treeItem.status)}
     selectedItem={selectedTreeItem}
     onAccepted={runTreeItem}
     onSelected={treeItem => {
@@ -543,7 +533,7 @@ const TestList: React.FC<{
 };
 
 const TraceView: React.FC<{
-  item: { testFile?: SourceLocation, testCase?: TestCase },
+  item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: TestCase },
   rootDir?: string,
 }> = ({ item, rootDir }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
@@ -610,7 +600,8 @@ const TraceView: React.FC<{
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
     fallbackLocation={item.testFile}
-    isLive={model?.isLive} />;
+    isLive={model?.isLive}
+    status={item.treeItem?.status} />;
 };
 
 let receiver: TeleReporterReceiver | undefined;
@@ -795,7 +786,7 @@ type TreeItemBase = {
   duration: number;
   parent: TreeItem | undefined;
   children: TreeItem[];
-  status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped';
+  status: UITestStatus;
 };
 
 type GroupItem = TreeItemBase & {
