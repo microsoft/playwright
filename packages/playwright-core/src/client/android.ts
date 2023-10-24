@@ -234,6 +234,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return binary;
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close() {
     try {
       if (this._shouldCloseConnectionOnClose)
@@ -306,6 +310,10 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 
   async close(): Promise<void> {
     await this._channel.close();
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close();
   }
 }
 

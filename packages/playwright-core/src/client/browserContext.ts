@@ -387,6 +387,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.emit(Events.BrowserContext.Close, this);
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close(options: { reason?: string } = {}): Promise<void> {
     if (this._closeWasCalled)
       return;

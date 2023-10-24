@@ -16,7 +16,6 @@
 
 // @ts-check
 const path = require('path');
-const toKebabCase = require('lodash/kebabCase')
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
 const md = require('../markdown');
 const docs = require('../doclint/documentation');
@@ -54,6 +53,27 @@ class TypesGenerator {
     if (!options.includeExperimental)
       this.documentation.filterOutExperimental();
     this.documentation.copyDocsFromSuperclasses([]);
+    this.injectDisposeAsync();
+  }
+
+  injectDisposeAsync() {
+    for (const [name, clazz] of this.documentation.classes.entries()) {
+      /** @type {docs.Member | undefined} */
+      let newMember = undefined;
+      for (const [memberName, member] of clazz.members) {
+        if (memberName !== 'close' && memberName !== 'dispose')
+          continue;
+        if (!member.async)
+          continue;
+        newMember = new docs.Member('method', { langs: {}, since: '1.0', experimental: false }, '[Symbol.asyncDispose]', null, []);
+        newMember.async = true;
+        break;
+      }
+      if (newMember) {
+        clazz.membersArray = [...clazz.membersArray, newMember];
+        clazz.index();
+      }
+    }
   }
 
   /**

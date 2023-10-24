@@ -68,6 +68,9 @@ let success = true;
 for (const method of api) {
   if (coveredMethods.has(method))
     continue;
+  // [Symbol.asyncDispose]
+  if (method.endsWith('.undefined'))
+    continue;
   success = false;
   console.log(`ERROR: Missing coverage for "${method}"`)
 }

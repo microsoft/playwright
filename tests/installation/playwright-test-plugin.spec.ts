@@ -42,7 +42,7 @@ test('npm: @playwright/test plugin should work', async ({ exec, tmpWorkspace }) 
   expect(output).toContain('plugin value: hello from plugin');
   expect(output).toContain('1 passed');
 
-  await exec('npm i typescript@5.2.2 @types/node@16');
+  await exec('npm i typescript@5.2.2 @types/node@18');
   await exec('npx tsc playwright-test-plugin-types.ts');
 });
 
@@ -56,7 +56,7 @@ test('pnpm: @playwright/test plugin should work', async ({ exec, tmpWorkspace })
   expect(output).toContain('plugin value: hello from plugin');
   expect(output).toContain('1 passed');
 
-  await exec('pnpm add typescript@5.2.2 @types/node@16');
+  await exec('pnpm add typescript@5.2.2 @types/node@18');
   await exec('pnpm exec tsc playwright-test-plugin-types.ts');
 });
 
@@ -70,6 +70,6 @@ test('yarn: @playwright/test plugin should work', async ({ exec, tmpWorkspace })
   expect(output).toContain('plugin value: hello from plugin');
   expect(output).toContain('1 passed');
 
-  await exec('yarn add typescript@5.2.2 @types/node@16');
+  await exec('yarn add typescript@5.2.2 @types/node@18');
   await exec('yarn tsc playwright-test-plugin-types.ts');
 });

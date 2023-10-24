@@ -14,6 +14,7 @@
     "@babel/helper-plugin-utils": "^7.22.5",
     "@babel/parser": "^7.23.0",
     "@babel/plugin-proposal-decorators": "^7.23.2",
+    "@babel/plugin-proposal-explicit-resource-management": "^7.23.0",
     "@babel/plugin-syntax-async-generators": "^7.8.4",
     "@babel/plugin-syntax-import-assertions": "^7.22.5",
     "@babel/plugin-syntax-json-strings": "^7.8.3",
