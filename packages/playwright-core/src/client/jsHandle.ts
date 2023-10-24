@@ -63,6 +63,10 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     return null as any;
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.dispose();
+  }
+
   async dispose() {
     return await this._channel.dispose();
   }

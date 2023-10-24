@@ -131,6 +131,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return buffer;
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     try {

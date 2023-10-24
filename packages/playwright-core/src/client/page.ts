@@ -517,6 +517,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.bringToFront();
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     this._closeReason = options.reason;
     try {

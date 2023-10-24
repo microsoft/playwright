@@ -108,6 +108,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return this._context;
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close() {
     if (this._isClosed)
       return;

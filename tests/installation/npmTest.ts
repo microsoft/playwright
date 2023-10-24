@@ -198,7 +198,7 @@ export const test = _test
         });
       },
       tsc: async ({ exec }, use) => {
-        await exec('npm i typescript@5.2.2 @types/node@16');
+        await exec('npm i typescript@5.2.2 @types/node@18');
         await use((args: string) => exec('npx', 'tsc', args, { shell: process.platform === 'win32' }));
       },
     });

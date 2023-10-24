@@ -65,6 +65,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();
+    browserServer[Symbol.asyncDispose] = browserServer.close;
     browserServer.kill = () => browser.options.browserProcess.kill();
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
