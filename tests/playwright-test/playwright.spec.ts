@@ -187,7 +187,6 @@ test('should respect context options in various contexts', async ({ runInlineTes
       import fs from 'fs';
       import os from 'os';
       import path from 'path';
-      import rimraf from 'rimraf';
 
       import { test, expect } from '@playwright/test';
       test.use({ locale: 'fr-FR' });
@@ -228,7 +227,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
         expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 
         await context.close();
-        rimraf.sync(dir);
+        fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
       });
 
       test('another browser', async ({ playwright, browserName }) => {
@@ -255,7 +254,6 @@ test('should respect headless in launchPersistent', async ({ runInlineTest }) =>
       import fs from 'fs';
       import os from 'os';
       import path from 'path';
-      import rimraf from 'rimraf';
 
       import { test, expect } from '@playwright/test';
 
@@ -265,7 +263,7 @@ test('should respect headless in launchPersistent', async ({ runInlineTest }) =>
         const page = context.pages()[0];
         expect(await page.evaluate(() => navigator.userAgent)).not.toContain('Headless');
         await context.close();
-        rimraf.sync(dir);
+        fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
       });
     `,
   }, { workers: 1 });
