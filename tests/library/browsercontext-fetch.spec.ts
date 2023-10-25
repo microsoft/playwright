@@ -920,7 +920,7 @@ it('should support multipart/form-data', async function({ context, server }) {
   expect(response.status()).toBe(200);
 });
 
-it('should support multipart/form-data with ReadSream values', async function({ context, page, asset, server }) {
+it('should support multipart/form-data with ReadStream values', async function({ context, page, asset, server }) {
   const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
       const form = new formidable.IncomingForm();
@@ -950,6 +950,35 @@ it('should support multipart/form-data with ReadSream values', async function({ 
   expect(files['readStream'].originalFilename).toBe('simplezip.json');
   expect(files['readStream'].mimetype).toBe('application/json');
   expect(fs.readFileSync(files['readStream'].filepath).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
+  expect(response.status()).toBe(200);
+});
+
+it('should support multipart/form-data and keep the order', async function({ context, page, asset, server }) {
+  const given = {
+    firstName: 'John',
+    lastName: 'Doe',
+    age: 27,
+  };
+  given['foo']  = 'bar';
+  const givenKeys = Object.keys(given);
+  const formReceived = new Promise<{error: any, fields: formidable.Fields}>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const form = new formidable.IncomingForm();
+      form.parse(serverRequest, (error, fields, files) => {
+        server.serveFile(serverRequest, res);
+        resolve({ error, fields });
+      });
+    });
+  });
+  const [{ error, fields }, response] = await Promise.all([
+    formReceived,
+    context.request.post(server.EMPTY_PAGE, {
+      multipart: given,
+    })
+  ]);
+  expect(error).toBeFalsy();
+  const actualKeys = Object.keys(fields);
+  expect(actualKeys).toEqual(givenKeys);
   expect(response.status()).toBe(200);
 });
 
