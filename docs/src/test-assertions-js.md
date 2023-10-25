@@ -132,12 +132,16 @@ await expect.soft(page.getByTestId('eta')).toHaveText('1 day');
 expect(test.info().errors).toHaveLength(0);
 ```
 
-If you want to playwright make screenshot for failed soft assertion (by default it will not), you can use `screenshotOnSoftFailure` config:
+If you want to playwright make screenshot for failed soft assertion (by default it will not), 
+you can use `screenshotOnSoftFailure` config:
 
 ```js
-await expect.soft(page.getByTestId('status'), { screenshotOnSoftFailure: true }).toHaveText('Success');
+await expect.soft(page.getByTestId('status'), { 
+    screenshotOnSoftFailure: true 
+  }).toHaveText('Success');
 ```
-or combine it with [Custom Expect Message](https://playwright.dev/docs/test-assertions#custom-expect-message):
+or combine it with 
+[Custom Expect Message](https://playwright.dev/docs/test-assertions#custom-expect-message):
 
 ```js
 await expect.soft(page.getByTestId('status'), { 
@@ -145,7 +149,8 @@ await expect.soft(page.getByTestId('status'), {
   message: 'Status should be Success'
 }).toHaveText('Success');
 ```
-Also you can configure `screenshotOnFailure` for `expect.soft` globally for all expectations in your project in your `playwright.config.ts` file:
+Also you can configure `screenshotOnFailure` for `expect.soft` globally for all expectations 
+in your project in your `playwright.config.ts` file:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
