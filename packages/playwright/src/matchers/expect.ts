@@ -249,7 +249,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
       matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
     }
-    return async (...args: any[]) => {
+    return (...args: any[]) => {
       const testInfo = currentTestInfo();
       if (!testInfo)
         return matcher.call(target, ...args);
@@ -272,7 +272,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         laxParent: true,
       }) : undefined;
 
-      const reportStepError = async (jestError: ExpectError) => {
+      const reportStepError = (jestError: ExpectError) => {
         const error = new ExpectError(jestError, customMessage, stackFrames);
         const serializedError = {
           message: error.message,
@@ -282,7 +282,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         if (this._info.isSoft) {
           testInfo._failWithError(serializedError, false /* isHardError */);
           if (this._info.screenshotOnSoftFailure)
-            await testInfo._onSoftExpectFailedFunction?.();
+            testInfo._onSoftExpectFailedFunction?.().then(() => {}).catch(() => {});
         } else {throw error;}
       };
 
@@ -300,7 +300,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         finalizer();
         return result;
       } catch (e) {
-        await reportStepError(e);
+        reportStepError(e);
       }
     };
   }
