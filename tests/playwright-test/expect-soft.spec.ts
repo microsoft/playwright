@@ -18,7 +18,7 @@ import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 
-export function listFiles(dir: string): string[] {
+function listFiles(dir: string): string[] {
   const result: string[] = [];
   const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
   for (const entry of entries) {
