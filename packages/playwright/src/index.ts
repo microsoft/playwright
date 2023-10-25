@@ -520,7 +520,7 @@ class ArtifactsRecorder {
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
-    testInfo._onSoftExpectFailedFunction =  () => this.onSoftExpectFailed();
+    testInfo._onSoftExpectFailedFunction =  () => this.screenshotOnSoftExpectFailed();
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
     if (this._captureTrace)
       this._testInfo._tracing.start(this._createTemporaryArtifact('traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
@@ -637,9 +637,9 @@ class ArtifactsRecorder {
       await fs.promises.unlink(file).catch(() => {});
   }
 
-  async onSoftExpectFailed() {
-    if (this._testInfo._isFailure() && (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure'))
-      await this._screenshotOnTestFailure();
+  async screenshotOnSoftExpectFailed() {
+    if (this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure()))
+      await this._screenshotOnTestFailure(true);
   }
 
   private _createScreenshotAttachmentPath() {
@@ -650,10 +650,11 @@ class ArtifactsRecorder {
     return screenshotPath;
   }
 
-  private async _screenshotPage(page: Page, temporary: boolean) {
-    if ((page as any)[this._screenshottedSymbol])
+  private async _screenshotPage(page: Page, temporary: boolean, soft: boolean = false) {
+    if ((page as any)[this._screenshottedSymbol] && !soft)
       return;
-    (page as any)[this._screenshottedSymbol] = true;
+    if (!soft)
+      (page as any)[this._screenshottedSymbol] = true;
     try {
       const screenshotPath = temporary ? this._createTemporaryArtifact(createGuid() + '.png') : this._createScreenshotAttachmentPath();
       // Pass caret=initial to avoid any evaluations that might slow down the screenshot
@@ -672,12 +673,12 @@ class ArtifactsRecorder {
     this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
   }
 
-  private async _screenshotOnTestFailure() {
+  private async _screenshotOnTestFailure(soft: boolean = false) {
     const contexts: BrowserContext[] = [];
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
       contexts.push(...(browserType as any)._contexts);
     const pages = contexts.map(ctx => ctx.pages()).flat();
-    await Promise.all(pages.map(page => this._screenshotPage(page, false)));
+    await Promise.all(pages.map(page => this._screenshotPage(page, false, soft)));
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {

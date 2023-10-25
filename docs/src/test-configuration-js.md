@@ -139,6 +139,11 @@ export default defineConfig({
       // total amount of pixels, between 0 and 1.
       maxDiffPixelRatio: 0.1,
     },
+
+    soft: {
+      // Take a screenshot on a soft assertions failure (by default soft assertions do not take screenshots on failure)
+      screenshotOnSoftFailure: true,
+    }
   },
 
 });

@@ -649,19 +649,19 @@ interface TestConfig {
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
-      animations?: 'allow'|'disabled';
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"hide"`.
        */
-      caret?: 'hide'|'initial';
+      caret?: "hide"|"initial";
 
       /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"css"`.
        */
-      scale?: 'css'|'device';
+      scale?: "css"|"device";
     };
 
     /**
@@ -687,6 +687,16 @@ interface TestConfig {
        * default.
        */
       maxDiffPixelRatio?: number;
+    };
+
+    /**
+     * Configuration for the `expect.soft()` method.
+     */
+    soft?: {
+      /**
+       * Take a screenshot on a soft assertions failure (by default soft assertions do not take screenshots on failure).
+       */
+      screenshotOnSoftFailure?: boolean;
     };
   };
 
@@ -965,7 +975,7 @@ interface TestConfig {
    * ```
    *
    */
-  preserveOutput?: 'always'|'never'|'failures-only';
+  preserveOutput?: "always"|"never"|"failures-only";
 
   /**
    * Playwright Test supports running multiple test projects at the same time. See {@link TestProject} for more
@@ -1330,7 +1340,7 @@ interface TestConfig {
    * ```
    *
    */
-  updateSnapshots?: 'all'|'none'|'missing';
+  updateSnapshots?: "all"|"none"|"missing";
 
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
@@ -2186,7 +2196,7 @@ export interface TestInfo {
    * ```
    *
    */
-  expectedStatus: 'passed'|'failed'|'timedOut'|'skipped'|'interrupted';
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Absolute path to a file where the currently running test is declared.
@@ -2290,7 +2300,7 @@ export interface TestInfo {
    * ```
    *
    */
-  status?: 'passed'|'failed'|'timedOut'|'skipped'|'interrupted';
+  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.
@@ -5874,13 +5884,13 @@ interface LocatorAssertions {
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: 'disabled'|'allow';
+    animations?: "disabled"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
      * changed.  Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initial';
+    caret?: "hide"|"initial";
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
@@ -5919,7 +5929,7 @@ interface LocatorAssertions {
      *
      * Defaults to `"css"`.
      */
-    scale?: 'css'|'device';
+    scale?: "css"|"device";
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
@@ -5957,13 +5967,13 @@ interface LocatorAssertions {
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: 'disabled'|'allow';
+    animations?: "disabled"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
      * changed.  Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initial';
+    caret?: "hide"|"initial";
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
@@ -6002,7 +6012,7 @@ interface LocatorAssertions {
      *
      * Defaults to `"css"`.
      */
-    scale?: 'css'|'device';
+    scale?: "css"|"device";
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
@@ -6185,13 +6195,13 @@ interface PageAssertions {
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: 'disabled'|'allow';
+    animations?: "disabled"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
      * changed.  Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initial';
+    caret?: "hide"|"initial";
 
     /**
      * An object which specifies clipping of the resulting image.
@@ -6261,7 +6271,7 @@ interface PageAssertions {
      *
      * Defaults to `"css"`.
      */
-    scale?: 'css'|'device';
+    scale?: "css"|"device";
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
@@ -6298,13 +6308,13 @@ interface PageAssertions {
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: 'disabled'|'allow';
+    animations?: "disabled"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
      * changed.  Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initial';
+    caret?: "hide"|"initial";
 
     /**
      * An object which specifies clipping of the resulting image.
@@ -6374,7 +6384,7 @@ interface PageAssertions {
      *
      * Defaults to `"css"`.
      */
-    scale?: 'css'|'device';
+    scale?: "css"|"device";
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
@@ -6713,19 +6723,19 @@ interface TestProject {
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
-      animations?: 'allow'|'disabled';
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"hide"`.
        */
-      caret?: 'hide'|'initial';
+      caret?: "hide"|"initial";
 
       /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"css"`.
        */
-      scale?: 'css'|'device';
+      scale?: "css"|"device";
     };
 
     /**
@@ -6751,6 +6761,16 @@ interface TestProject {
        * default.
        */
       maxDiffPixelRatio?: number;
+    };
+
+    /**
+     * Configuration for the `expect.soft()` method.
+     */
+    soft?: {
+      /**
+       * Take a screenshot on a soft assertions failure (by default soft assertions do not take screenshots on failure).
+       */
+      screenshotOnSoftFailure?: boolean;
     };
   };
 
@@ -7130,12 +7150,12 @@ interface TestConfigWebServer {
    * If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout
    * of the command. Default to `"ignore"`.
    */
-  stdout?: 'pipe'|'ignore';
+  stdout?: "pipe"|"ignore";
 
   /**
    * Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
    */
-  stderr?: 'pipe'|'ignore';
+  stderr?: "pipe"|"ignore";
 
   /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.

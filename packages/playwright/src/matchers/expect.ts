@@ -133,7 +133,9 @@ function createExpect(info: ExpectMetaInfo) {
 
       if (property === 'soft') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { screenshotOnSoftFailure?: boolean }) => {
-          const soft = isString(messageOrOptions) ? {} : messageOrOptions || {};
+          const testInfo = currentTestInfo();
+          const softFromConfig = testInfo?._projectInternal.expect?.soft || {};
+          const soft = isString(messageOrOptions) ? {} : { ...softFromConfig, ...messageOrOptions || {} };
           return configure({ _soft: soft })(actual, messageOrOptions) as any;
         };
       }

@@ -15,7 +15,19 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import { listFiles } from './playwright.artifacts.spec';
+import fs from 'fs';
+import path from 'path';
+
+export function listFiles(dir: string): string[] {
+  const result: string[] = [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    result.push(entry.name);
+    if (entry.isDirectory())
+      result.push(...listFiles(path.join(dir, entry.name)).map(x => '  ' + x));
+  }
+  return result;
+}
 
 test('soft expects should compile', async ({ runTSC }) => {
   const result = await runTSC({
@@ -85,10 +97,7 @@ test.describe('screenshots on soft expect ', async () => {
   test('should make screenshot on soft expect failure', async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
       'playwright.config.ts': `
-        export default { 
-          expect: {
-            screenshotOnSoftFailure: true
-          },
+        export default {
           use: { screenshot: 'only-on-failure' }
        };
     `,
@@ -106,9 +115,67 @@ test.describe('screenshots on soft expect ', async () => {
     expect(result.exitCode).toBe(1);
 
     expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
-      'artifacts-failing',
+      'a-should-work',
       '  test-failed-1.png',
-      'artifacts-own-context-failing'
+      '  test-failed-2.png',
+      '  test-failed-3.png'
+    ]);
+  });
+
+  test('should not make screenshot on soft expect failure if screenshotOnSoftFailure is false', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        export default {
+          use: { screenshot: 'only-on-failure' }
+       };
+    `,
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({ page }) => {
+        await page.goto('https://playwright.dev/');
+        await expect.soft(page).toHaveTitle(/Playwrighttt/);
+
+        await page.getByRole('link', { name: 'Get started' }).click();
+        await expect.soft(page, { screenshotOnSoftFailure: false }).toHaveURL(/.*introlololo/);
+      });
+    `
+    });
+    expect(result.exitCode).toBe(1);
+
+    expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+      'a-should-work',
+      '  test-failed-1.png',
+    ]);
+  });
+
+  test('should make screenshot on soft expect failure is enabled in config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        export default {
+          expect: {
+            soft: { screenshotOnSoftFailure: true }
+          },
+          use: { screenshot: 'only-on-failure' }
+       };
+    `,
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({ page }) => {
+        await page.goto('https://playwright.dev/');
+        await expect.soft(page).toHaveTitle(/Playwrighttt/);
+
+        await page.getByRole('link', { name: 'Get started' }).click();
+        await expect.soft(page).toHaveURL(/.*introlololo/);
+      });
+    `
+    });
+    expect(result.exitCode).toBe(1);
+
+    expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+      'a-should-work',
+      '  test-failed-1.png',
+      '  test-failed-2.png',
+      '  test-failed-3.png'
     ]);
   });
 });
