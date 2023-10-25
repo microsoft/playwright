@@ -254,7 +254,10 @@ export const UIModeView: React.FC<{}> = ({
           </div>}
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
+          <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
+            setWatchedTreeIds({ value: new Set() });
+            setWatchAll(!watchAll);
+          }}></ToolbarButton>
           <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
             setCollapseAllCount(collapseAllCount + 1);
           }} />

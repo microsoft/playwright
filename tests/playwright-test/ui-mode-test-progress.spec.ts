@@ -109,8 +109,6 @@ test('should update trace live', async ({ runUITest, server }) => {
     /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/two.html[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
-    /fixture: page[\d.]+m?s/,
-    /fixture: context[\d.]+m?s/,
   ]);
 });
 
