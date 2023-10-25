@@ -17,8 +17,9 @@
 import type * as trace from '@trace/trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
+import type * as traceV5 from './versions/traceV5';
 import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
-import type { ContextEntry, PageEntry } from './entries';
+import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
 import { SnapshotStorage } from './snapshotStorage';
 
@@ -67,7 +68,7 @@ export class TraceModel {
     let done = 0;
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
-      const actionMap = new Map<string, trace.ActionTraceEvent>();
+      const actionMap = new Map<string, ActionEntry>();
       contextEntry.traceUrl = backend.traceURL();
       contextEntry.hasSource = hasSource;
 
@@ -150,12 +151,15 @@ export class TraceModel {
     return pageEntry;
   }
 
-  appendEvent(contextEntry: ContextEntry, actionMap: Map<string, trace.ActionTraceEvent>, line: string) {
+  appendEvent(contextEntry: ContextEntry, actionMap: Map<string, ActionEntry>, line: string) {
     if (!line)
       return;
-    const event = this._modernize(JSON.parse(line));
-    if (!event)
-      return;
+    const events = this._modernize(JSON.parse(line));
+    for (const event of events)
+      this._innerAppendEvent(contextEntry, actionMap, event);
+  }
+
+  private _innerAppendEvent(contextEntry: ContextEntry, actionMap: Map<string, ActionEntry>, event: trace.TraceEvent) {
     switch (event.type) {
       case 'context-options': {
         this._version = event.version;
@@ -184,11 +188,18 @@ export class TraceModel {
         existing!.point = event.point;
         break;
       }
+      case 'log': {
+        const existing = actionMap.get(event.callId);
+        existing!.log.push({
+          time: event.time,
+          message: event.message,
+        });
+        break;
+      }
       case 'after': {
         const existing = actionMap.get(event.callId);
         existing!.afterSnapshot = event.afterSnapshot;
         existing!.endTime = event.endTime;
-        existing!.log = event.log;
         existing!.result = event.result;
         existing!.error = event.error;
         existing!.attachments = event.attachments;
@@ -197,7 +208,7 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        actionMap.set(event.callId, event);
+        actionMap.set(event.callId, { ...event, log: [] });
         break;
       }
       case 'event': {
@@ -238,36 +249,40 @@ export class TraceModel {
     }
   }
 
-  private _modernize(event: any): trace.TraceEvent | null {
+  private _modernize(event: any): trace.TraceEvent[] {
     if (this._version === undefined)
-      return event;
-    const lastVersion: trace.VERSION = 5;
-    for (let version = this._version; version < lastVersion; ++version) {
-      event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
-      if (!event)
-        return null;
-    }
-    return event;
+      return [event];
+    const lastVersion: trace.VERSION = 6;
+    let events = [event];
+    for (let version = this._version; version < lastVersion; ++version)
+      events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
+    return events;
   }
 
-  _modernize_0_to_1(event: any): any {
-    if (event.type === 'action') {
+  _modernize_0_to_1(events: any[]): any[] {
+    for (const event of events) {
+      if (event.type !== 'action')
+        continue;
       if (typeof event.metadata.error === 'string')
         event.metadata.error = { error: { name: 'Error', message: event.metadata.error } };
     }
-    return event;
+    return events;
   }
 
-  _modernize_1_to_2(event: any): any {
-    if (event.type === 'frame-snapshot' && event.snapshot.isMainFrame) {
+  _modernize_1_to_2(events: any[]): any[] {
+    for (const event of events) {
+      if (event.type !== 'frame-snapshot' || !event.snapshot.isMainFrame)
+        continue;
       // Old versions had completely wrong viewport.
       event.snapshot.viewport = this.contextEntries[0]?.options?.viewport || { width: 1280, height: 720 };
     }
-    return event;
+    return events;
   }
 
-  _modernize_2_to_3(event: any): any {
-    if (event.type === 'resource-snapshot' && !event.snapshot.request) {
+  _modernize_2_to_3(events: any[]): any[] {
+    for (const event of events) {
+      if (event.type !== 'resource-snapshot' || event.snapshot.request)
+        continue;
       // Migrate from old ResourceSnapshot to new har entry format.
       const resource = event.snapshot;
       event.snapshot = {
@@ -289,10 +304,20 @@ export class TraceModel {
         _monotonicTime: resource.timestamp,
       };
     }
-    return event;
+    return events;
   }
 
-  _modernize_3_to_4(event: traceV3.TraceEvent): traceV4.TraceEvent | null {
+  _modernize_3_to_4(events: traceV3.TraceEvent[]): traceV4.TraceEvent[] {
+    const result: traceV4.TraceEvent[] = [];
+    for (const event of events) {
+      const e = this._modernize_event_3_to_4(event);
+      if (e)
+        result.push(e);
+    }
+    return result;
+  }
+
+  _modernize_event_3_to_4(event: traceV3.TraceEvent): traceV4.TraceEvent | null {
     if (event.type !== 'action' && event.type !== 'event') {
       return event as traceV3.ContextCreatedTraceEvent |
         traceV3.ScreencastFrameTraceEvent |
@@ -344,7 +369,17 @@ export class TraceModel {
     };
   }
 
-  _modernize_4_to_5(event: traceV4.TraceEvent): trace.TraceEvent | null {
+  _modernize_4_to_5(events: traceV4.TraceEvent[]): traceV5.TraceEvent[] {
+    const result: traceV5.TraceEvent[] = [];
+    for (const event of events) {
+      const e = this._modernize_event_4_to_5(event);
+      if (e)
+        result.push(e);
+    }
+    return result;
+  }
+
+  _modernize_event_4_to_5(event: traceV4.TraceEvent): traceV5.TraceEvent | null {
     if (event.type === 'event' && event.method === '__create__' && event.class === 'JSHandle')
       this._jsHandles.set(event.params.guid, event.params.initializer);
     if (event.type === 'object') {
@@ -383,6 +418,24 @@ export class TraceModel {
       };
     }
     return event;
+  }
+
+  _modernize_5_to_6(events: traceV5.TraceEvent[]): trace.TraceEvent[] {
+    const result: trace.TraceEvent[] = [];
+    for (const event of events) {
+      result.push(event);
+      if (event.type !== 'after' || !event.log.length)
+        continue;
+      for (const log of event.log) {
+        result.push({
+          type: 'log',
+          callId: event.callId,
+          message: log,
+          time: -1,
+        });
+      }
+    }
+    return result;
   }
 }
 
