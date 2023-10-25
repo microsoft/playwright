@@ -405,7 +405,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       debugLogger.log('api', 'setting input buffers');
       await this._channel.setInputFiles({ selector, files: converted.files, ...options });
     } else {
-      debugLogger.log('api', 'setting input file paths');
+      debugLogger.log('api', 'setting input file paths/streams');
       await this._channel.setInputFilePaths({ selector, ...converted, ...options });
     }
   }

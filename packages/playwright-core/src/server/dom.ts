@@ -597,6 +597,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           name: payload.name,
           mimeType: payload.mimeType || mime.getType(payload.name) || 'application/octet-stream',
           buffer: payload.buffer.toString('base64'),
+          lastModified: payload.lastModified,
         });
       }
     }
@@ -620,7 +621,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (localPaths)
         await this._page._delegate.setInputFilePaths(progress, retargeted, localPaths);
       else
-        await this._page._delegate.setInputFiles(retargeted, filePayloads!);
+        await this._page._delegate.setInputFiles(progress, retargeted, filePayloads!);
     });
     return 'done';
   }

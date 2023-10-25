@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
+import { mime } from '../../utilsBundle';
 import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, headersArrayToObject } from '../../utils';
@@ -327,12 +329,25 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }
 
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
+  async setInputFiles(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     await handle.evaluateInUtility(([injected, node, files]) =>
       injected.setInputFiles(node, files), files);
   }
 
   async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
+    // clank is always remote
+    if (this._browserContext._browser.isClank()) {
+      return await this.setInputFiles(
+          progress,
+          handle,
+          await Promise.all(files.map(async file => ({
+            name: path.basename(file),
+            mimeType: mime.getType(path.basename(file)) ?? 'application/octet-string',
+            buffer: await fs.promises.readFile(file, 'base64'),
+            lastModified: await fs.promises.stat(file).then(s => s.mtime.getTime()),
+          }))),
+      );
+    }
     const frame = await handle.ownerFrame();
     if (!frame)
       throw new Error('Cannot set input files to detached input element');

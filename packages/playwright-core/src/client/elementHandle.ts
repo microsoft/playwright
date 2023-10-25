@@ -155,7 +155,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
       debugLogger.log('api', 'setting input buffers');
       await this._elementChannel.setInputFiles({ files: converted.files, ...options });
     } else {
-      debugLogger.log('api', 'setting input file paths');
+      debugLogger.log('api', 'setting input file paths/streams');
       await this._elementChannel.setInputFilePaths({ ...converted, ...options });
     }
   }

@@ -2118,6 +2118,7 @@ Frame:
               name: string
               mimeType: string?
               buffer: binary
+              lastModified: number?
         timeout: number?
         noWaitAfter: boolean?
       flags:
@@ -2686,6 +2687,7 @@ ElementHandle:
               name: string
               mimeType: string?
               buffer: binary
+              lastModified: number?
         timeout: number?
         noWaitAfter: boolean?
       flags:

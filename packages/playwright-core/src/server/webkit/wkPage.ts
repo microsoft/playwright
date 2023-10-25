@@ -956,7 +956,7 @@ export class WKPage implements PageDelegate {
     ]);
   }
 
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
+  async setInputFiles(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     const objectId = handle._objectId;
     const protocolFiles = files.map(file => ({
       name: file.name,
