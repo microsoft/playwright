@@ -182,7 +182,7 @@ export const expect = baseExpect.extend({
           `Locator: ${locator}\n` +
           `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(expected)}\n` +
           (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
-      : () =>  this.utils.matcherHint(assertionName, undefined, undefined, options) +
+      : () =>  this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
           `Locator: ${locator}\n` +
           `Expected: ${this.utils.printExpected(expected)}\n` +
