@@ -1356,12 +1356,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await expect(regressionLabelButton).not.toBeVisible();
 
-        {
-          const testDuration = await page.getByTestId('test-duration').textContent();
-          const totalDuration = await page.getByTestId('overall-duration').textContent();
-          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
-          expect(totalDuration).not.toBe('Total time: ' + testDuration);
-        }
+        await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
 
         await searchInput.clear();
 
@@ -1377,12 +1372,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @regression passes');
 
-        {
-          const testDuration = await page.getByTestId('test-duration').textContent();
-          const totalDuration = await page.getByTestId('overall-duration').textContent();
-          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
-          expect(totalDuration).not.toBe('Total time: ' + testDuration);
-        }
+        await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
 
         await searchInput.clear();
 

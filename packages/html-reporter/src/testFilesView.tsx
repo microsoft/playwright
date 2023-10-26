@@ -29,9 +29,8 @@ export const TestFilesView: React.FC<{
   setExpandedFiles: (value: Map<string, boolean>) => void,
   filter: Filter,
   filteredStats: FilteredStats,
-  duration: number,
   projectNames: string[],
-}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, filteredStats, duration }) => {
+}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, filteredStats }) => {
   const filteredFiles = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
@@ -46,10 +45,10 @@ export const TestFilesView: React.FC<{
   return <>
     <div className='mt-2 mx-1' style={{ display: 'flex' }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
-      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
       <div style={{ flex: 'auto' }}></div>
       <div data-testid="overall-time" style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
-      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(duration)}</div>
+      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report?.duration ?? 0)}</div>
     </div>
     {report && !!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}

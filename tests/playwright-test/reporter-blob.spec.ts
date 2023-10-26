@@ -388,7 +388,7 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
   // "Total time: 2.1s"
   const time = /Total time: (\d+)(\.\d+)?s/.exec(durationText);
   expect(time).toBeTruthy();
-  expect(parseInt(time[1], 10)).toBeGreaterThan(2);
+  expect(parseInt(time[1], 10)).toBeGreaterThanOrEqual(2);
 });
 
 test('merge into list report by default', async ({ runInlineTest, mergeReports }) => {

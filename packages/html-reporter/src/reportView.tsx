@@ -61,7 +61,6 @@ export const ReportView: React.FC<{
           setExpandedFiles={setExpandedFiles}
           projectNames={report?.json().projectNames || []}
           filteredStats={filteredStats}
-          duration={report?.json().duration || 0}
         />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
