@@ -50,7 +50,7 @@ export const TestFilesView: React.FC<{
       <div data-testid="overall-time" style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
       <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(filteredStats.duration)}</div>
     </div>
-    {report && report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
+    {report && report.errors.length > 0 && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
     {report && filteredFiles.map(({ file, defaultExpanded }) => {

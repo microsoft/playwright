@@ -93,10 +93,10 @@ export const TestResultView: React.FC<{
   }, [scrolled, anchor, setScrolled, videoRef]);
 
   return <div className='test-result'>
-    {!!result.errors.length && <AutoChip header='Errors'>
+    {result.errors.length > 0 && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
+    {result.steps.length > 0 && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
@@ -106,7 +106,7 @@ export const TestResultView: React.FC<{
       </AutoChip>
     )}
 
-    {!!screenshots.length && <AutoChip header='Screenshots'>
+    {screenshots.length > 0 && <AutoChip header='Screenshots'>
       {screenshots.map((a, i) => {
         return <div key={`screenshot-${i}`}>
           <a href={a.path}>
@@ -117,7 +117,7 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
 
-    {!!traces.length && <AutoChip header='Traces'>
+    {traces.length > 0 && <AutoChip header='Traces'>
       {<div>
         <a href={generateTraceUrl(traces)}>
           <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
@@ -126,7 +126,7 @@ export const TestResultView: React.FC<{
       </div>}
     </AutoChip>}
 
-    {!!videos.length && <AutoChip header='Videos' targetRef={videoRef}>
+    {videos.length > 0 && <AutoChip header='Videos' targetRef={videoRef}>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
