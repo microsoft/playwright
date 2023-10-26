@@ -245,7 +245,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     for (const dir of options.tempDirectories) {
       try {
-        fs.rmSync(dir, { force: true, recursive: true, maxRetries: 10 });
+        fs.rmSync(dir, { force: true, recursive: true, maxRetries: 5 });
       } catch (e) {
         options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${dir}: ${e}`);
       }
