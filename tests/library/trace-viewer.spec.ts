@@ -123,10 +123,10 @@ test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');
   await traceViewer.page.getByText('Log', { exact: true }).click();
-  const logLines = await traceViewer.logLines.allTextContents();
-  expect(logLines.length).toBeGreaterThan(10);
-  expect(logLines).toContain('attempting click action');
-  expect(logLines).toContain('  click action done');
+  await expect(traceViewer.logLines).toContainText([
+    /\d+m?sattempting click action/,
+    /\d+m?s  click action done/,
+  ]);
 });
 
 test('should render network bars', async ({ page, runAndTrace, server }) => {
