@@ -72,12 +72,21 @@ export const Workbench: React.FunctionComponent<{
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
     const failedAction = model?.failedAction();
-    if (initialSelection && model?.actions.includes(initialSelection))
+    if (initialSelection && model?.actions.includes(initialSelection)) {
       setSelectedAction(initialSelection);
-    else if (failedAction)
+    } else if (failedAction) {
       setSelectedAction(failedAction);
-    else if (model?.actions.length)
-      setSelectedAction(model.actions[model.actions.length - 1]);
+    } else if (model?.actions.length) {
+      // Select the last non-after hooks item.
+      let index = model.actions.length - 1;
+      for (let i = 0; i < model.actions.length; ++i) {
+        if (model.actions[i].apiName === 'After Hooks' && i) {
+          index = i - 1;
+          break;
+        }
+      }
+      setSelectedAction(model.actions[index]);
+    }
   }, [model, selectedAction, setSelectedAction, initialSelection]);
 
   const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
