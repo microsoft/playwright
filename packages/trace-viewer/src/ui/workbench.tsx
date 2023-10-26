@@ -131,7 +131,7 @@ export const Workbench: React.FunctionComponent<{
   const logTab: TabbedPaneTabModel = {
     id: 'log',
     title: 'Log',
-    render: () => <LogTab action={activeAction} />
+    render: () => <LogTab action={activeAction} isLive={isLive} />
   };
   const errorsTab: TabbedPaneTabModel = {
     id: 'errors',
@@ -199,7 +199,7 @@ export const Workbench: React.FunctionComponent<{
   }, [model]);
 
   let time: number = 0;
-  if (model && model.endTime >= 0)
+  if (!isLive && model && model.endTime >= 0)
     time = model.endTime - model.startTime;
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
