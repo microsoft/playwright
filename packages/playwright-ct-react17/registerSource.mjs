@@ -21,14 +21,13 @@
 import __pwReact from 'react';
 import __pwReactDOM from 'react-dom';
 
-/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponentChild} JsxComponentChild */
 /** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
-/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, () => Promise<FrameworkComponent>>} */
 const __pwLoaderRegistry = new Map();
-/** @type {Map<string, FrameworkComponent} */
+/** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
 /**
@@ -40,15 +39,15 @@ export function pwRegister(components) {
 }
 
 /**
- * @param {Component} component
- * @returns {component is JsxComponent | ObjectComponent}
+ * @param {any} component
+ * @returns {component is JsxComponent}
  */
 function isComponent(component) {
   return !(typeof component !== 'object' || Array.isArray(component));
 }
 
 /**
- * @param {Component} component
+ * @param {JsxComponent | JsxComponentChild} component
  */
 async function __pwResolveComponent(component) {
   if (!isComponent(component))
@@ -76,16 +75,13 @@ async function __pwResolveComponent(component) {
 }
 
 /**
- * @param {Component} component
+ * @param {JsxComponent | JsxComponentChild} component
  */
 function __pwRender(component) {
   if (!isComponent(component))
     return component;
 
   const componentFunc = __pwRegistry.get(component.type);
-
-  if (component.kind !== 'jsx')
-    throw new Error('Object mount notation is not supported');
 
   return __pwReact.createElement(componentFunc || component.type, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
@@ -99,6 +95,9 @@ function __pwRender(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  if (component.kind !== 'jsx')
+    throw new Error('Object mount notation is not supported');
+
   await __pwResolveComponent(component);
   let App = () => __pwRender(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
@@ -119,6 +118,9 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  if (component.kind !== 'jsx')
+    throw new Error('Object mount notation is not supported');
+
   await __pwResolveComponent(component);
-  __pwReactDOM.render(__pwRender(/** @type {Component} */(component)), rootElement);
+  __pwReactDOM.render(__pwRender(component), rootElement);
 };
