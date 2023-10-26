@@ -141,7 +141,8 @@ export default defineConfig({
     },
 
     soft: {
-      // Take a screenshot on a soft assertions failure (by default soft assertions do not take screenshots on failure)
+      // Take a screenshot on a soft assertions failure
+      // (by default soft assertions do not take screenshots on failure)
       screenshotOnSoftFailure: true,
     }
   },

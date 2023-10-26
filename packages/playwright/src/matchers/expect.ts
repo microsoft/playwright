@@ -136,7 +136,7 @@ function createExpect(info: ExpectMetaInfo) {
           const testInfo = currentTestInfo();
           const softFromConfig = testInfo?._projectInternal.expect?.soft || {};
           const soft = isString(messageOrOptions) ? {} : { ...softFromConfig, ...messageOrOptions || {} };
-          return configure({ _soft: soft })(actual, messageOrOptions) as any;
+          return configure({ soft: soft })(actual, messageOrOptions) as any;
         };
       }
 
@@ -150,16 +150,16 @@ function createExpect(info: ExpectMetaInfo) {
     },
   });
 
-  const configure = (configuration: { message?: string, timeout?: number, _soft?: boolean | { screenshotOnSoftFailure?: boolean }, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean | { screenshotOnSoftFailure?: boolean }, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
     const newInfo = { ...info };
     if ('message' in configuration)
       newInfo.message = configuration.message;
     if ('timeout' in configuration)
       newInfo.timeout = configuration.timeout;
-    if ('_soft' in configuration) {
-      newInfo.isSoft = !!configuration._soft;
-      if (typeof configuration._soft === 'object')
-        newInfo.screenshotOnSoftFailure = configuration._soft.screenshotOnSoftFailure;
+    if ('soft' in configuration) {
+      newInfo.isSoft = !!configuration.soft;
+      if (typeof configuration.soft === 'object')
+        newInfo.screenshotOnSoftFailure = configuration.soft.screenshotOnSoftFailure;
 
     }
     if ('_poll' in configuration) {

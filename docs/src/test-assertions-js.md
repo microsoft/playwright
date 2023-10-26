@@ -136,15 +136,15 @@ If you want to playwright make screenshot for failed soft assertion (by default 
 you can use `screenshotOnSoftFailure` config:
 
 ```js
-await expect.soft(page.getByTestId('status'), { 
-    screenshotOnSoftFailure: true 
-  }).toHaveText('Success');
+await expect.soft(page.getByTestId('status'), {
+  screenshotOnSoftFailure: true
+}).toHaveText('Success');
 ```
 or combine it with 
 [Custom Expect Message](https://playwright.dev/docs/test-assertions#custom-expect-message):
 
 ```js
-await expect.soft(page.getByTestId('status'), { 
+await expect.soft(page.getByTestId('status'), {
   screenshotOnSoftFailure: true,
   message: 'Status should be Success'
 }).toHaveText('Success');
