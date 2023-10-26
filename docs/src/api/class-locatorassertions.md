@@ -1151,6 +1151,12 @@ Expected attribute value.
 ### option: LocatorAssertions.toHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+### option: LocatorAssertions.toHaveAttribute.ignoreCase = %%-js-assertions-timeout-%%
+* since: v1.40
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ## async method: LocatorAssertions.toHaveAttribute#2
 * since: v1.39
 * langs: js
