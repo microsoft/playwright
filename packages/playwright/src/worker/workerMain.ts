@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, stdioChunkToParams } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
@@ -22,7 +22,7 @@ import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
-import { ManualPromise, captureLibraryStackTrace, gracefullyCloseAll } from 'playwright-core/lib/utils';
+import { ManualPromise, captureLibraryStackTrace, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
 import { TimeoutManager, type TimeSlot } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
@@ -323,7 +323,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await rimraf(testInfo.outputDir).catch(() => {});
+      await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
@@ -490,7 +490,7 @@ export class WorkerMain extends ProcessRunner {
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
-      await rimraf(testInfo.outputDir).catch(() => {});
+      await removeFolders([testInfo.outputDir]);
   }
 
   private async _runModifiersForSuite(suite: Suite, testInfo: TestInfoImpl, scope: 'worker' | 'test', timeSlot: TimeSlot | undefined, extraAnnotations?: Annotation[]) {

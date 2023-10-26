@@ -17,7 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
+import { debug } from 'playwright-core/lib/utilsBundle';
+import { removeFolders } from 'playwright-core/lib/utils';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -172,13 +173,15 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
           outputDirs.add(p.project.outputDir);
       }
 
-      await Promise.all(Array.from(outputDirs).map(outputDir => rimraf(outputDir).catch(async (error: any) => {
+      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
+        if (!error)
+          return;
         if ((error as any).code === 'EBUSY') {
           // We failed to remove folder, might be due to the whole folder being mounted inside a container:
           //   https://github.com/microsoft/playwright/issues/12106
           // Do a best-effort to remove all files inside of it instead.
           const entries = await readDirAsync(outputDir).catch(e => []);
-          await Promise.all(entries.map(entry => rimraf(path.join(outputDir, entry))));
+          await Promise.all(entries.map(entry => removeFolders([path.join(outputDir, entry)])));
         } else {
           throw error;
         }
