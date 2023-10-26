@@ -1359,7 +1359,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         {
           const testDuration = await page.getByTestId('test-duration').textContent();
           const totalDuration = await page.getByTestId('overall-duration').textContent();
-          expect(totalDuration).toBe('Total time: ' + testDuration);
+          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
+          expect(totalDuration).not.toBe('Total time: ' + testDuration);
         }
 
         await searchInput.clear();
@@ -1379,7 +1380,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         {
           const testDuration = await page.getByTestId('test-duration').textContent();
           const totalDuration = await page.getByTestId('overall-duration').textContent();
-          expect(totalDuration).toBe('Total time: ' + testDuration);
+          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
+          expect(totalDuration).not.toBe('Total time: ' + testDuration);
         }
 
         await searchInput.clear();
@@ -1534,21 +1536,15 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           return total;
         }
 
-        async function checkTotalDuration(testNames: string[]) {
-          for (const testDuration of await page.getByTestId('test-duration').allTextContents())
-            expect(testDuration).toMatch(/\d+m?s$/);
-
-          const expectedTotalTimeInMs = calculateTotalTestDuration(testNames);
-          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(expectedTotalTimeInMs)}`);
-        }
-
         const searchInput = page.locator('.subnav-search-input');
         await expect(page.getByTestId('filtered-tests-count')).not.toBeVisible();
+        await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
 
         await searchInput.fill('s:failed');
 
-        await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 3');
-        await checkTotalDuration(['a-one foo', 'a-two foo', 'b-one foo']);
+        const threeTestsDuration = calculateTotalTestDuration(['a-one foo', 'a-two foo', 'b-one foo']);
+        await expect(page.getByTestId('filtered-tests-count')).toHaveText(`Filtered: 3 (${msToString(threeTestsDuration)})`);
+        await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
         await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
         await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
@@ -1559,8 +1555,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page.getByTestId('filtered-tests-count')).not.toBeVisible();
 
         await searchInput.fill('foo');
-        await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 4');
-        await checkTotalDuration(['a-one foo', 'a-two foo', 'b-one foo', 'b-two foo']);
+        const fourTestsDuration = calculateTotalTestDuration(['a-one foo', 'a-two foo', 'b-one foo', 'b-two foo']);
+        await expect(page.getByTestId('filtered-tests-count')).toHaveText(`Filtered: 4 (${msToString(fourTestsDuration)})`);
+        await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
         await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
         await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
