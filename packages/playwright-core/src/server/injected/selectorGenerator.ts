@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteAttributeValue } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
@@ -358,10 +358,6 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     tokens.unshift(bestTokenForLevel);
   }
   return makeStrict(uniqueCSSSelector()!);
-}
-
-function quoteAttributeValue(text: string): string {
-  return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
 }
 
 function penalizeScoreForLength(groups: SelectorToken[][]) {

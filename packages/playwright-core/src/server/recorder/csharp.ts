@@ -76,13 +76,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     let subject: string;
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
-    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+    } else {
       const locators = actionInContext.frame.selectorsChain.map(selector => `.FrameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
-    } else if (actionInContext.frame.name) {
-      subject = `${pageAlias}.Frame(${quote(actionInContext.frame.name)})`;
-    } else {
-      subject = `${pageAlias}.FrameByUrl(${quote(actionInContext.frame.url)})`;
     }
 
     const signals = toSignalMap(action);
