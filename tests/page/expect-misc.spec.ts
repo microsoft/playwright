@@ -299,6 +299,13 @@ test.describe('toHaveAttribute', () => {
     await expect(locator).toHaveAttribute('checked', { timeout: 5000 });
     await expect(locator).not.toHaveAttribute('open', { timeout: 5000 });
   });
+
+  test('support ignoreCase', async ({ page }) => {
+    await page.setContent('<div id=NoDe>Text content</div>');
+    const locator = page.locator('#NoDe');
+    await expect(locator).toHaveAttribute('id', 'node', { ignoreCase: true });
+    await expect(locator).not.toHaveAttribute('id', 'node');
+  });
 });
 
 test.describe('toHaveCSS', () => {
