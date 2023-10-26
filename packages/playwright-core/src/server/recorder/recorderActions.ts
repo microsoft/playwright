@@ -26,7 +26,8 @@ export type ActionName =
   'press' |
   'select' |
   'uncheck' |
-  'setInputFiles';
+  'setInputFiles' |
+  'assertText';
 
 export type ActionBase = {
   name: ActionName,
@@ -91,7 +92,14 @@ export type SetInputFilesAction = ActionBase & {
   files: string[],
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction;
+export type AssertTextAction = ActionBase & {
+  name: 'assertText',
+  selector: string,
+  text: string,
+  substring: boolean,
+};
+
+export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction;
 
 // Signals.
 

@@ -112,7 +112,7 @@ export class Highlight {
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), stringifySelector(selector), false);
+    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), stringifySelector(selector));
     this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
@@ -144,11 +144,8 @@ export class Highlight {
     this._highlightEntries = [];
   }
 
-  updateHighlight(elements: Element[], selector: string, isRecording: boolean) {
-    let color: string;
-    if (isRecording)
-      color = '#dc6f6f7f';
-    else
+  updateHighlight(elements: Element[], selector: string, color?: string) {
+    if (!color)
       color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
     this._innerUpdateHighlight(elements, { color, tooltipText: selector ? asLocator(this._language, selector) : '' });
   }

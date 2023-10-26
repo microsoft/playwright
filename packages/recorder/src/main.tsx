@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, Source } from './recorderTypes';
+import type { CallLog, Mode, RecordingTool, Source } from './recorderTypes';
 import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';
@@ -25,8 +25,10 @@ export const Main: React.FC = ({
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<string, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
+  const [tool, setTool] = React.useState<RecordingTool>('action');
 
   window.playwrightSetMode = setMode;
+  window.playwrightSetRecordingTool = setTool;
   window.playwrightSetSources = setSources;
   window.playwrightSetPaused = setPaused;
   window.playwrightUpdateLogs = callLogs => {
@@ -39,5 +41,5 @@ export const Main: React.FC = ({
   };
 
   window.playwrightSourcesEchoForTest = sources;
-  return <Recorder sources={sources} paused={paused} log={log} mode={mode}/>;
+  return <Recorder sources={sources} paused={paused} log={log} mode={mode} tool={tool}/>;
 };

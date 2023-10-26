@@ -20,7 +20,7 @@ import type { Page } from '../page';
 import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, EventData, Mode, RecordingTool, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
@@ -44,7 +44,8 @@ declare global {
 export interface IRecorderApp extends EventEmitter {
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
-  setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void>;
+  setMode(mode: Mode): Promise<void>;
+  setRecordingTool(tool: RecordingTool): Promise<void>;
   setFileIfNeeded(file: string): Promise<void>;
   setSelector(selector: string, focus?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
@@ -54,7 +55,8 @@ export interface IRecorderApp extends EventEmitter {
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
-  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {}
+  async setMode(mode: Mode): Promise<void> {}
+  async setRecordingTool(tool: RecordingTool): Promise<void> {}
   async setFileIfNeeded(file: string): Promise<void> {}
   async setSelector(selector: string, focus?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
@@ -138,10 +140,16 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     return result;
   }
 
-  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {
+  async setMode(mode: Mode): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
     }).toString(), { isFunction: true }, mode).catch(() => {});
+  }
+
+  async setRecordingTool(tool: RecordingTool): Promise<void> {
+    await this._page.mainFrame().evaluateExpression(((tool: RecordingTool) => {
+      window.playwrightSetRecordingTool(tool);
+    }).toString(), { isFunction: true }, tool).catch(() => {});
   }
 
   async setFileIfNeeded(file: string): Promise<void> {

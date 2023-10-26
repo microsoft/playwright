@@ -18,8 +18,11 @@ import type * as actions from '../recorder/recorderActions';
 import type { InjectedScript } from '../injected/injectedScript';
 import { generateSelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
-import type { UIState } from '@recorder/recorderTypes';
+import type { UIState, Mode, RecordingTool } from '@recorder/recorderTypes';
 import { Highlight } from '../injected/highlight';
+import { enclosingElement, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { elementText } from './selectorUtils';
+import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -36,7 +39,9 @@ export class Recorder {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
-  private _mode: 'none' | 'inspecting' | 'recording' = 'none';
+  private _mode: Mode = 'none';
+  private _tool: RecordingTool = 'action';
+  private _selectionModel: SelectionModel | undefined;
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
   private _highlight: Highlight;
@@ -93,11 +98,12 @@ export class Recorder {
     else
       this.uninstallListeners();
 
-    const { mode, actionPoint, actionSelector, language, testIdAttributeName } = state;
+    const { mode, tool, actionPoint, actionSelector, language, testIdAttributeName } = state;
     this._testIdAttributeName = testIdAttributeName;
     this._highlight.setLanguage(language);
-    if (mode !== this._mode) {
+    if (mode !== this._mode || this._tool !== tool) {
       this._mode = mode;
+      this._tool = tool;
       this.clearHighlight();
     }
     if (actionPoint && this._actionPoint && actionPoint.x === this._actionPoint.x && actionPoint.y === this._actionPoint.y) {
@@ -126,6 +132,10 @@ export class Recorder {
   clearHighlight() {
     this._hoveredModel = null;
     this._activeModel = null;
+    if (this._selectionModel) {
+      this._selectionModel = undefined;
+      this._syncDocumentSelection();
+    }
     this._updateHighlight(false);
   }
 
@@ -157,6 +167,19 @@ export class Recorder {
       return;
     if (this._mode === 'inspecting')
       this._delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
+    if (this._mode === 'recording' && this._tool === 'assert') {
+      if (event.detail === 1 && !this._getSelectionText()) {
+        const target = this._deepEventTarget(event);
+        const text = target ? elementText(this._injectedScript._evaluator._cacheText, target).full : '';
+        if (text) {
+          this._selectionModel = { anchor: { node: target, offset: 0 }, focus: { node: target, offset: target.childNodes.length } };
+          this._syncDocumentSelection();
+          this._updateSelectionHighlight();
+        }
+      }
+      consumeEvent(event);
+      return;
+    }
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -202,11 +225,32 @@ export class Recorder {
     return false;
   }
 
+  private _selectionPosition(event: MouseEvent) {
+    if ((this.document as any).caretPositionFromPoint) {
+      const range = (this.document as any).caretPositionFromPoint(event.clientX, event.clientY);
+      return range ? { node: range.offsetNode, offset: range.offset } : undefined;
+    }
+    if ((this.document as any).caretRangeFromPoint) {
+      const range = this.document.caretRangeFromPoint(event.clientX, event.clientY);
+      return range ? { node: range.startContainer, offset: range.startOffset } : undefined;
+    }
+  }
+
   private _onMouseDown(event: MouseEvent) {
     if (!event.isTrusted)
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
+    if (this._mode === 'recording' && this._tool === 'assert') {
+      const pos = this._selectionPosition(event);
+      if (pos && event.detail <= 1) {
+        this._selectionModel = { anchor: pos, focus: pos };
+        this._syncDocumentSelection();
+        this._updateSelectionHighlight();
+      }
+      consumeEvent(event);
+      return;
+    }
     if (!this._performingAction)
       consumeEvent(event);
     this._activeModel = this._hoveredModel;
@@ -217,6 +261,10 @@ export class Recorder {
       return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
+    if (this._mode === 'recording' && this._tool === 'assert') {
+      consumeEvent(event);
+      return;
+    }
     if (!this._performingAction)
       consumeEvent(event);
   }
@@ -226,6 +274,18 @@ export class Recorder {
       return;
     if (this._mode === 'none')
       return;
+    if (this._mode === 'recording' && this._tool === 'assert') {
+      if (!event.buttons)
+        return;
+      const pos = this._selectionPosition(event);
+      if (pos && this._selectionModel) {
+        this._selectionModel.focus = pos;
+        this._syncDocumentSelection();
+        this._updateSelectionHighlight();
+      }
+      consumeEvent(event);
+      return;
+    }
     const target = this._deepEventTarget(event);
     if (this._hoveredElement === target)
       return;
@@ -245,6 +305,8 @@ export class Recorder {
 
   private _onFocus(userGesture: boolean) {
     if (this._mode === 'none')
+      return;
+    if (this._mode === 'recording' && this._tool === 'assert')
       return;
     const activeElement = this._deepActiveElement(this.document);
     // Firefox dispatches "focus" event to body when clicking on a backgrounded headed browser window.
@@ -273,10 +335,49 @@ export class Recorder {
     this._updateHighlight(true);
   }
 
+  private _getSelectionText() {
+    this._syncDocumentSelection();
+    // TODO: use elementText() passing |range=selection.getRangeAt(0)| for proper text.
+    return normalizeWhiteSpace(this.document.getSelection()?.toString() || '');
+  }
+
+  private _syncDocumentSelection() {
+    if (!this._selectionModel) {
+      this.document.getSelection()?.empty();
+      return;
+    }
+    this.document.getSelection()?.setBaseAndExtent(
+        this._selectionModel.anchor.node,
+        this._selectionModel.anchor.offset,
+        this._selectionModel.focus.node,
+        this._selectionModel.focus.offset,
+    );
+  }
+
+  private _updateSelectionHighlight() {
+    if (!this._selectionModel)
+      return;
+    const focusElement = enclosingElement(this._selectionModel.focus.node);
+    let lcaElement = focusElement ? enclosingElement(this._selectionModel.anchor.node) : undefined;
+    while (lcaElement && !isInsideScope(lcaElement, focusElement))
+      lcaElement = parentElementOrShadowHost(lcaElement);
+    const highlight = lcaElement ? generateSelector(this._injectedScript, lcaElement, { testIdAttributeName: this._testIdAttributeName, forTextExpect: true }) : undefined;
+    if (highlight?.selector === this._selectionModel.highlight?.selector)
+      return;
+    this._selectionModel.highlight = highlight;
+    this._updateHighlight(false);
+  }
+
   private _updateHighlight(userGesture: boolean) {
-    const elements = this._hoveredModel ? this._hoveredModel.elements : [];
-    const selector = this._hoveredModel ? this._hoveredModel.selector : '';
-    this._highlight.updateHighlight(elements, selector, this._mode === 'recording');
+    const model = this._selectionModel?.highlight ?? this._hoveredModel;
+    const elements = model?.elements ?? [];
+    const selector = model?.selector ?? '';
+    let color: string | undefined;
+    if (model === this._selectionModel?.highlight)
+      color = '#6fdcbd38';
+    else if (this._mode === 'recording')
+      color = '#dc6f6f7f';
+    this._highlight.updateHighlight(elements, selector, color);
     if (userGesture)
       this._delegate.highlightUpdated?.();
   }
@@ -363,6 +464,29 @@ export class Recorder {
     }
     if (this._mode !== 'recording')
       return;
+    if (this._mode === 'recording' && this._tool === 'assert') {
+      if (event.key === 'Escape') {
+        this._selectionModel = undefined;
+        this._syncDocumentSelection();
+        this._updateHighlight(false);
+      } else if (event.key === 'Enter') {
+        if (this._selectionModel?.highlight) {
+          const text = this._getSelectionText();
+          this._delegate.recordAction?.({
+            name: 'assertText',
+            selector: this._selectionModel.highlight.selector,
+            signals: [],
+            text,
+            substring: normalizeWhiteSpace(elementText(this._injectedScript._evaluator._cacheText, this._selectionModel.highlight.elements[0]).full) !== text,
+          });
+          this._selectionModel = undefined;
+          this._syncDocumentSelection();
+          this._updateHighlight(false);
+        }
+      }
+      consumeEvent(event);
+      return;
+    }
     if (!this._shouldGenerateKeyPressFor(event))
       return;
     if (this._actionInProgress(event)) {
@@ -472,6 +596,12 @@ function consumeEvent(e: Event) {
 type HighlightModel = {
   selector: string;
   elements: Element[];
+};
+
+type SelectionModel = {
+  anchor: { node: Node, offset: number };
+  focus: { node: Node, offset: number };
+  highlight?: HighlightModel;
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {
