@@ -343,6 +343,7 @@ export default defineConfig({
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
+* [Argos Visual Testing](https://argos-ci.com/docs/playwright)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
