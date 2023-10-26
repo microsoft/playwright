@@ -130,7 +130,6 @@ export class TestTracing {
       type: 'after',
       callId,
       endTime: monotonicTime(),
-      log: [],
       attachments: serializeAttachments(attachments),
       error,
     });

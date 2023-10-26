@@ -43,7 +43,7 @@ import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
 
-const version: trace.VERSION = 5;
+const version: trace.VERSION = 6;
 
 export type TracerOptions = {
   name?: string;
@@ -368,6 +368,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata, element);
   }
 
+  onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
+    if (logName !== 'api')
+      return;
+    const event = createActionLogTraceEvent(metadata, message);
+    if (event)
+      this._appendTraceEvent(event);
+  }
+
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (!this._state?.callIds.has(metadata.id))
       return;
@@ -466,7 +474,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _appendTraceEvent(event: trace.TraceEvent) {
     const visited = visitTraceEvent(event, this._state!.traceSha1s);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
-    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console');
+    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
   }
 
@@ -531,6 +539,17 @@ function createInputActionTraceEvent(metadata: CallMetadata): trace.InputActionT
   };
 }
 
+function createActionLogTraceEvent(metadata: CallMetadata, message: string): trace.LogTraceEvent | null {
+  if (metadata.internal || metadata.method.startsWith('tracing'))
+    return null;
+  return {
+    type: 'log',
+    callId: metadata.id,
+    time: monotonicTime(),
+    message,
+  };
+}
+
 function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
@@ -538,7 +557,6 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     type: 'after',
     callId: metadata.id,
     endTime: metadata.endTime,
-    log: metadata.log,
     error: metadata.error?.error,
     result: metadata.result,
   };

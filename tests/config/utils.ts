@@ -115,7 +115,6 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
             ...event,
             type: 'action',
             endTime: 0,
-            log: []
           };
           actionMap.set(event.callId, action);
         } else if (event.type === 'input') {
@@ -126,7 +125,6 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
           const existing = actionMap.get(event.callId);
           existing.afterSnapshot = event.afterSnapshot;
           existing.endTime = event.endTime;
-          existing.log = event.log;
           existing.error = event.error;
           existing.result = event.result;
         }

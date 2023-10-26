@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEventInContext } from './modelUtil';
 import * as React from 'react';
 import { ListView } from '@web/components/listView';
 import { PlaceholderPanel } from './placeholderPanel';
 
-const LogList = ListView<string>;
+const LogList = ListView<{ message: string, time: number }>;
 
 export const LogTab: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
+  action: ActionTraceEventInContext | undefined,
 }> = ({ action }) => {
   if (!action?.log.length)
     return <PlaceholderPanel text='No log entries' />;
   return <LogList
     name='log'
     items={action?.log || []}
-    render={logLine => logLine}
+    render={logLine => logLine.message}
   />;
 };
