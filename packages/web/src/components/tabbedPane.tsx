@@ -34,14 +34,17 @@ export const TabbedPane: React.FunctionComponent<{
   selectedTab: string,
   setSelectedTab: (tab: string) => void,
   dataTestId?: string,
-}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId }) => {
+  mode?: 'default' | 'select',
+}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
+  if (!mode)
+    mode = 'default';
   return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
         { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
           {...leftToolbar}
         </div>}
-        <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
+        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
           {[...tabs.map(tab => (
             <TabbedPaneTab
               id={tab.id}
@@ -52,7 +55,25 @@ export const TabbedPane: React.FunctionComponent<{
               onSelect={setSelectedTab}
             ></TabbedPaneTab>)),
           ]}
-        </div>
+        </div>}
+        {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
+          <select style={{width: '100%', background: 'none', cursor: 'pointer'}} onChange={e => {
+            setSelectedTab(tabs[e.currentTarget.selectedIndex].id);
+          }}>
+            {tabs.map(tab => {
+              let suffix = '';
+              if (tab.count === 1)
+                suffix = ' 🔵';
+              else if (tab.count)
+                suffix = ` 🔵✖️${tab.count}`;
+              if (tab.errorCount === 1)
+                suffix = ` 🔴`;
+              else if (tab.errorCount)
+                suffix = ` 🔴✖️${tab.errorCount}`;
+              return <option value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
+            })}
+          </select>
+        </div>}
         {rightToolbar && <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>
           {...rightToolbar}
         </div>}
