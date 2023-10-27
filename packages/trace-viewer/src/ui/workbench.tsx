@@ -278,6 +278,7 @@ export const Workbench: React.FunctionComponent<{
               setSidebarLocation('bottom');
             }} />
         ]}
+        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
       />
     </SplitView>
   </div>;
