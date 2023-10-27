@@ -521,6 +521,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   downloadsPath: tOptional(tString),
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
+  firefoxUserPrefs: tOptional(tAny),
   noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tNumber,

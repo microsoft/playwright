@@ -12842,6 +12842,12 @@ export interface BrowserType<Unused = {}> {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
+     * Firefox user preferences. Learn more about the Firefox user preferences at
+     * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+     */
+    firefoxUserPrefs?: { [key: string]: string|number|boolean; };
+
+    /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'none'`.

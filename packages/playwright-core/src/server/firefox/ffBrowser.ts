@@ -43,7 +43,7 @@ export class FFBrowser extends Browser {
     const browser = new FFBrowser(parent, connection, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
-    let firefoxUserPrefs = options.persistent ? {} : options.originalLaunchOptions.firefoxUserPrefs ?? {};
+    let firefoxUserPrefs = options.originalLaunchOptions.firefoxUserPrefs ?? {};
     if (Object.keys(kBandaidFirefoxUserPrefs).length)
       firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
     const promises: Promise<any>[] = [
