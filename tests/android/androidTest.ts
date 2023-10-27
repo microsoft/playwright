@@ -57,6 +57,7 @@ export const androidTest = baseTest.extend<PageTestFixtures, AndroidWorkerFixtur
     const [page] = context.pages();
     await page.goto('data:text/html,Default page');
     await run(context);
+    await context.close();
   }, { scope: 'worker' }],
 
   page: async ({ androidContext }, run) => {

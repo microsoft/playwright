@@ -21,7 +21,8 @@ import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
 import { wsReceiver, wsSender } from '../../utilsBundle';
-import { createGuid, makeWaitForNextTask, isUnderTest, getPackageManagerExecCommand } from '../../utils';
+import type { RegisteredListener } from '../../utils';
+import { createGuid, makeWaitForNextTask, isUnderTest, getPackageManagerExecCommand, eventsHelper } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { BrowserContext } from '../browserContext';
@@ -37,6 +38,7 @@ import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { registry } from '../registry';
+import { Page } from '../page';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -343,6 +345,35 @@ export class AndroidDevice extends SdkObject {
     validateBrowserContextOptions(options, browserOptions);
 
     const browser = await CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions);
+    {
+      const androidArtifacts = new Set<string>();
+      browser._interceptSetInputFilePaths = async (page, files) => {
+        const newLocalFiles = [];
+        for (const file of files) {
+          const localFileName = `/data/local/tmp/pw/${path.basename(file)}`;
+          await this.shell(`mkdir -p /data/local/tmp/pw`);
+          await this.push(await fs.promises.readFile(file), localFileName, 0o644, await fs.promises.stat(file).then(s => (s.mtimeMs / 1000) | 0));
+          newLocalFiles.push(localFileName);
+          androidArtifacts.add(localFileName);
+        }
+        const listeners: RegisteredListener[] = [];
+        const cleanupHandler = async () => {
+          const filesToDelete = [...androidArtifacts];
+          try {
+            await this.shell(`rm -rf ${filesToDelete.join(' ')}`);
+            filesToDelete.forEach(f => androidArtifacts.delete(f));
+            eventsHelper.removeEventListeners(listeners);
+          } catch (error) {
+            debug('pw:android')(`error while deleting temporary uploaded files ${files.join(' ')}: ${error}`);
+          }
+        };
+        listeners.push(eventsHelper.addEventListener(page, Page.Events.Close, cleanupHandler));
+        listeners.push(eventsHelper.addEventListener(page, Page.Events.InternalFrameNavigatedToNewDocument, cleanupHandler));
+        listeners.push(eventsHelper.addEventListener(socket, 'close', cleanupHandler));
+        return newLocalFiles;
+      };
+    }
+
     const controller = new ProgressController(serverSideCallMetadata(), this);
     const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {
@@ -366,7 +397,7 @@ export class AndroidDevice extends SdkObject {
     installSocket.close();
   }
 
-  async push(content: Buffer, path: string, mode = 0o644): Promise<void> {
+  async push(content: Buffer, path: string, mode = 0o644, lastModified?: number): Promise<void> {
     const socket = await this._backend.open(`sync:`);
     const sendHeader = async (command: string, length: number) => {
       const buffer = Buffer.alloc(command.length + 4);
@@ -382,7 +413,7 @@ export class AndroidDevice extends SdkObject {
     const maxChunk = 65535;
     for (let i = 0; i < content.length; i += maxChunk)
       await send('DATA', content.slice(i, i + maxChunk));
-    await sendHeader('DONE', (Date.now() / 1000) | 0);
+    await sendHeader('DONE', lastModified || (Date.now() / 1000) | 0);
     const result = await new Promise<Buffer>(f => socket.once('data', f));
     const code = result.slice(0, 4).toString();
     if (code !== 'OKAY')

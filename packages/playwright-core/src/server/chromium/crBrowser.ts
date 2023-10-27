@@ -47,6 +47,7 @@ export class CRBrowser extends Browser {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
+  _interceptSetInputFilePaths?: (page: Page, files: string[]) => Promise<string[]>;
   private _version = '';
 
   private _tracingRecording = false;

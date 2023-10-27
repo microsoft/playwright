@@ -32,11 +32,7 @@ class EventsHelper {
     return { emitter, eventName, handler };
   }
 
-  static removeEventListeners(listeners: Array<{
-      emitter: EventEmitter;
-      eventName: (string | symbol);
-      handler: (...args: any[]) => void;
-    }>) {
+  static removeEventListeners(listeners: RegisteredListener[]) {
     for (const listener of listeners)
       listener.emitter.removeListener(listener.eventName, listener.handler);
     listeners.splice(0, listeners.length);

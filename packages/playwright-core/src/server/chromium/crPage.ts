@@ -333,6 +333,8 @@ export class CRPage implements PageDelegate {
   }
 
   async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
+    if (this._browserContext._browser._interceptSetInputFilePaths)
+      files = await this._browserContext._browser._interceptSetInputFilePaths(this._page, files);
     const frame = await handle.ownerFrame();
     if (!frame)
       throw new Error('Cannot set input files to detached input element');
