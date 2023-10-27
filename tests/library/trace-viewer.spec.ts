@@ -241,9 +241,9 @@ test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/style.csstext\/css/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/script.jsapplication\/javascript/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/style.csstext\/css/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript/]);
 });
 
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
@@ -253,8 +253,8 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/GET\/style.cssx-unknown.*aborted/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/GET\/frames\/style.cssx-unknown.*aborted/]);
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
 });
 
@@ -265,8 +265,8 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html.*/]);
-  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/script.jsapplication\/javascript.*continued/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html.*/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript.*continued/]);
 });
 
 test('should show snapshot URL', async ({ page, runAndTrace, server }) => {

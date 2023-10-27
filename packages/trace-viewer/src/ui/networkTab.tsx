@@ -129,7 +129,8 @@ const NetworkResource: React.FunctionComponent<{
 }> = ({ resource, boundaries }) => {
   const { routeStatus, resourceName, contentType } = React.useMemo(() => {
     const routeStatus = formatRouteStatus(resource);
-    const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/'));
+    const url = new URL(resource.request.url);
+    const resourceName = url.pathname;
     let contentType = resource.response.content.mimeType;
     const charset = contentType.match(/^(.*);\s*charset=.*$/);
     if (charset)
