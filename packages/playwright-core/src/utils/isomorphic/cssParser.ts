@@ -98,8 +98,16 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     return tokens[p] instanceof css.CommaToken;
   }
 
+  function isOpenParen(p = pos) {
+    return tokens[p] instanceof css.OpenParenToken;
+  }
+
   function isCloseParen(p = pos) {
     return tokens[p] instanceof css.CloseParenToken;
+  }
+
+  function isFunction(p = pos) {
+    return tokens[p] instanceof css.FunctionToken;
   }
 
   function isStar(p = pos) {
@@ -186,7 +194,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
             functions.push({ name, args: [] });
             names.add(name);
           }
-        } else if (tokens[pos] instanceof css.FunctionToken) {
+        } else if (isFunction()) {
           const name = (tokens[pos++].value as string).toLowerCase();
           if (!customNames.has(name)) {
             rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
@@ -221,14 +229,22 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
 
   function consumeBuiltinFunctionArguments(): string {
     let s = '';
-    while (!isCloseParen() && !isEOF())
+    let balance = 1;  // First open paren is a part of a function token.
+    while (!isEOF()) {
+      if (isOpenParen() || isFunction())
+        balance++;
+      if (isCloseParen())
+        balance--;
+      if (!balance)
+        break;
       s += tokens[pos++].toSource();
+    }
     return s;
   }
 
   const result = consumeFunctionArguments();
   if (!isEOF())
-    throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
+    throw unexpected();
   if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
     throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
   return { selector: result as CSSComplexSelector[], names: Array.from(names) };
