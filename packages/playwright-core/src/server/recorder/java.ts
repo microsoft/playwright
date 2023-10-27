@@ -67,8 +67,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    const actionCall = this._generateActionCall(action, inFrameLocator);
-    let code = `${subject}.${actionCall};`;
+    let code = this._generateActionCall(subject, action, inFrameLocator);
 
     if (signals.popup) {
       code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {
@@ -87,12 +86,12 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action, inFrameLocator: boolean): string {
+  private _generateActionCall(subject: string, action: Action, inFrameLocator: boolean): string {
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
       case 'closePage':
-        return 'close()';
+        return `${subject}.close();`;
       case 'click': {
         let method = 'click';
         if (action.clickCount === 2)
@@ -108,25 +107,27 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsText = formatClickOptions(options);
-        return this._asLocator(action.selector, inFrameLocator) + `.${method}(${optionsText})`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.${method}(${optionsText});`;
       }
       case 'check':
-        return this._asLocator(action.selector, inFrameLocator) + `.check()`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.check();`;
       case 'uncheck':
-        return this._asLocator(action.selector, inFrameLocator) + `.uncheck()`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.uncheck();`;
       case 'fill':
-        return this._asLocator(action.selector, inFrameLocator) + `.fill(${quote(action.text)})`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.fill(${quote(action.text)});`;
       case 'setInputFiles':
-        return this._asLocator(action.selector, inFrameLocator) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return this._asLocator(action.selector, inFrameLocator) + `.press(${quote(shortcut)})`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.press(${quote(shortcut)});`;
       }
       case 'navigate':
-        return `navigate(${quote(action.url)})`;
+        return `${subject}.navigate(${quote(action.url)});`;
       case 'select':
-        return this._asLocator(action.selector, inFrameLocator) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])});`;
+      case 'assertText':
+        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
     }
   }
 

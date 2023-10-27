@@ -239,6 +239,7 @@ export const InspectModeController: React.FunctionComponent<{
       const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName);
       recorder.setUIState({
         mode: isInspecting ? 'inspecting' : 'none',
+        tool: 'action',
         actionSelector: actionSelector.startsWith(frameSelector) ? actionSelector.substring(frameSelector.length).trim() : undefined,
         language: sdkLanguage,
         testIdAttributeName,

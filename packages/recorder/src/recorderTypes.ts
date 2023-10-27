@@ -20,13 +20,16 @@ export type Point = { x: number, y: number };
 
 export type Mode = 'inspecting' | 'recording' | 'none';
 
+export type RecordingTool = 'action' | 'assert';
+
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'fileChanged';
+  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'setRecordingTool' | 'selectorUpdated' | 'fileChanged';
   params: any;
 };
 
 export type UIState = {
   mode: Mode;
+  tool: RecordingTool;
   actionPoint?: Point;
   actionSelector?: string;
   language: 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
@@ -72,6 +75,7 @@ export type Source = {
 declare global {
   interface Window {
     playwrightSetMode: (mode: Mode) => void;
+    playwrightSetRecordingTool: (tool: RecordingTool) => void;
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSources: (sources: Source[]) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
