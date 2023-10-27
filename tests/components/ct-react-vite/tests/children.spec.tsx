@@ -51,7 +51,7 @@ test('render string as child', async ({ mount }) => {
 test('render array as child', async ({ mount }) => {
   const component = await mount(<DefaultChildren>{[<h4>{[4]}</h4>,[[<p>[2,3]</p>]]]}</DefaultChildren>);
   await expect(component.getByRole('heading', { level: 4 })).toHaveText('4');
-  await expect(component.getByRole('paragraph')).toHaveText('2');
+  await expect(component.getByRole('paragraph')).toHaveText('[2,3]');
 });
 
 test('render number as child', async ({ mount }) => {
