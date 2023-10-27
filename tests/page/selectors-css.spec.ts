@@ -274,6 +274,30 @@ it('should work with :nth-child', async ({ page, server }) => {
   expect(await page.$$eval(`css=span:nth-child(23n+2)`, els => els.length)).toBe(1);
 });
 
+it('should work with :nth-child(of) notation with nested functions', async ({ page, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Should enable once Firefox supports this syntax');
+
+  await page.setContent(`
+    <div>
+      <span>span1</span>
+      <span class=foo>span2<dd></dd></span>
+      <span class=foo>span3<dd class=marker></dd></span>
+      <span class=foo>span4<dd class=marker></dd></span>
+      <span class=foo>span5<dd></dd></span>
+      <span>span6</span>
+    </div>
+  `);
+  expect(await page.$$eval(`css=span:nth-child(1)`, els => els.map(e => e.textContent))).toEqual(['span1']);
+  expect(await page.$$eval(`css=span:nth-child(1 of .foo)`, els => els.map(e => e.textContent))).toEqual(['span2']);
+  expect(await page.$$eval(`css=span:nth-child(1 of .foo:has(dd.marker))`, els => els.map(e => e.textContent))).toEqual(['span3']);
+  expect(await page.$$eval(`css=span:nth-last-child(1 of .foo:has(dd.marker))`, els => els.map(e => e.textContent))).toEqual(['span4']);
+  expect(await page.$$eval(`css=span:nth-last-child(1 of .foo)`, els => els.map(e => e.textContent))).toEqual(['span5']);
+  expect(await page.$$eval(`css=span:nth-last-child(  1  )`, els => els.map(e => e.textContent))).toEqual(['span6']);
+
+  expect(await page.$$eval(`css=span:nth-child(1 of .foo:nth-child(3))`, els => els.map(e => e.textContent))).toEqual(['span3']);
+  expect(await page.$$eval(`css=span:nth-child(1 of .foo:nth-child(6))`, els => els.map(e => e.textContent))).toEqual([]);
+});
+
 it('should work with :not', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:not(#root1)`, els => els.length)).toBe(2);
