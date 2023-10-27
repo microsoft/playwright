@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.39
 
+<LiteYouTube
+  id="KqVuRAlOkm0"
+  title="Playwright 1.39"
+/>
+
 ### Add custom matchers to your expect
 
 You can extend Playwright assertions by providing custom matchers. These matchers will be available on the expect object.
