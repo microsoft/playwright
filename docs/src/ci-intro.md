@@ -189,6 +189,8 @@ jobs:
         run: npm ci
       - name: Run your tests
         run: npx playwright test
+        env:
+          HOME: /root
 ```
 
 ```yml python title=".github/workflows/playwright.yml"
@@ -217,6 +219,8 @@ jobs:
           pip install -e .
       - name: Run your tests
         run: pytest
+        env:
+          HOME: /root
 ```
 
 ```yml java title=".github/workflows/playwright.yml"
@@ -242,6 +246,8 @@ jobs:
         run: mvn -B install -D skipTests --no-transfer-progress
       - name: Run tests
         run: mvn test
+        env:
+          HOME: /root
 ```
 
 ```yml csharp title=".github/workflows/playwright.yml"
@@ -266,6 +272,8 @@ jobs:
       - run: dotnet build
       - name: Run your tests
         run: dotnet test
+        env:
+          HOME: /root
 ```
 
 ### On deployment
