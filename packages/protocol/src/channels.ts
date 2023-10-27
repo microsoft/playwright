@@ -929,6 +929,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1000,6 +1001,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,

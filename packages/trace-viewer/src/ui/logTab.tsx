@@ -52,7 +52,7 @@ export const LogTab: React.FunctionComponent<{
       });
     }
     return entries;
-  }, [action]);
+  }, [action, isLive]);
   if (!entries.length)
     return <PlaceholderPanel text='No log entries' />;
 

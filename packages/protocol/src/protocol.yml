@@ -411,6 +411,7 @@ LaunchOptions:
     downloadsPath: string?
     tracesDir: string?
     chromiumSandbox: boolean?
+    firefoxUserPrefs: json?
 
 
 ContextOptions:
@@ -868,7 +869,6 @@ BrowserType:
     launch:
       parameters:
         $mixin: LaunchOptions
-        firefoxUserPrefs: json?
         slowMo: number?
       returns:
         browser: Browser
