@@ -40,3 +40,9 @@ test('render a component with a named slot', async ({ mount }) => {
   await expect(component).toContainText('Main Content');
   await expect(component).toContainText('Footer');
 });
+
+test('render array as child', async ({ mount }) => {
+  const component = await mount(<DefaultSlot>{[<h4>{[4]}</h4>,[[<p>[2,3]</p>]]]}</DefaultSlot>);
+  await expect(component.getByRole('heading', { level: 4 })).toHaveText('4');
+  await expect(component.getByRole('paragraph')).toHaveText('[2,3]');
+});

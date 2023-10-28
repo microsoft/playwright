@@ -80,10 +80,13 @@ const __pwAllListeners = new Map();
 
 /**
  * @param {JsxComponentChild} child
- * @returns {import('vue').VNode | string}
  */
 function __pwCreateChild(child) {
-  return typeof child === 'string' ? child : __pwCreateWrapper(child);
+  if (Array.isArray(child))
+    return child.map(grandChild => __pwCreateChild(grandChild));
+  if (isComponent(child))
+    return __pwCreateWrapper(child);
+  return child;
 }
 
 /**
@@ -133,9 +136,6 @@ function __pwSlotToFunction(slot) {
  * @param {Component} component
  */
 function __pwCreateComponent(component) {
-  if (typeof component === 'string')
-    return component;
-
   let componentFunc = __pwRegistry.get(component.type);
   componentFunc = componentFunc || component.type;
 
