@@ -37,6 +37,7 @@ export type TraceViewerFixtures = {
 class TraceViewerPage {
   actionTitles: Locator;
   callLines: Locator;
+  filtersContainer: Locator;
   consoleLines: Locator;
   logLines: Locator;
   consoleLineMessages: Locator;
@@ -48,6 +49,7 @@ class TraceViewerPage {
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
     this.callLines = page.locator('.call-tab .call-line');
+    this.filtersContainer = page.locator('.tab-network-filter');
     this.logLines = page.getByTestId('log-list').locator('.list-view-entry');
     this.consoleLines = page.locator('.console-line');
     this.consoleLineMessages = page.locator('.console-line-message');

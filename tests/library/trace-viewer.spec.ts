@@ -246,6 +246,31 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript/]);
 });
 
+test('should filtering a request in network tab', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.filtersContainer.getByPlaceholder('Filter').fill('style');
+
+  await expect(traceViewer.networkRequests).not.toContainText([/200GET\/frames\/frame.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).not.toContainText([/200GET\/frames\/script.jsapplication\/javascript/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/style.csstext\/css/]);
+});
+
+test('should clear filter request in network tab', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.filtersContainer.getByPlaceholder('Filter').fill('style');
+  await traceViewer.filtersContainer.getByPlaceholder('Filter').fill('');
+
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/style.csstext\/css/]);
+});
+
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/style.css', route => route.abort());
