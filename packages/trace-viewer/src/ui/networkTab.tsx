@@ -52,6 +52,7 @@ export const NetworkTab: React.FunctionComponent<{
 }> = ({ boundaries, networkModel, onEntryHovered }) => {
   const [resource, setResource] = React.useState<Entry | undefined>();
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
+  const [textFilter, setTextFilter] = React.useState<string>('');
 
   React.useMemo(() => {
     if (sorting)
@@ -67,10 +68,11 @@ export const NetworkTab: React.FunctionComponent<{
 
   return <>
     {!resource && <div className='vbox'>
+      <NetworkFilters textFilter={textFilter} setTextFilter={setTextFilter} />
       <NetworkHeader sorting={sorting} toggleSorting={toggleSorting} />
       <NetworkListView
         name='network'
-        items={networkModel.resources}
+        items={networkModel.resources.filter(r => r.request.url.includes(textFilter))}
         render={entry => <NetworkResource boundaries={boundaries} resource={entry}></NetworkResource>}
         onSelected={setResource}
         onHighlighted={onEntryHovered}
@@ -163,6 +165,28 @@ const NetworkResource: React.FunctionComponent<{
       {routeStatus && <div className={`status-route ${routeStatus}`}>{routeStatus}</div>}
     </div>
   </div>;
+};
+
+const NetworkFilters: React.FunctionComponent<{
+  textFilter: string,
+  setTextFilter: React.Dispatch<React.SetStateAction<string>>,
+}> = ({
+  textFilter,
+  setTextFilter,
+}) => {
+  return (
+    <div className='tab-network-filter'>
+      <input
+        type="search"
+        placeholder="Filter"
+        spellCheck={false}
+        value={textFilter}
+        onChange={e => {
+          setTextFilter(e.target.value);
+        }}
+      />
+    </div>
+  );
 };
 
 function formatStatus(status: number): string {
