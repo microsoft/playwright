@@ -79,7 +79,11 @@ async function __pwResolveComponent(component) {
  * @param {Component | JsxComponentChild} child
  */
 function __pwCreateChild(child) {
-  return typeof child === 'string' ? child : __pwCreateWrapper(child);
+  if (Array.isArray(child))
+    return child.map(grandChild => __pwCreateChild(grandChild));
+  if (isComponent(child))
+    return __pwCreateWrapper(child);
+  return child;
 }
 
 /**
