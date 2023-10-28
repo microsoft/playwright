@@ -76,23 +76,27 @@ async function __pwResolveComponent(component) {
 }
 
 /**
- * @param {JsxComponent | JsxComponentChild} component
+ * @param {JsxComponentChild} child
+ */
+function __renderChild(child) {
+  if (Array.isArray(child))
+    return child.map(grandChild => __renderChild(grandChild));
+  if (isComponent(child))
+    return __pwRender(child);
+  return child;
+}
+
+/**
+ * @param {JsxComponent} component
  */
 function __pwRender(component) {
-  if (!isComponent(component))
-    return component;
-
   const componentFunc = __pwRegistry.get(component.type);
-
-  return __pwReact.createElement(componentFunc || component.type, component.props, ...component.children.map(child => {
-    if (typeof child === 'string')
-      return child;
-    return __pwRender(child);
-  }).filter(child => {
+  const children = component.children.map(child => __renderChild(child)).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
     return true;
-  }));
+  });
+  return __pwReact.createElement(componentFunc || component.type, component.props, children);
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
