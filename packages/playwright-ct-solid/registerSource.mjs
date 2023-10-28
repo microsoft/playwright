@@ -73,28 +73,27 @@ async function __pwResolveComponent(component) {
     await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
+/**
+ * @param {JsxComponentChild} child
+ */
 function __pwCreateChild(child) {
-  return typeof child === 'string' ? child : __pwCreateComponent(child);
+  if (Array.isArray(child))
+    return child.map(grandChild => __pwCreateChild(grandChild));
+  if (isComponent(child))
+    return __pwCreateComponent(child);
+  return child;
 }
 
 /**
  * @param {JsxComponent} component
  */
 function __pwCreateComponent(component) {
-  if (typeof component !== 'object' || Array.isArray(component))
-    return component;
-
   const componentFunc = __pwRegistry.get(component.type);
-
-
-  const children = component.children.reduce((/** @type {any[]} */ children, current) => {
-    const child = __pwCreateChild(current);
-    if (Array.isArray(child))
-      return child.map(grandChild => __pwCreateChild(grandChild));
-    if (typeof child !== 'string' || !!child.trim())
-      children.push(child);
-    return children;
-  }, []);
+  const children = component.children.map(child => __pwCreateChild(child)).filter(child => {
+    if (typeof child === 'string')
+      return !!child.trim();
+    return true;
+  });
 
   if (!componentFunc)
     return __pwH(component.type, component.props, children);
