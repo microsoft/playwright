@@ -1,0 +1,36 @@
+name: Request Feature
+description: Request new features to be added
+title: "[Feature]"
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Let us know what functionality you'd like to see in Playwright and what your use case is.
+        Do you think others might benefit from this as well?
+
+  - type: textarea
+    attributes:
+      label: Desired Feature
+      description: Describe the feature you'd like to see implemented in Playwright.
+      placeholder: "I'd like Playwright to have the ability to..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Use Case
+      description: Explain the specific scenario or use case where this feature would be beneficial.
+      placeholder: "In my project, we often need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Potential Benefits for Others
+      description: Share your thoughts on how this feature might be useful for other Playwright users.
+      placeholder: "I think this would be beneficial for others because..."
+    validations:
+      required: false

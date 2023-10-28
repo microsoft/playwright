@@ -1,0 +1,76 @@
+name: Report Bug
+description: Something doesn't work like it should? Tell us!
+title: "[BUG]"
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️⚠️ Do not delete this template ⚠️⚠️
+
+        🔎 Search existing issues to avoid creating duplicates.
+        🧪 Test using the latest Playwright release to see if your issue has already been fixed.
+        💡 Provide enough information for us to be able to reproduce your issue locally.
+
+  - type: input
+    attributes:
+      label: Playwright Version
+      placeholder: "v1.XX"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Operating System
+      placeholder: "Windows 11, Ubuntu 20, macOS 13.2, etc."
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Browser
+      options:
+        - "All"
+        - "Chromium"
+        - "Firefox"
+        - "WebKit"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Other Info
+      placeholder: "Any additional system-related information."
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Source Code
+      description: Provide a link to a GitHub repo with reproducible code or paste a self-contained test file.
+      placeholder: "https://github.com/your_profile/playwright_issue_title or \n\n```js\n// Your code here\n```"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      placeholder: "1. Run the test\n2. ..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      placeholder: "What should have happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Actual Behavior
+      placeholder: "What actually happened?"
+    validations:
+      required: true

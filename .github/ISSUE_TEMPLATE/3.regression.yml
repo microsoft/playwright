@@ -1,0 +1,63 @@
+name: Report Regression
+description: Functionality that used to work and does not anymore
+title: "[REGRESSION]: "
+labels: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Context:**
+        Provide context information to help us better understand your report.
+  - type: input
+    attributes:
+      label: Good Playwright Version
+      description: Which version of Playwright was working correctly?
+      placeholder: v1.XX
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Bad Playwright Version
+      description: Which version of Playwright introduced the regression?
+      placeholder: v1.XX
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - Linux
+        - Mac
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Extra
+      placeholder: Specific details about your environment, if relevant.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Code Snippet
+      description: >
+        Help us help you! Insert a short code snippet that illustrates your
+        bug and that we can run and debug locally. For example:
+      placeholder: |
+        ```javascript
+        const {chromium, webkit, firefox} = require('playwright');
+
+        (async () => {
+          const browser = await chromium.launch();
+          // ... 
+        })();
+        ```
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the Bug
+      placeholder: Add any other details about the problem here.
+    validations:
+      required: true

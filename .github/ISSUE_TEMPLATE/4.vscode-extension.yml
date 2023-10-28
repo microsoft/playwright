@@ -1,0 +1,93 @@
+name: Report VSCode extension bug
+description: Something doesn't work like it should inside the Visual Studio Code extension or you have a feature request? Tell us!
+title: "[BUG]"
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Context:**
+        Provide context to help us better understand your report.
+
+  - type: input
+    attributes:
+      label: Playwright Version
+      description: "Which Playwright version are you using?"
+      placeholder: "v1.XX"
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Operating System
+      options:
+        - "Windows"
+        - "Linux"
+        - "Mac"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Node.js version
+      placeholder: "14.6"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Visual Studio Code version
+      placeholder: "1.65"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Playwright for VSCode extension version
+      placeholder: "1.2.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Browser
+      options:
+        - "All"
+        - "Chromium"
+        - "Firefox"
+        - "WebKit"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Extra
+      description: Any specific details about your environment.
+      placeholder: "For instance, any plugins or configurations that might be relevant."
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Code Snippet
+      description: Help us help you! Share a short code snippet that illustrates your bug.
+      placeholder: |
+        ```javascript
+        const {chromium, webkit, firefox} = require('playwright');
+
+        (async () => {
+          const browser = await chromium.launch();
+          // ... 
+        })();
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      placeholder: "Explain what you're experiencing and any other relevant details."
+    validations:
+      required: true
