@@ -31,6 +31,10 @@
   position: relative;
 }
 
+.tabbed-pane .tab-content.tab-network {
+  flex-direction: column;
+}
+
 .tabbed-pane-tab {
   padding: 2px 6px 0 6px;
   cursor: pointer;

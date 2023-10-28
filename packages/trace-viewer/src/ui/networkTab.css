@@ -140,3 +140,12 @@
 .network-request-header.filter-size.negative .network-request-size .codicon-triangle-up {
   display: initial !important;
 }
+
+.tab-network-filter {
+  padding: 8px;
+  background-color: var(--vscode-sideBar-background);
+}
+
+.tab-network-filter input[type=search] {
+  min-width: 200px;
+}
