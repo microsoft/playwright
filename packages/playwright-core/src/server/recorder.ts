@@ -43,7 +43,7 @@ import { EventEmitter } from 'events';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { quoteAttributeValue } from '../utils/isomorphic/stringUtils';
+import { quoteCSSAttributeValue } from '../utils/isomorphic/stringUtils';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
 import type { Dialog } from './dialog';
 
@@ -547,9 +547,9 @@ class ContextRecorder extends EventEmitter {
     const selectorsChain = [];
     for (let i = 0; i < chain.length - 1; i++) {
       if (chain[i].name())
-        selectorsChain.push(`iframe[name=${quoteAttributeValue(chain[i].name())}]`);
+        selectorsChain.push(`iframe[name=${quoteCSSAttributeValue(chain[i].name())}]`);
       else
-        selectorsChain.push(`iframe[src=${quoteAttributeValue(chain[i].url())}]`);
+        selectorsChain.push(`iframe[src=${quoteCSSAttributeValue(chain[i].url())}]`);
     }
     return {
       pageAlias,
