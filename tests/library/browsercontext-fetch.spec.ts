@@ -1196,5 +1196,5 @@ it('should update host header on redirect', async ({ context, server }) => {
 it('should keep working after dispose', async ({ context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27822' });
   await context.request.dispose();
-  expect(await context.request.get(server.EMPTY_PAGE)).toBeOK();
+  await expect(await context.request.get(server.EMPTY_PAGE)).toBeOK();
 });
