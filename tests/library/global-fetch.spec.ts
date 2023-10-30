@@ -451,3 +451,10 @@ it('should serialize post data on the client', async ({ playwright, server }) =>
   // expect(serverRequest.rawHeaders).toContain('vaLUE');
   await request.dispose();
 });
+
+it('should throw after dispose', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27822' });
+  const request = await playwright.request.newContext();
+  await request.dispose();
+  await expect(request.get(server.EMPTY_PAGE)).rejects.toThrow('Target page, context or browser has been closed');
+});

@@ -1192,3 +1192,9 @@ it('should update host header on redirect', async ({ context, server }) => {
 
   expect((await reqPromise).headers.host).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
 });
+
+it('should keep working after dispose', async ({ context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27822' });
+  await context.request.dispose();
+  await expect(await context.request.get(server.EMPTY_PAGE)).toBeOK();
+});

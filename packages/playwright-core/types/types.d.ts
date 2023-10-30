@@ -15262,6 +15262,16 @@ export interface APIRequestContext {
    * stored responses, and makes
    * [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body) throw "Response disposed"
    * error.
+   *
+   * If this {@link APIRequestContext} is obtained via
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+   * [page.request](https://playwright.dev/docs/api/class-page#page-request), it will keep working until its owning
+   * {@link BrowserContext} closes.
+   *
+   * If this {@link APIRequestContext} was created by
+   * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context), this
+   * method discards all its resources, calling any method on disposed {@link APIRequestContext} will throw an
+   * exception.
    */
   dispose(): Promise<void>;
 
