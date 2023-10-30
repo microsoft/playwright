@@ -95,7 +95,7 @@ it('should fail with WebSocket if not ignored', async ({ browser, httpsServer })
 
 it('serviceWorker should intercept document request', async ({ browser, httpsServer, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27768' });
-  it.skip(browserName === 'chromium');
+  it.fixme(browserName === 'chromium');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   await context.route('**/*', route => route.continue());
