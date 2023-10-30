@@ -57,7 +57,7 @@ export const TabbedPane: React.FunctionComponent<{
           ]}
         </div>}
         {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
-          <select style={{width: '100%', background: 'none', cursor: 'pointer'}} onChange={e => {
+          <select style={{ width: '100%', background: 'none', cursor: 'pointer' }} onChange={e => {
             setSelectedTab(tabs[e.currentTarget.selectedIndex].id);
           }}>
             {tabs.map(tab => {
