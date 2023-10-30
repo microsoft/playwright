@@ -56,13 +56,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     let subject: string;
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
-    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+    } else {
       const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
-    } else if (actionInContext.frame.name) {
-      subject = `${pageAlias}.frame(${formatObject({ name: actionInContext.frame.name })})`;
-    } else {
-      subject = `${pageAlias}.frame(${formatObject({ url: actionInContext.frame.url })})`;
     }
 
     const signals = toSignalMap(action);

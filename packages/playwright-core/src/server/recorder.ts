@@ -43,6 +43,7 @@ import { EventEmitter } from 'events';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { quoteCSSAttributeValue } from '../utils/isomorphic/stringUtils';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
 import type { Dialog } from './dialog';
 
@@ -530,7 +531,6 @@ class ContextRecorder extends EventEmitter {
     return {
       pageAlias: this._pageAliases.get(page)!,
       isMainFrame: true,
-      url: page.mainFrame().url(),
     };
   }
 
@@ -545,16 +545,6 @@ class ContextRecorder extends EventEmitter {
     if (chain.length === 1)
       return this._describeMainFrame(page);
 
-    const hasUniqueName = page.frames().filter(f => f.name() === frame.name()).length === 1;
-    const fallback: actions.FrameDescription = {
-      pageAlias,
-      isMainFrame: false,
-      url: frame.url(),
-      name: frame.name() && hasUniqueName ? frame.name() : undefined,
-    };
-    if (chain.length > 3)
-      return fallback;
-
     const selectorPromises: Promise<string | undefined>[] = [];
     for (let i = 0; i < chain.length - 1; i++)
       selectorPromises.push(findFrameSelector(chain[i + 1]));
@@ -562,11 +552,24 @@ class ContextRecorder extends EventEmitter {
     const result = await raceAgainstDeadline(() => Promise.all(selectorPromises), monotonicTime() + 2000);
     if (!result.timedOut && result.result.every(selector => !!selector)) {
       return {
-        ...fallback,
+        pageAlias,
+        isMainFrame: false,
         selectorsChain: result.result as string[],
       };
     }
-    return fallback;
+    // Best effort to find a selector for the frame.
+    const selectorsChain = [];
+    for (let i = 0; i < chain.length - 1; i++) {
+      if (chain[i].name())
+        selectorsChain.push(`iframe[name=${quoteCSSAttributeValue(chain[i].name())}]`);
+      else
+        selectorsChain.push(`iframe[src=${quoteCSSAttributeValue(chain[i].url())}]`);
+    }
+    return {
+      pageAlias,
+      isMainFrame: false,
+      selectorsChain,
+    };
   }
 
   testIdAttributeName(): string {

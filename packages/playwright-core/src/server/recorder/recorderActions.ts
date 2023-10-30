@@ -128,10 +128,13 @@ export type DialogSignal = BaseSignal & {
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
 
-export type FrameDescription = {
-  pageAlias: string;
-  isMainFrame: boolean;
-  url: string;
-  name?: string;
-  selectorsChain?: string[];
+type FrameDescriptionMainFrame = {
+  isMainFrame: true;
 };
+
+type FrameDescriptionChildFrame = {
+  isMainFrame: false;
+  selectorsChain: string[];
+};
+
+export type FrameDescription = { pageAlias: string } & (FrameDescriptionMainFrame | FrameDescriptionChildFrame);
