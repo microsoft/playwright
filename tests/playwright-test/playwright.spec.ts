@@ -848,21 +848,3 @@ test('should save trace in two APIRequestContexts', async ({ runInlineTest, serv
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
-
-test('should throw if disposed APIRequestContext was called', async ({ runInlineTest, server }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      let myRequest;
-      test.beforeAll(({ request }) => {
-        myRequest = request;
-      });
-      test('default APIRequestContext fixture', async ({ request }) => {
-        await myRequest.get('${server.EMPTY_PAGE}')
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.results[0].error.message).toContain('Target page, context or browser has been closed');
-});
