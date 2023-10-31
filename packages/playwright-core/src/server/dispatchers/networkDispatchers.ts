@@ -191,8 +191,6 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
       tracing,
     });
 
-    this.addObjectListener(APIRequestContext.Events.Dispose, () => this._dispose());
-
     this.adopt(tracing);
   }
 
@@ -201,7 +199,10 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async dispose(params?: channels.APIRequestContextDisposeParams): Promise<void> {
-    await this._object.dispose();
+    await this._wrapDispose(async () => {
+      await this._object.dispose();
+      this._dispose();
+    });
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {

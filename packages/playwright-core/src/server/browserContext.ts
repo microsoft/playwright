@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { createGuid, debugMode } from '../utils';
+import { ManualPromise, createGuid, debugMode } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
@@ -69,8 +69,7 @@ export abstract class BrowserContext extends SdkObject {
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
-  readonly _closePromise: Promise<Error>;
-  private _closePromiseFulfill: ((error: Error) => void) | undefined;
+  private _closedPromise = new ManualPromise<void>();
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browser: Browser;
@@ -95,8 +94,6 @@ export abstract class BrowserContext extends SdkObject {
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
-    this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
-
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
     if (this._options.recordHar)
@@ -231,25 +228,20 @@ export abstract class BrowserContext extends SdkObject {
   _browserClosed() {
     for (const page of this.pages())
       page._didClose();
-    this._didCloseInternal();
+    this._closedPromise.resolve();
+    this._fireContextClosedEvent();
   }
 
-  private _didCloseInternal() {
+  private _fireContextClosedEvent() {
     if (this._closedStatus === 'closed') {
       // We can come here twice if we close browser context and browser
       // at the same time.
       return;
     }
-    const gotClosedGracefully = this._closedStatus === 'closing';
+    this.tracing.abort();
     this._closedStatus = 'closed';
-    if (!gotClosedGracefully) {
-      this._deleteAllDownloads();
-      this._downloads.clear();
-    }
-    this.tracing.dispose().catch(() => {});
     if (this._isPersistentContext)
       this.onClosePersistent();
-    this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
 
@@ -273,7 +265,8 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doExposeBinding(binding: PageBinding): Promise<void>;
   protected abstract doRemoveExposedBindings(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
-  protected abstract doClose(reason: string | undefined): Promise<void>;
+  protected abstract doClose(): Promise<void>;
+  protected abstract doClosePersistent(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
@@ -422,7 +415,7 @@ export abstract class BrowserContext extends SdkObject {
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();
-      await this.tracing.dispose();
+      await this.tracing.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -432,12 +425,12 @@ export abstract class BrowserContext extends SdkObject {
           promises.push(artifact.finishedPromise());
       }
 
-      if (this._customCloseHandler) {
+      if (this._customCloseHandler)
         await this._customCloseHandler();
-      } else {
-        // Close the context.
-        await this.doClose(options.reason);
-      }
+      else if (this.isPersistentContext())
+        await this.doClosePersistent(options.reason);
+      else
+        await this.doClose();
 
       // We delete downloads after context closure
       // so that browser does not write to the download file anymore.
@@ -445,11 +438,15 @@ export abstract class BrowserContext extends SdkObject {
       promises.push(this._deleteAllTempDirs());
       await Promise.all(promises);
 
-      // Custom handler should trigger didCloseInternal itself.
-      if (!this._customCloseHandler)
-        this._didCloseInternal();
+      // The other branches will call _fireContextClosedEvent via browserClosed.
+      if (this._customCloseHandler || this.isPersistentContext()) {
+        await this._closedPromise;
+      } else {
+        this._closedPromise.resolve();
+        this._fireContextClosedEvent();
+      }
     }
-    await this._closePromise;
+    await this._closedPromise;
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {

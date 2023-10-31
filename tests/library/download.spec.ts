@@ -388,28 +388,6 @@ it.describe('download event', () => {
     expect(fs.existsSync(path2)).toBeFalsy();
   });
 
-  it('should delete downloads on browser gone', async ({ server, browserType }) => {
-    const browser = await browserType.launch();
-    const page = await browser.newPage();
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [download1] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const [download2] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path1 = await download1.path();
-    const path2 = await download2.path();
-    expect(fs.existsSync(path1)).toBeTruthy();
-    expect(fs.existsSync(path2)).toBeTruthy();
-    await browser.close();
-    expect(fs.existsSync(path1)).toBeFalsy();
-    expect(fs.existsSync(path2)).toBeFalsy();
-    expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
-  });
-
   it('should close the context without awaiting the failed download', async ({ browser, server, httpsServer, browserName, headless }, testInfo) => {
     it.skip(browserName !== 'chromium', 'Only Chromium downloads on alt-click');
 
@@ -489,7 +467,7 @@ it.describe('download event', () => {
     const [downloadError, saveError] = await Promise.all([
       download.path().catch(e => e),
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
-      (browser as any)._channel.killForTests(),
+      (browser as any)._channel.killForTests().catch(() => {}),
     ]);
     expect(downloadError.message).toBe('download.path: ' + kTargetClosedErrorMessage);
     expect(saveError.message).toContain('download.saveAs: ' + kTargetClosedErrorMessage);

@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { LongStandingScope, assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -45,12 +45,17 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   private _parent: ParentScopeType | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, DispatcherScope>();
-  protected _disposed = false;
+  _disposed = false;
+  _disposeSent = false;
   protected _eventListeners: RegisteredListener[] = [];
 
   readonly _guid: string;
   readonly _type: string;
   _object: Type;
+  private _delayDispose = false;
+  private _disposeReason: 'gc' | undefined;
+  private _dispatchersPendingSendDispose: DispatcherScope[] = [];
+  readonly _openScope = new LongStandingScope();
 
   constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>) {
     super();
@@ -105,8 +110,26 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   _dispose(reason?: 'gc') {
+    if (!this._disposeReason)
+      this._disposeReason = reason;
     this._disposeRecursively();
-    this._connection.sendDispose(this, reason);
+  }
+
+  async _wrapDispose(callback: () => Promise<void>) {
+    this._delayDispose = true;
+    await callback();
+    assert(this._disposed);
+    for (const dispatcher of this._dispatchersPendingSendDispose) {
+      dispatcher._openScope.close(new TargetClosedError());
+      dispatcher._sendDispose();
+    }
+  }
+
+  private _sendDispose() {
+    if (this._disposeSent)
+      return;
+    this._disposeSent = true;
+    this._connection.sendDispose(this, this._disposeReason);
   }
 
   protected _onDispose() {
@@ -129,6 +152,23 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
       dispatcher._disposeRecursively();
     this._dispatchers.clear();
     delete (this._object as any)[dispatcherSymbol];
+    this._disposeEpilogue();
+  }
+
+  _delayedDisposeRoot(): DispatcherScope | null {
+    if (this._delayDispose)
+      return this;
+    return this._parent?._delayedDisposeRoot() || null;
+  }
+
+  _disposeEpilogue() {
+    const delayRoot = this._delayedDisposeRoot();
+    if (delayRoot) {
+      delayRoot._dispatchersPendingSendDispose.push(this);
+      return;
+    }
+    this._openScope.close(new TargetClosedError());
+    this._connection.sendDispose(this, this._disposeReason);
   }
 
   _debugScopeState(): any {
@@ -213,7 +253,7 @@ export class DispatcherConnection {
     if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
       const guid = arg.guid;
       const dispatcher = this._dispatchers.get(guid);
-      if (!dispatcher)
+      if (!dispatcher || dispatcher._disposed)
         throw new ValidationError(`${path}: no object with guid ${guid}`);
       if (names !== '*' && !names.includes(dispatcher._type))
         throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${names.toString()}`);
@@ -251,7 +291,7 @@ export class DispatcherConnection {
     this._dispatchersByType.set(type, new Set(dispatchersArray.slice(maxDispatchers / 10)));
     for (let i = 0; i < maxDispatchers / 10; ++i) {
       const d = this._dispatchers.get(dispatchersArray[i]);
-      if (!d)
+      if (!d || d._disposed)
         continue;
       d._dispose('gc');
     }
@@ -260,7 +300,7 @@ export class DispatcherConnection {
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
-    if (!dispatcher) {
+    if (!dispatcher || dispatcher._disposed) {
       this.onmessage({ id, error: serializeError(new TargetClosedError()) });
       return;
     }
@@ -325,7 +365,7 @@ export class DispatcherConnection {
 
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
-      const result = await (dispatcher as any)[method](validParams, callMetadata);
+      const result = await dispatcher._openScope.race((dispatcher as any)[method](validParams, callMetadata));
       const validator = findValidator(dispatcher._type, method, 'Result');
       callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {

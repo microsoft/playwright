@@ -34,6 +34,8 @@ export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSes
   }
 
   async detach(): Promise<void> {
-    return this._object.detach();
+    await this._wrapDispose(async () => {
+      await this._object.detach();
+    });
   }
 }

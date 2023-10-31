@@ -632,7 +632,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await waitForRafs(page, 100);
-    await (browser as any)._channel.killForTests();
+    await (browser as any)._channel.killForTests().catch(() => {});
 
     const file = testInfo.outputPath('saved-video-');
     const saveResult = await page.video().saveAs(file).catch(e => e);

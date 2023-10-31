@@ -67,7 +67,10 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
   }
 
   async dispose() {
-    await this._object.dispose();
+    await this._wrapDispose(async () => {
+      this._object.dispose();
+      this._dispose();
+    });
   }
 }
 

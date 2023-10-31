@@ -56,7 +56,9 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async close(params: channels.BrowserCloseParams): Promise<void> {
-    await this._object.close(params);
+    await this._wrapDispose(async () => {
+      await this._object.close(params);
+    });
   }
 
   async killForTests(): Promise<void> {

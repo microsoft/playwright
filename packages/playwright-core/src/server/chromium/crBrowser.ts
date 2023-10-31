@@ -510,7 +510,7 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateRequestInterception();
   }
 
-  async doClose(reason: string | undefined) {
+  private async _handleBeforeUnloadOnClose() {
     // Headful chrome cannot dispose browser context with opened 'beforeunload'
     // dialogs, so we should close all that are currently opened.
     // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
@@ -521,16 +521,12 @@ export class CRBrowserContext extends BrowserContext {
       openedBeforeUnloadDialogs.push(...dialogs);
     }
     await Promise.all(openedBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
+  }
 
-    if (!this._browserContextId) {
-      await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
-      // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
-      return;
-    }
-
-    await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
-    this._browser._contexts.delete(this._browserContextId);
+  async doClose() {
+    await this._handleBeforeUnloadOnClose();
+    await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId! });
+    this._browser._contexts.delete(this._browserContextId!);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
       if (serviceWorker._browserContext !== this)
         continue;
@@ -541,6 +537,13 @@ export class CRBrowserContext extends BrowserContext {
       serviceWorker.didClose();
       this._browser._serviceWorkers.delete(targetId);
     }
+  }
+
+  async doClosePersistent(reason: string | undefined) {
+    await this._handleBeforeUnloadOnClose();
+    await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
+    // Closing persistent context should close the browser.
+    await this._browser.close({ reason });
   }
 
   onClosePersistent() {

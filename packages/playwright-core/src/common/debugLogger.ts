@@ -25,7 +25,9 @@ const debugLoggerColorMap = {
   'browser': 0, // reset
   'socks': 92, // purple
   'error': 160, // red,
-  'channel': 33, // blue
+  'channel:send': 33, // blue
+  'channel:recv': 34, // green
+  'channel:event': 160, // red
   'server': 45, // cyan
   'server:channel': 34, // green
 };

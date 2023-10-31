@@ -349,15 +349,15 @@ export class WKBrowserContext extends BrowserContext {
     });
   }
 
-  async doClose(reason: string | undefined) {
-    if (!this._browserContextId) {
-      await Promise.all(this._wkPages().map(wkPage => wkPage._stopVideo()));
-      // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
-    } else {
-      await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
-      this._browser._contexts.delete(this._browserContextId);
-    }
+  async doClose() {
+    await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId! });
+    this._browser._contexts.delete(this._browserContextId!);
+  }
+
+  async doClosePersistent(reason: string | undefined) {
+    await Promise.all(this._wkPages().map(wkPage => wkPage._stopVideo()));
+    // Closing persistent context should close the browser.
+    await this._browser.close({ reason });
   }
 
   async cancelDownload(uuid: string) {

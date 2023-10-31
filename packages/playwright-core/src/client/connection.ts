@@ -119,9 +119,9 @@ export class Connection extends EventEmitter {
     const type = object._type;
     const id = ++this._lastId;
     const message = { id, guid, method, params };
-    if (debugLogger.isEnabled('channel')) {
+    if (debugLogger.isEnabled('channel:send')) {
       // Do not include metadata in debug logs to avoid noise.
-      debugLogger.log('channel', 'SEND> ' + JSON.stringify(message));
+      debugLogger.log('channel:send', message);
     }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
@@ -137,8 +137,8 @@ export class Connection extends EventEmitter {
 
     const { id, guid, method, params, result, error, log } = message as any;
     if (id) {
-      if (debugLogger.isEnabled('channel'))
-        debugLogger.log('channel', '<RECV ' + JSON.stringify(message));
+      if (debugLogger.isEnabled('channel:recv'))
+        debugLogger.log('channel:recv', message);
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
@@ -154,8 +154,8 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    if (debugLogger.isEnabled('channel'))
-      debugLogger.log('channel', '<EVENT ' + JSON.stringify(message));
+    if (debugLogger.isEnabled('channel:event'))
+      debugLogger.log('channel:event', message);
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;

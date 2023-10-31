@@ -270,7 +270,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {
-    await this._context.close(params);
+    await this._wrapDispose(async () => {
+      await this._context.close(params);
+    });
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {

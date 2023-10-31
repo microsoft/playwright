@@ -106,7 +106,9 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async delete(): Promise<void> {
-    await this._object.delete();
-    this._dispose();
+    await this._wrapDispose(async () => {
+      await this._object.delete();
+      this._dispose();
+    });
   }
 }

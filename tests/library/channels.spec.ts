@@ -20,16 +20,20 @@ import { playwrightTest, expect } from '../config/browserTest';
 
 // Use something worker-scoped (e.g. expectScopeState) forces a new worker for this file.
 // Otherwise, a browser launched for other tests in this worker will affect the expectations.
-const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: any) => void }>({
+const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: any) => Promise<void> }>({
   expectScopeState: [async ({ toImplInWorkerScope }, use) => {
-    await use((object, golden) => {
-      golden = trimGuids(golden);
-      const remoteRoot = toImplInWorkerScope();
-      const remoteState = trimGuids(remoteRoot._debugScopeState());
-      const localRoot = object._connection._rootObject;
-      const localState = trimGuids(localRoot._debugScopeState());
-      expect(localState).toEqual(golden);
-      expect(remoteState).toEqual(golden);
+    await use(async (object, golden) => {
+      await it.step('expectScopeState', async () => {
+        await expect(() => {
+          const trimmedGolden = trimGuids(golden);
+          const remoteRoot = toImplInWorkerScope();
+          const remoteState = trimGuids(remoteRoot._debugScopeState());
+          const localRoot = object._connection._rootObject;
+          const localState = trimGuids(localRoot._debugScopeState());
+          expect(localState).toEqual(trimmedGolden);
+          expect(remoteState).toEqual(trimmedGolden);
+        }).toPass();
+      }, { box: true });
     });
   }, { scope: 'worker' }],
 });
@@ -53,14 +57,14 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
       { _guid: 'selectors', objects: [] },
     ]
   };
-  expectScopeState(browser, GOLDEN_PRECONDITION);
+  await expectScopeState(browser, GOLDEN_PRECONDITION);
 
   const context = await browser.newContext();
   const page = await context.newPage();
   // Firefox Beta 96 yields a console warning for the pages that
   // don't use `<!DOCTYPE HTML> tag.
   await page.goto(server.PREFIX + '/empty-standard-mode.html');
-  expectScopeState(browser, {
+  await expectScopeState(browser, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -88,7 +92,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
   });
 
   await context.close();
-  expectScopeState(browser, GOLDEN_PRECONDITION);
+  await expectScopeState(browser, GOLDEN_PRECONDITION);
   await browser.close();
 });
 
@@ -111,10 +115,10 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
       { _guid: 'selectors', objects: [] },
     ]
   };
-  expectScopeState(browserType, GOLDEN_PRECONDITION);
+  await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   const session = await browser.newBrowserCDPSession();
-  expectScopeState(browserType, {
+  await expectScopeState(browserType, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -133,7 +137,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
   });
 
   await session.detach();
-  expectScopeState(browserType, GOLDEN_PRECONDITION);
+  await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   await browser.close();
 });
@@ -152,11 +156,11 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
       { _guid: 'selectors', objects: [] },
     ]
   };
-  expectScopeState(browserType, GOLDEN_PRECONDITION);
+  await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   const browser = await browserType.launch();
   await browser.newContext();
-  expectScopeState(browserType, {
+  await expectScopeState(browserType, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -181,7 +185,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
   });
 
   await browser.close();
-  expectScopeState(browserType, GOLDEN_PRECONDITION);
+  await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
 it('should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState, video }) => {
@@ -192,7 +196,7 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
 
   await page.goto(server.PREFIX + '/one-style.html');
 
-  expectScopeState(browserType, {
+  await expectScopeState(browserType, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
