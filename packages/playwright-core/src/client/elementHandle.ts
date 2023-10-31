@@ -270,7 +270,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
     if (context._connection.isRemote()) {
-      if (!context._isLocalBrowser())
+      if (!context._isLocalBrowserOnServer())
         throw new Error('File paths are not supported in this type of browser, please set buffers instead');
       const streams: channels.WritableStreamChannel[] = await Promise.all((items as string[]).map(async item => {
         const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
@@ -281,12 +281,13 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
       }));
       return { streams };
     }
-    if (context._isLocalBrowser())
+    if (context._isLocalBrowserOnServer())
       return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
     const filePayloads: SetInputFilesFiles = await Promise.all((items as string[]).map(async item => {
       return {
         name: path.basename(item),
-        buffer: await fs.promises.readFile(item)
+        buffer: await fs.promises.readFile(item),
+        lastModifiedMs: (await fs.promises.stat(item)).mtimeMs,
       };
     }));
     return { files: filePayloads };
@@ -297,7 +298,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   const totalBufferSizeExceedsLimit = payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) > sizeLimit;
   if (totalBufferSizeExceedsLimit) {
     let error = 'Cannot set buffer larger than 50Mb';
-    if (context._isLocalBrowser())
+    if (context._isLocalBrowserOnServer())
       error += ', please write it to a file and pass its path instead.';
     throw new Error(error);
   }

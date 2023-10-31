@@ -597,6 +597,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           name: payload.name,
           mimeType: payload.mimeType || mime.getType(payload.name) || 'application/octet-stream',
           buffer: payload.buffer.toString('base64'),
+          lastModifiedMs: payload.lastModifiedMs
         });
       }
     }

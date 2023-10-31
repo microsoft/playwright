@@ -1012,7 +1012,7 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
-    isLocalBrowser: boolean
+    isLocalBrowserOnServer: boolean
     requestContext: APIRequestContext
     tracing: Tracing
 
@@ -2119,6 +2119,7 @@ Frame:
               name: string
               mimeType: string?
               buffer: binary
+              lastModifiedMs: number?
         timeout: number?
         noWaitAfter: boolean?
       flags:
@@ -2687,6 +2688,7 @@ ElementHandle:
               name: string
               mimeType: string?
               buffer: binary
+              lastModifiedMs: number?
         timeout: number?
         noWaitAfter: boolean?
       flags:

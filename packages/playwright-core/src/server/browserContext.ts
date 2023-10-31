@@ -109,6 +109,10 @@ export abstract class BrowserContext extends SdkObject {
     return this._isPersistentContext;
   }
 
+  isLocalBrowserOnServer(): boolean {
+    return false;
+  }
+
   setSelectors(selectors: Selectors) {
     this._selectors = selectors;
   }

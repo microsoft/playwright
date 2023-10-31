@@ -46,14 +46,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
 
-  constructor(parentScope: DispatcherScope, context: BrowserContext, isLocalBrowser: boolean) {
+  constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
-      isLocalBrowser,
+      isLocalBrowserOnServer: context._browser._isCollocatedWithServer,
       requestContext,
       tracing,
     });
@@ -178,6 +178,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
+    if (!this._context._browser._isCollocatedWithServer)
+      throw new Error('Cannot create temp file: browser is not collocated with server');
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
     await fs.promises.mkdir(tmpDir);

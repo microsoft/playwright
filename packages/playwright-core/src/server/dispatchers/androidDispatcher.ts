@@ -159,7 +159,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
     const context = await this._object.launchBrowser(params.pkg, params);
-    return { context: new BrowserContextDispatcher(this, context, false) };
+    return { context: new BrowserContextDispatcher(this, context) };
   }
 
   async close(params: channels.AndroidDeviceCloseParams) {
@@ -171,7 +171,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
-    return { context: new BrowserContextDispatcher(this, await this._object.connectToWebView(params.socketName), false) };
+    return { context: new BrowserContextDispatcher(this, await this._object.connectToWebView(params.socketName)) };
   }
 }
 
