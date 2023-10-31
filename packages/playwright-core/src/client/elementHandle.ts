@@ -294,9 +294,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
       throw new Error('File paths cannot be mixed with buffers');
 
     if (context._connection.isRemote()) {
-      if (await filesExceedSizeLimit(items as string[])) {
-        if (!context._isLocalBrowserOnServer())
-          throw new Error('Cannot transfer files larger than 50Mb to a browser not collocated with the server');
+      if (context._isLocalBrowserOnServer()) {
         const streams: channels.WritableStreamChannel[] = await Promise.all((items as string[]).map(async item => {
           const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
           const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item), lastModifiedMs });
@@ -306,12 +304,14 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
         }));
         return { streams };
       }
+      if (await filesExceedSizeLimit(items as string[]))
+        throw new Error('Cannot transfer files larger than 50Mb to a browser not co-located with the server');
       return { files: await readFilesIntoBuffers(items as string[]) };
     }
     if (context._isLocalBrowserOnServer())
       return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
     if (await filesExceedSizeLimit(items as string[]))
-      throw new Error('Cannot transfer files larger than 50Mb to a browser not collocated with the server');
+      throw new Error('Cannot transfer files larger than 50Mb to a browser not co-located with the server');
     return { files: await readFilesIntoBuffers(items as string[]) };
   }
 
