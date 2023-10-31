@@ -112,8 +112,9 @@ it('serviceWorker should intercept document request', async ({ browser, httpsSer
   });
   await page.goto(httpsServer.EMPTY_PAGE);
   await page.evaluate(async () => {
+    const waitForControllerChange = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
     await navigator.serviceWorker.register('/sw.js');
-    await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+    await waitForControllerChange;
   });
   await page.reload();
   expect(await page.textContent('body')).toBe('intercepted');
