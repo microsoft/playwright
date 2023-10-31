@@ -632,6 +632,21 @@ it('should send referer', async ({ page, server }) => {
   expect(page.url()).toBe(server.PREFIX + '/grid.html');
 });
 
+it('should send referer of cross-origin URL', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27765' });
+  const [request1, request2] = await Promise.all([
+    server.waitForRequest('/grid.html'),
+    server.waitForRequest('/digits/1.png'),
+    page.goto(server.PREFIX + '/grid.html', {
+      referer: 'https://microsoft.com/xbox/'
+    }),
+  ]);
+  expect(request1.headers['referer']).toBe('https://microsoft.com/xbox/');
+  // Make sure subresources do not inherit referer.
+  expect(request2.headers['referer']).toBe(server.PREFIX + '/grid.html');
+  expect(page.url()).toBe(server.PREFIX + '/grid.html');
+});
+
 it('should reject referer option when setExtraHTTPHeaders provides referer', async ({ page, server }) => {
   await page.setExtraHTTPHeaders({ 'referer': 'http://microsoft.com/' });
   let error;
