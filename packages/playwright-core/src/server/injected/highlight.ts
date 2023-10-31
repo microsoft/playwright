@@ -50,7 +50,7 @@ export class Highlight {
     this._glassPaneElement.style.right = '0';
     this._glassPaneElement.style.bottom = '0';
     this._glassPaneElement.style.left = '0';
-    this._glassPaneElement.style.zIndex = '2147483647';
+    this._glassPaneElement.style.zIndex = '2147483646';
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';

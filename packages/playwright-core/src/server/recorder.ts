@@ -202,6 +202,13 @@ export class Recorder implements InstrumentationListener {
       await this._recorderApp?.setSelector(fullSelector.join(' >> internal:control=enter-frame >> '), true);
     });
 
+    await this._context.exposeBinding('__pw_recorderSetModeAndTool', false, async ({ frame }, state: { mode: Mode, tool: RecordingTool }) => {
+      if (frame.parentFrame())
+        return;
+      this.setMode(state.mode);
+      this.setRecordingTool(state.tool);
+    });
+
     await this._context.exposeBinding('__pw_resume', false, () => {
       this._debugger.resume(false);
     });
