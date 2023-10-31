@@ -6933,10 +6933,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * If `source` is provided (and not empty), it will be injected into all future global objects as soon as they're created. Omitting `source` will stop this from happening.
        */
       source?: string;
-      /**
-       * Isolated world name to evaluate the script in. If not specified main world will be used.
-       */
-      worldName?: string;
     }
     export type setBootstrapScriptReturnValue = {
     }
@@ -7146,18 +7142,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type insertTextReturnValue = {
     }
     /**
-     * Set the current IME composition.
-     */
-    export type setCompositionParameters = {
-      text: string;
-      selectionStart: number;
-      selectionLength: number;
-      replacementStart?: number;
-      replacementLength?: number;
-    }
-    export type setCompositionReturnValue = {
-    }
-    /**
      * Serializes and returns all of the accessibility nodes of the page.
      */
     export type accessibilitySnapshotParameters = {
@@ -7230,14 +7214,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       angle?: number;
     }
     export type setOrientationOverrideReturnValue = {
-    }
-    export type setVisibleContentRectsParameters = {
-      unobscuredContentRect?: DOM.Rect;
-      contentInsets?: Insets;
-      obscuredInsets?: Insets;
-      unobscuredInsets?: Insets;
-    }
-    export type setVisibleContentRectsReturnValue = {
     }
     /**
      * Ensures that the scroll regions are up to date.
@@ -9043,10 +9019,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       workerId: string;
       url: string;
       name: string;
-      /**
-       * Id of the frame this worker belongs to.
-       */
-      frameId: Network.FrameId;
     }
     export type workerTerminatedPayload = {
       workerId: string;
@@ -9467,7 +9439,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveParameters;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.insertText": Page.insertTextParameters;
-    "Page.setComposition": Page.setCompositionParameters;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideParameters;
@@ -9475,7 +9446,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.crash": Page.crashParameters;
     "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
-    "Page.setVisibleContentRects": Page.setVisibleContentRectsParameters;
     "Page.updateScrollingState": Page.updateScrollingStateParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
@@ -9778,7 +9748,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveReturnValue;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.insertText": Page.insertTextReturnValue;
-    "Page.setComposition": Page.setCompositionReturnValue;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideReturnValue;
@@ -9786,7 +9755,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.crash": Page.crashReturnValue;
     "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
-    "Page.setVisibleContentRects": Page.setVisibleContentRectsReturnValue;
     "Page.updateScrollingState": Page.updateScrollingStateReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;
