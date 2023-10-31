@@ -46,13 +46,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
 
-  constructor(parentScope: DispatcherScope, context: BrowserContext) {
+  constructor(parentScope: DispatcherScope, context: BrowserContext, isLocalBrowser: boolean) {
     // We will reparent these to the context below.
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
+      isLocalBrowser,
       requestContext,
       tracing,
     });

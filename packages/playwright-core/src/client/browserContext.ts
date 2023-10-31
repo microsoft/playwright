@@ -151,6 +151,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
+  _isLocalBrowser(): boolean {
+    return this._initializer.isLocalBrowser;
+  }
+
   private _onPage(page: Page): void {
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);

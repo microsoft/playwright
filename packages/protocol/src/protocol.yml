@@ -1012,6 +1012,7 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
+    isLocalBrowser: boolean
     requestContext: APIRequestContext
     tracing: Tracing
 

@@ -32,9 +32,12 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, BrowserTypeDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
 
-  constructor(scope: BrowserTypeDispatcher, browser: Browser) {
+  readonly isCollocatedWithServer: boolean;
+
+  constructor(scope: BrowserTypeDispatcher, browser: Browser, isCollocatedWithServer: boolean) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
+    this.isCollocatedWithServer = isCollocatedWithServer;
   }
 
   _didClose() {
@@ -44,11 +47,11 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(metadata, params);
-    return { context: new BrowserContextDispatcher(this, context) };
+    return { context: new BrowserContextDispatcher(this, context, this.isCollocatedWithServer) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return await newContextForReuse(this._object, this, params, null, metadata);
+    return await newContextForReuse(this._object, this, params, null, metadata, this.isCollocatedWithServer);
   }
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
@@ -109,11 +112,11 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     this._contexts.add(context);
     context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    return { context: new BrowserContextDispatcher(this, context) };
+    return { context: new BrowserContextDispatcher(this, context, true) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
+    return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata, true);
   }
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
@@ -158,7 +161,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 }
 
-async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata, isLocalBrowser: boolean): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
@@ -168,6 +171,6 @@ async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, pa
   }
   if (selectors)
     context.setSelectors(selectors);
-  const contextDispatcher = new BrowserContextDispatcher(scope, context);
+  const contextDispatcher = new BrowserContextDispatcher(scope, context, isLocalBrowser);
   return { context: contextDispatcher };
 }
