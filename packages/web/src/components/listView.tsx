@@ -83,7 +83,7 @@ export function ListView<T>({
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
 
-  return <div className='list-view vbox' role='list' data-testid={dataTestId || (name + '-list')}>
+  return <div className='list-view vbox' role={items.length > 0 ? 'list' : undefined} data-testid={dataTestId || (name + '-list')}>
     <div
       className='list-view-content'
       tabIndex={0}
