@@ -48,14 +48,10 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     let inFrameLocator = false;
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
-    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+    } else {
       const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
       inFrameLocator = true;
-    } else if (actionInContext.frame.name) {
-      subject = `${pageAlias}.frame(${quote(actionInContext.frame.name)})`;
-    } else {
-      subject = `${pageAlias}.frameByUrl(${quote(actionInContext.frame.url)})`;
     }
 
     const signals = toSignalMap(action);

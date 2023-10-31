@@ -68,7 +68,7 @@ if (mode === 'service') {
   };
 }
 if (mode === 'service2') {
-  process.env.PW_VERSION_OVERRIDE = '1.37';
+  process.env.PW_VERSION_OVERRIDE = process.env.PW_VERSION_OVERRIDE || '1.39';
   connectOptions = {
     wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?cap=${JSON.stringify({ os, runId })}`,
     timeout: 3 * 60 * 1000,

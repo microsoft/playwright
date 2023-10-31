@@ -47,6 +47,10 @@ export function cssEscape(s: string): string {
   return result;
 }
 
+export function quoteCSSAttributeValue(text: string): string {
+  return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
+}
+
 function cssEscapeOne(s: string, i: number): string {
   // https://drafts.csswg.org/cssom/#serialize-an-identifier
   const c = s.charCodeAt(i);

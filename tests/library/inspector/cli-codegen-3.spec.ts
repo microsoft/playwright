@@ -163,44 +163,67 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frame({
-    name: 'one'
-  }).getByText('HelloNameOne').click();`);
+  await page.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frame("one").getByText("HelloNameOne").click();`);
+      page.frameLocator("#frame1").frameLocator("iframe").frameLocator("iframe[name=\\"one\\"]").getByText("HelloNameOne").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame(name=\"one\").get_by_text(\"HelloNameOne\").click()`);
+    page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe[name=\\"one\\"]").get_by_text("HelloNameOne").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame(name=\"one\").get_by_text(\"HelloNameOne\").click()`);
+    await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe[name=\\"one\\"]").get_by_text("HelloNameOne").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.Frame(\"one\").GetByText(\"HelloNameOne\").ClickAsync();`);
-
+        await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe[name=\\"one\\"]").GetByText("HelloNameOne").ClickAsync();`);
 
     [sources] = await Promise.all([
-      recorder.waitForOutput('JavaScript', 'url:'),
+      recorder.waitForOutput('JavaScript', 'HelloNameAnonymous'),
       frameAnonymous.click('text=HelloNameAnonymous'),
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frame({
-    url: 'about:blank'
-  }).getByText('HelloNameAnonymous').click();`);
+  await page.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe >> nth=2').getByText('HelloNameAnonymous').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameByUrl("about:blank").getByText("HelloNameAnonymous").click();`);
+      page.frameLocator("#frame1").frameLocator("iframe").frameLocator("iframe >> nth=2").getByText("HelloNameAnonymous").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame(url=\"about:blank\").get_by_text(\"HelloNameAnonymous\").click()`);
+    page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe >> nth=2").get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame(url=\"about:blank\").get_by_text(\"HelloNameAnonymous\").click()`);
+    await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe >> nth=2").get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameByUrl(\"about:blank\").GetByText(\"HelloNameAnonymous\").ClickAsync();`);
+        await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe >> nth=2").GetByText("HelloNameAnonymous").ClickAsync();`);
+  });
+
+  test('should generate frame locators with special characters in name attribute', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`
+      <iframe srcdoc="<button>Click me</button>">
+    `, server.EMPTY_PAGE, 2);
+    await page.$eval('iframe', (frame: HTMLIFrameElement) => {
+      frame.name = 'foo<bar\'"`>';
+    });
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Click me'),
+      page.frameLocator('iframe[name="foo<bar\'\\"`>"]').getByRole('button', { name: 'Click me' }).click(),
+    ]);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.frameLocator('iframe[name="foo\\\\<bar\\\\\\'\\\\"\\\\\`\\\\>"]').getByRole('button', { name: 'Click me' }).click();`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.frameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Click me")).click()`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.frame_locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").get_by_role("button", name="Click me").click()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.frame_locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").get_by_role("button", name="Click me").click()`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+        await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
   });
 
   test('should generate frame locators with title attribute', async ({ page, openRecorder, server }) => {

@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
-import type { APIRequestContext } from '../fetch';
+import { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
@@ -190,6 +190,8 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     super(parentScope, request, 'APIRequestContext', {
       tracing,
     });
+
+    this.addObjectListener(APIRequestContext.Events.Dispose, () => this._dispose());
 
     this.adopt(tracing);
   }
