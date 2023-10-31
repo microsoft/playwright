@@ -228,7 +228,7 @@ export const UIModeView: React.FC<{}> = ({
       </div>
       <div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
-          <img src='playwright-logo.svg' />
+          <img src='playwright-logo.svg' alt='Playwright logo' />
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>

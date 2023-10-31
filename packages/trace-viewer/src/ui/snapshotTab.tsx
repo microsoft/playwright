@@ -199,8 +199,8 @@ export const SnapshotTab: React.FunctionComponent<{
       }}>
         <BrowserFrame url={snapshotInfo.url} />
         <div className='snapshot-switcher'>
-          <iframe ref={iframeRef0} name='snapshot' className={loadingRef.current.visibleIframe === 0 ? 'snapshot-visible' : ''}></iframe>
-          <iframe ref={iframeRef1} name='snapshot' className={loadingRef.current.visibleIframe === 1 ? 'snapshot-visible' : ''}></iframe>
+          <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={loadingRef.current.visibleIframe === 0 ? 'snapshot-visible' : ''}></iframe>
+          <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={loadingRef.current.visibleIframe === 1 ? 'snapshot-visible' : ''}></iframe>
         </div>
       </div>
     </div>
