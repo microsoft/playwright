@@ -312,7 +312,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           pointElement.style.height = '20px';
           pointElement.style.borderRadius = '10px';
           pointElement.style.margin = '-10px 0 0 -10px';
-          pointElement.style.zIndex = '2147483647';
+          pointElement.style.zIndex = '2147483646';
           const box = target.getBoundingClientRect();
           pointElement.style.left = (box.left + box.width / 2) + 'px';
           pointElement.style.top = (box.top + box.height / 2) + 'px';

@@ -35,7 +35,7 @@ import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../common/types';
-import type { CallLog, CallLogStatus, EventData, Mode, RecordingTool, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from '@recorder/recorderTypes';
 import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
@@ -54,7 +54,6 @@ const recorderSymbol = Symbol('recorderSymbol');
 export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
-  private _tool: RecordingTool = 'action';
   private _highlightedSelector = '';
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
@@ -118,10 +117,6 @@ export class Recorder implements InstrumentationListener {
         this.setMode(data.params.mode);
         return;
       }
-      if (data.event === 'setRecordingTool') {
-        this.setRecordingTool(data.params.tool);
-        return;
-      }
       if (data.event === 'selectorUpdated') {
         this.setHighlightedSelector(this._currentLanguage, data.params.selector);
         return;
@@ -181,7 +176,6 @@ export class Recorder implements InstrumentationListener {
       }
       const uiState: UIState = {
         mode: this._mode,
-        tool: this._tool,
         actionPoint,
         actionSelector,
         language: this._currentLanguage,
@@ -200,6 +194,12 @@ export class Recorder implements InstrumentationListener {
       const fullSelector = (await Promise.all(selectorPromises)).filter(Boolean);
       fullSelector.push(selector);
       await this._recorderApp?.setSelector(fullSelector.join(' >> internal:control=enter-frame >> '), true);
+    });
+
+    await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
+      if (frame.parentFrame())
+        return;
+      this.setMode(mode);
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -233,18 +233,10 @@ export class Recorder implements InstrumentationListener {
     this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording');
-    this._debugger.setMuted(this._mode === 'recording');
+    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText');
+    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText');
     if (this._mode !== 'none' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
-    this._refreshOverlay();
-  }
-
-  setRecordingTool(tool: RecordingTool) {
-    if (this._tool === tool)
-      return;
-    this._tool = tool;
-    this._recorderApp?.setRecordingTool(this._tool);
     this._refreshOverlay();
   }
 
@@ -272,7 +264,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
@@ -286,7 +278,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
@@ -336,7 +328,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
-    if (this._mode === 'recording')
+    if (this._mode === 'recording' || this._mode === 'assertingText')
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
