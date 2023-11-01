@@ -18,7 +18,7 @@ import type * as actions from '../recorder/recorderActions';
 import type { InjectedScript } from '../injected/injectedScript';
 import { generateSelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
-import type { Mode, RecordingTool, UIState } from '@recorder/recorderTypes';
+import type { Mode, UIState } from '@recorder/recorderTypes';
 import { Highlight } from '../injected/highlight';
 import { enclosingElement, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { elementText } from './selectorUtils';
@@ -28,7 +28,7 @@ interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
   setSelector?(selector: string): Promise<void>;
-  setModeAndTool?(mode: Mode, tool: RecordingTool): Promise<void>;
+  setMode?(mode: Mode): Promise<void>;
   highlightUpdated?(): void;
 }
 
@@ -544,10 +544,7 @@ class TextAssertionTool implements RecorderTool {
 
 class Overlay {
   private _overlayElement: HTMLElement;
-  private _noneToolElement: HTMLElement;
-  private _inspectToolElement: HTMLElement;
-  private _actionToolElement: HTMLElement;
-  private _expectToolElement: HTMLElement;
+  private _tools: Record<Mode, HTMLElement>;
   private _position: { x: number, y: number } = { x: 0, y: 0 };
   private _dragState: { position: { x: number, y: number }, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
@@ -556,7 +553,7 @@ class Overlay {
     const document = this._recorder.injectedScript.document;
     this._overlayElement = document.createElement('x-pw-overlay');
 
-    const shadow = this._overlayElement.attachShadow({ mode: this._recorder.injectedScript.isUnderTest ? 'open' : 'closed' });
+    const shadow = this._overlayElement.attachShadow({ mode: 'closed' });
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       :host {
@@ -582,8 +579,8 @@ class Overlay {
 
       x-pw-tool-item {
         cursor: pointer;
-        height: 2.5em;
-        width: 2.5em;
+        height: 2.25em;
+        width: 2.25em;
         margin: 0.05em 0.25em;
         display: inline-flex;
         align-items: center;
@@ -609,27 +606,33 @@ class Overlay {
         background-color: black;
         -webkit-mask-repeat: no-repeat;
         -webkit-mask-position: center;
+        -webkit-mask-size: 20px;
         mask-repeat: no-repeat;
         mask-position: center;
+        mask-size: 20px;
       }
       x-pw-tool-item.active > div {
         background-color: #ff4ca5;
       }
       x-pw-tool-item.none > div {
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M5.72 5.72a.75.75 0 0 1 1.06 0L12 10.94l5.22-5.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L13.06 12l5.22 5.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L12 13.06l-5.22 5.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L10.94 12 5.72 6.78a.75.75 0 0 1 0-1.06Z'></path></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M5.72 5.72a.75.75 0 0 1 1.06 0L12 10.94l5.22-5.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L13.06 12l5.22 5.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L12 13.06l-5.22 5.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L10.94 12 5.72 6.78a.75.75 0 0 1 0-1.06Z'></path></svg>");
+        /* codicon: close */
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
       }
-      x-pw-tool-item.inspect > div {
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1ZM2.5 12a9.5 9.5 0 0 0 9.5 9.5 9.5 9.5 0 0 0 9.5-9.5A9.5 9.5 0 0 0 12 2.5 9.5 9.5 0 0 0 2.5 12Zm9.5 2a2 2 0 1 1-.001-3.999A2 2 0 0 1 12 14Z'></path></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1ZM2.5 12a9.5 9.5 0 0 0 9.5 9.5 9.5 9.5 0 0 0 9.5-9.5A9.5 9.5 0 0 0 12 2.5 9.5 9.5 0 0 0 2.5 12Zm9.5 2a2 2 0 1 1-.001-3.999A2 2 0 0 1 12 14Z'></path></svg>");
+      x-pw-tool-item.inspecting > div {
+        /* codicon: target */
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 9C8.55228 9 9 8.55228 9 8C9 7.44772 8.55228 7 8 7C7.44772 7 7 7.44772 7 8C7 8.55228 7.44772 9 8 9Z'/><path d='M12 8C12 10.2091 10.2091 12 8 12C5.79086 12 4 10.2091 4 8C4 5.79086 5.79086 4 8 4C10.2091 4 12 5.79086 12 8ZM8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11Z'/><path d='M15 8C15 11.866 11.866 15 8 15C4.13401 15 1 11.866 1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8ZM8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 9C8.55228 9 9 8.55228 9 8C9 7.44772 8.55228 7 8 7C7.44772 7 7 7.44772 7 8C7 8.55228 7.44772 9 8 9Z'/><path d='M12 8C12 10.2091 10.2091 12 8 12C5.79086 12 4 10.2091 4 8C4 5.79086 5.79086 4 8 4C10.2091 4 12 5.79086 12 8ZM8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11Z'/><path d='M15 8C15 11.866 11.866 15 8 15C4.13401 15 1 11.866 1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8ZM8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z'/></svg>");
       }
-      x-pw-tool-item.action > div {
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M9.5 15.584V8.416a.5.5 0 0 1 .77-.42l5.576 3.583a.5.5 0 0 1 0 .842l-5.576 3.584a.5.5 0 0 1-.77-.42Z'></path><path d='M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12Zm11-9.5A9.5 9.5 0 0 0 2.5 12a9.5 9.5 0 0 0 9.5 9.5 9.5 9.5 0 0 0 9.5-9.5A9.5 9.5 0 0 0 12 2.5Z'></path></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M9.5 15.584V8.416a.5.5 0 0 1 .77-.42l5.576 3.583a.5.5 0 0 1 0 .842l-5.576 3.584a.5.5 0 0 1-.77-.42Z'></path><path d='M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12Zm11-9.5A9.5 9.5 0 0 0 2.5 12a9.5 9.5 0 0 0 9.5 9.5 9.5 9.5 0 0 0 9.5-9.5A9.5 9.5 0 0 0 12 2.5Z'></path></svg>");
+      x-pw-tool-item.recording > div {
+        /* codicon: record */
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M8.6 1c1.6.1 3.1.9 4.2 2 1.3 1.4 2 3.1 2 5.1 0 1.6-.6 3.1-1.6 4.4-1 1.2-2.4 2.1-4 2.4-1.6.3-3.2.1-4.6-.7-1.4-.8-2.5-2-3.1-3.5C.9 9.2.8 7.5 1.3 6c.5-1.6 1.4-2.9 2.8-3.8C5.4 1.3 7 .9 8.6 1zm.5 12.9c1.3-.3 2.5-1 3.4-2.1.8-1.1 1.3-2.4 1.2-3.8 0-1.6-.6-3.2-1.7-4.3-1-1-2.2-1.6-3.6-1.7-1.3-.1-2.7.2-3.8 1-1.1.8-1.9 1.9-2.3 3.3-.4 1.3-.4 2.7.2 4 .6 1.3 1.5 2.3 2.7 3 1.2.7 2.6.9 3.9.6z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M8.6 1c1.6.1 3.1.9 4.2 2 1.3 1.4 2 3.1 2 5.1 0 1.6-.6 3.1-1.6 4.4-1 1.2-2.4 2.1-4 2.4-1.6.3-3.2.1-4.6-.7-1.4-.8-2.5-2-3.1-3.5C.9 9.2.8 7.5 1.3 6c.5-1.6 1.4-2.9 2.8-3.8C5.4 1.3 7 .9 8.6 1zm.5 12.9c1.3-.3 2.5-1 3.4-2.1.8-1.1 1.3-2.4 1.2-3.8 0-1.6-.6-3.2-1.7-4.3-1-1-2.2-1.6-3.6-1.7-1.3-.1-2.7.2-3.8 1-1.1.8-1.9 1.9-2.3 3.3-.4 1.3-.4 2.7.2 4 .6 1.3 1.5 2.3 2.7 3 1.2.7 2.6.9 3.9.6z'/></svg>");
       }
-      x-pw-tool-item.expect > div {
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M10.414 15H3.586l-1.631 4.505a.75.75 0 1 1-1.41-.51l5.08-14.03a1.463 1.463 0 0 1 2.75 0l5.08 14.03a.75.75 0 1 1-1.411.51Zm4.532-5.098c.913-1.683 2.703-2.205 4.284-2.205 1.047 0 2.084.312 2.878.885.801.577 1.392 1.455 1.392 2.548v8.12a.75.75 0 0 1-1.5 0v-.06l-.044.025c-.893.52-2.096.785-3.451.785-1.051 0-2.048-.315-2.795-.948-.76-.643-1.217-1.578-1.217-2.702 0-.919.349-1.861 1.168-2.563.81-.694 2-1.087 3.569-1.087H22v-1.57c0-.503-.263-.967-.769-1.332-.513-.37-1.235-.6-2.001-.6-1.319 0-2.429.43-2.966 1.42a.75.75 0 0 1-1.318-.716ZM9.87 13.5 7 5.572 4.13 13.5Zm12.13.7h-2.77c-1.331 0-2.134.333-2.593.726a1.822 1.822 0 0 0-.644 1.424c0 .689.267 1.203.686 1.557.43.365 1.065.593 1.826.593 1.183 0 2.102-.235 2.697-.581.582-.34.798-.74.798-1.134Z'></path></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><path d='M10.414 15H3.586l-1.631 4.505a.75.75 0 1 1-1.41-.51l5.08-14.03a1.463 1.463 0 0 1 2.75 0l5.08 14.03a.75.75 0 1 1-1.411.51Zm4.532-5.098c.913-1.683 2.703-2.205 4.284-2.205 1.047 0 2.084.312 2.878.885.801.577 1.392 1.455 1.392 2.548v8.12a.75.75 0 0 1-1.5 0v-.06l-.044.025c-.893.52-2.096.785-3.451.785-1.051 0-2.048-.315-2.795-.948-.76-.643-1.217-1.578-1.217-2.702 0-.919.349-1.861 1.168-2.563.81-.694 2-1.087 3.569-1.087H22v-1.57c0-.503-.263-.967-.769-1.332-.513-.37-1.235-.6-2.001-.6-1.319 0-2.429.43-2.966 1.42a.75.75 0 0 1-1.318-.716ZM9.87 13.5 7 5.572 4.13 13.5Zm12.13.7h-2.77c-1.331 0-2.134.333-2.593.726a1.822 1.822 0 0 0-.644 1.424c0 .689.267 1.203.686 1.557.43.365 1.065.593 1.826.593 1.183 0 2.102-.235 2.697-.581.582-.34.798-.74.798-1.134Z'></path></svg>");
+      x-pw-tool-item.assertingText > div {
+        /* codicon: text-size */
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M3.36 7L1 13h1.34l.51-1.47h2.26L5.64 13H7L4.65 7H3.36zm-.15 3.53l.78-2.14.78 2.14H3.21zM11.82 4h-1.6L7 13h1.56l.75-2.29h3.36l.77 2.29H15l-3.18-9zM9.67 9.5l1.18-3.59c.059-.185.1-.376.12-.57.027.192.064.382.11.57l1.25 3.59H9.67z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M3.36 7L1 13h1.34l.51-1.47h2.26L5.64 13H7L4.65 7H3.36zm-.15 3.53l.78-2.14.78 2.14H3.21zM11.82 4h-1.6L7 13h1.56l.75-2.29h3.36l.77 2.29H15l-3.18-9zM9.67 9.5l1.18-3.59c.059-.185.1-.376.12-.57.027.192.064.382.11.57l1.25 3.59H9.67z'/></svg>");
       }
     `;
     shadow.appendChild(styleElement);
@@ -637,33 +640,12 @@ class Overlay {
     const toolsListElement = document.createElement('x-pw-tools-list');
     shadow.appendChild(toolsListElement);
 
-    this._noneToolElement = document.createElement('x-pw-tool-item');
-    this._noneToolElement.title = 'Disable';
-    this._noneToolElement.classList.add('none');
-    this._noneToolElement.appendChild(document.createElement('div'));
-    this._noneToolElement.addEventListener('click', () => this._recorder.delegate.setModeAndTool?.('none', this._recorder.state.tool));
-    toolsListElement.appendChild(this._noneToolElement);
-
-    this._inspectToolElement = document.createElement('x-pw-tool-item');
-    this._inspectToolElement.title = 'Pick locator';
-    this._inspectToolElement.classList.add('inspect');
-    this._inspectToolElement.appendChild(document.createElement('div'));
-    this._inspectToolElement.addEventListener('click', () => this._recorder.delegate.setModeAndTool?.('inspecting', this._recorder.state.tool));
-    toolsListElement.appendChild(this._inspectToolElement);
-
-    this._actionToolElement = document.createElement('x-pw-tool-item');
-    this._actionToolElement.title = 'Record actions';
-    this._actionToolElement.classList.add('action');
-    this._actionToolElement.appendChild(document.createElement('div'));
-    this._actionToolElement.addEventListener('click', () => this._recorder.delegate.setModeAndTool?.('recording', 'action'));
-    toolsListElement.appendChild(this._actionToolElement);
-
-    this._expectToolElement = document.createElement('x-pw-tool-item');
-    this._expectToolElement.title = 'Assert text';
-    this._expectToolElement.classList.add('expect');
-    this._expectToolElement.appendChild(document.createElement('div'));
-    this._expectToolElement.addEventListener('click', () => this._recorder.delegate.setModeAndTool?.('recording', 'assert'));
-    toolsListElement.appendChild(this._expectToolElement);
+    this._tools = {
+      none: this._createToolElement(toolsListElement, 'none', 'Disable'),
+      inspecting: this._createToolElement(toolsListElement, 'inspecting', 'Pick locator'),
+      recording: this._createToolElement(toolsListElement, 'recording', 'Record actions'),
+      assertingText: this._createToolElement(toolsListElement, 'assertingText', 'Assert text'),
+    };
 
     this._overlayElement.addEventListener('mousedown', event => {
       this._dragState = { position: this._position, dragStart: { x: event.clientX, y: event.clientY } };
@@ -676,6 +658,16 @@ class Overlay {
     this._updateVisualPosition();
   }
 
+  private _createToolElement(parent: Element, mode: Mode, title: string) {
+    const element = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    element.title = title;
+    element.classList.add(mode);
+    element.appendChild(this._recorder.injectedScript.document.createElement('div'));
+    element.addEventListener('click', () => this._recorder.delegate.setMode?.(mode));
+    parent.appendChild(element);
+    return element;
+  }
+
   install() {
     this._recorder.injectedScript.document.documentElement.appendChild(this._overlayElement);
     this._measure = this._overlayElement.getBoundingClientRect();
@@ -686,19 +678,8 @@ class Overlay {
   }
 
   setUIState(state: UIState) {
-    let activeToolElement: HTMLElement;
-    if (state.mode === 'none')
-      activeToolElement = this._noneToolElement;
-    else if (state.mode === 'inspecting')
-      activeToolElement = this._inspectToolElement;
-    else if (state.tool === 'action')
-      activeToolElement = this._actionToolElement;
-    else
-      activeToolElement = this._expectToolElement;
-    this._noneToolElement.classList.toggle('active', activeToolElement === this._noneToolElement);
-    this._inspectToolElement.classList.toggle('active', activeToolElement === this._inspectToolElement);
-    this._actionToolElement.classList.toggle('active', activeToolElement === this._actionToolElement);
-    this._expectToolElement.classList.toggle('active', activeToolElement === this._expectToolElement);
+    for (const [mode, tool] of Object.entries(this._tools))
+      tool.classList.toggle('active', state.mode === mode);
   }
 
   private _updateVisualPosition() {
@@ -739,15 +720,12 @@ export class Recorder {
   readonly injectedScript: InjectedScript;
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
-  private _noneTool: NoneTool;
-  private _inspectTool: InspectTool;
-  private _recordActionTool: RecordActionTool;
-  private _textAssertionTool: TextAssertionTool;
+  private _tools: Record<Mode, RecorderTool>;
   private _actionSelectorModel: HighlightModel | null = null;
   private _highlight: Highlight;
   private _overlay: Overlay | undefined;
   private _styleElement: HTMLStyleElement;
-  state: UIState = { mode: 'none', tool: 'action', testIdAttributeName: 'data-testid', language: 'javascript' };
+  state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript' };
   readonly document: Document;
   delegate: RecorderDelegate = {};
 
@@ -755,13 +733,17 @@ export class Recorder {
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
     this._highlight = new Highlight(injectedScript);
-    this._noneTool = new NoneTool();
-    this._inspectTool = new InspectTool(this);
-    this._recordActionTool = new RecordActionTool(this);
-    this._textAssertionTool = new TextAssertionTool(this);
-    this._currentTool = this._noneTool;
-    if (injectedScript.window.top === injectedScript.window)
+    this._tools = {
+      none: new NoneTool(),
+      inspecting: new InspectTool(this),
+      recording: new RecordActionTool(this),
+      assertingText: new TextAssertionTool(this),
+    };
+    this._currentTool = this._tools.none;
+    if (injectedScript.window.top === injectedScript.window) {
       this._overlay = new Overlay(this);
+      this._overlay.setUIState(this.state);
+    }
     this._styleElement = this.document.createElement('style');
     this._styleElement.textContent = `
       body[data-pw-cursor=pointer] *, body[data-pw-cursor=pointer] *::after { cursor: pointer !important; }
@@ -797,15 +779,7 @@ export class Recorder {
   }
 
   private _switchCurrentTool() {
-    let newTool: RecorderTool;
-    if (this.state.mode === 'none')
-      newTool = this._noneTool;
-    else if (this.state.mode === 'inspecting')
-      newTool = this._inspectTool;
-    else if (this.state.tool === 'action')
-      newTool = this._recordActionTool;
-    else
-      newTool = this._textAssertionTool;
+    const newTool = this._tools[this.state.mode];
     if (newTool === this._currentTool)
       return;
     this._currentTool.disable?.();
@@ -1035,7 +1009,7 @@ interface Embedder {
   __pw_recorderRecordAction(action: actions.Action): Promise<void>;
   __pw_recorderState(): Promise<UIState>;
   __pw_recorderSetSelector(selector: string): Promise<void>;
-  __pw_recorderSetModeAndTool(state: { mode: Mode, tool: RecordingTool }): Promise<void>;
+  __pw_recorderSetMode(mode: Mode): Promise<void>;
   __pw_refreshOverlay(): void;
 }
 
@@ -1092,8 +1066,8 @@ export class PollingRecorder implements RecorderDelegate {
     await this._embedder.__pw_recorderSetSelector(selector);
   }
 
-  async setModeAndTool(mode: Mode, tool: RecordingTool): Promise<void> {
-    await this._embedder.__pw_recorderSetModeAndTool({ mode, tool });
+  async setMode(mode: Mode): Promise<void> {
+    await this._embedder.__pw_recorderSetMode(mode);
   }
 }
 

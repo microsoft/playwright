@@ -122,7 +122,7 @@ export class DebugController extends SdkObject {
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelector();
-      if (params.mode === 'recording')
+      if (params.mode !== 'inspecting')
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }

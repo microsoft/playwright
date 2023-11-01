@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, RecordingTool, Source } from './recorderTypes';
+import type { CallLog, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -40,7 +40,6 @@ export interface RecorderProps {
   paused: boolean,
   log: Map<string, CallLog>,
   mode: Mode,
-  tool: RecordingTool,
 }
 
 export const Recorder: React.FC<RecorderProps> = ({
@@ -48,7 +47,6 @@ export const Recorder: React.FC<RecorderProps> = ({
   paused,
   log,
   mode,
-  tool,
 }) => {
   const [fileId, setFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('log');
@@ -115,11 +113,11 @@ export const Recorder: React.FC<RecorderProps> = ({
 
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
+      <ToolbarButton icon='record' title='Record actions' toggled={mode === 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' } });
       }}>Record</ToolbarButton>
-      <ToolbarButton icon='check-all' title={tool === 'action' ? 'Recording actions' : 'Recording assertions'} toggled={tool === 'assert'} disabled={mode !== 'recording'} onClick={() => {
-        window.dispatch({ event: 'setRecordingTool', params: { tool: tool === 'assert' ? 'action' : 'assert' } });
+      <ToolbarButton icon='text-size' title='Assert text' toggled={mode === 'assertingText'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'none' : 'assertingText' } });
       }}>Assert</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
