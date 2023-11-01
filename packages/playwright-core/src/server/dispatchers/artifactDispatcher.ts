@@ -21,6 +21,7 @@ import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
 import { mkdirIfNeeded } from '../../utils/fileUtils';
 import type { Artifact } from '../artifact';
+import type { CallMetadata } from '../instrumentation';
 
 export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel, DispatcherScope> implements channels.ArtifactChannel {
   _type_Artifact = true;
@@ -105,7 +106,8 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     await this._object.cancel();
   }
 
-  async delete(): Promise<void> {
+  async delete(_: any, metadata: CallMetadata): Promise<void> {
+    metadata.closesScope = true;
     await this._object.delete();
     this._dispose();
   }

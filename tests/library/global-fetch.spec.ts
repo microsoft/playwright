@@ -18,6 +18,7 @@ import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
 import { expect, playwrightTest as it } from '../config/browserTest';
+import { kTargetClosedErrorMessage } from 'tests/config/errors';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -226,7 +227,7 @@ it('should abort requests when context is disposed', async ({ playwright, server
   ]);
   for (const result of results.slice(0, -1)) {
     expect(result instanceof Error).toBeTruthy();
-    expect(result.message).toContain('Request context disposed');
+    expect(result.message).toContain(kTargetClosedErrorMessage);
   }
   await connectionClosed;
 });
@@ -242,7 +243,7 @@ it('should abort redirected requests when context is disposed', async ({ playwri
     server.waitForRequest('/test').then(() => request.dispose())
   ]);
   expect(result instanceof Error).toBeTruthy();
-  expect(result.message).toContain('Request context disposed');
+  expect(result.message).toContain(kTargetClosedErrorMessage);
   await connectionClosed;
 });
 

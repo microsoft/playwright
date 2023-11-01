@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
-import { APIRequestContext } from '../fetch';
+import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
@@ -191,17 +191,17 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
       tracing,
     });
 
-    this.addObjectListener(APIRequestContext.Events.Dispose, () => this._dispose());
-
     this.adopt(tracing);
   }
 
-  async storageState(params?: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
+  async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
     return this._object.storageState();
   }
 
-  async dispose(params?: channels.APIRequestContextDisposeParams): Promise<void> {
+  async dispose(_: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
+    metadata.closesScope = true;
     await this._object.dispose();
+    this._dispose();
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {

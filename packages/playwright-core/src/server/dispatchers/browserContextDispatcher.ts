@@ -273,6 +273,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {
+    metadata.closesScope = true;
     await this._context.close(params);
   }
 
