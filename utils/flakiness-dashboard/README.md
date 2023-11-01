@@ -1,10 +1,11 @@
 # Flakiness Dashboard Backend
 
 This directory contains source code for the Azure function that we use to aggregate test reports.
-The data is consumed by https://devops.aslushnikov.com/flakiness2.html
+The data is consumed by https://devops.playwright.dev/flakiness.html
 
 To publish function:
-- install [Azure Functions Core Tools version 4.x.](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cmacos%2Ccsharp%2Cportal%2Cbash#v2).
-- install Azure CLI && login via `az login`
-- make sure to run `npm install` to populate `node_modules/` folder (this folder will be published as-is).
-- run `func azure functionapp publish folio-flakiness-dashboard --javascript`
+- Install [Azure Functions Core Tools version 4.x.](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local).
+  - This is as of Nov 2023 not available for macOS M1. So you can either use Rosetta or use GitHub Codespaces.
+- Install Azure CLI (`brew update && brew install azure-cli`) && login via `az login`
+- Make sure to run `npm install` to populate `node_modules/` folder (this folder will be published as-is).
+- Run `/tmp/azure-functions-cli/func azure functionapp publish folio-flakiness-dashboard --javascript`

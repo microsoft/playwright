@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "flakiness-dashboard",
   "version": "",
   "description": "",
   "scripts": {
@@ -7,6 +7,6 @@
   },
   "author": "",
   "dependencies": {
-    "@azure/storage-blob": "^12.2.1"
+    "@azure/storage-blob": "^12.16.0"
   }
 }
