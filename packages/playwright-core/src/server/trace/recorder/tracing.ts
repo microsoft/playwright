@@ -249,9 +249,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._tracesTmpDir;
   }
 
-  async dispose() {
+  abort() {
     this._snapshotter?.dispose();
     this._harTracer.stop();
+  }
+
+  async flush() {
+    this.abort();
     await this._fs.syncAndGetError();
   }
 
