@@ -60,7 +60,7 @@ function compressReports(reports) {
         specs = new Map();
         files[spec.file] = specs;
       }
-      const specId = spec.file + '---' + spec.title + ' --- ' + spec.line;
+      const specId = spec.file + '---' + spec.titlePath.join('-') + ' --- ' + spec.line;
       let specObject = specs.get(specId);
       if (!specObject) {
         specObject = {
