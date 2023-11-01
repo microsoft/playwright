@@ -1407,6 +1407,7 @@ export interface EventTargetEvents {
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
+  isLocalBrowserOnServer: boolean,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
 };
@@ -2795,6 +2796,7 @@ export type FrameSetInputFilesParams = {
     name: string,
     mimeType?: string,
     buffer: Binary,
+    lastModifiedMs?: number,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -3425,6 +3427,7 @@ export type ElementHandleSetInputFilesParams = {
     name: string,
     mimeType?: string,
     buffer: Binary,
+    lastModifiedMs?: number,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,

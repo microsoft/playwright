@@ -65,6 +65,7 @@ export abstract class Browser extends SdkObject {
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
+  _isCollocatedWithServer: boolean = true;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
     super(parent, 'browser');

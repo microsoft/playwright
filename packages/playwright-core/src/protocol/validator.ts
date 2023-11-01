@@ -762,6 +762,7 @@ scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEven
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
   isChromium: tBoolean,
+  isLocalBrowserOnServer: tBoolean,
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
 });
@@ -1560,6 +1561,7 @@ scheme.FrameSetInputFilesParams = tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
+    lastModifiedMs: tOptional(tNumber),
   })),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
@@ -1933,6 +1935,7 @@ scheme.ElementHandleSetInputFilesParams = tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
+    lastModifiedMs: tOptional(tNumber),
   })),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
