@@ -19,6 +19,7 @@ import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import type { BrowserDispatcher } from './browserDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { CallMetadata } from '../instrumentation';
 
 export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSessionChannel, BrowserDispatcher | BrowserContextDispatcher> implements channels.CDPSessionChannel {
   _type_CDPSession = true;
@@ -33,7 +34,8 @@ export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSes
     return { result: await this._object.send(params.method as any, params.params) };
   }
 
-  async detach(): Promise<void> {
-    return this._object.detach();
+  async detach(_: any, metadata: CallMetadata): Promise<void> {
+    metadata.closesScope = true;
+    await this._object.detach();
   }
 }

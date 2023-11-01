@@ -22,6 +22,7 @@ import { pipeline } from 'stream';
 import zlib from 'zlib';
 import { contextTest as it, expect } from '../config/browserTest';
 import { suppressCertificateWarning } from '../config/utils';
+import { kTargetClosedErrorMessage } from 'tests/config/errors';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -1078,7 +1079,7 @@ it('should abort requests when browser context closes', async ({ contextFactory,
     server.waitForRequest('/empty.html').then(() => context.close())
   ]);
   expect(error instanceof Error).toBeTruthy();
-  expect(error.message).toContain('Request context disposed');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
   await connectionClosed;
 });
 
@@ -1193,8 +1194,8 @@ it('should update host header on redirect', async ({ context, server }) => {
   expect((await reqPromise).headers.host).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
 });
 
-it('should keep working after dispose', async ({ context, server }) => {
+it('should not work after dispose', async ({ context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27822' });
   await context.request.dispose();
-  await expect(await context.request.get(server.EMPTY_PAGE)).toBeOK();
+  expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain(kTargetClosedErrorMessage);
 });

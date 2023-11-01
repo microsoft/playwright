@@ -452,7 +452,7 @@ it('should throw if underlying element was disposed', async ({ page }) => {
   await element.dispose();
   let error = null;
   await page.evaluate(e => e.textContent, element).catch(e => error = e);
-  expect(error.message).toContain('JSHandle is disposed');
+  expect(error.message).toContain('no object with guid');
 });
 
 it('should simulate a user gesture', async ({ page }) => {

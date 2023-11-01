@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { LongStandingScope, assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -51,6 +51,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   readonly _guid: string;
   readonly _type: string;
   _object: Type;
+  private _openScope = new LongStandingScope();
 
   constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>) {
     super();
@@ -93,6 +94,17 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._connection.sendAdopt(this, child);
   }
 
+  async _handleCommand(callMetadata: CallMetadata, method: string, validParams: any) {
+    const commandPromise = (this as any)[method](validParams, callMetadata);
+    try {
+      return await this._openScope.race(commandPromise);
+    } catch (e) {
+      if (callMetadata.closesScope && isTargetClosedError(e))
+        return await commandPromise;
+      throw e;
+    }
+  }
+
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
     if (this._disposed) {
       if (isUnderTest())
@@ -105,14 +117,14 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   _dispose(reason?: 'gc') {
-    this._disposeRecursively();
+    this._disposeRecursively(new TargetClosedError());
     this._connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
   }
 
-  private _disposeRecursively() {
+  private _disposeRecursively(error: Error) {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._onDispose();
     this._disposed = true;
@@ -126,9 +138,10 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._disposeRecursively();
+      dispatcher._disposeRecursively(error);
     this._dispatchers.clear();
     delete (this._object as any)[dispatcherSymbol];
+    this._openScope.close(error);
   }
 
   _debugScopeState(): any {
@@ -325,7 +338,7 @@ export class DispatcherConnection {
 
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
-      const result = await (dispatcher as any)[method](validParams, callMetadata);
+      const result = await dispatcher._handleCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
