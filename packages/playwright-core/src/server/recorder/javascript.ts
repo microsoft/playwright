@@ -127,6 +127,12 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.${this._asLocator(action.selector)}.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])});`;
       case 'assertText':
         return `await expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'toContainText' : 'toHaveText'}(${quote(action.text)});`;
+      case 'assertChecked':
+        return `await expect(${subject}.${this._asLocator(action.selector)})${action.checked ? '' : '.not'}.toBeChecked();`;
+      case 'assertValue': {
+        const assertion = action.value ? `toHaveValue(${quote(action.value)})` : `toBeEmpty()`;
+        return `await expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
+      }
     }
   }
 

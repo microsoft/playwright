@@ -116,7 +116,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='record' title='Record actions' toggled={mode === 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' } });
       }}>Record</ToolbarButton>
-      <ToolbarButton icon='text-size' title='Assert text' toggled={mode === 'assertingText'} onClick={() => {
+      <ToolbarButton icon='text-size' title='Assert text and values' toggled={mode === 'assertingText'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'none' : 'assertingText' } });
       }}>Assert</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {

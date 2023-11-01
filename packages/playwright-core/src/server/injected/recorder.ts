@@ -433,6 +433,29 @@ class TextAssertionTool implements RecorderTool {
     if (event.detail !== 1 || this._getSelectionText())
       return;
     const target = this._recorder.deepEventTarget(event);
+
+    if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
+      const highlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
+        this._recorder.delegate.recordAction?.({
+          name: 'assertChecked',
+          selector: highlight.selector,
+          signals: [],
+          // Interestingly, inputElement.checked is reversed inside this event handler.
+          checked: !(target as HTMLInputElement).checked,
+        });
+      } else {
+        this._recorder.delegate.recordAction?.({
+          name: 'assertValue',
+          selector: highlight.selector,
+          signals: [],
+          value: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
+        });
+      }
+      this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
+      return;
+    }
+
     const text = target ? elementText(new Map(), target).full : '';
     if (text) {
       this._selectionModel = { anchor: { node: target, offset: 0 }, focus: { node: target, offset: target.childNodes.length }, highlight: null };
@@ -443,6 +466,14 @@ class TextAssertionTool implements RecorderTool {
 
   onMouseDown(event: MouseEvent) {
     consumeEvent(event);
+    const target = this._recorder.deepEventTarget(event);
+    if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
+      this._selectionModel = null;
+      this._syncDocumentSelection();
+      const highlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
+      return;
+    }
     const pos = this._selectionPosition(event);
     if (pos && event.detail <= 1) {
       this._selectionModel = { anchor: pos, focus: pos, highlight: null };
@@ -538,7 +569,7 @@ class TextAssertionTool implements RecorderTool {
     if (highlight?.selector === this._selectionModel.highlight?.selector)
       return;
     this._selectionModel.highlight = highlight;
-    this._recorder.updateHighlight(highlight, false, '#6fdcbd38');
+    this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
   }
 }
 
@@ -644,7 +675,7 @@ class Overlay {
       none: this._createToolElement(toolsListElement, 'none', 'Disable'),
       inspecting: this._createToolElement(toolsListElement, 'inspecting', 'Pick locator'),
       recording: this._createToolElement(toolsListElement, 'recording', 'Record actions'),
-      assertingText: this._createToolElement(toolsListElement, 'assertingText', 'Assert text'),
+      assertingText: this._createToolElement(toolsListElement, 'assertingText', 'Assert text and values'),
     };
 
     this._overlayElement.addEventListener('mousedown', event => {
