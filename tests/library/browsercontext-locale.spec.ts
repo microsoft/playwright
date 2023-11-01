@@ -174,3 +174,12 @@ it('should format number in workers', async ({ browser, server }) => {
   expect(await worker.evaluate(() => (10000.20).toLocaleString())).toBe('10,000.2');
   await context.close();
 });
+
+it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ browser, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27802' });
+  const context = await browser.newContext({ locale: 'en-GB' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => (new Intl.DateTimeFormat()).resolvedOptions().locale)).toBe('en-GB');
+  await context.close();
+});

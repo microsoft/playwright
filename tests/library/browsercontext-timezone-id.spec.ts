@@ -94,3 +94,11 @@ it('should not change default timezone in another context', async ({ browser, se
     await context.close();
   }
 });
+
+it('should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ browser, server }) => {
+  const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => (new Intl.DateTimeFormat()).resolvedOptions().timeZone)).toBe('America/Jamaica');
+  await context.close();
+});
