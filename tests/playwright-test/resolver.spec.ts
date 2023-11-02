@@ -201,6 +201,34 @@ test('should fallback to *:* when baseurl and paths are specified', async ({ run
   expect(result.output).not.toContain(`Could not`);
 });
 
+test('should use the location of the tsconfig as the paths root when no baseUrl is specified', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'foo/bar/util/b.ts': `
+      export const foo = 42;
+    `,
+    'dir2/tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "paths": {"foo/*": ["../foo/*"]},
+      },
+    }`,
+    'dir2/inner.spec.ts': `
+      // This import should pick up ../foo/bar/util/b due to paths.
+      import { foo } from 'foo/bar/util/b';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Could not`);
+});
+
 test('should respect complex path resolver', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
