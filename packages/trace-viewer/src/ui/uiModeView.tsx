@@ -856,7 +856,7 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
   const visitSuite = (projectName: string, parentSuite: Suite, parentGroup: GroupItem) => {
     for (const suite of parentSuite.suites) {
       const title = suite.title || '<anonymous>';
-      let group = parentGroup.children.find(item => item.title === title) as GroupItem | undefined;
+      let group = parentGroup.children.find(item => item.kind === 'group' && item.title === title) as GroupItem | undefined;
       if (!group) {
         group = {
           kind: 'group',
@@ -877,7 +877,7 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
 
     for (const test of parentSuite.tests) {
       const title = test.title;
-      let testCaseItem = parentGroup.children.find(t => t.title === title) as TestCaseItem;
+      let testCaseItem = parentGroup.children.find(t => t.kind === 'case' && t.title === title) as TestCaseItem;
       if (!testCaseItem) {
         testCaseItem = {
           kind: 'case',
