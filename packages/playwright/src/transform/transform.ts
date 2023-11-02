@@ -16,6 +16,7 @@
 
 import crypto from 'crypto';
 import path from 'path';
+import { getPackageJsonPath } from 'playwright-core/lib/utils';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
 import type { Location } from '../../types/testReporter';
@@ -27,7 +28,7 @@ import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from
 import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupportIfNeeded } from './compilationCache';
 
-const version = require('../../package.json').version;
+const version = require(getPackageJsonPath(__dirname)).version;
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;

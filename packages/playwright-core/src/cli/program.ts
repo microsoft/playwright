@@ -31,12 +31,19 @@ import type { Page } from '../client/page';
 import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
+import {
+  wrapInASCIIBox,
+  isLikelyNpxGlobal,
+  assert,
+  gracefullyProcessExitDoNotHang,
+  getPackageManagerExecCommand,
+  getPackageJsonPath
+} from '../utils';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
 import { isTargetClosedError } from '../client/errors';
 
-const packageJSON = require('../../package.json');
+const packageJSON = require(getPackageJsonPath(__dirname));
 
 program
     .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))

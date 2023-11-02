@@ -24,7 +24,7 @@ import { debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utils
 import { formatCallLog } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
-import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames, getPackageJsonPath } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -215,30 +215,6 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 export const debugTest = debug('pw:test');
 
 export const callLogText = formatCallLog;
-
-const folderToPackageJsonPath = new Map<string, string>();
-
-export function getPackageJsonPath(folderPath: string): string {
-  const cached = folderToPackageJsonPath.get(folderPath);
-  if (cached !== undefined)
-    return cached;
-
-  const packageJsonPath = path.join(folderPath, 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    folderToPackageJsonPath.set(folderPath, packageJsonPath);
-    return packageJsonPath;
-  }
-
-  const parentFolder = path.dirname(folderPath);
-  if (folderPath === parentFolder) {
-    folderToPackageJsonPath.set(folderPath, '');
-    return '';
-  }
-
-  const result = getPackageJsonPath(parentFolder);
-  folderToPackageJsonPath.set(folderPath, result);
-  return result;
-}
 
 export function resolveReporterOutputPath(defaultValue: string, configDir: string, configValue: string | undefined) {
   if (configValue)

@@ -17,10 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { getPackageJsonPath } from 'playwright-core/lib/utils';
 import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import { getPackageJsonPath, mergeObjects } from '../util';
+import { mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/test';
@@ -92,7 +93,7 @@ export class FullConfigInternal {
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, config.shard, null),
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, config.updateSnapshots, 'missing'),
-      version: require('../../package.json').version,
+      version: require(packageJsonPath).version,
       workers: 0,
       webServer: null,
     };

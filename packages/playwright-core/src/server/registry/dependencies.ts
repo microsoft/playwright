@@ -26,7 +26,7 @@ import { deps } from './nativeDeps';
 import { getPlaywrightVersion } from '../../utils/userAgent';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
-const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;
+const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require(utils.getPackageJsonPath(__dirname)).version;
 
 const dockerVersionFilePath = '/ms-playwright/.docker-info';
 export async function writeDockerVersion(dockerImageNameTemplate: string) {
