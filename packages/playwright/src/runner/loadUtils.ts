@@ -249,7 +249,7 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
 function buildProjectSuite(project: FullProjectInternal, projectSuite: Suite): Suite {
   const result = new Suite(project.project.name, 'project');
   result._fullProject = project;
-  if (project.fullyParallel)
+  if (project.project.fullyParallel)
     result._parallelMode = 'parallel';
 
   for (const fileSuite of projectSuite.suites) {

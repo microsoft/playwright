@@ -280,7 +280,7 @@ export function toMatchSnapshot(
 
   const helper = new SnapshotHelper(
       testInfo, 'toMatchSnapshot', undefined, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
-      testInfo._projectInternal.expect?.toMatchSnapshot || {},
+      testInfo.project.expect?.toMatchSnapshot || {},
       nameOrOptions, optOptions);
 
   if (this.isNot) {
@@ -337,7 +337,7 @@ export async function toHaveScreenshot(
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
-  const config = (testInfo._projectInternal.expect as any)?.toHaveScreenshot;
+  const config = (testInfo.project.expect as any)?.toHaveScreenshot;
   const snapshotPathResolver = testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
       testInfo, 'toHaveScreenshot', locator, snapshotPathResolver, 'png',

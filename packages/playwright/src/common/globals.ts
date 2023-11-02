@@ -46,7 +46,7 @@ export function currentExpectTimeout(options: { timeout?: number }) {
     return options.timeout;
   if (currentExpectConfigureTimeout !== undefined)
     return currentExpectConfigureTimeout;
-  let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
+  let defaultExpectTimeout = testInfo?.project?.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   return defaultExpectTimeout;

@@ -110,6 +110,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+// Override TestProject properties that are always resolved to the non-undefined values.
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
  * multiple configurations. For example, consider running tests against multiple browsers.
@@ -160,7 +161,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  * ```
  *
  */
-export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> extends Project {
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
@@ -170,14 +171,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grep: RegExp | RegExp[];
-  /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grepInvert: RegExp | RegExp[] | null;
   /**
    * Metadata that will be put directly to the test report serialized as JSON.
    */
@@ -285,54 +278,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * option for all projects.
    */
   retries: number;
-  /**
-   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
-   * cleanup any resources acquired by this project.
-   *
-   * Passing `--no-deps` argument ignores
-   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
-   * it was not specified.
-   *
-   * **Usage**
-   *
-   * A common pattern is a "setup" dependency that has a corresponding "teardown":
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'setup',
-   *       testMatch: /global.setup\.ts/,
-   *       teardown: 'teardown',
-   *     },
-   *     {
-   *       name: 'teardown',
-   *       testMatch: /global.teardown\.ts/,
-   *     },
-   *     {
-   *       name: 'chromium',
-   *       use: devices['Desktop Chrome'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'firefox',
-   *       use: devices['Desktop Firefox'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'webkit',
-   *       use: devices['Desktop Safari'],
-   *       dependencies: ['setup'],
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   */
-  teardown?: string;
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *

@@ -153,10 +153,7 @@ export class FullConfigInternal {
 export class FullProjectInternal {
   readonly project: FullProject;
   readonly fullConfig: FullConfigInternal;
-  readonly fullyParallel: boolean;
-  readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
-  readonly snapshotPathTemplate: string;
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
@@ -165,17 +162,16 @@ export class FullProjectInternal {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    this.snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
 
     this.project = {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
-      grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
+      grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, undefined),
       outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
       // Note: we either apply the cli override for repeatEach or not, depending on whether the
       // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
       repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
-      metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
+      metadata: takeFirst(projectConfig.metadata, config.metadata, {}),
       name: takeFirst(projectConfig.name, config.name, ''),
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
@@ -185,14 +181,18 @@ export class FullProjectInternal {
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],
       teardown: projectConfig.teardown,
+      expect: takeFirst(projectConfig.expect, config.expect, {}),
+      fullyParallel: takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
+      snapshotPathTemplate: takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate),
     };
-    this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
-    this.expect = takeFirst(projectConfig.expect, config.expect, {});
     this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
   }
 }
 
-export function takeFirst<T>(...args: (T | undefined)[]): T {
+export function takeFirst<T>(arg1: T | undefined, arg2: T): T;
+export function takeFirst<T>(arg1: T | undefined, arg2: T | undefined, arg3: T): T;
+export function takeFirst<T>(arg1: T | undefined, arg2: T | undefined, arg3: T | undefined, arg4: T): T;
+export function takeFirst<T>(...args: T[]): T {
   for (const arg of args) {
     if (arg !== undefined)
       return arg;

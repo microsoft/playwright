@@ -439,7 +439,7 @@ export class TestInfoImpl implements TestInfo {
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const snapshotPath = (this._projectInternal.snapshotPathTemplate || '')
+    const snapshotPath = (this.project.snapshotPathTemplate || '')
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')

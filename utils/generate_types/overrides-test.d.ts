@@ -35,12 +35,9 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullProjectInternal instead.
-export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+// Override TestProject properties that are always resolved to the non-undefined values.
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> extends Project {
   grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
   name: string;
   dependencies: string[];
@@ -48,14 +45,12 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   outputDir: string;
   repeatEach: number;
   retries: number;
-  teardown?: string;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];
   timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
-// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
