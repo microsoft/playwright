@@ -34,8 +34,10 @@ interface RecorderDelegate {
 
 interface RecorderTool {
   cursor(): string;
+  enable?(): void;
   disable?(): void;
   onClick?(event: MouseEvent): void;
+  onDragStart?(event: DragEvent): void;
   onInput?(event: Event): void;
   onKeyDown?(event: KeyboardEvent): void;
   onKeyUp?(event: KeyboardEvent): void;
@@ -414,7 +416,8 @@ class RecordActionTool implements RecorderTool {
 }
 
 class TextAssertionTool implements RecorderTool {
-  private _selectionModel: SelectionModel | null = null;
+  private _selectionHighlight: HighlightModel | null = null;
+  private _inputIsFocused = false;
 
   constructor(private _recorder: Recorder) {
   }
@@ -423,18 +426,21 @@ class TextAssertionTool implements RecorderTool {
     return 'text';
   }
 
+  enable() {
+    this._recorder.injectedScript.document.designMode = 'on';
+  }
+
   disable() {
-    this._selectionModel = null;
-    this._syncDocumentSelection();
+    this._recorder.injectedScript.document.designMode = 'off';
+    this._selectionHighlight = null;
+    this._inputIsFocused = false;
   }
 
   onClick(event: MouseEvent) {
     consumeEvent(event);
-    if (event.detail !== 1 || this._getSelectionText())
-      return;
-    const target = this._recorder.deepEventTarget(event);
 
-    if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
+    const target = this._recorder.deepEventTarget(event);
+    if (event.detail === 1 && ['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
       const highlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         this._recorder.delegate.recordAction?.({
@@ -452,71 +458,72 @@ class TextAssertionTool implements RecorderTool {
           value: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
         });
       }
-      this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
       return;
     }
 
-    const text = target ? elementText(new Map(), target).full : '';
-    if (text) {
-      this._selectionModel = { anchor: { node: target, offset: 0 }, focus: { node: target, offset: target.childNodes.length }, highlight: null };
-      this._syncDocumentSelection();
+    const selection = this._recorder.document.getSelection();
+    if (event.detail === 1 && selection && !selection.toString()) {
+      selection.selectAllChildren(target);
       this._updateSelectionHighlight();
     }
   }
 
   onMouseDown(event: MouseEvent) {
-    consumeEvent(event);
     const target = this._recorder.deepEventTarget(event);
-    if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
-      this._selectionModel = null;
-      this._syncDocumentSelection();
-      const highlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
-      this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
+    if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
+      this._recorder.injectedScript.window.getSelection()?.empty();
+      this._selectionHighlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      this._inputIsFocused = true;
+      this._recorder.updateHighlight(this._selectionHighlight, true, '#6fdcbd38');
+      consumeEvent(event);
       return;
     }
-    const pos = this._selectionPosition(event);
-    if (pos && event.detail <= 1) {
-      this._selectionModel = { anchor: pos, focus: pos, highlight: null };
-      this._syncDocumentSelection();
-      this._updateSelectionHighlight();
-    }
+
+    this._inputIsFocused = false;
+    this._updateSelectionHighlight();
   }
 
   onMouseUp(event: MouseEvent) {
-    consumeEvent(event);
+    this._updateSelectionHighlight();
   }
 
   onMouseMove(event: MouseEvent) {
+    this._updateSelectionHighlight();
+  }
+
+  onDragStart(event: DragEvent) {
     consumeEvent(event);
-    if (!event.buttons)
-      return;
-    const pos = this._selectionPosition(event);
-    if (pos && this._selectionModel) {
-      this._selectionModel.focus = pos;
-      this._syncDocumentSelection();
-      this._updateSelectionHighlight();
-    }
   }
 
   onKeyDown(event: KeyboardEvent) {
-    consumeEvent(event);
     if (event.key === 'Escape') {
-      this._selectionModel = null;
-      this._syncDocumentSelection();
-      this._recorder.updateHighlight(null, false);
+      this._resetSelectionAndHighlight();
+      consumeEvent(event);
+      return;
     }
-    if (event.key === 'Enter' && this._selectionModel?.highlight) {
-      const text = this._getSelectionText();
-      this._recorder.delegate.recordAction?.({
-        name: 'assertText',
-        selector: this._selectionModel.highlight.selector,
-        signals: [],
-        text,
-        substring: normalizeWhiteSpace(elementText(new Map(), this._selectionModel.highlight.elements[0]).full) !== text,
-      });
-      this._selectionModel = null;
-      this._syncDocumentSelection();
-      this._recorder.updateHighlight(null, false);
+
+    if (event.key === 'Enter') {
+      const selection = this._recorder.document.getSelection();
+      if (selection && this._selectionHighlight) {
+        const selectedText = normalizeWhiteSpace(selection.toString());
+        const fullText = normalizeWhiteSpace(elementText(new Map(), this._selectionHighlight.elements[0]).full);
+        this._recorder.delegate.recordAction?.({
+          name: 'assertText',
+          selector: this._selectionHighlight.selector,
+          signals: [],
+          text: selectedText,
+          substring: fullText !== selectedText,
+        });
+        this._resetSelectionAndHighlight();
+      }
+      consumeEvent(event);
+      return;
+    }
+
+    // Only allow keys that control text selection.
+    if (!['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Shift', 'Control', 'Meta', 'Alt', 'AltGraph'].includes(event.key)) {
+      consumeEvent(event);
+      return;
     }
   }
 
@@ -525,50 +532,30 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onScroll(event: Event) {
-    this._recorder.updateHighlight(this._selectionModel ? this._selectionModel.highlight : null, false, '#6fdcbd38');
+    this._recorder.updateHighlight(this._selectionHighlight, false, '#6fdcbd38');
   }
 
-  private _selectionPosition(event: MouseEvent) {
-    if ((this._recorder.document as any).caretPositionFromPoint) {
-      const range = (this._recorder.document as any).caretPositionFromPoint(event.clientX, event.clientY);
-      return range ? { node: range.offsetNode, offset: range.offset } : undefined;
-    }
-    if ((this._recorder.document as any).caretRangeFromPoint) {
-      const range = this._recorder.document.caretRangeFromPoint(event.clientX, event.clientY);
-      return range ? { node: range.startContainer, offset: range.startOffset } : undefined;
-    }
-  }
-
-  private _syncDocumentSelection() {
-    if (!this._selectionModel) {
-      this._recorder.document.getSelection()?.empty();
-      return;
-    }
-    this._recorder.document.getSelection()?.setBaseAndExtent(
-        this._selectionModel.anchor.node,
-        this._selectionModel.anchor.offset,
-        this._selectionModel.focus.node,
-        this._selectionModel.focus.offset,
-    );
-  }
-
-  private _getSelectionText() {
-    this._syncDocumentSelection();
-    // TODO: use elementText() passing |range=selection.getRangeAt(0)| for proper text.
-    return normalizeWhiteSpace(this._recorder.document.getSelection()?.toString() || '');
+  private _resetSelectionAndHighlight() {
+    this._selectionHighlight = null;
+    this._recorder.injectedScript.window.getSelection()?.empty();
+    this._recorder.updateHighlight(null, false);
   }
 
   private _updateSelectionHighlight() {
-    if (!this._selectionModel)
+    if (this._inputIsFocused)
       return;
-    const focusElement = enclosingElement(this._selectionModel.focus.node);
-    let lcaElement = focusElement ? enclosingElement(this._selectionModel.anchor.node) : undefined;
-    while (lcaElement && !isInsideScope(lcaElement, focusElement))
-      lcaElement = parentElementOrShadowHost(lcaElement);
-    const highlight = lcaElement ? generateSelector(this._recorder.injectedScript, lcaElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true }) : null;
-    if (highlight?.selector === this._selectionModel.highlight?.selector)
+    const selection = this._recorder.document.getSelection();
+    let highlight: HighlightModel | null = null;
+    if (selection && selection.focusNode && selection.anchorNode && selection.toString()) {
+      const focusElement = enclosingElement(selection.focusNode);
+      let lcaElement = focusElement ? enclosingElement(selection.anchorNode) : undefined;
+      while (lcaElement && !isInsideScope(lcaElement, focusElement))
+        lcaElement = parentElementOrShadowHost(lcaElement);
+      highlight = lcaElement ? generateSelector(this._recorder.injectedScript, lcaElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true }) : null;
+    }
+    if (highlight?.selector === this._selectionHighlight?.selector)
       return;
-    this._selectionModel.highlight = highlight;
+    this._selectionHighlight = highlight;
     this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
   }
 }
@@ -794,6 +781,7 @@ export class Recorder {
     this._listeners = [
       addEventListener(this.document, 'click', event => this._onClick(event as MouseEvent), true),
       addEventListener(this.document, 'auxclick', event => this._onClick(event as MouseEvent), true),
+      addEventListener(this.document, 'dragstart', event => this._onDragStart(event as DragEvent), true),
       addEventListener(this.document, 'input', event => this._onInput(event), true),
       addEventListener(this.document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
       addEventListener(this.document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
@@ -816,7 +804,8 @@ export class Recorder {
     this._currentTool.disable?.();
     this.clearHighlight();
     this._currentTool = newTool;
-    this.injectedScript.document.body.setAttribute('data-pw-cursor', newTool.cursor());
+    this._currentTool.enable?.();
+    this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
   }
 
   setUIState(state: UIState, delegate: RecorderDelegate) {
@@ -858,6 +847,14 @@ export class Recorder {
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onClick?.(event);
+  }
+
+  private _onDragStart(event: DragEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onDragStart?.(event);
   }
 
   private _onMouseDown(event: MouseEvent) {
@@ -991,12 +988,6 @@ function consumeEvent(e: Event) {
 type HighlightModel = {
   selector: string;
   elements: Element[];
-};
-
-type SelectionModel = {
-  anchor: { node: Node, offset: number };
-  focus: { node: Node, offset: number };
-  highlight: HighlightModel | null;
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {
