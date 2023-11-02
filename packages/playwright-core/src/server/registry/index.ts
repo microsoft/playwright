@@ -918,7 +918,7 @@ export class Registry {
         darwin: { platform: 'MacOS', arch: 'universal', artifact: 'pkg' },
         win32: { platform: 'Windows', arch: 'x64', artifact: 'msi' },
       } as any)[process.platform];
-      const release = searchConfig ? product.releases.find((release: any) => release.platform === searchConfig.platform && release.architecture === searchConfig.arch) : null;
+      const release = searchConfig ? product.releases.find((release: any) => release.platform === searchConfig.platform && release.architecture === searchConfig.arch && release.artifacts.length > 0) : null;
       const artifact = release ? release.artifacts.find((artifact: any) => artifact.artifactname === searchConfig.artifact) : null;
       if (artifact)
         scriptArgs.push(artifact.location /* url */);
