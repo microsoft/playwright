@@ -46,7 +46,7 @@ export interface IRecorderApp extends EventEmitter {
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;
   setFileIfNeeded(file: string): Promise<void>;
-  setSelector(selector: string, focus?: boolean): Promise<void>;
+  setSelector(selector: string, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
   setSources(sources: Source[]): Promise<void>;
 }
@@ -56,7 +56,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
   async setFileIfNeeded(file: string): Promise<void> {}
-  async setSelector(selector: string, focus?: boolean): Promise<void> {}
+  async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
 }
@@ -166,14 +166,18 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       (process as any)._didSetSourcesForTest(sources[0].text);
   }
 
-  async setSelector(selector: string, focus?: boolean): Promise<void> {
-    if (focus) {
-      this._recorder.setMode('none');
-      this._page.bringToFront();
+  async setSelector(selector: string, userGesture?: boolean): Promise<void> {
+    if (userGesture) {
+      if (this._recorder.mode() === 'inspecting') {
+        this._recorder.setMode('none');
+        this._page.bringToFront();
+      } else {
+        this._recorder.setMode('recording');
+      }
     }
-    await this._page.mainFrame().evaluateExpression(((arg: any) => {
-      window.playwrightSetSelector(arg.selector, arg.focus);
-    }).toString(), { isFunction: true }, { selector, focus }).catch(() => {});
+    await this._page.mainFrame().evaluateExpression(((selector: string) => {
+      window.playwrightSetSelector(selector);
+    }).toString(), { isFunction: true }, selector).catch(() => {});
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {

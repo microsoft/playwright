@@ -46,3 +46,12 @@
 .toolbar-button.toggled .codicon {
   font-weight: bold;
 }
+
+.toolbar-separator {
+  flex: none;
+  background-color: var(--vscode-menu-separatorBackground);
+  width: 1px;
+  padding: 0;
+  margin: 5px 4px;
+  height: 16px;
+}

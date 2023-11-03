@@ -55,6 +55,7 @@ export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
+  private _overlayPosition: Point = { x: 0, y: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
@@ -97,6 +98,11 @@ export class Recorder implements InstrumentationListener {
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
     this._currentLanguage = this._contextRecorder.languageName();
+
+    if (isUnderTest()) {
+      // Most of our tests put elements at the top left, so get out of the way.
+      this._overlayPosition = { x: 350, y: 350 };
+    }
   }
 
   private static async defaultRecorderAppFactory(recorder: Recorder) {
@@ -180,6 +186,7 @@ export class Recorder implements InstrumentationListener {
         actionSelector,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
+        overlayPosition: this._overlayPosition,
       };
       return uiState;
     });
@@ -200,6 +207,12 @@ export class Recorder implements InstrumentationListener {
       if (frame.parentFrame())
         return;
       this.setMode(mode);
+    });
+
+    await this._context.exposeBinding('__pw_recorderSetOverlayPosition', false, async ({ frame }, position: Point) => {
+      if (frame.parentFrame())
+        return;
+      this._overlayPosition = position;
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -242,6 +255,10 @@ export class Recorder implements InstrumentationListener {
 
   resume() {
     this._debugger.resume(false);
+  }
+
+  mode() {
+    return this._mode;
   }
 
   setHighlightedSelector(language: Language, selector: string) {
