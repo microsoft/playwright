@@ -240,8 +240,21 @@ function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: str
     config.rootDir = rootDirOverride;
   } else {
     const rootDirs = new Set(configureEvents.map(e => e.params.config.rootDir));
-    if (rootDirs.size > 1)
-      throw new Error(`Multiple test root directories found in the blob reports. Please specify merge config with desired 'testDir'.\nFound directories:\n${[...rootDirs].join('\n')}`);
+    if (rootDirs.size > 1) {
+      throw new Error([
+        `Blob reports being merged were recorded with different test directories, and`,
+        `merging cannot proceed. This may happen if you are merging reports from`,
+        `machines with different environments, like different operating systems or`,
+        `if the tests ran with different playwright configs.`,
+        ``,
+        `You can force merge by specifying a merge config file with "-c" option. If`,
+        `you'd like all test paths to be correct, make sure 'testDir' in the merge config`,
+        `file points to the actual tests location.`,
+        ``,
+        `Found directories:`,
+        ...rootDirs
+      ].join('\n'));
+    }
   }
 
   return {

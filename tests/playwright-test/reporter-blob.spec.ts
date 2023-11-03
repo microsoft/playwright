@@ -1463,7 +1463,7 @@ test('merge reports with different rootDirs', async ({ runInlineTest, mergeRepor
   {
     const { exitCode, output } = await mergeReports(allReportsDir);
     expect(exitCode).toBe(1);
-    expect(output).toContain(`Multiple test root directories found in the blob reports. Please specify merge config with desired 'testDir'.`);
+    expect(output).toContain(`Blob reports being merged were recorded with different test directories`);
   }
 
   {

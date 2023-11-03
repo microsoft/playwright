@@ -596,7 +596,6 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
   for (const file of stepsInFile.keys()) {
     let source: string;
     try {
-      console.log('file = ' + file);
       source = fs.readFileSync(file, 'utf-8') + '\n//';
     } catch (e) {
       continue;
