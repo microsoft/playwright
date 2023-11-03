@@ -196,7 +196,7 @@ export class TeleReporterReceiver {
   }
 
   private _onConfigure(config: JsonConfig) {
-    this._rootDir = this._reportConfig?.rootDir || config.rootDir;
+    this._rootDir = config.rootDir;
     this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
     this._reporter.onConfigure?.(this._config);
@@ -324,7 +324,6 @@ export class TeleReporterReceiver {
     const result = { ...baseFullConfig, ...config };
     if (this._reportConfig) {
       result.configFile = this._reportConfig.configFile;
-      result.rootDir = this._reportConfig.rootDir;
       result.reportSlowTests = this._reportConfig.reportSlowTests;
       result.quiet = this._reportConfig.quiet;
       result.reporter = [...this._reportConfig.reporter];
