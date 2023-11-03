@@ -639,7 +639,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
 
   const htmlReportDir = test.info().outputPath('playwright-report');
   for (const entry of await fs.promises.readdir(htmlReportDir))
-    await (fs.promises as any).cp(path.join(htmlReportDir, entry), path.join(reportDir, entry), { recursive: true });
+    await fs.promises.cp(path.join(htmlReportDir, entry), path.join(reportDir, entry), { recursive: true });
 
   const oldSeveFile = server.serveFile;
   server.serveFile = async (req, res) => {
@@ -1415,4 +1415,100 @@ test('reporter list in the custom config', async ({ runInlineTest, mergeReports 
   const text = stripAnsi(output);
   expect(text).toContain('testReporter.js');
   expect(text).toContain('{ myOpt: 1 }');
+});
+
+test('merge reports with different rootDirs', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
+  const files1 = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onBegin(config, suite) {
+          console.log('rootDir:', config.rootDir);
+        }
+        onTestBegin(test) {
+          console.log('test:', test.location.file);
+        }
+      };
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+      reporter: './echo-reporter.js'
+     };`,
+    'dir1/playwright.config.ts': `module.exports = {
+      testDir: 'tests1',
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir1/tests1/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
+
+  const files2 = {
+    'dir2/playwright.config.ts': `module.exports = {
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir2/tests2/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files2, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir2/playwright.config.ts')] });
+
+  const allReportsDir = test.info().outputPath('all-blob-reports');
+  await fs.promises.cp(test.info().outputPath('dir1', 'blob-report', 'report.zip'), path.join(allReportsDir, 'report-1.zip'));
+  await fs.promises.cp(test.info().outputPath('dir2', 'blob-report', 'report.zip'), path.join(allReportsDir, 'report-2.zip'));
+
+  {
+    const { exitCode, output } = await mergeReports(allReportsDir);
+    expect(exitCode).toBe(1);
+    expect(output).toContain(`Blob reports being merged were recorded with different test directories`);
+  }
+
+  {
+    const { exitCode, output } = await mergeReports(allReportsDir, undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
+    expect(exitCode).toBe(0);
+    expect(output).toContain(`rootDir: ${test.info().outputPath('mergeRoot')}`);
+    expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'a.test.js')}`);
+    expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests2', 'b.test.js')}`);
+  }
+});
+
+test('merge reports same rootDirs', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
+  const files = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onBegin(config, suite) {
+          console.log('rootDir:', config.rootDir);
+        }
+        onTestBegin(test) {
+          console.log('test:', test.location.file);
+        }
+      };
+    `,
+    'playwright.config.ts': `module.exports = {
+      testDir: 'tests',
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'tests/dir1/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+    'tests/dir2/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const allReportsDir = test.info().outputPath('blob-report');
+
+  const { exitCode, output } = await mergeReports(allReportsDir, undefined, { additionalArgs: ['--reporter', './echo-reporter.js'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`rootDir: ${test.info().outputPath('tests')}`);
+  expect(output).toContain(`test: ${test.info().outputPath('tests', 'dir1', 'a.test.js')}`);
+  expect(output).toContain(`test: ${test.info().outputPath('tests', 'dir2', 'b.test.js')}`);
 });

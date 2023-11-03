@@ -34,7 +34,7 @@ type ReportData = {
   reportFile: string;
 };
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
   const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
@@ -49,7 +49,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus);
+  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
@@ -148,7 +148,7 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback) {
+async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined) {
   const internalizer = new JsonStringInternalizer(stringPool);
 
   const configureEvents: JsonEvent[] = [];
@@ -207,7 +207,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
   return {
     prologue: [
-      mergeConfigureEvents(configureEvents),
+      mergeConfigureEvents(configureEvents, rootDirOverride),
       ...projectEvents,
       { method: 'onBegin', params: undefined },
     ],
@@ -219,7 +219,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
   };
 }
 
-function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
+function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: string | undefined): JsonEvent {
   if (!configureEvents.length)
     throw new Error('No configure events found');
   let config: JsonConfig = {
@@ -235,6 +235,28 @@ function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
   };
   for (const event of configureEvents)
     config = mergeConfigs(config, event.params.config);
+
+  if (rootDirOverride) {
+    config.rootDir = rootDirOverride;
+  } else {
+    const rootDirs = new Set(configureEvents.map(e => e.params.config.rootDir));
+    if (rootDirs.size > 1) {
+      throw new Error([
+        `Blob reports being merged were recorded with different test directories, and`,
+        `merging cannot proceed. This may happen if you are merging reports from`,
+        `machines with different environments, like different operating systems or`,
+        `if the tests ran with different playwright configs.`,
+        ``,
+        `You can force merge by specifying a merge config file with "-c" option. If`,
+        `you'd like all test paths to be correct, make sure 'testDir' in the merge config`,
+        `file points to the actual tests location.`,
+        ``,
+        `Found directories:`,
+        ...rootDirs
+      ].join('\n'));
+    }
+  }
+
   return {
     method: 'onConfigure',
     params: {

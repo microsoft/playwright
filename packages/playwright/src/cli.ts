@@ -199,7 +199,8 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
     reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
     reporterDescriptions = [[defaultReporter]];
-  await createMergedReport(config, dir, reporterDescriptions!);
+  const rootDirOverride = configFile ? config.config.rootDir : undefined;
+  await createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
