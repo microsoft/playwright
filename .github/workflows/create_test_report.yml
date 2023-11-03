@@ -31,7 +31,7 @@ jobs:
 
     - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter markdown,html ./all-blob-reports
+        npx playwright merge-reports --config .github/workflows/merge.config.ts ./all-blob-reports
       env:
         NODE_OPTIONS: --max-old-space-size=4096
 
