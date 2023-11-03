@@ -242,3 +242,31 @@ test('should collapse all', async ({ runUITest }) => {
     ► ◯ a.test.ts
   `);
 });
+
+test('should resolve title conflicts', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+
+      test("foo", () => {});
+
+      test.describe("foo", () => {
+        test("bar", () => {});
+      });
+
+      test.describe("foo", () => {
+        test("bar 2", () => {});
+      });
+    `
+  });
+
+  await page.getByTestId('test-tree').getByText('foo').last().click();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ foo
+      ▼ ◯ foo <=
+          ◯ bar
+          ◯ bar 2
+  `);
+});

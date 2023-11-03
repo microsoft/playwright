@@ -856,12 +856,12 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
   const visitSuite = (projectName: string, parentSuite: Suite, parentGroup: GroupItem) => {
     for (const suite of parentSuite.suites) {
       const title = suite.title || '<anonymous>';
-      let group = parentGroup.children.find(item => item.title === title) as GroupItem | undefined;
+      let group = parentGroup.children.find(item => item.kind === 'group' && item.title === title) as GroupItem | undefined;
       if (!group) {
         group = {
           kind: 'group',
           subKind: 'describe',
-          id: parentGroup.id + '\x1e' + title,
+          id: 'suite:' + parentSuite.titlePath().join('\x1e') + '\x1e' + title,  // account for anonymous suites
           title,
           location: suite.location!,
           duration: 0,
@@ -877,11 +877,11 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
 
     for (const test of parentSuite.tests) {
       const title = test.title;
-      let testCaseItem = parentGroup.children.find(t => t.title === title) as TestCaseItem;
+      let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem;
       if (!testCaseItem) {
         testCaseItem = {
           kind: 'case',
-          id: parentGroup.id + '\x1e' + title,
+          id: 'test:' + test.titlePath().join('\x1e'),
           title,
           parent: parentGroup,
           children: [],
@@ -953,7 +953,7 @@ function filterTree(rootItem: GroupItem, filterText: string, statusFilters: Map<
     if (!tokens.every(token => title.includes(token)) && !testCase.tests.some(t => runningTestIds?.has(t.id)))
       return false;
     testCase.children = (testCase.children as TestItem[]).filter(test => {
-      return !filtersStatuses || runningTestIds?.has(test.id) || statusFilters.get(test.status);
+      return !filtersStatuses || runningTestIds?.has(test.test.id) || statusFilters.get(test.status);
     });
     testCase.tests = (testCase.children as TestItem[]).map(c => c.test);
     return !!testCase.children.length;
