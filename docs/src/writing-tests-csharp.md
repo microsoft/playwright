@@ -50,7 +50,7 @@ public class Tests : PageTest
         await getStarted.ClickAsync();
 
         // Expects page to have a heading with the name of Installation.
-        await Expect(page
+        await Expect(Page
             .GetByRole(AriaRole.Heading, new() { Name = "Installation" }))
             .ToBeVisibleAsync();
     }
