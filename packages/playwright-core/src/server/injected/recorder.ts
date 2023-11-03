@@ -41,6 +41,8 @@ interface RecorderTool {
   onInput?(event: Event): void;
   onKeyDown?(event: KeyboardEvent): void;
   onKeyUp?(event: KeyboardEvent): void;
+  onPointerDown?(event: PointerEvent): void;
+  onPointerUp?(event: PointerEvent): void;
   onMouseDown?(event: MouseEvent): void;
   onMouseUp?(event: MouseEvent): void;
   onMouseMove?(event: MouseEvent): void;
@@ -74,6 +76,14 @@ class InspectTool implements RecorderTool {
   onClick(event: MouseEvent) {
     consumeEvent(event);
     this._recorder.delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
+  }
+
+  onPointerDown(event: PointerEvent) {
+    consumeEvent(event);
+  }
+
+  onPointerUp(event: PointerEvent) {
+    consumeEvent(event);
   }
 
   onMouseDown(event: MouseEvent) {
@@ -174,6 +184,20 @@ class RecordActionTool implements RecorderTool {
       modifiers: modifiersForEvent(event),
       clickCount: event.detail
     });
+  }
+
+  onPointerDown(event: PointerEvent) {
+    if (this._shouldIgnoreMouseEvent(event))
+      return;
+    if (!this._performingAction)
+      consumeEvent(event);
+  }
+
+  onPointerUp(event: PointerEvent) {
+    if (this._shouldIgnoreMouseEvent(event))
+      return;
+    if (!this._performingAction)
+      consumeEvent(event);
   }
 
   onMouseDown(event: MouseEvent) {
@@ -785,6 +809,8 @@ export class Recorder {
       addEventListener(this.document, 'input', event => this._onInput(event), true),
       addEventListener(this.document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
       addEventListener(this.document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
+      addEventListener(this.document, 'pointerdown', event => this._onPointerDown(event as PointerEvent), true),
+      addEventListener(this.document, 'pointerup', event => this._onPointerUp(event as PointerEvent), true),
       addEventListener(this.document, 'mousedown', event => this._onMouseDown(event as MouseEvent), true),
       addEventListener(this.document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
       addEventListener(this.document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
@@ -855,6 +881,22 @@ export class Recorder {
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onDragStart?.(event);
+  }
+
+  private _onPointerDown(event: PointerEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onPointerDown?.(event);
+  }
+
+  private _onPointerUp(event: PointerEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onPointerUp?.(event);
   }
 
   private _onMouseDown(event: MouseEvent) {

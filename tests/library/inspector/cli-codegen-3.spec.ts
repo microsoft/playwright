@@ -527,4 +527,35 @@ test.describe('cli codegen', () => {
     expect.soft(sources.get('C#')!.text).toContain(`
         await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
+
+  test('should consume pointer events', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <button onclick="console.log('clicked')">Submit</button>
+      <script>
+        const button = document.querySelector('button');
+        const log = [];
+        for (const eventName of ['mousedown', 'mousemove', 'mouseup', 'pointerdown', 'pointermove', 'pointerup', 'click'])
+          button.addEventListener(eventName, e => log.push(e.type));
+      </script>
+    `);
+
+    await recorder.hoverOverElement('button');
+    expect(await page.evaluate('log')).toEqual(['pointermove', 'mousemove']);
+
+    const [message] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+    expect(message.text()).toBe('clicked');
+    expect(await page.evaluate('log')).toEqual([
+      'pointermove', 'mousemove',
+      'pointermove', 'mousemove',
+      'pointerdown', 'mousedown',
+      'pointerup', 'mouseup',
+      'click',
+    ]);
+  });
 });
