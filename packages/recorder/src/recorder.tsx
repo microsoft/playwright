@@ -19,7 +19,7 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
-import { ToolbarButton } from '@web/components/toolbarButton';
+import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
 import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
@@ -66,7 +66,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   };
 
   const [locator, setLocator] = React.useState('');
-  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
+  window.playwrightSetSelector = (selector: string) => {
     const language = source.language;
     setLocator(asLocator(language, selector));
   };
@@ -113,12 +113,25 @@ export const Recorder: React.FC<RecorderProps> = ({
 
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='record' title='Record actions' toggled={mode === 'recording'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' } });
+      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'inspecting' ? 'recording' : 'none' } });
       }}>Record</ToolbarButton>
-      <ToolbarButton icon='text-size' title='Assert text and values' toggled={mode === 'assertingText'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'none' : 'assertingText' } });
+      <ToolbarSeparator />
+      <ToolbarButton icon='inspect' title='Pick locator' toggled={mode === 'inspecting' || mode === 'recording-inspecting'} onClick={() => {
+        const newMode = {
+          'inspecting': 'none',
+          'none': 'inspecting',
+          'recording': 'recording-inspecting',
+          'recording-inspecting': 'recording',
+          'assertingText': 'recording-inspecting',
+        }[mode];
+        window.dispatch({ event: 'setMode', params: { mode: newMode } }).catch(() => { });
+        setSelectedTab('locator');
+      }}>Pick locator</ToolbarButton>
+      <ToolbarButton icon='check-all' title='Assert text and values' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'inspecting'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'recording' : 'assertingText' } });
       }}>Assert</ToolbarButton>
+      <ToolbarSeparator />
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
@@ -145,10 +158,6 @@ export const Recorder: React.FC<RecorderProps> = ({
     <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
       <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true}/>
       <TabbedPane
-        leftToolbar={[<ToolbarButton icon='target' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
-          window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
-          setSelectedTab('locator');
-        }} />]}
         rightToolbar={selectedTab === 'locator' ? [<ToolbarButton icon='files' title='Copy' onClick={() => copy(locator)} />] : []}
         tabs={[
           {
