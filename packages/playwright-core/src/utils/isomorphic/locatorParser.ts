@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
-import { asLocators } from './locatorGenerators';
-import type { Language, Quote } from './locatorGenerators';
+import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
+import type { Language } from './locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from './locatorUtils';
 import { parseSelector } from './selectorParser';
 
@@ -49,7 +48,7 @@ function tokenize(locator: string, language: Language): Token[] | undefined {
   const reQuote = language === 'javascript' ? '/' : undefined;
   const isIdentLikeChar = (c: string) => {
     // Identifier, number, true, false.
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_' || ('0' <= c && c <= '9') || c === '-' || c === '+';
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c === '_' || ('0' <= c && c <= '9') || c === '-' || c === '+';
   };
 
   const result: Token[] = [];
@@ -122,6 +121,56 @@ function tokenize(locator: string, language: Language): Token[] | undefined {
     return undefined;
   }
   result.push({ eof: true });
+
+  function tokenMatches(match: Token, token: Token) {
+    return match.eof === token.eof && match.re === token.re && match.token === token.token &&
+      (match.identLike === token.identLike || match.identLike === '*' && token.identLike !== undefined) &&
+      (match.string === token.string || match.string === '*' && token.string !== undefined);
+  }
+
+  function fixup(match: Token[], replacer: (tokens: Token[]) => Token) {
+    for (let i = 0; i < result.length; i++) {
+      if (match.every((t, j) => tokenMatches(t, result[i + j]))) {
+        const tokens = result.slice(i, i + match.length);
+        result.splice(i, match.length, replacer(tokens));
+      }
+    }
+  }
+
+  if (language === 'java') {
+    fixup([
+      { identLike: 'Pattern' }, { token: '.' }, { identLike: 'compile' }, { token: '(' }, { string: '*' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[4].string!, flags: '' } }));
+    fixup([
+      { identLike: 'Pattern' }, { token: '.' }, { identLike: 'compile' }, { token: '(' }, { string: '*' }, { token: ',' },
+      { identLike: 'Pattern' }, { token: '.' }, { identLike: 'CASE_INSENSITIVE' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[4].string!, flags: 'i' } }));
+    fixup([{ identLike: 'AriaRole' }, { token: '.' }, { identLike: '*' }], tokens => ({ string: tokens[2].identLike!.toLowerCase() }));
+  }
+
+  if (language === 'python') {
+    fixup([
+      { identLike: 're' }, { token: '.' }, { identLike: 'compile' }, { token: '(' }, { identLike: 'r' }, { string: '*' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[5].string!, flags: '' } }));
+    fixup([
+      { identLike: 're' }, { token: '.' }, { identLike: 'compile' }, { token: '(' }, { identLike: 'r' }, { string: '*' },
+      { token: ',' }, { identLike: 're' }, { token: '.' }, { identLike: 'IGNORECASE' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[5].string!, flags: 'i' } }));
+    fixup([{ identLike: 'True' }], tokens => ({ identLike: 'true' }));
+    fixup([{ identLike: 'False' }], tokens => ({ identLike: 'false' }));
+  }
+
+  if (language === 'csharp') {
+    fixup([
+      { identLike: 'new' }, { identLike: 'Regex' }, { token: '(' }, { string: '*' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[3].string!, flags: '' } }));
+    fixup([
+      { identLike: 'new' }, { identLike: 'Regex' }, { token: '(' }, { string: '*' }, { token: ',' },
+      { identLike: 'RegexOptions' }, { token: '.' }, { identLike: 'IgnoreCase' }, { token: ')' },
+    ], tokens => ({ re: { source: tokens[3].string!, flags: 'i' } }));
+    fixup([{ identLike: 'AriaRole' }, { token: '.' }, { identLike: '*' }], tokens => ({ string: tokens[2].identLike!.toLowerCase() }));
+  }
+
   return result;
 }
 
@@ -141,12 +190,20 @@ type Chain = {
   call?: Call;
 }[];
 
-function parseJavaScriptTokens(tokens: Token[]): Expr | undefined {
+function parse(tokens: Token[], language: Language): Expr | undefined {
   let pos = 0;
 
   function expect(condition: boolean): asserts condition {
     if (!condition)
       throw new Error('');
+  }
+
+  function titleCaseToCamelCase(s: string) {
+    return s[0].toLowerCase() + s.substring(1);
+  }
+
+  function snakeCaseToCamelCase(s: string) {
+    return s.split('_').map((r, index) => index ? r[0].toUpperCase() + r.substring(1) : r).join('');
   }
 
   function parseExpr(): Expr {
@@ -162,7 +219,7 @@ function parseJavaScriptTokens(tokens: Token[]): Expr | undefined {
     expect(false);
   }
 
-  function parseCall(): Call {
+  function parseJavaScriptCall(): Call {
     const func = tokens[pos++].identLike;
     expect(func !== undefined);
     const call: Call = { func, args: [], options: [] };
@@ -199,66 +256,7 @@ function parseJavaScriptTokens(tokens: Token[]): Expr | undefined {
     return call;
   }
 
-  function parseChain(): Chain {
-    const result: Chain = [];
-    while (tokens[pos].identLike !== undefined) {
-      if (tokens[pos + 1].token === '(')
-        result.push({ call: parseCall() });
-      else
-        result.push(tokens[pos++]);
-      if (tokens[pos].token !== '.')
-        break;
-      ++pos;
-    }
-    return result;
-  }
-
-  try {
-    const result = parseExpr();
-    expect(!!tokens[pos].eof);
-    return result;
-  } catch {
-  }
-}
-
-function parseJavaTokens(tokens: Token[]): Expr | undefined {
-  let pos = 0;
-
-  function expect(condition: boolean): asserts condition {
-    if (!condition)
-      throw new Error('');
-  }
-
-  function parseExpr(): Expr {
-    if (tokens[pos].string !== undefined)
-      return tokens[pos++];
-    if (tokens[pos].identLike !== undefined) {
-      if (tokens[pos].identLike === 'Pattern' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike === 'compile'
-        && tokens[pos + 3].token === '(' && tokens[pos + 4].string !== undefined) {
-        if (tokens[pos + 5].token === ')') {
-          const result = { re: { source: tokens[pos + 4].string!, flags: '' } };
-          pos += 6;
-          return result;
-        }
-        if (tokens[pos + 5].token === ',' && tokens[pos + 6].identLike === 'Pattern' && tokens[pos + 7].token === '.' && tokens[pos + 8].identLike === 'CASE_INSENSITIVE' && tokens[pos + 9].token === ')') {
-          const result = { re: { source: tokens[pos + 4].string!, flags: 'i' } };
-          pos += 10;
-          return result;
-        }
-      }
-      if (tokens[pos].identLike === 'AriaRole' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike !== undefined) {
-        const result = { string: tokens[pos + 2].identLike!.toLowerCase() };
-        pos += 3;
-        return result;
-      }
-      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
-        return { chain: parseChain() };
-      return tokens[pos++];
-    }
-    expect(false);
-  }
-
-  function parseCall(): Call {
+  function parseJavaCall(): Call {
     const func = tokens[pos++].identLike;
     expect(func !== undefined);
     const call: Call = { func, args: [], options: [] };
@@ -280,7 +278,7 @@ function parseJavaTokens(tokens: Token[]): Expr | undefined {
           let name = tokens[pos++].identLike;
           expect(name !== undefined);
           expect(name.startsWith('set'));
-          name = name[3].toLowerCase() + name.substring(4);
+          name = titleCaseToCamelCase(name.substring(3));
           expect(tokens[pos++].token === '(');
           const value = parseExpr();
           expect(tokens[pos++].token === ')');
@@ -300,70 +298,10 @@ function parseJavaTokens(tokens: Token[]): Expr | undefined {
     return call;
   }
 
-  function parseChain(): Chain {
-    const result: Chain = [];
-    while (tokens[pos].identLike !== undefined) {
-      if (tokens[pos + 1].token === '(')
-        result.push({ call: parseCall() });
-      else
-        result.push(tokens[pos++]);
-      if (tokens[pos].token !== '.')
-        break;
-      ++pos;
-    }
-    return result;
-  }
-
-  try {
-    const result = parseExpr();
-    expect(!!tokens[pos].eof);
-    return result;
-  } catch {
-  }
-}
-
-function parsePythonTokens(tokens: Token[]): Expr | undefined {
-  let pos = 0;
-
-  function expect(condition: boolean): asserts condition {
-    if (!condition)
-      throw new Error('');
-  }
-
-  function toCamelCase(s: string) {
-    return s.split('_').map((r, index) => index ? r[0].toUpperCase() + r.substring(1) : r).join('');
-  }
-
-  function parseExpr(): Expr {
-    if (tokens[pos].string !== undefined)
-      return tokens[pos++];
-    if (tokens[pos].identLike === 'True' || tokens[pos].identLike === 'False')
-      return { identLike: tokens[pos++].identLike!.toLowerCase() };
-    if (tokens[pos].identLike !== undefined) {
-      if (tokens[pos].identLike === 're' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike === 'compile'
-        && tokens[pos + 3].token === '(' && tokens[pos + 4].identLike === 'r' && tokens[pos + 5].string !== undefined) {
-        if (tokens[pos + 6].token === ')') {
-          const result = { re: { source: tokens[pos + 5].string!, flags: '' } };
-          pos += 7;
-          return result;
-        }
-        if (tokens[pos + 6].token === ',' && tokens[pos + 7].identLike === 're' && tokens[pos + 8].token === '.' && tokens[pos + 9].identLike === 'IGNORECASE' && tokens[pos + 10].token === ')') {
-          const result = { re: { source: tokens[pos + 5].string!, flags: 'i' } };
-          pos += 11;
-          return result;
-        }
-      }
-      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
-        return { chain: parseChain() };
-      return tokens[pos++];
-    }
-    expect(false);
-  }
-
-  function parseCall(): Call {
+  function parsePythonCall(): Call {
     const func = tokens[pos++].identLike;
     expect(func !== undefined);
-    const call: Call = { func: toCamelCase(func), args: [], options: [] };
+    const call: Call = { func: snakeCaseToCamelCase(func), args: [], options: [] };
     if (tokens[pos].token !== '(')
       return call;
     ++pos;
@@ -374,7 +312,7 @@ function parsePythonTokens(tokens: Token[]): Expr | undefined {
         const name = tokens[pos++].identLike!;
         ++pos;
         const value = parseExpr();
-        call.options.push({ name: toCamelCase(name), value });
+        call.options.push({ name: snakeCaseToCamelCase(name), value });
       } else {
         expect(!seenOptions);
         call.args.push(parseExpr());
@@ -389,72 +327,10 @@ function parsePythonTokens(tokens: Token[]): Expr | undefined {
     return call;
   }
 
-  function parseChain(): Chain {
-    const result: Chain = [];
-    while (tokens[pos].identLike !== undefined) {
-      if (result.length || tokens[pos + 1].token === '(')
-        result.push({ call: parseCall() });
-      else
-        result.push(tokens[pos++]);
-      if (tokens[pos].token !== '.')
-        break;
-      ++pos;
-    }
-    return result;
-  }
-
-  try {
-    const result = parseExpr();
-    expect(!!tokens[pos].eof);
-    return result;
-  } catch {
-  }
-}
-
-function parseCSharpTokens(tokens: Token[]): Expr | undefined {
-  let pos = 0;
-
-  function expect(condition: boolean): asserts condition {
-    if (!condition)
-      throw new Error('');
-  }
-
-  function toCamelCase(s: string) {
-    return s[0].toLowerCase() + s.substring(1);
-  }
-
-  function parseExpr(): Expr {
-    if (tokens[pos].string !== undefined)
-      return tokens[pos++];
-    if (tokens[pos].identLike !== undefined) {
-      if (tokens[pos].identLike === 'new' && tokens[pos + 1].identLike === 'Regex' && tokens[pos + 2].token === '(' && tokens[pos + 3].string !== undefined) {
-        if (tokens[pos + 4].token === ')') {
-          const result = { re: { source: tokens[pos + 3].string!, flags: '' } };
-          pos += 5;
-          return result;
-        }
-        if (tokens[pos + 4].token === ',' && tokens[pos + 5].identLike === 'RegexOptions' && tokens[pos + 6].token === '.' && tokens[pos + 7].identLike === 'IgnoreCase' && tokens[pos + 8].token === ')') {
-          const result = { re: { source: tokens[pos + 3].string!, flags: 'i' } };
-          pos += 9;
-          return result;
-        }
-      }
-      if (tokens[pos].identLike === 'AriaRole' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike !== undefined) {
-        const result = { string: tokens[pos + 2].identLike!.toLowerCase() };
-        pos += 3;
-        return result;
-      }
-      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
-        return { chain: parseChain() };
-      return tokens[pos++];
-    }
-    expect(false);
-  }
-
-  function parseCall(): Call {
+  function parseCSharpCall(): Call {
     const func = tokens[pos++].identLike;
     expect(func !== undefined);
-    const call: Call = { func: toCamelCase(func), args: [], options: [] };
+    const call: Call = { func: titleCaseToCamelCase(func), args: [], options: [] };
     if (tokens[pos].token !== '(')
       return call;
     ++pos;
@@ -477,7 +353,7 @@ function parseCSharpTokens(tokens: Token[]): Expr | undefined {
             name = name.substring(0, name.length - 5);
           expect(tokens[pos++].token === '=');
           const value = parseExpr();
-          call.options.push({ name: toCamelCase(name), value });
+          call.options.push({ name: titleCaseToCamelCase(name), value });
           if (tokens[pos].token === ',') {
             ++pos;
             continue;
@@ -497,6 +373,20 @@ function parseCSharpTokens(tokens: Token[]): Expr | undefined {
     }
     expect(tokens[pos++].token === ')');
     return call;
+  }
+
+  function parseJsonlCall(): Call {
+    expect(false);
+  }
+
+  function parseCall(): Call {
+    return {
+      javascript: parseJavaScriptCall,
+      java: parseJavaCall,
+      python: parsePythonCall,
+      csharp: parseCSharpCall,
+      jsonl: parseJsonlCall,
+    }[language]();
   }
 
   function parseChain(): Chain {
@@ -521,18 +411,7 @@ function parseCSharpTokens(tokens: Token[]): Expr | undefined {
   }
 }
 
-function parseTokens(tokens: Token[], language: Language): Expr | undefined {
-  if (language === 'javascript')
-    return parseJavaScriptTokens(tokens);
-  if (language === 'java')
-    return parseJavaTokens(tokens);
-  if (language === 'python')
-    return parsePythonTokens(tokens);
-  if (language === 'csharp')
-    return parseCSharpTokens(tokens);
-}
-
-function parseExpr(expr: Expr, testIdAttributeName: string): string | undefined {
+function interpret(expr: Expr, testIdAttributeName: string): string | undefined {
   function expect(condition: boolean): asserts condition {
     if (!condition)
       throw new Error('');
@@ -757,10 +636,10 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
     const tokens = tokenize(locator, language);
     if (!tokens)
       return '';
-    const expr = parseTokens(tokens, language);
+    const expr = parse(tokens, language);
     if (!expr)
       return '';
-    return parseExpr(expr, testIdAttributeName) || '';
+    return interpret(expr, testIdAttributeName) || '';
   } catch {
   }
   return '';
