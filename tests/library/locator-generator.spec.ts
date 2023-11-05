@@ -15,7 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import { asLocator, asLocators } from '../../packages/playwright-core/lib/utils/isomorphic/locatorGenerators';
+import { asLocator } from '../../packages/playwright-core/lib/utils/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector as parseLocator } from '../../packages/playwright-core/lib/utils/isomorphic/locatorParser';
 import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
@@ -375,86 +375,17 @@ it('reverse engineer frameLocator', async ({ page }) => {
   expect.soft(asLocator('javascript', selector, false)).toBe(`locator('div').frameLocator('iframe').locator('span')`);
 });
 
-it('generate multiple locators', async ({ page }) => {
+it('should generate a canonical locator', async ({ page }) => {
   const selector = (page.locator('div', { hasText: 'foo' }).nth(0).filter({ has: page.locator('span', { hasNotText: 'bar' }).nth(-1) }) as any)._selector;
   const locators = {
-    javascript: [
-      `locator('div').filter({ hasText: 'foo' }).first().filter({ has: locator('span').filter({ hasNotText: 'bar' }).last() })`,
-      `locator('div').filter({ hasText: 'foo' }).first().filter({ has: locator('span').filter({ hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div').filter({ hasText: 'foo' }).first().filter({ has: locator('span', { hasNotText: 'bar' }).last() })`,
-      `locator('div').filter({ hasText: 'foo' }).first().filter({ has: locator('span', { hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div').filter({ hasText: 'foo' }).nth(0).filter({ has: locator('span').filter({ hasNotText: 'bar' }).last() })`,
-      `locator('div').filter({ hasText: 'foo' }).nth(0).filter({ has: locator('span').filter({ hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div').filter({ hasText: 'foo' }).nth(0).filter({ has: locator('span', { hasNotText: 'bar' }).last() })`,
-      `locator('div').filter({ hasText: 'foo' }).nth(0).filter({ has: locator('span', { hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div', { hasText: 'foo' }).first().filter({ has: locator('span').filter({ hasNotText: 'bar' }).last() })`,
-      `locator('div', { hasText: 'foo' }).first().filter({ has: locator('span').filter({ hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div', { hasText: 'foo' }).first().filter({ has: locator('span', { hasNotText: 'bar' }).last() })`,
-      `locator('div', { hasText: 'foo' }).first().filter({ has: locator('span', { hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div', { hasText: 'foo' }).nth(0).filter({ has: locator('span').filter({ hasNotText: 'bar' }).last() })`,
-      `locator('div', { hasText: 'foo' }).nth(0).filter({ has: locator('span').filter({ hasNotText: 'bar' }).nth(-1) })`,
-      `locator('div', { hasText: 'foo' }).nth(0).filter({ has: locator('span', { hasNotText: 'bar' }).last() })`,
-      `locator('div', { hasText: 'foo' }).nth(0).filter({ has: locator('span', { hasNotText: 'bar' }).nth(-1) })`,
-    ],
-    java: [
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).last()))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).last()))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).last()))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).last()))`,
-      `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).last()))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).last()))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).last()))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).nth(-1)))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).last()))`,
-      `locator("div", new Page.LocatorOptions().setHasText("foo")).nth(0).filter(new Locator.FilterOptions().setHas(locator("span", new Page.LocatorOptions().setHasNotText("bar")).nth(-1)))`,
-    ],
-    python: [
-      `locator("div").filter(has_text="foo").first.filter(has=locator("span").filter(has_not_text="bar").last)`,
-      `locator("div").filter(has_text="foo").first.filter(has=locator("span").filter(has_not_text="bar").nth(-1))`,
-      `locator("div").filter(has_text="foo").first.filter(has=locator("span", has_not_text="bar").last)`,
-      `locator("div").filter(has_text="foo").first.filter(has=locator("span", has_not_text="bar").nth(-1))`,
-      `locator("div").filter(has_text="foo").nth(0).filter(has=locator("span").filter(has_not_text="bar").last)`,
-      `locator("div").filter(has_text="foo").nth(0).filter(has=locator("span").filter(has_not_text="bar").nth(-1))`,
-      `locator("div").filter(has_text="foo").nth(0).filter(has=locator("span", has_not_text="bar").last)`,
-      `locator("div").filter(has_text="foo").nth(0).filter(has=locator("span", has_not_text="bar").nth(-1))`,
-      `locator("div", has_text="foo").first.filter(has=locator("span").filter(has_not_text="bar").last)`,
-      `locator("div", has_text="foo").first.filter(has=locator("span").filter(has_not_text="bar").nth(-1))`,
-      `locator("div", has_text="foo").first.filter(has=locator("span", has_not_text="bar").last)`,
-      `locator("div", has_text="foo").first.filter(has=locator("span", has_not_text="bar").nth(-1))`,
-      `locator("div", has_text="foo").nth(0).filter(has=locator("span").filter(has_not_text="bar").last)`,
-      `locator("div", has_text="foo").nth(0).filter(has=locator("span").filter(has_not_text="bar").nth(-1))`,
-      `locator("div", has_text="foo").nth(0).filter(has=locator("span", has_not_text="bar").last)`,
-      `locator("div", has_text="foo").nth(0).filter(has=locator("span", has_not_text="bar").nth(-1))`,
-    ],
-    csharp: [
-      `Locator("div").Filter(new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Last })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Last })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Last })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Last })`,
-      `Locator("div").Filter(new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div", new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Last })`,
-      `Locator("div", new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div", new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Last })`,
-      `Locator("div", new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div", new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Last })`,
-      `Locator("div", new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Nth(-1) })`,
-      `Locator("div", new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Last })`,
-      `Locator("div", new() { HasText = "foo" }).Nth(0).Filter(new() { Has = Locator("span", new() { HasNotText = "bar" }).Nth(-1) })`,
-    ],
+    javascript: `locator('div').filter({ hasText: 'foo' }).first().filter({ has: locator('span').filter({ hasNotText: 'bar' }).last() })`,
+    java: `locator("div").filter(new Locator.FilterOptions().setHasText("foo")).first().filter(new Locator.FilterOptions().setHas(locator("span").filter(new Locator.FilterOptions().setHasNotText("bar")).last()))`,
+    python: `locator("div").filter(has_text="foo").first.filter(has=locator("span").filter(has_not_text="bar").last)`,
+    csharp: `Locator("div").Filter(new() { HasText = "foo" }).First.Filter(new() { Has = Locator("span").Filter(new() { HasNotText = "bar" }).Last })`,
   };
   for (const lang of ['javascript', 'java', 'python', 'csharp'] as const) {
-    expect.soft(asLocators(lang, selector, false)).toEqual(locators[lang]);
-    for (const locator of locators[lang])
-      expect.soft(parseLocator(lang, locator, 'data-testid'), `parse(${lang}): ${locator}`).toBe(selector);
+    expect.soft(asLocator(lang, selector, false)).toEqual(locators[lang]);
+    expect.soft(parseLocator(lang, locators[lang], 'data-testid'), `parse(${lang}): ${locators[lang]}`).toBe(selector);
   }
 });
 
@@ -503,10 +434,10 @@ it('asLocator internal:chain', async () => {
 
 it('asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
-  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
-  expect.soft(asLocator('python', selector, false)).toBe(`locator(\"//*[contains(normalizer-text(), 'foo']\")`);
-  expect.soft(asLocator('java', selector, false)).toBe(`locator(\"//*[contains(normalizer-text(), 'foo']\")`);
-  expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('xpath=//*[contains(normalizer-text(), \\'foo\\']')`);
+  expect.soft(asLocator('python', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('java', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
   expect.soft(parseLocator('javascript', `locator('//*[contains(normalizer-text(), \\'foo\\']')`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
   expect.soft(parseLocator('javascript', `locator("//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
   expect.soft(parseLocator('javascript', `locator('xpath=//*[contains(normalizer-text(), \\'foo\\']')`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
@@ -562,8 +493,8 @@ it('parse locators strictly', () => {
   expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`)).toBe(selector);
 
   // Extra symbols
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
-  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
-  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
-  expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`)).toBe('');
+  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world"))..locator("span")`)).toBe('');
+  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).toBe('');
+  expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).toBe('');
 });

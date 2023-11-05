@@ -27,8 +27,6 @@ type LocatorOptions = {
   attrs?: { name: string, value: string | boolean | number }[],
   exact?: boolean,
   name?: string | RegExp,
-  hasText?: string | RegExp,
-  hasNotText?: string | RegExp,
 };
 export interface LocatorFactory {
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options?: LocatorOptions): string;
@@ -36,23 +34,19 @@ export interface LocatorFactory {
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false): string {
-  return asLocators(lang, selector, isFrameLocator, playSafe)[0];
-}
-
-export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
   if (playSafe) {
     try {
-      return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
+      return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
     } catch (e) {
       // Tolerate invalid input.
-      return [selector];
+      return selector;
     }
   } else {
-    return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
+    return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
   }
 }
 
-function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false, maxOutputSize = 20): string[] {
+function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean): string {
   const parts = [...parsed.parts];
   // frameLocator('iframe').first is actually "iframe >> nth=0 >> internal:control=enter-frame"
   // To make it easier to parse, we turn it into "iframe >> internal:control=enter-frame >> nth=0"
@@ -64,7 +58,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     }
   }
 
-  const tokens: string[][] = [];
+  const tokens: string[] = [];
   let nextBase: LocatorBase = isFrameLocator ? 'frame-locator' : 'page';
   for (let index = 0; index < parts.length; index++) {
     const part = parts[index];
@@ -73,23 +67,23 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
 
     if (part.name === 'nth') {
       if (part.body === '0')
-        tokens.push([factory.generateLocator(base, 'first', ''), factory.generateLocator(base, 'nth', '0')]);
+        tokens.push(factory.generateLocator(base, 'first', ''));
       else if (part.body === '-1')
-        tokens.push([factory.generateLocator(base, 'last', ''), factory.generateLocator(base, 'nth', '-1')]);
+        tokens.push(factory.generateLocator(base, 'last', ''));
       else
-        tokens.push([factory.generateLocator(base, 'nth', part.body as string)]);
+        tokens.push(factory.generateLocator(base, 'nth', part.body as string));
       continue;
     }
     if (part.name === 'internal:text') {
       const { exact, text } = detectExact(part.body as string);
-      tokens.push([factory.generateLocator(base, 'text', text, { exact })]);
+      tokens.push(factory.generateLocator(base, 'text', text, { exact }));
       continue;
     }
     if (part.name === 'internal:has-text') {
       const { exact, text } = detectExact(part.body as string);
       // There is no locator equivalent for strict has-text, leave it as is.
       if (!exact) {
-        tokens.push([factory.generateLocator(base, 'has-text', text, { exact })]);
+        tokens.push(factory.generateLocator(base, 'has-text', text, { exact }));
         continue;
       }
     }
@@ -97,38 +91,38 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const { exact, text } = detectExact(part.body as string);
       // There is no locator equivalent for strict has-not-text, leave it as is.
       if (!exact) {
-        tokens.push([factory.generateLocator(base, 'has-not-text', text, { exact })]);
+        tokens.push(factory.generateLocator(base, 'has-not-text', text, { exact }));
         continue;
       }
     }
     if (part.name === 'internal:has') {
-      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
-      tokens.push(inners.map(inner => factory.generateLocator(base, 'has', inner)));
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed, false);
+      tokens.push(factory.generateLocator(base, 'has', inner));
       continue;
     }
     if (part.name === 'internal:has-not') {
-      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
-      tokens.push(inners.map(inner => factory.generateLocator(base, 'hasNot', inner)));
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed, false);
+      tokens.push(factory.generateLocator(base, 'hasNot', inner));
       continue;
     }
     if (part.name === 'internal:and') {
-      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
-      tokens.push(inners.map(inner => factory.generateLocator(base, 'and', inner)));
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed, false);
+      tokens.push(factory.generateLocator(base, 'and', inner));
       continue;
     }
     if (part.name === 'internal:or') {
-      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
-      tokens.push(inners.map(inner => factory.generateLocator(base, 'or', inner)));
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed, false);
+      tokens.push(factory.generateLocator(base, 'or', inner));
       continue;
     }
     if (part.name === 'internal:chain') {
-      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
-      tokens.push(inners.map(inner => factory.generateLocator(base, 'chain', inner)));
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed, false);
+      tokens.push(factory.generateLocator(base, 'chain', inner));
       continue;
     }
     if (part.name === 'internal:label') {
       const { exact, text } = detectExact(part.body as string);
-      tokens.push([factory.generateLocator(base, 'label', text, { exact })]);
+      tokens.push(factory.generateLocator(base, 'label', text, { exact }));
       continue;
     }
     if (part.name === 'internal:role') {
@@ -144,13 +138,13 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
           options.attrs!.push({ name: attr.name === 'include-hidden' ? 'includeHidden' : attr.name, value: attr.value });
         }
       }
-      tokens.push([factory.generateLocator(base, 'role', attrSelector.name, options)]);
+      tokens.push(factory.generateLocator(base, 'role', attrSelector.name, options));
       continue;
     }
     if (part.name === 'internal:testid') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const { value } = attrSelector.attributes[0];
-      tokens.push([factory.generateLocator(base, 'test-id', value)]);
+      tokens.push(factory.generateLocator(base, 'test-id', value));
       continue;
     }
     if (part.name === 'internal:attr') {
@@ -159,15 +153,15 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const text = value as string | RegExp;
       const exact = !!caseSensitive;
       if (name === 'placeholder') {
-        tokens.push([factory.generateLocator(base, 'placeholder', text, { exact })]);
+        tokens.push(factory.generateLocator(base, 'placeholder', text, { exact }));
         continue;
       }
       if (name === 'alt') {
-        tokens.push([factory.generateLocator(base, 'alt', text, { exact })]);
+        tokens.push(factory.generateLocator(base, 'alt', text, { exact }));
         continue;
       }
       if (name === 'title') {
-        tokens.push([factory.generateLocator(base, 'title', text, { exact })]);
+        tokens.push(factory.generateLocator(base, 'title', text, { exact }));
         continue;
       }
     }
@@ -181,61 +175,10 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       index++;
     }
 
-    const selectorPart = stringifySelector({ parts: [part] });
-    const locatorPart = factory.generateLocator(base, locatorType, selectorPart);
-
-    if (locatorType === 'default' && nextPart && ['internal:has-text', 'internal:has-not-text'].includes(nextPart.name)) {
-      const { exact, text } = detectExact(nextPart.body as string);
-      // There is no locator equivalent for strict has-text and has-not-text, leave it as is.
-      if (!exact) {
-        const nextLocatorPart = factory.generateLocator('locator', nextPart.name === 'internal:has-text' ? 'has-text' : 'has-not-text', text, { exact });
-        const options: LocatorOptions = {};
-        if (nextPart.name === 'internal:has-text')
-          options.hasText = text;
-        else
-          options.hasNotText = text;
-        const combinedPart = factory.generateLocator(base, 'default', selectorPart, options);
-        // Two options:
-        // - locator('div').filter({ hasText: 'foo' })
-        // - locator('div', { hasText: 'foo' })
-        tokens.push([factory.chainLocators([locatorPart, nextLocatorPart]), combinedPart]);
-        index++;
-        continue;
-      }
-    }
-
-    // Selectors can be prefixed with engine name, e.g. xpath=//foo
-    let locatorPartWithEngine: string | undefined;
-    if (['xpath', 'css'].includes(part.name)) {
-      const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
-      locatorPartWithEngine = factory.generateLocator(base, locatorType, selectorPart);
-    }
-
-    tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
+    tokens.push(factory.generateLocator(base, locatorType, stringifySelector({ parts: [part] })));
   }
 
-  return combineTokens(factory, tokens, maxOutputSize);
-}
-
-function combineTokens(factory: LocatorFactory, tokens: string[][], maxOutputSize: number): string[] {
-  const currentTokens = tokens.map(() => '');
-  const result: string[] = [];
-
-  const visit = (index: number) => {
-    if (index === tokens.length) {
-      result.push(factory.chainLocators(currentTokens));
-      return currentTokens.length < maxOutputSize;
-    }
-    for (const taken of tokens[index]) {
-      currentTokens[index] = taken;
-      if (!visit(index + 1))
-        return false;
-    }
-    return true;
-  };
-
-  visit(0);
-  return result;
+  return factory.chainLocators(tokens);
 }
 
 function detectExact(text: string): { exact?: boolean, text: string | RegExp } {
@@ -257,15 +200,9 @@ function detectExact(text: string): { exact?: boolean, text: string | RegExp } {
 }
 
 export class JavaScriptLocatorFactory implements LocatorFactory {
-  constructor(private preferredQuote?: Quote) {}
-
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: LocatorOptions = {}): string {
     switch (kind) {
       case 'default':
-        if (options.hasText !== undefined)
-          return `locator(${this.quote(body as string)}, { hasText: ${this.toHasText(options.hasText)} })`;
-        if (options.hasNotText !== undefined)
-          return `locator(${this.quote(body as string)}, { hasNotText: ${this.toHasText(options.hasNotText)} })`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
         return `frameLocator(${this.quote(body as string)})`;
@@ -346,7 +283,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
   }
 
   private quote(text: string) {
-    return escapeWithQuotes(text, this.preferredQuote ?? '\'');
+    return escapeWithQuotes(text, '\'');
   }
 }
 
@@ -354,10 +291,6 @@ export class PythonLocatorFactory implements LocatorFactory {
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: LocatorOptions = {}): string {
     switch (kind) {
       case 'default':
-        if (options.hasText !== undefined)
-          return `locator(${this.quote(body as string)}, has_text=${this.toHasText(options.hasText)})`;
-        if (options.hasNotText !== undefined)
-          return `locator(${this.quote(body as string)}, has_not_text=${this.toHasText(options.hasNotText)})`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
         return `frame_locator(${this.quote(body as string)})`;
@@ -459,10 +392,6 @@ export class JavaLocatorFactory implements LocatorFactory {
     }
     switch (kind) {
       case 'default':
-        if (options.hasText !== undefined)
-          return `locator(${this.quote(body as string)}, new ${clazz}.LocatorOptions().setHasText(${this.toHasText(options.hasText)}))`;
-        if (options.hasNotText !== undefined)
-          return `locator(${this.quote(body as string)}, new ${clazz}.LocatorOptions().setHasNotText(${this.toHasText(options.hasNotText)}))`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
         return `frameLocator(${this.quote(body as string)})`;
@@ -554,10 +483,6 @@ export class CSharpLocatorFactory implements LocatorFactory {
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: LocatorOptions = {}): string {
     switch (kind) {
       case 'default':
-        if (options.hasText !== undefined)
-          return `Locator(${this.quote(body as string)}, new() { ${this.toHasText(options.hasText)} })`;
-        if (options.hasNotText !== undefined)
-          return `Locator(${this.quote(body as string)}, new() { ${this.toHasNotText(options.hasNotText)} })`;
         return `Locator(${this.quote(body as string)})`;
       case 'frame':
         return `FrameLocator(${this.quote(body as string)})`;
@@ -668,12 +593,12 @@ export class JsonlLocatorFactory implements LocatorFactory {
   }
 }
 
-const generators: Record<Language, new (preferredQuote?: Quote) => LocatorFactory> = {
-  javascript: JavaScriptLocatorFactory,
-  python: PythonLocatorFactory,
-  java: JavaLocatorFactory,
-  csharp: CSharpLocatorFactory,
-  jsonl: JsonlLocatorFactory,
+const generators: Record<Language, LocatorFactory> = {
+  javascript: new JavaScriptLocatorFactory(),
+  python: new PythonLocatorFactory(),
+  java: new JavaLocatorFactory(),
+  csharp: new CSharpLocatorFactory(),
+  jsonl: new JsonlLocatorFactory(),
 };
 
 function isRegExp(obj: any): obj is RegExp {
