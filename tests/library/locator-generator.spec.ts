@@ -29,7 +29,7 @@ function generateForSelector(selector: string) {
   const result: any = {};
   for (const lang of ['javascript', 'python', 'java', 'csharp']) {
     const locatorString = asLocator(lang, selector, false);
-    expect.soft(parseLocator(lang, locatorString, 'data-testid'), lang + ' mismatch').toBe(selector);
+    expect.soft(parseLocator(lang, locatorString, 'data-testid'), lang + ' mismatch for ' + locatorString).toBe(selector);
     result[lang] = locatorString;
   }
   return result;
@@ -524,7 +524,7 @@ it('parseLocator quotes', async () => {
   expect.soft(parseLocator('javascript', `locator("text='bar'")`, '')).toBe(`text='bar'`);
   expect.soft(parseLocator('javascript', "locator(`text='bar'`)", '')).toBe(`text='bar'`);
   expect.soft(parseLocator('python', `locator("text='bar'")`, '')).toBe(`text='bar'`);
-  expect.soft(parseLocator('python', `locator('text="bar"')`, '')).toBe(``);
+  expect.soft(parseLocator('python', `locator('text="bar"')`, '')).toBe(`text="bar"`);
   expect.soft(parseLocator('java', `locator("text='bar'")`, '')).toBe(`text='bar'`);
   expect.soft(parseLocator('java', `locator('text="bar"')`, '')).toBe(``);
   expect.soft(parseLocator('csharp', `Locator("text='bar'")`, '')).toBe(`text='bar'`);

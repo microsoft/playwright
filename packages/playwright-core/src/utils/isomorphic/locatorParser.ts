@@ -17,198 +17,734 @@
 import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocators } from './locatorGenerators';
 import type { Language, Quote } from './locatorGenerators';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from './locatorUtils';
 import { parseSelector } from './selectorParser';
 
-type TemplateParams = { quote: string, text: string }[];
-function parseLocator(locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {
-  locator = locator
-      .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
-      .replace(/(get_by_role|getByRole)\s*\(\s*(?:["'`])([^'"`]+)['"`]/g, (_, group1, group2) => `${group1}(${group2.toLowerCase()}`);
-  const params: TemplateParams = [];
-  let template = '';
-  for (let i = 0; i < locator.length; ++i) {
-    const quote = locator[i];
-    if (quote !== '"' && quote !== '\'' && quote !== '`' && quote !== '/') {
-      template += quote;
+type Re = { source: string, flags: string };
+type Token = {
+  token?: string;
+  string?: string;
+  identLike?: string;
+  re?: Re;
+  eof?: boolean;
+};
+
+function tokenize(locator: string, language: Language): Token[] | undefined {
+  if (language === 'jsonl')
+    return;
+
+  const tokens = {
+    javascript: new Set(['(', ')', '{', '}', '.', ',', ':']),
+    java: new Set(['(', ')', '.', ',']),
+    python: new Set(['(', ')', '.', ',', '=']),
+    csharp: new Set(['(', ')', '{', '}', '.', ',', '=']),
+  }[language];
+  const quotes = {
+    javascript: new Set(['\'', '"', '`']),
+    java: new Set(['"']),
+    python: new Set(['\'', '"']),
+    csharp: new Set(['"']),
+  }[language];
+  const whitespace = new Set([' ', '\n', '\t']);
+  const reQuote = language === 'javascript' ? '/' : undefined;
+  const isIdentLikeChar = (c: string) => {
+    // Identifier, number, true, false.
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_' || ('0' <= c && c <= '9') || c === '-' || c === '+';
+  };
+
+  const result: Token[] = [];
+  let i = 0;
+  while (i < locator.length) {
+    if (whitespace.has(locator[i])) {
+      ++i;
       continue;
     }
-    const isRegexEscaping = locator[i - 1] === 'r' || locator[i] === '/';
-    ++i;
-    let text = '';
-    while (i < locator.length) {
-      if (locator[i] === '\\') {
-        if (isRegexEscaping) {
-          if (locator[i + 1] !== quote)
-            text += locator[i];
-          ++i;
-          text += locator[i];
-        } else {
-          ++i;
-          if (locator[i] === 'n')
-            text += '\n';
-          else if (locator[i] === 'r')
-            text += '\r';
-          else if (locator[i] === 't')
-            text += '\t';
+    if (tokens.has(locator[i])) {
+      result.push({ token: locator[i] });
+      ++i;
+      continue;
+    }
+    if (quotes.has(locator[i])) {
+      const plain = language === 'python' && locator[i - 1] === 'r';
+      const quote = locator[i];
+      let j = i + 1;
+      let string = '';
+      while (j < locator.length) {
+        if (plain && locator[j] === '\\' && locator[j + 1] === quote) {
+          string += quote;
+          j += 2;
+        } else if (!plain && locator[j] === '\\' && j + 1 < locator.length) {
+          if (locator[j + 1] === 'n')
+            string += '\n';
+          else if (locator[j + 1] === 'r')
+            string += '\r';
+          else if (locator[j + 1] === 't')
+            string += '\t';
           else
-            text += locator[i];
+            string += locator[j + 1];
+          j += 2;
+        } else if (locator[j] === quote) {
+          break;
+        } else {
+          string += locator[j];
+          ++j;
         }
-        ++i;
-        continue;
       }
-      if (locator[i] !== quote) {
-        text += locator[i++];
+      i = j + 1;
+      result.push({ string });
+      continue;
+    }
+    if (locator[i] === reQuote) {
+      let j = i + 1;
+      while (j < locator.length && locator[j] !== '/') {
+        if (locator[j] === '\\')
+          ++j;
+        ++j;
+      }
+      const source = locator.substring(i + 1, j);
+      ++j;
+      i = j;
+      while (j < locator.length && locator[j] >= 'a' && locator[j] <= 'z')
+        ++j;
+      const flags = locator.substring(i, j);
+      i = j;
+      result.push({ re: { source, flags } });
+      continue;
+    }
+    if (isIdentLikeChar(locator[i])) {
+      let j = i + 1;
+      while (j < locator.length && isIdentLikeChar(locator[j]))
+        ++j;
+      result.push({ identLike: locator.substring(i, j) });
+      i = j;
+      continue;
+    }
+    return undefined;
+  }
+  result.push({ eof: true });
+  return result;
+}
+
+type Expr = {
+  string?: string;
+  re?: Re;
+  chain?: Chain;
+  identLike?: string;
+};
+type Call = {
+  func: string;
+  args: Expr[];
+  options: { name: string, value: Expr }[];
+};
+type Chain = {
+  identLike?: string;
+  call?: Call;
+}[];
+
+function parseJavaScriptTokens(tokens: Token[]): Expr | undefined {
+  let pos = 0;
+
+  function expect(condition: boolean): asserts condition {
+    if (!condition)
+      throw new Error('');
+  }
+
+  function parseExpr(): Expr {
+    if (tokens[pos].string !== undefined)
+      return tokens[pos++];
+    if (tokens[pos].re !== undefined)
+      return tokens[pos++];
+    if (tokens[pos].identLike !== undefined) {
+      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
+        return { chain: parseChain() };
+      return tokens[pos++];
+    }
+    expect(false);
+  }
+
+  function parseCall(): Call {
+    const func = tokens[pos++].identLike;
+    expect(func !== undefined);
+    const call: Call = { func, args: [], options: [] };
+    expect(tokens[pos++].token === '(');
+    while (tokens[pos].token !== ')') {
+      let isOptions = false;
+      if (tokens[pos].token === '{') {
+        isOptions = true;
+        ++pos;
+        while (true) {
+          const name = tokens[pos++].identLike;
+          expect(name !== undefined);
+          expect(tokens[pos++].token === ':');
+          const value = parseExpr();
+          call.options.push({ name, value });
+          if (tokens[pos].token === ',') {
+            ++pos;
+            continue;
+          }
+          break;
+        }
+        expect(tokens[pos++].token === '}');
+      } else {
+        call.args.push(parseExpr());
+      }
+      if (tokens[pos].token === ',') {
+        expect(!isOptions);
+        ++pos;
         continue;
       }
       break;
     }
-    params.push({ quote, text });
-    template += (quote === '/' ? 'r' : '') + '$' + params.length;
+    expect(tokens[pos++].token === ')');
+    return call;
   }
 
-  // Equalize languages.
-  template = template.toLowerCase()
-      .replace(/get_by_alt_text/g, 'getbyalttext')
-      .replace(/get_by_test_id/g, 'getbytestid')
-      .replace(/get_by_([\w]+)/g, 'getby$1')
-      .replace(/has_not_text/g, 'hasnottext')
-      .replace(/has_text/g, 'hastext')
-      .replace(/has_not/g, 'hasnot')
-      .replace(/frame_locator/g, 'framelocator')
-      .replace(/[{}\s]/g, '')
-      .replace(/new\(\)/g, '')
-      .replace(/new[\w]+\.[\w]+options\(\)/g, '')
-      .replace(/\.set/g, ',set')
-      .replace(/\.or_\(/g, 'or(') // Python has "or_" instead of "or".
-      .replace(/\.and_\(/g, 'and(') // Python has "and_" instead of "and".
-      .replace(/:/g, '=')
-      .replace(/,re\.ignorecase/g, 'i')
-      .replace(/,pattern.case_insensitive/g, 'i')
-      .replace(/,regexoptions.ignorecase/g, 'i')
-      .replace(/re.compile\(([^)]+)\)/g, '$1') // Python has regex strings as r"foo"
-      .replace(/pattern.compile\(([^)]+)\)/g, 'r$1')
-      .replace(/newregex\(([^)]+)\)/g, 'r$1')
-      .replace(/string=/g, '=')
-      .replace(/regex=/g, '=')
-      .replace(/,,/g, ',');
-
-  const preferredQuote = params.map(p => p.quote).filter(quote => '\'"`'.includes(quote))[0] as Quote | undefined;
-  return { selector: transform(template, params, testIdAttributeName), preferredQuote };
-}
-
-function countParams(template: string) {
-  return [...template.matchAll(/\$\d+/g)].length;
-}
-
-function shiftParams(template: string, sub: number) {
-  return template.replace(/\$(\d+)/g, (_, ordinal) => `$${ordinal - sub}`);
-}
-
-function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
-  // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()).
-  // TODO: handle and(locator), or(locator), locator(locator), locator(has=, hasnot=, sethas(), sethasnot()).
-  while (true) {
-    const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()/);
-    if (!hasMatch)
-      break;
-
-    // Extract inner locator based on balanced parens.
-    const start = hasMatch.index! + hasMatch[0].length;
-    let balance = 0;
-    let end = start;
-    for (; end < template.length; end++) {
-      if (template[end] === '(')
-        balance++;
-      else if (template[end] === ')')
-        balance--;
-      if (balance < 0)
+  function parseChain(): Chain {
+    const result: Chain = [];
+    while (tokens[pos].identLike !== undefined) {
+      if (tokens[pos + 1].token === '(')
+        result.push({ call: parseCall() });
+      else
+        result.push(tokens[pos++]);
+      if (tokens[pos].token !== '.')
         break;
+      ++pos;
     }
-
-    // Replace Java sethas(...) and sethasnot(...) with has=... and hasnot=...
-    let prefix = template.substring(0, start);
-    let extraSymbol = 0;
-    if (['sethas(', 'sethasnot('].includes(hasMatch[1])) {
-      // Eat extra ) symbol at the end of sethas(...)
-      extraSymbol = 1;
-      prefix = prefix.replace(/sethas\($/, 'has=').replace(/sethasnot\($/, 'hasnot=');
-    }
-
-    const paramsCountBeforeHas = countParams(template.substring(0, start));
-    const hasTemplate = shiftParams(template.substring(start, end), paramsCountBeforeHas);
-    const paramsCountInHas = countParams(hasTemplate);
-    const hasParams = params.slice(paramsCountBeforeHas, paramsCountBeforeHas + paramsCountInHas);
-    const hasSelector = JSON.stringify(transform(hasTemplate, hasParams, testIdAttributeName));
-
-    // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
-    // Replace filter(hasnot=...) with filter(hasnot2=$5). Use hasnot2 to avoid matching the same filter again.
-    template = prefix.replace(/=$/, '2=') + `$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end + extraSymbol), paramsCountInHas - 1);
-
-    // Replace inner params with $5 value.
-    const paramsBeforeHas = params.slice(0, paramsCountBeforeHas);
-    const paramsAfterHas = params.slice(paramsCountBeforeHas + paramsCountInHas);
-    params = paramsBeforeHas.concat([{ quote: '"', text: hasSelector }]).concat(paramsAfterHas);
+    return result;
   }
 
-  // Transform to selector engines.
-  template = template
-      .replace(/\,set([\w]+)\(([^)]+)\)/g, (_, group1, group2) => ',' + group1.toLowerCase() + '=' + group2.toLowerCase())
-      .replace(/framelocator\(([^)]+)\)/g, '$1.internal:control=enter-frame')
-      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
-      .replace(/locator\(([^)]+),hasnottext=([^),]+)\)/g, 'locator($1).internal:has-not-text=$2')
-      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
-      .replace(/locator\(([^)]+)\)/g, '$1')
-      .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
-      .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
-      .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1]`)
-      .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
-      .replace(/first(\(\))?/g, 'nth=0')
-      .replace(/last(\(\))?/g, 'nth=-1')
-      .replace(/nth\(([^)]+)\)/g, 'nth=$1')
-      .replace(/filter\(,?hastext=([^)]+)\)/g, 'internal:has-text=$1')
-      .replace(/filter\(,?hasnottext=([^)]+)\)/g, 'internal:has-not-text=$1')
-      .replace(/filter\(,?has2=([^)]+)\)/g, 'internal:has=$1')
-      .replace(/filter\(,?hasnot2=([^)]+)\)/g, 'internal:has-not=$1')
-      .replace(/,exact=false/g, '')
-      .replace(/,exact=true/g, 's')
-      .replace(/\,/g, '][');
+  try {
+    const result = parseExpr();
+    expect(!!tokens[pos].eof);
+    return result;
+  } catch {
+  }
+}
 
-  const parts = template.split('.');
-  // Turn "internal:control=enter-frame >> nth=0" into "nth=0 >> internal:control=enter-frame"
-  // because these are swapped in locators vs selectors.
-  for (let index = 0; index < parts.length - 1; index++) {
-    if (parts[index] === 'internal:control=enter-frame' && parts[index + 1].startsWith('nth=')) {
-      // Swap nth and enter-frame.
-      const [nth] = parts.splice(index, 1);
-      parts.splice(index + 1, 0, nth);
-    }
+function parseJavaTokens(tokens: Token[]): Expr | undefined {
+  let pos = 0;
+
+  function expect(condition: boolean): asserts condition {
+    if (!condition)
+      throw new Error('');
   }
 
-  // Substitute params.
-  return parts.map(t => {
-    if (!t.startsWith('internal:') || t === 'internal:control')
-      return t.replace(/\$(\d+)/g, (_, ordinal) => { const param = params[+ordinal - 1]; return param.text; });
-    t = t.includes('[') ? t.replace(/\]/, '') + ']' : t;
-    t = t
-        .replace(/(?:r)\$(\d+)(i)?/g, (_, ordinal, suffix) => {
-          const param = params[+ordinal - 1];
-          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
-            return escapeForAttributeSelector(new RegExp(param.text), false) + (suffix || '');
-          return escapeForTextSelector(new RegExp(param.text, suffix), false);
-        })
-        .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {
-          const param = params[+ordinal - 1];
-          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not='))
-            return param.text;
-          if (t.startsWith('internal:testid'))
-            return escapeForAttributeSelector(param.text, true);
-          if (t.startsWith('internal:attr') || t.startsWith('internal:role'))
-            return escapeForAttributeSelector(param.text, suffix === 's');
-          return escapeForTextSelector(param.text, suffix === 's');
-        });
-    return t;
-  }).join(' >> ');
+  function parseExpr(): Expr {
+    if (tokens[pos].string !== undefined)
+      return tokens[pos++];
+    if (tokens[pos].identLike !== undefined) {
+      if (tokens[pos].identLike === 'Pattern' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike === 'compile'
+        && tokens[pos + 3].token === '(' && tokens[pos + 4].string !== undefined) {
+        if (tokens[pos + 5].token === ')') {
+          const result = { re: { source: tokens[pos + 4].string!, flags: '' } };
+          pos += 6;
+          return result;
+        }
+        if (tokens[pos + 5].token === ',' && tokens[pos + 6].identLike === 'Pattern' && tokens[pos + 7].token === '.' && tokens[pos + 8].identLike === 'CASE_INSENSITIVE' && tokens[pos + 9].token === ')') {
+          const result = { re: { source: tokens[pos + 4].string!, flags: 'i' } };
+          pos += 10;
+          return result;
+        }
+      }
+      if (tokens[pos].identLike === 'AriaRole' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike !== undefined) {
+        const result = { string: tokens[pos + 2].identLike!.toLowerCase() };
+        pos += 3;
+        return result;
+      }
+      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
+        return { chain: parseChain() };
+      return tokens[pos++];
+    }
+    expect(false);
+  }
+
+  function parseCall(): Call {
+    const func = tokens[pos++].identLike;
+    expect(func !== undefined);
+    const call: Call = { func, args: [], options: [] };
+    expect(tokens[pos++].token === '(');
+    while (tokens[pos].token !== ')') {
+      let isOptions = false;
+      if (tokens[pos].identLike === 'new') {
+        isOptions = true;
+        ++pos;
+        // new Page.GetByRoleOptions()
+        expect(tokens[pos++].identLike !== undefined);
+        expect(tokens[pos++].token === '.');
+        expect(tokens[pos++].identLike !== undefined);
+        expect(tokens[pos++].token === '(');
+        expect(tokens[pos++].token === ')');
+        // .setName("name") [.setExact(true)]
+        while (tokens[pos].token === '.') {
+          ++pos;
+          let name = tokens[pos++].identLike;
+          expect(name !== undefined);
+          expect(name.startsWith('set'));
+          name = name[3].toLowerCase() + name.substring(4);
+          expect(tokens[pos++].token === '(');
+          const value = parseExpr();
+          expect(tokens[pos++].token === ')');
+          call.options.push({ name, value });
+        }
+      } else {
+        call.args.push(parseExpr());
+      }
+      if (tokens[pos].token === ',') {
+        expect(!isOptions);
+        ++pos;
+        continue;
+      }
+      break;
+    }
+    expect(tokens[pos++].token === ')');
+    return call;
+  }
+
+  function parseChain(): Chain {
+    const result: Chain = [];
+    while (tokens[pos].identLike !== undefined) {
+      if (tokens[pos + 1].token === '(')
+        result.push({ call: parseCall() });
+      else
+        result.push(tokens[pos++]);
+      if (tokens[pos].token !== '.')
+        break;
+      ++pos;
+    }
+    return result;
+  }
+
+  try {
+    const result = parseExpr();
+    expect(!!tokens[pos].eof);
+    return result;
+  } catch {
+  }
+}
+
+function parsePythonTokens(tokens: Token[]): Expr | undefined {
+  let pos = 0;
+
+  function expect(condition: boolean): asserts condition {
+    if (!condition)
+      throw new Error('');
+  }
+
+  function toCamelCase(s: string) {
+    return s.split('_').map((r, index) => index ? r[0].toUpperCase() + r.substring(1) : r).join('');
+  }
+
+  function parseExpr(): Expr {
+    if (tokens[pos].string !== undefined)
+      return tokens[pos++];
+    if (tokens[pos].identLike === 'True' || tokens[pos].identLike === 'False')
+      return { identLike: tokens[pos++].identLike!.toLowerCase() };
+    if (tokens[pos].identLike !== undefined) {
+      if (tokens[pos].identLike === 're' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike === 'compile'
+        && tokens[pos + 3].token === '(' && tokens[pos + 4].identLike === 'r' && tokens[pos + 5].string !== undefined) {
+        if (tokens[pos + 6].token === ')') {
+          const result = { re: { source: tokens[pos + 5].string!, flags: '' } };
+          pos += 7;
+          return result;
+        }
+        if (tokens[pos + 6].token === ',' && tokens[pos + 7].identLike === 're' && tokens[pos + 8].token === '.' && tokens[pos + 9].identLike === 'IGNORECASE' && tokens[pos + 10].token === ')') {
+          const result = { re: { source: tokens[pos + 5].string!, flags: 'i' } };
+          pos += 11;
+          return result;
+        }
+      }
+      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
+        return { chain: parseChain() };
+      return tokens[pos++];
+    }
+    expect(false);
+  }
+
+  function parseCall(): Call {
+    const func = tokens[pos++].identLike;
+    expect(func !== undefined);
+    const call: Call = { func: toCamelCase(func), args: [], options: [] };
+    if (tokens[pos].token !== '(')
+      return call;
+    ++pos;
+    let seenOptions = false;
+    while (tokens[pos].token !== ')') {
+      if (tokens[pos].identLike !== undefined && tokens[pos + 1].token === '=') {
+        seenOptions = true;
+        const name = tokens[pos++].identLike!;
+        ++pos;
+        const value = parseExpr();
+        call.options.push({ name: toCamelCase(name), value });
+      } else {
+        expect(!seenOptions);
+        call.args.push(parseExpr());
+      }
+      if (tokens[pos].token === ',') {
+        ++pos;
+        continue;
+      }
+      break;
+    }
+    expect(tokens[pos++].token === ')');
+    return call;
+  }
+
+  function parseChain(): Chain {
+    const result: Chain = [];
+    while (tokens[pos].identLike !== undefined) {
+      if (result.length || tokens[pos + 1].token === '(')
+        result.push({ call: parseCall() });
+      else
+        result.push(tokens[pos++]);
+      if (tokens[pos].token !== '.')
+        break;
+      ++pos;
+    }
+    return result;
+  }
+
+  try {
+    const result = parseExpr();
+    expect(!!tokens[pos].eof);
+    return result;
+  } catch {
+  }
+}
+
+function parseCSharpTokens(tokens: Token[]): Expr | undefined {
+  let pos = 0;
+
+  function expect(condition: boolean): asserts condition {
+    if (!condition)
+      throw new Error('');
+  }
+
+  function toCamelCase(s: string) {
+    return s[0].toLowerCase() + s.substring(1);
+  }
+
+  function parseExpr(): Expr {
+    if (tokens[pos].string !== undefined)
+      return tokens[pos++];
+    if (tokens[pos].identLike !== undefined) {
+      if (tokens[pos].identLike === 'new' && tokens[pos + 1].identLike === 'Regex' && tokens[pos + 2].token === '(' && tokens[pos + 3].string !== undefined) {
+        if (tokens[pos + 4].token === ')') {
+          const result = { re: { source: tokens[pos + 3].string!, flags: '' } };
+          pos += 5;
+          return result;
+        }
+        if (tokens[pos + 4].token === ',' && tokens[pos + 5].identLike === 'RegexOptions' && tokens[pos + 6].token === '.' && tokens[pos + 7].identLike === 'IgnoreCase' && tokens[pos + 8].token === ')') {
+          const result = { re: { source: tokens[pos + 3].string!, flags: 'i' } };
+          pos += 9;
+          return result;
+        }
+      }
+      if (tokens[pos].identLike === 'AriaRole' && tokens[pos + 1].token === '.' && tokens[pos + 2].identLike !== undefined) {
+        const result = { string: tokens[pos + 2].identLike!.toLowerCase() };
+        pos += 3;
+        return result;
+      }
+      if (tokens[pos + 1].token === '.' || tokens[pos + 1].token === '(')
+        return { chain: parseChain() };
+      return tokens[pos++];
+    }
+    expect(false);
+  }
+
+  function parseCall(): Call {
+    const func = tokens[pos++].identLike;
+    expect(func !== undefined);
+    const call: Call = { func: toCamelCase(func), args: [], options: [] };
+    if (tokens[pos].token !== '(')
+      return call;
+    ++pos;
+    while (tokens[pos].token !== ')') {
+      let isOptions = false;
+      if (tokens[pos].identLike === 'new' && tokens[pos + 1].identLike !== 'Regex') {
+        isOptions = true;
+        ++pos;
+        // new [PageGetByRoleOptions]() { [...] }
+        if (tokens[pos].identLike !== undefined)
+          ++pos;
+        expect(tokens[pos++].token === '(');
+        expect(tokens[pos++].token === ')');
+        expect(tokens[pos++].token === '{');
+        // { Name = "foo", [...] }
+        while (true) {
+          let name = tokens[pos++].identLike;
+          expect(name !== undefined);
+          if (name.endsWith('Regex'))
+            name = name.substring(0, name.length - 5);
+          expect(tokens[pos++].token === '=');
+          const value = parseExpr();
+          call.options.push({ name: toCamelCase(name), value });
+          if (tokens[pos].token === ',') {
+            ++pos;
+            continue;
+          }
+          break;
+        }
+        expect(tokens[pos++].token === '}');
+      } else {
+        call.args.push(parseExpr());
+      }
+      if (tokens[pos].token === ',') {
+        expect(!isOptions);
+        ++pos;
+        continue;
+      }
+      break;
+    }
+    expect(tokens[pos++].token === ')');
+    return call;
+  }
+
+  function parseChain(): Chain {
+    const result: Chain = [];
+    while (tokens[pos].identLike !== undefined) {
+      if (result.length || tokens[pos + 1].token === '(')
+        result.push({ call: parseCall() });
+      else
+        result.push(tokens[pos++]);
+      if (tokens[pos].token !== '.')
+        break;
+      ++pos;
+    }
+    return result;
+  }
+
+  try {
+    const result = parseExpr();
+    expect(!!tokens[pos].eof);
+    return result;
+  } catch {
+  }
+}
+
+function parseTokens(tokens: Token[], language: Language): Expr | undefined {
+  if (language === 'javascript')
+    return parseJavaScriptTokens(tokens);
+  if (language === 'java')
+    return parseJavaTokens(tokens);
+  if (language === 'python')
+    return parsePythonTokens(tokens);
+  if (language === 'csharp')
+    return parseCSharpTokens(tokens);
+}
+
+function parseExpr(expr: Expr, testIdAttributeName: string): string | undefined {
+  function expect(condition: boolean): asserts condition {
+    if (!condition)
+      throw new Error('');
+  }
+
+  type LocatorOptions = {
+    hasText?: string | RegExp;
+    hasNotText?: string | RegExp;
+    has?: string;
+    hasNot?: string;
+  };
+
+  function chain(selector1: string, selector2: string, options?: LocatorOptions) {
+    const sep = selector1 && selector2 ? ' >> ' : '';
+    let selector = selector1 + sep + selector2;
+    if (options?.hasText)
+      selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+    if (options?.hasNotText)
+      selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
+    if (options?.has)
+      selector += ` >> internal:has=` + JSON.stringify(options.has);
+    if (options?.hasNot)
+      selector += ` >> internal:has-not=` + JSON.stringify(options.hasNot);
+    return selector;
+  }
+
+  function toRe(re: Re): RegExp {
+    return new RegExp(re.source, re.flags);
+  }
+
+  function toString(expr: Expr): string {
+    expect(expr.string !== undefined);
+    return expr.string;
+  }
+
+  function toStringOrRe(expr: Expr): string | RegExp {
+    if (expr.string !== undefined)
+      return expr.string;
+    if (expr.re)
+      return toRe(expr.re);
+    expect(false);
+  }
+
+  function toBoolean(expr: Expr): boolean {
+    expect(['true', 'false'].includes(expr.identLike || ''));
+    return expr.identLike === 'true';
+  }
+
+  function toNumber(expr: Expr): number {
+    const num = +expr.identLike!;
+    expect(!isNaN(num));
+    return num;
+  }
+
+  function toOptions(call: Call, allowed: Record<string, 'string' | 'boolean' | 'stringOrRe' | 'number' | 'locator'>): any {
+    const result: any = {};
+    const seen = new Set<string>();
+    for (const option of call.options) {
+      expect(!seen.has(option.name));
+      seen.add(option.name);
+      const type = allowed[option.name];
+      expect(!!type);
+      const func = {
+        string: toString,
+        boolean: toBoolean,
+        number: toNumber,
+        stringOrRe: toStringOrRe,
+        locator: toSelector,
+      }[type];
+      result[option.name] = func(option.value);
+    }
+    return result;
+  }
+
+  function toSelector(expr: Expr): string {
+    expect(!!expr.chain);
+
+    let selector = '';
+    let isFrameLocator = false;
+
+    const frameLocatorBehavior = (behavior: 'unexpected' | 'frameLocator' | 'locator') => {
+      if (!isFrameLocator)
+        return;
+      expect(behavior !== 'unexpected');
+      if (behavior === 'frameLocator')
+        return;
+      selector = chain(selector, 'internal:control=enter-frame');
+      isFrameLocator = false;
+    };
+
+    for (let i = 0; i < expr.chain.length; i++) {
+      if (i === 0 && expr.chain[i].identLike === 'page')
+        continue;
+      const call = expr.chain[i].call;
+      expect(!!call);
+      switch (call.func) {
+        case 'and': {
+          frameLocatorBehavior('unexpected');
+          expect(call.args.length === 1);
+          toOptions(call, {});
+          selector = chain(selector, `internal:and=` + JSON.stringify(toSelector(call.args[0])));
+          break;
+        }
+        case 'filter': {
+          frameLocatorBehavior('unexpected');
+          expect(call.args.length === 0);
+          selector = chain(selector, '', toOptions(call, { hasText: 'stringOrRe', hasNotText: 'stringOrRe', has: 'locator', hasNot: 'locator' }));
+          break;
+        }
+        case 'first': {
+          frameLocatorBehavior('frameLocator');
+          expect(call.args.length === 0);
+          toOptions(call, {});
+          selector = chain(selector, 'nth=0');
+          break;
+        }
+        case 'frameLocator': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          toOptions(call, {});
+          selector = chain(selector, toString(call.args[0]));
+          isFrameLocator = true;
+          break;
+        }
+        case 'getByAltText': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          selector = chain(selector, getByAltTextSelector(toStringOrRe(call.args[0]), toOptions(call, { exact: 'boolean' })));
+          break;
+        }
+        case 'getByLabel': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          selector = chain(selector, getByLabelSelector(toStringOrRe(call.args[0]), toOptions(call, { exact: 'boolean' })));
+          break;
+        }
+        case 'getByPlaceholder': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          selector = chain(selector, getByPlaceholderSelector(toStringOrRe(call.args[0]), toOptions(call, { exact: 'boolean' })));
+          break;
+        }
+        case 'getByRole': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          const options = { checked: 'boolean', disabled: 'boolean', exact: 'boolean', expanded: 'boolean', includeHidden: 'boolean', pressed: 'boolean', selected: 'boolean', level: 'number', name: 'stringOrRe' } as const;
+          selector = chain(selector, getByRoleSelector(toString(call.args[0]), toOptions(call, options)));
+          break;
+        }
+        case 'getByTestId': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          toOptions(call, {});
+          selector = chain(selector, getByTestIdSelector(testIdAttributeName, toStringOrRe(call.args[0])));
+          break;
+        }
+        case 'getByText': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          selector = chain(selector, getByTextSelector(toStringOrRe(call.args[0]), toOptions(call, { exact: 'boolean' })));
+          break;
+        }
+        case 'getByTitle': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          selector = chain(selector, getByTitleSelector(toStringOrRe(call.args[0]), toOptions(call, { exact: 'boolean' })));
+          break;
+        }
+        case 'last': {
+          frameLocatorBehavior('frameLocator');
+          expect(call.args.length === 0);
+          toOptions(call, {});
+          selector = chain(selector, 'nth=-1');
+          break;
+        }
+        case 'locator': {
+          frameLocatorBehavior('locator');
+          expect(call.args.length === 1);
+          const options = toOptions(call, { hasText: 'stringOrRe', hasNotText: 'stringOrRe', has: 'locator', hasNot: 'locator' });
+          if (call.args[0].string !== undefined)
+            selector = chain(selector, call.args[0].string, options);
+          else if (call.args[0].chain)
+            selector = chain(selector, toSelector(call.args[0]), options);
+          else
+            expect(false);
+          break;
+        }
+        case 'nth': {
+          frameLocatorBehavior('frameLocator');
+          expect(call.args.length === 1);
+          toOptions(call, {});
+          selector = chain(selector, 'nth=' + toNumber(call.args[0]));
+          break;
+        }
+        case 'or': {
+          frameLocatorBehavior('unexpected');
+          expect(call.args.length === 1);
+          toOptions(call, {});
+          selector = chain(selector, `internal:or=` + JSON.stringify(toSelector(call.args[0])));
+          break;
+        }
+        default:
+          expect(false);
+      }
+    }
+    return selector;
+  }
+
+  try {
+    return toSelector(expr);
+  } catch {
+  }
 }
 
 export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
@@ -218,16 +754,14 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   } catch (e) {
   }
   try {
-    const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
-    const locators = asLocators(language, selector, undefined, undefined, undefined, preferredQuote);
-    const digest = digestForComparison(locator);
-    if (locators.some(candidate => digestForComparison(candidate) === digest))
-      return selector;
-  } catch (e) {
+    const tokens = tokenize(locator, language);
+    if (!tokens)
+      return '';
+    const expr = parseTokens(tokens, language);
+    if (!expr)
+      return '';
+    return parseExpr(expr, testIdAttributeName) || '';
+  } catch {
   }
   return '';
-}
-
-function digestForComparison(locator: string) {
-  return locator.replace(/\s/g, '').replace(/["`]/g, '\'');
 }
