@@ -356,6 +356,36 @@ it('reverse engineer hasNot', async ({ page }) => {
   });
 });
 
+it('reverse engineer and', async ({ page }) => {
+  const locator = page.locator('section').and(page.getByRole('button').nth(2)).getByText('hello');
+  expect.soft(generate(locator)).toEqual({
+    csharp: `Locator("section").And(GetByRole(AriaRole.Button).Nth(2)).GetByText("hello")`,
+    java: `locator("section").and(getByRole(AriaRole.BUTTON).nth(2)).getByText("hello")`,
+    javascript: `locator('section').and(getByRole('button').nth(2)).getByText('hello')`,
+    python: `locator("section").and_(get_by_role("button").nth(2)).get_by_text("hello")`,
+  });
+});
+
+it('reverse engineer or', async ({ page }) => {
+  const locator = page.locator('section').or(page.getByRole('button').nth(2)).getByText('hello');
+  expect.soft(generate(locator)).toEqual({
+    csharp: `Locator("section").Or(GetByRole(AriaRole.Button).Nth(2)).GetByText("hello")`,
+    java: `locator("section").or(getByRole(AriaRole.BUTTON).nth(2)).getByText("hello")`,
+    javascript: `locator('section').or(getByRole('button').nth(2)).getByText('hello')`,
+    python: `locator("section").or_(get_by_role("button").nth(2)).get_by_text("hello")`,
+  });
+});
+
+it('reverse engineer locator(locator)', async ({ page }) => {
+  const locator = page.locator('section').locator(page.getByRole('button').nth(2)).getByText('hello');
+  expect.soft(generate(locator)).toEqual({
+    csharp: `Locator("section").Locator(GetByRole(AriaRole.Button).Nth(2)).GetByText("hello")`,
+    java: `locator("section").locator(getByRole(AriaRole.BUTTON).nth(2)).getByText("hello")`,
+    javascript: `locator('section').locator(getByRole('button').nth(2)).getByText('hello')`,
+    python: `locator("section").locator(get_by_role("button").nth(2)).get_by_text("hello")`,
+  });
+});
+
 it('reverse engineer frameLocator', async ({ page }) => {
   const locator = page
       .frameLocator('iframe')
@@ -471,6 +501,32 @@ it('parseLocator css', async () => {
   expect.soft(parseLocator('java', `locator("css=.foo")`, '')).toBe(`css=.foo`);
   expect.soft(parseLocator('csharp', `Locator(".foo")`, '')).toBe(`.foo`);
   expect.soft(parseLocator('csharp', `Locator("css=.foo")`, '')).toBe(`css=.foo`);
+});
+
+it('parseLocator locator(options)', async () => {
+  expect.soft(parseLocator('javascript', `locator('.foo', { hasText: 'hello' })`, '')).toBe(`.foo >> internal:has-text="hello"i`);
+  expect.soft(parseLocator('javascript', `locator('.foo', { hasNotText: 'hello' })`, '')).toBe(`.foo >> internal:has-not-text="hello"i`);
+  expect.soft(parseLocator('javascript', `locator('.foo', { has: locator('div') })`, '')).toBe(`.foo >> internal:has="div"`);
+  expect.soft(parseLocator('javascript', `locator('.foo', { hasNot: locator('div') })`, '')).toBe(`.foo >> internal:has-not="div"`);
+  expect.soft(parseLocator('java', `locator(".foo", new Locator.LocatorOptions().setHasText("hello"))`, '')).toBe(`.foo >> internal:has-text="hello"i`);
+  expect.soft(parseLocator('java', `locator(".foo", new Locator.LocatorOptions().setHasNotText("hello"))`, '')).toBe(`.foo >> internal:has-not-text="hello"i`);
+  expect.soft(parseLocator('java', `locator(".foo", new Locator.LocatorOptions().setHas(locator("div")))`, '')).toBe(`.foo >> internal:has="div"`);
+  expect.soft(parseLocator('java', `locator(".foo", new Locator.LocatorOptions().setHasNot(locator("div")))`, '')).toBe(`.foo >> internal:has-not="div"`);
+  expect.soft(parseLocator('csharp', `Locator(".foo", new () { HasText = "hello" })`, '')).toBe(`.foo >> internal:has-text="hello"i`);
+  expect.soft(parseLocator('csharp', `Locator(".foo", new () { HasNotText = "hello" })`, '')).toBe(`.foo >> internal:has-not-text="hello"i`);
+  expect.soft(parseLocator('csharp', `Locator(".foo", new () { Has = Locator("div") })`, '')).toBe(`.foo >> internal:has="div"`);
+  expect.soft(parseLocator('csharp', `Locator(".foo", new () { HasNot = Locator("div") })`, '')).toBe(`.foo >> internal:has-not="div"`);
+  expect.soft(parseLocator('python', `locator(".foo", has_text="hello")`, '')).toBe(`.foo >> internal:has-text="hello"i`);
+  expect.soft(parseLocator('python', `locator(".foo", has_not_text="hello")`, '')).toBe(`.foo >> internal:has-not-text="hello"i`);
+  expect.soft(parseLocator('python', `locator(".foo", has=locator("div"))`, '')).toBe(`.foo >> internal:has="div"`);
+  expect.soft(parseLocator('python', `locator(".foo", has_not=locator("div"))`, '')).toBe(`.foo >> internal:has-not="div"`);
+});
+
+it('parseLocator page prefix', async () => {
+  expect.soft(parseLocator('javascript', `page.locator('.foo', { has: page.locator('div') }).and(page.getByText('hello'))`, '')).toBe(`.foo >> internal:has="div" >> internal:and="internal:text=\\"hello\\"i"`);
+  expect.soft(parseLocator('java', `page.locator(".foo", new Page.LocatorOptions().setHas(page.locator("div"))).and(page.getByText("hello"))`, '')).toBe(`.foo >> internal:has="div" >> internal:and="internal:text=\\"hello\\"i"`);
+  expect.soft(parseLocator('csharp', `page.Locator(".foo", new() { Has = page.Locator("div") }).And(page.GetByText("hello"))`, '')).toBe(`.foo >> internal:has="div" >> internal:and="internal:text=\\"hello\\"i"`);
+  expect.soft(parseLocator('python', `page.locator(".foo", has=page.locator("div")).and_(page.get_by_text("hello"))`, '')).toBe(`.foo >> internal:has="div" >> internal:and="internal:text=\\"hello\\"i"`);
 });
 
 it('parse locators strictly', () => {

@@ -21,7 +21,6 @@ import type { ParsedSelector } from './selectorParser';
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
-export type Quote = '\'' | '"' | '`';
 
 type LocatorOptions = {
   attrs?: { name: string, value: string | boolean | number }[],

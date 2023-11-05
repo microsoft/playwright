@@ -158,6 +158,8 @@ function tokenize(locator: string, language: Language): Token[] | undefined {
     ], tokens => ({ re: { source: tokens[5].string!, flags: 'i' } }));
     fixup([{ identLike: 'True' }], tokens => ({ identLike: 'true' }));
     fixup([{ identLike: 'False' }], tokens => ({ identLike: 'false' }));
+    fixup([{ identLike: 'and_' }], tokens => ({ identLike: 'and' }));
+    fixup([{ identLike: 'or_' }], tokens => ({ identLike: 'or' }));
   }
 
   if (language === 'csharp') {
@@ -594,7 +596,7 @@ function interpret(expr: Expr, testIdAttributeName: string): string | undefined 
           if (call.args[0].string !== undefined)
             selector = chain(selector, call.args[0].string, options);
           else if (call.args[0].chain)
-            selector = chain(selector, toSelector(call.args[0]), options);
+            selector = chain(selector, 'internal:chain=' + JSON.stringify(toSelector(call.args[0])), options);
           else
             expect(false);
           break;
