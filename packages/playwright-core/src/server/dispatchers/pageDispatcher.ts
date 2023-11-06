@@ -201,7 +201,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
     if (!params.runBeforeUnload)
-      metadata.closesScope = true;
+      metadata.potentiallyClosesScope = true;
     await this._page.close(metadata, params);
   }
 

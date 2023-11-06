@@ -68,7 +68,7 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
   }
 
   async dispose(_: any, metadata: CallMetadata) {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     this._object.dispose();
     this._dispose();
   }

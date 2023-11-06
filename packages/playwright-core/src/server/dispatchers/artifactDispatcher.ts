@@ -107,7 +107,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async delete(_: any, metadata: CallMetadata): Promise<void> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     await this._object.delete();
     this._dispose();
   }

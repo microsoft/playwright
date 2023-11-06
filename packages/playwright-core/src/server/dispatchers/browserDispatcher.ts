@@ -56,12 +56,12 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async close(params: channels.BrowserCloseParams, metadata: CallMetadata): Promise<void> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     await this._object.close(params);
   }
 
   async killForTests(_: any, metadata: CallMetadata): Promise<void> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     await this._object.killForTests();
   }
 
