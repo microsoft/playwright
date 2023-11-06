@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatError } from './base';
+import { colors, BaseReporter, formatError } from './base';
 import type { FullResult, TestCase, TestResult, Suite, TestError } from '../../types/testReporter';
 
 class DotReporter extends BaseReporter {

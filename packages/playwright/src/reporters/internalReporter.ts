@@ -15,11 +15,10 @@
  */
 
 import fs from 'fs';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
 import { Suite } from '../common/test';
-import { prepareErrorStack, relativeFilePath } from './base';
+import { colors, prepareErrorStack, relativeFilePath } from './base';
 import type { ReporterV2 } from './reporterV2';
 import { monotonicTime } from 'playwright-core/lib/utils';
 
