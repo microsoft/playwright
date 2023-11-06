@@ -726,7 +726,7 @@ expect(page.locator("label")).to_have_text("Password")
 
 ```csharp
 // Fill the input by targeting the label.
-await Expect(page.Locator("label")).ToHaveTextAsync("Password");
+await Expect(Page.Locator("label")).ToHaveTextAsync("Password");
 ```
 
 ## Legacy text locator
