@@ -25,10 +25,12 @@ export const Main: React.FC = ({
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<string, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
+  const [overlayVisible, setOverlayVisible] = React.useState<boolean>(true);
 
   window.playwrightSetMode = setMode;
   window.playwrightSetSources = setSources;
   window.playwrightSetPaused = setPaused;
+  window.playwrightSetOverlayVisible = setOverlayVisible;
   window.playwrightUpdateLogs = callLogs => {
     const newLog = new Map<string, CallLog>(log);
     for (const callLog of callLogs) {
@@ -39,5 +41,5 @@ export const Main: React.FC = ({
   };
 
   window.playwrightSourcesEchoForTest = sources;
-  return <Recorder sources={sources} paused={paused} log={log} mode={mode}/>;
+  return <Recorder sources={sources} paused={paused} log={log} mode={mode} overlayVisible={overlayVisible}/>;
 };

@@ -28,6 +28,10 @@
   min-width: 100px;
 }
 
+.recorder .codicon {
+  font-size: 15px;
+}
+
 .recorder .toolbar-button.toggled.circle-large-filled {
   color: #a1260d;
 }

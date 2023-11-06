@@ -30,6 +30,13 @@ type HighlightEntry = {
   tooltipText?: string,
 };
 
+export type HighlightOptions = {
+  tooltipText?: string;
+  color?: string;
+  anchorGetter?: (element: Element) => DOMRect;
+  decorateTooltip?: (tooltip: Element) => void;
+};
+
 export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
@@ -112,7 +119,7 @@ export class Highlight {
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), stringifySelector(selector));
+    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), { tooltipText: asLocator(this._language, stringifySelector(selector)) });
     this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
@@ -144,17 +151,19 @@ export class Highlight {
     this._highlightEntries = [];
   }
 
-  updateHighlight(elements: Element[], selector: string, color?: string) {
-    if (!color)
-      color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
-    this._innerUpdateHighlight(elements, { color, tooltipText: selector ? asLocator(this._language, selector) : '' });
+  updateHighlight(elements: Element[], options: HighlightOptions) {
+    this._innerUpdateHighlight(elements, options);
   }
 
   maskElements(elements: Element[], color?: string) {
     this._innerUpdateHighlight(elements, { color: color ? color : '#F0F' });
   }
 
-  private _innerUpdateHighlight(elements: Element[], options: { color: string, tooltipText?: string }) {
+  private _innerUpdateHighlight(elements: Element[], options: HighlightOptions) {
+    let color = options.color;
+    if (!color)
+      color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
+
     // Code below should trigger one layout and leave with the
     // destroyed layout.
 
@@ -177,6 +186,7 @@ export class Highlight {
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
+        options.decorateTooltip?.(tooltipElement);
       }
       this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement, tooltipText: options.tooltipText });
     }
@@ -193,14 +203,15 @@ export class Highlight {
       const totalWidth = this._glassPaneElement.offsetWidth;
       const totalHeight = this._glassPaneElement.offsetHeight;
 
-      let anchorLeft = entry.box.left;
+      const anchorBox = options.anchorGetter ? options.anchorGetter(entry.targetElement) : entry.box;
+      let anchorLeft = anchorBox.left;
       if (anchorLeft + tooltipWidth > totalWidth - 5)
         anchorLeft = totalWidth - tooltipWidth - 5;
-      let anchorTop = entry.box.bottom + 5;
+      let anchorTop = anchorBox.bottom + 5;
       if (anchorTop + tooltipHeight > totalHeight - 5) {
         // If can't fit below, either position above...
-        if (entry.box.top > tooltipHeight + 5) {
-          anchorTop = entry.box.top - tooltipHeight - 5;
+        if (anchorBox.top > tooltipHeight + 5) {
+          anchorTop = anchorBox.top - tooltipHeight - 5;
         } else {
           // Or on top in case of large element
           anchorTop = totalHeight - 5 - tooltipHeight;
@@ -219,7 +230,7 @@ export class Highlight {
         entry.tooltipElement.style.left = entry.tooltipLeft + 'px';
       }
       const box = entry.box!;
-      entry.highlightElement.style.backgroundColor = options.color;
+      entry.highlightElement.style.backgroundColor = color;
       entry.highlightElement.style.left = box.x + 'px';
       entry.highlightElement.style.top = box.y + 'px';
       entry.highlightElement.style.width = box.width + 'px';
