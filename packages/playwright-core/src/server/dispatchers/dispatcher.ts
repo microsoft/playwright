@@ -99,7 +99,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     try {
       return await this._openScope.race(commandPromise);
     } catch (e) {
-      if (callMetadata.closesScope && isTargetClosedError(e))
+      if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
         return await commandPromise;
       throw e;
     }

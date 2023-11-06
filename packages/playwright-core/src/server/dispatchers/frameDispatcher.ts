@@ -133,6 +133,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async click(params: channels.FrameClickParams, metadata: CallMetadata): Promise<void> {
+    metadata.potentiallyClosesScope = true;
     return await this._frame.click(metadata, params.selector, params);
   }
 
@@ -265,7 +266,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
     if (result.received !== undefined)
