@@ -155,6 +155,34 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('click 250 250');
   });
 
+  test('should be able to generate drag and drop action', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'dragTo'),
+      page.locator('#source').dragTo(page.locator('#target')),
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByTestId('drag-source').dragTo(page.getByTestId('drag-target'));`);
+
+    expect(sources.get('Python')!.text).toContain(`
+    page.get_by_test_id("drag-source").drag_to(page.get_by_test_id("drag-target"))`);
+
+    expect(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_test_id("drag-source").drag_to(page.get_by_test_id("drag-target"))`);
+
+    expect(sources.get('Java')!.text).toContain(`
+      page.getByTestId("drag-source").dragTo(page.getByTestId("drag-target"));`);
+
+    expect(sources.get('C#')!.text).toContain(`
+        await page.GetByTestId("drag-source").DragToAsync(page.GetByTestId("drag-target"));`);
+
+    expect(message.text()).toBe('Drop');
+  });
+
   test('should work with TrustedTypes', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 

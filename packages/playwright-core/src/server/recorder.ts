@@ -652,6 +652,8 @@ class ContextRecorder extends EventEmitter {
       const values = action.options.map(value => ({ value }));
       await perform('selectOption', { selector: action.selector, values }, callMetadata => frame.selectOption(callMetadata, action.selector, [], values, { timeout: kActionTimeout, strict: true }));
     }
+    if (action.name === 'dragAndDrop')
+      await perform('dragAndDrop', { source: action.source, target: action.target }, callMetadata => frame.dragAndDrop(callMetadata, action.source, action.target, { timeout: kActionTimeout, strict: true }));
   }
 
   private async _recordAction(frame: Frame, action: actions.Action) {

@@ -39,6 +39,7 @@ interface RecorderTool {
   disable?(): void;
   onClick?(event: MouseEvent): void;
   onDragStart?(event: DragEvent): void;
+  onDrop?(event: DragEvent): void;
   onInput?(event: Event): void;
   onKeyDown?(event: KeyboardEvent): void;
   onKeyUp?(event: KeyboardEvent): void;
@@ -142,6 +143,7 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
+  private _dragSourceElement: HTMLElement | null = null;
 
   constructor(private _recorder: Recorder) {
   }
@@ -329,6 +331,27 @@ class RecordActionTool implements RecorderTool {
     this._recorder.updateHighlight(null, false);
   }
 
+  onDragStart(event: DragEvent): void {
+    this._dragSourceElement = event.target as HTMLElement;
+  }
+
+  onDrop(event: DragEvent): void {
+    if (this._actionInProgress(event))
+      return;
+    const targetElement = this._recorder.deepEventTarget(event);
+    const sourceElement = this._dragSourceElement;
+    this._dragSourceElement = null;
+    if (!sourceElement)
+      return;
+    consumeEvent(event);
+    this._performAction({
+      name: 'dragAndDrop',
+      signals: [],
+      source: generateSelector(this._recorder.injectedScript, sourceElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }).selector,
+      target: generateSelector(this._recorder.injectedScript, targetElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }).selector,
+    });
+  }
+
   private _onFocus(userGesture: boolean) {
     const activeElement = deepActiveElement(this._recorder.document);
     // Firefox dispatches "focus" event to body when clicking on a backgrounded headed browser window.
@@ -348,6 +371,8 @@ class RecordActionTool implements RecorderTool {
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
     if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type))
+      return true;
+    if (target.draggable && nodeName !== 'A')
       return true;
     return false;
   }
@@ -834,6 +859,7 @@ export class Recorder {
       addEventListener(this.document, 'click', event => this._onClick(event as MouseEvent), true),
       addEventListener(this.document, 'auxclick', event => this._onClick(event as MouseEvent), true),
       addEventListener(this.document, 'dragstart', event => this._onDragStart(event as DragEvent), true),
+      addEventListener(this.document, 'drop', event => this._onDrop(event as DragEvent), true),
       addEventListener(this.document, 'input', event => this._onInput(event), true),
       addEventListener(this.document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
       addEventListener(this.document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
@@ -909,6 +935,14 @@ export class Recorder {
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onDragStart?.(event);
+  }
+
+  private _onDrop(event: DragEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onDrop?.(event);
   }
 
   private _onPointerDown(event: PointerEvent) {

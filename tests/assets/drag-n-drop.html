@@ -50,8 +50,8 @@ function drop_handler(ev) {
 
 <body>
   <div>
-    <p id="source" ondragstart="dragstart_handler(event);" draggable="true">
+    <p id="source" ondragstart="dragstart_handler(event);" draggable="true" data-testid="drag-source">
       Select this element, drag it to the Drop Zone and then release the selection to move the element.</p>
   </div>
-  <div id="target" ondrop="drop_handler(event);" ondragover="dragover_handler(event);">Drop Zone</div>
+  <div id="target" ondrop="drop_handler(event);" ondragover="dragover_handler(event);" data-testid="drag-target">Drop Zone</div>
 </body>
