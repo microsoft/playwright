@@ -18,18 +18,19 @@ import type * as actions from '../recorder/recorderActions';
 import type { InjectedScript } from '../injected/injectedScript';
 import { generateSelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
-import type { Mode, UIState } from '@recorder/recorderTypes';
-import { Highlight } from '../injected/highlight';
+import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import { Highlight, type HighlightOptions } from '../injected/highlight';
 import { enclosingElement, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import { elementText } from './selectorUtils';
-import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
+import { escapeWithQuotes, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
   setSelector?(selector: string): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
-  setOverlayPosition?(position: { x: number, y: number }): Promise<void>;
+  setOverlayState?(state: OverlayState): Promise<void>;
   highlightUpdated?(): void;
 }
 
@@ -436,15 +437,23 @@ class RecordActionTool implements RecorderTool {
     if (this._hoveredModel && this._hoveredModel.selector === selector)
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
-    this._recorder.updateHighlight(this._hoveredModel, true, '#dc6f6f7f');
+    this._recorder.updateHighlight(this._hoveredModel, true, { color: '#dc6f6f7f' });
   }
 }
 
 class TextAssertionTool implements RecorderTool {
+  private _hoverHighlight: HighlightModel | null = null;
   private _selectionHighlight: HighlightModel | null = null;
+  private _selectionText: { selectedText: string, fullText: string } | null = null;
   private _inputHighlight: HighlightModel | null = null;
+  private _acceptButton: HTMLElement;
 
   constructor(private _recorder: Recorder) {
+    this._acceptButton = this._recorder.document.createElement('button');
+    this._acceptButton.textContent = 'Accept';
+    this._acceptButton.style.cursor = 'pointer';
+    this._acceptButton.style.pointerEvents = 'auto';
+    this._acceptButton.addEventListener('click', () => this._commitAction());
   }
 
   cursor() {
@@ -457,13 +466,19 @@ class TextAssertionTool implements RecorderTool {
 
   disable() {
     this._recorder.injectedScript.document.designMode = 'off';
+    this._hoverHighlight = null;
     this._selectionHighlight = null;
+    this._selectionText = null;
     this._inputHighlight = null;
   }
 
   onClick(event: MouseEvent) {
-    consumeEvent(event);
+    // Hack: work around highlight's glass pane having a closed shadow root.
+    const box = this._acceptButton.getBoundingClientRect();
+    if (box.left <= event.clientX && event.clientX <= box.right && box.top <= event.clientY && event.clientY <= box.bottom)
+      return;
 
+    consumeEvent(event);
     const selection = this._recorder.document.getSelection();
     if (event.detail === 1 && selection && !selection.toString() && !this._inputHighlight) {
       const target = this._recorder.deepEventTarget(event);
@@ -477,12 +492,13 @@ class TextAssertionTool implements RecorderTool {
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
       this._recorder.injectedScript.window.getSelection()?.empty();
       this._inputHighlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
-      this._recorder.updateHighlight(this._inputHighlight, true, '#6fdcbd38');
+      this._showHighlight(true);
       consumeEvent(event);
       return;
     }
 
     this._inputHighlight = null;
+    this._hoverHighlight = null;
     this._updateSelectionHighlight();
   }
 
@@ -491,7 +507,18 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onMouseMove(event: MouseEvent) {
-    this._updateSelectionHighlight();
+    const selection = this._recorder.document.getSelection();
+    if (selection && selection.toString()) {
+      this._updateSelectionHighlight();
+      return;
+    }
+    if (this._inputHighlight || event.buttons)
+      return;
+    const target = this._recorder.deepEventTarget(event);
+    if (this._hoverHighlight?.elements[0] === target)
+      return;
+    this._hoverHighlight = elementText(new Map(), target).full ? { elements: [target], selector: '' } : null;
+    this._recorder.updateHighlight(this._hoverHighlight, true, { color: '#8acae480' });
   }
 
   onDragStart(event: DragEvent) {
@@ -500,48 +527,17 @@ class TextAssertionTool implements RecorderTool {
 
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
-      this._resetSelectionAndHighlight();
-      this._recorder.delegate.setMode?.('recording');
+      const selection = this._recorder.document.getSelection();
+      if (selection && selection.toString())
+        this._resetSelectionAndHighlight();
+      else
+        this._recorder.delegate.setMode?.('recording');
       consumeEvent(event);
       return;
     }
 
     if (event.key === 'Enter') {
-      const selection = this._recorder.document.getSelection();
-
-      if (this._inputHighlight) {
-        const target = this._inputHighlight.elements[0] as HTMLInputElement;
-        if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes(target.type.toLowerCase())) {
-          this._recorder.delegate.recordAction?.({
-            name: 'assertChecked',
-            selector: this._inputHighlight.selector,
-            signals: [],
-            // Interestingly, inputElement.checked is reversed inside this event handler.
-            checked: !(target as HTMLInputElement).checked,
-          });
-          this._recorder.delegate.setMode?.('recording');
-        } else {
-          this._recorder.delegate.recordAction?.({
-            name: 'assertValue',
-            selector: this._inputHighlight.selector,
-            signals: [],
-            value: target.value,
-          });
-          this._recorder.delegate.setMode?.('recording');
-        }
-      } else if (selection && this._selectionHighlight) {
-        const selectedText = normalizeWhiteSpace(selection.toString());
-        const fullText = normalizeWhiteSpace(elementText(new Map(), this._selectionHighlight.elements[0]).full);
-        this._recorder.delegate.recordAction?.({
-          name: 'assertText',
-          selector: this._selectionHighlight.selector,
-          signals: [],
-          text: selectedText,
-          substring: fullText !== selectedText,
-        });
-        this._recorder.delegate.setMode?.('recording');
-        this._resetSelectionAndHighlight();
-      }
+      this._commitAction();
       consumeEvent(event);
       return;
     }
@@ -558,11 +554,67 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onScroll(event: Event) {
-    this._recorder.updateHighlight(this._selectionHighlight, false, '#6fdcbd38');
+    this._hoverHighlight = null;
+    this._showHighlight(false);
+  }
+
+  private _generateAction(): actions.Action | null {
+    if (this._inputHighlight) {
+      const target = this._inputHighlight.elements[0] as HTMLInputElement;
+      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes(target.type.toLowerCase())) {
+        return {
+          name: 'assertChecked',
+          selector: this._inputHighlight.selector,
+          signals: [],
+          // Interestingly, inputElement.checked is reversed inside this event handler.
+          checked: !(target as HTMLInputElement).checked,
+        };
+      } else {
+        return {
+          name: 'assertValue',
+          selector: this._inputHighlight.selector,
+          signals: [],
+          value: target.value,
+        };
+      }
+    } else if (this._selectionText && this._selectionHighlight) {
+      return {
+        name: 'assertText',
+        selector: this._selectionHighlight.selector,
+        signals: [],
+        text: this._selectionText.selectedText,
+        substring: this._selectionText.fullText !== this._selectionText.selectedText,
+      };
+    }
+    return null;
+  }
+
+  private _generateActionPreview() {
+    const action = this._generateAction();
+    // TODO: support other languages, maybe unify with code generator?
+    if (action?.name === 'assertText')
+      return `expect(${asLocator(this._recorder.state.language, action.selector)}).${action.substring ? 'toContainText' : 'toHaveText'}(${escapeWithQuotes(action.text)})`;
+    if (action?.name === 'assertChecked')
+      return `expect(${asLocator(this._recorder.state.language, action.selector)})${action.checked ? '' : '.not'}.toBeChecked()`;
+    if (action?.name === 'assertValue') {
+      const assertion = action.value ? `toHaveValue(${escapeWithQuotes(action.value)})` : `toBeEmpty()`;
+      return `expect(${asLocator(this._recorder.state.language, action.selector)}).${assertion}`;
+    }
+    return '';
+  }
+
+  private _commitAction() {
+    const action = this._generateAction();
+    if (action) {
+      this._resetSelectionAndHighlight();
+      this._recorder.delegate.recordAction?.(action);
+      this._recorder.delegate.setMode?.('recording');
+    }
   }
 
   private _resetSelectionAndHighlight() {
     this._selectionHighlight = null;
+    this._selectionText = null;
     this._inputHighlight = null;
     this._recorder.injectedScript.window.getSelection()?.empty();
     this._recorder.updateHighlight(null, false);
@@ -572,18 +624,32 @@ class TextAssertionTool implements RecorderTool {
     if (this._inputHighlight)
       return;
     const selection = this._recorder.document.getSelection();
+    const selectedText = normalizeWhiteSpace(selection?.toString() || '');
     let highlight: HighlightModel | null = null;
-    if (selection && selection.focusNode && selection.anchorNode && selection.toString()) {
+    if (selection && selection.focusNode && selection.anchorNode && selectedText) {
       const focusElement = enclosingElement(selection.focusNode);
       let lcaElement = focusElement ? enclosingElement(selection.anchorNode) : undefined;
       while (lcaElement && !isInsideScope(lcaElement, focusElement))
         lcaElement = parentElementOrShadowHost(lcaElement);
       highlight = lcaElement ? generateSelector(this._recorder.injectedScript, lcaElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true }) : null;
     }
-    if (highlight?.selector === this._selectionHighlight?.selector)
+    const fullText = highlight ? normalizeWhiteSpace(elementText(new Map(), highlight.elements[0]).full) : '';
+    const selectionText = highlight ? { selectedText, fullText } : null;
+    if (highlight?.selector === this._selectionHighlight?.selector && this._selectionText?.fullText === selectionText?.fullText && this._selectionText?.selectedText === selectionText?.selectedText)
       return;
     this._selectionHighlight = highlight;
-    this._recorder.updateHighlight(highlight, true, '#6fdcbd38');
+    this._selectionText = selectionText;
+    this._showHighlight(true);
+  }
+
+  private _showHighlight(userGesture: boolean) {
+    const options: HighlightOptions = { color: '#6fdcbd38', tooltipText: this._generateActionPreview(), decorateTooltip: tooltip => tooltip.appendChild(this._acceptButton) };
+    if (this._inputHighlight) {
+      this._recorder.updateHighlight(this._inputHighlight, userGesture, options);
+    } else {
+      options.anchorGetter = (e: Element) => this._recorder.document.getSelection()?.getRangeAt(0)?.getBoundingClientRect() || e.getBoundingClientRect();
+      this._recorder.updateHighlight(this._selectionHighlight, userGesture, options);
+    }
   }
 }
 
@@ -624,13 +690,21 @@ class Overlay {
 
       x-pw-drag-handle {
         cursor: grab;
-        height: 2px;
-        margin: 5px 9px;
-        border-top: 1px solid rgb(86 86 86 / 90%);
-        border-bottom: 1px solid rgb(86 86 86 / 90%);
+        padding: 6px 9px;
+      }
+      x-pw-drag-handle > div {
+        height: 1px;
+        margin-top: 2px;
+        background: rgb(148 148 148 / 90%);
       }
       x-pw-drag-handle:active {
         cursor: grabbing;
+      }
+
+      x-pw-separator {
+        height: 1px;
+        margin: 6px 9px;
+        background: rgb(148 148 148 / 90%);
       }
 
       x-pw-tool-item {
@@ -680,6 +754,11 @@ class Overlay {
         -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
         mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
       }
+      x-pw-tool-item.close > div {
+        /* codicon: close */
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
+      }
     `;
     shadow.appendChild(styleElement);
 
@@ -699,6 +778,9 @@ class Overlay {
     dragHandle.addEventListener('mousedown', event => {
       this._dragState = { position: this._position, dragStart: { x: event.clientX, y: event.clientY } };
     });
+    dragHandle.append(document.createElement('div'));
+    dragHandle.append(document.createElement('div'));
+    dragHandle.append(document.createElement('div'));
     toolsListElement.appendChild(dragHandle);
 
     this._pickLocatorToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
@@ -727,6 +809,16 @@ class Overlay {
     });
     toolsListElement.appendChild(this._assertToggle);
 
+    const closeButton = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    closeButton.title = 'Hide this overlay';
+    closeButton.classList.add('close');
+    closeButton.appendChild(this._recorder.injectedScript.document.createElement('div'));
+    closeButton.addEventListener('click', () => {
+      this._overlayElement.style.display = 'none';
+      this._recorder.delegate.setOverlayState?.({ position: this._position, visible: false });
+    });
+    toolsListElement.appendChild(closeButton);
+
     this._updateVisualPosition();
   }
 
@@ -744,10 +836,11 @@ class Overlay {
     this._pickLocatorToggle.classList.toggle('active', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
     this._assertToggle.classList.toggle('active', state.mode === 'assertingText');
     this._assertToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'inspecting');
-    if (this._position.x !== state.overlayPosition.x || this._position.y !== state.overlayPosition.y) {
-      this._position = state.overlayPosition;
+    if (this._position.x !== state.overlay.position.x || this._position.y !== state.overlay.position.y) {
+      this._position = state.overlay.position;
       this._updateVisualPosition();
     }
+    this._overlayElement.style.display = state.overlay.visible ? 'block' : 'none';
   }
 
   private _updateVisualPosition() {
@@ -768,7 +861,7 @@ class Overlay {
       this._position.x = Math.max(0, Math.min(this._recorder.injectedScript.window.innerWidth - this._measure.width, this._position.x));
       this._position.y = Math.max(0, Math.min(this._recorder.injectedScript.window.innerHeight - this._measure.height, this._position.y));
       this._updateVisualPosition();
-      this._recorder.delegate.setOverlayPosition?.(this._position);
+      this._recorder.delegate.setOverlayState?.({ position: this._position, visible: true });
       consumeEvent(event);
       return true;
     }
@@ -794,7 +887,7 @@ export class Recorder {
   private _highlight: Highlight;
   private _overlay: Overlay | undefined;
   private _styleElement: HTMLStyleElement;
-  state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlayPosition: { x: 0, y: 0 } };
+  state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { position: { x: 0, y: 0 }, visible: true } };
   readonly document: Document;
   delegate: RecorderDelegate = {};
 
@@ -1000,8 +1093,10 @@ export class Recorder {
     this._currentTool.onKeyUp?.(event);
   }
 
-  updateHighlight(model: HighlightModel | null, userGesture: boolean, color?: string) {
-    this._highlight.updateHighlight(model?.elements || [], model?.selector || '', color);
+  updateHighlight(model: HighlightModel | null, userGesture: boolean, options: HighlightOptions = {}) {
+    if (options.tooltipText === undefined && model?.selector)
+      options.tooltipText = asLocator(this.state.language, model.selector);
+    this._highlight.updateHighlight(model?.elements || [], options);
     if (userGesture)
       this.delegate.highlightUpdated?.();
   }
@@ -1102,7 +1197,7 @@ interface Embedder {
   __pw_recorderState(): Promise<UIState>;
   __pw_recorderSetSelector(selector: string): Promise<void>;
   __pw_recorderSetMode(mode: Mode): Promise<void>;
-  __pw_recorderSetOverlayPosition(position: { x: number, y: number }): Promise<void>;
+  __pw_recorderSetOverlayState(state: OverlayState): Promise<void>;
   __pw_refreshOverlay(): void;
 }
 
@@ -1159,8 +1254,8 @@ export class PollingRecorder implements RecorderDelegate {
     await this._embedder.__pw_recorderSetMode(mode);
   }
 
-  async setOverlayPosition(position: { x: number, y: number }): Promise<void> {
-    await this._embedder.__pw_recorderSetOverlayPosition(position);
+  async setOverlayState(state: OverlayState): Promise<void> {
+    await this._embedder.__pw_recorderSetOverlayState(state);
   }
 }
 

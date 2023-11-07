@@ -35,7 +35,7 @@ import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../common/types';
-import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
@@ -55,7 +55,7 @@ export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
-  private _overlayPosition: Point = { x: 0, y: 0 };
+  private _overlayState: OverlayState = { position: { x: 0, y: 0 }, visible: true };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
@@ -101,7 +101,7 @@ export class Recorder implements InstrumentationListener {
 
     if (isUnderTest()) {
       // Most of our tests put elements at the top left, so get out of the way.
-      this._overlayPosition = { x: 350, y: 350 };
+      this._overlayState.position = { x: 350, y: 350 };
     }
   }
 
@@ -121,6 +121,12 @@ export class Recorder implements InstrumentationListener {
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
         this.setMode(data.params.mode);
+        return;
+      }
+      if (data.event === 'setOverlayVisible') {
+        this._overlayState.visible = data.params.visible;
+        this._recorderApp?.setOverlayVisible(this._overlayState.visible);
+        this._refreshOverlay();
         return;
       }
       if (data.event === 'selectorUpdated') {
@@ -186,7 +192,7 @@ export class Recorder implements InstrumentationListener {
         actionSelector,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
-        overlayPosition: this._overlayPosition,
+        overlay: this._overlayState,
       };
       return uiState;
     });
@@ -209,10 +215,11 @@ export class Recorder implements InstrumentationListener {
       this.setMode(mode);
     });
 
-    await this._context.exposeBinding('__pw_recorderSetOverlayPosition', false, async ({ frame }, position: Point) => {
+    await this._context.exposeBinding('__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
       if (frame.parentFrame())
         return;
-      this._overlayPosition = position;
+      this._overlayState = state;
+      this._recorderApp?.setOverlayVisible(state.visible);
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
