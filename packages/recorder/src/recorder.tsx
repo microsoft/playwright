@@ -40,7 +40,6 @@ export interface RecorderProps {
   paused: boolean,
   log: Map<string, CallLog>,
   mode: Mode,
-  overlayVisible: boolean,
 }
 
 export const Recorder: React.FC<RecorderProps> = ({
@@ -48,7 +47,6 @@ export const Recorder: React.FC<RecorderProps> = ({
   paused,
   log,
   mode,
-  overlayVisible,
 }) => {
   const [fileId, setFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('log');
@@ -156,9 +154,6 @@ export const Recorder: React.FC<RecorderProps> = ({
         window.dispatch({ event: 'clear' });
       }}></ToolbarButton>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
-      <ToolbarButton icon='editor-layout' title='Toggle overlay' toggled={overlayVisible} onClick={() => {
-        window.dispatch({ event: 'setOverlayVisible', params: { visible: !overlayVisible } });
-      }}></ToolbarButton>
     </Toolbar>
     <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
       <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true}/>

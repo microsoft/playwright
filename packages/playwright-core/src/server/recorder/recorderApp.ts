@@ -46,7 +46,6 @@ export interface IRecorderApp extends EventEmitter {
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;
-  setOverlayVisible(visible: boolean): Promise<void>;
   setFileIfNeeded(file: string): Promise<void>;
   setSelector(selector: string, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
@@ -57,7 +56,6 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
-  async setOverlayVisible(visible: boolean): Promise<void> {}
   async setFileIfNeeded(file: string): Promise<void> {}
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
@@ -145,12 +143,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await this._page.mainFrame().evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
     }).toString(), { isFunction: true }, mode).catch(() => {});
-  }
-
-  async setOverlayVisible(visible: boolean): Promise<void> {
-    await this._page.mainFrame().evaluateExpression(((visible: boolean) => {
-      window.playwrightSetOverlayVisible(visible);
-    }).toString(), { isFunction: true }, visible).catch(() => {});
   }
 
   async setFileIfNeeded(file: string): Promise<void> {
