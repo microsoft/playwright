@@ -157,7 +157,7 @@ PlaywrightAssertions.assertThat(page).hasTitle("News");
 ```
 
 ```csharp
-await Expect(page).ToHaveTitleAsync("News");
+await Expect(Page).ToHaveTitleAsync("News");
 ```
 
 ### param: PlaywrightAssertions.expectPage.page
