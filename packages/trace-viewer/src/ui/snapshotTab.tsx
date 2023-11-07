@@ -242,7 +242,7 @@ export const InspectModeController: React.FunctionComponent<{
         actionSelector: actionSelector.startsWith(frameSelector) ? actionSelector.substring(frameSelector.length).trim() : undefined,
         language: sdkLanguage,
         testIdAttributeName,
-        overlay: { position: { x: 0, y: 0 }, visible: false },
+        overlay: { offsetX: 0 },
       }, {
         async setSelector(selector: string) {
           setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector, false /* isFrameLocator */, true /* playSafe */));

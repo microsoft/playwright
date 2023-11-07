@@ -658,13 +658,15 @@ class Overlay {
   private _recordToggle: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
   private _assertToggle: HTMLElement;
-  private _position: { x: number, y: number } = { x: 0, y: 0 };
-  private _dragState: { position: { x: number, y: number }, dragStart: { x: number, y: number } } | undefined;
+  private _offsetX = 0;
+  private _dragState: { offsetX: number, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
 
   constructor(private _recorder: Recorder) {
     const document = this._recorder.injectedScript.document;
     this._overlayElement = document.createElement('x-pw-overlay');
+    this._overlayElement.style.top = '0';
+    this._overlayElement.style.position = 'absolute';
 
     const shadow = this._overlayElement.attachShadow({ mode: 'closed' });
     const styleElement = document.createElement('style');
@@ -682,23 +684,7 @@ class Overlay {
         background-color: hsla(0 0% 100% / .9);
         font-family: 'Dank Mono', 'Operator Mono', Inconsolata, 'Fira Mono', 'SF Mono', Monaco, 'Droid Sans Mono', 'Source Code Pro', monospace;
         display: flex;
-        flex-direction: column;
-        margin: 10px;
-        padding: 3px 0;
-        border-radius: 17px;
-      }
-
-      x-pw-drag-handle {
-        cursor: grab;
-        padding: 6px 9px;
-      }
-      x-pw-drag-handle > div {
-        height: 1px;
-        margin-top: 2px;
-        background: rgb(148 148 148 / 90%);
-      }
-      x-pw-drag-handle:active {
-        cursor: grabbing;
+        border-radius: 3px;
       }
 
       x-pw-separator {
@@ -712,7 +698,7 @@ class Overlay {
         height: 28px;
         width: 28px;
         margin: 2px 4px;
-        border-radius: 50%;
+        border-radius: 3px;
       }
       x-pw-tool-item:not(.disabled):hover {
         background-color: hsl(0, 0%, 86%);
@@ -738,7 +724,28 @@ class Overlay {
       x-pw-tool-item.record.active > div {
         background-color: #a1260d;
       }
-
+      x-pw-tool-gripper {
+        height: 28px;
+        width: 24px;
+        margin: 2px 0;
+        cursor: grab;
+      }
+      x-pw-tool-gripper:active {
+        cursor: grabbing;
+      }
+      x-pw-tool-gripper > div {
+        width: 100%;
+        height: 100%;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        -webkit-mask-size: 20px;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: 16px;
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z' /></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z' /></svg>");
+        background-color: #555555;
+      }
       x-pw-tool-item.record > div {
         /* codicon: circle-large-filled */
         -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 1a6.8 6.8 0 0 1 1.86.253 6.899 6.899 0 0 1 3.083 1.805 6.903 6.903 0 0 1 1.804 3.083C14.916 6.738 15 7.357 15 8s-.084 1.262-.253 1.86a6.9 6.9 0 0 1-.704 1.674 7.157 7.157 0 0 1-2.516 2.509 6.966 6.966 0 0 1-1.668.71A6.984 6.984 0 0 1 8 15a6.984 6.984 0 0 1-1.86-.246 7.098 7.098 0 0 1-1.674-.711 7.3 7.3 0 0 1-1.415-1.094 7.295 7.295 0 0 1-1.094-1.415 7.098 7.098 0 0 1-.71-1.675A6.985 6.985 0 0 1 1 8c0-.643.082-1.262.246-1.86a6.968 6.968 0 0 1 .711-1.667 7.156 7.156 0 0 1 2.509-2.516 6.895 6.895 0 0 1 1.675-.704A6.808 6.808 0 0 1 8 1z'/></svg>");
@@ -754,16 +761,18 @@ class Overlay {
         -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
         mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
       }
-      x-pw-tool-item.close > div {
-        /* codicon: close */
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z'/></svg>");
-      }
     `;
     shadow.appendChild(styleElement);
 
     const toolsListElement = document.createElement('x-pw-tools-list');
     shadow.appendChild(toolsListElement);
+
+    const dragHandle = document.createElement('x-pw-tool-gripper');
+    dragHandle.addEventListener('mousedown', event => {
+      this._dragState = { offsetX: this._offsetX, dragStart: { x: event.clientX, y: 0 } };
+    });
+    dragHandle.appendChild(document.createElement('div'));
+    toolsListElement.appendChild(dragHandle);
 
     this._recordToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._recordToggle.title = 'Record';
@@ -773,15 +782,6 @@ class Overlay {
       this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'none');
     });
     toolsListElement.appendChild(this._recordToggle);
-
-    const dragHandle = document.createElement('x-pw-drag-handle');
-    dragHandle.addEventListener('mousedown', event => {
-      this._dragState = { position: this._position, dragStart: { x: event.clientX, y: event.clientY } };
-    });
-    dragHandle.append(document.createElement('div'));
-    dragHandle.append(document.createElement('div'));
-    dragHandle.append(document.createElement('div'));
-    toolsListElement.appendChild(dragHandle);
 
     this._pickLocatorToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._pickLocatorToggle.title = 'Pick locator';
@@ -809,16 +809,6 @@ class Overlay {
     });
     toolsListElement.appendChild(this._assertToggle);
 
-    const closeButton = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
-    closeButton.title = 'Hide this overlay';
-    closeButton.classList.add('close');
-    closeButton.appendChild(this._recorder.injectedScript.document.createElement('div'));
-    closeButton.addEventListener('click', () => {
-      this._overlayElement.style.display = 'none';
-      this._recorder.delegate.setOverlayState?.({ position: this._position, visible: false });
-    });
-    toolsListElement.appendChild(closeButton);
-
     this._updateVisualPosition();
   }
 
@@ -836,16 +826,14 @@ class Overlay {
     this._pickLocatorToggle.classList.toggle('active', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
     this._assertToggle.classList.toggle('active', state.mode === 'assertingText');
     this._assertToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'inspecting');
-    if (this._position.x !== state.overlay.position.x || this._position.y !== state.overlay.position.y) {
-      this._position = state.overlay.position;
+    if (this._offsetX !== state.overlay.offsetX) {
+      this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
     }
-    this._overlayElement.style.display = state.overlay.visible ? 'block' : 'none';
   }
 
   private _updateVisualPosition() {
-    this._overlayElement.style.left = this._position.x + 'px';
-    this._overlayElement.style.top = this._position.y + 'px';
+    this._overlayElement.style.left = (this._recorder.injectedScript.window.innerWidth / 2 + this._offsetX) + 'px';
   }
 
   onMouseMove(event: MouseEvent) {
@@ -854,14 +842,11 @@ class Overlay {
       return false;
     }
     if (this._dragState) {
-      this._position = {
-        x: this._dragState.position.x + event.clientX - this._dragState.dragStart.x,
-        y: this._dragState.position.y + event.clientY - this._dragState.dragStart.y,
-      };
-      this._position.x = Math.max(0, Math.min(this._recorder.injectedScript.window.innerWidth - this._measure.width, this._position.x));
-      this._position.y = Math.max(0, Math.min(this._recorder.injectedScript.window.innerHeight - this._measure.height, this._position.y));
+      this._offsetX = this._dragState.offsetX + event.clientX - this._dragState.dragStart.x;
+      this._offsetX = Math.min(this._recorder.injectedScript.window.innerWidth / 2 - 10 - this._measure.width, this._offsetX);
+      this._offsetX = Math.max(10 - this._recorder.injectedScript.window.innerWidth / 2, this._offsetX);
       this._updateVisualPosition();
-      this._recorder.delegate.setOverlayState?.({ position: this._position, visible: true });
+      this._recorder.delegate.setOverlayState?.({ offsetX: this._offsetX });
       consumeEvent(event);
       return true;
     }
@@ -869,6 +854,14 @@ class Overlay {
   }
 
   onMouseUp(event: MouseEvent) {
+    if (this._dragState) {
+      consumeEvent(event);
+      return true;
+    }
+    return false;
+  }
+
+  onClick(event: MouseEvent) {
     if (this._dragState) {
       this._dragState = undefined;
       consumeEvent(event);
@@ -887,7 +880,7 @@ export class Recorder {
   private _highlight: Highlight;
   private _overlay: Overlay | undefined;
   private _styleElement: HTMLStyleElement;
-  state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { position: { x: 0, y: 0 }, visible: true } };
+  state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { offsetX: 0 } };
   readonly document: Document;
   delegate: RecorderDelegate = {};
 
@@ -990,6 +983,8 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (!event.isTrusted)
+      return;
+    if (this._overlay?.onClick(event))
       return;
     if (this._ignoreOverlayEvent(event))
       return;

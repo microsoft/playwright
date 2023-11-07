@@ -21,13 +21,12 @@ export type Point = { x: number, y: number };
 export type Mode = 'inspecting' | 'recording' | 'none' | 'assertingText' | 'recording-inspecting';
 
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'fileChanged' | 'setOverlayVisible';
+  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'fileChanged';
   params: any;
 };
 
 export type OverlayState = {
-  position: Point;
-  visible: boolean;
+  offsetX: number;
 };
 
 export type UIState = {
