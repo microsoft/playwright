@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatError, formatFailure, formatTestTitle } from './base';
+import { colors, BaseReporter, formatError, formatFailure, formatTestTitle } from './base';
 import type { TestCase, Suite, TestResult, FullResult, TestStep, TestError } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {

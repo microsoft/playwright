@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
@@ -45,6 +45,28 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
+export const isTTY = !!process.env.PWTEST_TTY_WIDTH || process.stdout.isTTY;
+export const ttyWidth = process.env.PWTEST_TTY_WIDTH ? parseInt(process.env.PWTEST_TTY_WIDTH, 10) : process.stdout.columns || 0;
+let useColors = isTTY;
+if (process.env.DEBUG_COLORS === '0'
+    || process.env.DEBUG_COLORS === 'false'
+    || process.env.FORCE_COLOR === '0'
+    || process.env.FORCE_COLOR === 'false')
+  useColors = false;
+else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
+  useColors = true;
+
+export const colors = useColors ? realColors : {
+  bold: (t: string) => t,
+  cyan: (t: string) => t,
+  dim: (t: string) => t,
+  gray: (t: string) => t,
+  green: (t: string) => t,
+  red: (t: string) => t,
+  yellow: (t: string) => t,
+  enabled: false,
+};
+
 export class BaseReporter implements ReporterV2 {
   config!: FullConfig;
   suite!: Suite;
@@ -52,13 +74,11 @@ export class BaseReporter implements ReporterV2 {
   result!: FullResult;
   private fileDurations = new Map<string, number>();
   private _omitFailures: boolean;
-  private readonly _ttyWidthForTest: number;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
-    this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
   }
 
   version(): 'v2' {
@@ -128,12 +148,7 @@ export class BaseReporter implements ReporterV2 {
     return true;
   }
 
-  protected ttyWidth() {
-    return this._ttyWidthForTest || process.stdout.columns || 0;
-  }
-
   protected fitToScreen(line: string, prefix?: string): string {
-    const ttyWidth = this.ttyWidth();
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
@@ -473,7 +488,7 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
 export function separator(text: string = ''): string {
   if (text)
     text += ' ';
-  const columns = Math.min(100, process.stdout?.columns || 100);
+  const columns = Math.min(100, ttyWidth || 100);
   return text + colors.dim('─'.repeat(Math.max(0, columns - text.length)));
 }
 

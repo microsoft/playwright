@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors, open } from 'playwright-core/lib/utilsBundle';
+import { open } from 'playwright-core/lib/utilsBundle';
 import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
@@ -25,7 +25,7 @@ import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic, TestError } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import { formatError, formatResultFailure, stripAnsiEscapes } from './base';
+import { colors, formatError, formatResultFailure, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
