@@ -30,7 +30,7 @@ test('pass', async ({ page }) => {
 });
 ```
 
-See the documentation [for a full example](./test-configuration.md#add-custom-matchers-using-expectextend).
+See the documentation [for a full example](./test-assertions.md#add-custom-matchers-using-expectextend).
 
 ### Merge test fixtures
 
