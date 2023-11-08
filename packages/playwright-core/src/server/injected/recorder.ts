@@ -25,14 +25,6 @@ import { elementText } from './selectorUtils';
 import { escapeWithQuotes, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
-import CodeMirror from 'codemirror';
-import codemirrorCSS from 'codemirror/lib/codemirror.css?inline';
-import 'codemirror/mode/css/css';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/mode/python/python';
-import 'codemirror/mode/clike/clike';
-
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
@@ -816,29 +808,6 @@ class Overlay {
         this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
     });
     toolsListElement.appendChild(this._assertToggle);
-
-    const cmWrapperElement = document.createElement('div');
-    cmWrapperElement.style.position = 'fixed';
-    cmWrapperElement.style.left = '100px';
-    cmWrapperElement.style.top = '100px';
-    cmWrapperElement.style.width = '200px';
-    cmWrapperElement.style.height = '200px';
-    cmWrapperElement.style.background = 'red';
-    const cmStyle = document.createElement('style');
-    cmStyle.textContent = codemirrorCSS;
-    cmWrapperElement.appendChild(cmStyle);
-    const cmElement = document.createElement('div');
-    cmWrapperElement.appendChild(cmElement);
-    shadow.appendChild(cmWrapperElement);
-
-    const cm = CodeMirror(cmElement, {
-      value: 'await page.locator().click();',
-      mode: 'javascript',
-      readOnly: false,
-      lineNumbers: true,
-      lineWrapping: false,
-    });
-    (window as any).cm = cm;
 
     this._updateVisualPosition();
   }
