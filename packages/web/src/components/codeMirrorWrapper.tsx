@@ -93,7 +93,6 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 
       // Either configuration is different or we don't have a codemirror yet.
       codemirrorRef.current?.cm?.getWrapperElement().remove();
-
       const cm = CodeMirror(element, {
         value: '',
         mode,

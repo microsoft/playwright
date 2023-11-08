@@ -43,10 +43,6 @@
   color: var(--vscode-notificationLink-foreground);
 }
 
-.toolbar-button.toggled .codicon {
-  font-weight: bold;
-}
-
 .toolbar-separator {
   flex: none;
   background-color: var(--vscode-menu-separatorBackground);

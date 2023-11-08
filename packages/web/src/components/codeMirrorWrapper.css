@@ -16,6 +16,10 @@
 
 @import '../third_party/vscode/colors.css';
 
+.cm-wrapper {
+  line-height: 18px;
+}
+
 .cm-wrapper, .cm-wrapper > div {
   width: 100%;
   height: 100%;
