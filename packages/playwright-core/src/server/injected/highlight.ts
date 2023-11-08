@@ -19,6 +19,7 @@ import type { ParsedSelector } from '../../utils/isomorphic/selectorParser';
 import type { InjectedScript } from './injectedScript';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
+import { highlightCSS } from './highlight.css';
 
 type HighlightEntry = {
   targetElement: Element,
@@ -34,7 +35,8 @@ export type HighlightOptions = {
   tooltipText?: string;
   color?: string;
   anchorGetter?: (element: Element) => DOMRect;
-  decorateTooltip?: (tooltip: Element) => void;
+  toolbar?: Element[];
+  interactive?: boolean;
 };
 
 export class Highlight {
@@ -67,44 +69,7 @@ export class Highlight {
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._actionPointElement);
     const styleElement = document.createElement('style');
-    styleElement.textContent = `
-        x-pw-tooltip {
-          align-items: center;
-          backdrop-filter: blur(5px);
-          background-color: rgba(0, 0, 0, 0.7);
-          border-radius: 2px;
-          box-shadow: rgba(0, 0, 0, 0.1) 0px 3.6px 3.7px,
-                      rgba(0, 0, 0, 0.15) 0px 12.1px 12.3px,
-                      rgba(0, 0, 0, 0.1) 0px -2px 4px,
-                      rgba(0, 0, 0, 0.15) 0px -12.1px 24px,
-                      rgba(0, 0, 0, 0.25) 0px 54px 55px;
-          color: rgb(204, 204, 204);
-          display: none;
-          font-family: 'Dank Mono', 'Operator Mono', Inconsolata, 'Fira Mono',
-                      'SF Mono', Monaco, 'Droid Sans Mono', 'Source Code Pro', monospace;
-          font-size: 12.8px;
-          font-weight: normal;
-          left: 0;
-          line-height: 1.5;
-          max-width: 600px;
-          padding: 3.2px 5.12px 3.2px;
-          position: absolute;
-          top: 0;
-        }
-        x-pw-action-point {
-          position: absolute;
-          width: 20px;
-          height: 20px;
-          background: red;
-          border-radius: 10px;
-          pointer-events: none;
-          margin: -10px 0 0 -10px;
-          z-index: 2;
-        }
-        *[hidden] {
-          display: none !important;
-        }
-    `;
+    styleElement.textContent = highlightCSS;
     this._glassPaneShadow.appendChild(styleElement);
   }
 
@@ -180,13 +145,26 @@ export class Highlight {
       let tooltipElement;
       if (options.tooltipText) {
         tooltipElement = this._injectedScript.document.createElement('x-pw-tooltip');
-        this._glassPaneShadow.appendChild(tooltipElement);
-        const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-        tooltipElement.textContent = options.tooltipText + suffix;
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
-        options.decorateTooltip?.(tooltipElement);
+        tooltipElement.style.flexDirection = 'column';
+        tooltipElement.style.alignItems = 'start';
+        if (options.interactive)
+          tooltipElement.style.pointerEvents = 'auto';
+
+        if (options.toolbar) {
+          const toolbar = this._injectedScript.document.createElement('x-pw-tools-list');
+          tooltipElement.appendChild(toolbar);
+          for (const toolbarElement of options.toolbar)
+            toolbar.appendChild(toolbarElement);
+        }
+        const bodyElement = this._injectedScript.document.createElement('x-pw-tooltip-body');
+        tooltipElement.appendChild(bodyElement);
+
+        this._glassPaneShadow.appendChild(tooltipElement);
+        const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
+        bodyElement.textContent = options.tooltipText + suffix;
       }
       this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement, tooltipText: options.tooltipText });
     }
@@ -260,13 +238,10 @@ export class Highlight {
   }
 
   private _createHighlightElement(): HTMLElement {
-    const highlightElement = this._injectedScript.document.createElement('x-pw-highlight');
-    highlightElement.style.position = 'absolute';
-    highlightElement.style.top = '0';
-    highlightElement.style.left = '0';
-    highlightElement.style.width = '0';
-    highlightElement.style.height = '0';
-    highlightElement.style.boxSizing = 'border-box';
-    return highlightElement;
+    return this._injectedScript.document.createElement('x-pw-highlight');
+  }
+
+  appendChild(element: HTMLElement) {
+    this._glassPaneShadow.appendChild(element);
   }
 }

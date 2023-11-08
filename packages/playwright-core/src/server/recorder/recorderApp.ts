@@ -176,9 +176,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         this._recorder.setMode('recording');
       }
     }
-    await this._page.mainFrame().evaluateExpression(((selector: string) => {
-      window.playwrightSetSelector(selector);
-    }).toString(), { isFunction: true }, selector).catch(() => {});
+    await this._page.mainFrame().evaluateExpression(((data: { selector: string, userGesture?: boolean }) => {
+      window.playwrightSetSelector(data.selector, data.userGesture);
+    }).toString(), { isFunction: true }, { selector, userGesture }).catch(() => {});
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {

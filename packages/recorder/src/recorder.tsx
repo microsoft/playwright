@@ -66,8 +66,10 @@ export const Recorder: React.FC<RecorderProps> = ({
   };
 
   const [locator, setLocator] = React.useState('');
-  window.playwrightSetSelector = (selector: string) => {
+  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
     const language = source.language;
+    if (focus)
+      setSelectedTab('locator');
     setLocator(asLocator(language, selector));
   };
 
@@ -126,7 +128,6 @@ export const Recorder: React.FC<RecorderProps> = ({
           'assertingText': 'recording-inspecting',
         }[mode];
         window.dispatch({ event: 'setMode', params: { mode: newMode } }).catch(() => { });
-        setSelectedTab('locator');
       }}>Pick locator</ToolbarButton>
       <ToolbarButton icon='check-all' title='Assert text and values' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'inspecting'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'recording' : 'assertingText' } });
@@ -155,7 +156,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       }}></ToolbarButton>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </Toolbar>
-    <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
+    <SplitView sidebarSize={200}>
       <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true}/>
       <TabbedPane
         rightToolbar={selectedTab === 'locator' ? [<ToolbarButton icon='files' title='Copy' onClick={() => copy(locator)} />] : []}
@@ -163,7 +164,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'locator',
             title: 'Locator',
-            render: () => <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} onChange={onEditorChange} />
+            render: () => <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} onChange={onEditorChange} wrapLines={true}/>
           },
           {
             id: 'log',

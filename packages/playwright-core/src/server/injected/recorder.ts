@@ -36,8 +36,7 @@ interface RecorderDelegate {
 
 interface RecorderTool {
   cursor(): string;
-  enable?(): void;
-  disable?(): void;
+  cleanup?(): void;
   onClick?(event: MouseEvent): void;
   onDragStart?(event: DragEvent): void;
   onInput?(event: Event): void;
@@ -70,7 +69,7 @@ class InspectTool implements RecorderTool {
     return 'pointer';
   }
 
-  disable() {
+  cleanup() {
     this._hoveredModel = null;
     this._hoveredElement = null;
   }
@@ -151,7 +150,7 @@ class RecordActionTool implements RecorderTool {
     return 'pointer';
   }
 
-  disable() {
+  cleanup() {
     this._hoveredModel = null;
     this._hoveredElement = null;
     this._activeModel = null;
@@ -447,25 +446,25 @@ class TextAssertionTool implements RecorderTool {
   private _selectionText: { selectedText: string, fullText: string } | null = null;
   private _inputHighlight: HighlightModel | null = null;
   private _acceptButton: HTMLElement;
+  private _cancelButton: HTMLElement;
 
   constructor(private _recorder: Recorder) {
-    this._acceptButton = this._recorder.document.createElement('button');
-    this._acceptButton.textContent = 'Accept';
-    this._acceptButton.style.cursor = 'pointer';
-    this._acceptButton.style.pointerEvents = 'auto';
+    this._acceptButton = this._recorder.document.createElement('x-pw-tool-item');
+    this._acceptButton.classList.add('accept');
+    this._acceptButton.appendChild(this._recorder.document.createElement('x-div'));
     this._acceptButton.addEventListener('click', () => this._commitAction());
+
+    this._cancelButton = this._recorder.document.createElement('x-pw-tool-item');
+    this._cancelButton.classList.add('cancel');
+    this._cancelButton.appendChild(this._recorder.document.createElement('x-div'));
+    this._cancelButton.addEventListener('click', () => this._cancelAction());
   }
 
   cursor() {
     return 'text';
   }
 
-  enable() {
-    this._recorder.injectedScript.document.designMode = 'on';
-  }
-
-  disable() {
-    this._recorder.injectedScript.document.designMode = 'off';
+  cleanup() {
     this._hoverHighlight = null;
     this._selectionHighlight = null;
     this._selectionText = null;
@@ -473,11 +472,6 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onClick(event: MouseEvent) {
-    // Hack: work around highlight's glass pane having a closed shadow root.
-    const box = this._acceptButton.getBoundingClientRect();
-    if (box.left <= event.clientX && event.clientX <= box.right && box.top <= event.clientY && event.clientY <= box.bottom)
-      return;
-
     consumeEvent(event);
     const selection = this._recorder.document.getSelection();
     if (event.detail === 1 && selection && !selection.toString() && !this._inputHighlight) {
@@ -612,6 +606,10 @@ class TextAssertionTool implements RecorderTool {
     }
   }
 
+  private _cancelAction() {
+    this._resetSelectionAndHighlight();
+  }
+
   private _resetSelectionAndHighlight() {
     this._selectionHighlight = null;
     this._selectionText = null;
@@ -643,7 +641,12 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _showHighlight(userGesture: boolean) {
-    const options: HighlightOptions = { color: '#6fdcbd38', tooltipText: this._generateActionPreview(), decorateTooltip: tooltip => tooltip.appendChild(this._acceptButton) };
+    const options: HighlightOptions = {
+      color: '#6fdcbd38',
+      tooltipText: this._generateActionPreview(),
+      toolbar: [this._acceptButton, this._cancelButton],
+      interactive: true,
+    };
     if (this._inputHighlight) {
       this._recorder.updateHighlight(this._inputHighlight, userGesture, options);
     } else {
@@ -665,119 +668,21 @@ class Overlay {
   constructor(private _recorder: Recorder) {
     const document = this._recorder.injectedScript.document;
     this._overlayElement = document.createElement('x-pw-overlay');
-    this._overlayElement.style.top = '0';
-    this._overlayElement.style.position = 'absolute';
-
-    const shadow = this._overlayElement.attachShadow({ mode: 'closed' });
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      :host {
-        position: fixed;
-        max-width: min-content;
-        z-index: 2147483647;
-        background: transparent;
-      }
-
-      x-pw-tools-list {
-        box-shadow: rgba(0, 0, 0, 0.1) 0px 5px 5px;
-        backdrop-filter: blur(5px);
-        background-color: hsla(0 0% 100% / .9);
-        font-family: 'Dank Mono', 'Operator Mono', Inconsolata, 'Fira Mono', 'SF Mono', Monaco, 'Droid Sans Mono', 'Source Code Pro', monospace;
-        display: flex;
-        border-radius: 3px;
-      }
-
-      x-pw-separator {
-        height: 1px;
-        margin: 6px 9px;
-        background: rgb(148 148 148 / 90%);
-      }
-
-      x-pw-tool-item {
-        cursor: pointer;
-        height: 28px;
-        width: 28px;
-        margin: 2px 4px;
-        border-radius: 3px;
-      }
-      x-pw-tool-item:not(.disabled):hover {
-        background-color: hsl(0, 0%, 86%);
-      }
-      x-pw-tool-item > div {
-        width: 100%;
-        height: 100%;
-        -webkit-mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        -webkit-mask-size: 20px;
-        mask-repeat: no-repeat;
-        mask-position: center;
-        mask-size: 16px;
-        background-color: #3a3a3a;
-      }
-      x-pw-tool-item.disabled > div {
-        background-color: rgba(97, 97, 97, 0.5);
-        cursor: default;
-      }
-      x-pw-tool-item.active > div {
-        background-color: #006ab1;
-      }
-      x-pw-tool-item.record.active > div {
-        background-color: #a1260d;
-      }
-      x-pw-tool-gripper {
-        height: 28px;
-        width: 24px;
-        margin: 2px 0;
-        cursor: grab;
-      }
-      x-pw-tool-gripper:active {
-        cursor: grabbing;
-      }
-      x-pw-tool-gripper > div {
-        width: 100%;
-        height: 100%;
-        -webkit-mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        -webkit-mask-size: 20px;
-        mask-repeat: no-repeat;
-        mask-position: center;
-        mask-size: 16px;
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z' /></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z' /></svg>");
-        background-color: #555555;
-      }
-      x-pw-tool-item.record > div {
-        /* codicon: circle-large-filled */
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 1a6.8 6.8 0 0 1 1.86.253 6.899 6.899 0 0 1 3.083 1.805 6.903 6.903 0 0 1 1.804 3.083C14.916 6.738 15 7.357 15 8s-.084 1.262-.253 1.86a6.9 6.9 0 0 1-.704 1.674 7.157 7.157 0 0 1-2.516 2.509 6.966 6.966 0 0 1-1.668.71A6.984 6.984 0 0 1 8 15a6.984 6.984 0 0 1-1.86-.246 7.098 7.098 0 0 1-1.674-.711 7.3 7.3 0 0 1-1.415-1.094 7.295 7.295 0 0 1-1.094-1.415 7.098 7.098 0 0 1-.71-1.675A6.985 6.985 0 0 1 1 8c0-.643.082-1.262.246-1.86a6.968 6.968 0 0 1 .711-1.667 7.156 7.156 0 0 1 2.509-2.516 6.895 6.895 0 0 1 1.675-.704A6.808 6.808 0 0 1 8 1z'/></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path d='M8 1a6.8 6.8 0 0 1 1.86.253 6.899 6.899 0 0 1 3.083 1.805 6.903 6.903 0 0 1 1.804 3.083C14.916 6.738 15 7.357 15 8s-.084 1.262-.253 1.86a6.9 6.9 0 0 1-.704 1.674 7.157 7.157 0 0 1-2.516 2.509 6.966 6.966 0 0 1-1.668.71A6.984 6.984 0 0 1 8 15a6.984 6.984 0 0 1-1.86-.246 7.098 7.098 0 0 1-1.674-.711 7.3 7.3 0 0 1-1.415-1.094 7.295 7.295 0 0 1-1.094-1.415 7.098 7.098 0 0 1-.71-1.675A6.985 6.985 0 0 1 1 8c0-.643.082-1.262.246-1.86a6.968 6.968 0 0 1 .711-1.667 7.156 7.156 0 0 1 2.509-2.516 6.895 6.895 0 0 1 1.675-.704A6.808 6.808 0 0 1 8 1z'/></svg>");
-      }
-      x-pw-tool-item.pick-locator > div {
-        /* codicon: inspect */
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M1 3l1-1h12l1 1v6h-1V3H2v8h5v1H2l-1-1V3zm14.707 9.707L9 6v9.414l2.707-2.707h4zM10 13V8.414l3.293 3.293h-2L10 13z'/></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M1 3l1-1h12l1 1v6h-1V3H2v8h5v1H2l-1-1V3zm14.707 9.707L9 6v9.414l2.707-2.707h4zM10 13V8.414l3.293 3.293h-2L10 13z'/></svg>");
-      }
-      x-pw-tool-item.assert > div {
-        /* codicon: check-all */
-        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
-        mask-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='currentColor'><path fill-rule='evenodd' clip-rule='evenodd' d='M15.62 3.596L7.815 12.81l-.728-.033L4 8.382l.754-.53 2.744 3.907L14.917 3l.703.596z'/><path fill-rule='evenodd' clip-rule='evenodd' d='M7.234 8.774l4.386-5.178L10.917 3l-4.23 4.994.547.78zm-1.55.403l.548.78-.547-.78zm-1.617 1.91l.547.78-.799.943-.728-.033L0 8.382l.754-.53 2.744 3.907.57-.672z'/></svg>");
-      }
-    `;
-    shadow.appendChild(styleElement);
 
     const toolsListElement = document.createElement('x-pw-tools-list');
-    shadow.appendChild(toolsListElement);
+    this._overlayElement.appendChild(toolsListElement);
 
     const dragHandle = document.createElement('x-pw-tool-gripper');
     dragHandle.addEventListener('mousedown', event => {
       this._dragState = { offsetX: this._offsetX, dragStart: { x: event.clientX, y: 0 } };
     });
-    dragHandle.appendChild(document.createElement('div'));
+    dragHandle.appendChild(document.createElement('x-div'));
     toolsListElement.appendChild(dragHandle);
 
     this._recordToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._recordToggle.title = 'Record';
     this._recordToggle.classList.add('record');
-    this._recordToggle.appendChild(this._recorder.injectedScript.document.createElement('div'));
+    this._recordToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._recordToggle.addEventListener('click', () => {
       this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'none');
     });
@@ -786,7 +691,7 @@ class Overlay {
     this._pickLocatorToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._pickLocatorToggle.title = 'Pick locator';
     this._pickLocatorToggle.classList.add('pick-locator');
-    this._pickLocatorToggle.appendChild(this._recorder.injectedScript.document.createElement('div'));
+    this._pickLocatorToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._pickLocatorToggle.addEventListener('click', () => {
       const newMode: Record<Mode, Mode> = {
         'inspecting': 'none',
@@ -802,7 +707,7 @@ class Overlay {
     this._assertToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._assertToggle.title = 'Assert text and values';
     this._assertToggle.classList.add('assert');
-    this._assertToggle.appendChild(this._recorder.injectedScript.document.createElement('div'));
+    this._assertToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._assertToggle.addEventListener('click', () => {
       if (!this._assertToggle.classList.contains('disabled'))
         this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
@@ -813,7 +718,7 @@ class Overlay {
   }
 
   install() {
-    this._recorder.injectedScript.document.documentElement.appendChild(this._overlayElement);
+    this._recorder.highlight.appendChild(this._overlayElement);
     this._measure = this._overlayElement.getBoundingClientRect();
   }
 
@@ -877,7 +782,7 @@ export class Recorder {
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
   private _actionSelectorModel: HighlightModel | null = null;
-  private _highlight: Highlight;
+  readonly highlight: Highlight;
   private _overlay: Overlay | undefined;
   private _styleElement: HTMLStyleElement;
   state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { offsetX: 0 } };
@@ -887,7 +792,7 @@ export class Recorder {
   constructor(injectedScript: InjectedScript) {
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
-    this._highlight = new Highlight(injectedScript);
+    this.highlight = new Highlight(injectedScript);
     this._tools = {
       'none': new NoneTool(),
       'inspecting': new InspectTool(this),
@@ -913,7 +818,7 @@ export class Recorder {
 
   installListeners() {
     // Ensure we are attached to the current document, and we are on top (last element);
-    if (this._highlight.isInstalled())
+    if (this.highlight.isInstalled())
       return;
     removeEventListeners(this._listeners);
     this._listeners = [
@@ -932,7 +837,7 @@ export class Recorder {
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
     ];
-    this._highlight.install();
+    this.highlight.install();
     this._overlay?.install();
     this.injectedScript.document.head.appendChild(this._styleElement);
   }
@@ -941,10 +846,9 @@ export class Recorder {
     const newTool = this._tools[this.state.mode];
     if (newTool === this._currentTool)
       return;
-    this._currentTool.disable?.();
+    this._currentTool.cleanup?.();
     this.clearHighlight();
     this._currentTool = newTool;
-    this._currentTool.enable?.();
     this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
   }
 
@@ -957,13 +861,13 @@ export class Recorder {
       // All good.
     } else {
       if (state.actionPoint)
-        this._highlight.showActionPoint(state.actionPoint.x, state.actionPoint.y);
+        this.highlight.showActionPoint(state.actionPoint.x, state.actionPoint.y);
       else
-        this._highlight.hideActionPoint();
+        this.highlight.hideActionPoint();
     }
 
     this.state = state;
-    this._highlight.setLanguage(state.language);
+    this.highlight.setLanguage(state.language);
     this._switchCurrentTool();
     this._overlay?.setUIState(state);
 
@@ -977,7 +881,7 @@ export class Recorder {
   }
 
   clearHighlight() {
-    this._currentTool.disable?.();
+    this._currentTool.cleanup?.();
     this.updateHighlight(null, false);
   }
 
@@ -1062,7 +966,7 @@ export class Recorder {
   private _onScroll(event: Event) {
     if (!event.isTrusted)
       return;
-    this._highlight.hideActionPoint();
+    this.highlight.hideActionPoint();
     this._currentTool.onScroll?.(event);
   }
 
@@ -1091,13 +995,14 @@ export class Recorder {
   updateHighlight(model: HighlightModel | null, userGesture: boolean, options: HighlightOptions = {}) {
     if (options.tooltipText === undefined && model?.selector)
       options.tooltipText = asLocator(this.state.language, model.selector);
-    this._highlight.updateHighlight(model?.elements || [], options);
+    this.highlight.updateHighlight(model?.elements || [], options);
     if (userGesture)
       this.delegate.highlightUpdated?.();
   }
 
   private _ignoreOverlayEvent(event: Event) {
-    return this._overlay?.contains(event.composedPath()[0] as Element);
+    const target = event.composedPath()[0] as Element;
+    return target.nodeName.toLowerCase() === 'x-pw-glass';
   }
 
   deepEventTarget(event: Event): HTMLElement {
