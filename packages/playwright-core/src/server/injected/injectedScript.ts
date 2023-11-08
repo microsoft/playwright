@@ -33,7 +33,7 @@ import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName } fr
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -1365,13 +1365,6 @@ const booleanAttributes = new Set(['checked', 'selected', 'disabled', 'readonly'
 
 function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
-}
-
-function trimStringWithEllipsis(input: string, cap: number): string {
-  const chars = [...input];
-  if (chars.length > cap)
-    return chars.slice(0, 49).join('') + '\u2026';
-  return chars.join('');
 }
 
 const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel'>([

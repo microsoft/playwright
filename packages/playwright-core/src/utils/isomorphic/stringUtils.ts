@@ -103,3 +103,10 @@ export function escapeForAttributeSelector(value: string | RegExp, exact: boolea
   // so we escape them differently.
   return `"${value.replace(/\\/g, '\\\\').replace(/["]/g, '\\"')}"${exact ? 's' : 'i'}`;
 }
+
+export function trimStringWithEllipsis(input: string, cap: number): string {
+  const chars = [...input];
+  if (chars.length > cap)
+    return chars.slice(0, 49).join('') + '\u2026';
+  return chars.join('');
+}

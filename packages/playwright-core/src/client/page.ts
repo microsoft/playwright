@@ -42,6 +42,7 @@ import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import { trimStringWithEllipsis } from '../utils/isomorphic/stringUtils';
 import { type RouteHandlerCallback, type Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import { Video } from './video';
@@ -751,15 +752,9 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   }
 }
 
-function trimEnd(s: string): string {
-  if (s.length > 50)
-    s = s.substring(0, 50) + '\u2026';
-  return s;
-}
-
 function trimUrl(param: any): string | undefined {
   if (isRegExp(param))
-    return `/${trimEnd(param.source)}/${param.flags}`;
+    return `/${trimStringWithEllipsis(param.source, 50)}/${param.flags}`;
   if (isString(param))
-    return `"${trimEnd(param)}"`;
+    return `"${trimStringWithEllipsis(param, 50)}"`;
 }
