@@ -33,7 +33,7 @@ import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName } fr
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -1072,9 +1072,7 @@ export class InjectedScript {
         attrs.push(` ${name}="${value}"`);
     }
     attrs.sort((a, b) => a.length - b.length);
-    let attrText = attrs.join('');
-    if (attrText.length > 50)
-      attrText = attrText.substring(0, 49) + '\u2026';
+    const attrText = trimStringWithEllipsis(attrs.join(''), 50);
     if (autoClosingTags.has(element.nodeName))
       return oneLine(`<${element.nodeName.toLowerCase()}${attrText}/>`);
 
@@ -1085,10 +1083,8 @@ export class InjectedScript {
       for (let i = 0; i < children.length; i++)
         onlyText = onlyText && children[i].nodeType === Node.TEXT_NODE;
     }
-    let text = onlyText ? (element.textContent || '') : (children.length ? '\u2026' : '');
-    if (text.length > 50)
-      text = text.substring(0, 49) + '\u2026';
-    return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
+    const text = onlyText ? (element.textContent || '') : (children.length ? '\u2026' : '');
+    return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${trimStringWithEllipsis(text, 50)}</${element.nodeName.toLowerCase()}>`);
   }
 
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue, trimString } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
@@ -276,7 +276,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   }
 
   const fullText = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
-  const text = fullText.substring(0, 80);
+  const text = trimString(fullText, 80);
   if (text) {
     const escaped = escapeForTextSelector(text, false);
     if (isTargetNode) {
