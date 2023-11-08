@@ -105,6 +105,8 @@ export function escapeForAttributeSelector(value: string | RegExp, exact: boolea
 }
 
 export function trimStringWithEllipsis(input: string, cap: number): string {
+  if (input.length <= cap)
+    return input;
   const chars = [...input];
   if (chars.length > cap)
     return chars.slice(0, 49).join('') + '\u2026';
