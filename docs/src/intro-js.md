@@ -24,7 +24,8 @@ Get started by installing Playwright using npm or yarn. Alternatively you can al
   values={[
     {label: 'npm', value: 'npm'},
     {label: 'yarn', value: 'yarn'},
-    {label: 'pnpm', value: 'pnpm'}
+    {label: 'pnpm', value: 'pnpm'},
+    {label: 'bun', value: 'bun'}
   ]
 }>
 <TabItem value="npm">
@@ -47,6 +48,14 @@ yarn create playwright
 
 ```bash
 pnpm create playwright
+```
+
+</TabItem>
+
+<TabItem value="bun">
+
+```bash
+bun create playwright
 ```
 
 </TabItem>
@@ -85,7 +94,7 @@ By default tests will be run on all 3 browsers, chromium, firefox and webkit usi
 npx playwright test
 ```
 
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628) 
+![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
 
 ## HTML Test Reports
