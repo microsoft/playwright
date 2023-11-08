@@ -67,6 +67,10 @@ export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
 };
 
+interface WebKitLegacyDeviceOrientationEvent extends DeviceOrientationEvent {
+  readonly initDeviceOrientationEvent: (type: string, bubbles: boolean, cancelable: boolean, alpha: number, beta: number, gamma: number, absolute: boolean) => void;
+}
+
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
@@ -1036,6 +1040,15 @@ export class InjectedScript {
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
       case 'wheel': event = new WheelEvent(type, eventInit); break;
+      case 'deviceorientation':
+        try {
+          event = new DeviceOrientationEvent(type, eventInit);
+        } catch {
+          const { bubbles, cancelable, alpha, beta, gamma, absolute } = eventInit as {bubbles: boolean, cancelable: boolean, alpha: number, beta: number, gamma: number, absolute: boolean};
+          event = this.document.createEvent('DeviceOrientationEvent') as WebKitLegacyDeviceOrientationEvent;
+          event.initDeviceOrientationEvent(type, bubbles, cancelable, alpha, beta, gamma, absolute);
+        }
+        break;
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
@@ -1371,7 +1384,7 @@ function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel' | 'deviceorientation'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
@@ -1419,6 +1432,9 @@ const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | '
   ['drop', 'drag'],
 
   ['wheel', 'wheel'],
+
+  ['deviceorientation', 'deviceorientation'],
+  ['deviceorientationabsolute', 'deviceorientation'],
 ]);
 
 const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);

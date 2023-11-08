@@ -171,3 +171,23 @@ it('should dispatch wheel event', async ({ page, server }) => {
   expect(await eventsHandle.evaluate(e => e[0] instanceof WheelEvent)).toBeTruthy();
   expect(await eventsHandle.evaluate(e => ({ deltaX: e[0].deltaX, deltaY: e[0].deltaY }))).toEqual({ deltaX: 100, deltaY: 200 });
 });
+
+it('should dispatch device orientation event', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/device-orientation.html');
+  await page.locator('html').dispatchEvent('deviceorientation', { alpha: 10, beta: 20, gamma: 30 });
+  expect(await page.evaluate('result')).toBe('Oriented');
+  expect(await page.evaluate('alpha')).toBe(10);
+  expect(await page.evaluate('beta')).toBe(20);
+  expect(await page.evaluate('gamma')).toBe(30);
+  expect(await page.evaluate('absolute')).toBeFalsy();
+});
+
+it('should dispatch absolute device orientation event', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/device-orientation.html');
+  await page.locator('html').dispatchEvent('deviceorientationabsolute', { alpha: 10, beta: 20, gamma: 30, absolute: true });
+  expect(await page.evaluate('result')).toBe('Oriented');
+  expect(await page.evaluate('alpha')).toBe(10);
+  expect(await page.evaluate('beta')).toBe(20);
+  expect(await page.evaluate('gamma')).toBe(30);
+  expect(await page.evaluate('absolute')).toBeTruthy();
+});
