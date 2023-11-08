@@ -94,7 +94,7 @@ Prefer [auto-retrying](#auto-retrying-assertions) assertions whenever possible. 
 | [`method: GenericAssertions.stringContaining`] | String contains a substring |
 | [`method: GenericAssertions.stringMatching`] | String matches a regular expression |
 
-## Negating Matchers
+## Negating matchers
 
 In general, we can expect the opposite to be true by adding a `.not` to the front
 of the matchers:
@@ -104,7 +104,7 @@ expect(value).not.toEqual(0);
 await expect(locator).not.toContainText('some text');
 ```
 
-## Soft Assertions
+## Soft assertions
 
 By default, failed assertion will terminate test execution. Playwright also
 supports *soft assertions*: failed soft assertions **do not** terminate test execution,
@@ -134,7 +134,7 @@ expect(test.info().errors).toHaveLength(0);
 
 Note that soft assertions only work with Playwright test runner.
 
-## Custom Expect Message
+## Custom expect message
 
 You can specify a custom error message as a second argument to the `expect` function, for example:
 
@@ -234,5 +234,88 @@ await expect(async () => {
   // ... Defaults to [100, 250, 500, 1000].
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
+});
+```
+
+## Add custom matchers using expect.extend
+
+You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
+
+In this example we add a custom `toHaveAmount` function. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+
+```js title="fixtures.ts"
+import { expect as baseExpect } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
+
+export { test } from '@playwright/test';
+
+export const expect = baseExpect.extend({
+  async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+    const assertionName = 'toHaveAmount';
+    let pass: boolean;
+    let matcherResult: any;
+    try {
+      await baseExpect(locator).toHaveAttribute('data-amount', String(expected), options);
+      pass = true;
+    } catch (e: any) {
+      matcherResult = e.matcherResult;
+      pass = false;
+    }
+
+    const message = pass
+      ? () => this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
+          '\n\n' +
+          `Locator: ${locator}\n` +
+          `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
+      : () =>  this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
+          '\n\n' +
+          `Locator: ${locator}\n` +
+          `Expected: ${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '');
+
+    return {
+      message,
+      pass,
+      name: assertionName,
+      expected,
+      actual: matcherResult?.actual,
+    };
+  },
+});
+```
+
+Now we can use `toHaveAmount` in the test.
+
+```js title="example.spec.ts"
+import { test, expect } from './fixtures';
+
+test('amount', async () => {
+  await expect(page.locator('.cart')).toHaveAmount(4);
+});
+```
+
+:::note
+Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
+:::
+
+### Combine custom matchers from multiple modules
+
+You can combine custom matchers from multiple files or modules.
+
+```js title="fixtures.ts"
+import { mergeTests, mergeExpects } from '@playwright/test';
+import { test as dbTest, expect as dbExpect } from 'database-test-utils';
+import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
+
+export const expect = mergeExpects(dbExpect, a11yExpect);
+export const test = mergeTests(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test, expect } from './fixtures';
+
+test('passes', async ({ database }) => {
+  await expect(database).toHaveDatabaseUser('admin');
 });
 ```
