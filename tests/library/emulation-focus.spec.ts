@@ -186,3 +186,36 @@ browserTest('should focus with more than one page/context', async ({ contextFact
   expect(await page1.evaluate(() => !!window['gotFocus'])).toBe(true);
   expect(await page2.evaluate(() => !!window['gotFocus'])).toBe(true);
 });
+
+browserTest('should trigger hover state concurrently', async ({ browserType, browserName }) => {
+  browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27969' });
+  browserTest.fixme(browserName === 'firefox');
+
+  const browser1 = await browserType.launch();
+  const context1 = await browser1.newContext();
+  const page1 = await context1.newPage();
+  const page2 = await context1.newPage();
+  const browser2 = await browserType.launch();
+  const page3 = await browser2.newPage();
+
+  for (const page of [page1, page2, page3]) {
+    await page.setContent(`
+      <style>
+        button { display: none; }
+        div:hover button { display: inline };
+      </style>
+      <div><span>hover me</span><button onclick="window.clicked=1+(window.clicked || 0)">click me</button></div>
+    `);
+  }
+
+  for (const page of [page1, page2, page3])
+    await page.hover('span');
+  for (const page of [page1, page2, page3])
+    await page.click('button');
+  for (const page of [page1, page2, page3])
+    expect(await page.evaluate('window.clicked')).toBe(1);
+  for (const page of [page1, page2, page3])
+    await page.click('button');
+  for (const page of [page1, page2, page3])
+    expect(await page.evaluate('window.clicked')).toBe(2);
+});
