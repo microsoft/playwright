@@ -37,7 +37,7 @@ Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about 
 
 ### Run tests in headed mode
 
-To run your tests in headed mode use the `--headed` flag. This will give you the ability to visually see, how Playwright interacts with the website.
+To run your tests in headed mode use the `--headed` flag. This will give you the ability to visually see how Playwright interacts with the website.
 
 ```bash
 npx playwright test --headed
