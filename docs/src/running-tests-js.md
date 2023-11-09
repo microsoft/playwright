@@ -4,7 +4,7 @@ title: "Running and debugging tests"
 ---
 ## Introduction
 
-With Playwright you can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers by using the `--project` flag. Tests are run in parallel by default and are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. However you can run tests in headed mode by using the `--headed` CLI argument or you can run your tests in [UI mode](./test-ui-mode.md), by using the `--ui` flag, and see a full trace of your tests complete with watch mode, time travel debugging and more.
+With Playwright you can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers by using the `--project` flag. Tests are run in parallel by default and are run in a headless manner, meaning no browser window will be opened while running the tests and results will be seen in the terminal. However, you can run tests in headed mode by using the `--headed` CLI argument, or you can run your tests in [UI mode](./test-ui-mode.md) by using the `--ui` flag. See a full trace of your tests complete with watch mode, time travel debugging and more.
 
 **You will learn**
 
