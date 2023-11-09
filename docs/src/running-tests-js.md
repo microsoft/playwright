@@ -37,7 +37,7 @@ Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about 
 
 ### Run tests in headed mode
 
-To run your tests in headed mode use the `--headed` flag. This will give you the ability to visually see how Playwright interacts with the website.
+To run your tests in headed mode, use the `--headed` flag. This will give you the ability to visually see how Playwright interacts with the website.
 
 ```bash
 npx playwright test --headed
@@ -45,13 +45,13 @@ npx playwright test --headed
 
 ### Run tests on different browsers
 
-To specify which browser you would like to run your tests on use the `--project` flag followed by the name of the browser.
+To specify which browser you would like to run your tests on, use the `--project` flag followed by the name of the browser.
 
 ```bash
 npx playwright test --project webkit
 ```
 
-To specify multiple browsers to run your tests on use the `--project` flag multiple times followed by the name of each browser.
+To specify multiple browsers to run your tests on, use the `--project` flag multiple times followed by the name of each browser.
 
 ```bash
 npx playwright test --project webkit --project firefox
@@ -59,25 +59,25 @@ npx playwright test --project webkit --project firefox
 
 ### Run specific tests
 
-To run a single test file pass in the name of the test file that you want to run.
+To run a single test file, pass in the name of the test file that you want to run.
 
 ```bash
 npx playwright test landing-page.spec.ts
 ```
 
-To run a set of test files from different directories pass in the names of the directories that you want to run the tests in.
+To run a set of test files from different directories, pass in the names of the directories that you want to run the tests in.
 
 ```bash
 npx playwright test tests/todo-page/ tests/landing-page/
 ```
 
-To run files that have `landing` or `login` in the file name simply pass in these keywords to the CLI.
+To run files that have `landing` or `login` in the file name, simply pass in these keywords to the CLI.
 
 ```bash
 npx playwright test landing login
 ```
 
-To run a test with a specific title use the `-g` flag followed by the title of the test.
+To run a test with a specific title, use the `-g` flag followed by the title of the test.
 
 ```bash
 npx playwright test -g "add a todo item"
