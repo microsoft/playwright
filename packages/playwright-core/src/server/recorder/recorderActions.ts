@@ -114,6 +114,7 @@ export type AssertCheckedAction = ActionBase & {
 };
 
 export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction;
+export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction;
 
 // Signals.
 

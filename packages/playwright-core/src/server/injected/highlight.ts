@@ -19,7 +19,7 @@ import type { ParsedSelector } from '../../utils/isomorphic/selectorParser';
 import type { InjectedScript } from './injectedScript';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { highlightCSS } from './highlight.css';
+import highlightCSS from './highlight.css?inline';
 
 type HighlightEntry = {
   targetElement: Element,
@@ -34,9 +34,6 @@ type HighlightEntry = {
 export type HighlightOptions = {
   tooltipText?: string;
   color?: string;
-  anchorGetter?: (element: Element) => DOMRect;
-  toolbar?: Element[];
-  interactive?: boolean;
 };
 
 export class Highlight {
@@ -63,7 +60,12 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
-
+    for (const eventName of ['click', 'auxclick', 'dragstart', 'input', 'keydown', 'keyup', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'mousemove', 'mouseleave', 'focus', 'scroll']) {
+      this._glassPaneElement.addEventListener(eventName, e => {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      });
+    }
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
@@ -145,26 +147,12 @@ export class Highlight {
       let tooltipElement;
       if (options.tooltipText) {
         tooltipElement = this._injectedScript.document.createElement('x-pw-tooltip');
+        this._glassPaneShadow.appendChild(tooltipElement);
+        const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
+        tooltipElement.textContent = options.tooltipText + suffix;
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
-        tooltipElement.style.flexDirection = 'column';
-        tooltipElement.style.alignItems = 'start';
-        if (options.interactive)
-          tooltipElement.style.pointerEvents = 'auto';
-
-        if (options.toolbar) {
-          const toolbar = this._injectedScript.document.createElement('x-pw-tools-list');
-          tooltipElement.appendChild(toolbar);
-          for (const toolbarElement of options.toolbar)
-            toolbar.appendChild(toolbarElement);
-        }
-        const bodyElement = this._injectedScript.document.createElement('x-pw-tooltip-body');
-        tooltipElement.appendChild(bodyElement);
-
-        this._glassPaneShadow.appendChild(tooltipElement);
-        const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-        bodyElement.textContent = options.tooltipText + suffix;
       }
       this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement, tooltipText: options.tooltipText });
     }
@@ -176,25 +164,7 @@ export class Highlight {
         continue;
 
       // Position tooltip, if any.
-      const tooltipWidth = entry.tooltipElement.offsetWidth;
-      const tooltipHeight = entry.tooltipElement.offsetHeight;
-      const totalWidth = this._glassPaneElement.offsetWidth;
-      const totalHeight = this._glassPaneElement.offsetHeight;
-
-      const anchorBox = options.anchorGetter ? options.anchorGetter(entry.targetElement) : entry.box;
-      let anchorLeft = anchorBox.left;
-      if (anchorLeft + tooltipWidth > totalWidth - 5)
-        anchorLeft = totalWidth - tooltipWidth - 5;
-      let anchorTop = anchorBox.bottom + 5;
-      if (anchorTop + tooltipHeight > totalHeight - 5) {
-        // If can't fit below, either position above...
-        if (anchorBox.top > tooltipHeight + 5) {
-          anchorTop = anchorBox.top - tooltipHeight - 5;
-        } else {
-          // Or on top in case of large element
-          anchorTop = totalHeight - 5 - tooltipHeight;
-        }
-      }
+      const { anchorLeft, anchorTop } = this.tooltipPosition(entry.box, entry.tooltipElement);
       entry.tooltipTop = anchorTop;
       entry.tooltipLeft = anchorLeft;
     }
@@ -219,6 +189,33 @@ export class Highlight {
         console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console
     }
   }
+
+  firstBox(): DOMRect | undefined {
+    return this._highlightEntries[0]?.box;
+  }
+
+  tooltipPosition(box: DOMRect, tooltipElement: HTMLElement) {
+    const tooltipWidth = tooltipElement.offsetWidth;
+    const tooltipHeight = tooltipElement.offsetHeight;
+    const totalWidth = this._glassPaneElement.offsetWidth;
+    const totalHeight = this._glassPaneElement.offsetHeight;
+
+    let anchorLeft = box.left;
+    if (anchorLeft + tooltipWidth > totalWidth - 5)
+      anchorLeft = totalWidth - tooltipWidth - 5;
+    let anchorTop = box.bottom + 5;
+    if (anchorTop + tooltipHeight > totalHeight - 5) {
+      // If can't fit below, either position above...
+      if (box.top > tooltipHeight + 5) {
+        anchorTop = box.top - tooltipHeight - 5;
+      } else {
+        // Or on top in case of large element
+        anchorTop = totalHeight - 5 - tooltipHeight;
+      }
+    }
+    return { anchorLeft, anchorTop };
+  }
+
   private _highlightIsUpToDate(elements: Element[], tooltipText: string | undefined): boolean {
     if (elements.length !== this._highlightEntries.length)
       return false;
