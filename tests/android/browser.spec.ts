@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { androidTest as test, expect } from './androidTest';
 
 test.afterAll(async ({ androidDevice }) => {
@@ -154,4 +155,20 @@ test('should be able to pass context options', async ({ androidDevice, httpsServ
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
   await context.close();
+});
+
+test('should record har', async ({ androidDevice }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28015' });
+  const harPath = test.info().outputPath('test.har');
+
+  const context = await androidDevice.launchBrowser({
+    recordHar: { path: harPath }
+  });
+  const [page] = context.pages();
+  await page.goto('data:text/html,<title>Hello</title>');
+  await page.waitForLoadState('domcontentloaded');
+  await context.close();
+
+  const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
+  expect(log.pages[0].title).toBe('Hello');
 });
