@@ -111,7 +111,7 @@ Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about
 
 ### Debug tests with the Playwright Inspector
 
-To debug all tests run the Playwright test command followed by the `--debug` flag.
+To debug all tests, run the Playwright test command followed by the `--debug` flag.
 
 ```bash
 npx playwright test --debug
@@ -121,13 +121,13 @@ npx playwright test --debug
 
 This command will open up a Browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or, press the play button to run your test from start to finish. Once the test has finished, the browser window will close.
 
-To debug one test file run the Playwright test command with the name of the test file that you want to debug followed by the `--debug` flag.
+To debug one test file, run the Playwright test command with the name of the test file that you want to debug followed by the `--debug` flag.
 
 ```bash
 npx playwright test example.spec.ts --debug
 ```
 
-To debug a specific test from the line number where the `test(..` is defined add a colon followed by the line number at the end of the test file name, followed by the `--debug` flag.
+To debug a specific test from the line number where the `test(..` is defined, add a colon followed by the line number at the end of the test file name, followed by the `--debug` flag.
 
 ```bash
 npx playwright test example.spec.ts:10 --debug
