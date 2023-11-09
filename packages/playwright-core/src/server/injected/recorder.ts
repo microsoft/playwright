@@ -20,10 +20,12 @@ import { generateSelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import { Highlight, type HighlightOptions } from '../injected/highlight';
-import { enclosingElement, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { isInsideScope } from './domUtils';
 import { elementText } from './selectorUtils';
-import { escapeWithQuotes, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { parseSelector } from '@isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -442,217 +444,187 @@ class RecordActionTool implements RecorderTool {
 
 class TextAssertionTool implements RecorderTool {
   private _hoverHighlight: HighlightModel | null = null;
-  private _selectionHighlight: HighlightModel | null = null;
-  private _selectionText: { selectedText: string, fullText: string } | null = null;
-  private _inputHighlight: HighlightModel | null = null;
+  private _action: actions.AssertAction | null = null;
+  private _dialogElement: HTMLElement | null = null;
   private _acceptButton: HTMLElement;
   private _cancelButton: HTMLElement;
+  private _keyboardListener: ((event: KeyboardEvent) => void) | undefined;
 
   constructor(private _recorder: Recorder) {
     this._acceptButton = this._recorder.document.createElement('x-pw-tool-item');
+    this._acceptButton.title = 'Accept';
     this._acceptButton.classList.add('accept');
     this._acceptButton.appendChild(this._recorder.document.createElement('x-div'));
-    this._acceptButton.addEventListener('click', () => this._commitAction());
+    this._acceptButton.addEventListener('click', () => this._commit());
 
     this._cancelButton = this._recorder.document.createElement('x-pw-tool-item');
+    this._cancelButton.title = 'Close';
     this._cancelButton.classList.add('cancel');
     this._cancelButton.appendChild(this._recorder.document.createElement('x-div'));
-    this._cancelButton.addEventListener('click', () => this._cancelAction());
+    this._cancelButton.addEventListener('click', () => this._closeDialog());
   }
 
   cursor() {
-    return 'text';
+    return 'pointer';
   }
 
   cleanup() {
+    this._closeDialog();
     this._hoverHighlight = null;
-    this._selectionHighlight = null;
-    this._selectionText = null;
-    this._inputHighlight = null;
   }
 
   onClick(event: MouseEvent) {
+    if (!this._dialogElement)
+      this._showDialog();
     consumeEvent(event);
-    const selection = this._recorder.document.getSelection();
-    if (event.detail === 1 && selection && !selection.toString() && !this._inputHighlight) {
-      const target = this._recorder.deepEventTarget(event);
-      selection.selectAllChildren(target);
-      this._updateSelectionHighlight();
-    }
-  }
-
-  onMouseDown(event: MouseEvent) {
-    const target = this._recorder.deepEventTarget(event);
-    if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
-      this._recorder.injectedScript.window.getSelection()?.empty();
-      this._inputHighlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
-      this._showHighlight(true);
-      consumeEvent(event);
-      return;
-    }
-
-    this._inputHighlight = null;
-    this._hoverHighlight = null;
-    this._updateSelectionHighlight();
-  }
-
-  onMouseUp(event: MouseEvent) {
-    this._updateSelectionHighlight();
   }
 
   onMouseMove(event: MouseEvent) {
-    const selection = this._recorder.document.getSelection();
-    if (selection && selection.toString()) {
-      this._updateSelectionHighlight();
-      return;
-    }
-    if (this._inputHighlight || event.buttons)
+    if (this._dialogElement)
       return;
     const target = this._recorder.deepEventTarget(event);
     if (this._hoverHighlight?.elements[0] === target)
       return;
-    this._hoverHighlight = elementText(new Map(), target).full ? { elements: [target], selector: '' } : null;
+    this._hoverHighlight = target.nodeName === 'INPUT' || target.nodeName === 'TEXTAREA' || elementText(new Map(), target).full ? { elements: [target], selector: '' } : null;
     this._recorder.updateHighlight(this._hoverHighlight, true, { color: '#8acae480' });
   }
 
-  onDragStart(event: DragEvent) {
-    consumeEvent(event);
-  }
-
   onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      const selection = this._recorder.document.getSelection();
-      if (selection && selection.toString())
-        this._resetSelectionAndHighlight();
-      else
-        this._recorder.delegate.setMode?.('recording');
-      consumeEvent(event);
-      return;
-    }
-
-    if (event.key === 'Enter') {
-      this._commitAction();
-      consumeEvent(event);
-      return;
-    }
-
-    // Only allow keys that control text selection.
-    if (!['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Shift', 'Control', 'Meta', 'Alt', 'AltGraph'].includes(event.key)) {
-      consumeEvent(event);
-      return;
-    }
-  }
-
-  onKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Escape')
+      this._recorder.delegate.setMode?.('recording');
     consumeEvent(event);
   }
 
-  onScroll(event: Event) {
-    this._hoverHighlight = null;
-    this._showHighlight(false);
-  }
-
-  private _generateAction(): actions.Action | null {
-    if (this._inputHighlight) {
-      const target = this._inputHighlight.elements[0] as HTMLInputElement;
-      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes(target.type.toLowerCase())) {
+  private _generateAction(): actions.AssertAction | null {
+    const target = this._hoverHighlight?.elements[0];
+    if (!target)
+      return null;
+    if (target.nodeName === 'INPUT' || target.nodeName === 'TEXTAREA') {
+      const { selector } = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         return {
           name: 'assertChecked',
-          selector: this._inputHighlight.selector,
+          selector,
           signals: [],
           // Interestingly, inputElement.checked is reversed inside this event handler.
-          checked: !(target as HTMLInputElement).checked,
+          checked: (target as HTMLInputElement).checked,
         };
       } else {
         return {
           name: 'assertValue',
-          selector: this._inputHighlight.selector,
+          selector,
           signals: [],
-          value: target.value,
+          value: (target as HTMLInputElement).value,
         };
       }
-    } else if (this._selectionText && this._selectionHighlight) {
+    } else {
+      const { selector } = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
       return {
         name: 'assertText',
-        selector: this._selectionHighlight.selector,
+        selector,
         signals: [],
-        text: this._selectionText.selectedText,
-        substring: this._selectionText.fullText !== this._selectionText.selectedText,
+        text: target.textContent!,
+        substring: true,
       };
     }
-    return null;
   }
 
-  private _generateActionPreview() {
-    const action = this._generateAction();
-    // TODO: support other languages, maybe unify with code generator?
+  private _renderValue(action: actions.Action) {
     if (action?.name === 'assertText')
-      return `expect(${asLocator(this._recorder.state.language, action.selector)}).${action.substring ? 'toContainText' : 'toHaveText'}(${escapeWithQuotes(action.text)})`;
+      return normalizeWhiteSpace(action.text);
     if (action?.name === 'assertChecked')
-      return `expect(${asLocator(this._recorder.state.language, action.selector)})${action.checked ? '' : '.not'}.toBeChecked()`;
-    if (action?.name === 'assertValue') {
-      const assertion = action.value ? `toHaveValue(${escapeWithQuotes(action.value)})` : `toBeEmpty()`;
-      return `expect(${asLocator(this._recorder.state.language, action.selector)}).${assertion}`;
-    }
+      return String(action.checked);
+    if (action?.name === 'assertValue')
+      return action.value;
     return '';
   }
 
-  private _commitAction() {
-    const action = this._generateAction();
-    if (action) {
-      this._resetSelectionAndHighlight();
-      this._recorder.delegate.recordAction?.(action);
-      this._recorder.delegate.setMode?.('recording');
-    }
-  }
-
-  private _cancelAction() {
-    this._resetSelectionAndHighlight();
-  }
-
-  private _resetSelectionAndHighlight() {
-    this._selectionHighlight = null;
-    this._selectionText = null;
-    this._inputHighlight = null;
-    this._recorder.injectedScript.window.getSelection()?.empty();
-    this._recorder.updateHighlight(null, false);
-  }
-
-  private _updateSelectionHighlight() {
-    if (this._inputHighlight)
+  private _commit() {
+    if (!this._action || !this._dialogElement)
       return;
-    const selection = this._recorder.document.getSelection();
-    const selectedText = normalizeWhiteSpace(selection?.toString() || '');
-    let highlight: HighlightModel | null = null;
-    if (selection && selection.focusNode && selection.anchorNode && selectedText) {
-      const focusElement = enclosingElement(selection.focusNode);
-      let lcaElement = focusElement ? enclosingElement(selection.anchorNode) : undefined;
-      while (lcaElement && !isInsideScope(lcaElement, focusElement))
-        lcaElement = parentElementOrShadowHost(lcaElement);
-      highlight = lcaElement ? generateSelector(this._recorder.injectedScript, lcaElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true }) : null;
-    }
-    const fullText = highlight ? normalizeWhiteSpace(elementText(new Map(), highlight.elements[0]).full) : '';
-    const selectionText = highlight ? { selectedText, fullText } : null;
-    if (highlight?.selector === this._selectionHighlight?.selector && this._selectionText?.fullText === selectionText?.fullText && this._selectionText?.selectedText === selectionText?.selectedText)
-      return;
-    this._selectionHighlight = highlight;
-    this._selectionText = selectionText;
-    this._showHighlight(true);
+    this._closeDialog();
+    this._recorder.delegate.recordAction?.(this._action);
+    this._recorder.delegate.setMode?.('recording');
   }
 
-  private _showHighlight(userGesture: boolean) {
-    const options: HighlightOptions = {
-      color: '#6fdcbd38',
-      tooltipText: this._generateActionPreview(),
-      toolbar: [this._acceptButton, this._cancelButton],
-      interactive: true,
+  private _showDialog() {
+    const target = this._hoverHighlight?.elements[0];
+    if (!target)
+      return;
+    this._action = this._generateAction();
+    if (!this._action)
+      return;
+
+    this._dialogElement = this._recorder.document.createElement('x-pw-dialog');
+    this._keyboardListener = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        this._closeDialog();
+        return;
+      }
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        if (this._dialogElement)
+          this._commit();
+        return;
+      }
     };
-    if (this._inputHighlight) {
-      this._recorder.updateHighlight(this._inputHighlight, userGesture, options);
-    } else {
-      options.anchorGetter = (e: Element) => this._recorder.document.getSelection()?.getRangeAt(0)?.getBoundingClientRect() || e.getBoundingClientRect();
-      this._recorder.updateHighlight(this._selectionHighlight, userGesture, options);
-    }
+    this._recorder.document.addEventListener('keydown', this._keyboardListener, true);
+    const toolbarElement = this._recorder.document.createElement('x-pw-tools-list');
+    toolbarElement.appendChild(this._createLabel(this._action));
+    toolbarElement.appendChild(this._recorder.document.createElement('x-spacer'));
+    toolbarElement.appendChild(this._acceptButton);
+    toolbarElement.appendChild(this._cancelButton);
+
+    this._dialogElement.appendChild(toolbarElement);
+    const bodyElement = this._recorder.document.createElement('x-pw-dialog-body');
+    const locatorElement = this._recorder.document.createElement('input');
+    locatorElement.classList.add('locator-editor');
+    locatorElement.value = asLocator(this._recorder.state.language, this._action.selector);
+    locatorElement.addEventListener('input', () => {
+      if (this._action) {
+        const selector = locatorOrSelectorAsSelector(this._recorder.state.language, locatorElement.value, this._recorder.state.testIdAttributeName);
+        const model: HighlightModel = {
+          selector,
+          elements: this._recorder.injectedScript.querySelectorAll(parseSelector(selector), this._recorder.document),
+        };
+        this._action.selector = selector;
+        this._recorder.updateHighlight(model, true);
+      }
+    });
+    const textElement = this._recorder.document.createElement('textarea');
+    textElement.value = this._renderValue(this._action);
+    textElement.classList.add('text-editor');
+
+    textElement.addEventListener('input', () => {
+      if (this._action?.name === 'assertText')
+        this._action.text = normalizeWhiteSpace(elementText(new Map(), textElement).full);
+      if (this._action?.name === 'assertChecked')
+        this._action.checked = textElement.value === 'true';
+      if (this._action?.name === 'assertValue')
+        this._action.value = textElement.value;
+    });
+
+    bodyElement.appendChild(locatorElement);
+    bodyElement.appendChild(textElement);
+    this._dialogElement.appendChild(bodyElement);
+    this._recorder.highlight.appendChild(this._dialogElement);
+    const position = this._recorder.highlight.tooltipPosition(this._recorder.highlight.firstBox()!, this._dialogElement);
+    this._dialogElement.style.top = position.anchorTop + 'px';
+    this._dialogElement.style.left = position.anchorLeft + 'px';
+    textElement.focus();
+  }
+
+  private _createLabel(action: actions.AssertAction) {
+    const labelElement = this._recorder.document.createElement('x-pw-tool-label');
+    labelElement.textContent = action.name === 'assertText' ? 'Assert text' : action.name === 'assertValue' ? 'Assert value' : 'Assert checked';
+    return labelElement;
+  }
+
+  private _closeDialog() {
+    if (!this._dialogElement)
+      return;
+    this._dialogElement.remove();
+    this._recorder.document.removeEventListener('keydown', this._keyboardListener!);
+    this._dialogElement = null;
   }
 }
 
