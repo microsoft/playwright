@@ -274,8 +274,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
     const contextOptions = await prepareBrowserContextParams(options);
-    const { context } = await this._channel.launchBrowser(contextOptions);
-    return BrowserContext.from(context) as BrowserContext;
+    const result = await this._channel.launchBrowser(contextOptions);
+    const context = BrowserContext.from(result.context) as BrowserContext;
+    context._setOptions(contextOptions, {});
+    return context;
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
