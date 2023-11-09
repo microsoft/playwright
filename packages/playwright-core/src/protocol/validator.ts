@@ -1557,25 +1557,17 @@ scheme.FrameSetContentResult = tOptional(tObject({}));
 scheme.FrameSetInputFilesParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
-  files: tArray(tObject({
+  payloads: tOptional(tArray(tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
-    lastModifiedMs: tOptional(tNumber),
-  })),
-  timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
-});
-scheme.FrameSetInputFilesResult = tOptional(tObject({}));
-scheme.FrameSetInputFilePathsParams = tObject({
-  selector: tString,
-  strict: tOptional(tBoolean),
+  }))),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
 });
-scheme.FrameSetInputFilePathsResult = tOptional(tObject({}));
+scheme.FrameSetInputFilesResult = tOptional(tObject({}));
 scheme.FrameTapParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -1931,23 +1923,17 @@ scheme.ElementHandleSelectTextParams = tObject({
 });
 scheme.ElementHandleSelectTextResult = tOptional(tObject({}));
 scheme.ElementHandleSetInputFilesParams = tObject({
-  files: tArray(tObject({
+  payloads: tOptional(tArray(tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
-    lastModifiedMs: tOptional(tNumber),
-  })),
-  timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
-});
-scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
-scheme.ElementHandleSetInputFilePathsParams = tObject({
+  }))),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
 });
-scheme.ElementHandleSetInputFilePathsResult = tOptional(tObject({}));
+scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
 scheme.ElementHandleTapParams = tObject({
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),

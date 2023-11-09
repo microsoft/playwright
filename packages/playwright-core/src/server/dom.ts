@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { mime } from '../utilsBundle';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
-import type * as channels from '@protocol/channels';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as frames from './frames';
@@ -30,8 +28,11 @@ import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
 import { isUnderTest } from '../utils';
 
-type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
-export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };
+export type InputFilesItems = {
+  filePayloads?: types.FilePayload[],
+  localPaths?: string[]
+};
+
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
 
 export class NonRecoverableDOMError extends Error {
@@ -588,20 +589,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    const { files, localPaths } = items;
-    let filePayloads: types.FilePayload[] | undefined;
-    if (files) {
-      filePayloads = [];
-      for (const payload of files) {
-        filePayloads.push({
-          name: payload.name,
-          mimeType: payload.mimeType || mime.getType(payload.name) || 'application/octet-stream',
-          buffer: payload.buffer.toString('base64'),
-          lastModifiedMs: payload.lastModifiedMs
-        });
-      }
-    }
-    const multiple = files && files.length > 1 || localPaths && localPaths.length > 1;
+    const { filePayloads, localPaths } = items;
+    const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
     const result = await this.evaluateHandleInUtility(([injected, node, multiple]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)

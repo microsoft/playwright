@@ -23,11 +23,9 @@ import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
-import type { WritableStreamDispatcher } from './writableStreamDispatcher';
-import { assert } from '../../utils';
-import path from 'path';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
+import { prepareFilesForUpload } from '../fileUploadUtils';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;
@@ -218,19 +216,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<channels.FrameSetInputFilesResult> {
-    return await this._frame.setInputFiles(metadata, params.selector, { files: params.files }, params);
-  }
-
-  async setInputFilePaths(params: channels.FrameSetInputFilePathsParams, metadata: CallMetadata): Promise<void> {
-    let { localPaths } = params;
-    if (!localPaths) {
-      if (!params.streams)
-        throw new Error('Neither localPaths nor streams is specified');
-      localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
-    }
-    for (const p of localPaths)
-      assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
-    return await this._frame.setInputFiles(metadata, params.selector, { localPaths }, params);
+    const inputFileItems = await prepareFilesForUpload(this._frame, params);
+    return await this._frame.setInputFiles(metadata, params.selector, inputFileItems, params);
   }
 
   async type(params: channels.FrameTypeParams, metadata: CallMetadata): Promise<void> {

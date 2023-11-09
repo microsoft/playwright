@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+export const fileUploadSizeLimit = 50 * 1024 * 1024;
+
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 export async function mkdirIfNeeded(filePath: string) {
