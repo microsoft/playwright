@@ -77,9 +77,9 @@ For more information, see [Playwright Pytest usage](./test-runners.md) or the Py
 
 ## Debugging tests
 
-Since Playwright runs in Python, you can debug it with your debugger of choice with e.g. the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
+Since Playwright runs in Python, you can debug it with your debugger of choice, e.g., with the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
 
-To debug all tests run the following command.
+To debug all tests, run the following command.
 
 ```bash tab=bash-bash lang=python
 PWDEBUG=1 pytest -s
@@ -127,7 +127,7 @@ $env:PWDEBUG=1
 pytest -s -k test_get_started_link
 ```
 
-This command will open up a Browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or press the play button to run your test from start to finish. Once the test has finished the browser window will close.
+This command will open up a Browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or press the play button to run your test from start to finish. Once the test has finished, the browser window will close.
 
 While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You an also edit the locator and see it highlighting live on the Browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into you test.
 
