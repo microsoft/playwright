@@ -95,7 +95,7 @@ $env:PWDEBUG=1
 pytest -s
 ```
 
-To debug one test file run the command followed by the name of the test file that you want to debug.
+To debug one test file, run the command followed by the name of the test file that you want to debug.
 
 ```bash tab=bash-bash lang=python
 PWDEBUG=1 pytest -s test_example.py
@@ -111,7 +111,7 @@ $env:PWDEBUG=1
 pytest -s test_example.py
 ```
 
-To debug a specific test add `-k` followed by the name of the test that you want to debug.
+To debug a specific test, add `-k` followed by the name of the test that you want to debug.
 
 ```bash tab=bash-bash lang=python
 PWDEBUG=1 pytest -s -k test_get_started_link
