@@ -1407,7 +1407,6 @@ export interface EventTargetEvents {
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
-  isLocalBrowserOnServer: boolean,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
 };

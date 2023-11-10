@@ -38,10 +38,10 @@ import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams, Inje
 import { isSessionClosedError } from './protocolError';
 import { type ParsedSelector, isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import type { ScreenshotOptions } from './screenshotter';
-import type { InputFilesItems } from './dom';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
 import { TimeoutError } from './errors';
+import { prepareFilesForUpload } from './fileUploadUtils';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;
@@ -1319,11 +1319,12 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, selector: string, items: InputFilesItems, options: types.NavigatingActionWaitOptions = {}): Promise<channels.FrameSetInputFilesResult> {
+  async setInputFiles(metadata: CallMetadata, selector: string, params: channels.FrameSetInputFilesParams): Promise<channels.FrameSetInputFilesResult> {
+    const inputFileItems = await prepareFilesForUpload(this, params);
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._setInputFiles(progress, items, options)));
-    }, this._page._timeoutSettings.timeout(options));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params.strict, handle => handle._setInputFiles(progress, inputFileItems, params)));
+    }, this._page._timeoutSettings.timeout(params));
   }
 
   async type(metadata: CallMetadata, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {

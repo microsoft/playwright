@@ -277,12 +277,8 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   }
 
   const payloads = items as FilePayload[];
-  if (filePayloadExceedsSizeLimit(payloads)) {
-    let error = 'Cannot set buffer larger than 50Mb';
-    if (context._isLocalBrowserOnServer())
-      error += ', please write it to a file and pass its path instead.';
-    throw new Error(error);
-  }
+  if (filePayloadExceedsSizeLimit(payloads))
+    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
   return { payloads };
 }
 

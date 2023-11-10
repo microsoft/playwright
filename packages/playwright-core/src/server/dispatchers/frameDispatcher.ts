@@ -25,7 +25,6 @@ import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
-import { prepareFilesForUpload } from '../fileUploadUtils';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;
@@ -216,8 +215,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<channels.FrameSetInputFilesResult> {
-    const inputFileItems = await prepareFilesForUpload(this._frame, params);
-    return await this._frame.setInputFiles(metadata, params.selector, inputFileItems, params);
+    return await this._frame.setInputFiles(metadata, params.selector, params);
   }
 
   async type(params: channels.FrameTypeParams, metadata: CallMetadata): Promise<void> {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type * as channels from '@protocol/channels';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';
@@ -27,6 +28,7 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
 import { isUnderTest } from '../utils';
+import { prepareFilesForUpload } from './fileUploadUtils';
 
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],
@@ -580,12 +582,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, items: InputFilesItems, options: types.NavigatingActionWaitOptions) {
+  async setInputFiles(metadata: CallMetadata, params: channels.ElementHandleSetInputFilesParams) {
+    const inputFileItems = await prepareFilesForUpload(this._frame, params);
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      const result = await this._setInputFiles(progress, items, options);
+      const result = await this._setInputFiles(progress, inputFileItems, params);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(params));
   }
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
