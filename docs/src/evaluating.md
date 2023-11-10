@@ -83,15 +83,15 @@ await page.evaluate(array => array.length, [1, 2, 3]);
 await page.evaluate(object => object.foo, { foo: 'bar' });
 
 // A single handle.
-const button = await page.evaluate('window.button');
+const button = await page.evaluateHandle('window.button');
 await page.evaluate(button => button.textContent, button);
 
 // Alternative notation using elementHandle.evaluate.
 await button.evaluate((button, from) => button.textContent.substring(from), 5);
 
 // Object with multiple handles.
-const button1 = await page.evaluate('window.button1');
-const button2 = await page.evaluate('window.button2');
+const button1 = await page.evaluateHandle('window.button1');
+const button2 = await page.evaluateHandle('window.button2');
 await page.evaluate(
     o => o.button1.textContent + o.button2.textContent,
     { button1, button2 });
