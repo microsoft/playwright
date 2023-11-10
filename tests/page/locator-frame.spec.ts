@@ -268,3 +268,33 @@ it('wait for hidden should succeed when frame is not in dom', async ({ page }) =
   const error = await button.waitFor({ state: 'attached', timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('Timeout 1000ms exceeded');
 });
+
+it('should work with COEP/COOP/CORP isolated iframe', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28082' });
+  it.fixme(browserName === 'firefox');
+  await page.route('**/empty.html', route => {
+    return route.fulfill({
+      body: `<iframe src="https://${server.CROSS_PROCESS_PREFIX}/btn.html" allow="cross-origin-isolated; fullscreen" sandbox="allow-same-origin allow-scripts allow-popups" ></iframe>`,
+      contentType: 'text/html',
+      headers: {
+        'cross-origin-embedder-policy': 'require-corp',
+        'cross-origin-opener-policy': 'same-origin',
+        'cross-origin-resource-policy': 'cross-origin',
+      }
+    });
+  });
+  await page.route('**/btn.html', route => {
+    return route.fulfill({
+      body: '<button onclick="window.__clicked=true">Click target</button>',
+      contentType: 'text/html',
+      headers: {
+        'cross-origin-embedder-policy': 'require-corp',
+        'cross-origin-opener-policy': 'same-origin',
+        'cross-origin-resource-policy': 'cross-origin',
+      }
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.frameLocator('iframe').getByRole('button').click();
+  expect(await page.frames()[1].evaluate(() => window['__clicked'])).toBe(true);
+});
