@@ -172,7 +172,8 @@ it('should dispatch wheel event', async ({ page, server }) => {
   expect(await eventsHandle.evaluate(e => ({ deltaX: e[0].deltaX, deltaY: e[0].deltaY }))).toEqual({ deltaX: 100, deltaY: 200 });
 });
 
-it('should dispatch device orientation event', async ({ page, server }) => {
+it('should dispatch device orientation event', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
   await page.goto(server.PREFIX + '/device-orientation.html');
   await page.locator('html').dispatchEvent('deviceorientation', { alpha: 10, beta: 20, gamma: 30 });
   expect(await page.evaluate('result')).toBe('Oriented');
@@ -182,7 +183,8 @@ it('should dispatch device orientation event', async ({ page, server }) => {
   expect(await page.evaluate('absolute')).toBeFalsy();
 });
 
-it('should dispatch absolute device orientation event', async ({ page, server }) => {
+it('should dispatch absolute device orientation event', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
   await page.goto(server.PREFIX + '/device-orientation.html');
   await page.locator('html').dispatchEvent('deviceorientationabsolute', { alpha: 10, beta: 20, gamma: 30, absolute: true });
   expect(await page.evaluate('result')).toBe('Oriented');
