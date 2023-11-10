@@ -1012,7 +1012,6 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
-    isLocalBrowserOnServer: boolean
     requestContext: APIRequestContext
     tracing: Tracing
 
@@ -2111,28 +2110,15 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        files:
-          type: array
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
           items:
             type: object
             properties:
               name: string
               mimeType: string?
               buffer: binary
-              lastModifiedMs: number?
-        timeout: number?
-        noWaitAfter: boolean?
-      flags:
-        slowMo: true
-        snapshot: true
-        pausesBeforeInput: true
-
-    # This method should be used if one of the files is large (>50Mb).
-    setInputFilePaths:
-      parameters:
-        selector: string
-        strict: boolean?
-        # Only one of localPaths and streams should be present.
         localPaths:
           type: array?
           items: string
@@ -2680,26 +2666,15 @@ ElementHandle:
 
     setInputFiles:
       parameters:
-        files:
-          type: array
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
           items:
             type: object
             properties:
               name: string
               mimeType: string?
               buffer: binary
-              lastModifiedMs: number?
-        timeout: number?
-        noWaitAfter: boolean?
-      flags:
-        slowMo: true
-        snapshot: true
-        pausesBeforeInput: true
-
-    # This method should be used if one of the files is large (>50Mb).
-    setInputFilePaths:
-      parameters:
-        # Only one of localPaths and streams should be present.
         localPaths:
           type: array?
           items: string
