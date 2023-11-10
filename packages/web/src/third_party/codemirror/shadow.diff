@@ -1,0 +1,219 @@
+diff --git a/src/display/operations.js b/src/display/operations.js
+index b004575b..ca5d3f61 100644
+--- a/src/display/operations.js
++++ b/src/display/operations.js
+@@ -2,7 +2,7 @@ import { clipPos } from "../line/pos.js"
+ import { findMaxLine } from "../line/spans.js"
+ import { displayWidth, measureChar, scrollGap } from "../measurement/position_measurement.js"
+ import { signal } from "../util/event.js"
+-import { activeElt, doc } from "../util/dom.js"
++import { activeElt, rootNode } from "../util/dom.js"
+ import { finishOperation, pushOperation } from "../util/operation_group.js"
+ 
+ import { ensureFocus } from "./focus.js"
+@@ -116,7 +116,7 @@ function endOperation_W2(op) {
+     cm.display.maxLineChanged = false
+   }
+ 
+-  let takeFocus = op.focus && op.focus == activeElt(doc(cm))
++  let takeFocus = op.focus && op.focus == activeElt(rootNode(cm))
+   if (op.preparedSelection)
+     cm.display.input.showSelection(op.preparedSelection, takeFocus)
+   if (op.updatedDisplay || op.startHeight != cm.doc.height)
+diff --git a/src/display/update_display.js b/src/display/update_display.js
+index 63529d51..23428c88 100644
+--- a/src/display/update_display.js
++++ b/src/display/update_display.js
+@@ -3,7 +3,7 @@ import { heightAtLine, visualLineEndNo, visualLineNo } from "../line/spans.js"
+ import { getLine, lineNumberFor } from "../line/utils_line.js"
+ import { displayHeight, displayWidth, getDimensions, paddingVert, scrollGap } from "../measurement/position_measurement.js"
+ import { mac, webkit } from "../util/browser.js"
+-import { activeElt, removeChildren, contains, win, doc } from "../util/dom.js"
++import { activeElt, removeChildren, contains, win, rootNode } from "../util/dom.js"
+ import { hasHandler, signal } from "../util/event.js"
+ import { signalLater } from "../util/operation_group.js"
+ import { indexOf } from "../util/misc.js"
+@@ -57,7 +57,7 @@ export function maybeClipScrollbars(cm) {
+ 
+ function selectionSnapshot(cm) {
+   if (cm.hasFocus()) return null
+-  let active = activeElt(doc(cm))
++  let active = activeElt(rootNode(cm))
+   if (!active || !contains(cm.display.lineDiv, active)) return null
+   let result = {activeElt: active}
+   if (window.getSelection) {
+@@ -73,7 +73,7 @@ function selectionSnapshot(cm) {
+ }
+ 
+ function restoreSelection(snapshot) {
+-  if (!snapshot || !snapshot.activeElt || snapshot.activeElt == activeElt(snapshot.activeElt.ownerDocument)) return
++  if (!snapshot || !snapshot.activeElt || snapshot.activeElt == activeElt(snapshot.activeElt.getRootNode())) return
+   snapshot.activeElt.focus()
+   if (!/^(INPUT|TEXTAREA)$/.test(snapshot.activeElt.nodeName) &&
+       snapshot.anchorNode && contains(document.body, snapshot.anchorNode) && contains(document.body, snapshot.focusNode)) {
+diff --git a/src/edit/fromTextArea.js b/src/edit/fromTextArea.js
+index cdd10d74..a13e3595 100644
+--- a/src/edit/fromTextArea.js
++++ b/src/edit/fromTextArea.js
+@@ -13,7 +13,7 @@ export function fromTextArea(textarea, options) {
+   // Set autofocus to true if this textarea is focused, or if it has
+   // autofocus and no other element is focused.
+   if (options.autofocus == null) {
+-    let hasFocus = activeElt(textarea.ownerDocument)
++    let hasFocus = activeElt(textarea.getRootNode())
+     options.autofocus = hasFocus == textarea ||
+       textarea.getAttribute("autofocus") != null && hasFocus == document.body
+   }
+diff --git a/src/edit/key_events.js b/src/edit/key_events.js
+index 1d3c9f90..1283663d 100644
+--- a/src/edit/key_events.js
++++ b/src/edit/key_events.js
+@@ -3,7 +3,7 @@ import { restartBlink } from "../display/selection.js"
+ import { isModifierKey, keyName, lookupKey } from "../input/keymap.js"
+ import { eventInWidget } from "../measurement/widgets.js"
+ import { ie, ie_version, mac, presto, gecko } from "../util/browser.js"
+-import { activeElt, addClass, rmClass, doc } from "../util/dom.js"
++import { activeElt, addClass, rmClass, rootNode } from "../util/dom.js"
+ import { e_preventDefault, off, on, signalDOMEvent } from "../util/event.js"
+ import { hasCopyEvent } from "../util/feature_detection.js"
+ import { Delayed, Pass } from "../util/misc.js"
+@@ -107,7 +107,7 @@ let lastStoppedKey = null
+ export function onKeyDown(e) {
+   let cm = this
+   if (e.target && e.target != cm.display.input.getField()) return
+-  cm.curOp.focus = activeElt(doc(cm))
++  cm.curOp.focus = activeElt(rootNode(cm))
+   if (signalDOMEvent(cm, e)) return
+   // IE does strange things with escape.
+   if (ie && ie_version < 11 && e.keyCode == 27) e.returnValue = false
+diff --git a/src/edit/methods.js b/src/edit/methods.js
+index b1cbcc9e..0acef25b 100644
+--- a/src/edit/methods.js
++++ b/src/edit/methods.js
+@@ -1,7 +1,7 @@
+ import { deleteNearSelection } from "./deleteNearSelection.js"
+ import { commands } from "./commands.js"
+ import { attachDoc } from "../model/document_data.js"
+-import { activeElt, addClass, rmClass, doc, win } from "../util/dom.js"
++import { activeElt, addClass, rmClass, rootNode, win } from "../util/dom.js"
+ import { eventMixin, signal } from "../util/event.js"
+ import { getLineStyles, getContextBefore, takeToken } from "../line/highlight.js"
+ import { indentLine } from "../input/indent.js"
+@@ -358,7 +358,7 @@ export default function(CodeMirror) {
+ 
+       signal(this, "overwriteToggle", this, this.state.overwrite)
+     },
+-    hasFocus: function() { return this.display.input.getField() == activeElt(doc(this)) },
++    hasFocus: function() { return this.display.input.getField() == activeElt(rootNode(this)) },
+     isReadOnly: function() { return !!(this.options.readOnly || this.doc.cantEdit) },
+ 
+     scrollTo: methodOp(function (x, y) { scrollToCoords(this, x, y) }),
+diff --git a/src/edit/mouse_events.js b/src/edit/mouse_events.js
+index e854d647..94f98034 100644
+--- a/src/edit/mouse_events.js
++++ b/src/edit/mouse_events.js
+@@ -9,7 +9,7 @@ import { normalizeSelection, Range, Selection } from "../model/selection.js"
+ import { extendRange, extendSelection, replaceOneSelection, setSelection } from "../model/selection_updates.js"
+ import { captureRightClick, chromeOS, ie, ie_version, mac, webkit, safari } from "../util/browser.js"
+ import { getOrder, getBidiPartAt } from "../util/bidi.js"
+-import { activeElt, doc as getDoc, win } from "../util/dom.js"
++import { activeElt, rootNode, win } from "../util/dom.js"
+ import { e_button, e_defaultPrevented, e_preventDefault, e_target, hasHandler, off, on, signal, signalDOMEvent } from "../util/event.js"
+ import { dragAndDrop } from "../util/feature_detection.js"
+ import { bind, countColumn, findColumn, sel_mouse } from "../util/misc.js"
+@@ -128,7 +128,7 @@ function configureMouse(cm, repeat, event) {
+ 
+ function leftButtonDown(cm, pos, repeat, event) {
+   if (ie) setTimeout(bind(ensureFocus, cm), 0)
+-  else cm.curOp.focus = activeElt(getDoc(cm))
++  else cm.curOp.focus = activeElt(rootNode(cm))
+ 
+   let behavior = configureMouse(cm, repeat, event)
+ 
+@@ -292,7 +292,7 @@ function leftButtonSelect(cm, event, start, behavior) {
+     let cur = posFromMouse(cm, e, true, behavior.unit == "rectangle")
+     if (!cur) return
+     if (cmp(cur, lastPos) != 0) {
+-      cm.curOp.focus = activeElt(getDoc(cm))
++      cm.curOp.focus = activeElt(rootNode(cm))
+       extendTo(cur)
+       let visible = visibleLines(display, doc)
+       if (cur.line >= visible.to || cur.line < visible.from)
+diff --git a/src/input/ContentEditableInput.js b/src/input/ContentEditableInput.js
+index f789af74..b1f97af4 100644
+--- a/src/input/ContentEditableInput.js
++++ b/src/input/ContentEditableInput.js
+@@ -97,7 +97,7 @@ export default class ContentEditableInput {
+       disableBrowserMagic(te)
+       cm.display.lineSpace.insertBefore(kludge, cm.display.lineSpace.firstChild)
+       te.value = lastCopied.text.join("\n")
+-      let hadFocus = activeElt(div.ownerDocument)
++      let hadFocus = activeElt(div.getRootNode())
+       selectInput(te)
+       setTimeout(() => {
+         cm.display.lineSpace.removeChild(kludge)
+@@ -120,7 +120,7 @@ export default class ContentEditableInput {
+ 
+   prepareSelection() {
+     let result = prepareSelection(this.cm, false)
+-    result.focus = activeElt(this.div.ownerDocument) == this.div
++    result.focus = activeElt(this.div.getRootNode()) == this.div
+     return result
+   }
+ 
+@@ -214,7 +214,7 @@ export default class ContentEditableInput {
+ 
+   focus() {
+     if (this.cm.options.readOnly != "nocursor") {
+-      if (!this.selectionInEditor() || activeElt(this.div.ownerDocument) != this.div)
++      if (!this.selectionInEditor() || activeElt(this.div.getRootNode()) != this.div)
+         this.showSelection(this.prepareSelection(), true)
+       this.div.focus()
+     }
+diff --git a/src/input/TextareaInput.js b/src/input/TextareaInput.js
+index 0aac125b..07ef6cac 100644
+--- a/src/input/TextareaInput.js
++++ b/src/input/TextareaInput.js
+@@ -182,7 +182,7 @@ export default class TextareaInput {
+   supportsTouch() { return false }
+ 
+   focus() {
+-    if (this.cm.options.readOnly != "nocursor" && (!mobile || activeElt(this.textarea.ownerDocument) != this.textarea)) {
++    if (this.cm.options.readOnly != "nocursor" && (!mobile || activeElt(this.textarea.getRootNode()) != this.textarea)) {
+       try { this.textarea.focus() }
+       catch (e) {} // IE8 will throw if the textarea is display: none or not in DOM
+     }
+diff --git a/src/util/dom.js b/src/util/dom.js
+index 6672645a..89fbb1a1 100644
+--- a/src/util/dom.js
++++ b/src/util/dom.js
+@@ -64,10 +64,13 @@ export function contains(parent, child) {
+   } while (child = child.parentNode)
+ }
+ 
+-export function activeElt(doc) {
++export function activeElt(rootNode) {
+   // IE and Edge may throw an "Unspecified Error" when accessing document.activeElement.
+   // IE < 10 will throw when accessed while the page is loading or in an iframe.
+   // IE > 9 and Edge will throw when accessed in an iframe if document.body is unavailable.
++  return rootNode.activeElement;
++
++/*
+   let activeElement
+   try {
+     activeElement = doc.activeElement
+@@ -77,6 +80,7 @@ export function activeElt(doc) {
+   while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement)
+     activeElement = activeElement.shadowRoot.activeElement
+   return activeElement
++*/
+ }
+ 
+ export function addClass(node, cls) {
+@@ -98,4 +102,6 @@ else if (ie) // Suppress mysterious IE10 errors
+ 
+ export function doc(cm) { return cm.display.wrapper.ownerDocument }
+ 
++export function rootNode(cm) { return cm.display.wrapper.getRootNode() }
++
+ export function win(cm) { return doc(cm).defaultView }

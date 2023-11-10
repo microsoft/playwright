@@ -59,11 +59,10 @@ This project incorporates components from the projects listed below. The origina
       }
     }
 
-    const packages = await checkDir('node_modules/codemirror');
-    for (const [key, value] of Object.entries(packages)) {
-      if (value.licenseText)
-        allPackages[key] = value;
-    }
+    allPackages['codemirror@5.65.15'] = {
+      repository: 'https://github.com/codemirror/CodeMirror',
+      licenseText: fs.readFileSync(path.join(__dirname, '../packages/web/src/third_party/codemirror/LICENSE.txt'), 'utf8')
+    };
 
     // fsevents is a darwin-only dependency that we do not bundle.
     const keys = Object.keys(allPackages).sort().filter(key => !key.startsWith('fsevents@'));
