@@ -44,14 +44,26 @@ x-pw-dialog {
   display: flex;
   flex-direction: column;
   position: absolute;
-  min-width: 500px;
-  min-height: 200px;
+  width: 500px;
+  height: 200px;
+  z-index: 10;
 }
 
 x-pw-dialog-body {
   display: flex;
   flex-direction: column;
   flex: auto;
+}
+
+x-pw-dialog-body label {
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+x-pw-dialog-body input {
+  cursor: pointer;
 }
 
 x-pw-highlight {
@@ -205,27 +217,17 @@ x-pw-overlay x-pw-tool-item {
   margin: 2px;
 }
 
-input.locator-editor {
-  display: flex;
-  padding: 10px;
-  flex: none;
-  border: none;
-  border-bottom: 1px solid #dddddd;
-}
-
-input.locator-editor:focus,
-textarea.text-editor:focus {
-  outline: none;
-}
-
 textarea.text-editor {
   font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
   flex: auto;
   border: none;
-  padding: 10px;
+  margin: 10px;
   color: #333;
 }
 
+textarea.text-editor:focus {
+  outline: none;
+}
 
 x-div {
   display: block;
@@ -241,4 +243,17 @@ x-spacer {
 
 *[hidden] {
   display: none !important;
+}
+
+x-locator-editor {
+  flex: none;
+  width: 100%;
+  height: 60px;
+  padding: 4px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.CodeMirror {
+  width: 100% !important;
+  height: 100% !important;
 }
