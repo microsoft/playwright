@@ -23,9 +23,27 @@ import { Highlight, type HighlightOptions } from '../injected/highlight';
 import { isInsideScope } from './domUtils';
 import { elementText } from './selectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { parseSelector } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
+
+// @ts-ignore @no-check-deps
+import CodeMirrorImpl from 'codemirror-shadow-1';
+import type CodeMirrorType from 'codemirror';
+// @no-check-deps
+import codemirrorCSS from 'codemirror-shadow-1/lib/codemirror.css?inline';
+// @no-check-deps
+import 'codemirror-shadow-1/mode/css/css';
+// @no-check-deps
+import 'codemirror-shadow-1/mode/htmlmixed/htmlmixed';
+// @no-check-deps
+import 'codemirror-shadow-1/mode/javascript/javascript';
+// @no-check-deps
+import 'codemirror-shadow-1/mode/python/python';
+// @no-check-deps
+import 'codemirror-shadow-1/mode/clike/clike';
+const CodeMirror = CodeMirrorImpl as typeof CodeMirrorType;
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -507,7 +525,7 @@ class TextAssertionTool implements RecorderTool {
           selector,
           signals: [],
           // Interestingly, inputElement.checked is reversed inside this event handler.
-          checked: (target as HTMLInputElement).checked,
+          checked: !(target as HTMLInputElement).checked,
         };
       } else {
         return {
@@ -576,12 +594,21 @@ class TextAssertionTool implements RecorderTool {
 
     this._dialogElement.appendChild(toolbarElement);
     const bodyElement = this._recorder.document.createElement('x-pw-dialog-body');
-    const locatorElement = this._recorder.document.createElement('input');
-    locatorElement.classList.add('locator-editor');
-    locatorElement.value = asLocator(this._recorder.state.language, this._action.selector);
-    locatorElement.addEventListener('input', () => {
+    const cmStyle = this._recorder.document.createElement('style');
+    const cmElement = this._recorder.document.createElement('x-locator-editor');
+    cmStyle.textContent = codemirrorCSS;
+    bodyElement.appendChild(cmStyle);
+    bodyElement.appendChild(cmElement);
+    const cm = CodeMirror(cmElement, {
+      value: asLocator(this._recorder.state.language, this._action.selector),
+      mode: cmModeForLanguage(this._recorder.state.language),
+      readOnly: false,
+      lineNumbers: false,
+      lineWrapping: true,
+    });
+    cm.on('change', () => {
       if (this._action) {
-        const selector = locatorOrSelectorAsSelector(this._recorder.state.language, locatorElement.value, this._recorder.state.testIdAttributeName);
+        const selector = locatorOrSelectorAsSelector(this._recorder.state.language, cm.getValue(), this._recorder.state.testIdAttributeName);
         const model: HighlightModel = {
           selector,
           elements: this._recorder.injectedScript.querySelectorAll(parseSelector(selector), this._recorder.document),
@@ -590,27 +617,46 @@ class TextAssertionTool implements RecorderTool {
         this._recorder.updateHighlight(model, true);
       }
     });
-    const textElement = this._recorder.document.createElement('textarea');
-    textElement.value = this._renderValue(this._action);
-    textElement.classList.add('text-editor');
 
-    textElement.addEventListener('input', () => {
-      if (this._action?.name === 'assertText')
-        this._action.text = normalizeWhiteSpace(elementText(new Map(), textElement).full);
-      if (this._action?.name === 'assertChecked')
-        this._action.checked = textElement.value === 'true';
-      if (this._action?.name === 'assertValue')
-        this._action.value = textElement.value;
-    });
+    let elementToFocus: HTMLElement | null = null;
+    if (this._action.name !== 'assertChecked') {
+      const textElement = this._recorder.document.createElement('textarea');
+      textElement.setAttribute('spellcheck', 'false');
+      textElement.value = this._renderValue(this._action);
+      textElement.classList.add('text-editor');
 
-    bodyElement.appendChild(locatorElement);
-    bodyElement.appendChild(textElement);
+      textElement.addEventListener('input', () => {
+        if (this._action?.name === 'assertText')
+          this._action.text = normalizeWhiteSpace(elementText(new Map(), textElement).full);
+        if (this._action?.name === 'assertChecked')
+          this._action.checked = textElement.value === 'true';
+        if (this._action?.name === 'assertValue')
+          this._action.value = textElement.value;
+      });
+      bodyElement.appendChild(textElement);
+      elementToFocus = textElement;
+    } else {
+      const labelElement = this._recorder.document.createElement('label');
+      labelElement.textContent = 'Value:';
+      const checkboxElement = this._recorder.document.createElement('input');
+      labelElement.appendChild(checkboxElement);
+      checkboxElement.type = 'checkbox';
+      checkboxElement.checked = this._action.checked;
+      checkboxElement.addEventListener('change', () => {
+        if (this._action?.name === 'assertChecked')
+          this._action.checked = checkboxElement.checked;
+      });
+      bodyElement.appendChild(labelElement);
+      elementToFocus = labelElement;
+    }
+
     this._dialogElement.appendChild(bodyElement);
     this._recorder.highlight.appendChild(this._dialogElement);
     const position = this._recorder.highlight.tooltipPosition(this._recorder.highlight.firstBox()!, this._dialogElement);
     this._dialogElement.style.top = position.anchorTop + 'px';
     this._dialogElement.style.left = position.anchorLeft + 'px';
-    textElement.focus();
+    elementToFocus?.focus();
+    cm.refresh();
   }
 
   private _createLabel(action: actions.AssertAction) {
@@ -1129,6 +1175,16 @@ export class PollingRecorder implements RecorderDelegate {
   async setOverlayState(state: OverlayState): Promise<void> {
     await this._embedder.__pw_recorderSetOverlayState(state);
   }
+}
+
+function cmModeForLanguage(language: Language): string {
+  if (language === 'python')
+    return 'python';
+  if (language === 'java')
+    return 'text/x-java';
+  if (language === 'csharp')
+    return 'text/x-csharp';
+  return 'javascript';
 }
 
 export default PollingRecorder;

@@ -79,7 +79,7 @@ async function innerCheckDeps(root) {
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
-  sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
+  sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName, x.getFullText()));
 
   if (errors.length) {
     for (const error of errors)
@@ -112,7 +112,7 @@ async function innerCheckDeps(root) {
 
   return packageJSON;
 
-  function visit(node, fileName) {
+  function visit(node, fileName, text) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       if (node.importClause) {
         if (node.importClause.isTypeOnly)
@@ -151,6 +151,14 @@ async function innerCheckDeps(root) {
         return;
       }
 
+      const fullStart = node.getFullStart();
+      const commentRanges = ts.getLeadingCommentRanges(text, fullStart);
+      for (const range of commentRanges || []) {
+          const comment = text.substring(range.pos, range.end);
+          if (comment.includes('@no-check-deps'))
+            return;
+      }
+
       if (importName.startsWith('@'))
         deps.add(importName.split('/').slice(0, 2).join('/'));
       else
@@ -159,7 +167,7 @@ async function innerCheckDeps(root) {
       if (!allowExternalImport(importName, packageJSON))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
-    ts.forEachChild(node, x => visit(x, fileName));
+    ts.forEachChild(node, x => visit(x, fileName, text));
   }
 
   function calculateDeps(from) {

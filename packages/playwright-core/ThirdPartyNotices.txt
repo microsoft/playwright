@@ -10,7 +10,7 @@ This project incorporates components from the projects listed below. The origina
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
--	codemirror@5.65.9 (https://github.com/codemirror/CodeMirror)
+-	codemirror-shadow-1@0.0.1 (https://github.com/codemirror/CodeMirror)
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
 -	commander@8.3.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
@@ -326,11 +326,11 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
 =========================================
 END OF buffer-crc32@0.2.13 AND INFORMATION
 
-%% codemirror@5.65.9 NOTICES AND INFORMATION BEGIN HERE
+%% codemirror-shadow-1@0.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
-Copyright (C) 2017 by Marijn Haverbeke <marijnh@gmail.com> and others
+Copyright (C) 2017 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -350,7 +350,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF codemirror@5.65.9 AND INFORMATION
+END OF codemirror-shadow-1@0.0.1 AND INFORMATION
 
 %% colors@1.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================

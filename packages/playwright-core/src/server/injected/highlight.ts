@@ -60,7 +60,7 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
-    for (const eventName of ['click', 'auxclick', 'dragstart', 'input', 'keydown', 'keyup', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'mousemove', 'mouseleave', 'focus', 'scroll']) {
+    for (const eventName of ['click', 'auxclick', 'dragstart', 'input', 'keydown', 'keyup', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'mouseleave', 'focus', 'scroll']) {
       this._glassPaneElement.addEventListener(eventName, e => {
         e.stopPropagation();
         e.stopImmediatePropagation();
