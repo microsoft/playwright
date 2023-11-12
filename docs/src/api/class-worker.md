@@ -52,6 +52,12 @@ foreach(var pageWorker in page.Workers)
 }
 ```
 
+**addInitScript for Worker**
+
+Currently, methods like [`method: Page.addInitScript`] is not supported for worker. See issue [#28029](https://github.com/microsoft/playwright/issues/28029).
+
+However, there is a workaround by routing the main worker script. For code example, see [this comment](https://github.com/microsoft/playwright/issues/28029#issuecomment-1802788239). For full repository demo, see [this repository](https://github.com/doehyunbaek/monkeypatch-worker).
+
 ## event: Worker.close
 * since: v1.8
 - argument: <[Worker]>
