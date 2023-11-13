@@ -169,7 +169,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   generateStandaloneHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     formatter.add(`
-      const { ${options.browserName}${options.deviceName ? ', devices' : ''} } = require('playwright');
+      const { expect, ${options.browserName}${options.deviceName ? ', devices' : ''} } = require('@playwright/test');
 
       (async () => {
         const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
