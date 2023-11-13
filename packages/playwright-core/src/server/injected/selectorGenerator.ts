@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue, trimString } from '../../utils/isomorphic/stringUtils';
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
@@ -229,16 +229,18 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
     if (input.placeholder) {
-      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, false)}]`, score: kPlaceholderScore });
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: kPlaceholderScoreExact });
+      for (const alternative of suitableTextAlternatives(input.placeholder))
+        candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(alternative.text, false)}]`, score: kPlaceholderScore - alternative.scoreBouns });
     }
   }
 
   const labels = getElementLabels(injectedScript._evaluator._cacheText, element);
   for (const label of labels) {
     const labelText = label.full.trim();
-    candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
     candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
+    for (const alternative of suitableTextAlternatives(labelText))
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(alternative.text, false), score: kLabelScore - alternative.scoreBouns });
   }
 
   const ariaRole = getAriaRole(element);
@@ -265,36 +267,43 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     return [];
   const candidates: SelectorToken[][] = [];
 
-  if (element.getAttribute('title')) {
-    candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, false)}]`, score: kTitleScore }]);
-    candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, true)}]`, score: kTitleScoreExact }]);
+  const title = element.getAttribute('title');
+  if (title) {
+    candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(title, true)}]`, score: kTitleScoreExact }]);
+    for (const alternative of suitableTextAlternatives(title))
+      candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBouns }]);
   }
 
-  if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
-    candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, false)}]`, score: kAltTextScore }]);
-    candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, true)}]`, score: kAltTextScoreExact }]);
+  const alt = element.getAttribute('alt');
+  if (alt && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
+    candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alt, true)}]`, score: kAltTextScoreExact }]);
+    for (const alternative of suitableTextAlternatives(alt))
+      candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBouns }]);
   }
 
-  const fullText = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
-  const text = trimString(fullText, 80);
+  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
   if (text) {
-    const escaped = escapeForTextSelector(text, false);
+    const alternatives = suitableTextAlternatives(text);
     if (isTargetNode) {
-      candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
-      candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+      if (text.length <= 80)
+        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+      for (const alternative of alternatives)
+        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
     }
     const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
-    candidates.push([cssToken, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
-    if (fullText.length <= 80)
-      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(fullText) + '$/', score: kTextScoreRegex }]);
+    for (const alternative of alternatives)
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
+    if (text.length <= 80)
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(text) + '$/', score: kTextScoreRegex }]);
   }
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false);
     if (ariaName) {
-      candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore }]);
       candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact }]);
+      for (const alternative of suitableTextAlternatives(ariaName))
+        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBouns }]);
     }
   }
 
@@ -465,4 +474,50 @@ function isGuidLike(id: string): boolean {
 function escapeRegExp(s: string) {
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+function trimWordBoundary(text: string, maxLength: number) {
+  if (text.length <= maxLength)
+    return text;
+  text = text.substring(0, maxLength);
+  // Find last word boundary in the text.
+  const match = text.match(/^(.*)\b(.+?)$/);
+  if (!match)
+    return '';
+  return match[1].trimEnd();
+}
+
+function suitableTextAlternatives(text: string) {
+  let result: { text: string, scoreBouns: number }[] = [];
+
+  {
+    const match = text.match(/^([\d.,]+)[^.,\w]/);
+    const leadingNumberLength = match ? match[1].length : 0;
+    if (leadingNumberLength) {
+      const alt = text.substring(leadingNumberLength).trimStart();
+      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+    }
+  }
+
+  {
+    const match = text.match(/[^.,\w]([\d.,]+)$/);
+    const trailingNumberLength = match ? match[1].length : 0;
+    if (trailingNumberLength) {
+      const alt = text.substring(0, text.length - trailingNumberLength).trimEnd();
+      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+    }
+  }
+
+  if (text.length <= 30) {
+    result.push({ text, scoreBouns: 0 });
+  } else {
+    result.push({ text: trimWordBoundary(text, 80), scoreBouns: 0 });
+    result.push({ text: trimWordBoundary(text, 30), scoreBouns: 1 });
+  }
+
+  result = result.filter(r => r.text);
+  if (!result.length)
+    result.push({ text: text.substring(0, 80), scoreBouns: 0 });
+
+  return result;
 }

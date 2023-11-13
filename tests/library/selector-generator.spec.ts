@@ -54,8 +54,36 @@ it.describe('selector generator', () => {
   });
 
   it('should trim text', async ({ page }) => {
-    await page.setContent(`<div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>`);
+    await page.setContent(`
+      <div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>
+      <div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789!Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>
+    `);
     expect(await generate(page, 'div')).toBe('internal:text="Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text012345"i');
+  });
+
+  it('should try to improve role name', async ({ page }) => {
+    await page.setContent(`<div role=button>Issues 23</div>`);
+    expect(await generate(page, 'div')).toBe('internal:role=button[name="Issues"i]');
+  });
+
+  it('should try to improve text', async ({ page }) => {
+    await page.setContent(`<div>23 Issues</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="Issues"i');
+  });
+
+  it('should try to improve text by shortening', async ({ page }) => {
+    await page.setContent(`<div>Longest verbose description of the item</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="Longest verbose description"i');
+  });
+
+  it('should try to improve label text by shortening', async ({ page }) => {
+    await page.setContent(`<label>Longest verbose description of the item<input></label>`);
+    expect(await generate(page, 'input')).toBe('internal:label="Longest verbose description"i');
+  });
+
+  it('should not improve guid text', async ({ page }) => {
+    await page.setContent(`<div>91b1b23</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="91b1b23"i');
   });
 
   it('should not escape text with >>', async ({ page }) => {
@@ -206,9 +234,10 @@ it.describe('selector generator', () => {
       </div>
       <div id="id">
       <div>Text that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on</div>
+      <div>Text that goes on and on and on and on and on and on and on and on and X on and on and on and on and on and on and on</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and on"i`);
+    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and"i`);
   });
 
   it('should use nested ordinals', async ({ page }) => {
