@@ -572,8 +572,7 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _showDialog() {
-    const target = this._hoverHighlight?.elements[0];
-    if (!target)
+    if (!this._hoverHighlight?.elements[0])
       return;
     this._action = this._generateAction();
     if (!this._action)
@@ -616,12 +615,14 @@ class TextAssertionTool implements RecorderTool {
     cm.on('change', () => {
       if (this._action) {
         const selector = locatorOrSelectorAsSelector(this._recorder.state.language, cm.getValue(), this._recorder.state.testIdAttributeName);
-        const model: HighlightModel = {
+        const elements = this._recorder.injectedScript.querySelectorAll(parseSelector(selector), this._recorder.document);
+        cmElement.classList.toggle('does-not-match', !elements.length);
+        this._hoverHighlight = elements.length ? {
           selector,
-          elements: this._recorder.injectedScript.querySelectorAll(parseSelector(selector), this._recorder.document),
-        };
+          elements,
+        } : null;
         this._action.selector = selector;
-        this._recorder.updateHighlight(model, true);
+        this._recorder.updateHighlight(this._hoverHighlight, true);
       }
     });
 
@@ -635,6 +636,9 @@ class TextAssertionTool implements RecorderTool {
 
       const updateAndValidate = () => {
         const newValue = normalizeWhiteSpace(textElement.value);
+        const target = this._hoverHighlight?.elements[0];
+        if (!target)
+          return;
         action.text = newValue;
         const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
         const matches = action.substring ? newValue && targetText.includes(newValue) : targetText === newValue;
@@ -678,8 +682,7 @@ class TextAssertionTool implements RecorderTool {
       checkboxElement.type = 'checkbox';
       checkboxElement.checked = action.checked;
       checkboxElement.addEventListener('change', () => {
-        if (action.name === 'assertChecked')
-          action.checked = checkboxElement.checked;
+        action.checked = checkboxElement.checked;
       });
       bodyElement.appendChild(labelElement);
       elementToFocus = labelElement;

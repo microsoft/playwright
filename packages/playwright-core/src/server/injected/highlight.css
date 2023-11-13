@@ -55,17 +55,6 @@ x-pw-dialog-body {
   flex: auto;
 }
 
-x-pw-dialog-body label {
-  margin: 10px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-x-pw-dialog-body input {
-  cursor: pointer;
-}
-
 x-pw-highlight {
   position: absolute;
   top: 0;
@@ -221,7 +210,7 @@ textarea.text-editor {
   font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
   flex: auto;
   border: none;
-  margin: 10px;
+  margin: 6px;
   color: #333;
   outline: 1px solid transparent !important;
 }
@@ -252,6 +241,11 @@ x-locator-editor {
   height: 60px;
   padding: 4px;
   border-bottom: 1px solid #dddddd;
+  outline: 1px solid transparent;
+}
+
+x-locator-editor.does-not-match {
+  outline: 1px solid red;
 }
 
 .CodeMirror {
