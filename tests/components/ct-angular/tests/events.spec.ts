@@ -16,6 +16,36 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
   expect(messages).toEqual(['hello']);
 });
 
+test('replace existing listener when new listener is set', async ({
+  mount,
+}) => {
+  test.skip(true, '🚧 work in progress');
+
+  let count = 0;
+
+  const component = await mount(ButtonComponent, {
+    props: {
+      title: 'Submit',
+    },
+    on: {
+      submit() {
+        count++;
+      },
+    },
+  });
+
+  component.update({
+    on: {
+      submit() {
+        count++;
+      },
+    },
+  });
+
+  await component.click();
+  expect(count).toBe(1);
+});
+
 test('unsubscribe from events when the component is unmounted', async ({
   mount,
   page,
@@ -23,7 +53,7 @@ test('unsubscribe from events when the component is unmounted', async ({
   test.skip(true, '🚧 work in progress');
   const component = await mount(OutputComponent, {
     on: {
-      answerChange: () => {},
+      answerChange() {},
     },
   });
 
