@@ -5,12 +5,12 @@ title: "Running and debugging tests"
 
 ## Introduction
 
-Playwright tests can be run in a variety of ways. We recommend hooking it up to your favorite test runner, e.g. [JUnit](./test-runners.md) since it gives you the ability to run tests in parallel, run single test, etc.
+Playwright tests can be run in a variety of ways. We recommend hooking it up to your favorite test runner, e.g., [JUnit](./test-runners.md), since it gives you the ability to run tests in parallel, run single test, etc.
 
-You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer you can run your tests in headed mode by using the `launch(new BrowserType.LaunchOptions().setHeadless(false))` option.
+You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer, you can run your tests in headed mode by using the `launch(new BrowserType.LaunchOptions().setHeadless(false))` option.
 
-In [JUnit](https://junit.org/junit5/) you can initialize [Playwright] and [Browser] in [@BeforeAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/BeforeAll.html) method and
-destroy them in [@AfterAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/AfterAll.html). In the example below all three test methods use the same
+In [JUnit](https://junit.org/junit5/), you can initialize [Playwright] and [Browser] in [@BeforeAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/BeforeAll.html) method and
+destroy them in [@AfterAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/AfterAll.html). In the example below, all three test methods use the same
 [Browser]. Each test uses its own [BrowserContext] and [Page].
 
 ```java
@@ -81,7 +81,7 @@ public class TestExample {
 }
 ```
 
-See [here](./test-runners.md) for further details on how to run tests in parallel etc..
+See [here](./test-runners.md) for further details on how to run tests in parallel, etc.
 
 ## What's Next
 
