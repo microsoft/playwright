@@ -18,9 +18,15 @@
 // This file is injected into the registry as text, no dependencies are allowed.
 
 import 'zone.js';
+import {
+  Component as defineComponent,
+  reflectComponentType
+} from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
-import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
-import { EventEmitter, reflectComponentType, Component as defineComponent } from '@angular/core';
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
 import { Router } from '@angular/router';
 
 /** @typedef {import('@playwright/experimental-ct-core/types/component').Component} Component */
@@ -34,6 +40,8 @@ const __pwLoaderRegistry = new Map();
 const __pwRegistry = new Map();
 /** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
 const __pwFixtureRegistry = new Map();
+/** @type {WeakMap<import('@angular/core/testing').ComponentFixture, Record<string, import('rxjs').Subscription>>} */
+const __pwOutputSubscriptionRegistry = new WeakMap();
 
 getTestBed().initTestEnvironment(
     BrowserDynamicTestingModule,
@@ -96,12 +104,22 @@ function __pwUpdateProps(fixture, props = {}) {
  * @param {import('@angular/core/testing').ComponentFixture} fixture
  */
 function __pwUpdateEvents(fixture, events = {}) {
-  for (const [name, value] of Object.entries(events)) {
-    fixture.debugElement.children[0].componentInstance[name] = {
-      ...new EventEmitter(),
-      emit: event => value(event)
-    };
+  const outputSubscriptionRecord =
+    __pwOutputSubscriptionRegistry.get(fixture) ?? {};
+  for (const [name, listener] of Object.entries(events)) {
+    /* Unsubscribe previous listener. */
+    outputSubscriptionRecord[name]?.unsubscribe();
+
+    const subscription = fixture.debugElement.children[0].componentInstance[
+      name
+    ].subscribe((event) => listener(event));
+
+    /* Store new subscription. */
+    outputSubscriptionRecord[name] = subscription;
   }
+
+  /* Update output subscription registry. */
+  __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
 }
 
 function __pwUpdateSlots(Component, slots = {}, tagName) {
@@ -211,8 +229,12 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
 window.playwrightUnmount = async rootElement => {
   const fixture = __pwFixtureRegistry.get(rootElement.id);
-  if (!fixture)
-    throw new Error('Component was not mounted');
+  if (!fixture) throw new Error('Component was not mounted');
+
+  /* Unsubscribe from all outputs. */
+  for (const subscription of Object.values(__pwOutputSubscriptionRegistry.get(fixture) ?? {}))
+    subscription?.unsubscribe();
+  __pwOutputSubscriptionRegistry.delete(fixture);
 
   fixture.destroy();
   fixture.nativeElement.replaceChildren();
