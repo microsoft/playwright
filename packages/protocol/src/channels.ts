@@ -636,6 +636,7 @@ export type RecorderSource = {
 export type DebugControllerInitializer = {};
 export interface DebugControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
+  on(event: 'setModeRequested', callback: (params: DebugControllerSetModeRequestedEvent) => void): this;
   on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
   on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
   on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
@@ -657,6 +658,9 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
   locator: string,
+};
+export type DebugControllerSetModeRequestedEvent = {
+  mode: string,
 };
 export type DebugControllerStateChangedEvent = {
   pageCount: number,
@@ -732,6 +736,7 @@ export type DebugControllerCloseAllBrowsersResult = void;
 
 export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
+  'setModeRequested': DebugControllerSetModeRequestedEvent;
   'stateChanged': DebugControllerStateChangedEvent;
   'sourceChanged': DebugControllerSourceChangedEvent;
   'paused': DebugControllerPausedEvent;

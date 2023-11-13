@@ -763,6 +763,10 @@ DebugController:
         selector: string
         locator: string
 
+    setModeRequested:
+      parameters:
+        mode: string
+
     stateChanged:
       parameters:
         pageCount: number
