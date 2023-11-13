@@ -96,10 +96,6 @@ export class Highlight {
     this._glassPaneElement.remove();
   }
 
-  isInstalled(): boolean {
-    return this._glassPaneElement.parentElement === this._injectedScript.document.documentElement && !this._glassPaneElement.nextElementSibling;
-  }
-
   showActionPoint(x: number, y: number) {
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
