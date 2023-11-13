@@ -193,3 +193,25 @@ it('should dispatch absolute device orientation event', async ({ page, server, i
   expect(await page.evaluate('gamma')).toBe(30);
   expect(await page.evaluate('absolute')).toBeTruthy();
 });
+
+it('should dispatch device motion event', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
+  await page.goto(server.PREFIX + '/device-motion.html');
+  await page.locator('html').dispatchEvent('devicemotion', {
+    acceleration: { x: 10, y: 20, z: 30 },
+    accelerationIncludingGravity: { x: 15, y: 25, z: 35 },
+    rotationRate: { alpha: 5, beta: 10, gamma: 15 },
+    interval: 16,
+  });
+  expect(await page.evaluate('result')).toBe('Moved');
+  expect(await page.evaluate('acceleration.x')).toBe(10);
+  expect(await page.evaluate('acceleration.y')).toBe(20);
+  expect(await page.evaluate('acceleration.z')).toBe(30);
+  expect(await page.evaluate('accelerationIncludingGravity.x')).toBe(15);
+  expect(await page.evaluate('accelerationIncludingGravity.y')).toBe(25);
+  expect(await page.evaluate('accelerationIncludingGravity.z')).toBe(35);
+  expect(await page.evaluate('rotationRate.alpha')).toBe(5);
+  expect(await page.evaluate('rotationRate.beta')).toBe(10);
+  expect(await page.evaluate('rotationRate.gamma')).toBe(15);
+  expect(await page.evaluate('interval')).toBe(16);
+});
