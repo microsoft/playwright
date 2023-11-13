@@ -26,7 +26,7 @@ const launchOptions = (channel: string) => {
 
 test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--target=javascript', emptyHTML]);
-  const expectedResult = `const { ${browserName} } = require('playwright');
+  const expectedResult = `const { expect, ${browserName} } = require('@playwright/test');
 
 (async () => {
   const browser = await ${browserName}.launch({
@@ -38,7 +38,7 @@ test('should print the correct imports and context options', async ({ browserNam
 
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--color-scheme=light', '--target=javascript', emptyHTML]);
-  const expectedResult = `const { ${browserName} } = require('playwright');
+  const expectedResult = `const { expect, ${browserName} } = require('@playwright/test');
 
 (async () => {
   const browser = await ${browserName}.launch({
@@ -55,7 +55,7 @@ test('should print the correct context options when using a device', async ({ br
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=javascript', emptyHTML]);
-  const expectedResult = `const { chromium, devices } = require('playwright');
+  const expectedResult = `const { expect, chromium, devices } = require('@playwright/test');
 
 (async () => {
   const browser = await chromium.launch({
@@ -71,7 +71,7 @@ test('should print the correct context options when using a device and additiona
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=javascript', emptyHTML]);
-  const expectedResult = `const { webkit, devices } = require('playwright');
+  const expectedResult = `const { expect, webkit, devices } = require('@playwright/test');
 
 (async () => {
   const browser = await webkit.launch({
@@ -91,7 +91,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   });
   await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
-  expect(content.toString()).toBe(`const { ${browserName} } = require('playwright');
+  expect(content.toString()).toBe(`const { expect, ${browserName} } = require('@playwright/test');
 
 (async () => {
   const browser = await ${browserName}.launch({
@@ -113,7 +113,7 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=javascript', emptyHTML]);
-  const expectedResult1 = `const { ${browserName} } = require('playwright');
+  const expectedResult1 = `const { expect, ${browserName} } = require('@playwright/test');
 
 (async () => {
   const browser = await ${browserName}.launch({
