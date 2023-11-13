@@ -5632,6 +5632,9 @@ interface LocatorAssertions {
    * Ensures the {@link Locator} points to an element that contains the given text. You can use regular expressions for
    * the value as well.
    *
+   * When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual
+   * text and in the expected string before matching. When regular expression is used, the actual text is matched as is.
+   *
    * **Usage**
    *
    * ```js
@@ -6028,6 +6031,9 @@ interface LocatorAssertions {
   /**
    * Ensures the {@link Locator} points to an element with the given text. You can use regular expressions for the value
    * as well.
+   *
+   * When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual
+   * text and in the expected string before matching. When regular expression is used, the actual text is matched as is.
    *
    * **Usage**
    *
