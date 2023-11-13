@@ -115,10 +115,10 @@ x-pw-tool-gripper > x-div {
   background-color: #555555;
 }
 
-x-pw-tool-label {
+x-pw-tools-list > label {
   display: flex;
   align-items: center;
-  margin-left: 10px;
+  margin: 0 10px;
   user-select: none;
 }
 
