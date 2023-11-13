@@ -19,8 +19,6 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
 test('replace existing listener when new listener is set', async ({
   mount,
 }) => {
-  test.skip(true, '🚧 work in progress');
-
   let count = 0;
 
   const component = await mount(ButtonComponent, {
@@ -50,7 +48,6 @@ test('unsubscribe from events when the component is unmounted', async ({
   mount,
   page,
 }) => {
-  test.skip(true, '🚧 work in progress');
   const component = await mount(OutputComponent, {
     on: {
       answerChange() {},
