@@ -72,7 +72,7 @@ Upon successful cancellations, `download.failure()` would resolve to `'canceled'
 * langs: java, js, csharp
 - returns: <[Readable]>
 
-Returns readable stream for current download or `null` if download failed.
+Returns a readable stream for a successful download, or throws for a failed/canceled download.
 
 ## async method: Download.delete
 * since: v1.8
@@ -95,8 +95,7 @@ Get the page that the download belongs to.
 * since: v1.8
 - returns: <[path]>
 
-Returns path to the downloaded file in case of successful download. The method will
-wait for the download to finish if necessary. The method throws when connected remotely.
+Returns path to the downloaded file for a successful download, or throws for a failed/canceled download. The method will wait for the download to finish if necessary. The method throws when connected remotely.
 
 Note that the download's file name is a random GUID, use [`method: Download.suggestedFilename`]
 to get suggested file name.
