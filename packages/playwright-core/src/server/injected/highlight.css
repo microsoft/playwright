@@ -223,10 +223,11 @@ textarea.text-editor {
   border: none;
   margin: 10px;
   color: #333;
+  outline: 1px solid transparent !important;
 }
 
-textarea.text-editor:focus {
-  outline: none;
+textarea.text-editor.does-not-match {
+  outline: 1px solid red !important;
 }
 
 x-div {

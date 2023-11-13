@@ -22,6 +22,7 @@ import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import { Highlight, type HighlightOptions } from '../injected/highlight';
 import { isInsideScope } from './domUtils';
 import { elementText } from './selectorUtils';
+import type { ElementText } from './selectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
@@ -467,6 +468,7 @@ class TextAssertionTool implements RecorderTool {
   private _acceptButton: HTMLElement;
   private _cancelButton: HTMLElement;
   private _keyboardListener: ((event: KeyboardEvent) => void) | undefined;
+  private _textCache = new Map<Element | ShadowRoot, ElementText>();
 
   constructor(private _recorder: Recorder) {
     this._acceptButton = this._recorder.document.createElement('x-pw-tool-item');
@@ -514,6 +516,7 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _generateAction(): actions.AssertAction | null {
+    this._textCache.clear();
     const target = this._hoverHighlight?.elements[0];
     if (!target)
       return null;
@@ -541,7 +544,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertText',
         selector,
         signals: [],
-        text: target.textContent!,
+        text: normalizeWhiteSpace(elementText(this._textCache, target).full),
         substring: true,
       };
     }
@@ -626,12 +629,16 @@ class TextAssertionTool implements RecorderTool {
       textElement.classList.add('text-editor');
 
       textElement.addEventListener('input', () => {
-        if (this._action?.name === 'assertText')
-          this._action.text = normalizeWhiteSpace(elementText(new Map(), textElement).full);
-        if (this._action?.name === 'assertChecked')
+        if (this._action?.name === 'assertText') {
+          const newValue = normalizeWhiteSpace(textElement.value);
+          this._action.text = newValue;
+          const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
+          textElement.classList.toggle('does-not-match', !!newValue && !targetText.includes(newValue));
+        } else if (this._action?.name === 'assertChecked') {
           this._action.checked = textElement.value === 'true';
-        if (this._action?.name === 'assertValue')
+        } else if (this._action?.name === 'assertValue') {
           this._action.value = textElement.value;
+        }
       });
       bodyElement.appendChild(textElement);
       elementToFocus = textElement;
