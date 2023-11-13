@@ -842,9 +842,6 @@ export class Recorder {
   }
 
   installListeners() {
-    // Ensure we are attached to the current document, and we are on top (last element);
-    if (this.highlight.isInstalled())
-      return;
     removeEventListeners(this._listeners);
     this._listeners = [
       addEventListener(this.document, 'click', event => this._onClick(event as MouseEvent), true),
