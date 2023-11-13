@@ -539,10 +539,13 @@ class TextAssertionTool implements RecorderTool {
         };
       }
     } else {
-      const { selector } = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      this._hoverHighlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      // forTextExpect can update the target, re-highlight it.
+      this._recorder.updateHighlight(this._hoverHighlight, true, { color: '#8acae480' });
+
       return {
         name: 'assertText',
-        selector,
+        selector: this._hoverHighlight.selector,
         signals: [],
         text: normalizeWhiteSpace(elementText(this._textCache, target).full),
         substring: true,
@@ -588,6 +591,7 @@ class TextAssertionTool implements RecorderTool {
         return;
       }
     };
+
     this._recorder.document.addEventListener('keydown', this._keyboardListener, true);
     const toolbarElement = this._recorder.document.createElement('x-pw-tools-list');
     toolbarElement.appendChild(this._createLabel(this._action));
@@ -622,36 +626,60 @@ class TextAssertionTool implements RecorderTool {
     });
 
     let elementToFocus: HTMLElement | null = null;
-    if (this._action.name !== 'assertChecked') {
+    const action = this._action;
+    if (action.name === 'assertText') {
+      const textElement = this._recorder.document.createElement('textarea');
+      textElement.setAttribute('spellcheck', 'false');
+      textElement.value = this._renderValue(this._action);
+      textElement.classList.add('text-editor');
+
+      const updateAndValidate = () => {
+        const newValue = normalizeWhiteSpace(textElement.value);
+        action.text = newValue;
+        const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
+        const matches = action.substring ? newValue && targetText.includes(newValue) : targetText === newValue;
+        textElement.classList.toggle('does-not-match', !matches);
+      };
+      textElement.addEventListener('input', updateAndValidate);
+      bodyElement.appendChild(textElement);
+
+      // Add a toolbar substring checkbox.
+      const substringElement = this._recorder.document.createElement('label');
+      substringElement.style.cursor = 'pointer';
+      const checkboxElement = this._recorder.document.createElement('input');
+      substringElement.appendChild(checkboxElement);
+      substringElement.appendChild(this._recorder.document.createTextNode('Substring'));
+      checkboxElement.type = 'checkbox';
+      checkboxElement.style.cursor = 'pointer';
+      checkboxElement.checked = action.substring;
+      checkboxElement.addEventListener('change', () => {
+        action.substring = checkboxElement.checked;
+        updateAndValidate();
+      });
+      toolbarElement.insertBefore(substringElement, this._acceptButton);
+
+      elementToFocus = textElement;
+    } else if (action.name === 'assertValue') {
       const textElement = this._recorder.document.createElement('textarea');
       textElement.setAttribute('spellcheck', 'false');
       textElement.value = this._renderValue(this._action);
       textElement.classList.add('text-editor');
 
       textElement.addEventListener('input', () => {
-        if (this._action?.name === 'assertText') {
-          const newValue = normalizeWhiteSpace(textElement.value);
-          this._action.text = newValue;
-          const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
-          textElement.classList.toggle('does-not-match', !!newValue && !targetText.includes(newValue));
-        } else if (this._action?.name === 'assertChecked') {
-          this._action.checked = textElement.value === 'true';
-        } else if (this._action?.name === 'assertValue') {
-          this._action.value = textElement.value;
-        }
+        action.value = textElement.value;
       });
       bodyElement.appendChild(textElement);
       elementToFocus = textElement;
-    } else {
+    } else if (action.name === 'assertChecked') {
       const labelElement = this._recorder.document.createElement('label');
       labelElement.textContent = 'Value:';
       const checkboxElement = this._recorder.document.createElement('input');
       labelElement.appendChild(checkboxElement);
       checkboxElement.type = 'checkbox';
-      checkboxElement.checked = this._action.checked;
+      checkboxElement.checked = action.checked;
       checkboxElement.addEventListener('change', () => {
-        if (this._action?.name === 'assertChecked')
-          this._action.checked = checkboxElement.checked;
+        if (action.name === 'assertChecked')
+          action.checked = checkboxElement.checked;
       });
       bodyElement.appendChild(labelElement);
       elementToFocus = labelElement;
@@ -667,7 +695,7 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _createLabel(action: actions.AssertAction) {
-    const labelElement = this._recorder.document.createElement('x-pw-tool-label');
+    const labelElement = this._recorder.document.createElement('label');
     labelElement.textContent = action.name === 'assertText' ? 'Assert text' : action.name === 'assertValue' ? 'Assert value' : 'Assert checked';
     return labelElement;
   }
