@@ -18,7 +18,7 @@ import type { Language } from '../../playwright-core/src/utils/isomorphic/locato
 
 export type Point = { x: number, y: number };
 
-export type Mode = 'inspecting' | 'recording' | 'none' | 'assertingText' | 'recording-inspecting' | 'standby' | 'assertingVisibility';
+export type Mode = 'inspecting' | 'recording' | 'none' | 'assertingText' | 'recording-inspecting' | 'standby' | 'assertingVisibility' | 'assertingValue';
 
 export type EventData = {
   event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'fileChanged';
