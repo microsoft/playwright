@@ -251,13 +251,13 @@ export class PlaywrightConnection {
   }
 
   private logServerMetadata(message: object, direction: 'SEND' | 'RECV') {
-    const serverLogMetadata = {
+    const serverLogMetadata: { [key: string]: any } = {
       timestamp: Date.now(),
       payloadSizeInBytes: Buffer.byteLength(JSON.stringify(message), 'utf-8')
     };
     ['id', 'guid', 'method'].forEach(key => {
       if (key in message)
-        serverLogMetadata[key] = message[key];
+        serverLogMetadata[key] = (message as any)[key];
     });
     debugLogger.log('server:metadata', (direction === 'SEND' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(serverLogMetadata));
   }
