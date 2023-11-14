@@ -170,7 +170,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {
     if (userGesture) {
       if (this._recorder.mode() === 'inspecting') {
-        this._recorder.setMode('none');
+        this._recorder.setMode('standby');
         this._page.bringToFront();
       } else {
         this._recorder.setMode('recording');

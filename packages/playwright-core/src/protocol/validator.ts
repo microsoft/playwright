@@ -367,6 +367,9 @@ scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
   locator: tString,
 });
+scheme.DebugControllerSetModeRequestedEvent = tObject({
+  mode: tString,
+});
 scheme.DebugControllerStateChangedEvent = tObject({
   pageCount: tNumber,
 });

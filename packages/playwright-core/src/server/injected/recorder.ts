@@ -740,7 +740,7 @@ class Overlay {
     this._recordToggle.classList.add('record');
     this._recordToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._recordToggle.addEventListener('click', () => {
-      this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'none');
+      this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'standby' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'standby');
     });
     toolsListElement.appendChild(this._recordToggle);
 
@@ -750,8 +750,9 @@ class Overlay {
     this._pickLocatorToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._pickLocatorToggle.addEventListener('click', () => {
       const newMode: Record<Mode, Mode> = {
-        'inspecting': 'none',
+        'inspecting': 'standby',
         'none': 'inspecting',
+        'standby': 'inspecting',
         'recording': 'recording-inspecting',
         'recording-inspecting': 'recording',
         'assertingText': 'recording-inspecting',
@@ -786,11 +787,15 @@ class Overlay {
     this._recordToggle.classList.toggle('active', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'recording-inspecting');
     this._pickLocatorToggle.classList.toggle('active', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
     this._assertToggle.classList.toggle('active', state.mode === 'assertingText');
-    this._assertToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'inspecting');
+    this._assertToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     if (this._offsetX !== state.overlay.offsetX) {
       this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
     }
+    if (state.mode === 'none')
+      this._overlayElement.setAttribute('hidden', 'true');
+    else
+      this._overlayElement.removeAttribute('hidden');
   }
 
   private _updateVisualPosition() {
@@ -851,6 +856,7 @@ export class Recorder {
     this.highlight = new Highlight(injectedScript);
     this._tools = {
       'none': new NoneTool(),
+      'standby': new NoneTool(),
       'inspecting': new InspectTool(this),
       'recording': new RecordActionTool(this),
       'recording-inspecting': new InspectTool(this),
@@ -929,7 +935,7 @@ export class Recorder {
       this._actionSelectorModel = null;
     if (state.actionSelector !== this._actionSelectorModel?.selector)
       this._actionSelectorModel = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
-    if (this.state.mode === 'none')
+    if (this.state.mode === 'none' || this.state.mode === 'standby')
       this.updateHighlight(this._actionSelectorModel, false);
   }
 
