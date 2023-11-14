@@ -213,6 +213,7 @@ textarea.text-editor {
   margin: 6px;
   color: #333;
   outline: 1px solid transparent !important;
+  resize: none;
 }
 
 textarea.text-editor.does-not-match {
