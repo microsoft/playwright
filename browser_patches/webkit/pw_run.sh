@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+function getWebkitCheckoutPath() {
+  echo ${WK_CHECKOUT_PATH:-"$HOME/webkit"}
+}
+
 function runOSX() {
   # if script is run as-is
-  if [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -n "$WK_CHECKOUT_PATH" && -d "$WK_CHECKOUT_PATH/WebKitBuild/Release/Playwright.app" ]]; then
+  WK_CHECKOUT_PATH=$(getWebkitCheckoutPath)
+  if [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -d "$WK_CHECKOUT_PATH/WebKitBuild/Release/Playwright.app" ]]; then
     DYLIB_PATH="$WK_CHECKOUT_PATH/WebKitBuild/Release"
-  elif [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -d "$HOME/webkit/WebKitBuild/Release/Playwright.app" ]]; then
-    DYLIB_PATH="$HOME/webkit/WebKitBuild/Release"
   elif [[ -d $SCRIPT_PATH/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH"
   elif [[ -d $SCRIPT_PATH/WebKitBuild/Release/Playwright.app ]]; then
@@ -34,13 +37,14 @@ function runLinux() {
   # Setting extra environment variables like LD_LIBRARY_PATH or WEBKIT_INJECTED_BUNDLE_PATH
   # is only needed when calling MiniBrowser from the build folder. The MiniBrowser from
   # the zip bundle wrapper already sets itself the needed env variables.
+  WK_CHECKOUT_PATH=$(getWebkitCheckoutPath)
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
     MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
-  elif [[ -d $HOME/webkit/$BUILD_FOLDER ]]; then
-    LD_PATH="$HOME/webkit/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
-    GIO_DIR="$HOME/webkit/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
-    BUNDLE_DIR="$HOME/webkit/$BUILD_FOLDER/Release/lib"
-    MINIBROWSER="$HOME/webkit/$BUILD_FOLDER/Release/bin/MiniBrowser"
+  elif [[ -d $WK_CHECKOUT_PATH/$BUILD_FOLDER ]]; then
+    LD_PATH="$WK_CHECKOUT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
+    GIO_DIR="$WK_CHECKOUT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    BUNDLE_DIR="$WK_CHECKOUT_PATH/$BUILD_FOLDER/Release/lib"
+    MINIBROWSER="$WK_CHECKOUT_PATH/$BUILD_FOLDER/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/$BUILD_FOLDER ]]; then

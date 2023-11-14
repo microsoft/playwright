@@ -4,7 +4,6 @@
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
 const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
