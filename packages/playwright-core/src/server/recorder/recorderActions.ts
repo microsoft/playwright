@@ -29,7 +29,8 @@ export type ActionName =
   'setInputFiles' |
   'assertText' |
   'assertValue' |
-  'assertChecked';
+  'assertChecked' |
+  'assertVisible';
 
 export type ActionBase = {
   name: ActionName,
@@ -113,8 +114,13 @@ export type AssertCheckedAction = ActionBase & {
   checked: boolean,
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction;
-export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction;
+export type AssertVisibleAction = ActionBase & {
+  name: 'assertVisible',
+  selector: string,
+};
+
+export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction;
+export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction;
 
 // Signals.
 

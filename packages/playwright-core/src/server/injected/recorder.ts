@@ -83,7 +83,7 @@ class InspectTool implements RecorderTool {
   private _hoveredModel: HighlightModel | null = null;
   private _hoveredElement: HTMLElement | null = null;
 
-  constructor(private _recorder: Recorder) {
+  constructor(private _recorder: Recorder, private _assertVisibility: boolean) {
   }
 
   cursor() {
@@ -97,7 +97,17 @@ class InspectTool implements RecorderTool {
 
   onClick(event: MouseEvent) {
     consumeEvent(event);
-    this._recorder.delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
+    if (this._assertVisibility) {
+      if (this._hoveredModel?.selector) {
+        this._recorder.delegate.recordAction?.({
+          name: 'assertVisible',
+          selector: this._hoveredModel.selector,
+          signals: [],
+        });
+      }
+    } else {
+      this._recorder.delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
+    }
   }
 
   onPointerDown(event: PointerEvent) {
@@ -144,6 +154,8 @@ class InspectTool implements RecorderTool {
 
   onKeyDown(event: KeyboardEvent) {
     consumeEvent(event);
+    if (this._assertVisibility && event.key === 'Escape')
+      this._recorder.delegate.setMode?.('recording');
   }
 
   onKeyUp(event: KeyboardEvent) {
@@ -726,7 +738,8 @@ class Overlay {
   private _overlayElement: HTMLElement;
   private _recordToggle: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
-  private _assertToggle: HTMLElement;
+  private _assertVisibilityToggle: HTMLElement;
+  private _assertTextToggle: HTMLElement;
   private _offsetX = 0;
   private _dragState: { offsetX: number, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
@@ -766,20 +779,31 @@ class Overlay {
         'recording': 'recording-inspecting',
         'recording-inspecting': 'recording',
         'assertingText': 'recording-inspecting',
+        'assertingVisibility': 'recording-inspecting',
       };
       this._recorder.delegate.setMode?.(newMode[this._recorder.state.mode]);
     });
     toolsListElement.appendChild(this._pickLocatorToggle);
 
-    this._assertToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
-    this._assertToggle.title = 'Assert text and values';
-    this._assertToggle.classList.add('assert');
-    this._assertToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._assertToggle.addEventListener('click', () => {
-      if (!this._assertToggle.classList.contains('disabled'))
+    this._assertVisibilityToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertVisibilityToggle.title = 'Assert visibility';
+    this._assertVisibilityToggle.classList.add('visibility');
+    this._assertVisibilityToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._assertVisibilityToggle.addEventListener('click', () => {
+      if (!this._assertVisibilityToggle.classList.contains('disabled'))
+        this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility');
+    });
+    toolsListElement.appendChild(this._assertVisibilityToggle);
+
+    this._assertTextToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertTextToggle.title = 'Assert text and values';
+    this._assertTextToggle.classList.add('text');
+    this._assertTextToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._assertTextToggle.addEventListener('click', () => {
+      if (!this._assertTextToggle.classList.contains('disabled'))
         this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
     });
-    toolsListElement.appendChild(this._assertToggle);
+    toolsListElement.appendChild(this._assertTextToggle);
 
     this._updateVisualPosition();
   }
@@ -794,10 +818,12 @@ class Overlay {
   }
 
   setUIState(state: UIState) {
-    this._recordToggle.classList.toggle('active', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'recording-inspecting');
+    this._recordToggle.classList.toggle('active', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'recording-inspecting');
     this._pickLocatorToggle.classList.toggle('active', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
-    this._assertToggle.classList.toggle('active', state.mode === 'assertingText');
-    this._assertToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
+    this._assertVisibilityToggle.classList.toggle('active', state.mode === 'assertingVisibility');
+    this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
+    this._assertTextToggle.classList.toggle('active', state.mode === 'assertingText');
+    this._assertTextToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     if (this._offsetX !== state.overlay.offsetX) {
       this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
@@ -867,10 +893,11 @@ export class Recorder {
     this._tools = {
       'none': new NoneTool(),
       'standby': new NoneTool(),
-      'inspecting': new InspectTool(this),
+      'inspecting': new InspectTool(this, false),
       'recording': new RecordActionTool(this),
-      'recording-inspecting': new InspectTool(this),
+      'recording-inspecting': new InspectTool(this, false),
       'assertingText': new TextAssertionTool(this),
+      'assertingVisibility': new InspectTool(this, true),
     };
     this._currentTool = this._tools.none;
     if (injectedScript.window.top === injectedScript.window) {

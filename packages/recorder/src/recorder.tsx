@@ -115,8 +115,8 @@ export const Recorder: React.FC<RecorderProps> = ({
 
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'none' } });
+      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' } });
       }}>Record</ToolbarButton>
       <ToolbarSeparator />
       <ToolbarButton icon='inspect' title='Pick locator' toggled={mode === 'inspecting' || mode === 'recording-inspecting'} onClick={() => {
@@ -127,12 +127,16 @@ export const Recorder: React.FC<RecorderProps> = ({
           'recording': 'recording-inspecting',
           'recording-inspecting': 'recording',
           'assertingText': 'recording-inspecting',
+          'assertingVisibility': 'recording-inspecting',
         }[mode];
         window.dispatch({ event: 'setMode', params: { mode: newMode } }).catch(() => { });
-      }}>Pick locator</ToolbarButton>
-      <ToolbarButton icon='check-all' title='Assert text and values' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+      }}></ToolbarButton>
+      <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility' } });
+      }}></ToolbarButton>
+      <ToolbarButton icon='whole-word' title='Assert text and values' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'recording' : 'assertingText' } });
-      }}>Assert</ToolbarButton>
+      }}></ToolbarButton>
       <ToolbarSeparator />
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);

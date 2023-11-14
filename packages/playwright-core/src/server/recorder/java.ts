@@ -126,6 +126,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
       case 'assertChecked':
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)})${action.checked ? '' : '.not()'}.isChecked();`;
+      case 'assertVisible':
+        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).isVisible();`;
       case 'assertValue': {
         const assertion = action.value ? `hasValue(${quote(action.value)})` : `isEmpty()`;
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${assertion};`;

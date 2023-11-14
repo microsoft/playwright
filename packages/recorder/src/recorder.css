@@ -29,6 +29,10 @@
 }
 
 .recorder .codicon {
+  font-size: 16px;
+}
+
+.recorder .codicon.circle-large-filled {
   font-size: 15px;
 }
 
