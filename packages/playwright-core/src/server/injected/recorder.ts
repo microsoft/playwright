@@ -499,6 +499,12 @@ class TextAssertionTool implements RecorderTool {
     consumeEvent(event);
   }
 
+  onMouseDown(event: MouseEvent) {
+    const target = this._recorder.deepEventTarget(event);
+    if (target.nodeName === 'SELECT')
+      event.preventDefault();
+  }
+
   onMouseMove(event: MouseEvent) {
     if (this._dialogElement)
       return;
@@ -520,7 +526,7 @@ class TextAssertionTool implements RecorderTool {
     const target = this._hoverHighlight?.elements[0];
     if (!target)
       return null;
-    if (target.nodeName === 'INPUT' || target.nodeName === 'TEXTAREA') {
+    if (target.nodeName === 'INPUT' || target.nodeName === 'TEXTAREA' || target.nodeName === 'SELECT') {
       const { selector } = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         return {
@@ -535,7 +541,7 @@ class TextAssertionTool implements RecorderTool {
           name: 'assertValue',
           selector,
           signals: [],
-          value: (target as HTMLInputElement).value,
+          value: (target as (HTMLInputElement | HTMLSelectElement)).value,
         };
       }
     } else {
@@ -611,6 +617,10 @@ class TextAssertionTool implements RecorderTool {
       readOnly: false,
       lineNumbers: false,
       lineWrapping: true,
+    });
+    cm.on('keydown', (_, event) => {
+      if (event.key === 'Tab')
+        (event as any).codemirrorIgnore = true;
     });
     cm.on('change', () => {
       if (this._action) {
