@@ -5,7 +5,6 @@
 "use strict";
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const { ChannelEventSinkFactory } = ChromeUtils.import("chrome://remote/content/cdp/observers/ChannelEventSink.jsm");
 

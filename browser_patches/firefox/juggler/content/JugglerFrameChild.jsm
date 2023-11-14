@@ -1,7 +1,6 @@
 "use strict";
 
 const { Helper } = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { initialize } = ChromeUtils.import('chrome://juggler/content/content/main.js');
 
 const Ci = Components.interfaces;

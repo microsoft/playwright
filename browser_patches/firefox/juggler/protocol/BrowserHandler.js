@@ -5,7 +5,6 @@
 "use strict";
 
 const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
