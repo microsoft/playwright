@@ -5709,8 +5709,6 @@ interface LocatorAssertions {
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
-     *
      * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
      * expression flag if specified.
      */
