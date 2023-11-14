@@ -76,15 +76,20 @@ export class PlaywrightConnection {
         const messageString = JSON.stringify(message);
         if (debugLogger.isEnabled('server:channel'))
           debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} SEND ► ${messageString}`);
+        if (debugLogger.isEnabled('server:metadata'))
+          this.logServerMetadata(message, 'SEND');
         ws.send(messageString);
       }
     };
     ws.on('message', async (message: string) => {
       await lock;
       const messageString = Buffer.from(message).toString();
+      const jsonMessage = JSON.parse(messageString);
       if (debugLogger.isEnabled('server:channel'))
         debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} ◀ RECV ${messageString}`);
-      this._dispatcherConnection.dispatch(JSON.parse(messageString));
+      if (debugLogger.isEnabled('server:metadata'))
+        this.logServerMetadata(jsonMessage, 'RECV');
+      this._dispatcherConnection.dispatch(jsonMessage);
     });
 
     ws.on('close', () => this._onDisconnect());
@@ -243,6 +248,18 @@ export class PlaywrightConnection {
     await stopProfiling(this._profileName);
     this._onClose();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
+  }
+
+  private logServerMetadata(message: object, direction: 'SEND' | 'RECV') {
+    const serverLogMetadata = {
+      timestamp: Date.now(),
+      payloadSizeInBytes: Buffer.byteLength(JSON.stringify(message), 'utf-8')
+    };
+    ['id', 'guid', 'method'].forEach(key => {
+      if (key in message)
+        serverLogMetadata[key] = message[key];
+    });
+    debugLogger.log('server:metadata', (direction === 'SEND' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(serverLogMetadata));
   }
 
   async close(reason?: { code: number, reason: string }) {
