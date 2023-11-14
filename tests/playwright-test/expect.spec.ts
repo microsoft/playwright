@@ -713,7 +713,7 @@ test('should chain expect matchers and expose matcher utils (TSC)', async ({ run
   const result = await runTSC({
     'a.spec.ts': `
     import { test, expect as baseExpect } from '@playwright/test';
-    import type { Page, Locator } from '@playwright/test';
+    import type { Page, Locator, ExpectMatcherState, Expect } from '@playwright/test';
 
     function callLogText(log: string[] | undefined): string {
       if (!log)
@@ -721,8 +721,15 @@ test('should chain expect matchers and expose matcher utils (TSC)', async ({ run
       return log.join('\\n');
     }
 
+    const dummy: Expect = baseExpect;
+    const dummy2: Expect<{}> = baseExpect;
+
     const expect = baseExpect.extend({
       async toHaveAmount(locator: Locator, expected: string, options?: { timeout?: number }) {
+        // Make sure "this" is inferred as ExpectMatcherState.
+        const self: ExpectMatcherState = this;
+        const self2: ReturnType<Expect['getState']> = self;
+
         const baseAmount = locator.locator('.base-amount');
 
         let pass: boolean;
