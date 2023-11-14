@@ -246,8 +246,8 @@ export class Recorder implements InstrumentationListener {
     this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText');
-    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText');
+    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility');
+    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility');
     if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
     this._refreshOverlay();
@@ -281,7 +281,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility')
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
@@ -295,7 +295,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility')
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
@@ -345,7 +345,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
-    if (this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility')
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
