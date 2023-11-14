@@ -45,6 +45,7 @@ x-pw-dialog {
   flex-direction: column;
   position: absolute;
   width: 500px;
+  height: 200px;
   z-index: 10;
 }
 
@@ -212,8 +213,7 @@ textarea.text-editor {
   margin: 6px;
   color: #333;
   outline: 1px solid transparent !important;
-  min-height: 130px;
-  resize: vertical;
+  resize: none;
 }
 
 textarea.text-editor.does-not-match {
