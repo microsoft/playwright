@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+let browserNameForWorkarounds = '';
+export function setBrowserName(name: string) {
+  browserNameForWorkarounds = name;
+}
+
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
   while (element) {
     if (scope.contains(element))
@@ -75,9 +80,9 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
-  // @ts-ignore Typescript doesn't know that checkVisibility exists yet.
-  if (Element.prototype.checkVisibility) {
-    // @ts-ignore Typescript doesn't know that checkVisibility exists yet.
+  // All the browser implement it, but WebKit has a bug which prevents us from using it:
+  // https://bugs.webkit.org/show_bug.cgi?id=264733
+  if (browserNameForWorkarounds !== 'webkit') {
     if (!element.checkVisibility({ checkOpacity: false, checkVisibilityCSS: false }))
       return false;
   } else {

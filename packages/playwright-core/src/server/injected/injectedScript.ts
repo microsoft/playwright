@@ -24,7 +24,7 @@ import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../
 import { visitAllSelectorParts, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText, getElementLabels } from './selectorUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
-import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
@@ -137,6 +137,7 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._browserName = browserName;
+    setBrowserName(browserName);
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
