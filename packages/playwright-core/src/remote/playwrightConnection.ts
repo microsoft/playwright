@@ -77,7 +77,7 @@ export class PlaywrightConnection {
         if (debugLogger.isEnabled('server:channel'))
           debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} SEND ► ${messageString}`);
         if (debugLogger.isEnabled('server:metadata'))
-          this.logServerMetadata(message, 'SEND');
+          this.logServerMetadata(message, messageString, 'SEND');
         ws.send(messageString);
       }
     };
@@ -88,7 +88,7 @@ export class PlaywrightConnection {
       if (debugLogger.isEnabled('server:channel'))
         debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} ◀ RECV ${messageString}`);
       if (debugLogger.isEnabled('server:metadata'))
-        this.logServerMetadata(jsonMessage, 'RECV');
+        this.logServerMetadata(jsonMessage, messageString, 'RECV');
       this._dispatcherConnection.dispatch(jsonMessage);
     });
 
@@ -250,15 +250,14 @@ export class PlaywrightConnection {
     debugLogger.log('server', `[${this._id}] finished cleanup`);
   }
 
-  private logServerMetadata(message: object, direction: 'SEND' | 'RECV') {
-    const serverLogMetadata: { [key: string]: any } = {
+  private logServerMetadata(message: object, messageString: string, direction: 'SEND' | 'RECV') {
+    const serverLogMetadata = {
       timestamp: Date.now(),
-      payloadSizeInBytes: Buffer.byteLength(JSON.stringify(message), 'utf-8')
+      id: (message as any).id,
+      guid: (message as any).guid,
+      method: (message as any).method,
+      payloadSizeInBytes: Buffer.byteLength(messageString, 'utf-8')
     };
-    ['id', 'guid', 'method'].forEach(key => {
-      if (key in message)
-        serverLogMetadata[key] = (message as any)[key];
-    });
     debugLogger.log('server:metadata', (direction === 'SEND' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(serverLogMetadata));
   }
 
