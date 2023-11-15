@@ -134,10 +134,12 @@ class HtmlReporter extends EmptyReporter {
     } else if (!FullConfigInternal.from(this.config)?.cliListOnly) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
+      const hostArg = this._options.host ? ` --host ${this._options.host}` : '';
+      const portArg = this._options.port ? ` --port ${this._options.port}` : '';
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  ${packageManagerCommand} playwright show-report${relativeReportPath}
+  ${packageManagerCommand} playwright show-report${relativeReportPath}${hostArg}${portArg}
 `));
     }
   }
