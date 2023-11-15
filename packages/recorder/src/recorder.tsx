@@ -109,9 +109,11 @@ export const Recorder: React.FC<RecorderProps> = ({
   }, [paused]);
 
   const onEditorChange = React.useCallback((selector: string) => {
+    if (mode === 'none')
+      window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
     setLocator(selector);
     window.dispatch({ event: 'selectorUpdated', params: { selector } });
-  }, []);
+  }, [mode]);
 
   return <div className='recorder'>
     <Toolbar>
