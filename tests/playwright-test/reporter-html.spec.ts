@@ -869,6 +869,33 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
+    test('should auto expand failed test steps', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          const { test, expect } = require('@playwright/test');
+          test('sample', async () => {
+            await test.step('step1', async () => {
+              await test.step('step2', async () => {
+                await test.step('step3', async () => {
+                  throw new Error('my error');
+                });
+              });
+            });
+          });
+        `,
+      }, { 'reporter': 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+      await page.getByText('sample').click();
+      await expect(page.locator('.tree-item-title')).toContainText([
+        'Before Hooks',
+        'step1',
+        'step2',
+        'step3',
+        'After Hooks',
+      ]);
+    });
+
     test.describe('gitCommitInfo plugin', () => {
       test('should include metadata', async ({ runInlineTest, writeFiles, showReport, page }) => {
         const files = {

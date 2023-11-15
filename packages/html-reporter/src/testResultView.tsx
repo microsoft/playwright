@@ -145,9 +145,10 @@ const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ step, depth }) => {
-  return <TreeItem title={<span>
+  const failed = !!step.error || step.duration === -1;
+  return <TreeItem expandByDefault={failed} title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
+    {statusIcon(failed ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
