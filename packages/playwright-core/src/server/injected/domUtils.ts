@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-let browserName = '';
+let browserNameForWorkarounds = '';
 export function setBrowserName(name: string) {
-  browserName = name;
+  browserNameForWorkarounds = name;
 }
 
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
@@ -82,7 +82,7 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
   // details element for example.
   // All the browser implement it, but WebKit has a bug which prevents us from using it:
   // https://bugs.webkit.org/show_bug.cgi?id=264733
-  if (browserName !== 'webkit') {
+  if (browserNameForWorkarounds !== 'webkit') {
     if (!element.checkVisibility({ checkOpacity: false, checkVisibilityCSS: false }))
       return false;
   } else {
