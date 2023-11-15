@@ -178,7 +178,7 @@ export function toHaveAttribute(
   locator: LocatorEx,
   name: string,
   expected: string | RegExp | undefined | { timeout?: number },
-  options?: { timeout?: number },
+  options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   if (!options) {
     // Update params for the case toHaveAttribute(name, options);
@@ -193,7 +193,7 @@ export function toHaveAttribute(
     }, options);
   }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected as (string | RegExp)]);
+    const expectedText = toExpectedTextValues([expected as (string | RegExp)], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
   }, expected as (string | RegExp), options);
 }

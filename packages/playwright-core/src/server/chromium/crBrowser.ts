@@ -59,6 +59,8 @@ export class CRBrowser extends Browser {
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(parent, connection, options);
     browser._devtools = devtools;
+    if (browser.isClank())
+      browser._isCollocatedWithServer = false;
     const session = connection.rootSession;
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
@@ -523,7 +525,7 @@ export class CRBrowserContext extends BrowserContext {
     await Promise.all(openedBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
 
     if (!this._browserContextId) {
-      await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
+      await this.stopVideoRecording();
       // Closing persistent context should close the browser.
       await this._browser.close({ reason });
       return;
@@ -541,6 +543,10 @@ export class CRBrowserContext extends BrowserContext {
       serviceWorker.didClose();
       this._browser._serviceWorkers.delete(targetId);
     }
+  }
+
+  async stopVideoRecording() {
+    await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
   }
 
   onClosePersistent() {

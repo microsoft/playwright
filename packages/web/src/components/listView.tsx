@@ -35,6 +35,7 @@ export type ListViewProps<T> = {
   onIconClicked?: (item: T, index: number) => void,
   noItemsMessage?: string,
   dataTestId?: string,
+  noHighlightOnHover?: boolean,
 };
 
 const scrollPositions = new Map<string, number>();
@@ -57,6 +58,7 @@ export function ListView<T>({
   onIconClicked,
   noItemsMessage,
   dataTestId,
+  noHighlightOnHover,
 }: ListViewProps<T>) {
   const itemListRef = React.useRef<HTMLDivElement>(null);
   const [highlightedItem, setHighlightedItem] = React.useState<any>();
@@ -81,7 +83,7 @@ export function ListView<T>({
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
 
-  return <div className='list-view vbox' role='list' data-testid={dataTestId || (name + '-list')}>
+  return <div className='list-view vbox' role={items.length > 0 ? 'list' : undefined} data-testid={dataTestId || (name + '-list')}>
     <div
       className='list-view-content'
       tabIndex={0}
@@ -131,7 +133,7 @@ export function ListView<T>({
       {noItemsMessage && items.length === 0 && <div className='list-view-empty'>{noItemsMessage}</div>}
       {items.map((item, index) => {
         const selectedSuffix = selectedItem === item ? ' selected' : '';
-        const highlightedSuffix = highlightedItem === item ? ' highlighted' : '';
+        const highlightedSuffix = !noHighlightOnHover && highlightedItem === item ? ' highlighted' : '';
         const errorSuffix = isError?.(item, index) ? ' error' : '';
         const warningSuffix = isWarning?.(item, index) ? ' warning' : '';
         const indentation = indent?.(item, index) || 0;

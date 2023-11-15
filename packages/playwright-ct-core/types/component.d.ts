@@ -19,16 +19,18 @@ type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 export type JsonObject = { [Key in string]?: JsonValue };
 
+// JsxComponentChild can be anything, consider cases like: <>{1}</>, <>{null}</>
+export type JsxComponentChild = JsxComponent | string | number | boolean | null;
 export type JsxComponent = {
   kind: 'jsx',
   type: string,
   props: Record<string, any>,
-  children: (Component | string)[],
+  children: JsxComponentChild[],
 };
 
 export type MountOptions = {
   props?: Record<string, any>,
-  slots?: Record<string, any>,
+  slots?: Record<string, string | string[]>,
   on?: Record<string, Function>,
   hooksConfig?: any,
 };
@@ -39,7 +41,7 @@ export type ObjectComponent = {
   options?: MountOptions
 };
 
-export type Component = JsxComponent | ObjectComponent | number | string | Array<any>;
+export type Component = JsxComponent | ObjectComponent;
 
 declare global {
   interface Window {

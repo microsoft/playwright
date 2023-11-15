@@ -3,50 +3,50 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1086",
+      "revision": "1090",
       "installByDefault": true,
-      "browserVersion": "119.0.6045.33"
+      "browserVersion": "120.0.6099.18"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "1086",
+      "revision": "1090",
       "installByDefault": false,
-      "browserVersion": "119.0.6045.33"
+      "browserVersion": "120.0.6099.18"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1161",
+      "revision": "1168",
       "installByDefault": false,
-      "browserVersion": "120.0.6076.0"
+      "browserVersion": "121.0.6127.0"
     },
     {
       "name": "firefox",
-      "revision": "1425",
+      "revision": "1429",
       "installByDefault": true,
-      "browserVersion": "118.0.1"
+      "browserVersion": "119.0"
     },
     {
       "name": "firefox-asan",
-      "revision": "1425",
+      "revision": "1429",
       "installByDefault": false,
-      "browserVersion": "118.0.1"
+      "browserVersion": "119.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1425",
+      "revision": "1429",
       "installByDefault": false,
-      "browserVersion": "118.0b5"
+      "browserVersion": "120.0b8"
     },
     {
       "name": "webkit",
-      "revision": "1928",
+      "revision": "1943",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
         "mac10.15": "1616",
         "mac11": "1816",
         "mac11-arm64": "1816",
-        "ubuntu18.04": "1728"
+        "ubuntu18.04-x64": "1728"
       },
       "browserVersion": "17.4"
     },

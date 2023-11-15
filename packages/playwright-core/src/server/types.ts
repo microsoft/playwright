@@ -76,6 +76,7 @@ export type FilePayload = {
   name: string,
   mimeType: string,
   buffer: string,
+  lastModifiedMs?: number,
 };
 
 export type MediaType = 'screen' | 'print' | 'no-override';

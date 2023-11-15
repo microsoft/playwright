@@ -65,8 +65,11 @@ function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | 
   if (!tsconfig.tsConfigPath)
     return;
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
-  const absoluteBaseUrl = tsconfig.baseUrl ? path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl) : undefined;
-  const pathsFallback = [{ key: '*', values: ['*'] }];
+  // When no explicit baseUrl is set, resolve paths relative to the tsconfig file.
+  // See https://www.typescriptlang.org/tsconfig#paths
+  const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl ?? '.');
+  // Only add the catch-all mapping when baseUrl is specified
+  const pathsFallback = tsconfig.baseUrl ? [{ key: '*', values: ['*'] }] : [];
   return {
     allowJs: tsconfig.allowJs,
     absoluteBaseUrl,

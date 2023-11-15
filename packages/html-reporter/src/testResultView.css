@@ -39,19 +39,6 @@
   color: var(--color-fg-muted);
 }
 
-.test-result-error-message {
-  white-space: pre;
-  font-family: monospace;
-  overflow: auto;
-  flex: none;
-  padding: 0;
-  background-color: var(--color-canvas-subtle);
-  border-radius: 6px;
-  padding: 16px;
-  line-height: initial;
-  margin-bottom: 6px;
-}
-
 .test-result-counter {
   border-radius: 12px;
   color: var(--color-canvas-default);

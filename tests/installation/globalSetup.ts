@@ -17,13 +17,13 @@
 import path from 'path';
 import fs from 'fs';
 import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
-import { rimraf } from 'playwright-core/lib/utilsBundle';
+import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
 import { TMP_WORKSPACES } from './npmTest';
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
 
 async function globalSetup() {
-  await rimraf(TMP_WORKSPACES);
+  await removeFolders([TMP_WORKSPACES]);
   console.log(`Temporary workspaces will be created in ${TMP_WORKSPACES}. They will not be removed at the end. Set DEBUG=itest to determine which sub-dir a specific test is using.`);
   await fs.promises.mkdir(TMP_WORKSPACES, { recursive: true });
 
@@ -32,7 +32,7 @@ async function globalSetup() {
   } else {
     console.log('Building packages. Set PWTEST_INSTALLATION_TEST_SKIP_PACKAGE_BUILDS to skip.');
     const outputDir = path.join(__dirname, 'output');
-    await rimraf(outputDir);
+    await removeFolders([outputDir]);
     await fs.promises.mkdir(outputDir, { recursive: true });
 
     const build = async (buildTarget: string, pkgNameOverride?: string) => {

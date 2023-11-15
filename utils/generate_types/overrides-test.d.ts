@@ -370,7 +370,7 @@ export interface ExpectMatcherUtils {
   stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
 }
 
-type State = {
+export type ExpectMatcherState = {
   isNot: boolean;
   promise: 'rejects' | 'resolves' | '';
   utils: ExpectMatcherUtils;
@@ -402,7 +402,7 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
-export type Expect<ExtendedMatchers> = {
+export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
@@ -411,18 +411,13 @@ export type Expect<ExtendedMatchers> = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-  extend<MoreMatchers extends Record<string, (this: State, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
+  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
     timeout?: number,
     soft?: boolean,
   }) => Expect<ExtendedMatchers>;
-  getState(): {
-    expand?: boolean;
-    isNot?: boolean;
-    promise?: string;
-    utils: any;
-  };
+  getState(): ExpectMatcherState;
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
 

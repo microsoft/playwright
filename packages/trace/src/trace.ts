@@ -21,7 +21,7 @@ import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 export type Size = { width: number, height: number };
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export type VERSION = 5;
+export type VERSION = 6;
 
 export type BrowserContextEventOptions = {
   viewport?: Size,
@@ -87,10 +87,16 @@ export type AfterActionTraceEvent = {
   callId: string;
   endTime: number;
   afterSnapshot?: string;
-  log: string[];
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
   result?: any;
+};
+
+export type LogTraceEvent = {
+  type: 'log',
+  callId: string;
+  time: number;
+  message: string;
 };
 
 export type EventTraceEvent = {
@@ -147,6 +153,7 @@ export type TraceEvent =
     InputActionTraceEvent |
     AfterActionTraceEvent |
     EventTraceEvent |
+    LogTraceEvent |
     ConsoleMessageTraceEvent |
     ResourceSnapshotTraceEvent |
     FrameSnapshotTraceEvent |

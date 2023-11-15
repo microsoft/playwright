@@ -47,6 +47,10 @@ export function cssEscape(s: string): string {
   return result;
 }
 
+export function quoteCSSAttributeValue(text: string): string {
+  return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
+}
+
 function cssEscapeOne(s: string, i: number): string {
   // https://drafts.csswg.org/cssom/#serialize-an-identifier
   const c = s.charCodeAt(i);
@@ -98,4 +102,17 @@ export function escapeForAttributeSelector(value: string | RegExp, exact: boolea
   // However, our attribute selectors do not conform to CSS parsing spec,
   // so we escape them differently.
   return `"${value.replace(/\\/g, '\\\\').replace(/["]/g, '\\"')}"${exact ? 's' : 'i'}`;
+}
+
+export function trimString(input: string, cap: number, suffix: string = ''): string {
+  if (input.length <= cap)
+    return input;
+  const chars = [...input];
+  if (chars.length > cap)
+    return chars.slice(0, cap - suffix.length).join('') + suffix;
+  return chars.join('');
+}
+
+export function trimStringWithEllipsis(input: string, cap: number): string {
+  return trimString(input, cap, '\u2026');
 }

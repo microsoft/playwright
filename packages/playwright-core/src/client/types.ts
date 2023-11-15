@@ -76,14 +76,11 @@ type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[];
   env?: Env;
   logger?: Logger;
+  firefoxUserPrefs?: { [key: string]: string | number | boolean };
 };
 
-type FirefoxUserPrefs = {
-  firefoxUserPrefs?: { [key: string]: string | number | boolean },
-};
-type LaunchOptionsBase = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
-export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
-export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserContextOptions, 'storageState'>;
+export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {
   wsEndpoint: string,
@@ -117,7 +114,8 @@ export type LaunchServerOptions = {
   port?: number,
   wsPath?: string,
   logger?: Logger,
-} & FirefoxUserPrefs;
+  firefoxUserPrefs?: { [key: string]: string | number | boolean };
+};
 
 export type LaunchAndroidServerOptions = {
   deviceSerialNumber?: string,

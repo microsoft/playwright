@@ -85,7 +85,7 @@ assertThat(page).not().hasURL("error");
 ```
 
 ```csharp
-await Expect(page).Not.ToHaveURL("error");
+await Expect(Page).Not.ToHaveURL("error");
 ```
 
 ## async method: PageAssertions.NotToHaveTitle
@@ -261,7 +261,7 @@ expect(page).to_have_title(re.compile(r".*checkout"))
 ```
 
 ```csharp
-await Expect(page).ToHaveTitle("Playwright");
+await Expect(Page).ToHaveTitle("Playwright");
 ```
 
 ### param: PageAssertions.toHaveTitle.titleOrRegExp
@@ -310,7 +310,7 @@ expect(page).to_have_url(re.compile(".*checkout"))
 ```
 
 ```csharp
-await Expect(page).ToHaveURL(new Regex(".*checkout"));
+await Expect(Page).ToHaveURL(new Regex(".*checkout"));
 ```
 
 ### param: PageAssertions.toHaveURL.urlOrRegExp

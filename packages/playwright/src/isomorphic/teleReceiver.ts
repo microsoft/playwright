@@ -196,7 +196,7 @@ export class TeleReporterReceiver {
   }
 
   private _onConfigure(config: JsonConfig) {
-    this._rootDir = this._reportConfig?.rootDir || config.rootDir;
+    this._rootDir = config.rootDir;
     this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
     this._reporter.onConfigure?.(this._config);
@@ -324,7 +324,6 @@ export class TeleReporterReceiver {
     const result = { ...baseFullConfig, ...config };
     if (this._reportConfig) {
       result.configFile = this._reportConfig.configFile;
-      result.rootDir = this._reportConfig.rootDir;
       result.reportSlowTests = this._reportConfig.reportSlowTests;
       result.quiet = this._reportConfig.quiet;
       result.reporter = [...this._reportConfig.reporter];
@@ -493,16 +492,10 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
+    const results = this.results.filter(result => result.status !== 'interrupted');
+    if (results.every(result => result.status === 'skipped'))
       return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
+    const failures = results.filter(result => result.status !== this.expectedStatus);
     if (!failures.length) // all passed
       return 'expected';
     if (failures.length === results.length) // all failed

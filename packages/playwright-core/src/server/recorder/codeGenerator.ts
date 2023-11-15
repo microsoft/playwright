@@ -141,12 +141,11 @@ export class CodeGenerator extends EventEmitter {
       return;
     }
 
-    if (signal.name === 'navigation') {
+    if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       this.addAction({
         frame: {
           pageAlias,
-          isMainFrame: frame._page.mainFrame() === frame,
-          url: frame.url(),
+          isMainFrame: true,
         },
         committed: true,
         action: {

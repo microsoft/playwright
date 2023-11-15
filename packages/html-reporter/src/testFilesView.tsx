@@ -20,6 +20,8 @@ import type { Filter } from './filter';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
 import { msToString } from './uiUtils';
+import { AutoChip } from './chip';
+import { TestErrorView } from './testErrorView';
 
 export const TestFilesView: React.FC<{
   report?: HTMLReport,
@@ -43,11 +45,14 @@ export const TestFilesView: React.FC<{
   return <>
     <div className='mt-2 mx-1' style={{ display: 'flex' }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
-      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total}</div>}
+      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
       <div style={{ flex: 'auto' }}></div>
       <div data-testid="overall-time" style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
-      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(filteredStats.duration)}</div>
+      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report?.duration ?? 0)}</div>
     </div>
+    {report && !!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
+      {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
+    </AutoChip>}
     {report && filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileView
         key={`file-${file.fileId}`}

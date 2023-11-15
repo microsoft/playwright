@@ -119,9 +119,9 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
   const searchQuery = params.length ? '?' + params.join('&') : '';
   const urlPath  = `/trace/${app || 'index.html'}${searchQuery}`;
 
-  server.routePath('/', (_, response) => {
+  server.routePath('/', (request, response) => {
     response.statusCode = 302;
-    response.setHeader('Location', urlPath);
+    response.setHeader('Location', urlPath + request.url!.substring(1));
     response.end();
     return true;
   });

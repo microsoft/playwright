@@ -16,7 +16,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { rimraf } from '../utilsBundle';
+
+export const fileUploadSizeLimit = 50 * 1024 * 1024;
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -25,12 +26,10 @@ export async function mkdirIfNeeded(filePath: string) {
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }
 
-export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
-  return await Promise.all(dirs.map((dir: string) => {
-    return new Promise<Error|null|undefined>(fulfill => {
-      rimraf(dir, { maxRetries: 10 }).then(() => fulfill(undefined)).catch((e: Error) => fulfill(e));
-    });
-  }));
+export async function removeFolders(dirs: string[]): Promise<Error[]> {
+  return await Promise.all(dirs.map((dir: string) =>
+    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 })
+  )).catch(e => e);
 }
 
 export function canAccessFile(file: string) {

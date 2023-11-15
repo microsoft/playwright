@@ -93,6 +93,10 @@ export class HarRouter {
     page.once(Events.Page.Close, () => this.dispose());
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.dispose();
+  }
+
   dispose() {
     this._localUtils._channel.harClose({ harId: this._harId }).catch(() => {});
   }

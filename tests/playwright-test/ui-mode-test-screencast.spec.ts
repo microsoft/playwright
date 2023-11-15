@@ -44,6 +44,6 @@ test('should show screenshots', async ({ runUITest }) => {
   await page.getByText('test 2', { exact: true }).click();
   await expect(
       page.locator('.CodeMirror .source-line-running'),
-  ).toContainText(`test('test 2', async ({ page }) => {`);
+  ).toContainText(`await page.waitForTimeout(1000);`);
   await expect(page.locator('.film-strip-frame').first()).toBeVisible();
 });

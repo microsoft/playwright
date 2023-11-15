@@ -30,12 +30,30 @@ const injectedScripts = [
 ];
 
 const modulePrefix = `
+var __commonJS = obj => {
+  let required = false;
+  let result;
+  return function __require() {
+    if (!required) {
+      required = true;
+      let fn;
+      for (const name in obj) { fn = obj[name]; break; }
+      const module = { exports: {} };
+      fn(module.exports, module);
+      result = module.exports;
+    }
+    return result;
+  }
+};
 var __export = (target, all) => {for (var name in all) target[name] = all[name];};
+var __toESM = mod => ({ ...mod, 'default': mod });
 var __toCommonJS = mod => ({ ...mod, __esModule: true });
 `;
 
 async function replaceEsbuildHeader(content, outFileJs) {
-  const sourcesStart = content.indexOf('// packages/playwright-core/src/server');
+  let sourcesStart = content.indexOf('__toCommonJS');
+  if (sourcesStart !== -1)
+    sourcesStart = content.indexOf('\n', sourcesStart);
   if (sourcesStart === -1)
     throw new Error(`Did not find start of bundled code in ${outFileJs}`);
 
@@ -49,19 +67,33 @@ async function replaceEsbuildHeader(content, outFileJs) {
   return content;
 }
 
+const inlineCSSPlugin = {
+  name: 'inlineCSSPlugin',
+  setup(build) {
+    build.onLoad({ filter: /\.css$/ }, async (args) => {
+      const f = await fs.promises.readFile(args.path)
+      const css = await esbuild.transform(f, { loader: 'css', minify: true });
+      return { loader: 'text', contents: css.code };
+    });
+  },
+};
+
 (async () => {
   const generatedFolder = path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated');
   await fs.promises.mkdir(generatedFolder, { recursive: true });
   for (const injected of injectedScripts) {
     const outdir = path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed');
-    await esbuild.build({
+    const buildOutput = await esbuild.build({
       entryPoints: [injected],
       bundle: true,
       outdir,
       format: 'cjs',
       platform: 'browser',
-      target: 'ES2019'
+      target: 'ES2019',
+      plugins: [inlineCSSPlugin],
     });
+    for (const message of [...buildOutput.errors, ...buildOutput.warnings])
+      console.log(message.text);
     const baseName = path.basename(injected);
     const outFileJs = path.join(outdir, baseName.replace('.ts', '.js'));
     let content = await fs.promises.readFile(outFileJs, 'utf-8');

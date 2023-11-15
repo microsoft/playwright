@@ -200,6 +200,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
+    if (!params.runBeforeUnload)
+      metadata.potentiallyClosesScope = true;
     await this._page.close(metadata, params);
   }
 
@@ -362,9 +364,11 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
 
   async resolve(params: channels.BindingCallResolveParams, metadata: CallMetadata): Promise<void> {
     this._resolve!(parseArgument(params.result));
+    this._dispose();
   }
 
   async reject(params: channels.BindingCallRejectParams, metadata: CallMetadata): Promise<void> {
     this._reject!(parseError(params.error));
+    this._dispose();
   }
 }

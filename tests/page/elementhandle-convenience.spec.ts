@@ -30,6 +30,13 @@ it('should have a nice preview', async ({ page, server }) => {
   expect(String(check)).toBe('JSHandle@<input checked id="check" foo="bar"" type="checkbox"/>');
 });
 
+it('should have a nice preview for non-ascii attributes/children', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div title="${'😛'.repeat(100)}">${'😛'.repeat(100)}`);
+  const handle = await page.$('div');
+  await expect.poll(() => String(handle)).toBe(`JSHandle@<div title=\"😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛…>😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛…</div>`);
+});
+
 it('getAttribute should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');

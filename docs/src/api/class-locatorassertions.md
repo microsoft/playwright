@@ -929,6 +929,11 @@ await Expect(
 
 Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
 
+**Details**
+
+When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual text and
+in the expected string before matching. When regular expression is used, the actual text is matched as is.
+
 **Usage**
 
 ```js
@@ -1150,6 +1155,12 @@ Expected attribute value.
 
 ### option: LocatorAssertions.toHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+### option: LocatorAssertions.toHaveAttribute.ignoreCase
+* since: v1.40
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ## async method: LocatorAssertions.toHaveAttribute#2
 * since: v1.39
@@ -1591,6 +1602,11 @@ Note that screenshot assertions only work with Playwright test runner.
   - alias-java: hasText
 
 Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
+
+**Details**
+
+When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual text and
+in the expected string before matching. When regular expression is used, the actual text is matched as is.
 
 **Usage**
 

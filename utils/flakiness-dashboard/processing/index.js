@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {blobServiceClient, gunzipAsync, deleteBlob} = require('./utils.js');
+const {gunzipAsync, deleteBlob} = require('./utils.js');
 const {processDashboardRaw} = require('./dashboard_raw.js');
 const {processDashboardCompressedV1} = require('./dashboard_compressed_v1.js');
 

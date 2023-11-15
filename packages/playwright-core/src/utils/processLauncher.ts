@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { isUnderTest } from './';
 import { removeFolders } from './fileUtils';
-import { rimraf } from '../utilsBundle';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -245,7 +245,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     for (const dir of options.tempDirectories) {
       try {
-        rimraf.sync(dir);
+        fs.rmSync(dir, { force: true, recursive: true, maxRetries: 5 });
       } catch (e) {
         options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${dir}: ${e}`);
       }

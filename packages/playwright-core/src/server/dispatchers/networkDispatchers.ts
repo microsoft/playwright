@@ -194,12 +194,14 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     this.adopt(tracing);
   }
 
-  async storageState(params?: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
+  async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
     return this._object.storageState();
   }
 
-  async dispose(params?: channels.APIRequestContextDisposeParams): Promise<void> {
+  async dispose(_: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
+    metadata.potentiallyClosesScope = true;
     await this._object.dispose();
+    this._dispose();
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {

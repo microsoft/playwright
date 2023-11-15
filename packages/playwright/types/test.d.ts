@@ -5236,7 +5236,7 @@ export interface ExpectMatcherUtils {
   stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
 }
 
-type State = {
+export type ExpectMatcherState = {
   isNot: boolean;
   promise: 'rejects' | 'resolves' | '';
   utils: ExpectMatcherUtils;
@@ -5268,7 +5268,7 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
-export type Expect<ExtendedMatchers> = {
+export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
@@ -5277,18 +5277,13 @@ export type Expect<ExtendedMatchers> = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-  extend<MoreMatchers extends Record<string, (this: State, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
+  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
     timeout?: number,
     soft?: boolean,
   }) => Expect<ExtendedMatchers>;
-  getState(): {
-    expand?: boolean;
-    isNot?: boolean;
-    promise?: string;
-    utils: any;
-  };
+  getState(): ExpectMatcherState;
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
 
@@ -5632,6 +5627,11 @@ interface LocatorAssertions {
    * Ensures the {@link Locator} points to an element that contains the given text. You can use regular expressions for
    * the value as well.
    *
+   * **Details**
+   *
+   * When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual
+   * text and in the expected string before matching. When regular expression is used, the actual text is matched as is.
+   *
    * **Usage**
    *
    * ```js
@@ -5708,6 +5708,12 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -6020,6 +6026,11 @@ interface LocatorAssertions {
   /**
    * Ensures the {@link Locator} points to an element with the given text. You can use regular expressions for the value
    * as well.
+   *
+   * **Details**
+   *
+   * When `expected` parameter is a string, Playwright will normalize whitespaces and line breaks both in the actual
+   * text and in the expected string before matching. When regular expression is used, the actual text is matched as is.
    *
    * **Usage**
    *

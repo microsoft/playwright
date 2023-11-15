@@ -92,3 +92,31 @@ it('should fail with WebSocket if not ignored', async ({ browser, httpsServer })
   expect(value).toBe('Error');
   await context.close();
 });
+
+it('serviceWorker should intercept document request', async ({ browser, httpsServer, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27768' });
+  it.fixme(browserName === 'chromium');
+  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  await context.route('**/*', route => route.continue());
+  httpsServer.setRoute('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end(`
+      self.addEventListener('fetch', event => {
+        event.respondWith(new Response('intercepted'));
+      });
+      self.addEventListener('activate', event => {
+        event.waitUntil(clients.claim());
+      });
+    `);
+  });
+  await page.goto(httpsServer.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const waitForControllerChange = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+    await navigator.serviceWorker.register('/sw.js');
+    await waitForControllerChange;
+  });
+  await page.reload();
+  expect(await page.textContent('body')).toBe('intercepted');
+  await context.close();
+});

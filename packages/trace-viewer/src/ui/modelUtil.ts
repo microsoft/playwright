@@ -38,6 +38,7 @@ export type SourceModel = {
 
 export type ActionTraceEventInContext = ActionTraceEvent & {
   context: ContextEntry;
+  log: { time: number, message: string }[];
 };
 
 export type ActionTreeItem = {

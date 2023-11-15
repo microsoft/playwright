@@ -35,7 +35,7 @@ import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../common/types';
-import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
@@ -43,6 +43,7 @@ import { EventEmitter } from 'events';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { quoteCSSAttributeValue } from '../utils/isomorphic/stringUtils';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
 import type { Dialog } from './dialog';
 
@@ -54,6 +55,7 @@ export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
+  private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
@@ -96,6 +98,11 @@ export class Recorder implements InstrumentationListener {
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
     this._currentLanguage = this._contextRecorder.languageName();
+
+    if (isUnderTest()) {
+      // Most of our tests put elements at the top left, so get out of the way.
+      this._overlayState.offsetX = 200;
+    }
   }
 
   private static async defaultRecorderAppFactory(recorder: Recorder) {
@@ -179,6 +186,7 @@ export class Recorder implements InstrumentationListener {
         actionSelector,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
+        overlay: this._overlayState,
       };
       return uiState;
     });
@@ -193,6 +201,18 @@ export class Recorder implements InstrumentationListener {
       const fullSelector = (await Promise.all(selectorPromises)).filter(Boolean);
       fullSelector.push(selector);
       await this._recorderApp?.setSelector(fullSelector.join(' >> internal:control=enter-frame >> '), true);
+    });
+
+    await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
+      if (frame.parentFrame())
+        return;
+      this.setMode(mode);
+    });
+
+    await this._context.exposeBinding('__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
+      if (frame.parentFrame())
+        return;
+      this._overlayState = state;
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -226,15 +246,19 @@ export class Recorder implements InstrumentationListener {
     this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording');
-    this._debugger.setMuted(this._mode === 'recording');
-    if (this._mode !== 'none' && this._context.pages().length === 1)
+    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
+    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
+    if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
     this._refreshOverlay();
   }
 
   resume() {
     this._debugger.resume(false);
+  }
+
+  mode() {
+    return this._mode;
   }
 
   setHighlightedSelector(language: Language, selector: string) {
@@ -257,7 +281,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
@@ -271,7 +295,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
@@ -321,7 +345,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
-    if (this._mode === 'recording')
+    if (this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
@@ -516,7 +540,6 @@ class ContextRecorder extends EventEmitter {
     return {
       pageAlias: this._pageAliases.get(page)!,
       isMainFrame: true,
-      url: page.mainFrame().url(),
     };
   }
 
@@ -531,16 +554,6 @@ class ContextRecorder extends EventEmitter {
     if (chain.length === 1)
       return this._describeMainFrame(page);
 
-    const hasUniqueName = page.frames().filter(f => f.name() === frame.name()).length === 1;
-    const fallback: actions.FrameDescription = {
-      pageAlias,
-      isMainFrame: false,
-      url: frame.url(),
-      name: frame.name() && hasUniqueName ? frame.name() : undefined,
-    };
-    if (chain.length > 3)
-      return fallback;
-
     const selectorPromises: Promise<string | undefined>[] = [];
     for (let i = 0; i < chain.length - 1; i++)
       selectorPromises.push(findFrameSelector(chain[i + 1]));
@@ -548,11 +561,24 @@ class ContextRecorder extends EventEmitter {
     const result = await raceAgainstDeadline(() => Promise.all(selectorPromises), monotonicTime() + 2000);
     if (!result.timedOut && result.result.every(selector => !!selector)) {
       return {
-        ...fallback,
+        pageAlias,
+        isMainFrame: false,
         selectorsChain: result.result as string[],
       };
     }
-    return fallback;
+    // Best effort to find a selector for the frame.
+    const selectorsChain = [];
+    for (let i = 0; i < chain.length - 1; i++) {
+      if (chain[i].name())
+        selectorsChain.push(`iframe[name=${quoteCSSAttributeValue(chain[i].name())}]`);
+      else
+        selectorsChain.push(`iframe[src=${quoteCSSAttributeValue(chain[i].url())}]`);
+    }
+    return {
+      pageAlias,
+      isMainFrame: false,
+      selectorsChain,
+    };
   }
 
   testIdAttributeName(): string {

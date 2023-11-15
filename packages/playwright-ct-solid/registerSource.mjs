@@ -20,9 +20,8 @@
 import { render as __pwSolidRender, createComponent as __pwSolidCreateComponent } from 'solid-js/web';
 import __pwH from 'solid-js/h';
 
-/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponentChild} JsxComponentChild */
 /** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
-/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {() => import('solid-js').JSX.Element} FrameworkComponent */
 
 /** @type {Map<string, () => Promise<FrameworkComponent>>} */
@@ -39,19 +38,19 @@ export function pwRegister(components) {
 }
 
 /**
- * @param {Component} component
- * @returns {component is JsxComponent | ObjectComponent}
+ * @param {any} component
+ * @returns {component is JsxComponent}
  */
 function isComponent(component) {
   return !(typeof component !== 'object' || Array.isArray(component));
 }
 
 /**
- * @param {Component} component
+ * @param {JsxComponent | JsxComponentChild} component
  */
 async function __pwResolveComponent(component) {
   if (!isComponent(component))
-    return
+    return;
 
   let componentFactory = __pwLoaderRegistry.get(component.type);
   if (!componentFactory) {
@@ -67,37 +66,34 @@ async function __pwResolveComponent(component) {
   if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
-  if(componentFactory)
-    __pwRegistry.set(component.type, await componentFactory())
+  if (componentFactory)
+    __pwRegistry.set(component.type, await componentFactory());
 
   if ('children' in component)
-    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
-}
-
-function __pwCreateChild(child) {
-  return typeof child === 'string' ? child : __pwCreateComponent(child);
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
 /**
- * @param {Component} component
+ * @param {JsxComponentChild} child
+ */
+function __pwCreateChild(child) {
+  if (Array.isArray(child))
+    return child.map(grandChild => __pwCreateChild(grandChild));
+  if (isComponent(child))
+    return __pwCreateComponent(child);
+  return child;
+}
+
+/**
+ * @param {JsxComponent} component
  */
 function __pwCreateComponent(component) {
-  if (typeof component !== 'object' || Array.isArray(component))
-    return component;
-
   const componentFunc = __pwRegistry.get(component.type);
-
-  if (component.kind !== 'jsx')
-    throw new Error('Object mount notation is not supported');
-
-  const children = component.children.reduce((/** @type {any[]} */ children, current) => {
-    const child = __pwCreateChild(current);
-    if (Array.isArray(child))
-      return child.map(grandChild => __pwCreateChild(grandChild));
-    if (typeof child !== 'string' || !!child.trim())
-      children.push(child);
-    return children;
-  }, []);
+  const children = component.children.map(child => __pwCreateChild(child)).filter(child => {
+    if (typeof child === 'string')
+      return !!child.trim();
+    return true;
+  });
 
   if (!componentFunc)
     return __pwH(component.type, component.props, children);
@@ -108,6 +104,9 @@ function __pwCreateComponent(component) {
 const __pwUnmountKey = Symbol('unmountKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  if (component.kind !== 'jsx')
+    throw new Error('Object mount notation is not supported');
+
   await __pwResolveComponent(component);
   let App = () => __pwCreateComponent(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
@@ -132,6 +131,9 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  if (component.kind !== 'jsx')
+    throw new Error('Object mount notation is not supported');
+
   window.playwrightUnmount(rootElement);
   window.playwrightMount(component, rootElement, {});
 };

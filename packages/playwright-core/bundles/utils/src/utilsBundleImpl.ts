@@ -46,9 +46,6 @@ export { program } from 'commander';
 import progressLibrary from 'progress';
 export const progress = progressLibrary;
 
-import rimrafLibrary from 'rimraf';
-export const rimraf = rimrafLibrary;
-
 export { SocksProxyAgent } from 'socks-proxy-agent';
 
 import StackUtilsLibrary from 'stack-utils';

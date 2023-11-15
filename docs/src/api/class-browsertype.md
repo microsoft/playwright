@@ -337,6 +337,12 @@ use a temporary directory instead.
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-v1.8-%%
 * since: v1.8
 
+### option: BrowserType.launchPersistentContext.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
+* since: v1.40
+
+### option: BrowserType.launchPersistentContext.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
+* since: v1.40
+
 ## async method: BrowserType.launchServer
 * since: v1.8
 * langs: js

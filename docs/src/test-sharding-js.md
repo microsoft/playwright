@@ -141,6 +141,8 @@ You can now see the reports have been merged and a combined HTML report is avail
 
 `npx playwright merge-reports path/to/blob-reports-dir` reads all blob reports from the passed directory and merges them into a single report.
 
+When merging reports from different OS'es you'll have to provide an explicit merge config to disambiguate which directory should be used as tests root.
+
 Supported options:
 - `--reporter reporter-to-use`
 
@@ -166,6 +168,7 @@ Supported options:
 
   ```ts title="merge.config.ts"
   export default {
+    testDir: 'e2e',
     reporter: [['html', { open: 'never' }]],
   };
   ```

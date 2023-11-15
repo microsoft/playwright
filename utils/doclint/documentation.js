@@ -55,8 +55,8 @@ const md = require('../markdown');
  * @typedef {{
  *   langs: Langs,
  *   since: string,
- *   deprecated: string | undefined,
- *   discouraged: string | undefined,
+ *   deprecated?: string | undefined,
+ *   discouraged?: string | undefined,
  *   experimental: boolean
  * }} Metainfo
  */

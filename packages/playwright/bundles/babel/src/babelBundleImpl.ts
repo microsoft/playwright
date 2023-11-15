@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
 import type { TSExportAssignment, ImportDeclaration } from '@babel/types';
 import type { TemplateBuilder } from '@babel/template';
@@ -46,6 +47,7 @@ function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, plugin
   if (isTypeScript) {
     plugins.push(
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
+        [require('@babel/plugin-proposal-explicit-resource-management')],
         [require('@babel/plugin-transform-class-properties')],
         [require('@babel/plugin-transform-class-static-block')],
         [require('@babel/plugin-transform-numeric-separator')],
@@ -91,7 +93,7 @@ function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, plugin
   } else {
     plugins.push([require('@babel/plugin-transform-react-jsx'), {
       runtime: 'automatic',
-      importSource: 'playwright'
+      importSource: path.dirname(require.resolve('playwright'))
     }]);
   }
 

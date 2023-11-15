@@ -125,7 +125,7 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
 
 const MetadataViewItem: React.FC<{ content: JSX.Element | string; icon?: keyof typeof icons, href?: string, testId?: string }> = ({ content, icon, href, testId }) => {
   return (
-    <div className='my-1 hbox' data-test-id={testId} >
+    <div className='my-1 hbox' data-testid={testId} >
       <div className='mr-2'>
         {icons[icon || 'blank']()}
       </div>

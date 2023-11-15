@@ -587,6 +587,19 @@ tests:
     - npm ci
     - npx playwright test --project=$PROJECT --shard=$SHARD
 ```
+### Google Cloud Build
+* langs: js
+
+To run Playwright tests on Google Cloud Build, use our public Docker image ([see Dockerfile](./docker.md)).
+
+```yml
+steps:
+- name: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+  script: 
+  ...
+  env:
+  - 'CI=true'
+```
 
 ## Caching browsers
 

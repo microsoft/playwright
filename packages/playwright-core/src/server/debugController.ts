@@ -35,6 +35,7 @@ export class DebugController extends SdkObject {
     InspectRequested: 'inspectRequested',
     SourceChanged: 'sourceChanged',
     Paused: 'paused',
+    SetModeRequested: 'setModeRequested',
   };
 
   private _autoCloseTimer: NodeJS.Timeout | undefined;
@@ -122,7 +123,7 @@ export class DebugController extends SdkObject {
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelector();
-      if (params.mode === 'recording')
+      if (params.mode !== 'inspecting')
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
@@ -239,5 +240,9 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setPaused(paused: boolean) {
     this._debugController.emit(DebugController.Events.Paused, { paused });
+  }
+
+  override async setMode(mode: Mode) {
+    this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
   }
 }

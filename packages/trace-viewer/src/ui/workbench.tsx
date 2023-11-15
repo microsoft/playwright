@@ -34,8 +34,11 @@ import { AttachmentsTab } from './attachmentsTab';
 import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting } from '@web/uiUtils';
+import { useSetting, msToString } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
+import './workbench.css';
+import { testStatusIcon, testStatusText } from './testUtils';
+import type { UITestStatus } from './testUtils';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -46,7 +49,8 @@ export const Workbench: React.FunctionComponent<{
   initialSelection?: ActionTraceEventInContext,
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
-}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
+  status?: UITestStatus,
+}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
@@ -68,12 +72,21 @@ export const Workbench: React.FunctionComponent<{
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
     const failedAction = model?.failedAction();
-    if (initialSelection && model?.actions.includes(initialSelection))
+    if (initialSelection && model?.actions.includes(initialSelection)) {
       setSelectedAction(initialSelection);
-    else if (failedAction)
+    } else if (failedAction) {
       setSelectedAction(failedAction);
-    else if (model?.actions.length)
-      setSelectedAction(model.actions[model.actions.length - 1]);
+    } else if (model?.actions.length) {
+      // Select the last non-after hooks item.
+      let index = model.actions.length - 1;
+      for (let i = 0; i < model.actions.length; ++i) {
+        if (model.actions[i].apiName === 'After Hooks' && i) {
+          index = i - 1;
+          break;
+        }
+      }
+      setSelectedAction(model.actions[index]);
+    }
   }, [model, selectedAction, setSelectedAction, initialSelection]);
 
   const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
@@ -118,7 +131,7 @@ export const Workbench: React.FunctionComponent<{
   const logTab: TabbedPaneTabModel = {
     id: 'log',
     title: 'Log',
-    render: () => <LogTab action={activeAction} />
+    render: () => <LogTab action={activeAction} isLive={isLive} />
   };
   const errorsTab: TabbedPaneTabModel = {
     id: 'errors',
@@ -185,6 +198,12 @@ export const Workbench: React.FunctionComponent<{
     return { boundaries };
   }, [model]);
 
+  let time: number = 0;
+  if (!isLive && model && model.endTime >= 0)
+    time = model.endTime - model.startTime;
+  else if (model && model.wallTime)
+    time = Date.now() - model.wallTime;
+
   return <div className='vbox workbench'>
     <Timeline
       model={model}
@@ -211,17 +230,25 @@ export const Workbench: React.FunctionComponent<{
             {
               id: 'actions',
               title: 'Actions',
-              component: <ActionList
-                sdkLanguage={sdkLanguage}
-                actions={model?.actions || []}
-                selectedAction={model ? selectedAction : undefined}
-                selectedTime={selectedTime}
-                setSelectedTime={setSelectedTime}
-                onSelected={onActionSelected}
-                onHighlighted={setHighlightedAction}
-                revealConsole={() => selectPropertiesTab('console')}
-                isLive={isLive}
-              />
+              component: <div className='vbox'>
+                {status && <div className='workbench-run-status'>
+                  <span className={`codicon ${testStatusIcon(status)}`}></span>
+                  <div>{testStatusText(status)}</div>
+                  <div className='spacer'></div>
+                  <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
+                </div>}
+                <ActionList
+                  sdkLanguage={sdkLanguage}
+                  actions={model?.actions || []}
+                  selectedAction={model ? selectedAction : undefined}
+                  selectedTime={selectedTime}
+                  setSelectedTime={setSelectedTime}
+                  onSelected={onActionSelected}
+                  onHighlighted={setHighlightedAction}
+                  revealConsole={() => selectPropertiesTab('console')}
+                  isLive={isLive}
+                />
+              </div>
             },
             {
               id: 'metadata',
@@ -251,6 +278,7 @@ export const Workbench: React.FunctionComponent<{
               setSidebarLocation('bottom');
             }} />
         ]}
+        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
       />
     </SplitView>
   </div>;

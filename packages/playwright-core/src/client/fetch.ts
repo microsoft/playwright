@@ -95,6 +95,10 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     this._tracing = Tracing.from(initializer.tracing);
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.dispose();
+  }
+
   async dispose(): Promise<void> {
     await this._instrumentation.onWillCloseRequestContext(this);
     await this._channel.dispose();
@@ -300,6 +304,10 @@ export class APIResponse implements api.APIResponse {
   async json(): Promise<object> {
     const content = await this.text();
     return JSON.parse(content);
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.dispose();
   }
 
   async dispose(): Promise<void> {

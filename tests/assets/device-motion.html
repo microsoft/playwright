@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Device motion test</title>
+</head>
+
+<body>
+  <script>
+    window.result = 'Was not moved';
+    window.acceleration = undefined;
+    window.accelerationIncludingGravity = undefined;
+    window.rotationRate = undefined;
+    window.interval = undefined;
+
+    document.addEventListener('devicemotion', onMotion, false);
+
+    function onMotion(event) {
+      window.result = 'Moved';
+      window.acceleration = event.acceleration;
+      window.accelerationIncludingGravity = event.accelerationIncludingGravity;
+      window.rotationRate = event.rotationRate;
+      window.interval = event.interval;
+    }
+  </script>
+</body>
+
+</html>

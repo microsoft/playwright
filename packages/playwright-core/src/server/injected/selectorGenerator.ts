@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
@@ -60,18 +60,36 @@ const kCSSTagNameScore = 530;
 const kNthScore = 10000;
 const kCSSFallbackScore = 10000000;
 
+const kScoreThresholdForTextExpect = 1000;
+
 export type GenerateSelectorOptions = {
   testIdAttributeName: string;
   omitInternalEngines?: boolean;
   root?: Element | Document;
+  forTextExpect?: boolean;
 };
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   beginAriaCaches();
   try {
-    targetElement = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root) || targetElement;
-    const targetTokens = generateSelectorFor(injectedScript, targetElement, options);
+    let targetTokens: SelectorToken[];
+    if (options.forTextExpect) {
+      targetTokens = cssFallback(injectedScript, targetElement.ownerDocument.documentElement, options);
+      for (let element: Element | undefined = targetElement; element; element = parentElementOrShadowHost(element)) {
+        const tokens = generateSelectorFor(injectedScript, element, options);
+        if (!tokens)
+          continue;
+        const score = combineScores(tokens);
+        if (score <= kScoreThresholdForTextExpect) {
+          targetTokens = tokens;
+          break;
+        }
+      }
+    } else {
+      targetElement = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root) || targetElement;
+      targetTokens = generateSelectorFor(injectedScript, targetElement, options) || cssFallback(injectedScript, targetElement, options);
+    }
     const selector = joinTokens(targetTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
     return {
@@ -91,7 +109,7 @@ function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][]
   return textCandidates.filter(c => c[0].selector[0] !== '/');
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] {
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] | null {
   if (options.root && !isInsideScope(options.root, targetElement))
     throw new Error(`Target element must belong to the root's subtree`);
 
@@ -170,7 +188,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
     return value;
   };
 
-  return calculateCached(targetElement, true) || cssFallback(injectedScript, targetElement, options);
+  return calculate(targetElement, !options.forTextExpect);
 }
 
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: GenerateSelectorOptions): SelectorToken[] {
@@ -180,7 +198,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   {
     for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
       if (attr !== options.testIdAttributeName && element.getAttribute(attr))
-        candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
+        candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
     const idAttr = element.getAttribute('id');
@@ -193,12 +211,12 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   if (element.nodeName === 'IFRAME') {
     for (const attribute of ['name', 'title']) {
       if (element.getAttribute(attribute))
-        candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
+        candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteCSSAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
     }
 
     // Locate by testId via CSS selector.
     if (element.getAttribute(options.testIdAttributeName))
-      candidates.push({ engine: 'css', selector: `[${options.testIdAttributeName}=${quoteAttributeValue(element.getAttribute(options.testIdAttributeName)!)}]`, score: kTestIdScore });
+      candidates.push({ engine: 'css', selector: `[${options.testIdAttributeName}=${quoteCSSAttributeValue(element.getAttribute(options.testIdAttributeName)!)}]`, score: kTestIdScore });
 
     penalizeScoreForLength([candidates]);
     return candidates;
@@ -211,38 +229,30 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
     if (input.placeholder) {
-      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, false)}]`, score: kPlaceholderScore });
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: kPlaceholderScoreExact });
+      for (const alternative of suitableTextAlternatives(input.placeholder))
+        candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(alternative.text, false)}]`, score: kPlaceholderScore - alternative.scoreBouns });
     }
   }
 
   const labels = getElementLabels(injectedScript._evaluator._cacheText, element);
   for (const label of labels) {
     const labelText = label.full.trim();
-    candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
     candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
+    for (const alternative of suitableTextAlternatives(labelText))
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(alternative.text, false), score: kLabelScore - alternative.scoreBouns });
   }
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole))
     candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
 
-  if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
-    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, false)}]`, score: kAltTextScore });
-    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, true)}]`, score: kAltTextScoreExact });
-  }
-
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
-    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
-
-  if (element.getAttribute('title')) {
-    candidates.push({ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, false)}]`, score: kTitleScore });
-    candidates.push({ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, true)}]`, score: kTitleScoreExact });
-  }
+    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteCSSAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
 
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))
-      candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[type=${quoteAttributeValue(element.getAttribute('type')!)}]`, score: kCSSInputTypeNameScore });
+      candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[type=${quoteCSSAttributeValue(element.getAttribute('type')!)}]`, score: kCSSInputTypeNameScore });
   }
 
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden')
@@ -257,26 +267,43 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     return [];
   const candidates: SelectorToken[][] = [];
 
-  const fullText = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
-  const text = fullText.substring(0, 80);
+  const title = element.getAttribute('title');
+  if (title) {
+    candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(title, true)}]`, score: kTitleScoreExact }]);
+    for (const alternative of suitableTextAlternatives(title))
+      candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBouns }]);
+  }
+
+  const alt = element.getAttribute('alt');
+  if (alt && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
+    candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alt, true)}]`, score: kAltTextScoreExact }]);
+    for (const alternative of suitableTextAlternatives(alt))
+      candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBouns }]);
+  }
+
+  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
   if (text) {
-    const escaped = escapeForTextSelector(text, false);
+    const alternatives = suitableTextAlternatives(text);
     if (isTargetNode) {
-      candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
-      candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+      if (text.length <= 80)
+        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+      for (const alternative of alternatives)
+        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
     }
     const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
-    candidates.push([cssToken, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
-    if (fullText.length <= 80)
-      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(fullText) + '$/', score: kTextScoreRegex }]);
+    for (const alternative of alternatives)
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
+    if (text.length <= 80)
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(text) + '$/', score: kTextScoreRegex }]);
   }
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false);
     if (ariaName) {
-      candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore }]);
       candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact }]);
+      for (const alternative of suitableTextAlternatives(ariaName))
+        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBouns }]);
     }
   }
 
@@ -358,10 +385,6 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     tokens.unshift(bestTokenForLevel);
   }
   return makeStrict(uniqueCSSSelector()!);
-}
-
-function quoteAttributeValue(text: string): string {
-  return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
 }
 
 function penalizeScoreForLength(groups: SelectorToken[][]) {
@@ -451,4 +474,50 @@ function isGuidLike(id: string): boolean {
 function escapeRegExp(s: string) {
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+function trimWordBoundary(text: string, maxLength: number) {
+  if (text.length <= maxLength)
+    return text;
+  text = text.substring(0, maxLength);
+  // Find last word boundary in the text.
+  const match = text.match(/^(.*)\b(.+?)$/);
+  if (!match)
+    return '';
+  return match[1].trimEnd();
+}
+
+function suitableTextAlternatives(text: string) {
+  let result: { text: string, scoreBouns: number }[] = [];
+
+  {
+    const match = text.match(/^([\d.,]+)[^.,\w]/);
+    const leadingNumberLength = match ? match[1].length : 0;
+    if (leadingNumberLength) {
+      const alt = text.substring(leadingNumberLength).trimStart();
+      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+    }
+  }
+
+  {
+    const match = text.match(/[^.,\w]([\d.,]+)$/);
+    const trailingNumberLength = match ? match[1].length : 0;
+    if (trailingNumberLength) {
+      const alt = text.substring(0, text.length - trailingNumberLength).trimEnd();
+      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+    }
+  }
+
+  if (text.length <= 30) {
+    result.push({ text, scoreBouns: 0 });
+  } else {
+    result.push({ text: trimWordBoundary(text, 80), scoreBouns: 0 });
+    result.push({ text: trimWordBoundary(text, 30), scoreBouns: 1 });
+  }
+
+  result = result.filter(r => r.text);
+  if (!result.length)
+    result.push({ text: text.substring(0, 80), scoreBouns: 0 });
+
+  return result;
 }

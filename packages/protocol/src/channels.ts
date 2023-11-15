@@ -636,6 +636,7 @@ export type RecorderSource = {
 export type DebugControllerInitializer = {};
 export interface DebugControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
+  on(event: 'setModeRequested', callback: (params: DebugControllerSetModeRequestedEvent) => void): this;
   on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
   on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
   on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
@@ -657,6 +658,9 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
   locator: string,
+};
+export type DebugControllerSetModeRequestedEvent = {
+  mode: string,
 };
 export type DebugControllerStateChangedEvent = {
   pageCount: number,
@@ -732,6 +736,7 @@ export type DebugControllerCloseAllBrowsersResult = void;
 
 export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
+  'setModeRequested': DebugControllerSetModeRequestedEvent;
   'stateChanged': DebugControllerStateChangedEvent;
   'sourceChanged': DebugControllerSourceChangedEvent;
   'paused': DebugControllerPausedEvent;
@@ -929,6 +934,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1000,6 +1006,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -2302,7 +2309,6 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   selectOption(params: FrameSelectOptionParams, metadata?: CallMetadata): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, metadata?: CallMetadata): Promise<FrameSetContentResult>;
   setInputFiles(params: FrameSetInputFilesParams, metadata?: CallMetadata): Promise<FrameSetInputFilesResult>;
-  setInputFilePaths(params: FrameSetInputFilePathsParams, metadata?: CallMetadata): Promise<FrameSetInputFilePathsResult>;
   tap(params: FrameTapParams, metadata?: CallMetadata): Promise<FrameTapResult>;
   textContent(params: FrameTextContentParams, metadata?: CallMetadata): Promise<FrameTextContentResult>;
   title(params?: FrameTitleParams, metadata?: CallMetadata): Promise<FrameTitleResult>;
@@ -2789,36 +2795,29 @@ export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {
   selector: string,
   strict?: boolean,
-  files: {
+  payloads?: {
     name: string,
     mimeType?: string,
     buffer: Binary,
   }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesOptions = {
   strict?: boolean,
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
-export type FrameSetInputFilePathsParams = {
-  selector: string,
-  strict?: boolean,
-  localPaths?: string[],
-  streams?: WritableStreamChannel[],
-  timeout?: number,
-  noWaitAfter?: boolean,
-};
-export type FrameSetInputFilePathsOptions = {
-  strict?: boolean,
-  localPaths?: string[],
-  streams?: WritableStreamChannel[],
-  timeout?: number,
-  noWaitAfter?: boolean,
-};
-export type FrameSetInputFilePathsResult = void;
 export type FrameTapParams = {
   selector: string,
   strict?: boolean,
@@ -3111,7 +3110,6 @@ export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandle
   selectOption(params: ElementHandleSelectOptionParams, metadata?: CallMetadata): Promise<ElementHandleSelectOptionResult>;
   selectText(params: ElementHandleSelectTextParams, metadata?: CallMetadata): Promise<ElementHandleSelectTextResult>;
   setInputFiles(params: ElementHandleSetInputFilesParams, metadata?: CallMetadata): Promise<ElementHandleSetInputFilesResult>;
-  setInputFilePaths(params: ElementHandleSetInputFilePathsParams, metadata?: CallMetadata): Promise<ElementHandleSetInputFilePathsResult>;
   tap(params: ElementHandleTapParams, metadata?: CallMetadata): Promise<ElementHandleTapResult>;
   textContent(params?: ElementHandleTextContentParams, metadata?: CallMetadata): Promise<ElementHandleTextContentResult>;
   type(params: ElementHandleTypeParams, metadata?: CallMetadata): Promise<ElementHandleTypeResult>;
@@ -3419,32 +3417,28 @@ export type ElementHandleSelectTextOptions = {
 };
 export type ElementHandleSelectTextResult = void;
 export type ElementHandleSetInputFilesParams = {
-  files: {
+  payloads?: {
     name: string,
     mimeType?: string,
     buffer: Binary,
   }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesOptions = {
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesResult = void;
-export type ElementHandleSetInputFilePathsParams = {
-  localPaths?: string[],
-  streams?: WritableStreamChannel[],
-  timeout?: number,
-  noWaitAfter?: boolean,
-};
-export type ElementHandleSetInputFilePathsOptions = {
-  localPaths?: string[],
-  streams?: WritableStreamChannel[],
-  timeout?: number,
-  noWaitAfter?: boolean,
-};
-export type ElementHandleSetInputFilePathsResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
   noWaitAfter?: boolean,

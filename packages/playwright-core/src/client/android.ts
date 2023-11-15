@@ -234,6 +234,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return binary;
   }
 
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
   async close() {
     try {
       if (this._shouldCloseConnectionOnClose)
@@ -270,8 +274,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
     const contextOptions = await prepareBrowserContextParams(options);
-    const { context } = await this._channel.launchBrowser(contextOptions);
-    return BrowserContext.from(context) as BrowserContext;
+    const result = await this._channel.launchBrowser(contextOptions);
+    const context = BrowserContext.from(result.context) as BrowserContext;
+    context._setOptions(contextOptions, {});
+    return context;
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
@@ -306,6 +312,10 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 
   async close(): Promise<void> {
     await this._channel.close();
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close();
   }
 }
 

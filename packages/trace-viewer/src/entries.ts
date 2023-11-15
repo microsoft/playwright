@@ -33,7 +33,7 @@ export type ContextEntry = {
   options: trace.BrowserContextEventOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
-  actions: trace.ActionTraceEvent[];
+  actions: ActionEntry[];
   events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   stdio: trace.StdioTraceEvent[];
   hasSource: boolean;
@@ -47,6 +47,11 @@ export type PageEntry = {
     height: number,
   }[];
 };
+
+export type ActionEntry = trace.ActionTraceEvent & {
+  log: { time: number, message: string }[];
+};
+
 export function createEmptyContext(): ContextEntry {
   return {
     isPrimary: false,

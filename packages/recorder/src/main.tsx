@@ -39,5 +39,5 @@ export const Main: React.FC = ({
   };
 
   window.playwrightSourcesEchoForTest = sources;
-  return <Recorder sources={sources} paused={paused} log={log} mode={mode}/>;
+  return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };

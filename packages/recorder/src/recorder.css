@@ -28,11 +28,19 @@
   min-width: 100px;
 }
 
-.recorder .toolbar-button.toggled.record {
+.recorder .codicon {
+  font-size: 16px;
+}
+
+.recorder .codicon.circle-large-filled {
+  font-size: 15px;
+}
+
+.recorder .toolbar-button.toggled.circle-large-filled {
   color: #a1260d;
 }
 
-body.dark-mode .recorder .toolbar-button.toggled.record {
+body.dark-mode .recorder .toolbar-button.toggled.circle-large-filled {
   color: #f48771;
 }
 

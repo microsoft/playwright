@@ -119,8 +119,10 @@ export const test = _test
       }],
       writeFiles: async ({ tmpWorkspace }, use) => {
         await use(async (nameToContents: Record<string, string>) => {
-          for (const [name, contents] of Object.entries(nameToContents))
+          for (const [name, contents] of Object.entries(nameToContents)) {
+            await fs.promises.mkdir(path.join(tmpWorkspace, path.dirname(name)), { recursive: true });
             await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
+          }
         });
       },
       tmpWorkspace: async ({}, use) => {
@@ -196,7 +198,7 @@ export const test = _test
         });
       },
       tsc: async ({ exec }, use) => {
-        await exec('npm i typescript@5.2.2 @types/node@16');
+        await exec('npm i typescript@5.2.2 @types/node@18');
         await use((args: string) => exec('npx', 'tsc', args, { shell: process.platform === 'win32' }));
       },
     });

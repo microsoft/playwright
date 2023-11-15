@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Device orientation test</title>
+</head>
+
+<body>
+  <script>
+    window.result = 'Was not oriented';
+    window.alpha = undefined;
+    window.beta = undefined;
+    window.gamma = undefined;
+    window.absolute = undefined;
+
+    document.addEventListener('deviceorientation', onOrientation, false);
+    document.addEventListener('deviceorientationabsolute', onOrientation, false);
+
+    function onOrientation(event) {
+      window.result = 'Oriented';
+      window.alpha = event.alpha;
+      window.beta = event.beta;
+      window.gamma = event.gamma;
+      window.absolute = event.absolute;
+    }
+  </script>
+</body>
+
+</html>

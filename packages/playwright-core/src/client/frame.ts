@@ -35,7 +35,6 @@ import { kLifecycleEvents } from './types';
 import { urlMatches } from '../utils/network';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
-import { debugLogger } from '../common/debugLogger';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -401,13 +400,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
     const converted = await convertInputFiles(files, this.page().context());
-    if (converted.files) {
-      debugLogger.log('api', 'setting input buffers');
-      await this._channel.setInputFiles({ selector, files: converted.files, ...options });
-    } else {
-      debugLogger.log('api', 'setting input file paths');
-      await this._channel.setInputFilePaths({ selector, ...converted, ...options });
-    }
+    await this._channel.setInputFiles({ selector, ...converted, ...options });
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {
