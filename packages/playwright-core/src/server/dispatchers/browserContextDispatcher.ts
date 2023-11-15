@@ -178,8 +178,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
-    if (!this._context._browser._isCollocatedWithServer)
-      throw new Error('Cannot create temp file: the browser is not co-located with the server');
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
     await fs.promises.mkdir(tmpDir);
