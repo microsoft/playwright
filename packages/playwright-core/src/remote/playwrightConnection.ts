@@ -252,7 +252,7 @@ export class PlaywrightConnection {
 
   private logServerMetadata(message: object, messageString: string, direction: 'SEND' | 'RECV') {
     const serverLogMetadata = {
-      timestamp: Date.now(),
+      wallTime: Date.now(),
       id: (message as any).id,
       guid: (message as any).guid,
       method: (message as any).method,
