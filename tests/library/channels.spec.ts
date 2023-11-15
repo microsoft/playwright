@@ -256,7 +256,7 @@ it('should work with the domain module', async ({ browserType, server, browserNa
     throw err;
 });
 
-it('exposeFunction should not leak', async ({ page, expectScopeState, server }) => {
+it('exposeFunction should not leak', async ({ page, expectScopeState, server, video }) => {
   await page.goto(server.EMPTY_PAGE);
   let called = 0;
   await page.exposeFunction('myFunction', () => ++called);
@@ -284,6 +284,7 @@ it('exposeFunction should not leak', async ({ page, expectScopeState, server }) 
           {
             '_guid': 'browser',
             'objects': [
+              ...(video === 'on' ? [{ _guid: 'artifact', objects: [] }] : []),
               {
                 '_guid': 'browser-context',
                 'objects': [
