@@ -256,6 +256,89 @@ it('should work with the domain module', async ({ browserType, server, browserNa
     throw err;
 });
 
+it('exposeFunction should not leak', async ({ page, expectScopeState, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  let called = 0;
+  await page.exposeFunction('myFunction', () => ++called);
+  for (let i = 0; i < 10; ++i)
+    await page.evaluate(() => (window as any).myFunction({ foo: 'bar' }));
+  expect(called).toBe(10);
+  expectScopeState(page, {
+    '_guid': '',
+    'objects': [
+      {
+        '_guid': 'android',
+        'objects': [],
+      },
+      {
+        '_guid': 'browser-type',
+        'objects': [],
+      },
+      {
+        '_guid': 'browser-type',
+        'objects': [],
+      },
+      {
+        '_guid': 'browser-type',
+        'objects': [
+          {
+            '_guid': 'browser',
+            'objects': [
+              {
+                '_guid': 'browser-context',
+                'objects': [
+                  {
+                    '_guid': 'page',
+                    'objects': [
+                      {
+                        '_guid': 'frame',
+                        'objects': [],
+                      },
+                      {
+                        '_guid': 'request',
+                        'objects': [
+                          {
+                            '_guid': 'response',
+                            'objects': [],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    '_guid': 'request-context',
+                    'objects': [],
+                  },
+                  {
+                    '_guid': 'tracing',
+                    'objects': [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        '_guid': 'electron',
+        'objects': [],
+      },
+      {
+        '_guid': 'localUtils',
+        'objects': [],
+      },
+      {
+        '_guid': 'Playwright',
+        'objects': [],
+      },
+      {
+        '_guid': 'selectors',
+        'objects': [],
+      },
+    ],
+  });
+});
+
 function compareObjects(a, b) {
   if (a._guid !== b._guid)
     return a._guid.localeCompare(b._guid);

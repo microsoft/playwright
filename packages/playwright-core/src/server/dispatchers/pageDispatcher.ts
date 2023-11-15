@@ -364,9 +364,11 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
 
   async resolve(params: channels.BindingCallResolveParams, metadata: CallMetadata): Promise<void> {
     this._resolve!(parseArgument(params.result));
+    this._dispose();
   }
 
   async reject(params: channels.BindingCallRejectParams, metadata: CallMetadata): Promise<void> {
     this._reject!(parseError(params.error));
+    this._dispose();
   }
 }
