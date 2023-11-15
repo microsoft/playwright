@@ -90,7 +90,7 @@ Using [`method: Locator.setChecked`] is the easiest way to check and uncheck a c
 await page.getByLabel('I agree to the terms above').check();
 
 // Assert the checked state
-expect(await page.getByLabel('Subscribe to newsletter').isChecked()).toBeTruthy();
+expect(page.getByLabel('Subscribe to newsletter')).toBeChecked();
 
 // Select the radio button
 await page.getByLabel('XL').check();
@@ -101,7 +101,7 @@ await page.getByLabel('XL').check();
 page.getByLabel("I agree to the terms above").check();
 
 // Assert the checked state
-assertTrue(page.getByLabel("Subscribe to newsletter").isChecked());
+assertTrue(page.getByLabel("Subscribe to newsletter")).isChecked();
 
 // Select the radio button
 page.getByLabel("XL").check();
@@ -112,7 +112,7 @@ page.getByLabel("XL").check();
 await page.get_by_label('I agree to the terms above').check()
 
 # Assert the checked state
-assert await page.get_by_label('Subscribe to newsletter').is_checked() is True
+await expect(page.get_by_label('Subscribe to newsletter')).to_be_checked()
 
 # Select the radio button
 await page.get_by_label('XL').check()
@@ -123,7 +123,7 @@ await page.get_by_label('XL').check()
 page.get_by_label('I agree to the terms above').check()
 
 # Assert the checked state
-assert page.get_by_label('Subscribe to newsletter').is_checked() is True
+expect(page.get_by_label('Subscribe to newsletter')).to_be_checked()
 
 # Select the radio button
 page.get_by_label('XL').check()
@@ -134,7 +134,7 @@ page.get_by_label('XL').check()
 await page.GetByLabel("I agree to the terms above").CheckAsync();
 
 // Assert the checked state
-Assert.True(await page.GetByLabel("Subscribe to newsletter").IsCheckedAsync());
+await Expect(page.GetByLabel("Subscribe to newsletter")).ToBeCheckedAsync();
 
 // Select the radio button
 await page.GetByLabel("XL").CheckAsync();
