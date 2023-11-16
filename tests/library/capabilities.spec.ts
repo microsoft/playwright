@@ -17,7 +17,7 @@
 import os from 'os';
 import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
-import { hostPlatform } from '../../packages/playwright-core/src/utils';
+import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
 it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
   it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
