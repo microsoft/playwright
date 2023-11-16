@@ -4,6 +4,53 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.40
+
+### Test Generator Update
+
+![Playwright Test Generator](https://github.com/microsoft/playwright/assets/9881434/8c3d6fac-5381-4aaf-920f-6e22b964eec6)
+
+New tools to generate assertions:
+- "Assert visibility" tool generates [`method: LocatorAssertions.toBeVisible`].
+- "Assert value" tool generates [`method: LocatorAssertions.toHaveValue`].
+- "Assert text" tool generates [`method: LocatorAssertions.toContainText`].
+
+Here is an example of a generated test with assertions:
+
+```python
+from playwright.sync_api import Page, expect
+
+def test_example(page: Page) -> None:
+    page.goto("https://playwright.dev/")
+    page.get_by_role("link", name="Get started").click()
+    expect(page.get_by_label("Breadcrumbs").get_by_role("list")).to_contain_text("Installation")
+    expect(page.get_by_label("Search")).to_be_visible()
+    page.get_by_label("Search").click()
+    page.get_by_placeholder("Search docs").fill("locator")
+    expect(page.get_by_placeholder("Search docs")).to_have_value("locator");
+```
+
+### New APIs
+
+- Option [`option: reason`] in [`method: Page.close`], [`method: BrowserContext.close`] and [`method: Browser.close`]. Close reason is reported for all operations interrupted by the closure.
+- Option [`option: firefoxUserPrefs`] in [`method: BrowserType.launchPersistentContext`].
+
+### Other Changes
+
+- Method [`method: Download.path`] throws an error for failed and cancelled downloads.
+- Playwright [docker image](./docker.md) now comes with Node.js v20.
+
+### Browser Versions
+
+* Chromium 120.0.6099.28
+* Mozilla Firefox 119.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 119
+* Microsoft Edge 119
+
 ## Version 1.39
 
 Evergreen browsers update.
