@@ -223,6 +223,10 @@ export class TraceModel {
         contextEntry!.stdio.push(event);
         break;
       }
+      case 'error': {
+        contextEntry!.errors.push(event);
+        break;
+      }
       case 'console': {
         contextEntry!.events.push(event);
         break;

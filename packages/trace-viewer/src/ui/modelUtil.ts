@@ -61,6 +61,7 @@ export class MultiTraceModel {
   readonly actions: ActionTraceEventInContext[];
   readonly events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   readonly stdio: trace.StdioTraceEvent[];
+  readonly errors: trace.ErrorTraceEvent[];
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
@@ -86,6 +87,7 @@ export class MultiTraceModel {
     this.actions = mergeActions(contexts);
     this.events = ([] as (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]).concat(...contexts.map(c => c.events));
     this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
+    this.errors = ([] as trace.ErrorTraceEvent[]).concat(...contexts.map(c => c.errors));
     this.hasSource = contexts.some(c => c.hasSource);
     this.resources = [...contexts.map(c => c.resources)].flat();
 

@@ -323,7 +323,6 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  fixture: page',
     '    browserContext.newPage',
     'page.goto',
-    'error',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
@@ -335,6 +334,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  fixture: request',
     '    apiRequestContext.dispose',
   ]);
+  expect(trace1.errors).toEqual([`'oh no!'`]);
 
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
   expect(error).toBeTruthy();
@@ -668,11 +668,11 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     '  fixture: page',
     '    browserContext.newPage',
     'expect.toBe',
-    'ReferenceError: undefinedVariable1 is not defined',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
   ]);
+  expect(trace.errors).toEqual(['ReferenceError: undefinedVariable1 is not defined']);
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest }, testInfo) => {
