@@ -54,7 +54,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   browserType: [async ({ playwright, browserName, mode }, run) => {
-    test.skip(mode.startsWith('service'));
+    test.skip(mode === 'service2');
     await run(playwright[browserName]);
   }, { scope: 'worker' }],
 
