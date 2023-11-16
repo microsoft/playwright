@@ -21,7 +21,8 @@ import fs from 'fs';
 import path from 'path';
 import { ManualPromise, calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import type { TestInfo } from '../../types/test';
+import type { TestInfo, TestInfoError } from '../../types/test';
+import { filteredStackTrace } from '../util';
 
 
 export type Attachment = TestInfo['attachments'][0];
@@ -98,6 +99,16 @@ export class TestTracing {
       zipFile.end(undefined, () => {
         zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
       });
+    });
+  }
+
+  appendForError(error: TestInfoError) {
+    const rawStack = error.stack?.split('\n') || [];
+    const stack = rawStack ? filteredStackTrace(rawStack) : [];
+    this._appendTraceEvent({
+      type: 'error',
+      message: error.message || String(error.value),
+      stack,
     });
   }
 

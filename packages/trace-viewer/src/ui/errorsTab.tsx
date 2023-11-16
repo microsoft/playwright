@@ -20,20 +20,50 @@ import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
+import type { StackFrame } from '@protocol/channels';
+
+type ErrorDescription = {
+  action?: modelUtil.ActionTraceEventInContext;
+  stack?: StackFrame[];
+};
 
 type ErrorsTabModel = {
-  errors: Map<string, modelUtil.ActionTraceEventInContext>;
+  errors: Map<string, ErrorDescription>;
 };
+
+function errorsFromActions(model: modelUtil.MultiTraceModel): Map<string, ErrorDescription> {
+  const errors = new Map<string, ErrorDescription>();
+  for (const action of model.actions || []) {
+    // Overwrite errors with the last one.
+    if (!action.error?.message || errors.has(action.error.message))
+      continue;
+    errors.set(action.error.message, {
+      action,
+      stack: action.stack,
+    });
+  }
+  return errors;
+}
+
+function errorsFromTestRunner(model: modelUtil.MultiTraceModel): Map<string, ErrorDescription> {
+  const actionErrors = errorsFromActions(model);
+  const errors = new Map<string, ErrorDescription>();
+  for (const error of model.errors || []) {
+    if (!error.message || errors.has(error.message))
+      continue;
+    errors.set(error.message, actionErrors.get(error.message) || error);
+  }
+  return errors;
+}
 
 export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
-    const errors = new Map<string, modelUtil.ActionTraceEventInContext>();
-    for (const action of model?.actions || []) {
-      // Overwrite errors with the last one.
-      if (action.error?.message)
-        errors.set(action.error.message, action);
-    }
-    return { errors };
+    if (!model)
+      return { errors: new Map() };
+    // Feature detection: if there is test runner info, pick errors from the 'error' trace events.
+    // If there are no test errors, but there are action errors - render those instead.
+    const testHasErrors = !!model.errors.length;
+    return { errors: testHasErrors ? errorsFromTestRunner(model) : errorsFromActions(model) };
   }, [model]);
 }
 
@@ -46,13 +76,14 @@ export const ErrorsTab: React.FunctionComponent<{
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {[...errorsModel.errors.entries()].map(([message, action]) => {
+    {[...errorsModel.errors.entries()].map(([message, error]) => {
       let location: string | undefined;
       let longLocation: string | undefined;
-      if (action.stack?.[0]) {
-        const file = action.stack[0].file.replace(/.*\/(.*)/, '$1');
-        location = file + ':' + action.stack[0].line;
-        longLocation = action.stack[0].file + ':' + action.stack[0].line;
+      const stackFrame = error.stack?.[0];
+      if (stackFrame) {
+        const file = stackFrame.file.replace(/.*\/(.*)/, '$1');
+        location = file + ':' + stackFrame.line;
+        longLocation = stackFrame.file + ':' + stackFrame.line;
       }
       return <div key={message}>
         <div className='hbox' style={{
@@ -62,9 +93,9 @@ export const ErrorsTab: React.FunctionComponent<{
           fontWeight: 'bold',
           color: 'var(--vscode-errorForeground)',
         }}>
-          {renderAction(action, { sdkLanguage })}
+          {error.action && renderAction(error.action, { sdkLanguage })}
           {location && <div className='action-location'>
-            @ <span title={longLocation} onClick={() => revealInSource(action)}>{location}</span>
+            @ <span title={longLocation} onClick={() => error.action && revealInSource(error.action)}>{location}</span>
           </div>}
         </div>
         <ErrorMessage error={message} />
