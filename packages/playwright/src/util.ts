@@ -32,11 +32,11 @@ const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/packa
 
 export function filterStackTrace(e: Error): { message: string, stack: string } {
   if (process.env.PWDEBUGIMPL)
-    return { message: e.message, stack: e.stack || '' };
+    return { message: e.name + ': ' + e.message, stack: e.stack || '' };
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
-    message: e.message,
+    message: e.name + ': ' + e.message,
     stack: `${e.name}: ${e.message}\n${stackLines.join('\n')}`
   };
 }

@@ -349,7 +349,7 @@ test('should throw when calling runTest twice', async ({ runInlineTest }) => {
       test('works', async ({foo}) => {});
     `,
   });
-  expect(result.results[0].error.message).toBe('Cannot provide fixture value for the second time');
+  expect(result.results[0].error.message).toBe('Error: Cannot provide fixture value for the second time');
   expect(result.exitCode).toBe(1);
 });
 

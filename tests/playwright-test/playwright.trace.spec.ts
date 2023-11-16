@@ -668,7 +668,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     '  fixture: page',
     '    browserContext.newPage',
     'expect.toBe',
-    'undefinedVariable1 is not defined',
+    'ReferenceError: undefinedVariable1 is not defined',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',

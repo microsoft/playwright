@@ -51,12 +51,12 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
   expect(result.results[0].status).toBe('failed');
   expect(result.results[0].retry).toBe(0);
   // Should only fail the last retry check.
-  expect(result.results[0].error.message).toBe('Give me retries');
+  expect(result.results[0].error.message).toBe('Error: Give me retries');
 
   expect(result.results[1].status).toBe('failed');
   expect(result.results[1].retry).toBe(1);
   // Should only fail the last retry check.
-  expect(result.results[1].error.message).toBe('Give me retries');
+  expect(result.results[1].error.message).toBe('Error: Give me retries');
 
   expect(result.results[2].status).toBe('passed');
   expect(result.results[2].retry).toBe(2);

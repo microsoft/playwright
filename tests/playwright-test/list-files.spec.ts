@@ -94,7 +94,7 @@ test('should report error', async ({ runListFiles }) => {
         line: 3,
         column: 8,
       },
-      message: 'Assignment to constant variable.',
+      message: 'TypeError: Assignment to constant variable.',
       stack: expect.stringContaining('TypeError: Assignment to constant variable.'),
     }
   });

@@ -236,7 +236,7 @@ test('should use the first occurring error when an unhandled exception was throw
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('first error');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('Error: first error');
 });
 
 test('worker interrupt should report errors', async ({ interactWithTestRunner }) => {
