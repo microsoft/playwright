@@ -24,27 +24,7 @@ import { isInsideScope } from './domUtils';
 import { elementText } from './selectorUtils';
 import type { ElementText } from './selectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
-import { parseSelector } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
-
-// @ts-ignore @no-check-deps
-import CodeMirrorImpl from 'codemirror-shadow-1';
-import type CodeMirrorType from 'codemirror';
-// @no-check-deps
-import codemirrorCSS from 'codemirror-shadow-1/lib/codemirror.css?inline';
-// @no-check-deps
-import 'codemirror-shadow-1/mode/css/css';
-// @no-check-deps
-import 'codemirror-shadow-1/mode/htmlmixed/htmlmixed';
-// @no-check-deps
-import 'codemirror-shadow-1/mode/javascript/javascript';
-// @no-check-deps
-import 'codemirror-shadow-1/mode/python/python';
-// @no-check-deps
-import 'codemirror-shadow-1/mode/clike/clike';
-const CodeMirror = CodeMirrorImpl as typeof CodeMirrorType;
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -68,6 +48,7 @@ interface RecorderTool {
   onMouseDown?(event: MouseEvent): void;
   onMouseUp?(event: MouseEvent): void;
   onMouseMove?(event: MouseEvent): void;
+  onMouseEnter?(event: MouseEvent): void;
   onMouseLeave?(event: MouseEvent): void;
   onFocus?(event: Event): void;
   onScroll?(event: Event): void;
@@ -109,6 +90,7 @@ class InspectTool implements RecorderTool {
           signals: [],
         });
         this._recorder.delegate.setMode?.('recording');
+        this._recorder.overlay?.flashToolSucceeded('assertingVisibility');
       }
     } else {
       this._recorder.delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
@@ -144,6 +126,10 @@ class InspectTool implements RecorderTool {
       return;
     this._hoveredModel = model;
     this._recorder.updateHighlight(model, true, { color: this._assertVisibility ? '#8acae480' : undefined });
+  }
+
+  onMouseEnter(event: MouseEvent) {
+    consumeEvent(event);
   }
 
   onMouseLeave(event: MouseEvent) {
@@ -518,14 +504,23 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onClick(event: MouseEvent) {
-    if (!this._dialogElement)
-      this._showDialog();
     consumeEvent(event);
+    if (this._kind === 'value') {
+      const action = this._generateAction();
+      if (action) {
+        this._recorder.delegate.recordAction?.(action);
+        this._recorder.delegate.setMode?.('recording');
+        this._recorder.overlay?.flashToolSucceeded('assertingValue');
+      }
+    } else {
+      if (!this._dialogElement)
+        this._showDialog();
+    }
   }
 
   onMouseDown(event: MouseEvent) {
     const target = this._recorder.deepEventTarget(event);
-    if (target.nodeName === 'SELECT')
+    if (this._elementHasValue(target))
       event.preventDefault();
   }
 
@@ -618,7 +613,7 @@ class TextAssertionTool implements RecorderTool {
     if (!this._hoverHighlight?.elements[0])
       return;
     this._action = this._generateAction();
-    if (!this._action)
+    if (!this._action || this._action.name !== 'assertText')
       return;
 
     this._dialogElement = this._recorder.document.createElement('x-pw-dialog');
@@ -636,122 +631,41 @@ class TextAssertionTool implements RecorderTool {
 
     this._recorder.document.addEventListener('keydown', this._keyboardListener, true);
     const toolbarElement = this._recorder.document.createElement('x-pw-tools-list');
-    toolbarElement.appendChild(this._createLabel(this._action));
+    const labelElement = this._recorder.document.createElement('label');
+    labelElement.textContent = 'Assert that element contains text';
+    toolbarElement.appendChild(labelElement);
     toolbarElement.appendChild(this._recorder.document.createElement('x-spacer'));
     toolbarElement.appendChild(this._acceptButton);
     toolbarElement.appendChild(this._cancelButton);
 
     this._dialogElement.appendChild(toolbarElement);
     const bodyElement = this._recorder.document.createElement('x-pw-dialog-body');
-    const cmStyle = this._recorder.document.createElement('style');
-    const cmElement = this._recorder.document.createElement('x-locator-editor');
-    cmStyle.textContent = codemirrorCSS;
-    bodyElement.appendChild(cmStyle);
-    bodyElement.appendChild(cmElement);
-    const cm = CodeMirror(cmElement, {
-      value: asLocator(this._recorder.state.language, this._action.selector),
-      mode: cmModeForLanguage(this._recorder.state.language),
-      readOnly: false,
-      lineNumbers: false,
-      lineWrapping: true,
-    });
-    cm.on('keydown', (_, event) => {
-      if (event.key === 'Tab')
-        (event as any).codemirrorIgnore = true;
-    });
-    cm.on('change', () => {
-      if (this._action) {
-        const selector = locatorOrSelectorAsSelector(this._recorder.state.language, cm.getValue(), this._recorder.state.testIdAttributeName);
-        let elements: Element[] = [];
-        try {
-          elements = this._recorder.injectedScript.querySelectorAll(parseSelector(selector), this._recorder.document);
-        } catch {
-        }
-        cmElement.classList.toggle('does-not-match', !elements.length);
-        this._hoverHighlight = elements.length ? {
-          selector,
-          elements,
-        } : null;
-        this._action.selector = selector;
-        this._recorder.updateHighlight(this._hoverHighlight, true);
-      }
-    });
 
-    let elementToFocus: HTMLElement | null = null;
     const action = this._action;
-    if (action.name === 'assertText') {
-      const textElement = this._recorder.document.createElement('textarea');
-      textElement.setAttribute('spellcheck', 'false');
-      textElement.value = this._renderValue(this._action);
-      textElement.classList.add('text-editor');
+    const textElement = this._recorder.document.createElement('textarea');
+    textElement.setAttribute('spellcheck', 'false');
+    textElement.value = this._renderValue(this._action);
+    textElement.classList.add('text-editor');
 
-      const updateAndValidate = () => {
-        const newValue = normalizeWhiteSpace(textElement.value);
-        const target = this._hoverHighlight?.elements[0];
-        if (!target)
-          return;
-        action.text = newValue;
-        const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
-        const matches = action.substring ? newValue && targetText.includes(newValue) : targetText === newValue;
-        textElement.classList.toggle('does-not-match', !matches);
-      };
-      textElement.addEventListener('input', updateAndValidate);
-      bodyElement.appendChild(textElement);
-
-      // Add a toolbar substring checkbox.
-      const substringElement = this._recorder.document.createElement('label');
-      substringElement.style.cursor = 'pointer';
-      const checkboxElement = this._recorder.document.createElement('input');
-      substringElement.appendChild(checkboxElement);
-      substringElement.appendChild(this._recorder.document.createTextNode('Substring'));
-      checkboxElement.type = 'checkbox';
-      checkboxElement.style.cursor = 'pointer';
-      checkboxElement.checked = action.substring;
-      checkboxElement.addEventListener('change', () => {
-        action.substring = checkboxElement.checked;
-        updateAndValidate();
-      });
-      toolbarElement.insertBefore(substringElement, this._acceptButton);
-
-      elementToFocus = textElement;
-    } else if (action.name === 'assertValue') {
-      const textElement = this._recorder.document.createElement('textarea');
-      textElement.setAttribute('spellcheck', 'false');
-      textElement.value = this._renderValue(this._action);
-      textElement.classList.add('text-editor');
-
-      textElement.addEventListener('input', () => {
-        action.value = textElement.value;
-      });
-      bodyElement.appendChild(textElement);
-      elementToFocus = textElement;
-    } else if (action.name === 'assertChecked') {
-      const labelElement = this._recorder.document.createElement('label');
-      labelElement.textContent = 'Value:';
-      const checkboxElement = this._recorder.document.createElement('input');
-      labelElement.appendChild(checkboxElement);
-      checkboxElement.type = 'checkbox';
-      checkboxElement.checked = action.checked;
-      checkboxElement.addEventListener('change', () => {
-        action.checked = checkboxElement.checked;
-      });
-      bodyElement.appendChild(labelElement);
-      elementToFocus = labelElement;
-    }
+    const updateAndValidate = () => {
+      const newValue = normalizeWhiteSpace(textElement.value);
+      const target = this._hoverHighlight?.elements[0];
+      if (!target)
+        return;
+      action.text = newValue;
+      const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
+      const matches = newValue && targetText.includes(newValue);
+      textElement.classList.toggle('does-not-match', !matches);
+    };
+    textElement.addEventListener('input', updateAndValidate);
+    bodyElement.appendChild(textElement);
 
     this._dialogElement.appendChild(bodyElement);
     this._recorder.highlight.appendChild(this._dialogElement);
     const position = this._recorder.highlight.tooltipPosition(this._recorder.highlight.firstBox()!, this._dialogElement);
     this._dialogElement.style.top = position.anchorTop + 'px';
     this._dialogElement.style.left = position.anchorLeft + 'px';
-    elementToFocus?.focus();
-    cm.refresh();
-  }
-
-  private _createLabel(action: actions.AssertAction) {
-    const labelElement = this._recorder.document.createElement('label');
-    labelElement.textContent = action.name === 'assertText' ? 'Assert text' : action.name === 'assertValue' ? 'Assert value' : 'Assert checked';
-    return labelElement;
+    textElement.focus();
   }
 
   private _closeDialog() {
@@ -829,7 +743,7 @@ class Overlay {
     toolsListElement.appendChild(this._assertVisibilityToggle);
 
     this._assertTextToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
-    this._assertTextToggle.title = 'Assert text and values';
+    this._assertTextToggle.title = 'Assert text';
     this._assertTextToggle.classList.add('text');
     this._assertTextToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     this._assertTextToggle.addEventListener('click', () => {
@@ -853,7 +767,7 @@ class Overlay {
 
   install() {
     this._recorder.highlight.appendChild(this._overlayElement);
-    this._measure = this._overlayElement.getBoundingClientRect();
+    this._updateVisualPosition();
   }
 
   contains(element: Element) {
@@ -874,13 +788,31 @@ class Overlay {
       this._updateVisualPosition();
     }
     if (state.mode === 'none')
-      this._overlayElement.setAttribute('hidden', 'true');
+      this._hideOverlay();
     else
-      this._overlayElement.removeAttribute('hidden');
+      this._showOverlay();
+  }
+
+  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue') {
+    const element = tool === 'assertingVisibility' ? this._assertVisibilityToggle : this._assertValuesToggle;
+    element.classList.add('succeeded');
+    setTimeout(() => element.classList.remove('succeeded'), 2000);
+  }
+
+  private _hideOverlay() {
+    this._overlayElement.setAttribute('hidden', 'true');
+  }
+
+  private _showOverlay() {
+    if (!this._overlayElement.hasAttribute('hidden'))
+      return;
+    this._overlayElement.removeAttribute('hidden');
+    this._updateVisualPosition();
   }
 
   private _updateVisualPosition() {
-    this._overlayElement.style.left = (this._recorder.injectedScript.window.innerWidth / 2 + this._offsetX) + 'px';
+    this._measure = this._overlayElement.getBoundingClientRect();
+    this._overlayElement.style.left = ((this._recorder.injectedScript.window.innerWidth - this._measure.width) / 2 + this._offsetX) + 'px';
   }
 
   onMouseMove(event: MouseEvent) {
@@ -890,8 +822,8 @@ class Overlay {
     }
     if (this._dragState) {
       this._offsetX = this._dragState.offsetX + event.clientX - this._dragState.dragStart.x;
-      this._offsetX = Math.min(this._recorder.injectedScript.window.innerWidth / 2 - 10 - this._measure.width, this._offsetX);
-      this._offsetX = Math.max(10 - this._recorder.injectedScript.window.innerWidth / 2, this._offsetX);
+      const halfGapSize = (this._recorder.injectedScript.window.innerWidth - this._measure.width) / 2 - 10;
+      this._offsetX = Math.max(-halfGapSize, Math.min(halfGapSize, this._offsetX));
       this._updateVisualPosition();
       this._recorder.delegate.setOverlayState?.({ offsetX: this._offsetX });
       consumeEvent(event);
@@ -925,7 +857,7 @@ export class Recorder {
   private _tools: Record<Mode, RecorderTool>;
   private _actionSelectorModel: HighlightModel | null = null;
   readonly highlight: Highlight;
-  private _overlay: Overlay | undefined;
+  readonly overlay: Overlay | undefined;
   private _styleElement: HTMLStyleElement;
   state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { offsetX: 0 } };
   readonly document: Document;
@@ -947,8 +879,8 @@ export class Recorder {
     };
     this._currentTool = this._tools.none;
     if (injectedScript.window.top === injectedScript.window) {
-      this._overlay = new Overlay(this);
-      this._overlay.setUIState(this.state);
+      this.overlay = new Overlay(this);
+      this.overlay.setUIState(this.state);
     }
     this._styleElement = this.document.createElement('style');
     this._styleElement.textContent = `
@@ -976,11 +908,12 @@ export class Recorder {
       addEventListener(this.document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
       addEventListener(this.document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
       addEventListener(this.document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
+      addEventListener(this.document, 'mouseenter', event => this._onMouseEnter(event as MouseEvent), true),
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
     ];
     this.highlight.install();
-    this._overlay?.install();
+    this.overlay?.install();
     this.injectedScript.document.head.appendChild(this._styleElement);
   }
 
@@ -1011,7 +944,7 @@ export class Recorder {
     this.state = state;
     this.highlight.setLanguage(state.language);
     this._switchCurrentTool();
-    this._overlay?.setUIState(state);
+    this.overlay?.setUIState(state);
 
     // Race or scroll.
     if (this._actionSelectorModel?.selector && !this._actionSelectorModel?.elements.length)
@@ -1030,7 +963,7 @@ export class Recorder {
   private _onClick(event: MouseEvent) {
     if (!event.isTrusted)
       return;
-    if (this._overlay?.onClick(event))
+    if (this.overlay?.onClick(event))
       return;
     if (this._ignoreOverlayEvent(event))
       return;
@@ -1072,7 +1005,7 @@ export class Recorder {
   private _onMouseUp(event: MouseEvent) {
     if (!event.isTrusted)
       return;
-    if (this._overlay?.onMouseUp(event))
+    if (this.overlay?.onMouseUp(event))
       return;
     if (this._ignoreOverlayEvent(event))
       return;
@@ -1082,11 +1015,19 @@ export class Recorder {
   private _onMouseMove(event: MouseEvent) {
     if (!event.isTrusted)
       return;
-    if (this._overlay?.onMouseMove(event))
+    if (this.overlay?.onMouseMove(event))
       return;
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onMouseMove?.(event);
+  }
+
+  private _onMouseEnter(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onMouseEnter?.(event);
   }
 
   private _onMouseLeave(event: MouseEvent) {
@@ -1149,7 +1090,7 @@ export class Recorder {
 
   deepEventTarget(event: Event): HTMLElement {
     for (const element of event.composedPath()) {
-      if (!this._overlay?.contains(element as Element))
+      if (!this.overlay?.contains(element as Element))
         return element as HTMLElement;
     }
     return event.composedPath()[0] as HTMLElement;
@@ -1299,16 +1240,6 @@ export class PollingRecorder implements RecorderDelegate {
   async setOverlayState(state: OverlayState): Promise<void> {
     await this._embedder.__pw_recorderSetOverlayState(state);
   }
-}
-
-function cmModeForLanguage(language: Language): string {
-  if (language === 'python')
-    return 'python';
-  if (language === 'java')
-    return 'text/x-java';
-  if (language === 'csharp')
-    return 'text/x-csharp';
-  return 'javascript';
 }
 
 export default PollingRecorder;
