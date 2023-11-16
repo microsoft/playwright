@@ -46,6 +46,7 @@ import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
+import { isSessionClosedError } from '../protocolError';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -132,7 +133,7 @@ export class CRPage implements PageDelegate {
         return cb(frameSession);
       return cb(frameSession).catch(e => {
         // Broadcasting a message to the closed iframe should be a noop.
-        if (e.message && e.message.includes('Target closed'))
+        if (isSessionClosedError(e))
           return;
         throw e;
       });
