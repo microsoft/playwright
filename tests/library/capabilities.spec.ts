@@ -17,7 +17,7 @@
 import os from 'os';
 import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
-const { hostPlatform } = require('../../packages/playwright-core/lib/utils') as typeof import('../../packages/playwright-core/src/utils');
+import { hostPlatform } from '../../packages/playwright-core/src/utils';
 
 it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
   it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
@@ -287,7 +287,7 @@ it('should send no Content-Length header for GET requests with a Content-Type', 
 
 it('Intl.ListFormat should work', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23978' });
-  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'libicu is too low and WebKit disables it by default then');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'libicu is too old and WebKit disables Intl.ListFormat by default then');
   await page.goto(server.EMPTY_PAGE);
   const formatted = await page.evaluate(() => {
     const data = ['first', 'second', 'third'];
