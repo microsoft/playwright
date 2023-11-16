@@ -283,3 +283,17 @@ it('should send no Content-Length header for GET requests with a Content-Type', 
   ]);
   expect(request.headers['content-length']).toBe(undefined);
 });
+
+it('Intl.ListFormat should work', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23978' });
+  await page.goto(server.EMPTY_PAGE);
+  const formatted = await page.evaluate(() => {
+    const data = ['first', 'second', 'third'];
+    const listFormat = new Intl.ListFormat('en', {
+      type: 'disjunction',
+      style: 'short',
+    });
+    return listFormat.format(data);
+  });
+  expect(formatted).toBe('first, second, or third');
+});
