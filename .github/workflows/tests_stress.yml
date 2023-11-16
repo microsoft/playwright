@@ -40,13 +40,19 @@ jobs:
       if: always()
     - run: npm run stest browsers -- --project=chromium
       if: always()
+    - run: npm run stest frames -- --project=chromium
+      if: always()
     - run: npm run stest contexts -- --project=webkit
       if: always()
     - run: npm run stest browsers -- --project=webkit
       if: always()
+    - run: npm run stest frames -- --project=webkit
+      if: always()
     - run: npm run stest contexts -- --project=firefox
       if: always()
     - run: npm run stest browsers -- --project=firefox
+      if: always()
+    - run: npm run stest frames -- --project=firefox
       if: always()
     - run: npm run stest heap -- --project=chromium
       if: always()

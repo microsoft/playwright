@@ -74,6 +74,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     if (this._parent)
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
+    this._connection.maybeDisposeStaleDispatchers(type);
   }
 
   parentScope(): ParentScopeType {
@@ -255,7 +256,11 @@ export class DispatcherConnection {
       this._dispatchersByType.set(type, list);
     }
     list.add(dispatcher._guid);
-    if (list.size > maxDispatchers)
+  }
+
+  maybeDisposeStaleDispatchers(type: string) {
+    const list = this._dispatchersByType.get(type);
+    if (list && list.size > maxDispatchers)
       this._disposeStaleDispatchers(type, list);
   }
 
