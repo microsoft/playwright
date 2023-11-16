@@ -729,7 +729,7 @@ function renderApiCall(apiName: string, params: any) {
         continue;
       let value;
       if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
-        const getter = asLocator('javascript', params[name], false, true);
+        const getter = asLocator('javascript', params[name]);
         apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
         apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
         apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
