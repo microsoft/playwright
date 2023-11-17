@@ -32,9 +32,7 @@ it('SharedArrayBuffer should work @smoke', async function({ contextFactory, http
   expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');
 });
 
-it('Web Assembly should work @smoke', async function({ page, server, browserName, platform }) {
-  it.fail(browserName === 'webkit' && platform === 'win32');
-
+it('Web Assembly should work @smoke', async function({ page, server }) {
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });

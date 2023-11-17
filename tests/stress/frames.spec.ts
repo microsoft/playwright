@@ -16,6 +16,8 @@
 
 import { contextTest as test } from '../config/browserTest';
 
+test.slow();
+
 test('cycle frames', async ({ page, server }) => {
   const kFrameCount = 1200;
 
