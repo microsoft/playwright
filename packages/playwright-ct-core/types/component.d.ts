@@ -25,7 +25,7 @@ export type JsxComponent = {
   kind: 'jsx',
   type: string,
   props: Record<string, any>,
-  children: JsxComponentChild[],
+  children?: JsxComponentChild[],
 };
 
 export type MountOptions = {
