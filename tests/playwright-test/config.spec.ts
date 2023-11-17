@@ -546,6 +546,9 @@ test('should merge configs', async ({ runInlineTest }) => {
           command: 'echo 123',
         }]
       }));
+
+      // Should not add an empty project list.
+      expect(defineConfig({}, {}).projects).toBeUndefined();
     `,
     'a.test.ts': `
       import { test } from '@playwright/test';
