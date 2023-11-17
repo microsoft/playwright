@@ -824,6 +824,32 @@ it.describe('page screenshot animations', () => {
       'onfinish', 'animationend'
     ]);
   });
+
+  it('should wait for fonts to load', async ({ page, server, isWindows, browserName, isLinux }) => {
+    it.fixme(isWindows, 'This requires a windows-specific test expectations. https://github.com/microsoft/playwright/issues/12707');
+    await page.setViewportSize({ width: 500, height: 500 });
+    const fontRequestPromise = new Promise<any>(resolve => {
+      // Stall font loading.
+      server.setRoute('/webfont/iconfont.woff2', (request, response) => {
+        resolve({ request, response });
+      });
+    });
+    await page.goto(server.PREFIX + '/webfont/webfont.html', {
+      waitUntil: 'domcontentloaded', // 'load' will not happen if webfont is pending
+    });
+
+    // Make sure screenshot times out while webfont is stalled.
+    const error = await page.screenshot({ timeout: 200, }).catch(e => e);
+    expect(error.message).toContain('waiting for fonts to load...');
+    expect(error.message).toContain('Timeout 200ms exceeded');
+
+    const fontRequest = await fontRequestPromise;
+    server.serveFile(fontRequest.request, fontRequest.response);
+    const iconsScreenshot = await page.screenshot();
+    expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png', {
+      maxDiffPixels: 50,
+    });
+  });
 });
 
 it('should throw if screenshot size is too large', async ({ page, browserName, isMac }) => {

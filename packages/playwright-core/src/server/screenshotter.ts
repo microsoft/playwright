@@ -240,6 +240,13 @@ export class Screenshotter {
     await Promise.all(this._page.frames().map(async frame => {
       await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
     }));
+    if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
+      progress.log('waiting for fonts to load...');
+      await Promise.all(this._page.frames().map(async frame => {
+        await frame.nonStallingEvaluateInExistingContext('document.fonts.ready', false, 'utility').catch(() => {});
+      }));
+      progress.log('fonts loaded');
+    }
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
 
