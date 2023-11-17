@@ -245,7 +245,7 @@ export const InspectModeController: React.FunctionComponent<{
         overlay: { offsetX: 0 },
       }, {
         async setSelector(selector: string) {
-          setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector, false /* isFrameLocator */, true /* playSafe */));
+          setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector));
         },
         highlightUpdated() {
           for (const r of recorders) {

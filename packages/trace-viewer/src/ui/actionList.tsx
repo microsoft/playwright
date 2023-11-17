@@ -88,7 +88,7 @@ export const renderAction = (
   }) => {
   const { sdkLanguage, revealConsole, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
-  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector, false /* isFrameLocator */, true /* playSafe */) : undefined;
+  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
   let time: string = '';
   if (action.endTime)

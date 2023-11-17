@@ -219,7 +219,7 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   }
   try {
     const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
-    const locators = asLocators(language, selector, undefined, undefined, undefined, preferredQuote);
+    const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
     const digest = digestForComparison(locator);
     if (locators.some(candidate => digestForComparison(candidate) === digest))
       return selector;
