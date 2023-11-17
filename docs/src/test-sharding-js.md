@@ -49,7 +49,7 @@ This will produce a standard HTML report into `playwright-report` directory.
 
 GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. 
 
-The following example shows you how to configure a job to run your tests on four machines in parallel and then merge the reports into a single report. Don't for get to add `reporter: process.env.CI ? 'blob' : 'html',` to your `playwright.config.ts` file as in the example above.
+The following example shows you how to configure a job to run your tests on four machines in parallel and then merge the reports into a single report. Don't forget to add `reporter: process.env.CI ? 'blob' : 'html',` to your `playwright.config.ts` file as in the example above.
 
 1. First we add a `matrix` option to our job configuration with the `shard` option containing the number of shards we want to create. `shard: [1/4, 2/4, 3/4, 4/4]` will create four shards, each with a different shard number.
 
