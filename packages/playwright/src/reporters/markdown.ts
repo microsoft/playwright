@@ -57,7 +57,7 @@ class MarkdownReporter extends BaseReporter {
     }
     if (summary.interrupted.length) {
       lines.push(`<details>`);
-      lines.push(`<summary><b>${summary.flaky.length} interrupted</b></summary>`);
+      lines.push(`<summary><b>${summary.interrupted.length} interrupted</b></summary>`);
       this._printTestList(':warning:', summary.interrupted, lines, ' <br/>');
       lines.push(`</details>`);
       lines.push(``);
