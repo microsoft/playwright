@@ -48,6 +48,9 @@ export const defineConfig = (...configs: any[]) => {
       ]
     };
 
+    if (!result.projects && !config.projects)
+      continue;
+
     const projectOverrides = new Map<string, any>();
     for (const project of config.projects || [])
       projectOverrides.set(project.name, project);
