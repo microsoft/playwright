@@ -34,10 +34,11 @@ type ReportData = {
   reportFile: string;
 };
 
+const joinAndNormalizePath = (root: string, relativePath: string) => path.normalize(path.join(root, relativePath));
+
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
-  const joinAndNormalizePath = (root: string, relativePath: string) => path.normalize(path.join(dir, relativePath));
   const receiver = new TeleReporterReceiver(joinAndNormalizePath, multiplexer, false, config.config);
   const stringPool = new StringInternPool();
 
