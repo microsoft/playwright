@@ -25,6 +25,7 @@ import { captureRawStack, constructURLBasedOnBaseURL, isRegExp, isTextualMimeTyp
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl, type TestStepInternal } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
+import { takeFirst } from '../common/config';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -367,7 +368,7 @@ export async function toPass(
   } = {},
 ) {
   const testInfo = currentTestInfo();
-  const timeout = options.timeout !== undefined ? options.timeout : 0;
+  const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
 
   const rawStack = captureRawStack();
   const stackFrames = filteredStackTrace(rawStack);

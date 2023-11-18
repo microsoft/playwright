@@ -688,6 +688,17 @@ interface TestConfig {
        */
       maxDiffPixelRatio?: number;
     };
+
+    /**
+     * Configuration for the [expect(value).toPass([, options])](https://playwright.dev/docs/test-assertions#expecttopass)
+     * method.
+     */
+    toPass?: {
+      /**
+       * timeout for toPass method in milliseconds.
+       */
+      timeout?: number;
+    };
   };
 
   /**
@@ -6762,6 +6773,17 @@ interface TestProject {
        * default.
        */
       maxDiffPixelRatio?: number;
+    };
+
+    /**
+     * Configuration for the [expect(value).toPass([, options])](https://playwright.dev/docs/test-assertions#expecttopass)
+     * method.
+     */
+    toPass?: {
+      /**
+       * timeout for toPass method in milliseconds.
+       */
+      timeout?: number;
     };
   };
 
