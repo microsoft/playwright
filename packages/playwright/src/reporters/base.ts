@@ -398,7 +398,7 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
 }
 
 export function relativeFilePath(config: FullConfig, file: string): string {
-  return toPosixPath(path.relative(config.rootDir, file)) || path.basename(file);
+  return path.relative(config.rootDir, file) || path.basename(file);
 }
 
 function relativeTestPath(config: FullConfig, test: TestCase): string {
@@ -494,10 +494,6 @@ export function separator(text: string = ''): string {
 
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
-}
-
-export function toPosixPath(aPath: string): string {
-  return aPath.split(path.sep).join(path.posix.sep);
 }
 
 export function prepareErrorStack(stack: string): {
