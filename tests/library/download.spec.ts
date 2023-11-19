@@ -733,6 +733,22 @@ it('should download successfully when routing', async ({ browser, server }) => {
   await page.close();
 });
 
+it('should download successfully when routing with fulfill', async ({ browser, server }, testInfo) => {
+  const page = await browser.newPage();
+  await page.context().route('**/*', route => route.fulfill({ body: 'Hello world', contentType: 'text/plain' }));
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`<a href="${server.PREFIX}/download.txt" download="download.txt">download</a>`);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  expect(await download.failure()).toBe(null);
+  const userPath = testInfo.outputPath('download.txt');
+  await download.saveAs(userPath);
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
 async function assertDownloadToPDF(download: Download, filePath: string) {
   expect(download.suggestedFilename()).toBe(path.basename(filePath));
   const stream = await download.createReadStream();
