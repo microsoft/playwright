@@ -612,61 +612,61 @@ binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```bash tab=bash-bash lang=js
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npx playwright install
+PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 npx playwright install
 ```
 
 ```batch tab=bash-batch lang=js
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 npx playwright install
 ```
 
 ```powershell tab=bash-powershell lang=js
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 npx playwright install
 ```
 
 ```bash tab=bash-bash lang=python
 pip install playwright
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 playwright install
 ```
 
 ```batch tab=bash-batch lang=python
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 pip install playwright
 playwright install
 ```
 
 ```powershell tab=bash-powershell lang=python
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 pip install playwright
 playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
+PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
@@ -674,69 +674,69 @@ It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMI
 take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
 ```bash tab=bash-bash lang=js
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npx playwright install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 npx playwright install
 ```
 
 ```batch tab=bash-batch lang=js
-set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 npx playwright install
 ```
 
 ```powershell tab=bash-powershell lang=js
-$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 npx playwright install
 ```
 
 ```bash tab=bash-bash lang=python
 pip install playwright
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 playwright install
 ```
 
 ```batch tab=bash-batch lang=python
-set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 pip install playwright
 playwright install
 ```
 
 ```powershell tab=bash-powershell lang=python
-$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 pip install playwright
 playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
-set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
-$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
-set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
-set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
-$Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
-$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+$Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
+$Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 ## Managing browser binaries
