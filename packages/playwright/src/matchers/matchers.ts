@@ -157,7 +157,7 @@ export function toBeInViewport(
 export function toContainText(
   this: ExpectMatcherContext,
   locator: LocatorEx,
-  expected: string | RegExp | (string | RegExp)[],
+  expected: string | RegExp | readonly (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
@@ -201,7 +201,7 @@ export function toHaveAttribute(
 export function toHaveClass(
   this: ExpectMatcherContext,
   locator: LocatorEx,
-  expected: string | RegExp | (string | RegExp)[],
+  expected: string | RegExp | readonly (string | RegExp)[],
   options?: { timeout?: number },
 ) {
   if (Array.isArray(expected)) {
@@ -268,7 +268,7 @@ export function toHaveJSProperty(
 export function toHaveText(
   this: ExpectMatcherContext,
   locator: LocatorEx,
-  expected: string | RegExp | (string | RegExp)[],
+  expected: string | RegExp | readonly (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
@@ -299,7 +299,7 @@ export function toHaveValue(
 export function toHaveValues(
   this: ExpectMatcherContext,
   locator: LocatorEx,
-  expected: (string | RegExp)[],
+  expected: readonly (string | RegExp)[],
   options?: { timeout?: number },
 ) {
   return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout) => {
@@ -362,7 +362,7 @@ export async function toPass(
   this: ExpectMatcherContext,
   callback: () => any,
   options: {
-    intervals?: number[];
+    intervals?: readonly number[];
     timeout?: number,
   } = {},
 ) {

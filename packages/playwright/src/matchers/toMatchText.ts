@@ -109,7 +109,7 @@ export async function toMatchText(
   };
 }
 
-export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
+export function toExpectedTextValues(items: readonly (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
   return items.map(i => ({
     string: isString(i) ? i : undefined,
     regexSource: isRegExp(i) ? i.source : undefined,
