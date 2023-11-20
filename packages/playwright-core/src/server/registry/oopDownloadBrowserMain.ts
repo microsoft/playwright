@@ -73,6 +73,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
     const file = fs.createWriteStream(options.zipPath);
+    let lastDataReceivedTimer: NodeJS.Timeout;
     file.on('finish', () => {
       if (downloadedBytes !== totalBytes) {
         log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
@@ -80,18 +81,22 @@ function downloadFile(options: DownloadParams): Promise<void> {
       } else {
         log(`-- download complete, size: ${downloadedBytes}`);
         promise.resolve();
+        clearTimeout(lastDataReceivedTimer);
       }
     });
     file.on('error', error => promise.reject(error));
     response.pipe(file);
-    response.on('data', onData);
+    response.on('data', (chunk: string) => {
+      clearTimeout(lastDataReceivedTimer);
+      lastDataReceivedTimer = setTimeout(() => {
+        response.destroy();
+        promise.reject(new Error(`Download failed: no data received for ${options.connectionTimeout}ms URL: ${options.url}`));
+      }, options.connectionTimeout);
+      downloadedBytes += chunk.length;
+      progress(downloadedBytes, totalBytes);
+    });
   }, (error: any) => promise.reject(error));
   return promise;
-
-  function onData(chunk: string) {
-    downloadedBytes += chunk.length;
-    progress(downloadedBytes, totalBytes);
-  }
 }
 
 async function main(options: DownloadParams) {
