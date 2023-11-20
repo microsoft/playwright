@@ -28,8 +28,8 @@ export async function mkdirIfNeeded(filePath: string) {
 
 export async function removeFolders(dirs: string[]): Promise<Error[]> {
   return await Promise.all(dirs.map((dir: string) =>
-    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 })
-  )).catch(e => e);
+    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
+  ));
 }
 
 export function canAccessFile(file: string) {
