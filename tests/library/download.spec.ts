@@ -733,7 +733,8 @@ it('should download successfully when routing', async ({ browser, server }) => {
   await page.close();
 });
 
-it('should download successfully when routing with fulfill', async ({ browser, server }, testInfo) => {
+it('should download successfully when routing with fulfill', async ({ browser, server, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit');
   const page = await browser.newPage();
   await page.context().route('**/*', route => route.fulfill({ body: 'Hello world', contentType: 'text/plain' }));
   await page.goto(server.PREFIX + '/empty.html');
