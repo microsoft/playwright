@@ -244,6 +244,12 @@ Attribute name.
 
 Expected attribute value.
 
+### option: LocatorAssertions.NotToHaveAttribute.ignoreCase
+* since: v1.40
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
