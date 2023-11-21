@@ -35,7 +35,6 @@ assertThat(page.getByPlaceholder("Search docs")).hasValue("locator");
 ### Other Changes
 
 - Methods [`method: Download.path`] and [`method: Download.createReadStream`] throw an error for failed and cancelled downloads.
-- Playwright [docker image](./docker.md) now comes with Node.js v20.
 
 ### Browser Versions
 
