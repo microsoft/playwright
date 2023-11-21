@@ -68,3 +68,30 @@ test(`playwright cdn should race with a timeout`, async ({ exec }) => {
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test(`npx playwright install should not hang when CDN closes the connection`, async ({ exec }) => {
+  let retryCount = 0;
+  const server = http.createServer((req, res) => {
+    ++retryCount;
+    res.writeHead(200, {
+      'Content-Length': 100 * 1024 * 1024,
+      'Content-Type': 'application/zip',
+    });
+    res.end('a');
+  });
+  await new Promise<void>(resolve => server.listen(0, resolve));
+  try {
+    await exec('npm i playwright');
+    const result = await exec('npx playwright install', {
+      env: {
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        DEBUG: 'pw:install',
+      },
+      expectToExitWithError: true
+    });
+    expect(retryCount).toBe(3);
+    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(3);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
