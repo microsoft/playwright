@@ -38,7 +38,6 @@ def test_example(page: Page) -> None:
 ### Other Changes
 
 - Method [`method: Download.path`] throws an error for failed and cancelled downloads.
-- Playwright [docker image](./docker.md) now comes with Node.js v20.
 
 ### Browser Versions
 
