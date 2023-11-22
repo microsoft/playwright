@@ -85,6 +85,13 @@ function downloadFile(options: DownloadParams): Promise<void> {
     file.on('error', error => promise.reject(error));
     response.pipe(file);
     response.on('data', onData);
+    response.on('close', () => {
+      if (response.complete)
+        return;
+      file.close();
+      log(`-- download failed, server closed connection`);
+      promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
+    });
   }, (error: any) => promise.reject(error));
   return promise;
 
