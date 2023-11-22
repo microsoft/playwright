@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -52,8 +52,10 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
   printStatus(`processing test events`);
 
+  const pathSeparatorPatcher = new PathSeparatorPatcher();
   const dispatchEvents = async (events: JsonEvent[]) => {
     for (const event of events) {
+      pathSeparatorPatcher.updatePathSeparators(event);
       if (event.method === 'onEnd')
         printStatus(`building final report`);
       await receiver.dispatch(event);
@@ -73,6 +75,66 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   }
   await dispatchEvents(eventData.epilogue);
 }
+
+class PathSeparatorPatcher {
+  private _from: string;
+  private _to: string;
+  constructor() {
+    this._from = path.sep === '/' ? '\\' : '/';
+    this._to = path.sep;
+  }
+
+  updatePathSeparators(jsonEvent: JsonEvent) {
+    if (jsonEvent.method === 'onProject') {
+      this._updateProject(jsonEvent.params.project as JsonProject);
+      return;
+    }
+    if (jsonEvent.method === 'onTestEnd') {
+      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      testResult.errors.forEach(error => this._updateLocation(error.location));
+      return;
+    }
+    if (jsonEvent.method === 'onTestEnd') {
+      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      testResult.errors.forEach(error => this._updateLocation(error.location));
+      testResult.attachments.forEach(attachment => {
+        if (attachment.path)
+          attachment.path = this._updatePath(attachment.path);
+      });
+      return;
+    }
+    if (jsonEvent.method === 'onStepBegin') {
+      const step = jsonEvent.params.step as JsonTestStepStart;
+      this._updateLocation(step.location);
+      return;
+    }
+  }
+
+  private _updateProject(project: JsonProject) {
+    project.outputDir = this._updatePath(project.outputDir);
+    project.testDir = this._updatePath(project.testDir);
+    project.snapshotDir = this._updatePath(project.snapshotDir);
+    project.suites.forEach(suite => this._updateSuite(suite));
+  }
+
+  private _updateSuite(suite: JsonSuite) {
+    this._updateLocation(suite.location);
+    for (const child of suite.suites)
+      this._updateSuite(child);
+    for (const test of suite.tests)
+      this._updateLocation(test.location);
+  }
+
+  private _updateLocation(location?: JsonLocation) {
+    if (location)
+      location.file = this._updatePath(location.file);
+  }
+
+  private _updatePath(text: string): string {
+    return text.split(this._from).join(this._to);
+  }
+}
+
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
   for (const event of events) {
