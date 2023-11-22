@@ -84,8 +84,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `-c <file>` or `--config <file>`| Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
 | `-c <dir>` or `--config <dir>`| Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
 | `--forbid-only` | Whether to disallow `test.only`. Useful on CI.|
-| `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g "add to cart"`.  The regular expression will be tested against the string that consists of the test file name, `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`. |
-| `--grep-invert <grep>` | Only run tests **not** matching this regular expression. The opposite of `--grep`. |
+| `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g "add to cart"`.  The regular expression will be tested against the string that consists of the test file name, `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`. The filter does not apply to the tests from dependcy projects, i.e. Playwright will still run all tests from [project dependencies](./test-projects.md#dependencies). |
+| `--grep-invert <grep>` | Only run tests **not** matching this regular expression. The opposite of `--grep`. The filter does not apply to the tests from dependcy projects, i.e. Playwright will still run all tests from [project dependencies](./test-projects.md#dependencies).|
 | `--global-timeout <number>` | Total timeout for the whole test run in milliseconds. By default, there is no global timeout. Learn more about [various timeouts](./test-timeouts.md).|
 | `--list` | list all the tests, but do not run them.|
 | `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
