@@ -128,7 +128,7 @@ export type JsonEvent = {
 
 export class TeleReporterReceiver {
   private _rootSuite: TeleSuite;
-  private _joinAndNormalizePath: (root: string, relative: string) => string;
+  private _pathSeparator: string;
   private _reporter: Partial<ReporterV2>;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
@@ -139,9 +139,9 @@ export class TeleReporterReceiver {
   private _config!: FullConfig;
   private _stringPool = new StringInternPool();
 
-  constructor(joinAndNormalizePath: (root: string, relative: string) => string, reporter: Partial<ReporterV2>, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
+  constructor(pathSeparator: string, reporter: Partial<ReporterV2>, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
-    this._joinAndNormalizePath = joinAndNormalizePath;
+    this._pathSeparator = pathSeparator;
     this._reporter = reporter;
     this._reuseTestCases = reuseTestCases;
     this._reportConfig = reportConfig;
@@ -413,7 +413,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (!relativePath)
       return relativePath;
-    return this._stringPool.internString(this._joinAndNormalizePath(this._rootDir, relativePath));
+    return this._stringPool.internString(this._rootDir + this._pathSeparator + relativePath);
   }
 
 }
