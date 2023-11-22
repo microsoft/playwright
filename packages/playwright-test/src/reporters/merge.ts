@@ -23,7 +23,7 @@ import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd }
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
-import { ZipFile } from 'playwright-core/lib/utils';
+import { ZipFile } from '@intuned/playwright-core/lib/utils';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);

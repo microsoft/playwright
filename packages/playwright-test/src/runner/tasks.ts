@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
+import { debug, rimraf } from '@intuned/playwright-core/lib/utilsBundle';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -29,7 +29,7 @@ import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGloba
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { monotonicTime } from '@intuned/playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);

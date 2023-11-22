@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
+import { captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from '@intuned/playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';

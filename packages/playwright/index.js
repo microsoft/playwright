@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = require('playwright-core');
+module.exports = require('@intuned/playwright-core');

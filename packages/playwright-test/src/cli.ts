@@ -16,11 +16,11 @@
 
 /* eslint-disable no-console */
 
-import type { Command } from 'playwright-core/lib/utilsBundle';
+import type { Command } from '@intuned/playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
+import { stopProfiling, startProfiling } from '@intuned/playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
@@ -30,7 +30,7 @@ import type { FullResult, TestError } from '../reporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
-import program from 'playwright-core/lib/cli/program';
+import program from '@intuned/playwright-core/lib/cli/program';
 import type { ReporterDescription } from '..';
 import { prepareErrorStack } from './reporters/base';
 

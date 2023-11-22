@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { minimatch } from 'playwright-core/lib/utilsBundle';
+import { minimatch } from '@intuned/playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
 import { createFileMatcher } from '../util';

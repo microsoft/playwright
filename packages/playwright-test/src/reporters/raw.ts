@@ -17,11 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { assert } from 'playwright-core/lib/utils';
+import { assert } from '@intuned/playwright-core/lib/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
-import { MultiMap } from 'playwright-core/lib/utils';
+import { MultiMap } from '@intuned/playwright-core/lib/utils';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { Metadata } from '../../types/test';
 import type { SuitePrivate } from '../../types/reporterPrivate';

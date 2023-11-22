@@ -16,7 +16,7 @@
 
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { debug } from '@intuned/playwright-core/lib/utilsBundle';
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
 

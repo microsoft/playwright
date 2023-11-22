@@ -15,19 +15,19 @@
  */
 
 import fs from 'fs';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import { mime } from '@intuned/playwright-core/lib/utilsBundle';
 import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { colors, debug, minimatch, parseStackTraceLine } from '@intuned/playwright-core/lib/utilsBundle';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
-import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
-import type { RawStack } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString } from '@intuned/playwright-core/lib/utils';
+import type { RawStack } from '@intuned/playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
-const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
+const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('@intuned/playwright-core/package.json'));
 
 export function filterStackTrace(e: Error): { message: string, stack: string } {
   if (process.env.PWDEBUGIMPL)
@@ -300,7 +300,7 @@ function folderIsModule(folder: string): boolean {
 }
 
 export function experimentalLoaderOption() {
-  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/transform/esmLoader')).toString()}`;
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright-test/lib/transform/esmLoader')).toString()}`;
 }
 
 export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {

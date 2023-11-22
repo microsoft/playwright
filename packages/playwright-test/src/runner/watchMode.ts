@@ -15,7 +15,7 @@
  */
 
 import readline from 'readline';
-import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, ManualPromise } from '@intuned/playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
 import { createFileMatcher, createFileMatcherFromArguments } from '../util';
@@ -26,10 +26,10 @@ import { clearCompilationCache, collectAffectedTestFiles } from '../transform/co
 import type { FullResult } from 'packages/playwright-test/reporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from '@intuned/playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
-import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
+import { PlaywrightServer } from '@intuned/playwright-core/lib/remote/playwrightServer';
 import ListReporter from '../reporters/list';
 
 class FSWatcher {

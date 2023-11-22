@@ -16,7 +16,7 @@
 
 import type { WriteStream } from 'tty';
 import type { EnvProducedPayload, ProcessInitParams, TtyParams } from './ipc';
-import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { startProfiling, stopProfiling } from '@intuned/playwright-core/lib/utils';
 import type { TestInfoError } from '../../types/test';
 import { serializeError } from '../util';
 

@@ -16,15 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid } from 'playwright-core/lib/utils';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import { ManualPromise, calculateSha1, createGuid } from '@intuned/playwright-core/lib/utils';
+import { mime } from '@intuned/playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
-import { yazl } from 'playwright-core/lib/zipBundle';
+import { yazl } from '@intuned/playwright-core/lib/zipBundle';
 
 type BlobReporterOptions = {
   configDir: string;

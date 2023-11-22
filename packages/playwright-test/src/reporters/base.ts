@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { colors, ms as milliseconds, parseStackTraceLine } from '@intuned/playwright-core/lib/utilsBundle';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { monotonicTime } from '@intuned/playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');

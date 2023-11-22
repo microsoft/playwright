@@ -18,8 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
 import { formatError, prepareErrorStack } from './base';
-import { MultiMap } from 'playwright-core/lib/utils';
-import { assert } from 'playwright-core/lib/utils';
+import { MultiMap } from '@intuned/playwright-core/lib/utils';
+import { assert } from '@intuned/playwright-core/lib/utils';
 import { FullProjectInternal } from '../common/config';
 import EmptyReporter from './empty';
 

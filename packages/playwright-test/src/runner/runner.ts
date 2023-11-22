@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { monotonicTime } from '@intuned/playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from '@intuned/playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';

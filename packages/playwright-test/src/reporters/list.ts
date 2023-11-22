@@ -15,7 +15,7 @@
  */
 
 /* eslint-disable no-console */
-import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { colors, ms as milliseconds } from '@intuned/playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError, formatTestTitle, stepSuffix, stripAnsiEscapes } from './base';
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 

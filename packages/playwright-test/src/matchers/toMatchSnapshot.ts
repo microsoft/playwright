@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import type { Locator, Page } from 'playwright-core';
-import type { Page as PageEx } from 'playwright-core/lib/client/page';
-import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
+import type { Locator, Page } from '@intuned/playwright-core';
+import type { Page as PageEx } from '@intuned/playwright-core/lib/client/page';
+import type { Locator as LocatorEx } from '@intuned/playwright-core/lib/client/locator';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
-import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
-import { getComparator } from 'playwright-core/lib/utils';
-import type { PageScreenshotOptions } from 'playwright-core/types/types';
+import type { ImageComparatorOptions, Comparator } from '@intuned/playwright-core/lib/utils';
+import { getComparator } from '@intuned/playwright-core/lib/utils';
+import type { PageScreenshotOptions } from '@intuned/playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText,
   expectTypes  } from '../util';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from '@intuned/playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import { mime } from '@intuned/playwright-core/lib/utilsBundle';
 import type { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherContext, SyncExpectationResult } from './expect';
 

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import { colors, open } from 'playwright-core/lib/utilsBundle';
+import { colors, open } from '@intuned/playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
-import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils';
+import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, removeFolders } from '@intuned/playwright-core/lib/utils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath, sanitizeForFilePath } from '../util';
 import type { Metadata } from '../../types/test';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import type { ZipFile } from '@intuned/playwright-core/lib/zipBundle';
+import { yazl } from '@intuned/playwright-core/lib/zipBundle';
+import { mime } from '@intuned/playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import { FullConfigInternal } from '../common/config';
 import EmptyReporter from './empty';
@@ -279,12 +279,12 @@ class HtmlBuilder {
     this._addDataFile('report.json', htmlReport);
 
     // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
+    const appFolder = path.join(require.resolve('@intuned/playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
     await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
 
     // Copy trace viewer.
     if (this._hasTraces) {
-      const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
+      const traceViewerFolder = path.join(require.resolve('@intuned/playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
       const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
       const traceViewerAssetsTargetFolder = path.join(traceViewerTargetFolder, 'assets');
       fs.mkdirSync(traceViewerAssetsTargetFolder, { recursive: true });

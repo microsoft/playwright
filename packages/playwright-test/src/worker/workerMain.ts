@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
+import { colors, rimraf } from '@intuned/playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
@@ -23,7 +23,7 @@ import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
-import { ManualPromise, captureLibraryStackTrace } from 'playwright-core/lib/utils';
+import { ManualPromise, captureLibraryStackTrace } from '@intuned/playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
 import { TimeoutManager, type TimeSlot } from './timeoutManager';
 import { ProcessRunner } from '../common/process';

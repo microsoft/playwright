@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { openTraceViewerApp, openTraceInBrowser } from 'playwright-core/lib/server';
-import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
+import { openTraceViewerApp, openTraceInBrowser } from '@intuned/playwright-core/lib/server';
+import { isUnderTest, ManualPromise } from '@intuned/playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
@@ -25,9 +25,9 @@ import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
-import { open } from 'playwright-core/lib/utilsBundle';
+import { open } from '@intuned/playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
-import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
+import type { OpenTraceViewerOptions, Transport } from '@intuned/playwright-core/lib/server/trace/viewer/traceViewer';
 import { Multiplexer } from '../reporters/multiplexer';
 
 class UIMode {

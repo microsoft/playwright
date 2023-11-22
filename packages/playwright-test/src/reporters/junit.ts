@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { monotonicTime } from '@intuned/playwright-core/lib/utils';
 import { formatFailure, stripAnsiEscapes } from './base';
-import { assert } from 'playwright-core/lib/utils';
+import { assert } from '@intuned/playwright-core/lib/utils';
 import EmptyReporter from './empty';
 
 class JUnitReporter extends EmptyReporter {

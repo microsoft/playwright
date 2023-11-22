@@ -16,7 +16,7 @@
 
 const pwt = require('./lib/index');
 const { defineConfig } = require('./lib/common/configLoader');
-const playwright = require('playwright-core');
+const playwright = require('@intuned/playwright-core');
 const combinedExports = {
   ...playwright,
   ...pwt,

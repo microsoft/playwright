@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core';
+export * from '@intuned/playwright-core';

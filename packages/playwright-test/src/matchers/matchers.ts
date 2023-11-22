@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import type { Locator, Page, APIResponse } from 'playwright-core';
-import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import type { Locator, Page, APIResponse } from '@intuned/@intuned/playwright-core';
+import type { FrameExpectOptions } from '@intuned/playwright-core/lib/client/types';
+import { colors } from '@intuned/playwright-core/lib/utilsBundle';
 import { expectTypes, callLogText, filteredStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from '@intuned/playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import type { TestStepInternal } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';

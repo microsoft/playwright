@@ -15,7 +15,7 @@
 */
 
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils';
+import { calculateSha1 } from '@intuned/playwright-core/lib/utils';
 import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './config';
 import type { Matcher, TestFileFilter } from '../util';

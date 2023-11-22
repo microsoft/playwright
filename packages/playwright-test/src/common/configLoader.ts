@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { isRegExp } from 'playwright-core/lib/utils';
+import { isRegExp } from '@intuned/playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
 import { requireOrImport } from '../transform/transform';
 import type { Config, Project } from '../../types/test';

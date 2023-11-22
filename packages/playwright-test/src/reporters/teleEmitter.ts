@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { createGuid } from 'playwright-core/lib/utils';
+import { createGuid } from '@intuned/playwright-core/lib/utils';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfig, FullResult, Location, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';

@@ -17,8 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import { currentConfig } from './common/globals';
-import { mime } from 'playwright-core/lib/utilsBundle';
-import { isJsonMimeType, isString, isTextualMimeType } from 'playwright-core/lib/utils';
+import { mime } from '@intuned/playwright-core/lib/utilsBundle';
+import { isJsonMimeType, isString, isTextualMimeType } from '@intuned/playwright-core/lib/utils';
 
 class JsonStore {
   async delete(name: string) {

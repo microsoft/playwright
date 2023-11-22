@@ -20,7 +20,7 @@ import type { TestResult, TestStep, TestError } from '../../types/testReporter';
 import type { Suite } from '../common/test';
 import type { ProcessExitData } from './processHost';
 import type { TestCase } from '../common/test';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from '@intuned/playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';

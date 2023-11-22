@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from '@intuned/playwright-core/lib/utilsBundle';
 import type { ExpectMatcherContext } from './expect';
 
 export function matcherHint(state: ExpectMatcherContext, matcherName: string, a: any, b: any, matcherOptions: any, timeout?: number) {

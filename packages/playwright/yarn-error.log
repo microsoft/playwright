@@ -1,0 +1,58 @@
+Arguments: 
+  /Users/ahmadilaiwi/.nvm/versions/node/v16.15.0/bin/node /opt/homebrew/Cellar/yarn/1.22.17_2/libexec/bin/yarn.js add @intuned/playwright-core@latest
+
+PATH: 
+  /opt/homebrew/opt/postgresql@13/bin:/Users/ahmadilaiwi/.nvm/versions/node/v16.15.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/opt/homebrew/opt/postgresql@13/bin:/Users/ahmadilaiwi/anaconda3/condabin:/Users/ahmadilaiwi/.nvm/versions/node/v16.15.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin
+
+Yarn version: 
+  1.22.17
+
+Node version: 
+  16.15.0
+
+Platform: 
+  darwin arm64
+
+Trace: 
+  Error: EEXIST: file already exists, mkdir '/Users/ahmadilaiwi/Documents/ilaiwi/playwright/node_modules/@playwright/test/node_modules/fsevents'
+
+npm manifest: 
+  {
+    "name": "@intuned/playwright",
+    "version": "1.36.2-5",
+    "description": "A high-level API to automate web browsers",
+    "repository": "github:Microsoft/playwright",
+    "homepage": "https://playwright.dev",
+    "engines": {
+      "node": ">=16"
+    },
+    "author": {
+      "name": "Microsoft Corporation"
+    },
+    "license": "Apache-2.0",
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "import": "./index.mjs",
+        "require": "./index.js",
+        "default": "./index.js"
+      },
+      "./cli": "./cli.js",
+      "./package.json": "./package.json"
+    },
+    "bin": {
+      "playwright": "./cli.js"
+    },
+    "scripts": {
+      "install": "node install.js"
+    },
+    "dependencies": {
+      "@intuned/playwright-core": "1.36.2-5"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

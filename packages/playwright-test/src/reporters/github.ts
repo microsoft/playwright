@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { ms as milliseconds } from '@intuned/playwright-core/lib/utilsBundle';
 import path from 'path';
 import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';

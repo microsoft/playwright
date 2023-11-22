@@ -15,7 +15,7 @@
  */
 
 import { formatLocation, debugTest, filterStackFile, serializeError } from '../util';
-import { ManualPromise, zones } from 'playwright-core/lib/utils';
+import { ManualPromise, zones } from '@intuned/playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';

@@ -16,9 +16,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
-import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator } from 'playwright-core/lib/utils';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from '@intuned/playwright-core';
+import * as playwrightLibrary from '@intuned/playwright-core';
+import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator } from '@intuned/playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -63,7 +63,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
   playwright: [async ({}, use) => {
-    await use(require('playwright-core'));
+    await use(require('@intuned/playwright-core'));
   }, { scope: 'worker', _hideStep: true } as any],
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
