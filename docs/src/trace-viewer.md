@@ -177,8 +177,8 @@ Options for tracing are:
 
 This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
 
-<details><summary>If you are not using Pytest, click here to learn how to record traces.
-</summary>
+<details>
+<summary>If you are not using Pytest, click here to learn how to record traces.</summary>
 
 ```python async
 browser = await chromium.launch()
