@@ -30,7 +30,7 @@ import { relativeFilePath } from '../util';
 type StatusCallback = (message: string) => void;
 
 type ReportData = {
-  idsPatcher: IdsPatcher;
+  eventPatchers: JsonEventPatchers;
   reportFile: string;
 };
 
@@ -52,10 +52,8 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
   printStatus(`processing test events`);
 
-  const pathSeparatorPatcher = new PathSeparatorPatcher();
   const dispatchEvents = async (events: JsonEvent[]) => {
     for (const event of events) {
-      pathSeparatorPatcher.updatePathSeparators(event);
       if (event.method === 'onEnd')
         printStatus(`building final report`);
       await receiver.dispatch(event);
@@ -65,88 +63,15 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
 
   await dispatchEvents(eventData.prologue);
-  for (const { reportFile, idsPatcher } of eventData.reports) {
+  for (const { reportFile, eventPatchers } of eventData.reports) {
     const reportJsonl = await fs.promises.readFile(reportFile);
     const events = parseTestEvents(reportJsonl);
     new JsonStringInternalizer(stringPool).traverse(events);
-    idsPatcher.patchEvents(events);
-    patchAttachmentPaths(events, dir);
+    eventPatchers.patchers.push(new AttachmentPathPatcher(dir));
+    eventPatchers.patchEvents(events);
     await dispatchEvents(events);
   }
   await dispatchEvents(eventData.epilogue);
-}
-
-class PathSeparatorPatcher {
-  private _from: string;
-  private _to: string;
-  constructor() {
-    this._from = path.sep === '/' ? '\\' : '/';
-    this._to = path.sep;
-  }
-
-  updatePathSeparators(jsonEvent: JsonEvent) {
-    if (jsonEvent.method === 'onProject') {
-      this._updateProject(jsonEvent.params.project as JsonProject);
-      return;
-    }
-    if (jsonEvent.method === 'onTestEnd') {
-      const testResult = jsonEvent.params.result as JsonTestResultEnd;
-      testResult.errors.forEach(error => this._updateLocation(error.location));
-      return;
-    }
-    if (jsonEvent.method === 'onTestEnd') {
-      const testResult = jsonEvent.params.result as JsonTestResultEnd;
-      testResult.errors.forEach(error => this._updateLocation(error.location));
-      testResult.attachments.forEach(attachment => {
-        if (attachment.path)
-          attachment.path = this._updatePath(attachment.path);
-      });
-      return;
-    }
-    if (jsonEvent.method === 'onStepBegin') {
-      const step = jsonEvent.params.step as JsonTestStepStart;
-      this._updateLocation(step.location);
-      return;
-    }
-  }
-
-  private _updateProject(project: JsonProject) {
-    project.outputDir = this._updatePath(project.outputDir);
-    project.testDir = this._updatePath(project.testDir);
-    project.snapshotDir = this._updatePath(project.snapshotDir);
-    project.suites.forEach(suite => this._updateSuite(suite));
-  }
-
-  private _updateSuite(suite: JsonSuite) {
-    this._updateLocation(suite.location);
-    for (const child of suite.suites)
-      this._updateSuite(child);
-    for (const test of suite.tests)
-      this._updateLocation(test.location);
-  }
-
-  private _updateLocation(location?: JsonLocation) {
-    if (location)
-      location.file = this._updatePath(location.file);
-  }
-
-  private _updatePath(text: string): string {
-    return text.split(this._from).join(this._to);
-  }
-}
-
-
-function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
-  for (const event of events) {
-    if (event.method !== 'onTestEnd')
-      continue;
-    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
-      if (!attachment.path)
-        continue;
-
-      attachment.path = path.join(resourceDir, attachment.path);
-    }
-  }
 }
 
 const commonEventNames = ['onBlobReportMetadata', 'onConfigure', 'onProject', 'onBegin', 'onEnd'];
@@ -248,8 +173,10 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       salt = sha1 + '-' + i;
     saltSet.add(salt);
 
-    const idsPatcher = new IdsPatcher(stringPool, metadata.name, salt);
-    idsPatcher.patchEvents(parsedEvents);
+    const eventPatchers = new JsonEventPatchers();
+    eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, salt));
+    eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
+    eventPatchers.patchEvents(parsedEvents);
 
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
@@ -262,7 +189,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
     // Save information about the reports to stream their test events later.
     reports.push({
-      idsPatcher,
+      eventPatchers,
       reportFile: localPath,
     });
   }
@@ -400,26 +327,27 @@ class UniqueFileNameGenerator {
 }
 
 class IdsPatcher {
-  constructor(private _stringPool: StringInternPool, private _reportName: string | undefined, private _salt: string) {
+  constructor(
+    private _stringPool: StringInternPool,
+    private _reportName: string | undefined,
+    private _salt: string) {
   }
 
-  patchEvents(events: JsonEvent[]) {
-    for (const event of events) {
-      const { method, params } = event;
-      switch (method) {
-        case 'onProject':
-          this._onProject(params.project);
-          continue;
-        case 'onTestBegin':
-        case 'onStepBegin':
-        case 'onStepEnd':
-        case 'onStdIO':
-          params.testId = this._mapTestId(params.testId);
-          continue;
-        case 'onTestEnd':
-          params.test.testId = this._mapTestId(params.test.testId);
-          continue;
-      }
+  patchEvent(event: JsonEvent) {
+    const { method, params } = event;
+    switch (method) {
+      case 'onProject':
+        this._onProject(params.project);
+        return;
+      case 'onTestBegin':
+      case 'onStepBegin':
+      case 'onStepEnd':
+      case 'onStdIO':
+        params.testId = this._mapTestId(params.testId);
+        return;
+      case 'onTestEnd':
+        params.test.testId = this._mapTestId(params.test.testId);
+        return;
     }
   }
 
@@ -437,5 +365,97 @@ class IdsPatcher {
 
   private _mapTestId(testId: string): string {
     return this._stringPool.internString(testId + this._salt);
+  }
+}
+
+class AttachmentPathPatcher {
+  constructor(private _resourceDir: string) {
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method !== 'onTestEnd')
+      return;
+    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
+      if (!attachment.path)
+        continue;
+
+      attachment.path = path.join(this._resourceDir, attachment.path);
+    }
+  }
+}
+
+class PathSeparatorPatcher {
+  private _from: string;
+  private _to: string;
+  constructor(from?: string) {
+    this._from = from ?? (path.sep === '/' ? '\\' : '/');
+    this._to = path.sep;
+  }
+
+  patchEvent(jsonEvent: JsonEvent) {
+    if (this._from === this._to)
+      return;
+    if (jsonEvent.method === 'onProject') {
+      this._updateProject(jsonEvent.params.project as JsonProject);
+      return;
+    }
+    if (jsonEvent.method === 'onTestEnd') {
+      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      testResult.errors.forEach(error => this._updateLocation(error.location));
+      return;
+    }
+    if (jsonEvent.method === 'onTestEnd') {
+      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      testResult.errors.forEach(error => this._updateLocation(error.location));
+      testResult.attachments.forEach(attachment => {
+        if (attachment.path)
+          attachment.path = this._updatePath(attachment.path);
+      });
+      return;
+    }
+    if (jsonEvent.method === 'onStepBegin') {
+      const step = jsonEvent.params.step as JsonTestStepStart;
+      this._updateLocation(step.location);
+      return;
+    }
+  }
+
+  private _updateProject(project: JsonProject) {
+    project.outputDir = this._updatePath(project.outputDir);
+    project.testDir = this._updatePath(project.testDir);
+    project.snapshotDir = this._updatePath(project.snapshotDir);
+    project.suites.forEach(suite => this._updateSuite(suite));
+  }
+
+  private _updateSuite(suite: JsonSuite) {
+    this._updateLocation(suite.location);
+    for (const child of suite.suites)
+      this._updateSuite(child);
+    for (const test of suite.tests)
+      this._updateLocation(test.location);
+  }
+
+  private _updateLocation(location?: JsonLocation) {
+    if (location)
+      location.file = this._updatePath(location.file);
+  }
+
+  private _updatePath(text: string): string {
+    return text.split(this._from).join(this._to);
+  }
+}
+
+interface JsonEventPatcher {
+  patchEvent(event: JsonEvent): void;
+}
+
+class JsonEventPatchers {
+  readonly patchers: JsonEventPatcher[] = [];
+
+  patchEvents(events: JsonEvent[]) {
+    for (const event of events) {
+      for (const patcher of this.patchers)
+        patcher.patchEvent(event);
+    }
   }
 }

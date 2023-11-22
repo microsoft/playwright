@@ -1530,7 +1530,7 @@ function patchPathSeparators(json: any) {
     if (typeof obj !== 'object')
       return;
     for (const key in obj) {
-      if (/(file|dir|path)$/i.test(key) && typeof obj[key] === 'string')
+      if (/file|dir|path/i.test(key) && typeof obj[key] === 'string')
         obj[key] = obj[key].replace(from, to);
       patchPathSeparatorsRecursive(obj[key]);
     }
