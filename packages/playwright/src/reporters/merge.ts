@@ -37,7 +37,6 @@ type ReportData = {
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
-  const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
   const stringPool = new StringInternPool();
 
   let printStatus: StatusCallback = () => {};
@@ -50,6 +49,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
+  const receiver = new TeleReporterReceiver(eventData.pathSeparator || path.sep, multiplexer, false, config.config);
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
@@ -175,7 +175,9 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
     const eventPatchers = new JsonEventPatchers();
     eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, salt));
-    eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
+    // Only patch path separators if we are merging reports with explicit config.
+    if (rootDirOverride)
+      eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
     eventPatchers.patchEvents(parsedEvents);
 
     for (const event of parsedEvents) {
@@ -204,7 +206,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     epilogue: [
       mergeEndEvents(endEvents),
       { method: 'onExit', params: undefined },
-    ]
+    ],
+    pathSeparator: blobs[0]?.metadata.pathSeparator,
   };
 }
 
@@ -397,11 +400,6 @@ class PathSeparatorPatcher {
       return;
     if (jsonEvent.method === 'onProject') {
       this._updateProject(jsonEvent.params.project as JsonProject);
-      return;
-    }
-    if (jsonEvent.method === 'onTestEnd') {
-      const testResult = jsonEvent.params.result as JsonTestResultEnd;
-      testResult.errors.forEach(error => this._updateLocation(error.location));
       return;
     }
     if (jsonEvent.method === 'onTestEnd') {

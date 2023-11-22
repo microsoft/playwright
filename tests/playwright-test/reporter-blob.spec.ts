@@ -1599,3 +1599,50 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
     expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests2', 'b.test.js')}`);
   }
 });
+
+test('merge reports with same rootDirs preserves path separators', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
+  const files1 = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onBegin(config, suite) {
+          console.log('rootDir:', config.rootDir);
+        }
+        onTestBegin(test) {
+          console.log('test:', test.location.file);
+        }
+      };
+    `,
+    'dir1/playwright.config.ts': `module.exports = {
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir1/tests1/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+    'dir1/tests2/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
+
+  const allReportsDir = test.info().outputPath('all-blob-reports');
+  await fs.promises.mkdir(allReportsDir, { recursive: true });
+
+  // Extract report and change path separators.
+  const reportZipFile = test.info().outputPath('dir1', 'blob-report', 'report.zip');
+  const events = await extractReport(reportZipFile, test.info().outputPath('tmp'));
+  events.forEach(patchPathSeparators);
+
+  // Zip it back.
+  const report1 = path.join(allReportsDir, 'report-1.zip');
+  await zipReport(events, report1);
+
+  const { exitCode, output } = await mergeReports(allReportsDir, undefined, { additionalArgs: ['--reporter', './echo-reporter.js'] });
+  expect(exitCode).toBe(0);
+  const otherSeparator = path.sep === '/' ? '\\' : '/';
+  expect(output).toContain(`rootDir: ${test.info().outputPath('dir1').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests1', 'a.test.js').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests2', 'b.test.js').replaceAll(path.sep, otherSeparator)}`);
+});
