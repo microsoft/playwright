@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.40
 
+<LiteYouTube
+  id="mn892dV81_8"
+  title="Playwright 1.40"
+/>
+
 ### Test Generator Update
 
 ![Playwright Test Generator](https://github.com/microsoft/playwright/assets/9881434/e8d67e2e-f36d-4301-8631-023948d3e190)
