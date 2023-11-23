@@ -1530,7 +1530,7 @@ function patchPathSeparators(json: any) {
     if (typeof obj !== 'object')
       return;
     for (const key in obj) {
-      if (/file|dir|path/i.test(key) && typeof obj[key] === 'string')
+      if (/file|dir|path|^title$/i.test(key) && typeof obj[key] === 'string')
         obj[key] = obj[key].replace(from, to);
       patchPathSeparatorsRecursive(obj[key]);
     }
@@ -1548,6 +1548,7 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
         }
         onTestBegin(test) {
           console.log('test:', test.location.file);
+          console.log('test title:', test.titlePath()[2]);
         }
       };
     `,
@@ -1596,11 +1597,13 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
     expect(exitCode).toBe(0);
     expect(output).toContain(`rootDir: ${test.info().outputPath('mergeRoot')}`);
     expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests1', 'a.test.js')}`);
+    expect(output).toContain(`test title: ${'tests1' + path.sep + 'a.test.js'}`);
     expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests2', 'b.test.js')}`);
+    expect(output).toContain(`test title: ${'tests2' + path.sep + 'b.test.js'}`);
   }
 });
 
-test('merge reports with same rootDirs preserves path separators', async ({ runInlineTest, mergeReports }) => {
+test('merge reports without --config preserves path separators', async ({ runInlineTest, mergeReports }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
   const files1 = {
     'echo-reporter.js': `
@@ -1610,6 +1613,7 @@ test('merge reports with same rootDirs preserves path separators', async ({ runI
         }
         onTestBegin(test) {
           console.log('test:', test.location.file);
+          console.log('test title:', test.titlePath()[2]);
         }
       };
     `,
@@ -1644,5 +1648,7 @@ test('merge reports with same rootDirs preserves path separators', async ({ runI
   const otherSeparator = path.sep === '/' ? '\\' : '/';
   expect(output).toContain(`rootDir: ${test.info().outputPath('dir1').replaceAll(path.sep, otherSeparator)}`);
   expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests1', 'a.test.js').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test title: ${'tests1' + otherSeparator + 'a.test.js'}`);
   expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests2', 'b.test.js').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test title: ${'tests2' + otherSeparator + 'b.test.js'}`);
 });

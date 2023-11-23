@@ -49,7 +49,9 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
-  const receiver = new TeleReporterReceiver(eventData.pathSeparator || path.sep, multiplexer, false, config.config);
+  // If expicit config is provided, use platform path separator, otherwise use the one from the report (if any).
+  const pathSep = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
+  const receiver = new TeleReporterReceiver(pathSep, multiplexer, false, config.config);
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
@@ -207,7 +209,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       mergeEndEvents(endEvents),
       { method: 'onExit', params: undefined },
     ],
-    pathSeparator: blobs[0]?.metadata.pathSeparator,
+    pathSeparatorFromMetadata: blobs[0]?.metadata.pathSeparator,
   };
 }
 
@@ -422,11 +424,13 @@ class PathSeparatorPatcher {
     project.outputDir = this._updatePath(project.outputDir);
     project.testDir = this._updatePath(project.testDir);
     project.snapshotDir = this._updatePath(project.snapshotDir);
-    project.suites.forEach(suite => this._updateSuite(suite));
+    project.suites.forEach(suite => this._updateSuite(suite, true));
   }
 
-  private _updateSuite(suite: JsonSuite) {
+  private _updateSuite(suite: JsonSuite, isFileSuite: boolean = false) {
     this._updateLocation(suite.location);
+    if (isFileSuite)
+      suite.title = this._updatePath(suite.title);
     for (const child of suite.suites)
       this._updateSuite(child);
     for (const test of suite.tests)
