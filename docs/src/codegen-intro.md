@@ -37,8 +37,8 @@ pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will look at the rendered page and figure out the recommended locator, prioritizing role, text and test id locators. If the generator identifies multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, therefore eliminating and reducing test(s) failing and flaking due to locators.
 
 With the test generator you can record:
-* User actions by interacting with the page
-* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can assert:
+* Actions like click or fill by simply interacting with the page
+* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can choose:
   * `'assert visibility'` to assert that an element is visible
   * `'assert text'` to assert that an element contains specific text
   * `'assert value'` to assert that an element has a specific value

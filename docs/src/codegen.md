@@ -36,7 +36,7 @@ Playwright will record your actions and generate the test code directly in VS Co
 
 ![generating assertions](https://github.com/microsoft/playwright/assets/13063165/d131eb35-b2ca-4bf4-a8ac-88b6e40dcf07)
 
-Once you are done recording click the **cancel** button or close the browser window. You can then inspect your `test-1.spec.ts` file and see your generated test.
+Once you are done recording click the **cancel** button or close the browser window. You can then inspect your `test-1.spec.ts` file and manually improve it if needed.
 
 ![code from a generated test](https://github.com/microsoft/playwright/assets/13063165/2ba4c212-4713-460a-b054-6dc6b67a9a7c)
 
@@ -94,8 +94,8 @@ pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
 Run the `codegen` command and perform actions in the browser window. Playwright will generate the code for the user interactions which you can see in the Playwright Inspector window. Once you have finished recording your test stop the recording and press the **copy** button to copy your generated test into your editor.
 
 With the test generator you can record:
-* User actions by interacting with the page
-* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can assert:
+* Actions like click or fill by simply interacting with the page
+* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can choose:
   * `'assert visibility'` to assert that an element is visible
   * `'assert text'` to assert that an element contains specific text
   * `'assert value'` to assert that an element has a specific value
