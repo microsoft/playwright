@@ -109,6 +109,7 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
     {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
+    {label: 'Angular', value: 'angular'},
   ]
 }>
 <TabItem value="react">
@@ -176,6 +177,22 @@ test.use({ viewport: { width: 500, height: 500 } });
 test('should work', async ({ mount }) => {
   const component = await mount(<App />);
   await expect(component).toContainText('Learn Solid');
+});
+```
+
+</TabItem>
+
+<TabItem value="angular">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-angular';
+import { AppComponent } from './app.component';
+
+test.use({ viewport: { width: 500, height: 500 } });
+
+test('should work', async ({ mount }) => {
+  const component = await mount(AppComponent);
+  await expect(component).toContainText('Learn Angular');
 });
 ```
 
@@ -292,6 +309,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
     {label: 'Solid', value: 'solid'},
     {label: 'Vue3', value: 'vue3'},
     {label: 'Vue2', value: 'vue2'},
+    {label: 'Angular', value: 'angular'},
   ]
 }>
   <TabItem value="react">
@@ -421,6 +439,41 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   </TabItem>
 
+  <TabItem value="angular">
+
+  ```js title="playwright/index.ts"
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-angular/hooks';
+  import { provideRouter } from '@angular/router';
+  import { routes } from '../src/router';
+
+  export type HooksConfig = {
+    enableRouting?: boolean;
+  }
+
+  beforeMount<HooksConfig>(async ({ TestBed, hooksConfig }) => {
+    if (hooksConfig?.enableRouting) {
+      TestBed.configureTestingModule({
+        providers: [provideRouter(routes)],
+      });
+    }
+  });
+  ```
+
+  ```js title="src/pages/ProductsPage.spec.ts"
+  import { test, expect } from '@playwright/experimental-ct-angular';
+  import type { HooksConfig } from '@playwright/test';
+  import { ProductsComponent } from './pages/products.component';
+
+  test('configure routing through hooks config', async ({ page, mount }) => {
+    const component = await mount<HooksConfig>(ProductsComponent, {
+      hooksConfig: { enableRouting: true },
+    });
+    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
 </Tabs>
 
 ## Under the hood
@@ -436,7 +489,7 @@ Playwright is using [Vite](https://vitejs.dev/) to create the components bundle 
 
 ## Frequently asked questions
 
-### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
+### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid,angular}`?
 
 ```js
 test('…', async ({ mount, page, context }) => {
@@ -444,7 +497,7 @@ test('…', async ({ mount, page, context }) => {
 });
 ```
 
-`@playwright/experimental-ct-{react,svelte,vue,solid}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+`@playwright/experimental-ct-{react,svelte,vue,solid,angular}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
   defaultValue="react"
@@ -453,19 +506,20 @@ test('…', async ({ mount, page, context }) => {
     {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
+    {label: 'Angular', value: 'angular'},
   ]
 }>
 <TabItem value="react">
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-react';
-import HelloWorld from './HelloWorld';
+import { Greetings } from './Greetings';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings');
+  const component = await mount(<Greetings message="Hello world" />);
+  await expect(component).toContainText('Hello world');
 });
 ```
 
@@ -475,17 +529,17 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-vue';
-import HelloWorld from './HelloWorld.vue';
+import Greetings from './Greetings.vue';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
+  const component = await mount(Greetings, {
     props: {
-      msg: 'Greetings',
+      message: 'Hello world',
     },
   });
-  await expect(component).toContainText('Greetings');
+  await expect(component).toContainText('Hello world');
 });
 ```
 
@@ -495,17 +549,17 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-svelte';
-import HelloWorld from './HelloWorld.svelte';
+import Greetings from './Greetings.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
+  const component = await mount(Greetings, {
     props: {
-      msg: 'Greetings',
+      message: 'Hello world',
     },
   });
-  await expect(component).toContainText('Greetings');
+  await expect(component).toContainText('Hello world');
 });
 ```
 
@@ -515,13 +569,33 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-solid';
-import HelloWorld from './HelloWorld';
+import { Greetings } from './Welcome';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings');
+  const component = await mount(<Greetings message="Hello world" />);
+  await expect(component).toContainText('Hello world');
+});
+```
+
+</TabItem>
+
+<TabItem value="angular">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-angular';
+import { GreetingsComponent } from './greetings.component';
+
+test.use({ viewport: { width: 500, height: 500 } });
+
+test('should work', async ({ mount }) => {
+  const component = await mount(GreetingsComponent, {
+    props: {
+      message: 'Hello world',
+    },
+  });
+  await expect(component).toContainText('Hello world');
 });
 ```
 
