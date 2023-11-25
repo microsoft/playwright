@@ -85,6 +85,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
     file.on('error', error => promise.reject(error));
     response.pipe(file);
     response.on('data', onData);
+    response.on('error', error => promise.reject(error));
     response.on('close', () => {
       if (response.complete)
         return;
