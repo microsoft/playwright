@@ -97,6 +97,10 @@ You can annotate inter-dependent tests as serial. If one of the serial tests
 fails, all subsequent tests are skipped. All tests in a group are retried together.
 
 :::note
+If you're using a fixture (e.g. for browser extension development) and this might not work as expected (receiving "Error: net::ERR_ABORTED" or "context/browser closed"), make sure that your fixture is not closing the context; otherwise serial execution is not possible.
+:::
+
+:::note
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
