@@ -190,7 +190,10 @@ export class TraceModel {
       }
       case 'log': {
         const existing = actionMap.get(event.callId);
-        existing!.log.push({
+        // We have some corrupted traces out there, tolerate them.
+        if (!existing)
+          return;
+        existing.log.push({
           time: event.time,
           message: event.message,
         });
