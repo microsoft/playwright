@@ -38,6 +38,7 @@ export type BlobReportMetadata = {
   userAgent: string;
   name?: string;
   shard?: { total: number, current: number };
+  pathSeparator?: string;
 };
 
 export class BlobReporter extends TeleReporterEmitter {
@@ -59,6 +60,7 @@ export class BlobReporter extends TeleReporterEmitter {
       userAgent: getUserAgent(),
       name: process.env.PWTEST_BLOB_REPORT_NAME,
       shard: config.shard ?? undefined,
+      pathSeparator: path.sep,
     };
     this._messages.push({
       method: 'onBlobReportMetadata',

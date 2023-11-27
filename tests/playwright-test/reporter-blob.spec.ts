@@ -1259,14 +1259,35 @@ test('blob report should include version', async ({ runInlineTest }) => {
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toEqual(['report.zip']);
 
-  await extractZip(test.info().outputPath('blob-report', reportFiles[0]), { dir: test.info().outputPath('blob-report') });
-  const reportFile = test.info().outputPath('blob-report', reportFiles[0].replace(/\.zip$/, '.jsonl'));
-  const data = await fs.promises.readFile(reportFile, 'utf8');
-  const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  const events = await extractReport(test.info().outputPath('blob-report', 'report.zip'), test.info().outputPath('tmp'));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBe(1);
   expect(metadataEvent.params.userAgent).toBe(getUserAgent());
 });
+
+async function extractReport(reportZipFile: string, unzippedReportDir: string): Promise<any[]> {
+  await extractZip(reportZipFile, { dir: unzippedReportDir });
+  const reportFile = path.join(unzippedReportDir, path.basename(reportZipFile).replace(/\.zip$/, '.jsonl'));
+  const data = await fs.promises.readFile(reportFile, 'utf8');
+  const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  return events;
+}
+
+async function zipReport(events: any[], zipFilePath: string) {
+  const lines = events.map(e => JSON.stringify(e) + '\n');
+  const zipFile = new yazl.ZipFile();
+  const zipFinishPromise = new Promise((resolve, reject) => {
+    (zipFile as any).on('error', error => reject(error));
+    zipFile.outputStream.pipe(fs.createWriteStream(zipFilePath)).on('close', () => {
+      resolve(undefined);
+    }).on('error', error => reject(error));
+  });
+  const content = Readable.from(lines);
+  zipFile.addReadStream(content, 'report.jsonl');
+  zipFile.end();
+  await zipFinishPromise;
+}
+
 
 test('merge-reports should throw if report version is from the future', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
@@ -1293,28 +1314,15 @@ test('merge-reports should throw if report version is from the future', async ({
 
   // Extract report and modify version.
   const reportZipFile = test.info().outputPath('blob-report', reportFiles[1]);
-  await extractZip(reportZipFile, { dir: test.info().outputPath('tmp') });
-  const reportFile = test.info().outputPath('tmp', reportFiles[1].replace(/\.zip$/, '.jsonl'));
-  const data = await fs.promises.readFile(reportFile, 'utf8');
-  const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  const events = await extractReport(reportZipFile, test.info().outputPath('tmp'));
+
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBeTruthy();
   ++metadataEvent.params.version;
-  const modifiedLines = events.map(e => JSON.stringify(e) + '\n');
 
   // Zip it back.
   await fs.promises.rm(reportZipFile, { force: true });
-  const zipFile = new yazl.ZipFile();
-  const zipFinishPromise = new Promise((resolve, reject) => {
-    (zipFile as any).on('error', error => reject(error));
-    zipFile.outputStream.pipe(fs.createWriteStream(reportZipFile)).on('close', () => {
-      resolve(undefined);
-    }).on('error', error => reject(error));
-  });
-  const content = Readable.from(modifiedLines);
-  zipFile.addReadStream(content, path.basename(reportFile));
-  zipFile.end();
-  await zipFinishPromise;
+  await zipReport(events, reportZipFile);
 
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(1);
@@ -1511,4 +1519,136 @@ test('merge reports same rootDirs', async ({ runInlineTest, mergeReports }) => {
   expect(output).toContain(`rootDir: ${test.info().outputPath('tests')}`);
   expect(output).toContain(`test: ${test.info().outputPath('tests', 'dir1', 'a.test.js')}`);
   expect(output).toContain(`test: ${test.info().outputPath('tests', 'dir2', 'b.test.js')}`);
+});
+
+
+function patchPathSeparators(json: any) {
+  const from = (path.sep === '/') ? /\//g : /\\/g;
+  const to = (path.sep === '/') ? '\\' : '/';
+
+  function patchPathSeparatorsRecursive(obj: any) {
+    if (typeof obj !== 'object')
+      return;
+    for (const key in obj) {
+      if (/file|dir|path|^title$/i.test(key) && typeof obj[key] === 'string')
+        obj[key] = obj[key].replace(from, to);
+      patchPathSeparatorsRecursive(obj[key]);
+    }
+  }
+  patchPathSeparatorsRecursive(json);
+}
+
+test('merge reports with different rootDirs and path separators', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
+  const files1 = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onBegin(config, suite) {
+          console.log('rootDir:', config.rootDir);
+        }
+        onTestBegin(test) {
+          console.log('test:', test.location.file);
+          console.log('test title:', test.titlePath()[2]);
+        }
+      };
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+      reporter: './echo-reporter.js'
+     };`,
+    'dir1/playwright.config.ts': `module.exports = {
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir1/tests1/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
+
+  const files2 = {
+    'dir2/playwright.config.ts': `module.exports = {
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir2/tests2/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files2, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir2/playwright.config.ts')] });
+
+  const allReportsDir = test.info().outputPath('all-blob-reports');
+  await fs.promises.mkdir(allReportsDir, { recursive: true });
+
+  // Extract report and change path separators.
+  const reportZipFile = test.info().outputPath('dir1', 'blob-report', 'report.zip');
+  const events = await extractReport(reportZipFile, test.info().outputPath('tmp'));
+  events.forEach(patchPathSeparators);
+
+  // Zip it back.
+  const report1 = path.join(allReportsDir, 'report-1.zip');
+  await zipReport(events, report1);
+
+  // Copy second report as is.
+  await fs.promises.cp(test.info().outputPath('dir2', 'blob-report', 'report.zip'), path.join(allReportsDir, 'report-2.zip'));
+
+  {
+    const { exitCode, output } = await mergeReports(allReportsDir, undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
+    expect(exitCode).toBe(0);
+    expect(output).toContain(`rootDir: ${test.info().outputPath('mergeRoot')}`);
+    expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests1', 'a.test.js')}`);
+    expect(output).toContain(`test title: ${'tests1' + path.sep + 'a.test.js'}`);
+    expect(output).toContain(`test: ${test.info().outputPath('mergeRoot', 'tests2', 'b.test.js')}`);
+    expect(output).toContain(`test title: ${'tests2' + path.sep + 'b.test.js'}`);
+  }
+});
+
+test('merge reports without --config preserves path separators', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27877' });
+  const files1 = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onBegin(config, suite) {
+          console.log('rootDir:', config.rootDir);
+        }
+        onTestBegin(test) {
+          console.log('test:', test.location.file);
+          console.log('test title:', test.titlePath()[2]);
+        }
+      };
+    `,
+    'dir1/playwright.config.ts': `module.exports = {
+      reporter: [['blob', { outputDir: 'blob-report' }]]
+    };`,
+    'dir1/tests1/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+    'dir1/tests2/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
+
+  const allReportsDir = test.info().outputPath('all-blob-reports');
+  await fs.promises.mkdir(allReportsDir, { recursive: true });
+
+  // Extract report and change path separators.
+  const reportZipFile = test.info().outputPath('dir1', 'blob-report', 'report.zip');
+  const events = await extractReport(reportZipFile, test.info().outputPath('tmp'));
+  events.forEach(patchPathSeparators);
+
+  // Zip it back.
+  const report1 = path.join(allReportsDir, 'report-1.zip');
+  await zipReport(events, report1);
+
+  const { exitCode, output } = await mergeReports(allReportsDir, undefined, { additionalArgs: ['--reporter', './echo-reporter.js'] });
+  expect(exitCode).toBe(0);
+  const otherSeparator = path.sep === '/' ? '\\' : '/';
+  expect(output).toContain(`rootDir: ${test.info().outputPath('dir1').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests1', 'a.test.js').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test title: ${'tests1' + otherSeparator + 'a.test.js'}`);
+  expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests2', 'b.test.js').replaceAll(path.sep, otherSeparator)}`);
+  expect(output).toContain(`test title: ${'tests2' + otherSeparator + 'b.test.js'}`);
 });
