@@ -3072,7 +3072,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * You can access all the same {@link Fixtures} as the test function itself, and also the {@link TestInfo} object that
    * gives a lot of useful information. For example, you can navigate the page before starting the test.
    *
-   * Playwright continue running all applicable hooks even if some of them have failed.
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1) to
    * teardown any resources set up in `beforeEach`.
@@ -3101,7 +3101,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **Details**
    *
-   * See [[test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1)]
+   * See [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1).
    *
    * **Usage**
    *
@@ -3135,7 +3135,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * You can access all the same {@link Fixtures} as the test function itself, and also the {@link TestInfo} object that
    * gives a lot of useful information. For example, you can check whether the test succeeded or failed.
    *
-   * Playwright continue running all applicable hooks even if some of them have failed.
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3163,7 +3163,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **Details**
    *
-   * See [[test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1)]
+   * See [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1).
    *
    * **Usage**
    *
@@ -3199,7 +3199,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
    *
-   * Playwright continue running all applicable hooks even if some of them have failed.
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1) to teardown
    * any resources set up in `beforeAll`.
@@ -3231,7 +3231,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **Details**
    *
-   * See [[test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all-1)]
+   * See [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all-1).
    *
    * **Usage**
    *
@@ -3264,7 +3264,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
    *
-   * Playwright continue running all applicable hooks even if some of them have failed.
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3283,7 +3283,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **Details**
    *
-   * See [[test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1)]
+   * See [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1).
    *
    * **Usage**
    *
