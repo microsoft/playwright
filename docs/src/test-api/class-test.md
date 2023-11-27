@@ -55,6 +55,8 @@ When called in the scope of a test file, runs after all tests in the file. When 
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
+Playwright will always run all `afterAll` hooks for the test even if some of them throw errors.
+
 **Usage**
 
 ```js
@@ -180,6 +182,8 @@ Declares a `beforeAll` hook that is executed once per worker process before all 
 When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe#1`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
 
 Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
+
+Playwright will always run all `beforeAll` hooks for the test even if some of them throw errors.
 
 You can use [`method: Test.afterAll#1`] to teardown any resources set up in `beforeAll`.
 
