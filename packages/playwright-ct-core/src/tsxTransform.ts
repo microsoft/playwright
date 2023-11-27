@@ -121,12 +121,15 @@ export default declare((api: BabelAPI) => {
             children.push(t.spreadElement(child.expression));
         }
 
-        path.replaceWith(t.objectExpression([
+        const component = [
           t.objectProperty(t.identifier('kind'), t.stringLiteral('jsx')),
           t.objectProperty(t.identifier('type'), t.stringLiteral(componentName)),
           t.objectProperty(t.identifier('props'), t.objectExpression(props)),
-          t.objectProperty(t.identifier('children'), t.arrayExpression(children)),
-        ]));
+        ];
+        if (children.length)
+          component.push(t.objectProperty(t.identifier('children'), t.arrayExpression(children)));
+
+        path.replaceWith(t.objectExpression(component));
       }
     }
   };

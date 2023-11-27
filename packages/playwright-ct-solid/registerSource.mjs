@@ -69,7 +69,7 @@ async function __pwResolveComponent(component) {
   if (componentFactory)
     __pwRegistry.set(component.type, await componentFactory());
 
-  if ('children' in component)
+  if (component.children?.length)
     await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
@@ -89,7 +89,7 @@ function __pwCreateChild(child) {
  */
 function __pwCreateComponent(component) {
   const componentFunc = __pwRegistry.get(component.type);
-  const children = component.children.map(child => __pwCreateChild(child)).filter(child => {
+  const children = component.children?.map(child => __pwCreateChild(child)).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
     return true;
