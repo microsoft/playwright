@@ -85,12 +85,15 @@ function downloadFile(options: DownloadParams): Promise<void> {
     file.on('error', error => promise.reject(error));
     response.pipe(file);
     response.on('data', onData);
-    response.on('close', () => {
-      if (response.complete)
-        return;
+    response.on('error', (error: any) => {
       file.close();
-      log(`-- download failed, server closed connection`);
-      promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
+      if (error?.code === 'ECONNRESET') {
+        log(`-- download failed, server closed connection`);
+        promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
+      } else {
+        log(`-- download failed, unexpected error`);
+        promise.reject(new Error(`Download failed: ${error?.message ?? error}. URL: ${options.url}`));
+      }
     });
   }, (error: any) => promise.reject(error));
   return promise;
