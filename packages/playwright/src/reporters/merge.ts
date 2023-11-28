@@ -81,17 +81,35 @@ const commonEvents = new Set(commonEventNames);
 const commonEventRegex = new RegExp(`${commonEventNames.join('|')}`);
 
 function parseCommonEvents(reportJsonl: Buffer): JsonEvent[] {
-  return reportJsonl.toString().split('\n')
+  return splitBufferLines(reportJsonl)
+      .map(line => line.toString('utf8'))
       .filter(line => commonEventRegex.test(line)) // quick filter
       .map(line => JSON.parse(line) as JsonEvent)
       .filter(event => commonEvents.has(event.method));
 }
 
 function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
-  return reportJsonl.toString().split('\n')
+  return splitBufferLines(reportJsonl)
+      .map(line => line.toString('utf8'))
       .filter(line => line.length)
       .map(line => JSON.parse(line) as JsonEvent)
       .filter(event => !commonEvents.has(event.method));
+}
+
+function splitBufferLines(buffer: Buffer) {
+  const lines = [];
+  let start = 0;
+  while (start < buffer.length) {
+    // 0x0A is the byte for '\n'
+    const end = buffer.indexOf(0x0A, start);
+    if (end === -1) {
+      lines.push(buffer.slice(start));
+      break;
+    }
+    lines.push(buffer.slice(start, end));
+    start = end + 1;
+  }
+  return lines;
 }
 
 async function extractAndParseReports(dir: string, shardFiles: string[], internalizer: JsonStringInternalizer, printStatus: StatusCallback) {
