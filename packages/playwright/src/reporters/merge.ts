@@ -99,14 +99,16 @@ function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
 function splitBufferLines(buffer: Buffer) {
   const lines = [];
   let start = 0;
-  for (let i = 0; i < buffer.length; i++) {
-    if (buffer[i] === 0x0A) { // 0x0A is the byte for '\n'
-      lines.push(buffer.slice(start, i));
-      start = i + 1;
+  while (start < buffer.length) {
+    // 0x0A is the byte for '\n'
+    const end = buffer.indexOf(0x0A, start);
+    if (end === -1) {
+      lines.push(buffer.slice(start));
+      break;
     }
+    lines.push(buffer.slice(start, end));
+    start = end + 1;
   }
-  if (start < buffer.length)
-    lines.push(buffer.slice(start));
   return lines;
 }
 
