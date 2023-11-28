@@ -1,4 +1,6 @@
-FROM ubuntu:jammy
+ARG base_image=ubuntu:jammy
+
+FROM ${base_image}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles
