@@ -209,6 +209,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return frame;
   }
 
+  _safePage(): Page | null {
+    return Frame.fromNullable(this._initializer.frame)?._page || null;
+  }
+
   serviceWorker(): Worker | null {
     return this._initializer.serviceWorker ? Worker.from(this._initializer.serviceWorker) : null;
   }
@@ -275,8 +279,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _targetClosedScope(): LongStandingScope {
-    const frame = Frame.fromNullable(this._initializer.frame);
-    return this.serviceWorker()?._closedScope || frame?._page?._closedOrCrashedScope || new LongStandingScope();
+    return this.serviceWorker()?._closedScope || this._safePage()?._closedOrCrashedScope || new LongStandingScope();
   }
 }
 
@@ -632,12 +635,15 @@ export class RouteHandler {
   private readonly _times: number;
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
+  readonly noWaitOnUnrouteOrClose: boolean;
+  private _activeInvocations: MultiMap<Page|null, { ignoreException: boolean, complete: Promise<void> }> = new MultiMap();
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER, noWaitOnUnrouteOrClose: boolean = false) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
+    this.noWaitOnUnrouteOrClose = noWaitOnUnrouteOrClose;
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -661,6 +667,37 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
+    const page = route.request()._safePage();
+    const handlerInvocation = { ignoreException: false, complete: new ManualPromise() } ;
+    this._activeInvocations.set(page, handlerInvocation);
+    try {
+      return await this._handleInternal(route);
+    } catch (e) {
+      // If the handler was stopped (without waiting for completion), we ignore all exceptions.
+      if (handlerInvocation.ignoreException)
+        return false;
+      throw e;
+    } finally {
+      handlerInvocation.complete.resolve();
+      this._activeInvocations.delete(page, handlerInvocation);
+    }
+  }
+
+  async stopAndWaitForRunningHandlers(page: Page | null, noWait?: boolean) {
+    // When a handler is manually unrouted or its page/context is closed we either
+    // - wait for the current handler invocations to finish
+    // - or do not wait, if the user opted out of it, but swallow all exceptions
+    //   that happen after the unroute/close.
+    // Note that context.route handler may be later invoked on a different page,
+    // so we only swallow errors for the current page's routes.
+    const handlerActivations = page ? this._activeInvocations.get(page) : [...this._activeInvocations.values()];
+    if (this.noWaitOnUnrouteOrClose || noWait)
+      handlerActivations.forEach(h => h.ignoreException = true);
+    else
+      await Promise.all(handlerActivations.map(h => h.complete));
+  }
+
+  private async _handleInternal(route: Route): Promise<boolean> {
     ++this.handledCount;
     const handledPromise = route._startHandling();
     // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.

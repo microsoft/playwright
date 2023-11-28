@@ -1202,6 +1202,13 @@ handler function to route the request.
 
 How often a route should be used. By default it will be used every time.
 
+### option: BrowserContext.route.noWaitForFinish
+* since: v1.41
+- `noWaitForFinish` <[boolean]>
+
+If set to true, [`method: BrowserContext.close`] and [`method: Page.close`] will not wait for the handler to finish and all
+errors thrown by then handler after the context has been closed are silently caught. Defaults to false.
+
 ## async method: BrowserContext.routeFromHAR
 * since: v1.23
 
@@ -1434,6 +1441,13 @@ Optional handler function used to register a routing with [`method: BrowserConte
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+### option: BrowserContext.unroute.noWaitForActive
+* since: v1.41
+- `noWaitForActive` <[boolean]>
+
+If set to true, [`method: BrowserContext.unroute`] will not wait for current handler call (if any) to finish and all
+errors thrown by the handler after unrouting are silently caught. Defaults to false.
 
 ## async method: BrowserContext.waitForCondition
 * since: v1.32

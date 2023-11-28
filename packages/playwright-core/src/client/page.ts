@@ -80,7 +80,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _closed = false;
   readonly _closedOrCrashedScope = new LongStandingScope();
   private _viewportSize: Size | null;
-  private _routes: RouteHandler[] = [];
+  _routes: RouteHandler[] = [];
 
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
@@ -94,6 +94,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _video: Video | null = null;
   readonly _opener: Page | null;
   private _closeReason: string | undefined;
+  _closeWasCalled: boolean = false;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -175,6 +176,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     route._context = this.context();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
+      // If the page was closed we stall all requests right away.
+      if (this._closeWasCalled || this._browserContext._closeWasCalled)
+        return;
       if (!routeHandler.matches(route.request().url()))
         continue;
       const index = this._routes.indexOf(routeHandler);
@@ -188,6 +192,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (handled)
         return;
     }
+
     await this._browserContext._onRoute(route);
   }
 
@@ -451,8 +456,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.addInitScript({ source });
   }
 
-  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
+  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number, noWaitForFinish?: boolean } = {}): Promise<void> {
+    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times, options.noWaitForFinish));
     await this._updateInterceptionPatterns();
   }
 
@@ -465,9 +470,19 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     harRouter.addPageRoute(this);
   }
 
-  async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
+  async unroute(url: URLMatch, handler?: RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
+    const removed = [];
+    const remaining = [];
+    for (const route of this._routes) {
+      if (urlMatchesEqual(route.url, url) && (!handler || route.handler === handler))
+        removed.push(route);
+      else
+        remaining.push(route);
+    }
+    this._routes = remaining;
     await this._updateInterceptionPatterns();
+    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this, options?.noWaitForActive));
+    await Promise.all(promises);
   }
 
   private async _updateInterceptionPatterns() {
@@ -525,8 +540,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this.close();
   }
 
+  private async _waitForActiveRouteHandlersToFinish() {
+    const promises = this._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this));
+    promises.push(...this._browserContext._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this)));
+    await Promise.all(promises);
+  }
+
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     this._closeReason = options.reason;
+    this._closeWasCalled = true;
+    if (!options.runBeforeUnload)
+      await this._waitForActiveRouteHandlersToFinish();
     try {
       if (this._ownedContext)
         await this._ownedContext.close();

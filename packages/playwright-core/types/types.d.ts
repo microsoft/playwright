@@ -3596,7 +3596,7 @@ export interface Page {
    * when request matches both handlers.
    *
    * To remove a route with its handler you can use
-   * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
+   * [page.unroute(url[, handler, options])](https://playwright.dev/docs/api/class-page#page-unroute).
    *
    * **NOTE** Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context
@@ -3606,6 +3606,14 @@ export interface Page {
    * @param options
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
+    /**
+     * If set to true, [page.close([options])](https://playwright.dev/docs/api/class-page#page-close) and
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) will
+     * not wait for the handler to finish and all errors thrown by then handler after the page has been closed are
+     * silently caught. Defaults to false.
+     */
+    noWaitForFinish?: boolean;
+
     /**
      * How often a route should be used. By default it will be used every time.
      */
@@ -4229,8 +4237,16 @@ export interface Page {
    * specified, removes all routes for the `url`.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler Optional handler function to route the request.
+   * @param options
    */
-  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
+  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any), options?: {
+    /**
+     * If set to true, [page.unroute(url[, handler, options])](https://playwright.dev/docs/api/class-page#page-unroute)
+     * will not wait for current handler call (if any) to finish and all errors thrown by the handler after unrouting are
+     * silently caught. Defaults to false.
+     */
+    noWaitForActive?: boolean;
+  }): Promise<void>;
 
   url(): string;
 
@@ -8376,7 +8392,7 @@ export interface BrowserContext {
    * browser context routes when request matches both handlers.
    *
    * To remove a route with its handler you can use
-   * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
+   * [browserContext.unroute(url[, handler, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
    *
    * **NOTE** Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context
@@ -8386,6 +8402,15 @@ export interface BrowserContext {
    * @param options
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
+    /**
+     * If set to true,
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) and
+     * [page.close([options])](https://playwright.dev/docs/api/class-page#page-close) will not wait for the handler to
+     * finish and all errors thrown by then handler after the context has been closed are silently caught. Defaults to
+     * false.
+     */
+    noWaitForFinish?: boolean;
+
     /**
      * How often a route should be used. By default it will be used every time.
      */
@@ -8589,8 +8614,17 @@ export interface BrowserContext {
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    * @param handler Optional handler function used to register a routing with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * @param options
    */
-  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
+  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any), options?: {
+    /**
+     * If set to true,
+     * [browserContext.unroute(url[, handler, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute)
+     * will not wait for current handler call (if any) to finish and all errors thrown by the handler after unrouting are
+     * silently caught. Defaults to false.
+     */
+    noWaitForActive?: boolean;
+  }): Promise<void>;
 
   /**
    * **NOTE** Only works with Chromium browser's persistent context.

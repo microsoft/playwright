@@ -47,7 +47,7 @@ import { TargetClosedError, parseError } from './errors';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
-  private _routes: network.RouteHandler[] = [];
+  _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -62,7 +62,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
-  private _closeWasCalled = false;
+  _closeWasCalled = false;
   private _closeReason: string | undefined;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -193,8 +193,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _onRoute(route: network.Route) {
     route._context = this;
+    const page = route.request()._safePage();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
+      // If the page or the context was closed we stall all requests right away.
+      if (page?._closeWasCalled || this._closeWasCalled)
+        return;
       if (!routeHandler.matches(route.request().url()))
         continue;
       const index = this._routes.indexOf(routeHandler);
@@ -303,8 +307,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._bindings.set(name, binding);
   }
 
-  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
+  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number, noWaitForFinish?: boolean } = {}): Promise<void> {
+    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times, options.noWaitForFinish));
     await this._updateInterceptionPatterns();
   }
 
@@ -330,9 +334,20 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     harRouter.addContextRoute(this);
   }
 
-  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
+  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
+    const removed = [];
+    const remaining = [];
+    for (const route of this._routes) {
+      if (urlMatchesEqual(route.url, url) && (!handler || route.handler === handler))
+        removed.push(route);
+      else
+        remaining.push(route);
+    }
+    this._routes = remaining;
     await this._updateInterceptionPatterns();
+    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.noWaitForActive));
+    await Promise.all(promises);
+
   }
 
   private async _updateInterceptionPatterns() {
@@ -399,6 +414,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     this._closeReason = options.reason;
     this._closeWasCalled = true;
+    await this._waitForActiveRouteHandlersToFinish();
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {
@@ -418,6 +434,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     }, true);
     await this._channel.close(options);
     await this._closedPromise;
+  }
+
+  private async _waitForActiveRouteHandlersToFinish() {
+    const promises = this._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null));
+    promises.push(...[...this._pages].map(page => page._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(page))).flat());
+    await Promise.all(promises);
   }
 
   async _enableRecorder(params: {
