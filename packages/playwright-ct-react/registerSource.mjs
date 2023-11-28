@@ -32,7 +32,7 @@ const __pwRegistry = new Map();
 const __pwRootRegistry = new Map();
 
 /**
- * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
+ * @param {Record<string, () => Promise<FrameworkComponent>>} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
@@ -44,7 +44,7 @@ export function pwRegister(components) {
  * @returns {component is JsxComponent}
  */
 function isComponent(component) {
-  return !(typeof component !== 'object' || Array.isArray(component));
+  return component.kind === 'jsx';
 }
 
 /**
@@ -73,6 +73,11 @@ async function __pwResolveComponent(component) {
 
   if (component.children?.length)
     await Promise.all(component.children.map(child => __pwResolveComponent(child)));
+
+  for (const prop of Object.values(component.props)) {
+    if (isComponent(prop))
+      await __pwResolveComponent(prop);
+  }
 }
 
 /**
@@ -87,16 +92,33 @@ function __renderChild(child) {
 }
 
 /**
+  * @param {Record<string, any>} props
+  */
+function __resolveProps(props) {
+  const resolvedProps = {};
+  for (const [key, prop] of Object.entries(props)) {
+    if (Array.isArray(prop))
+      resolvedProps[key] = prop.map(child => __renderChild(child));
+    else if (isComponent(prop))
+      resolvedProps[key] = __renderChild(prop);
+    else
+      resolvedProps[key] = prop;
+  }
+  return resolvedProps;
+}
+
+/**
  * @param {JsxComponent} component
  */
 function __pwRender(component) {
   const componentFunc = __pwRegistry.get(component.type);
+  const props = __resolveProps(component.props);
   const children = component.children?.map(child => __renderChild(child)).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
     return true;
   });
-  return __pwReact.createElement(componentFunc || component.type, component.props, children);
+  return __pwReact.createElement(componentFunc || component.type, props, children);
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
