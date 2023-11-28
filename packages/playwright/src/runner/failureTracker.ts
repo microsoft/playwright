@@ -31,7 +31,7 @@ export class FailureTracker {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== test.expectedStatus)
+    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
   }
 
