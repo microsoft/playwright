@@ -177,8 +177,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     for (const routeHandler of routeHandlers) {
       if (!routeHandler.matches(route.request().url()))
         continue;
+      const index = this._routes.indexOf(routeHandler);
+      if (index === -1)
+        continue;
       if (routeHandler.willExpire())
-        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+        this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
         this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
