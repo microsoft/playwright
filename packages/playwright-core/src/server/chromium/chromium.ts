@@ -391,11 +391,17 @@ function streamToString(stream: stream.Readable): Promise<string> {
 }
 
 function parseSeleniumRemoteParams(env: {name: string, value: string}, progress: Progress) {
+  let value = env.value;
+
+  if (/authorization/i.test(env.value)) {
+    value = value.replace(/OAuth [^"]*/i, 'OAuth <token>');
+  }
+
   try {
     const parsed = JSON.parse(env.value);
-    progress.log(`<selenium> using additional ${env.name} "${env.value}"`);
+    progress.log(`<selenium> using additional ${env.name} "${value}"`);
     return parsed;
   } catch (e) {
-    progress.log(`<selenium> ignoring additional ${env.name} "${env.value}": ${e}`);
+    progress.log(`<selenium> ignoring additional ${env.name} "${value}": ${e}`);
   }
 }
