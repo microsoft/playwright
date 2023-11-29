@@ -68,7 +68,7 @@ jobs:
       if: always()
       with:
         name: playwright-report
-        path: playwright-report/
+        path: test-results/
         retention-days: 30
 ```
 
@@ -474,7 +474,7 @@ Downloading the HTML report as a zip file is not very convenient. However, we ca
           shell: bash
           run: |
             REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
-            azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+            azcopy cp --recursive "./test-results/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
             echo "::notice title=HTML report url::https://<STORAGE_ACCOUNT_NAME>.z1.web.core.windows.net/$REPORT_DIR/index.html"
           env:
             AZCOPY_AUTO_LOGIN_TYPE: SPN
