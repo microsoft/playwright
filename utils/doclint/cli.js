@@ -199,6 +199,7 @@ async function run() {
                   'html',
                   'bash',
                   'sh',
+                  'Dockerfile',
                 ]);
                 if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
                   throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
