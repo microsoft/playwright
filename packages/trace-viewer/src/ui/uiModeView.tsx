@@ -316,7 +316,7 @@ const FiltersView: React.FC<{
       <span className='filter-label'>Status:</span> {statusLine}
       <span className='filter-label'>Projects:</span> {projectsLine}
     </div>
-    {expanded && <div className='hbox' style={{ marginLeft: 14 }}>
+    {expanded && <div className='hbox' style={{ marginLeft: 14, maxHeight: 200, overflowY: 'auto' }}>
       <div className='filter-list'>
         {[...statusFilters.entries()].map(([status, value]) => {
           return <div className='filter-entry'>
