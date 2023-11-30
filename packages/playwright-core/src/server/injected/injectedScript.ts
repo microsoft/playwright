@@ -1125,7 +1125,7 @@ export class InjectedScript {
     return error;
   }
 
-  maskSelectors(selectors: ParsedSelector[], color?: string) {
+  maskSelectors(selectors: ParsedSelector[], color: string) {
     if (this._highlight)
       this.hideHighlight();
     this._highlight = new Highlight(this);

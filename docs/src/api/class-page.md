@@ -3399,6 +3399,9 @@ Returns the buffer with the captured screenshot.
 ### option: Page.screenshot.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.34
 
+### option: Page.screenshot.style = %%-screenshot-option-style-%%
+* since: v1.41
+
 ## async method: Page.selectOption
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).

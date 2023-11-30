@@ -847,7 +847,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  async maskSelectors(selectors: ParsedSelector[], color?: string): Promise<void> {
+  async maskSelectors(selectors: ParsedSelector[], color: string): Promise<void> {
     const context = await this._utilityContext();
     const injectedScript = await context.injectedScript();
     await injectedScript.evaluate((injected, { parsed, color }) => {

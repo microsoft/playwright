@@ -1216,6 +1216,47 @@ test('should support maskColor option', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should support style option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': createImage(IMG_WIDTH, IMG_HEIGHT, 0, 255, 0),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('png', async ({ page }) => {
+        await page.setContent('<style> html,body { padding: 0; margin: 0; }</style>');
+        await expect(page).toHaveScreenshot('snapshot.png', {
+          style: 'body { background: #00FF00; }',
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support style option in config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+      expect: {
+        toHaveScreenshot: {
+          style: 'body { background: #00FF00; }',
+        },
+      },
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': createImage(IMG_WIDTH, IMG_HEIGHT, 0, 255, 0),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('png', async ({ page }) => {
+        await page.setContent('<style> html,body { padding: 0; margin: 0; }</style>');
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `

@@ -28,24 +28,25 @@ import { MultiMap } from '../utils/multimap';
 
 declare global {
   interface Window {
-    __cleanupScreenshot?: () => void;
+    __pwCleanupScreenshot?: () => void;
   }
 }
 
 export type ScreenshotOptions = {
-  type?: 'png' | 'jpeg',
-  quality?: number,
-  omitBackground?: boolean,
-  animations?: 'disabled' | 'allow',
-  mask?: { frame: Frame, selector: string}[],
-  maskColor?: string,
-  fullPage?: boolean,
-  clip?: Rect,
-  scale?: 'css' | 'device',
-  caret?: 'hide' | 'initial',
+  type?: 'png' | 'jpeg';
+  quality?: number;
+  omitBackground?: boolean;
+  animations?: 'disabled' | 'allow';
+  mask?: { frame: Frame, selector: string}[];
+  maskColor?: string;
+  fullPage?: boolean;
+  clip?: Rect;
+  scale?: 'css' | 'device';
+  caret?: 'hide' | 'initial';
+  style?: string;
 };
 
-function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: boolean) {
+function inPagePrepareForScreenshots(screenshotStyle: string, disableAnimations: boolean) {
   const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
     roots.push(root);
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -58,29 +59,23 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
     return roots;
   };
 
-  let documentRoots: (Document|ShadowRoot)[] | undefined;
-  const memoizedRoots = () => documentRoots ??= collectRoots(document);
-
-  const styleTags: Element[] = [];
-  if (hideCaret) {
-    for (const root of memoizedRoots()) {
-      const styleTag = document.createElement('style');
-      styleTag.textContent = `
-        *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
-          caret-color: transparent !important;
-        }
-      `;
-      if (root === document)
-        document.documentElement.append(styleTag);
-      else
-        root.append(styleTag);
-      styleTags.push(styleTag);
-    }
-  }
-  const infiniteAnimationsToResume: Set<Animation> = new Set();
+  const roots = collectRoots(document);
   const cleanupCallbacks: (() => void)[] = [];
+  for (const root of roots) {
+    const styleTag = document.createElement('style');
+    styleTag.textContent = screenshotStyle;
+    if (root === document)
+      document.documentElement.append(styleTag);
+    else
+      root.append(styleTag);
 
+    cleanupCallbacks.push(() => {
+      styleTag.remove();
+    });
+
+  }
   if (disableAnimations) {
+    const infiniteAnimationsToResume: Set<Animation> = new Set();
     const handleAnimations = (root: Document|ShadowRoot): void => {
       for (const animation of root.getAnimations()) {
         if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
@@ -106,7 +101,7 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
         }
       }
     };
-    for (const root of memoizedRoots()) {
+    for (const root of roots) {
       const handleRootAnimations: (() => void) = handleAnimations.bind(null, root);
       handleRootAnimations();
       root.addEventListener('transitionrun', handleRootAnimations);
@@ -116,23 +111,22 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
         root.removeEventListener('animationstart', handleRootAnimations);
       });
     }
+    cleanupCallbacks.push(() => {
+      for (const animation of infiniteAnimationsToResume) {
+        try {
+          animation.play();
+        } catch (e) {
+          // animation.play() should never throw, but
+          // we'd like to be on the safe side.
+        }
+      }
+    });
   }
 
-  window.__cleanupScreenshot = () => {
-    for (const styleTag of styleTags)
-      styleTag.remove();
-
-    for (const animation of infiniteAnimationsToResume) {
-      try {
-        animation.play();
-      } catch (e) {
-        // animation.play() should never throw, but
-        // we'd like to be on the safe side.
-      }
-    }
+  window.__pwCleanupScreenshot = () => {
     for (const cleanupCallback of cleanupCallbacks)
       cleanupCallback();
-    delete window.__cleanupScreenshot;
+    delete window.__pwCleanupScreenshot;
   };
 }
 
@@ -178,7 +172,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, screenshotStyle(options), options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -207,7 +201,7 @@ export class Screenshotter {
       progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, screenshotStyle(options), options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
@@ -231,14 +225,11 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean) {
-    if (!hideCaret && !disableAnimations)
-      return;
-
+  async _preparePageForScreenshot(progress: Progress, screenshotStyle: string, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
+      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${disableAnimations})`, false, 'utility').catch(() => {});
     }));
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');
@@ -252,7 +243,7 @@ export class Screenshotter {
 
   async _restorePageAfterScreenshot() {
     await Promise.all(this._page.frames().map(async frame => {
-      frame.nonStallingEvaluateInExistingContext('window.__cleanupScreenshot && window.__cleanupScreenshot()', false, 'utility').catch(() => {});
+      frame.nonStallingEvaluateInExistingContext('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', false, 'utility').catch(() => {});
     }));
   }
 
@@ -276,7 +267,7 @@ export class Screenshotter {
     progress.throwIfAborted(); // Avoid extra work.
 
     await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
-      await frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor);
+      await frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor || '#F0F');
     }));
     progress.cleanupWhenAborted(cleanup);
     return cleanup;
@@ -367,4 +358,17 @@ export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | '
     assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
   }
   return format;
+}
+
+function screenshotStyle(options: ScreenshotOptions): string {
+  const parts: string[] = [];
+  if (options.caret !== 'initial') {
+    parts.push(`
+    *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
+      caret-color: transparent !important;
+    }`);
+  }
+  if (options.style)
+    parts.push(options.style);
+  return parts.join('\n');
 }

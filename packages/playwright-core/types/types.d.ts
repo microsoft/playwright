@@ -9968,6 +9968,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scale?: "css"|"device";
 
     /**
+     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+     * Shadow DOM and applies to the inner frames.
+     */
+    style?: string;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -20038,6 +20045,13 @@ export interface LocatorScreenshotOptions {
   scale?: "css"|"device";
 
   /**
+   * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+   * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+   * Shadow DOM and applies to the inner frames.
+   */
+  style?: string;
+
+  /**
    * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
    * option in the config, or by using the
    * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -20229,6 +20243,13 @@ export interface PageScreenshotOptions {
    * Defaults to `"device"`.
    */
   scale?: "css"|"device";
+
+  /**
+   * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+   * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+   * Shadow DOM and applies to the inner frames.
+   */
+  style?: string;
 
   /**
    * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`

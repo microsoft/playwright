@@ -749,6 +749,9 @@ Returns the buffer with the captured screenshot.
 ### option: ElementHandle.screenshot.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.34
 
+### option: ElementHandle.screenshot.style = %%-screenshot-option-style-%%
+* since: v1.41
+
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 * since: v1.8
 

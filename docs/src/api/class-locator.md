@@ -1913,6 +1913,9 @@ Returns the buffer with the captured screenshot.
 ### option: Locator.screenshot.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.34
 
+### option: Locator.screenshot.style = %%-screenshot-option-style-%%
+* since: v1.41
+
 ## async method: Locator.scrollIntoViewIfNeeded
 * since: v1.14
 
