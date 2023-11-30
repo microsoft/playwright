@@ -50,3 +50,8 @@ test('should not print timed out error message when page closes', async ({ page 
   expect(stripAnsi(error.message)).toContain('expect.toHaveText with timeout 100000ms');
   expect(stripAnsi(error.message)).not.toContain('Timed out');
 });
+
+test('should have timeout error name', async ({ page }) => {
+  const error = await page.waitForSelector('#not-found', { timeout: 1 }).catch(e => e);
+  expect(error.name).toBe('TimeoutError');
+});
