@@ -136,7 +136,20 @@ Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikip
 
 ### Build the image
 
-Use [`//utils/docker/build.sh`](https://github.com/microsoft/playwright/blob/main/utils/docker/build.sh) to build the image.
+To run Playwright inside Docker, you need to have Node.js, [Playwright browsers](./browsers.md#install-browsers) and [browser syste dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
+
+```Dockerfile
+FROM node:20-bookworm
+
+COPY . /app
+
+WORKDIR /app
+
+RUN npm ci
+RUN npx playwright install --with-deps
+```
+
+To build the same Docker images which we publish to [Microsoft Artifact Registry], use the [`//utils/docker/build.sh`](https://github.com/microsoft/playwright/blob/main/utils/docker/build.sh) script.
 
 ```txt
 ./utils/docker/build.sh jammy playwright:localbuild-jammy
