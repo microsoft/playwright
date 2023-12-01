@@ -185,6 +185,7 @@ export class WKPage implements PageDelegate {
     ];
     if (this._page.needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
+      promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
     }
     if (this._page._browserContext.isSettingStorageState()) {
@@ -723,6 +724,7 @@ export class WKPage implements PageDelegate {
     const enabled = this._page.needsRequestInterception();
     await Promise.all([
       this._updateState('Network.setInterceptionEnabled', { enabled }),
+      this._updateState('Network.setResourceCachingDisabled', { disabled: enabled }),
       this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
     ]);
   }
