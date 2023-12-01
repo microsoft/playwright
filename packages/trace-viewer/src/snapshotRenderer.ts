@@ -223,7 +223,9 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         scrollLefts.push(e);
 
       for (const element of root.querySelectorAll(`[__playwright_value_]`)) {
-        (element as HTMLInputElement | HTMLTextAreaElement).value = element.getAttribute('__playwright_value_')!;
+        const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
+        if (inputElement.type !== 'file')
+          inputElement.value = inputElement.getAttribute('__playwright_value_')!;
         element.removeAttribute('__playwright_value_');
       }
       for (const element of root.querySelectorAll(`[__playwright_checked_]`)) {

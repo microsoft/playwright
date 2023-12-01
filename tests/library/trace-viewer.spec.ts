@@ -438,12 +438,13 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
   expect(await frame.locator('div').evaluate(div => div.scrollTop)).toBe(136);
 });
 
-test('should restore control values', async ({ page, runAndTrace }) => {
+test('should restore control values', async ({ page, runAndTrace, asset }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <input type=text value=old>
       <input type=checkbox checked>
       <input type=radio>
+      <input type=file>
       <textarea>old</textarea>
       <select multiple>
         <option value=opt1>Hi</option>
@@ -460,6 +461,7 @@ test('should restore control values', async ({ page, runAndTrace }) => {
         document.querySelector('[value=opt3]').selected = true;
       </script>
     `);
+    await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
     await page.click('input');
   });
 
@@ -486,6 +488,8 @@ test('should restore control values', async ({ page, runAndTrace }) => {
   expect(await frame.locator('option >> nth=1').evaluate(o => o.hasAttribute('selected'))).toBe(true);
   expect(await frame.locator('option >> nth=2').evaluate(o => o.hasAttribute('selected'))).toBe(false);
   await expect(frame.locator('select')).toHaveValues(['opt1', 'opt3']);
+
+  await expect(frame.locator('input[type=file]')).toHaveValue('');
 });
 
 test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
