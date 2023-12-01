@@ -626,6 +626,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await page.locator('text=t5').innerText();
     await expect(page.locator('text=t6')).toHaveText(/t6/i);
     await expect(page.locator('text=multi')).toHaveText(['a', 'b'], { timeout: 1000 }).catch(() => {});
+    await page.mouse.move(123, 234);
   });
 
   async function highlightedDivs(frameLocator: FrameLocator) {
@@ -637,6 +638,14 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const framePageClick = await traceViewer.snapshotFrame('page.click');
   await expect.poll(() => highlightedDivs(framePageClick)).toEqual(['t1']);
+  const box1 = await framePageClick.getByText('t1').boundingBox();
+  const box2 = await framePageClick.locator('x-pw-pointer').boundingBox();
+  const x1 = box1!.x + box1!.width / 2;
+  const y1 = box1!.y + box1!.height / 2;
+  const x2 = box2!.x + box2!.width / 2;
+  const y2 = box2!.y + box2!.height / 2;
+  expect(Math.abs(x1 - x2) < 2).toBeTruthy();
+  expect(Math.abs(y1 - y2) < 2).toBeTruthy();
 
   const framePageInnerText = await traceViewer.snapshotFrame('page.innerText');
   await expect.poll(() => highlightedDivs(framePageInnerText)).toEqual(['t2']);
@@ -655,6 +664,10 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameExpect2 = await traceViewer.snapshotFrame('expect.toHaveText', 1);
   await expect.poll(() => highlightedDivs(frameExpect2)).toEqual(['multi', 'multi']);
+  await expect(frameExpect2.locator('x-pw-pointer')).not.toBeVisible();
+
+  const frameMouseMove = await traceViewer.snapshotFrame('mouse.move');
+  await expect(frameMouseMove.locator('x-pw-pointer')).toBeVisible();
 });
 
 test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
