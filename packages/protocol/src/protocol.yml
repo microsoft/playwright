@@ -379,6 +379,7 @@ CommonScreenshotOptions:
           frame: Frame
           selector: string
     maskColor: string?
+    style: string?
 
 LaunchOptions:
   type: mixin

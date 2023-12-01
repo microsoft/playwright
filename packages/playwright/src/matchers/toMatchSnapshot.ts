@@ -356,6 +356,7 @@ export async function toHaveScreenshot(
     animations: config?.animations ?? 'disabled',
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
+    style: config?.style ?? '',
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     maskColor: helper.allOptions.maskColor,

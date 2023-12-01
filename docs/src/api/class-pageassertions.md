@@ -161,6 +161,9 @@ Snapshot name.
 ### option: PageAssertions.toHaveScreenshot#1.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
 
+### option: PageAssertions.toHaveScreenshot#1.style = %%-screenshot-option-style-%%
+* since: v1.41
+
 ### option: PageAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23
 
@@ -211,6 +214,9 @@ Note that screenshot assertions only work with Playwright test runner.
 
 ### option: PageAssertions.toHaveScreenshot#2.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
+
+### option: PageAssertions.toHaveScreenshot#2.style = %%-screenshot-option-style-%%
+* since: v1.41
 
 ### option: PageAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23

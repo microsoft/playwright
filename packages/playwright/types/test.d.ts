@@ -662,6 +662,11 @@ interface TestConfig {
        * to `"css"`.
        */
       scale?: "css"|"device";
+
+      /**
+       * See `style` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
+       */
+      style?: string;
     };
 
     /**
@@ -5952,6 +5957,13 @@ interface LocatorAssertions {
     scale?: "css"|"device";
 
     /**
+     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+     * Shadow DOM and applies to the inner frames.
+     */
+    style?: string;
+
+    /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
      * `TestConfig.expect`. Defaults to `0.2`.
@@ -6033,6 +6045,13 @@ interface LocatorAssertions {
      * Defaults to `"css"`.
      */
     scale?: "css"|"device";
+
+    /**
+     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+     * Shadow DOM and applies to the inner frames.
+     */
+    style?: string;
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
@@ -6299,6 +6318,13 @@ interface PageAssertions {
     scale?: "css"|"device";
 
     /**
+     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+     * Shadow DOM and applies to the inner frames.
+     */
+    style?: string;
+
+    /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
      * `TestConfig.expect`. Defaults to `0.2`.
@@ -6410,6 +6436,13 @@ interface PageAssertions {
      * Defaults to `"css"`.
      */
     scale?: "css"|"device";
+
+    /**
+     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
+     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
+     * Shadow DOM and applies to the inner frames.
+     */
+    style?: string;
 
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the

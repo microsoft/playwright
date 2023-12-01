@@ -543,6 +543,36 @@ it.describe('page screenshot', () => {
         maskColor: '#00FF00',
       })).toMatchSnapshot('mask-color-should-work.png');
     });
+
+    it('should hide elements based on attr', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.locator('div').nth(5).evaluate(element => {
+        element.setAttribute('data-test-screenshot', 'hide');
+      });
+      expect(await page.screenshot({
+        style: `[data-test-screenshot="hide"] {
+          visibility: hidden;
+        }`
+      })).toMatchSnapshot('hide-should-work.png');
+      const visibility = await page.locator('div').nth(5).evaluate(element => element.style.visibility);
+      expect(visibility).toBe('');
+    });
+
+    it('should remove elements based on attr', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.locator('div').nth(5).evaluate(element => {
+        element.setAttribute('data-test-screenshot', 'remove');
+      });
+      expect(await page.screenshot({
+        style: `[data-test-screenshot="remove"] {
+          display: none;
+        }`
+      })).toMatchSnapshot('remove-should-work.png');
+      const display = await page.locator('div').nth(5).evaluate(element => element.style.display);
+      expect(display).toBe('');
+    });
   });
 });
 

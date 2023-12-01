@@ -1132,6 +1132,13 @@ Defaults to `"css"`.
 
 When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.  Defaults to `"hide"`.
 
+## screenshot-option-style
+- `style` <string>
+
+Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements invisible
+or change their properties to help you creating repeatable screenshots. This stylesheet pierces the Shadow DOM and applies
+to the inner frames.
+
 ## screenshot-options-common-list-v1.8
 - %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
