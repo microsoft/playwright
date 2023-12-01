@@ -334,6 +334,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     harRouter.addContextRoute(this);
   }
 
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+    await this._unrouteInternal(this._routes, [], options);
+  }
+
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
     const removed = [];
     const remaining = [];
@@ -343,11 +347,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       else
         remaining.push(route);
     }
+    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait'
+    await this._unrouteInternal(removed, remaining, { behavior });
+}
+
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.noWaitForActive));
+    if (!options || options?.behavior === 'default')
+      return;
+    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.behavior === 'ignoreErrors'));
     await Promise.all(promises);
-
   }
 
   private async _updateInterceptionPatterns() {
