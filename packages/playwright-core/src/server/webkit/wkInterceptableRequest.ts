@@ -47,13 +47,11 @@ export class WKInterceptableRequest {
   _timestamp: number;
   _wallTime: number;
   readonly _route: WKRouteImpl | null;
-  private _redirectedFrom: WKInterceptableRequest | null;
 
   constructor(session: WKSession, route: WKRouteImpl | null, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WKInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
     this._route = route;
-    this._redirectedFrom = redirectedFrom;
     const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
     let postDataBuffer = null;
     this._timestamp = event.timestamp;

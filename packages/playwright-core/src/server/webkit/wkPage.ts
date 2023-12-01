@@ -62,7 +62,6 @@ export class WKPage implements PageDelegate {
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
-  private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
   private _eventListeners: RegisteredListener[];
   readonly _browserContext: WKBrowserContext;
@@ -509,8 +508,6 @@ export class WKPage implements PageDelegate {
     (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
       frame._contextCreated(worldName, context);
-    if (contextPayload.type === 'normal' && frame === this._page.mainFrame())
-      this._mainFrameContextId = contextPayload.id;
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
