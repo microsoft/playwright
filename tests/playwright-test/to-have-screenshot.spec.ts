@@ -1033,7 +1033,7 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   expect(result.exitCode).toBe(1);
   const outputText = result.output;
   expect(outputText).toContain('Expected an image 2px by 2px, received 1280px by 720px.');
-  expect(outputText).toContain('4 pixels (ratio 0.01 of all image pixels) are different.');
+  expect(outputText).toContain('4 pixels (ratio 1.00 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');

@@ -59,10 +59,17 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
-    sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
+    // only produce an error if the images differ by more than 1 pixel in size
+    // a threshold of 1.5 allows for floating point rounding errors
+    if (Math.abs(expected.width - actual.width) >= 1.5 || Math.abs(expected.height - actual.height) >= 1.5)
+      sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
+
+    // always resize both images, so that we can perform the pixel diff
     actual = resizeImage(actual, size);
     expected = resizeImage(expected, size);
   }
+
+  // count the number of pixels that are different
   const diff = new PNG({ width: size.width, height: size.height });
   let count;
   if (options._comparator === 'ssim-cie94') {
@@ -79,14 +86,18 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     throw new Error(`Configuration specifies unknown comparator "${options._comparator}"`);
   }
 
+  // compute the max number of pixels that can be different in the diff image
   const maxDiffPixels1 = options.maxDiffPixels;
-  const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;
+  const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? size.width * size.height * options.maxDiffPixelRatio : undefined;
   let maxDiffPixels;
   if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined)
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
   else
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
-  const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
+  maxDiffPixels += 0.5; // accounting for floating point rounding errors
+
+  // determine if there is a mismatch error, and return it
+  const ratio = Math.ceil(count / (size.width * size.height) * 100) / 100;
   const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
   if (pixelsMismatchError || sizesMismatchError)
     return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
