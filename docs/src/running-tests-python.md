@@ -129,7 +129,7 @@ pytest -s -k test_get_started_link
 
 This command will open up a Browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or press the play button to run your test from start to finish. Once the test has finished, the browser window will close.
 
-While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You an also edit the locator and see it highlighting live on the Browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into you test.
+While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator and see it highlighting live on the Browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
 ![Playwright Inspector](https://github.com/microsoft/playwright/assets/13063165/c94c89c8-f945-460c-a653-7809c6ca50ee)
 
