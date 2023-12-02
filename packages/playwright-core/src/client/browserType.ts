@@ -88,7 +88,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
     options = { ...this._defaultLaunchOptions, ...options };
-    return this._serverLauncher.launchServer(options);
+    return await this._serverLauncher.launchServer(options);
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
@@ -118,7 +118,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (typeof optionsOrWsEndpoint === 'string')
       return this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
     assert(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
-    return this._connect(optionsOrWsEndpoint);
+    return await this._connect(optionsOrWsEndpoint);
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {

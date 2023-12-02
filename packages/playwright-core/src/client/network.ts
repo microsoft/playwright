@@ -188,7 +188,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       return Response.fromNullable((await this._channel.response()).response);
     }, true);
   }
@@ -332,7 +332,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 
@@ -522,7 +522,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
         return new RawHeaders((await this._channel.rawResponseHeaders()).headers);
       })();
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -542,7 +542,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return this.request()._targetClosedScope().race(this._finishedPromise);
+    return await this.request()._targetClosedScope().race(this._finishedPromise);
   }
 
   async body(): Promise<Buffer> {
@@ -616,7 +616,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);

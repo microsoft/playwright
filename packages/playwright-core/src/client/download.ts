@@ -45,26 +45,26 @@ export class Download implements api.Download {
   }
 
   async path(): Promise<string> {
-    return this._artifact.pathAfterFinished();
+    return await this._artifact.pathAfterFinished();
   }
 
   async saveAs(path: string): Promise<void> {
-    return this._artifact.saveAs(path);
+    return await this._artifact.saveAs(path);
   }
 
   async failure(): Promise<string | null> {
-    return this._artifact.failure();
+    return await this._artifact.failure();
   }
 
   async createReadStream(): Promise<Readable> {
-    return this._artifact.createReadStream();
+    return await this._artifact.createReadStream();
   }
 
   async cancel(): Promise<void> {
-    return this._artifact.cancel();
+    return await this._artifact.cancel();
   }
 
   async delete(): Promise<void> {
-    return this._artifact.delete();
+    return await this._artifact.delete();
   }
 }
