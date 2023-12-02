@@ -17737,6 +17737,58 @@ export interface FrameLocator {
    * @param index
    */
   nth(index: number): FrameLocator;
+
+  /**
+   * Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+   *
+   * **Usage**
+   *
+   * The
+   * [frameLocator.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-framelocator#frame-locator-wait-for-function)
+   * can be used to observe viewport size change:
+   *
+   * ```js
+   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+   *
+   * (async () => {
+   *   const browser = await webkit.launch();
+   *   const page = await browser.newPage();
+   *   const watchDog = page.frameLocator('iframe').waitForFunction(() => window.innerWidth < 100);
+   *   await page.setViewportSize({ width: 50, height: 50 });
+   *   await watchDog;
+   *   await browser.close();
+   * })();
+   * ```
+   *
+   * To pass an argument to the predicate of
+   * [frameLocator.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-framelocator#frame-locator-wait-for-function)
+   * function:
+   *
+   * ```js
+   * const selector = '.foo';
+   * await page.frameLocator('iframe').waitForFunction(selector => !!document.querySelector(selector), selector);
+   * ```
+   *
+   * @param pageFunction Function to be evaluated in the page context.
+   * @param arg Optional argument to pass to `pageFunction`.
+   * @param options
+   */
+  waitForFunction(pageFunction: Function|string, arg?: EvaluationArgument, options?: {
+    /**
+     * If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If
+     * `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed.
+     * Defaults to `raf`.
+     */
+    polling?: number|"raf";
+
+    /**
+     * Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+     * `actionTimeout` option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<JSHandle>;
 }
 
 /**

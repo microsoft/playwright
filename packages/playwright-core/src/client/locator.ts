@@ -21,7 +21,7 @@ import * as util from 'util';
 import { asLocator, isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
-import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions, WaitForFunctionOptions  } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
@@ -418,6 +418,10 @@ export class FrameLocator implements api.FrameLocator {
 
   nth(index: number): FrameLocator {
     return new FrameLocator(this._frame, this._frameSelector + ` >> nth=${index}`);
+  }
+
+  async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: WaitForFunctionOptions): Promise<structs.SmartHandle<R>> {
+    return this._frame.waitForFunction(pageFunction, arg, options);
   }
 }
 

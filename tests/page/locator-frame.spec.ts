@@ -298,3 +298,11 @@ it('should work with COEP/COOP/CORP isolated iframe', async ({ page, server, bro
   await page.frameLocator('iframe').getByRole('button').click();
   expect(await page.frames()[1].evaluate(() => window['__clicked'])).toBe(true);
 });
+
+it('should wait until the function is resolved', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  let resolved = false;
+  await page.frameLocator('iframe').waitForFunction('window.innerWidth == 1280').then(() => resolved = true);
+  expect(resolved).toBe(true);
+});
