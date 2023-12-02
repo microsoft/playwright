@@ -1723,7 +1723,7 @@ Consider the following config:
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
+  snapshotPathTemplate: '__screenshots__/{projectName}/{testFilePath}/{arg}{ext}',
   testMatch: 'example.spec.ts',
   projects: [
     { use: { browserName: 'firefox' } },
