@@ -1029,13 +1029,13 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    let route = null;
+    const request = new WKInterceptableRequest(session, frame, event, redirectedFrom, documentId);
     // We do not support intercepting redirects.
     if (this._page.needsRequestInterception() && !redirectedFrom)
-      route = new WKRouteImpl(session, event.requestId);
-    const request = new WKInterceptableRequest(session, route, frame, event, redirectedFrom, documentId);
+      request._willBeIntercepted = true;
     this._requestIdToRequest.set(event.requestId, request);
-    this._page._frameManager.requestStarted(request.request, route || undefined);
+    if (!request._willBeIntercepted)
+      this._page._frameManager.requestStarted(request.request, undefined);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
@@ -1059,12 +1059,14 @@ export class WKPage implements PageDelegate {
     // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
     // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
     request.request.setRawRequestHeaders(null);
-    if (!request._route) {
+    if (!request._willBeIntercepted) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
-      request._route._requestInterceptedPromise.resolve();
+      const route = new WKRouteImpl(session, request._requestId);
+      request._willBeIntercepted = false;
+      this._page._frameManager.requestStarted(request.request, route);
     }
   }
 
@@ -1073,6 +1075,12 @@ export class WKPage implements PageDelegate {
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
+    if (request._willBeIntercepted) {
+      // We received a response, so the request won't be intercepted (e.g. it was handled by service
+      // worker and we don't intercept service workers).
+      request._willBeIntercepted = false;
+      this._page._frameManager.requestStarted(request.request, undefined);
+    }
     this._requestIdToResponseReceivedPayloadEvent.set(request._requestId, event);
     const response = request.createResponse(event.response);
     this._page._frameManager.requestReceivedResponse(response);
@@ -1128,6 +1136,10 @@ export class WKPage implements PageDelegate {
     if (!request)
       return;
 
+    if (request._willBeIntercepted) {
+      request._willBeIntercepted = false;
+      this._page._frameManager.requestStarted(request.request, undefined);
+    }
     const response = request.request._existingResponse();
     if (response) {
       response._serverAddrFinished();
