@@ -69,12 +69,16 @@ it('should report requests and responses handled by service worker', async ({ pa
   expect(await failedRequest.response()).toBe(null);
 });
 
-it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, platform }) => {
+it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
   it.fixme(mode.startsWith('service') && platform === 'linux', 'Times out for no clear reason');
 
-  await page.route('**/*', route => route.continue());
+  const interceptedUrls = [];
+  await page.route('**/*', route => {
+    interceptedUrls.push(route.request().url());
+    void route.continue();
+  });
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
   const [swResponse, request] = await Promise.all([
@@ -96,6 +100,11 @@ it('should report requests and responses handled by service worker with routing'
   expect(failedRequest.failure()).not.toBe(null);
   expect(failedRequest.serviceWorker()).toBe(null);
   expect(await failedRequest.response()).toBe(null);
+
+  const expectedUrls = [server.PREFIX + '/serviceworkers/fetchdummy/sw.html'];
+  if (browserName === 'webkit')
+    expectedUrls.push(server.PREFIX + '/serviceworkers/fetchdummy/sw.js');
+  expect(interceptedUrls).toEqual(expectedUrls);
 });
 
 it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron, browserName }) => {

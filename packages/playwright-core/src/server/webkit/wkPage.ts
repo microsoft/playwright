@@ -60,6 +60,7 @@ export class WKPage implements PageDelegate {
   private readonly _pageProxySession: WKSession;
   readonly _opener: WKPage | null;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
+  private readonly _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
@@ -388,9 +389,9 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       eventsHelper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
+      eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
+      eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -1011,6 +1012,15 @@ export class WKPage implements PageDelegate {
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
+
+    // We do not support intercepting redirects.
+    if (this._page.needsRequestInterception() && !event.redirectResponse)
+      this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
+    else
+      this._onRequest(session, event, false);
+  }
+
+  private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, intercepted: boolean) {
     let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -1029,13 +1039,16 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    let route = null;
-    // We do not support intercepting redirects.
-    if (this._page.needsRequestInterception() && !redirectedFrom)
-      route = new WKRouteImpl(session, event.requestId);
-    const request = new WKInterceptableRequest(session, route, frame, event, redirectedFrom, documentId);
+    const request = new WKInterceptableRequest(session, frame, event, redirectedFrom, documentId);
+    let route;
+    if (intercepted) {
+      route = new WKRouteImpl(session, request._requestId);
+      // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
+      // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
+      request.request.setRawRequestHeaders(null);
+    }
     this._requestIdToRequest.set(event.requestId, request);
-    this._page._frameManager.requestStarted(request.request, route || undefined);
+    this._page._frameManager.requestStarted(request.request, route);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
@@ -1051,34 +1064,36 @@ export class WKPage implements PageDelegate {
   }
 
   _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (!request) {
-      session.sendMayFail('Network.interceptRequestWithError', { errorType: 'Cancellation', requestId: event.requestId });
-      return;
-    }
-    // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
-    // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
-    request.request.setRawRequestHeaders(null);
-    if (!request._route) {
+    const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
+    if (!requestWillBeSentEvent) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
-    } else {
-      request._route._requestInterceptedPromise.resolve();
+      session.sendMayFail('Network.interceptWithRequest', { requestId: event.requestId });
+      return;
     }
+    this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
+    this._onRequest(session, requestWillBeSentEvent, true);
   }
 
-  _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+  _onResponseReceived(session: WKSession, event: Protocol.Network.responseReceivedPayload) {
+    const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
+    if (requestWillBeSentEvent) {
+      this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
+      // We received a response, so the request won't be intercepted (e.g. it was handled by a
+      // service worker and we don't intercept service workers).
+      this._onRequest(session, requestWillBeSentEvent, false);
+    }
     const request = this._requestIdToRequest.get(event.requestId);
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
+
     this._requestIdToResponseReceivedPayloadEvent.set(request._requestId, event);
     const response = request.createResponse(event.response);
     this._page._frameManager.requestReceivedResponse(response);
 
     if (response.status() === 204) {
-      this._onLoadingFailed({
+      this._onLoadingFailed(session, {
         requestId: event.requestId,
         errorText: 'Aborted: 204 No Content',
         timestamp: event.timestamp
@@ -1121,7 +1136,15 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
-  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  _onLoadingFailed(session: WKSession, event: Protocol.Network.loadingFailedPayload) {
+    const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
+    if (requestWillBeSentEvent) {
+      this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
+      // If loading failed, the request won't be intercepted (e.g. it was handled by a
+      // service worker and we don't intercept service workers).
+      this._onRequest(session, requestWillBeSentEvent, false);
+    }
+
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
