@@ -1020,7 +1020,7 @@ export class WKPage implements PageDelegate {
       this._onRequest(session, event, false);
   }
 
-  private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, interceted: boolean) {
+  private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, intercepted: boolean) {
     let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -1041,7 +1041,7 @@ export class WKPage implements PageDelegate {
     const documentId = isNavigationRequest ? event.loaderId : undefined;
     const request = new WKInterceptableRequest(session, frame, event, redirectedFrom, documentId);
     let route;
-    if (interceted) {
+    if (intercepted) {
       route = new WKRouteImpl(session, request._requestId);
       // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
       // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
@@ -1140,7 +1140,7 @@ export class WKPage implements PageDelegate {
     const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
     if (requestWillBeSentEvent) {
       this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-      // We received a response, so the request won't be intercepted (e.g. it was handled by a
+      // If loading failed, the request won't be intercepted (e.g. it was handled by a
       // service worker and we don't intercept service workers).
       this._onRequest(session, requestWillBeSentEvent, false);
     }
