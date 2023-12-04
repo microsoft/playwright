@@ -52,7 +52,7 @@ it('should intercept after a service worker', async ({ page, server, browserName
       contentType: 'text/css',
       body: 'responseFromInterception:' + name
     });
-  }, { noWaitForFinish: true });
+  });
 
   // Page route is applied after service worker fetch event.
   const swResponse2 = await page.evaluate(() => window['fetchDummy']('foo'));

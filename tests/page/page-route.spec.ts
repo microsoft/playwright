@@ -264,7 +264,7 @@ it('should show custom HTTP headers', async ({ page, server }) => {
 it('should work with redirect inside sync XHR', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/logo.png', '/pptr.png');
-  await page.route('**/*', route => route.continue(), { noWaitForFinish: true });
+  await page.route('**/*', route => route.continue());
   const status = await page.evaluate(async () => {
     const request = new XMLHttpRequest();
     request.open('GET', '/logo.png', false);  // `false` makes the request synchronous
