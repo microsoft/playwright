@@ -45,7 +45,6 @@ export class WKInterceptableRequest {
   readonly _requestId: string;
   _timestamp: number;
   _wallTime: number;
-  _willBeIntercepted = false;
 
   constructor(session: WKSession, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WKInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
