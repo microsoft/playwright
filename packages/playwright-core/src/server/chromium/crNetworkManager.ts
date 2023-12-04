@@ -508,7 +508,6 @@ class InterceptableRequest {
   readonly _timestamp: number;
   readonly _wallTime: number;
   readonly _route: RouteImpl | null;
-  private _redirectedFrom: InterceptableRequest | null;
   session: CRSession;
 
   constructor(options: {
@@ -530,7 +529,6 @@ class InterceptableRequest {
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
     this._route = route;
-    this._redirectedFrom = redirectedFrom;
 
     const {
       headers,
