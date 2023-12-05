@@ -314,12 +314,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fallback(options: FallbackOverrides = {}) {
     this._checkNotHandled();
-    try {
-      this.request()._applyFallbackOverrides(options);
-      this._reportHandled(false);
-    } finally {
-      this._didTryToHandle = true;
-    }
+    this.request()._applyFallbackOverrides(options);
+    this._reportHandled(false);
   }
 
   async abort(errorCode?: string) {
