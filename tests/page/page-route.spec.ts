@@ -261,10 +261,15 @@ it('should show custom HTTP headers', async ({ page, server }) => {
 });
 
 // @see https://github.com/GoogleChrome/puppeteer/issues/4337
-it('should work with redirect inside sync XHR', async ({ page, server }) => {
+it('should work with redirect inside sync XHR', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28461' });
+  it.fixme(browserName === 'webkit', 'No Network.requestIntercepted for the request');
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/logo.png', '/pptr.png');
-  await page.route('**/*', route => route.continue());
+  let continuePromise;
+  await page.route('**/*', route => {
+    continuePromise = route.continue();
+  });
   const status = await page.evaluate(async () => {
     const request = new XMLHttpRequest();
     request.open('GET', '/logo.png', false);  // `false` makes the request synchronous
@@ -272,6 +277,8 @@ it('should work with redirect inside sync XHR', async ({ page, server }) => {
     return request.status;
   });
   expect(status).toBe(200);
+  expect(continuePromise).toBeTruthy();
+  await continuePromise;
 });
 
 it('should pause intercepted XHR until continue', async ({ page, server, browserName }) => {
