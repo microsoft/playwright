@@ -286,7 +286,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
-  _didTryToHandle: boolean = false;
+  _didThrow: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
@@ -323,8 +323,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     try {
       await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
       this._reportHandled(true);
-    } finally {
-      this._didTryToHandle = true;
+    } catch(e) {
+      this._didThrow = true;
+      throw e;
     }
   }
 
@@ -333,8 +334,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     try {
       await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
       this._reportHandled(true);
-    } finally {
-      this._didTryToHandle = true;
+    } catch(e) {
+      this._didThrow = true;
+      throw e;
     }
   }
 
@@ -351,8 +353,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         await this._innerFulfill(options);
         this._reportHandled(true);
       });
-    } finally {
-      this._didTryToHandle = true;
+    } catch(e) {
+      this._didThrow = true;
+      throw e;
     }
   }
 
@@ -420,8 +423,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       this.request()._applyFallbackOverrides(options);
       await this._innerContinue();
       this._reportHandled(true);
-    } finally {
-      this._didTryToHandle = true;
+    } catch(e) {
+      this._didThrow = true;
+      throw e;
     }
   }
 
@@ -708,10 +712,18 @@ export class RouteHandler {
     // Note that context.route handler may be later invoked on a different page,
     // so we only swallow errors for the current page's routes.
     const handlerActivations = page ? this._activeInvocations.get(page) : [...this._activeInvocations.values()];
-    if (this.noWaitOnUnrouteOrClose || noWait)
+    if (this.noWaitOnUnrouteOrClose || noWait) {
       handlerActivations.forEach(h => h.ignoreException = true);
-    else
-      await Promise.all(handlerActivations.filter(h => !h.route._didTryToHandle).map(h => h.complete));
+    } else {
+      const promises = [];
+      for (const activation of handlerActivations) {
+        if (activation.route._didThrow)
+          activation.ignoreException = true;
+        else
+          promises.push(activation.complete);
+      }
+      await Promise.all(promises);
+    }
   }
 
   private async _handleInternal(route: Route): Promise<boolean> {
