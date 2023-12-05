@@ -45,14 +45,15 @@ context.tracing.stop(path = "trace.zip")
 ```
 
 ```csharp
-await using var browser = playwright.Chromium.LaunchAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
   Screenshots = true,
   Snapshots = true
 });
-var page = context.NewPageAsync();
+var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
@@ -99,14 +100,15 @@ context.tracing.stop(path = "trace.zip")
 ```
 
 ```csharp
-await using var browser = playwright.Chromium.LaunchAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
   Screenshots = true,
   Snapshots = true
 });
-var page = context.NewPageAsync();
+var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
@@ -234,14 +236,15 @@ context.tracing.stop_chunk(path = "trace2.zip")
 ```
 
 ```csharp
-await using var browser = playwright.Chromium.LaunchAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
   Screenshots = true,
   Snapshots = true
 });
-var page = context.NewPageAsync();
+var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 
 await context.Tracing.StartChunkAsync();
