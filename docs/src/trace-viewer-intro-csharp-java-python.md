@@ -85,7 +85,8 @@ context.tracing().stop(new Tracing.StopOptions()
 ```
 
 ```csharp
-await using var browser = await Playwright.Chromium.LaunchAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 
 // Start tracing before creating / navigating a page.
