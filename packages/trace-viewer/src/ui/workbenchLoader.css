@@ -107,13 +107,18 @@ body.dark-mode .drop-target {
   height: 32px;
   width: 32px;
   pointer-events: none;
+  flex: none;
 }
 
 .workbench-loader .product {
   font-weight: 600;
   margin-left: 16px;
+  flex: none;
 }
 
 .workbench-loader .header .title {
   margin-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
 }
