@@ -21,15 +21,15 @@
     },
     {
       "name": "firefox",
-      "revision": "1429",
+      "revision": "1430",
       "installByDefault": true,
-      "browserVersion": "119.0"
+      "browserVersion": "120.0.1"
     },
     {
       "name": "firefox-asan",
-      "revision": "1429",
+      "revision": "1430",
       "installByDefault": false,
-      "browserVersion": "119.0"
+      "browserVersion": "120.0.1"
     },
     {
       "name": "firefox-beta",
