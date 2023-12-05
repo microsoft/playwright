@@ -116,7 +116,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<api.Browser>;
   async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint: string }), options?: api.ConnectOptions): Promise<Browser>{
     if (typeof optionsOrWsEndpoint === 'string')
-      return this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
+      return await this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
     assert(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
     return await this._connect(optionsOrWsEndpoint);
   }
@@ -193,14 +193,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
   }
 
-  connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
-  connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
-  connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string, options?: api.ConnectOverCDPOptions) {
+  async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
+  async connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
+  async connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string, options?: api.ConnectOverCDPOptions) {
     if (typeof endpointURLOrOptions === 'string')
-      return this._connectOverCDP(endpointURLOrOptions, options);
+      return await this._connectOverCDP(endpointURLOrOptions, options);
     const endpointURL = 'endpointURL' in endpointURLOrOptions ? endpointURLOrOptions.endpointURL : endpointURLOrOptions.wsEndpoint;
     assert(endpointURL, 'Cannot connect over CDP without wsEndpoint.');
-    return this.connectOverCDP(endpointURL, endpointURLOrOptions);
+    return await this.connectOverCDP(endpointURL, endpointURLOrOptions);
   }
 
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {

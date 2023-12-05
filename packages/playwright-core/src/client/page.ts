@@ -371,10 +371,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
-    const predicate = (request: Request) => {
+    const predicate = async (request: Request) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(this._browserContext._options.baseURL, request.url(), urlOrPredicate);
-      return urlOrPredicate(request);
+      return await urlOrPredicate(request);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
@@ -382,10 +382,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
-    const predicate = (response: Response) => {
+    const predicate = async (response: Response) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(this._browserContext._options.baseURL, response.url(), urlOrPredicate);
-      return urlOrPredicate(response);
+      return await urlOrPredicate(response);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;

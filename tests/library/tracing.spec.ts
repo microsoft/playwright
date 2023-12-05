@@ -35,7 +35,7 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.keyboard.insertText('abc');
   await page.goto(server.PREFIX + '/input/fileupload.html');
   await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
-  await page.waitForTimeout(2000);  // Give it some time to produce screenshots.\
+  await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 

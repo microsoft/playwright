@@ -159,16 +159,16 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
-  _actualHeaders(): Promise<RawHeaders> {
+  async _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
-      return Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
+      return await Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
         return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
       });
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -300,16 +300,16 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return Request.from(this._initializer.request);
   }
 
-  private _raceWithTargetClose(promise: Promise<any>): Promise<void> {
+  private async _raceWithTargetClose(promise: Promise<any>): Promise<void> {
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return this.request()._targetClosedScope().safeRace(promise);
+    return await this.request()._targetClosedScope().safeRace(promise);
   }
 
-  _startHandling(): Promise<boolean> {
+  async _startHandling(): Promise<boolean> {
     this._handlingPromise = new ManualPromise();
-    return this._handlingPromise;
+    return await this._handlingPromise;
   }
 
   async fallback(options: FallbackOverrides = {}) {

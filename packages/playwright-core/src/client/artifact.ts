@@ -60,7 +60,7 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
   async readIntoBuffer(): Promise<Buffer> {
     const stream = (await this.createReadStream())!;
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       stream.on('data', (chunk: Buffer) => {
         chunks.push(chunk);
