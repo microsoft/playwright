@@ -108,7 +108,7 @@ it('should not allow changing protocol when overriding url', async ({ page, serv
     } catch (e) {
       resolve(e);
     }
-  }, { noWaitForFinish: true });
+  });
   page.goto(server.EMPTY_PAGE).catch(() => {});
   const error = await errorPromise;
   expect(error).toBeTruthy();

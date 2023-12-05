@@ -286,6 +286,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
+  _didTryToHandle: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
@@ -313,20 +314,32 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fallback(options: FallbackOverrides = {}) {
     this._checkNotHandled();
-    this.request()._applyFallbackOverrides(options);
-    this._reportHandled(false);
+    try {
+      this.request()._applyFallbackOverrides(options);
+      this._reportHandled(false);
+    } finally {
+      this._didTryToHandle = true;
+    }
   }
 
   async abort(errorCode?: string) {
     this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
-    this._reportHandled(true);
+    try {
+      await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
+      this._reportHandled(true);
+    } finally {
+      this._didTryToHandle = true;
+    }
   }
 
   async _redirectNavigationRequest(url: string) {
     this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
-    this._reportHandled(true);
+    try {
+      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
+      this._reportHandled(true);
+    } finally {
+      this._didTryToHandle = true;
+    }
   }
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
@@ -337,10 +350,14 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
     this._checkNotHandled();
-    await this._wrapApiCall(async () => {
-      await this._innerFulfill(options);
-      this._reportHandled(true);
-    });
+    try {
+      await this._wrapApiCall(async () => {
+        await this._innerFulfill(options);
+        this._reportHandled(true);
+      });
+    } finally {
+      this._didTryToHandle = true;
+    }
   }
 
   private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}): Promise<void> {
@@ -403,9 +420,13 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async continue(options: FallbackOverrides = {}) {
     this._checkNotHandled();
-    this.request()._applyFallbackOverrides(options);
-    await this._innerContinue();
-    this._reportHandled(true);
+    try {
+      this.request()._applyFallbackOverrides(options);
+      await this._innerContinue();
+      this._reportHandled(true);
+    } finally {
+      this._didTryToHandle = true;
+    }
   }
 
   _checkNotHandled() {
@@ -636,7 +657,7 @@ export class RouteHandler {
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
   readonly noWaitOnUnrouteOrClose: boolean;
-  private _activeInvocations: MultiMap<Page|null, { ignoreException: boolean, complete: Promise<void> }> = new MultiMap();
+  private _activeInvocations: MultiMap<Page|null, { ignoreException: boolean, complete: Promise<void>, route: Route }> = new MultiMap();
 
   constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER, noWaitOnUnrouteOrClose: boolean = false) {
     this._baseURL = baseURL;
@@ -668,7 +689,7 @@ export class RouteHandler {
 
   public async handle(route: Route): Promise<boolean> {
     const page = route.request()._safePage();
-    const handlerInvocation = { ignoreException: false, complete: new ManualPromise() } ;
+    const handlerInvocation = { ignoreException: false, complete: new ManualPromise(), route } ;
     this._activeInvocations.set(page, handlerInvocation);
     try {
       return await this._handleInternal(route);
@@ -694,7 +715,7 @@ export class RouteHandler {
     if (this.noWaitOnUnrouteOrClose || noWait)
       handlerActivations.forEach(h => h.ignoreException = true);
     else
-      await Promise.all(handlerActivations.map(h => h.complete));
+      await Promise.all(handlerActivations.filter(h => !h.route._didTryToHandle).map(h => h.complete));
   }
 
   private async _handleInternal(route: Route): Promise<boolean> {
