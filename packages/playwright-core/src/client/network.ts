@@ -319,25 +319,15 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   async abort(errorCode?: string) {
-    this._checkNotHandled();
-    try {
+    await this._handleRoute(async () => {
       await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
-      this._reportHandled(true);
-    } catch (e) {
-      this._didThrow = true;
-      throw e;
-    }
+    });
   }
 
   async _redirectNavigationRequest(url: string) {
-    this._checkNotHandled();
-    try {
+    await this._handleRoute(async () => {
       await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
-      this._reportHandled(true);
-    } catch (e) {
-      this._didThrow = true;
-      throw e;
-    }
+    });
   }
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
@@ -347,12 +337,18 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
-    this._checkNotHandled();
-    try {
+    await this._handleRoute(async () => {
       await this._wrapApiCall(async () => {
         await this._innerFulfill(options);
-        this._reportHandled(true);
       });
+    });
+  }
+
+  private async _handleRoute(callback: () => Promise<void>) {
+    this._checkNotHandled();
+    try {
+      await callback();
+      this._reportHandled(true);
     } catch (e) {
       this._didThrow = true;
       throw e;
@@ -418,15 +414,10 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   async continue(options: FallbackOverrides = {}) {
-    this._checkNotHandled();
-    try {
+    await this._handleRoute(async () => {
       this.request()._applyFallbackOverrides(options);
       await this._innerContinue();
-      this._reportHandled(true);
-    } catch (e) {
-      this._didThrow = true;
-      throw e;
-    }
+    });
   }
 
   _checkNotHandled() {
