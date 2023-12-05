@@ -323,7 +323,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     try {
       await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
       this._reportHandled(true);
-    } catch(e) {
+    } catch (e) {
       this._didThrow = true;
       throw e;
     }
@@ -334,7 +334,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     try {
       await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
       this._reportHandled(true);
-    } catch(e) {
+    } catch (e) {
       this._didThrow = true;
       throw e;
     }
@@ -353,7 +353,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         await this._innerFulfill(options);
         this._reportHandled(true);
       });
-    } catch(e) {
+    } catch (e) {
       this._didThrow = true;
       throw e;
     }
@@ -423,7 +423,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       this.request()._applyFallbackOverrides(options);
       await this._innerContinue();
       this._reportHandled(true);
-    } catch(e) {
+    } catch (e) {
       this._didThrow = true;
       throw e;
     }
