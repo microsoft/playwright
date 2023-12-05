@@ -74,6 +74,7 @@ export class FullConfigInternal {
     this.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
+      botName: takeFirst(configCLIOverrides.botName, config.botName, null),
       configFile,
       rootDir: pathResolve(configDir, config.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, config.forbidOnly, false),

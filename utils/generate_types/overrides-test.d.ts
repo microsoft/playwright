@@ -75,6 +75,7 @@ export type Metadata = { [key: string]: any };
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+  botName: string | null;
   forbidOnly: boolean;
   fullyParallel: boolean;
   globalSetup: string | null;

@@ -597,6 +597,7 @@ class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = FullProject & { __projectId: string };
 
 export const baseFullConfig: FullConfig = {
+  botName: null,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

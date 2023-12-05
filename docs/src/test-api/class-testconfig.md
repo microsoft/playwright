@@ -17,6 +17,23 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.botName
+* since: v1.41
+- type: ?<[string]>
+
+Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and
+test run parameters. The name of the bot will be automatically included into `blob` report's file name.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  botName: process.env.BOT_NAME,
+});
+```
+
 ## property: TestConfig.build
 * since: v1.35
 - type: ?<[Object]>
