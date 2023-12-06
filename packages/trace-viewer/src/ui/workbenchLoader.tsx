@@ -118,9 +118,13 @@ export const WorkbenchLoader: React.FunctionComponent<{}> = () => {
   React.useEffect(() => {
     const params = new URL(window.location.href).searchParams;
     const desiredTheme = params.get("theme");
-    const curTheme = currentTheme();
-    if (desiredTheme !== curTheme) {
-      toggleTheme();
+    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+    if (
+      desiredTheme === "dark-mode" ||
+      (desiredTheme === undefined && prefersDarkScheme.matches)
+    ) {
+      document.body.classList.add("dark-mode");
     }
   }, [window.location.href]);
 

@@ -27,11 +27,6 @@ export function applyTheme() {
   document!.defaultView!.addEventListener('blur', event => {
     document.body.classList.add('inactive');
   }, false);
-
-  const currentTheme = settings.getString('theme', 'light-mode');
-  const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-  if (currentTheme === 'dark-mode' || prefersDarkScheme.matches)
-    document.body.classList.add('dark-mode');
 }
 
 type Theme = 'dark-mode' | 'light-mode';
