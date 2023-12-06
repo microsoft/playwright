@@ -64,7 +64,7 @@ test.describe('signals', () => {
     const pid = await remoteServer.out('pid');
     process.kill(-pid, 'SIGKILL');
     if (isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22 && os.arch() === 'arm64') {
-      // WebKit on mac13 exits differently.
+      // WebKit on newer macOS exits differently.
       expect(await remoteServer.out('exitCode')).toBe('137');
       expect(await remoteServer.out('signal')).toBe('null');
     } else {
