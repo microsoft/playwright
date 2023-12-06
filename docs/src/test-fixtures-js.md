@@ -1062,8 +1062,7 @@ A few observations:
 * `workerFixture` is lazily set up before the second test, but teared down once during worker shutdown, as a worker-scoped fixture.
 * `autoWorkerFixture` is set up for `beforeAll` hook, but `autoTestFixture` is not.
 
-## Merging fixtures
-* since: v1.39
+## Combine custom fixtures from multiple modules
 
 You can merge test fixtures from multiple files or modules:
 
