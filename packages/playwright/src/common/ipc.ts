@@ -20,7 +20,6 @@ import type { FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
-  botName?: string;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;

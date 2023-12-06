@@ -1211,7 +1211,7 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
   expect(output).toContain(`reportNames: first,second`);
 });
 
-test('include botName as report file name suffix', async ({ runInlineTest, mergeReports }) => {
+test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => {
   const files = (botName: string) => ({
     'echo-reporter.js': `
       import fs from 'fs';
@@ -1220,7 +1220,7 @@ test('include botName as report file name suffix', async ({ runInlineTest, merge
         onBegin(config, suite) {
           const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
           console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('reportNames: ' + projects.map(p => p.metadata.reportName));
+          console.log('botNames: ' + projects.map(p => p.botName));
         }
       }
       module.exports = EchoReporter;
@@ -1240,17 +1240,14 @@ test('include botName as report file name suffix', async ({ runInlineTest, merge
     `,
   });
 
-  await runInlineTest(files('first'));
-  await runInlineTest(files('second'), undefined, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files('first'), undefined, { PWTEST_BLOB_REPORT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BLOB_REPORT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
-  const reportFiles = await fs.promises.readdir(reportDir);
-  expect(reportFiles.sort()).toEqual(['report-first.zip', 'report-second.zip']);
-
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
   expect(output).toContain(`projectNames: foo,foo`);
-  expect(output).toContain(`reportNames: first,second`);
+  expect(output).toContain(`botNames: first,second`);
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {

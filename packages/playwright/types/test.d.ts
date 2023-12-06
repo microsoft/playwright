@@ -161,6 +161,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *
  */
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+  botName?: string;
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
@@ -572,7 +573,7 @@ interface TestConfig {
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
    * Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and test run
-   * parameters. The name of the bot will be automatically included into `blob` report's file name.
+   * parameters. Test reporters can access the name via `TestProject.botName` property.
    *
    * **Usage**
    *
@@ -1469,23 +1470,6 @@ export type Metadata = { [key: string]: any };
  *
  */
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  /**
-   * Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and test run
-   * parameters. The name of the bot will be automatically included into `blob` report's file name.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   botName: process.env.BOT_NAME,
-   * });
-   * ```
-   *
-   */
-  botName: string | null;
   /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or

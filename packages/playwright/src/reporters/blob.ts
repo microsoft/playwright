@@ -58,7 +58,7 @@ export class BlobReporter extends TeleReporterEmitter {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
       userAgent: getUserAgent(),
-      name: config.botName ?? process.env.PWTEST_BLOB_REPORT_NAME,
+      name: process.env.PWTEST_BLOB_REPORT_NAME,
       shard: config.shard ?? undefined,
       pathSeparator: path.sep,
     };
@@ -107,8 +107,6 @@ export class BlobReporter extends TeleReporterEmitter {
 
   private _computeReportName(config: FullConfig) {
     let reportName = 'report';
-    if (config.botName)
-      reportName += `-${sanitizeForFilePath(config.botName)}`;
     if (process.env.PWTEST_BLOB_REPORT_NAME)
       reportName += `-${sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME)}`;
     if (config.shard) {

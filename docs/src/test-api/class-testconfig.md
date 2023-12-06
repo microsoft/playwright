@@ -22,7 +22,7 @@ export default defineConfig({
 - type: ?<[string]>
 
 Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and
-test run parameters. The name of the bot will be automatically included into `blob` report's file name.
+test run parameters. Test reporters can access the name via `TestProject.botName` property.
 
 **Usage**
 

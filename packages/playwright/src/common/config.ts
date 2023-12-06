@@ -74,7 +74,6 @@ export class FullConfigInternal {
     this.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
-      botName: takeFirst(configCLIOverrides.botName, config.botName, null),
       configFile,
       rootDir: pathResolve(configDir, config.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, config.forbidOnly, false),
@@ -169,6 +168,7 @@ export class FullProjectInternal {
     this.snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
 
     this.project = {
+      botName: config.botName,
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
       outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
