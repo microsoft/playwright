@@ -1211,6 +1211,45 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
   expect(output).toContain(`reportNames: first,second`);
 });
 
+test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => {
+  const files = (botName: string) => ({
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onBegin(config, suite) {
+          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
+          console.log('projectNames: ' + projects.map(p => p.name));
+          console.log('botNames: ' + projects.map(p => p.botName));
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        botName: '${botName}',
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  });
+
+  await runInlineTest(files('first'), undefined, { PWTEST_BLOB_REPORT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BLOB_REPORT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`projectNames: foo,foo`);
+  expect(output).toContain(`botNames: first,second`);
+});
+
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   fs.mkdirSync(reportDir, { recursive: true });

@@ -113,7 +113,7 @@ class TypesGenerator {
         return '';
       this.handledMethods.add(`${className}.${methodName}#${overloadIndex}`);
       if (!method) {
-        if (new Set(['on', 'addListener', 'off', 'removeListener', 'once', 'prependListener']).has(methodName))
+        if (new Set(['on', 'addListener', 'off', 'removeListener', 'once', 'prependListener', 'botName']).has(methodName))
           return '';
         throw new Error(`Unknown override method "${className}.${methodName}"`);
       }
