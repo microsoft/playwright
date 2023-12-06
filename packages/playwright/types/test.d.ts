@@ -1471,6 +1471,23 @@ export type Metadata = { [key: string]: any };
  */
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
+   * Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and test run
+   * parameters. Test reporters can access the name via `TestProject.botName` property.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   botName: process.env.BOT_NAME,
+   * });
+   * ```
+   *
+   */
+  botName?: string;
+  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
