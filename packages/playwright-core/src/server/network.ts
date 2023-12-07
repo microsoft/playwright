@@ -258,7 +258,13 @@ export class Route extends SdkObject {
   async abort(errorCode: string = 'failed') {
     this._startHandling();
     this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
-    await this._delegate.abort(errorCode);
+    await Promise.race([
+      this._delegate.abort(errorCode),
+      // If the request is already cancelled by the page before we handle the route,
+      // we'll receive loading failed error and throw it here.
+      this._waitForFailure()
+    ]);
+
     this._endHandling();
   }
 
@@ -286,13 +292,24 @@ export class Route extends SdkObject {
     const headers = [...(overrides.headers || [])];
     this._maybeAddCorsHeaders(headers);
     this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
-    await this._delegate.fulfill({
-      status: overrides.status || 200,
-      headers,
-      body,
-      isBase64,
-    });
+    await Promise.race([
+      this._delegate.fulfill({
+        status: overrides.status || 200,
+        headers,
+        body,
+        isBase64,
+      }),
+      // If the request is already cancelled by the page before we handle the route,
+      // we'll receive loading failed error and throw it here.
+      this._waitForFailure()
+    ]);
     this._endHandling();
+  }
+
+  private async _waitForFailure() {
+    const response = await this._request.response();
+    if (!response)
+      throw new Error(this._request._failureText || 'Request was cancelled');
   }
 
   // See https://github.com/microsoft/playwright/issues/12929
@@ -324,7 +341,13 @@ export class Route extends SdkObject {
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
-    await this._delegate.continue(this._request, overrides);
+    await Promise.race([
+      this._delegate.continue(this._request, overrides),
+      // If the request is already cancelled by the page before we handle the route,
+      // we'll receive loading failed error and throw it here.
+      this._waitForFailure()
+    ]);
+
     this._endHandling();
   }
 

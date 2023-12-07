@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import type { Route } from 'playwright-core';
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => route.continue());
@@ -140,6 +141,31 @@ it('should not throw when continuing after page is closed', async ({ page, serve
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   await done;
   expect(error).toBeInstanceOf(Error);
+});
+
+it('should throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  console.log('cancelledRequest', cancelledRequest.failure());
+  let error;
+  if (browserName === 'chromium')
+    error = 'net::ERR_ABORTED';
+  else if (browserName === 'webkit')
+    error = 'cancelled';
+  else if (browserName === 'firefox')
+    error = 'NS_BINDING_ABORTED';
+  expect(cancelledRequest.failure().errorText).toBe(error);
+  await expect(route.continue()).rejects.toThrow(new RegExp(error));
 });
 
 it('should override method along with url', async ({ page, server }) => {

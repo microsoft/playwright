@@ -563,18 +563,14 @@ class RouteImpl implements network.RouteDelegate {
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
     };
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.continueRequest', this._alreadyContinuedParams);
+    await this._session.send('Fetch.continueRequest', this._alreadyContinuedParams);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     const responseHeaders = splitSetCookieHeader(response.headers);
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.fulfillRequest', {
+    await this._session.send('Fetch.fulfillRequest', {
       requestId: this._interceptionId!,
       responseCode: response.status,
       responsePhrase: network.STATUS_TEXTS[String(response.status)],
