@@ -375,7 +375,8 @@ it('should be abortable with custom error codes', async ({ page, server, browser
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
 });
 
-it('should throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
   await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
@@ -385,19 +386,11 @@ it('should throw if request was cancelled by the page', async ({ page, server, b
     return fetch(url, { signal: globalThis.controller.signal });
   }, server.PREFIX + '/data.json').catch(() => {});
   const route = await interceptPromise;
-  // const failurePromise = page.waitForEvent('requestfailed');
-  // await page.evaluate(() => globalThis.controller.abort());
-  // const cancelledRequest = await failurePromise;
-  // console.log('cancelledRequest', cancelledRequest.failure());
-  let error;
-  if (browserName === 'chromium')
-    error = 'net::ERR_ABORTED';
-  else if (browserName === 'webkit')
-    error = 'cancelled';
-  else if (browserName === 'firefox')
-    error = 'NS_BINDING_ABORTED';
-  // expect(cancelledRequest.failure().errorText).toBe(error);
-  await expect(route.abort()).rejects.toThrow(new RegExp(error));
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.abort(); // Should not throw.
 });
 
 it('should send referer', async ({ page, server }) => {

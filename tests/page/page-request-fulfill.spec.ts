@@ -79,6 +79,7 @@ it('should work with status code 422', async ({ page, server }) => {
 });
 
 it('should throw exception if status code is not supported', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let fulfillPromiseCallback;
   const fulfillPromise = new Promise<Error|undefined>(f => fulfillPromiseCallback = f);
   await page.route('**/data.json', route => {
@@ -98,7 +99,8 @@ it('should throw exception if status code is not supported', async ({ page, serv
   }
 });
 
-it('should throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
   await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
@@ -111,16 +113,9 @@ it('should throw if request was cancelled by the page', async ({ page, server, b
   const failurePromise = page.waitForEvent('requestfailed');
   await page.evaluate(() => globalThis.controller.abort());
   const cancelledRequest = await failurePromise;
-  console.log('cancelledRequest', cancelledRequest.failure());
-  let error;
-  if (browserName === 'chromium')
-    error = 'net::ERR_ABORTED';
-  else if (browserName === 'webkit')
-    error = 'cancelled';
-  else if (browserName === 'firefox')
-    error = 'NS_BINDING_ABORTED';
-  expect(cancelledRequest.failure().errorText).toBe(error);
-  await expect(route.fulfill({ status: 200 })).rejects.toThrow(new RegExp(error));
+  expect(cancelledRequest.failure()).toBeTruthy();
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.fulfill({ status: 200 }); // Should not throw.
 });
 
 it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {

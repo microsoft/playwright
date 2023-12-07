@@ -261,8 +261,8 @@ export class Route extends SdkObject {
     await Promise.race([
       this._delegate.abort(errorCode),
       // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed error and throw it here.
-      this._waitForFailure()
+      // we'll receive loading failed event and will ignore route handling error.
+      this._request.response()
     ]);
 
     this._endHandling();
@@ -300,16 +300,10 @@ export class Route extends SdkObject {
         isBase64,
       }),
       // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed error and throw it here.
-      this._waitForFailure()
+      // we'll receive loading failed event and will ignore route handling error.
+      this._request.response()
     ]);
     this._endHandling();
-  }
-
-  private async _waitForFailure() {
-    const response = await this._request.response();
-    if (!response)
-      throw new Error(this._request._failureText || 'Request was cancelled');
   }
 
   // See https://github.com/microsoft/playwright/issues/12929
@@ -344,8 +338,8 @@ export class Route extends SdkObject {
     await Promise.race([
       this._delegate.continue(this._request, overrides),
       // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed error and throw it here.
-      this._waitForFailure()
+      // we'll receive loading failed event and will ignore route handling error.
+      this._request.response()
     ]);
 
     this._endHandling();

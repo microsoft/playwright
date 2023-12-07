@@ -143,10 +143,11 @@ it('should not throw when continuing after page is closed', async ({ page, serve
   expect(error).toBeInstanceOf(Error);
 });
 
-it('should throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+it('should not throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
-  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.route('**/data.json', route => interceptCallback(route));
   await page.goto(server.EMPTY_PAGE);
   page.evaluate(url => {
     globalThis.controller = new AbortController();
@@ -156,16 +157,8 @@ it('should throw if request was cancelled by the page', async ({ page, server, b
   const failurePromise = page.waitForEvent('requestfailed');
   await page.evaluate(() => globalThis.controller.abort());
   const cancelledRequest = await failurePromise;
-  console.log('cancelledRequest', cancelledRequest.failure());
-  let error;
-  if (browserName === 'chromium')
-    error = 'net::ERR_ABORTED';
-  else if (browserName === 'webkit')
-    error = 'cancelled';
-  else if (browserName === 'firefox')
-    error = 'NS_BINDING_ABORTED';
-  expect(cancelledRequest.failure().errorText).toBe(error);
-  await expect(route.continue()).rejects.toThrow(new RegExp(error));
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.continue(); // Should not throw.
 });
 
 it('should override method along with url', async ({ page, server }) => {
