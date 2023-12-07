@@ -18,17 +18,14 @@ import url from 'url';
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { transformConfig } from '../transform/transform';
 import { PortTransport } from '../transform/portTransport';
-import { kSupportsModuleRegister } from '../transform/esmUtils';
 
 let loaderChannel: PortTransport | undefined;
-// Node.js < 21
+// Node.js < 20
 if ((globalThis as any).__legacyEsmLoaderPort)
   loaderChannel = createPortTransport((globalThis as any).__legacyEsmLoaderPort);
 
+// Node.js >= 20
 export function registerESMLoader() {
-  if (!kSupportsModuleRegister)
-    return;
-  // Node.js >= 21
   const { port1, port2 } = new MessageChannel();
   // register will wait until the loader is initialized.
   require('node:module').register(require.resolve('../transform/esmLoader'), {

@@ -66,7 +66,7 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
 let transport: PortTransport | undefined;
 
-// Node.js < 21
+// Node.js < 20
 function globalPreload(context: { port: MessagePort }) {
   transport = createTransport(context.port);
   return `
@@ -74,7 +74,7 @@ function globalPreload(context: { port: MessagePort }) {
   `;
 }
 
-// Node.js >= 21
+// Node.js >= 20
 function initialize(data: { port: MessagePort }) {
   transport = createTransport(data?.port);
 }

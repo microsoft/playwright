@@ -279,7 +279,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  // Node.js < 21
+  // Node.js < 20
   if ((globalThis as any).__legacyEsmLoaderPort) {
     // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
@@ -287,7 +287,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   }
   if (!fileIsModule(configFile))
     return false;
-    // Node.js < 21
+    // Node.js < 20
   if (!kSupportsModuleRegister) {
     const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
       env: {
