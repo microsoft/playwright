@@ -235,19 +235,19 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async mouseMove(params: channels.PageMouseMoveParams, metadata: CallMetadata): Promise<void> {
-    await this._page.mouse.move(params.x, params.y, params);
+    await this._page.mouse.move(params.x, params.y, params, metadata);
   }
 
   async mouseDown(params: channels.PageMouseDownParams, metadata: CallMetadata): Promise<void> {
-    await this._page.mouse.down(params);
+    await this._page.mouse.down(params, metadata);
   }
 
   async mouseUp(params: channels.PageMouseUpParams, metadata: CallMetadata): Promise<void> {
-    await this._page.mouse.up(params);
+    await this._page.mouse.up(params, metadata);
   }
 
   async mouseClick(params: channels.PageMouseClickParams, metadata: CallMetadata): Promise<void> {
-    await this._page.mouse.click(params.x, params.y, params);
+    await this._page.mouse.click(params.x, params.y, params, metadata);
   }
 
   async mouseWheel(params: channels.PageMouseWheelParams, metadata: CallMetadata): Promise<void> {
@@ -255,7 +255,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {
-    await this._page.touchscreen.tap(params.x, params.y);
+    await this._page.touchscreen.tap(params.x, params.y, metadata);
   }
 
   async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {

@@ -251,7 +251,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
-          // Retain query parameters to inherit name=, time=, showPoint= and other values from parent.
+          // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
           const url = new URL(unwrapPopoutUrl(window.location.href));
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
@@ -305,8 +305,13 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
-      if (search.get('showPoint')) {
-        for (const target of targetElements) {
+
+      if (search.get('pointX') && search.get('pointY')) {
+        const pointX = +search.get('pointX')!;
+        const pointY = +search.get('pointY')!;
+        const hasTargetElements = targetElements.length > 0;
+        const roots = document.documentElement ? [document.documentElement] : [];
+        for (const target of (hasTargetElements ? targetElements : roots)) {
           const pointElement = document.createElement('x-pw-pointer');
           pointElement.style.position = 'fixed';
           pointElement.style.backgroundColor = '#f44336';
@@ -315,9 +320,24 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           pointElement.style.borderRadius = '10px';
           pointElement.style.margin = '-10px 0 0 -10px';
           pointElement.style.zIndex = '2147483646';
-          const box = target.getBoundingClientRect();
-          pointElement.style.left = (box.left + box.width / 2) + 'px';
-          pointElement.style.top = (box.top + box.height / 2) + 'px';
+          if (hasTargetElements) {
+            // Sometimes there are layout discrepancies between recording and rendering, e.g. fonts,
+            // that may place the point at the wrong place. To avoid confusion, we just show the
+            // point in the middle of the target element.
+            const box = target.getBoundingClientRect();
+            const centerX = (box.left + box.width / 2);
+            const centerY = (box.top + box.height / 2);
+            pointElement.style.left = centerX + 'px';
+            pointElement.style.top = centerY + 'px';
+            // "Blue dot" to indicate that action point is not 100% correct.
+            if (Math.abs(centerX - pointX) >= 2 || Math.abs(centerY - pointY) >= 2)
+              pointElement.style.backgroundColor = '#3646f4';
+          } else {
+            // For actions without a target element, e.g. page.mouse.move(),
+            // show the point at the recorder location.
+            pointElement.style.left = pointX + 'px';
+            pointElement.style.top = pointY + 'px';
+          }
           document.documentElement.appendChild(pointElement);
         }
       }

@@ -90,6 +90,7 @@ export type AfterActionTraceEvent = {
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
   result?: any;
+  point?: Point;
 };
 
 export type LogTraceEvent = {
