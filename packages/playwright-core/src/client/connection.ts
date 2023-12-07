@@ -70,6 +70,7 @@ export class Connection extends EventEmitter {
   private _closedError: Error | undefined;
   private _isRemote = false;
   private _localUtils?: LocalUtils;
+  private _rawBuffers = false;
   // Some connections allow resolving in-process dispatchers.
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
@@ -88,6 +89,14 @@ export class Connection extends EventEmitter {
 
   isRemote() {
     return this._isRemote;
+  }
+
+  useRawBuffers() {
+    this._rawBuffers = true;
+  }
+
+  rawBuffers() {
+    return this._rawBuffers;
   }
 
   localUtils(): LocalUtils {
@@ -149,7 +158,7 @@ export class Connection extends EventEmitter {
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
-        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
+        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
       }
       return;
     }
@@ -179,7 +188,7 @@ export class Connection extends EventEmitter {
     }
 
     const validator = findValidator(object._type, method, 'Event');
-    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
+    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
   }
 
   close(cause?: Error) {
@@ -208,7 +217,7 @@ export class Connection extends EventEmitter {
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' });
+    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' });
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);
