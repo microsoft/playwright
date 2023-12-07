@@ -18,7 +18,9 @@ import type { WriteStream } from 'tty';
 import type { EnvProducedPayload, ProcessInitParams, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from '../../types/test';
-import { execArgvWithoutExperimentalLoaderOptions, serializeError } from '../util';
+import { serializeError } from '../util';
+import { registerESMLoader } from './esmLoaderHost';
+import { execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
 
 export type ProtocolRequest = {
   id: number;
@@ -53,6 +55,7 @@ process.on('SIGTERM', () => {});
 
 // Clear execArgv immediately, so that the user-code does not inherit our loader.
 process.execArgv = execArgvWithoutExperimentalLoaderOptions();
+registerESMLoader();
 
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;

@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
-import { execArgvWithExperimentalLoaderOptions } from '../util';
+import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
 import { assert } from 'playwright-core/lib/utils';
 
 export type ProcessExitData = {
@@ -58,7 +58,7 @@ export class ProcessHost extends EventEmitter {
         (options.onStdErr && !process.env.PW_RUNNER_DEBUG) ? 'pipe' : 'inherit',
         'ipc',
       ],
-      ...(process.env.PW_TS_ESM_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
+      ...(process.env.PW_TS_ESM_LEGACY_LOADER_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
     });
     this.process.on('exit', async (code, signal) => {
       this._processDidExit = true;
