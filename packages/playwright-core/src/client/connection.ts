@@ -92,7 +92,7 @@ export class Connection extends EventEmitter {
   }
 
   useRawBuffers() {
-    this._rawBuffers = false;
+    this._rawBuffers = true;
   }
 
   rawBuffers() {
