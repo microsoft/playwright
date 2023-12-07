@@ -24,7 +24,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob'],
+    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
     ['list'],
     ['html', { open: 'on-failure' }]
@@ -34,6 +34,7 @@ const reporters = () => {
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 export default defineConfig({
+  botName: process.env.PWTEST_BOT_NAME,
   globalSetup: path.join(__dirname, 'globalSetup'),
   outputDir,
   testIgnore: '**\/fixture-scripts/**',

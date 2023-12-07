@@ -19,7 +19,7 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export * from 'playwright-core';
 
 export type ReporterDescription =
-  ['blob'] | ['blob', { outputDir?: string }] |
+  ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
   ['line'] |
   ['list'] | ['list', { printSteps?: boolean }] |
