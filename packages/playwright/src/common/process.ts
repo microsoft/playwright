@@ -20,7 +20,7 @@ import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from '../../types/test';
 import { serializeError } from '../util';
 import { registerESMLoader } from './esmLoaderHost';
-import { execArgvWithoutExperimentalLoaderOptions, kSupportsModuleRegister } from '../transform/esmUtils';
+import { execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
 
 export type ProtocolRequest = {
   id: number;
@@ -57,7 +57,7 @@ process.on('SIGTERM', () => {});
 process.execArgv = execArgvWithoutExperimentalLoaderOptions();
 
 // Node.js >= 20
-if (kSupportsModuleRegister)
+if (process.env.PW_TS_ESM_LOADER_ON)
   registerESMLoader();
 
 let processRunner: ProcessRunner | undefined;

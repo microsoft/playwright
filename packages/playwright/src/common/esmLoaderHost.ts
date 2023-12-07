@@ -25,15 +25,17 @@ if ((globalThis as any).__legacyEsmLoaderPort)
   loaderChannel = createPortTransport((globalThis as any).__legacyEsmLoaderPort);
 
 // Node.js >= 20
+export let esmLoaderRegistered = false;
 export function registerESMLoader() {
   const { port1, port2 } = new MessageChannel();
   // register will wait until the loader is initialized.
-  require('node:module').register(require.resolve('../transform/esmLoader'), {
+  require('node:module').register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
     parentURL: url.pathToFileURL(__filename),
     data: { port: port2 },
     transferList: [port2],
   });
   loaderChannel = createPortTransport(port1);
+  esmLoaderRegistered = true;
 }
 
 function createPortTransport(port: MessagePort) {

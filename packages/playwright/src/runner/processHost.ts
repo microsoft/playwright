@@ -21,6 +21,7 @@ import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
 import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
 import { assert } from 'playwright-core/lib/utils';
+import { esmLoaderRegistered } from '../common/esmLoaderHost';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -51,7 +52,11 @@ export class ProcessHost extends EventEmitter {
     assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
-      env: { ...process.env, ...this._extraEnv },
+      env: {
+        ...process.env,
+        ...this._extraEnv,
+        ...(esmLoaderRegistered ? { PW_TS_ESM_LOADER_ON: '1' } : {}),
+      },
       stdio: [
         'ignore',
         options.onStdOut ? 'pipe' : 'inherit',
