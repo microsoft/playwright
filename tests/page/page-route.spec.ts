@@ -375,6 +375,24 @@ it('should be abortable with custom error codes', async ({ page, server, browser
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
 });
 
+it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.abort(); // Should not throw.
+});
+
 it('should send referer', async ({ page, server }) => {
   await page.setExtraHTTPHeaders({
     referer: 'http://google.com/'
