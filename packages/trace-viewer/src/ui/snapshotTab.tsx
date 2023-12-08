@@ -183,7 +183,7 @@ export const SnapshotTab: React.FunctionComponent<{
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
-      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
+      <ToolbarButton style={{ visibility: "hidden" }} icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
         const win = window.open(popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
