@@ -326,6 +326,16 @@ it('should handle selectAll', async ({ page, server, isMac }) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
 });
 
+it('pressing Meta should not result in any text insertion on any platform', async ({ page, server, isMac }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28495' });
+  await page.setContent('<input type="text" value="hello world">');
+  const input = page.locator('input');
+  await expect(input).toHaveValue('hello world');
+  await input.focus();
+  await page.keyboard.press('Meta');
+  await expect(input).toHaveValue('hello world');
+});
+
 it('should be able to prevent selectAll', async ({ page, server, isMac }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
