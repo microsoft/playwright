@@ -27,8 +27,8 @@ export function escapeRegExp(string: string) {
 
 export function testCaseLabels(test: TestCaseSummary): string[] {
   const tags = matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b));
-  if (test.reportName)
-    tags.unshift(test.reportName);
+  if (test.botName)
+    tags.unshift(test.botName);
   return tags;
 }
 

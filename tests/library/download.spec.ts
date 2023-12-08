@@ -666,7 +666,7 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  if (mode !== 'default') {
+  if (mode.startsWith('service')) {
     const error = await download.path().catch(e => e);
     expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
   }

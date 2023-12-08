@@ -240,7 +240,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.metadata?.reportName, [], testEntries);
+        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.botName, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -340,13 +340,13 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, botName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, reportName, newPath)));
+    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, botName, newPath, outTests));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, botName, newPath)));
   }
 
-  private _createTestEntry(test: TestCasePublic, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
+  private _createTestEntry(test: TestCasePublic, projectName: string, botName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1);
@@ -358,7 +358,7 @@ class HtmlBuilder {
         testId: test.id,
         title: test.title,
         projectName,
-        reportName,
+        botName,
         location,
         duration,
         annotations: test.annotations,
@@ -371,7 +371,7 @@ class HtmlBuilder {
         testId: test.id,
         title: test.title,
         projectName,
-        reportName,
+        botName,
         location,
         duration,
         annotations: test.annotations,

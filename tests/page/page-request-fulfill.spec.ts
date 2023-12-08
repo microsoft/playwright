@@ -18,6 +18,7 @@
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
 import type * as har from '../../packages/trace/src/har';
+import type { Route } from 'playwright-core';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -75,6 +76,46 @@ it('should work with status code 422', async ({ page, server }) => {
   expect(response.status()).toBe(422);
   expect(response.statusText()).toBe('Unprocessable Entity');
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
+});
+
+it('should throw exception if status code is not supported', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let fulfillPromiseCallback;
+  const fulfillPromise = new Promise<Error|undefined>(f => fulfillPromiseCallback = f);
+  await page.route('**/data.json', route => {
+    fulfillPromiseCallback(route.fulfill({
+      status: 430,
+      body: 'Yo, page!'
+    }).catch(e => e));
+  });
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => fetch(url), server.PREFIX + '/data.json').catch(() => {});
+  const error = await fulfillPromise;
+  if (browserName === 'chromium') {
+    expect(error).toBeTruthy();
+    expect(error.message).toContain(' Invalid http status code or phrase');
+  } else {
+    expect(error).toBe(undefined);
+  }
+});
+
+it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure()).toBeTruthy();
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.fulfill({ status: 200 }); // Should not throw.
 });
 
 it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {

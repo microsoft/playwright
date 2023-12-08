@@ -1061,3 +1061,23 @@ A few observations:
 * `testFixture` depends on `workerFixture` and triggers its setup.
 * `workerFixture` is lazily set up before the second test, but teared down once during worker shutdown, as a worker-scoped fixture.
 * `autoWorkerFixture` is set up for `beforeAll` hook, but `autoTestFixture` is not.
+
+## Combine custom fixtures from multiple modules
+
+You can merge test fixtures from multiple files or modules:
+
+```js title="fixtures.ts"
+import { mergeTests } from '@playwright/test';
+import { test as dbTest } from 'database-test-utils';
+import { test as a11yTest } from 'a11y-test-utils';
+
+export const test = mergeTests(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test } from './fixtures';
+
+test('passes', async ({ database, page, a11y }) => {
+  // use database and a11y fixtures.
+});
+```

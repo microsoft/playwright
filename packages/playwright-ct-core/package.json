@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "playwright-core": "1.41.0-next",
-    "vite": "^4.4.10",
+    "vite": "^4.4.12",
     "playwright": "1.41.0-next"
   },
   "bin": {

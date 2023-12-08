@@ -25,6 +25,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
 
   const clientConnection = new Connection(undefined, undefined);
+  clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
 
   // Dispatch synchronously at first.

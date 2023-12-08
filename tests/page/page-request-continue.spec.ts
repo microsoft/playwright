@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import type { Route } from 'playwright-core';
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => route.continue());
@@ -140,6 +141,24 @@ it('should not throw when continuing after page is closed', async ({ page, serve
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   await done;
   expect(error).toBeInstanceOf(Error);
+});
+
+it('should not throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route));
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.continue(); // Should not throw.
 });
 
 it('should override method along with url', async ({ page, server }) => {
