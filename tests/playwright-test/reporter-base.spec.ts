@@ -89,6 +89,39 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain(`> 4 |             const error = new Error('my-message');`);
     });
 
+    test('should report error.cause over multiple levels', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('foo', () => {
+          const myFunc = () => {
+            (() => {
+              throw new Error('First level error');
+            })();
+          };
+          try {
+            try {
+              myFunc();
+            } catch (error) {
+              throw new Error('Second level error', { cause: error });
+            }
+          } catch (error) {
+            throw new Error('Third level error', { cause: error });
+          }
+        });
+        `
+      });
+      expect(result.exitCode).toBe(1);
+
+      expect(result.output).toContain('Third level error');
+      expect(result.output).toContain('[cause]: Error: Second level error');
+      expect(result.output).toContain('a.spec.ts:13:21');
+      expect(result.output).toContain('[cause]: Error: First level error');
+      expect(result.output).toContain('a.spec.ts:6:21');
+      expect(result.output).toContain('a.spec.ts:7:14');
+      expect(result.output).toContain('a.spec.ts:11:15');
+    });
+
     test('should filter out node_modules error in a codeframe', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'node_modules/utils/utils.js': `

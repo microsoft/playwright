@@ -35,6 +35,12 @@ export function filterStackTrace(e: Error): { message: string, stack: string } {
     return { message: e.name + ': ' + e.message, stack: e.stack || '' };
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
+  let cause: Error = e.cause as any;
+  while (cause) {
+    stackLines.push('[cause]: ' + cause.toString());
+    stackLines.push(...stringifyStackFrames(filteredStackTrace(cause.stack?.split('\n') || [])));
+    cause = cause.cause as any;
+  }
   return {
     message: e.name + ': ' + e.message,
     stack: `${e.name}: ${e.message}\n${stackLines.join('\n')}`
