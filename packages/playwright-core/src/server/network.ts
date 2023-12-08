@@ -134,6 +134,18 @@ export class Request extends SdkObject {
     this._waitForResponsePromise.resolve(null);
   }
 
+  async _waitForRequestFailure() {
+    const response = await this._waitForResponsePromise;
+    // If response is null it was a failure an we are done.
+    if (!response)
+      return;
+    await response._finishedPromise;
+    if (this.failure())
+      return;
+    // If request finished without errors, we stall.
+    await new Promise(() => {});
+  }
+
   _setOverrides(overrides: types.NormalizedContinueOverrides) {
     this._overrides = overrides;
     this._updateHeadersMap();
@@ -262,7 +274,7 @@ export class Route extends SdkObject {
       this._delegate.abort(errorCode),
       // If the request is already cancelled by the page before we handle the route,
       // we'll receive loading failed event and will ignore route handling error.
-      this._request.response()
+      this._request._waitForRequestFailure()
     ]);
 
     this._endHandling();
@@ -301,7 +313,7 @@ export class Route extends SdkObject {
       }),
       // If the request is already cancelled by the page before we handle the route,
       // we'll receive loading failed event and will ignore route handling error.
-      this._request.response()
+      this._request._waitForRequestFailure()
     ]);
     this._endHandling();
   }
@@ -339,7 +351,7 @@ export class Route extends SdkObject {
       this._delegate.continue(this._request, overrides),
       // If the request is already cancelled by the page before we handle the route,
       // we'll receive loading failed event and will ignore route handling error.
-      this._request.response()
+      this._request._waitForRequestFailure()
     ]);
 
     this._endHandling();
