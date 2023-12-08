@@ -161,7 +161,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   async _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
-      return await Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
+      return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers);
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {

@@ -20,7 +20,7 @@ module.exports = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'ensure that return statements in classes await their promises',
+      description: 'ensure that return statements in classes await their promises so we always have the full stack trace in channel owners/tracing apiName extraction',
       category: 'Best Practices',
       recommended: false,
     },
@@ -39,7 +39,7 @@ module.exports = {
           )) {
             context.report({
               node: statement,
-              message: 'Return statement in a class should await a promise',
+              message: 'Return statement in a class should await a promise so we are able to extract the whole stack trace when reporting it to e.g. Trace Viewer',
               fix(fixer) {
                 const sourceCode = context.getSourceCode();
                 const returnKeyword = sourceCode.getFirstToken(statement);
