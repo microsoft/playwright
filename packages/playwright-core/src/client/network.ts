@@ -159,16 +159,16 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
-  _actualHeaders(): Promise<RawHeaders> {
+  async _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
-      return Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
+      return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers);
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
         return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
       });
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -188,7 +188,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       return Response.fromNullable((await this._channel.response()).response);
     }, true);
   }
@@ -300,16 +300,16 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return Request.from(this._initializer.request);
   }
 
-  private _raceWithTargetClose(promise: Promise<any>): Promise<void> {
+  private async _raceWithTargetClose(promise: Promise<any>): Promise<void> {
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return this.request()._targetClosedScope().safeRace(promise);
+    return await this.request()._targetClosedScope().safeRace(promise);
   }
 
-  _startHandling(): Promise<boolean> {
+  async _startHandling(): Promise<boolean> {
     this._handlingPromise = new ManualPromise();
-    return this._handlingPromise;
+    return await this._handlingPromise;
   }
 
   async fallback(options: FallbackOverrides = {}) {
@@ -332,7 +332,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 
@@ -522,7 +522,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
         return new RawHeaders((await this._channel.rawResponseHeaders()).headers);
       })();
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -542,7 +542,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return this.request()._targetClosedScope().race(this._finishedPromise);
+    return await this.request()._targetClosedScope().race(this._finishedPromise);
   }
 
   async body(): Promise<Buffer> {
@@ -616,7 +616,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);

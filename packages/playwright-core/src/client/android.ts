@@ -60,7 +60,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
-    return this._serverLauncher.launchServer(options);
+    return await this._serverLauncher.launchServer(options);
   }
 
   async connect(wsEndpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
@@ -175,7 +175,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     const webView = [...this._webViews.values()].find(predicate);
     if (webView)
       return webView;
-    return this.waitForEvent('webview', { ...options, predicate });
+    return await this.waitForEvent('webview', { ...options, predicate });
   }
 
   async wait(selector: api.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
@@ -281,7 +281,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
@@ -321,7 +321,7 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 
 async function loadFile(file: string | Buffer): Promise<Buffer> {
   if (isString(file))
-    return fs.promises.readFile(file);
+    return await fs.promises.readFile(file);
   return file;
 }
 
@@ -429,7 +429,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   async page(): Promise<Page> {
     if (!this._pagePromise)
       this._pagePromise = this._fetchPage();
-    return this._pagePromise;
+    return await this._pagePromise;
   }
 
   private async _fetchPage(): Promise<Page> {

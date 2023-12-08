@@ -141,13 +141,13 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
-            return (params: any) => {
-              return this._wrapApiCall(apiZone => {
+            return async (params: any) => {
+              return await this._wrapApiCall(async apiZone => {
                 const { apiName, frames, csi, callCookie, wallTime } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], wallTime: undefined } : apiZone;
                 apiZone.reported = true;
                 if (csi && apiName)
                   csi.onApiCallBegin(apiName, params, frames, wallTime, callCookie);
-                return this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' }), apiName, frames, wallTime);
+                return await this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' }), apiName, frames, wallTime);
               });
             };
           }
@@ -164,7 +164,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const stack = captureRawStack();
     const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
     if (apiZone)
-      return func(apiZone);
+      return await func(apiZone);
 
     const stackTrace = captureLibraryStackTrace(stack);
     let apiName: string | undefined = stackTrace.apiName;

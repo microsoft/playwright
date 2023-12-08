@@ -111,7 +111,7 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
-  async setIsTracing(isTracing: boolean) {
+  setIsTracing(isTracing: boolean) {
     if (isTracing)
       this._tracingCount++;
     else
