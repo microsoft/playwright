@@ -368,25 +368,13 @@ it('should support MacOS shortcuts', async ({ page, server, platform, browserNam
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some ');
 });
 
-it('should press the meta key', async ({ page, browserName, isMac, browserMajorVersion }) => {
+it('should press the meta key', async ({ page }) => {
   const lastEvent = await captureLastKeydown(page);
   await page.keyboard.press('Meta');
   const { key, code, metaKey } = await lastEvent.jsonValue();
-  if (browserName === 'firefox' && !isMac)
-    expect(key).toBe('OS');
-  else
-    expect(key).toBe('Meta');
-
-  if (browserName === 'firefox' && browserMajorVersion <= 117)
-    expect(code).toBe('OSLeft');
-  else
-    expect(code).toBe('MetaLeft');
-
-  if (browserName === 'firefox' && !isMac)
-    expect(metaKey).toBe(false);
-  else
-    expect(metaKey).toBe(true);
-
+  expect(key).toBe('Meta');
+  expect(code).toBe('MetaLeft');
+  expect(metaKey).toBe(true);
 });
 
 it('should work with keyboard events with empty.html', async ({ page, server }) => {
