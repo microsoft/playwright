@@ -2072,7 +2072,7 @@ export interface TestInfo {
    * (i.e. `test-results/a-test-title`), otherwise it will throw.
    * @param pathSegments Path segments to append at the end of the resulting path.
    */
-  outputPath(...pathSegments: Array<string>): string;
+  outputPath(...pathSegments: ReadonlyArray<string>): string;
 
   /**
    * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
@@ -2134,7 +2134,7 @@ export interface TestInfo {
    * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the
    * same test file are expected to be the same.
    */
-  snapshotPath(...pathSegments: Array<string>): string;
+  snapshotPath(...pathSegments: ReadonlyArray<string>): string;
 
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
@@ -5740,7 +5740,7 @@ interface LocatorAssertions {
    * @param expected Expected substring or RegExp or a list of those.
    * @param options
    */
-  toContainText(expected: string|RegExp|Array<string|RegExp>, options?: {
+  toContainText(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
      * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
      * expression flag if specified.
@@ -5831,7 +5831,7 @@ interface LocatorAssertions {
    * @param expected Expected class or RegExp or a list of those.
    * @param options
    */
-  toHaveClass(expected: string|RegExp|Array<string|RegExp>, options?: {
+  toHaveClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -5936,7 +5936,7 @@ interface LocatorAssertions {
    * @param name Snapshot name.
    * @param options
    */
-  toHaveScreenshot(name: string|Array<string>, options?: {
+  toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
     /**
      * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
      * treatment depending on their duration:
@@ -6153,7 +6153,7 @@ interface LocatorAssertions {
    * @param expected Expected string or RegExp or a list of those.
    * @param options
    */
-  toHaveText(expected: string|RegExp|Array<string|RegExp>, options?: {
+  toHaveText(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
      * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
      * expression flag if specified.
@@ -6217,7 +6217,7 @@ interface LocatorAssertions {
    * @param values Expected options currently selected.
    * @param options
    */
-  toHaveValues(values: Array<string|RegExp>, options?: {
+  toHaveValues(values: ReadonlyArray<string|RegExp>, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -6266,7 +6266,7 @@ interface PageAssertions {
    * @param name Snapshot name.
    * @param options
    */
-  toHaveScreenshot(name: string|Array<string>, options?: {
+  toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
     /**
      * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
      * treatment depending on their duration:
@@ -6585,7 +6585,7 @@ interface SnapshotAssertions {
    * @param name Snapshot name.
    * @param options
    */
-  toMatchSnapshot(name: string|Array<string>, options?: {
+  toMatchSnapshot(name: string|ReadonlyArray<string>, options?: {
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
      * configurable with `TestConfig.expect`. Unset by default.

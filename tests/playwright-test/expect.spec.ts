@@ -223,6 +223,20 @@ test('should compile generic matchers', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should work when passing a ReadonlyArray', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example', async ({ page }) => {
+        const readonlyArray: ReadonlyArray<string> = ['1', '2', '3'];
+        expect(page.locator('.foo')).toHaveText(readonlyArray);
+        await page.locator('.foo').setInputFiles(readonlyArray);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should work with expect message', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
