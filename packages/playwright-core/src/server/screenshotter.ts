@@ -46,7 +46,16 @@ export type ScreenshotOptions = {
   style?: string;
 };
 
-function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean, disableAnimations: boolean) {
+function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean, disableAnimations: boolean, syncAnimations: boolean) {
+  // In WebKit, sync the animations.
+  if (syncAnimations) {
+    const style = document.createElement('style');
+    style.textContent = 'body {}';
+    document.head.appendChild(style);
+    document.documentElement.getBoundingClientRect();
+    style.remove();
+  }
+
   if (!screenshotStyle && !hideCaret && !disableAnimations)
     return;
 
@@ -251,8 +260,9 @@ export class Screenshotter {
   async _preparePageForScreenshot(progress: Progress, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
+    const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
+      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, false, 'utility').catch(() => {});
     }));
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');

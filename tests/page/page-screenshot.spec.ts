@@ -689,7 +689,6 @@ it.describe('page screenshot animations', () => {
   });
 
   it('should fire transitionend for finite transitions', async ({ page, server, browserName, platform }) => {
-    it.fixme(browserName === 'webkit' && platform === 'linux');
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
     await div.evaluate(el => {
@@ -716,7 +715,6 @@ it.describe('page screenshot animations', () => {
   });
 
   it('should capture screenshots after layoutchanges in transitionend event', async ({ page, server, browserName, platform }) => {
-    it.fixme(browserName === 'webkit' && platform === 'linux');
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
     await div.evaluate(el => {
