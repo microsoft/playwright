@@ -121,7 +121,8 @@ export default declare((api: BabelAPI) => {
             children.push(t.spreadElement(child.expression));
         }
 
-        const component = [
+        const component: T.ObjectProperty[] = [
+          t.objectProperty(t.identifier('__pw_component_marker'), t.booleanLiteral(true)),
           t.objectProperty(t.identifier('kind'), t.stringLiteral('jsx')),
           t.objectProperty(t.identifier('type'), t.stringLiteral(componentName)),
           t.objectProperty(t.identifier('props'), t.objectExpression(props)),
