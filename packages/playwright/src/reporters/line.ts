@@ -21,6 +21,7 @@ class LineReporter extends BaseReporter {
   private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
+  private _didBegin = false;
 
   override printsToStdio() {
     return true;
@@ -28,8 +29,12 @@ class LineReporter extends BaseReporter {
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
-    console.log(this.generateStartingMessage());
-    console.log();
+    const startingMessage = this.generateStartingMessage();
+    if (startingMessage) {
+      console.log(startingMessage);
+      console.log();
+    }
+    this._didBegin = true;
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -105,15 +110,15 @@ class LineReporter extends BaseReporter {
   override onError(error: TestError): void {
     super.onError(error);
 
-    const message = formatError(error, colors.enabled).message + '\n\n';
-    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+    const message = formatError(error, colors.enabled).message + '\n';
+    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
       process.stdout.write(`\u001B[1A\u001B[2K`);
     process.stdout.write(message);
     console.log();
   }
 
   override async onEnd(result: FullResult) {
-    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
       process.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
     this.epilogue(false);
