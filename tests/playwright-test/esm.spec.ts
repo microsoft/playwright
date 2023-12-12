@@ -38,7 +38,8 @@ test('should load nested as esm when package.json has type module', async ({ run
 test('should support import assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      import packageJSON from './package.json' assert { type: 'json' };
+      import packageJSON1 from './package.json' assert { type: 'json' };
+      import packageJSON2 from './package.json' with { type: 'json' };
       export default { };
     `,
     'package.json': JSON.stringify({ type: 'module' }),
