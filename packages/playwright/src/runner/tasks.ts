@@ -198,8 +198,16 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
-      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
+      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard) {
+        if (testRun.config.cliArgs.length) {
+          throw new Error([
+            `No tests found.`,
+            `Make sure that arguments are regular expressions matching test files.`,
+            `You may need to escape symbols like "$" or "*" and quote the arguments.`,
+          ].join('\n'));
+        }
         throw new Error(`No tests found`);
+      }
     },
   };
 }
