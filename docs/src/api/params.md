@@ -1023,8 +1023,10 @@ For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 ## locator-option-has
 - `has` <[Locator]>
 
-Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+Narrows down the results of the method to those which contain elements matching this relative locator.
 For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+
+Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not the document root. For example, you can find `content` that has `div` in `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
