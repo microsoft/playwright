@@ -268,6 +268,26 @@ test('should check types of fixtures', async ({ runTSC }) => {
         },
       });
     `,
+    'playwright-define-merge.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      const config0 = defineConfig({
+        timeout: 1,
+        // @ts-expect-error
+        grep: 23,
+      }, {
+        timeout: 2,
+      });
+    `,
+    'playwright-define-merge-ct.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-vue';
+      const config0 = defineConfig({
+        timeout: 1,
+        // @ts-expect-error
+        grep: 23,
+      }, {
+        timeout: 2,
+      });
+    `,
   });
   expect(result.exitCode).toBe(0);
 });

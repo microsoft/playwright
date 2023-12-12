@@ -42,6 +42,10 @@ export const defineConfig = (...configs: any[]) => {
         ...result.use,
         ...config.use,
       },
+      build: {
+        ...result.build,
+        ...config.build,
+      },
       webServer: [
         ...(Array.isArray(result.webServer) ? result.webServer : (result.webServer ? [result.webServer] : [])),
         ...(Array.isArray(config.webServer) ? config.webServer : (config.webServer ? [config.webServer] : [])),
