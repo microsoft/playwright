@@ -334,9 +334,8 @@ it('should be able to click in iframe', async ({ page, server, browser }) => {
   expect(page.frames().length).toBe(2);
   const frame = page.frames()[1];
   await frame.setContent(`<button onclick="console.log('clicked')">OK</button>`);
-  const consoleLogPromise = page.waitForEvent('console');
   const [message] = await Promise.all([
-    consoleLogPromise,
+    page.waitForEvent('console'),
     frame.click('button'),
   ]);
   expect(message.text()).toBe('clicked');
