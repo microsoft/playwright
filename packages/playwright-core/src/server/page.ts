@@ -97,6 +97,8 @@ export interface PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts?: boolean;
   // Work around for mouse position in Firefox.
   resetForReuse(): Promise<void>;
+  // WebKit hack.
+  shouldToggleStyleSheetToSyncAnimations(): boolean;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };

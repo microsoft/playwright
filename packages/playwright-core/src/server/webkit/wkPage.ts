@@ -1184,6 +1184,10 @@ export class WKPage implements PageDelegate {
   async _clearPermissions() {
     await this._pageProxySession.send('Emulation.resetPermissions', {});
   }
+
+  shouldToggleStyleSheetToSyncAnimations(): boolean {
+    return true;
+  }
 }
 
 /**
