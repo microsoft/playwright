@@ -17,7 +17,7 @@
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
 
-const defineConfig = config => originalDefineConfig({
+const defineConfig = (config, ...configs) => originalDefineConfig({
   ...config,
   build: {
     ...config.build,
@@ -25,7 +25,7 @@ const defineConfig = config => originalDefineConfig({
       [require.resolve('./lib/tsxTransform')]
     ],
   }
-});
+}, ...configs);
 
 const test = baseTest.extend(fixtures);
 
