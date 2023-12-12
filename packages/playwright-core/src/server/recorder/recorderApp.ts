@@ -97,7 +97,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
           ],
           body: buffer.toString('base64'),
           isBase64: true
-        });
+        }).catch(() => {});
       });
       return true;
     });
