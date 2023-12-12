@@ -1385,3 +1385,95 @@ test('should step w/ box', async ({ runInlineTest }) => {
     },
   ]);
 });
+
+test('should not generate dupes for named expects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('timeout', async ({ page }) => {
+        await page.setContent('<div style="background:rgb(1,2,3)">hi</div>');
+        await expect(page.locator('div'), 'Checking color')
+            .toHaveCSS('background-color', 'rgb(1, 2, 3)');
+      });
+    `
+  }, { reporter: '', workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: browser',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserType.launch',
+            },
+          ]
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
+        },
+      ],
+    },
+    {
+      category: 'pw:api',
+      title: 'page.setContent',
+      location: {
+        column: expect.any(Number),
+        file: 'a.test.ts',
+        line: expect.any(Number),
+      },
+    },
+    {
+      category: 'expect',
+      title: 'Checking color',
+      location: {
+        column: expect.any(Number),
+        file: 'a.test.ts',
+        line: expect.any(Number),
+      },
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
+      ],
+    },
+  ]);
+});
