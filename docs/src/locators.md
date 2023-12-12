@@ -973,19 +973,21 @@ await page
     .ClickAsync();
 ```
 
-We can also assert the product card to make sure there is only one
+We can also assert the product card to make sure there is only one:
 
 ```js
 await expect(page
     .getByRole('listitem')
-    .filter({ has: page.getByText('Product 2') }))
+    .filter({ has: page.getByRole('heading', { name: 'Product 2' }) }))
     .toHaveCount(1);
 ```
 
 ```java
 assertThat(page
     .getByRole(AriaRole.LISTITEM)
-    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")))
+    .filter(new Locator.FilterOptions()
+        .setHas(page.GetByRole(AriaRole.HEADING,
+                               new Page.GetByRoleOptions().setName("Product 2"))))
     .hasCount(1);
 ```
 
@@ -1010,6 +1012,55 @@ await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+    }))
+    .ToHaveCountAsync(1);
+```
+
+The filtering locator **must be relative** to the original locator and is queried starting with the original locator match, not the document root. Therefore, the following will not work, because the filtering locator starts matching from the `<ul>` list element that is outside of the `<li>` list item matched by the original locator:
+
+```js
+// ✖ WRONG
+await expect(page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('list').getByText('Product 2') }))
+    .toHaveCount(1);
+```
+
+```java
+// ✖ WRONG
+assertThat(page
+    .getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions()
+        .setHas(page.GetByRole(AriaRole.LIST)
+                    .GetByRole(AriaRole.HEADING,
+                               new Page.GetByRoleOptions().setName("Product 2"))))
+    .hasCount(1);
+```
+
+```python async
+# ✖ WRONG
+await expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("list").get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```python sync
+# ✖ WRONG
+expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("list").get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```csharp
+// ✖ WRONG
+await Expect(Page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        Has = page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
