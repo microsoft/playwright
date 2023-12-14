@@ -62,7 +62,7 @@ context.tracing.stop(path = "trace.zip")
 </details>
 
 ## Recording a trace
-* langs: csharp, java
+* langs: java
   
 Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
 
@@ -84,30 +84,118 @@ context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
 ```
 
-```csharp
-using var playwright = await Playwright.CreateAsync();
-var browser = await playwright.Chromium.LaunchAsync();
-await using var context = await browser.NewContextAsync();
-
-// Start tracing before creating / navigating a page.
-await context.Tracing.StartAsync(new()
-{
-    Screenshots = true,
-    Snapshots = true,
-    Sources = true
-});
-
-var page = await context.NewPageAsync();
-await page.GotoAsync("https://playwright.dev");
-
-// Stop tracing and export it into a zip archive.
-await context.Tracing.StopAsync(new()
-{
-    Path = "trace.zip"
-});
-```
 
 This will record the trace and place it into the file named `trace.zip`.
+
+## Recording a trace
+* langs: csharp
+
+Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
+
+<Tabs
+  groupId="test-runners"
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```csharp
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class Tests : PageTest
+{
+    [SetUp]
+    public async Task Setup()
+    {
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.CurrentContext.Test.Name,
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        // This will produce e.g.:
+        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.Tests.Test1.zip
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                TestContext.CurrentContext.WorkDirectory,
+                "playwright-traces",
+                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
+            )
+        });
+    }
+
+    [Test]
+    public async Task TestYourOnlineShop()
+    {
+        // ..
+    }
+}
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```csharp
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+
+namespace PlaywrightTestsMSTest;
+
+[TestClass]
+public class UnitTest1 : PageTest
+{
+    [TestInitialize]
+    public async Task TestInitialize()
+    {
+         await Context.Tracing.StartAsync(new()
+        {
+            Title = TestContext.TestName,
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    [TestCleanup]
+    public async Task TestCleanup()
+    {
+        // This will produce e.g.:
+        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.UnitTest1.zip
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+                $"{TestContext.FullyQualifiedTestClassName}.zip"
+            )
+        });
+    }
+
+    [TestMethod]
+    public async Task TestYourOnlineShop()
+    {
+        // ...
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+This will record the trace and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
 
 ## Opening the trace
 
