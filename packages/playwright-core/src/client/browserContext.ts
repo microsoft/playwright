@@ -335,7 +335,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
     this._harRouters.push(harRouter);
-    harRouter.addContextRoute(this);
+    await harRouter.addContextRoute(this);
   }
 
   private _disposeHarRouters() {
@@ -422,6 +422,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._disposeHarRouters();
     this.emit(Events.BrowserContext.Close, this);
   }
 
