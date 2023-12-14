@@ -181,6 +181,7 @@ async function run() {
                 const allowedCodeLangs = new Set([
                   'csharp',
                   'java',
+                  'css',
                   'js',
                   'ts',
                   'python',

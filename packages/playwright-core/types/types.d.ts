@@ -10012,9 +10012,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scale?: "css"|"device";
 
     /**
-     * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
-     * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
-     * Shadow DOM and applies to the inner frames.
+     * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+     * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+     * the Shadow DOM and applies to the inner frames.
      */
     style?: string;
 
@@ -20104,9 +20104,9 @@ export interface LocatorScreenshotOptions {
   scale?: "css"|"device";
 
   /**
-   * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
-   * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
-   * Shadow DOM and applies to the inner frames.
+   * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
    */
   style?: string;
 
@@ -20304,9 +20304,9 @@ export interface PageScreenshotOptions {
   scale?: "css"|"device";
 
   /**
-   * Stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements
-   * invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the
-   * Shadow DOM and applies to the inner frames.
+   * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
    */
   style?: string;
 

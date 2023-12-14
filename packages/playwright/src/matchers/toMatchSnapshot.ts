@@ -19,7 +19,7 @@ import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
-import { getComparator, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError,
@@ -308,7 +308,7 @@ export function toMatchSnapshot(
   return helper.handleDifferent(received, expected, undefined, result.diff, result.errorMessage, undefined);
 }
 
-type HaveScreenshotOptions = ImageComparatorOptions & Omit<PageScreenshotOptions, 'type' | 'quality' | 'path'>;
+type HaveScreenshotOptions = ImageComparatorOptions & Omit<PageScreenshotOptions, 'type' | 'quality' | 'path' | 'style'> & { stylePath?: string | string[] };
 
 export function toHaveScreenshotStepTitle(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
@@ -351,12 +351,25 @@ export async function toHaveScreenshot(
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
+  return await zones.preserve(async () => {
+    // Loading from filesystem resets zones.
+    const style = await loadScreenshotStyles(optOptions.stylePath || config?.stylePath);
+    return toHaveScreenshotContinuation.call(this, helper, page, locator, config, style);
+  });
+}
 
-  const screenshotOptions = {
+async function toHaveScreenshotContinuation(
+  this: ExpectMatcherContext,
+  helper: SnapshotHelper<HaveScreenshotOptions>,
+  page: PageEx,
+  locator: LocatorEx | undefined,
+  config?: HaveScreenshotOptions,
+  style?: string) {
+  const screenshotOptions: any = {
     animations: config?.animations ?? 'disabled',
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
-    style: config?.style ?? '',
+    style,
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     maskColor: helper.allOptions.maskColor,
@@ -461,4 +474,16 @@ function determineFileExtension(file: string | Buffer): string {
 
 function compareMagicBytes(file: Buffer, magicBytes: number[]): boolean {
   return Buffer.compare(Buffer.from(magicBytes), file.slice(0, magicBytes.length)) === 0;
+}
+
+async function loadScreenshotStyles(stylePath?: string | string[]): Promise<string | undefined> {
+  if (!stylePath)
+    return;
+
+  const stylePaths = Array.isArray(stylePath) ? stylePath : [stylePath];
+  const styles = await Promise.all(stylePaths.map(async stylePath => {
+    const text = await fs.promises.readFile(stylePath, 'utf8');
+    return text.trim();
+  }));
+  return styles.join('\n').trim() || undefined;
 }
