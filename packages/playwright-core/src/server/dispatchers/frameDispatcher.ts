@@ -25,6 +25,7 @@ import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
+import { debugAssert } from '../../utils';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;
@@ -43,13 +44,18 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   private constructor(scope: BrowserContextDispatcher, frame: Frame) {
+    // Main frames are gc'ed separately from any other frames, so that
+    // methods on Page that redirect to the main frame remain operational.
+    // Note: we cannot check parentFrame() here because it may be null after the frame has been detached.
+    debugAssert(frame._page.mainFrame(), 'Cannot determine whether the frame is a main frame');
+    const gcBucket = frame._page.mainFrame() === frame ? 'MainFrame' : 'Frame';
     const pageDispatcher = existingDispatcher<PageDispatcher>(frame._page);
     super(pageDispatcher || scope, frame, 'Frame', {
       url: frame.url(),
       name: frame.name(),
       parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame()),
       loadStates: Array.from(frame._firedLifecycleEvents),
-    });
+    }, gcBucket);
     this._browserContextDispatcher = scope;
     this._frame = frame;
     this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
