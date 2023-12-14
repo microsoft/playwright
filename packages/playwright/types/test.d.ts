@@ -3809,6 +3809,8 @@ export interface PlaywrightWorkerOptions {
    * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) take priority over
    * this.
    *
+   * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
    * **Usage**
    *
    * ```js
