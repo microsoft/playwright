@@ -647,15 +647,13 @@ export class RouteHandler {
   private readonly _times: number;
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
-  readonly noWaitOnUnrouteOrClose: boolean;
   private _activeInvocations: MultiMap<Page|null, { ignoreException: boolean, complete: Promise<void>, route: Route }> = new MultiMap();
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER, noWaitOnUnrouteOrClose: boolean = false) {
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this.noWaitOnUnrouteOrClose = noWaitOnUnrouteOrClose;
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -703,7 +701,7 @@ export class RouteHandler {
     // Note that context.route handler may be later invoked on a different page,
     // so we only swallow errors for the current page's routes.
     const handlerActivations = page ? this._activeInvocations.get(page) : [...this._activeInvocations.values()];
-    if (this.noWaitOnUnrouteOrClose || noWait) {
+    if (noWait) {
       handlerActivations.forEach(h => h.ignoreException = true);
     } else {
       const promises = [];

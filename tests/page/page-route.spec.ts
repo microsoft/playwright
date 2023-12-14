@@ -72,7 +72,7 @@ it('should unroute', async ({ page, server }) => {
   expect(intercepted).toEqual([1]);
 });
 
-it('unroute should wait for pending handlers to complete', async ({ page, server }) => {
+it('unroute should not wait for pending handlers to complete', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
   let secondHandlerCalled = false;
   await page.route(/.*/, async route => {
@@ -91,44 +91,9 @@ it('unroute should wait for pending handlers to complete', async ({ page, server
   await page.route(/.*/, handler);
   const navigationPromise = page.goto(server.EMPTY_PAGE);
   await routePromise;
-  let didUnroute = false;
-  const unroutePromise = page.unroute(/.*/, handler).then(() => didUnroute = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didUnroute).toBe(false);
+  await page.unroute(/.*/, handler);
   continueRouteCallback();
-  await unroutePromise;
-  expect(didUnroute).toBe(true);
   await navigationPromise;
-  expect(secondHandlerCalled).toBe(true);
-});
-
-it('unroute should not wait for pending handlers to complete if noWaitForActive is true', async ({ page, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let secondHandlerCalled = false;
-  await page.route(/.*/, async route => {
-    secondHandlerCalled = true;
-    await route.continue();
-  });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  const handler = async route => {
-    routeCallback();
-    await routeBarrier;
-    throw new Error('Handler error');
-  };
-  await page.route(/.*/, handler);
-  const navigationPromise = page.goto(server.EMPTY_PAGE);
-  await routePromise;
-  let didUnroute = false;
-  const unroutePromise = page.unroute(/.*/, handler, { noWaitForActive: true }).then(() => didUnroute = true);
-  await new Promise(f => setTimeout(f, 500));
-  await unroutePromise;
-  expect(didUnroute).toBe(true);
-  continueRouteCallback();
-  await navigationPromise.catch(e => void e);
-  // The error in the unrouted handler should be silently caught and remaining handler called.
   expect(secondHandlerCalled).toBe(true);
 });
 
@@ -451,7 +416,7 @@ it('should not throw if request was cancelled by the page', async ({ page, serve
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
-  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.route('**/data.json', route => interceptCallback(route));
   await page.goto(server.EMPTY_PAGE);
   page.evaluate(url => {
     globalThis.controller = new AbortController();
@@ -732,7 +697,7 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
     } catch (e) {
       fulfill(e);
     }
-  }, { noWaitForFinish: true });
+  });
 
   for (status = 300; status < 310; status++) {
     const [, exception] = await Promise.all([
@@ -1160,29 +1125,7 @@ it('should intercept when postData is more than 1MB', async ({ page, server }) =
   expect(await interceptionPromise).toBe(POST_BODY);
 });
 
-it('page.close waits for active route handlers by default', async ({ page, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  await page.route(/.*/, async route => {
-    routeCallback();
-    await routeBarrier;
-    await route.continue();
-  });
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await routePromise;
-  let didClose = false;
-  const closePromise = page.close().then(() => didClose = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didClose).toBe(false);
-  continueRouteCallback();
-  await closePromise;
-  expect(didClose).toBe(true);
-});
-
-it('page.close does not wait for active route handlers with noWaitForFinish: true', async ({ page, server }) => {
+it('page.close does not wait for active route handlers', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
   let secondHandlerCalled = false;
   await page.route(/.*/, () => secondHandlerCalled = true);
@@ -1191,7 +1134,7 @@ it('page.close does not wait for active route handlers with noWaitForFinish: tru
   await page.route(/.*/, async route => {
     routeCallback();
     await new Promise(() => {});
-  }, { noWaitForFinish: true });
+  });
   page.goto(server.EMPTY_PAGE).catch(() => {});
   await routePromise;
   await page.close();

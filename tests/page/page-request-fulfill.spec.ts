@@ -103,7 +103,7 @@ it('should not throw if request was cancelled by the page', async ({ page, serve
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
-  await page.route('**/data.json', route => interceptCallback(route), { noWaitForFinish: true });
+  await page.route('**/data.json', route => interceptCallback(route));
   await page.goto(server.EMPTY_PAGE);
   page.evaluate(url => {
     globalThis.controller = new AbortController();

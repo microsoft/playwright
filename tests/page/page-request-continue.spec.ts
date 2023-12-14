@@ -137,7 +137,7 @@ it('should not throw when continuing after page is closed', async ({ page, serve
   await page.route('**/*', async route => {
     await page.close();
     done = route.continue();
-  }, { noWaitForFinish: true });
+  });
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   await done;
   expect(error).toBeInstanceOf(Error);

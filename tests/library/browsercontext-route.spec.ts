@@ -79,7 +79,7 @@ it('should unroute', async ({ browser, server }) => {
   await context.close();
 });
 
-it('unroute should wait for pending handlers to complete', async ({ page, context, server }) => {
+it('unroute should not wait for pending handlers to complete', async ({ page, context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
   let secondHandlerCalled = false;
   await context.route(/.*/, async route => {
@@ -98,44 +98,9 @@ it('unroute should wait for pending handlers to complete', async ({ page, contex
   await context.route(/.*/, handler);
   const navigationPromise = page.goto(server.EMPTY_PAGE);
   await routePromise;
-  let didUnroute = false;
-  const unroutePromise = context.unroute(/.*/, handler).then(() => didUnroute = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didUnroute).toBe(false);
+  await context.unroute(/.*/, handler);
   continueRouteCallback();
-  await unroutePromise;
-  expect(didUnroute).toBe(true);
   await navigationPromise;
-  expect(secondHandlerCalled).toBe(true);
-});
-
-it('unroute should not wait for pending handlers to complete if noWaitForActive is true', async ({ page, context, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let secondHandlerCalled = false;
-  await context.route(/.*/, async route => {
-    secondHandlerCalled = true;
-    await route.continue();
-  });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  const handler = async route => {
-    routeCallback();
-    await routeBarrier;
-    throw new Error('Handler error');
-  };
-  await context.route(/.*/, handler);
-  const navigationPromise = page.goto(server.EMPTY_PAGE);
-  await routePromise;
-  let didUnroute = false;
-  const unroutePromise = context.unroute(/.*/, handler, { noWaitForActive: true }).then(() => didUnroute = true);
-  await new Promise(f => setTimeout(f, 500));
-  await unroutePromise;
-  expect(didUnroute).toBe(true);
-  continueRouteCallback();
-  await navigationPromise.catch(e => void e);
-  // The error in the unrouted handler should be silently caught and remaining handler called.
   expect(secondHandlerCalled).toBe(true);
 });
 
@@ -519,136 +484,32 @@ it('should fall back async', async ({ page, context, server }) => {
   expect(intercepted).toEqual([3, 2, 1]);
 });
 
-it('page.close waits for active route handlers on the owning context by default', async ({ page, context, server }) => {
+it('page.close should not wait for active route handlers on the owning context', async ({ page, context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  await context.route(/.*/, async route => {
-    routeCallback();
-    await routeBarrier;
-    await route.continue();
-  });
-  await page.route(/.*/, async route => {
-    await route.fallback();
-  });
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await routePromise;
-  let didClose = false;
-  const closePromise = page.close().then(() => didClose = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didClose).toBe(false);
-  continueRouteCallback();
-  await closePromise;
-  expect(didClose).toBe(true);
-});
-
-it('context.close waits for active route handlers on the owned pages by default', async ({ page, context, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  await page.route(/.*/, async route => {
-    routeCallback();
-    await routeBarrier;
-    await route.continue();
-  });
-  await page.route(/.*/, async route => {
-    await route.fallback();
-  });
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await routePromise;
-  let didClose = false;
-  const closePromise = context.close().then(() => didClose = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didClose).toBe(false);
-  continueRouteCallback();
-  await closePromise;
-  expect(didClose).toBe(true);
-});
-
-it('context.close waits for active route handlers by default', async ({ page, context, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  await context.route(/.*/, async route => {
-    routeCallback();
-    await routeBarrier;
-    await route.continue();
-  });
-  await page.route(/.*/, async route => {
-    await route.fallback();
-  });
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await routePromise;
-  let didClose = false;
-  const closePromise = context.close().then(() => didClose = true);
-  await new Promise(f => setTimeout(f, 500));
-  expect(didClose).toBe(false);
-  continueRouteCallback();
-  await closePromise;
-  expect(didClose).toBe(true);
-});
-
-it('page.close does not wait for active route handlers on the owning context with noWaitForFinish: true', async ({ page, context, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let secondHandlerCalled = false;
-  await context.route(/.*/, () => secondHandlerCalled = true);
   let routeCallback;
   const routePromise = new Promise(f => routeCallback = f);
   await context.route(/.*/, async route => {
     routeCallback();
-    await new Promise(() => {});
-  }, { noWaitForFinish: true });
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await routePromise;
-  await page.close();
-  await new Promise(f => setTimeout(f, 500));
-  expect(secondHandlerCalled).toBe(false);
-});
-
-it('page.close swallows errors in active route handlers on the owning context with noWaitForFinish: true', async ({ page, context, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let secondHandlerCalled = false;
-  await context.route(/.*/, () => secondHandlerCalled = true);
-  let routeCallback;
-  const routePromise = new Promise(f => routeCallback = f);
-  let continueRouteCallback;
-  const routeBarrier = new Promise(f => continueRouteCallback = f);
-  await context.route(/.*/, async route => {
-    routeCallback();
-    await routeBarrier;
-    throw new Error('Error in route handler');
-  }, { noWaitForFinish: true });
+  });
   await page.route(/.*/, async route => {
     await route.fallback();
   });
   page.goto(server.EMPTY_PAGE).catch(() => {});
   await routePromise;
   await page.close();
-  continueRouteCallback();
-  await new Promise(f => setTimeout(f, 500));
-  // The exception should be silently caught and the remaining handler called.
-  expect(secondHandlerCalled).toBe(false);
 });
 
-it('context.close does not wait for active route handlers on the owned pages with noWaitForFinish: true', async ({ page, context, server }) => {
+it('context.close should not wait for active route handlers on the owned pages', async ({ page, context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
-  let secondHandlerCalled = false;
-  await context.route(/.*/, () => secondHandlerCalled = true);
   let routeCallback;
   const routePromise = new Promise(f => routeCallback = f);
-  await context.route(/.*/, async route => {
+  await page.route(/.*/, async route => {
     routeCallback();
-    await new Promise(() => {});
-  }, { noWaitForFinish: true });
+  });
+  await page.route(/.*/, async route => {
+    await route.fallback();
+  });
   page.goto(server.EMPTY_PAGE).catch(() => {});
   await routePromise;
   await context.close();
-  await new Promise(f => setTimeout(f, 500));
-  expect(secondHandlerCalled).toBe(false);
 });

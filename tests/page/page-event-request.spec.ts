@@ -203,7 +203,7 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
   });
 
   // Stall requests to make sure we don't get requestfinished.
-  await page.route('**', route => {}, { noWaitForFinish: true });
+  await page.route('**', route => {});
 
   await page.setContent(`
     <iframe src="${server.EMPTY_PAGE}"></iframe>
