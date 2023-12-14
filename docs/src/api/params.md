@@ -911,8 +911,12 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 ## browser-option-args
 - `args` <[Array]<[string]>>
 
+:::warning
+Use custom browser args at your own risk, as some of them may break Playwright functionality.
+:::
+
 Additional arguments to pass to the browser instance. The list of Chromium flags can be found
-[here](http://peter.sh/experiments/chromium-command-line-switches/).
+[here](https://peter.sh/experiments/chromium-command-line-switches/).
 
 ## browser-option-channel
 - `channel` <[string]>
