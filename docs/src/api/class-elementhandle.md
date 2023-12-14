@@ -156,6 +156,7 @@ await page.Mouse.ClickAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
 
 ## async method: ElementHandle.check
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -191,6 +192,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.click
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../locators.md).
 
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -241,6 +243,7 @@ Returns the content frame for element handles referencing iframe nodes, or `null
 
 ## async method: ElementHandle.dblclick
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -289,6 +292,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.dispatchEvent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../locators.md).
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -383,6 +387,9 @@ Optional event-specific initialization properties.
 
 ## async method: ElementHandle.evalOnSelector
 * since: v1.9
+* discouraged: This method does not wait for the element to pass actionability
+  checks and therefore can lead to the flaky tests. Use [`method: Locator.evaluate`],
+  other [Locator] helper methods or web-first assertions instead.
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
@@ -445,6 +452,8 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.evalOnSelectorAll
 * since: v1.9
+* discouraged: In most cases, [`method: Locator.evaluateAll`],
+  other [Locator] helper methods and web-first assertions do a better job.
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
@@ -511,6 +520,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.fill
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
 
 This method waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
@@ -538,11 +548,13 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: ElementHandle.focus
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
 
 Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
 
 ## async method: ElementHandle.getAttribute
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -555,6 +567,7 @@ Attribute name to get the value for.
 
 ## async method: ElementHandle.hover
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
 
 This method hovers over the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -590,18 +603,21 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.innerHTML
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns the `element.innerHTML`.
 
 ## async method: ElementHandle.innerText
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns the `element.innerText`.
 
 ## async method: ElementHandle.inputValue
 * since: v1.13
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -616,36 +632,42 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: ElementHandle.isChecked
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
 ## async method: ElementHandle.isDisabled
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isEditable
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
 
 ## async method: ElementHandle.isEnabled
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isHidden
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
 ## async method: ElementHandle.isVisible
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible).
@@ -658,6 +680,7 @@ Returns the frame containing the given element.
 
 ## async method: ElementHandle.press
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -702,6 +725,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: ElementHandle.querySelector
 * since: v1.9
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -715,6 +739,7 @@ returns `null`.
 
 ## async method: ElementHandle.querySelectorAll
 * since: v1.9
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -728,6 +753,7 @@ returns empty array.
 
 ## async method: ElementHandle.screenshot
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.screenshot`] instead. Read more about [locators](../locators.md).
 - returns: <[Buffer]>
 
 This method captures a screenshot of the page, clipped to the size and position of this particular element. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
@@ -753,6 +779,7 @@ Returns the buffer with the captured screenshot.
 * since: v1.41
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded
+* discouraged: Use locator-based [`method: Locator.scrollIntoViewIfNeeded`] instead. Read more about [locators](../locators.md).
 * since: v1.8
 
 This method waits for [actionability](../actionability.md) checks, then tries to scroll element into view, unless it is
@@ -770,6 +797,7 @@ Throws when `elementHandle` does not point to an element
 
 ## async method: ElementHandle.selectOption
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).
 - returns: <[Array]<[string]>>
 
 This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -863,6 +891,7 @@ await handle.SelectOptionAsync(new[] {
 
 ## async method: ElementHandle.selectText
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.selectText`] instead. Read more about [locators](../locators.md).
 
 This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
 content.
@@ -879,6 +908,7 @@ If the element is inside the `<label>` element that has an associated [control](
 * since: v1.8
 
 ## async method: ElementHandle.setChecked
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
 * since: v1.15
 
 This method checks or unchecks an element by performing the following steps:
@@ -917,6 +947,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.setInputFiles
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../locators.md).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -938,6 +969,7 @@ This method expects [ElementHandle] to point to an
 
 ## async method: ElementHandle.tap
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
 
 This method taps the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -977,6 +1009,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.textContent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns the `node.textContent`.
@@ -1014,6 +1047,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: ElementHandle.uncheck
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -1079,6 +1113,7 @@ A state to wait for, see below for more details.
 
 ## async method: ElementHandle.waitForSelector
 * since: v1.8
+* discouraged: Use web assertions that assert visibility or a locator-based [`method: Locator.waitFor`] instead.
 - returns: <[null]|[ElementHandle]>
 
 Returns element specified by selector when it satisfies [`option: state`] option. Returns `null` if waiting for `hidden`
