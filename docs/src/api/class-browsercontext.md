@@ -1418,7 +1418,7 @@ Returns storage state for this browser context, contains current cookies and loc
 ## async method: BrowserContext.unrouteAll
 * since: v1.41
 
-Removes all routes created with [`method: BrowserContext.route`].
+Removes all routes created with [`method: BrowserContext.route`] and [`method: BrowserContext.routeFromHAR`].
 
 ### option: BrowserContext.unrouteAll.behavior = %%-unroute-all-options-behavior-%%
 * since: v1.41

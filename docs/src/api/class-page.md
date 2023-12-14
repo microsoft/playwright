@@ -3873,7 +3873,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: Page.unrouteAll
 * since: v1.41
 
-Removes all routes created with [`method: Page.route`].
+Removes all routes created with [`method: Page.route`] and [`method: Page.routeFromHAR`].
 
 ### option: Page.unrouteAll.behavior = %%-unroute-all-options-behavior-%%
 * since: v1.41

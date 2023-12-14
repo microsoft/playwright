@@ -4255,7 +4255,8 @@ export interface Page {
 
   /**
    * Removes all routes created with
-   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) and
+   * [page.routeFromHAR(har[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
    * @param options
    */
   unrouteAll(options?: {
@@ -8655,7 +8656,9 @@ export interface BrowserContext {
 
   /**
    * Removes all routes created with
-   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.routeFromHAR(har[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
    * @param options
    */
   unrouteAll(options?: {

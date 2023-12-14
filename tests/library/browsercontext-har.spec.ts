@@ -403,3 +403,29 @@ it('should update extracted har.zip for page', async ({ contextFactory, server }
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
+
+it('page.unrouteAll should stop page.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+  const harPath = asset('har-fulfill.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  // The har file contains requests for another domain, so the router
+  // is expected to abort all requests.
+  await page1.routeFromHAR(harPath, { notFound: 'abort' });
+  await expect(page1.goto(server.EMPTY_PAGE)).rejects.toThrow();
+  await page1.unrouteAll({ behavior: 'wait' });
+  const response = await page1.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBeTruthy();
+});
+
+it('context.unrouteAll should stop context.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+  const harPath = asset('har-fulfill.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  // The har file contains requests for another domain, so the router
+  // is expected to abort all requests.
+  await context1.routeFromHAR(harPath, { notFound: 'abort' });
+  await expect(page1.goto(server.EMPTY_PAGE)).rejects.toThrow();
+  await context1.unrouteAll({ behavior: 'wait' });
+  const response = await page1.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBeTruthy();
+});
