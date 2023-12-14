@@ -492,7 +492,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         remaining.push(route);
     }
-    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait'
+    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
     await this._unrouteInternal(removed, remaining, { behavior });
   }
 

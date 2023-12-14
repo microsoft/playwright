@@ -357,9 +357,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       else
         remaining.push(route);
     }
-    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait'
+    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
     await this._unrouteInternal(removed, remaining, { behavior });
-}
+  }
 
   private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     this._routes = remaining;
