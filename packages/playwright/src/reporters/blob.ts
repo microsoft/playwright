@@ -109,12 +109,14 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   private _computeReportName(config: FullConfig) {
-    let reportName = this._options.fileName ?? 'report.zip';
+    if (this._options.fileName)
+      return this._options.fileName;
+    let reportName = 'report';
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
-      reportName = `${reportName.slice(0, -4)}-${paddedNumber}.zip`;
+      reportName = `${reportName}-${paddedNumber}`;
     }
-    return reportName;
+    return `${reportName}.zip`;
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
