@@ -95,6 +95,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _opener: Page | null;
   private _closeReason: string | undefined;
   _closeWasCalled: boolean = false;
+  private _harRouters: HarRouter[] = [];
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -215,6 +216,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = true;
     this._browserContext._pages.delete(this);
     this._browserContext._backgroundPages.delete(this);
+    this._disposeHarRouters();
     this.emit(Events.Page.Close, this);
   }
 
@@ -467,7 +469,18 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       return;
     }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
-    harRouter.addPageRoute(this);
+    this._harRouters.push(harRouter);
+    await harRouter.addPageRoute(this);
+  }
+
+  private _disposeHarRouters() {
+    this._harRouters.forEach(router => router.dispose());
+    this._harRouters = [];
+  }
+
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+    await this._unrouteInternal(this._routes, [], options);
+    this._disposeHarRouters();
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
@@ -479,9 +492,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         remaining.push(route);
     }
+    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
+    await this._unrouteInternal(removed, remaining, { behavior });
+  }
+
+  private async _unrouteInternal(removed: RouteHandler[], remaining: RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this, options?.noWaitForActive));
+    if (!options?.behavior || options?.behavior === 'default')
+      return;
+    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this, options?.behavior === 'ignoreErrors'));
     await Promise.all(promises);
   }
 

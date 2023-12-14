@@ -16,7 +16,6 @@
 
 import { debugLogger } from '../common/debugLogger';
 import type { BrowserContext } from './browserContext';
-import { Events } from './events';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
 import type { URLMatch } from './types';
@@ -85,12 +84,10 @@ export class HarRouter {
 
   async addContextRoute(context: BrowserContext) {
     await context.route(this._options.urlMatch || '**/*', route => this._handle(route));
-    context.once(Events.BrowserContext.Close, () => this.dispose());
   }
 
   async addPageRoute(page: Page) {
     await page.route(this._options.urlMatch || '**/*', route => this._handle(route));
-    page.once(Events.Page.Close, () => this.dispose());
   }
 
   async [Symbol.asyncDispose]() {

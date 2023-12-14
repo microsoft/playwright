@@ -64,6 +64,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
   _closeWasCalled = false;
   private _closeReason: string | undefined;
+  private _harRouters: HarRouter[] = [];
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -212,7 +213,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       if (handled)
         return;
     }
-    await route._innerContinue(true);
+    // If the page is closed or unrouteAll() was called without waiting and interception disabled,
+    // the method will throw an error - silence it.
+    await route._innerContinue(true).catch(() => {});
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -331,7 +334,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
-    harRouter.addContextRoute(this);
+    this._harRouters.push(harRouter);
+    await harRouter.addContextRoute(this);
+  }
+
+  private _disposeHarRouters() {
+    this._harRouters.forEach(router => router.dispose());
+    this._harRouters = [];
+  }
+
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+    await this._unrouteInternal(this._routes, [], options);
+    this._disposeHarRouters();
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
@@ -343,11 +357,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       else
         remaining.push(route);
     }
+    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
+    await this._unrouteInternal(removed, remaining, { behavior });
+  }
+
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.noWaitForActive));
+    if (!options?.behavior || options?.behavior === 'default')
+      return;
+    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.behavior === 'ignoreErrors'));
     await Promise.all(promises);
-
   }
 
   private async _updateInterceptionPatterns() {
@@ -402,6 +422,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._disposeHarRouters();
     this.emit(Events.BrowserContext.Close, this);
   }
 

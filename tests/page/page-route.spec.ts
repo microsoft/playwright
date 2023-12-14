@@ -132,6 +132,78 @@ it('unroute should not wait for pending handlers to complete if noWaitForActive 
   expect(secondHandlerCalled).toBe(true);
 });
 
+it('unrouteAll removes all routes', async ({ page, server }) => {
+  await page.route('**/*', route => {
+    void route.abort();
+  });
+  await page.route('**/empty.html', route => {
+    void route.abort();
+  });
+  await page.unrouteAll();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBe(true);
+});
+
+it('unrouteAll should wait for pending handlers to complete', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
+  let secondHandlerCalled = false;
+  await page.route(/.*/, async route => {
+    secondHandlerCalled = true;
+    await route.abort();
+  });
+  let routeCallback;
+  const routePromise = new Promise(f => routeCallback = f);
+  let continueRouteCallback;
+  const routeBarrier = new Promise(f => continueRouteCallback = f);
+  const handler = async route => {
+    routeCallback();
+    await routeBarrier;
+    await route.fallback();
+  };
+  await page.route(/.*/, handler);
+  const navigationPromise = page.goto(server.EMPTY_PAGE);
+  await routePromise;
+  let didUnroute = false;
+  const unroutePromise = page.unrouteAll({ behavior: 'wait' }).then(() => didUnroute = true);
+  await new Promise(f => setTimeout(f, 500));
+  expect(didUnroute).toBe(false);
+  continueRouteCallback();
+  await unroutePromise;
+  expect(didUnroute).toBe(true);
+  await navigationPromise;
+  expect(secondHandlerCalled).toBe(false);
+});
+
+it('unrouteAll should not wait for pending handlers to complete if behavior is ignoreErrors', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
+  let secondHandlerCalled = false;
+  await page.route(/.*/, async route => {
+    secondHandlerCalled = true;
+    await route.abort();
+  });
+  let routeCallback;
+  const routePromise = new Promise(f => routeCallback = f);
+  let continueRouteCallback;
+  const routeBarrier = new Promise(f => continueRouteCallback = f);
+  const handler = async route => {
+    routeCallback();
+    await routeBarrier;
+    throw new Error('Handler error');
+  };
+  await page.route(/.*/, handler);
+  const navigationPromise = page.goto(server.EMPTY_PAGE);
+  await routePromise;
+  let didUnroute = false;
+  const unroutePromise = page.unrouteAll({ behavior: 'ignoreErrors' }).then(() => didUnroute = true);
+  await new Promise(f => setTimeout(f, 500));
+  await unroutePromise;
+  expect(didUnroute).toBe(true);
+  continueRouteCallback();
+  await navigationPromise.catch(e => void e);
+  // The error in the unrouted handler should be silently caught.
+  expect(secondHandlerCalled).toBe(false);
+});
+
 it('should support ? in glob pattern', async ({ page, server }) => {
   server.setRoute('/index', (req, res) => res.end('index-no-hello'));
   server.setRoute('/index123hello', (req, res) => res.end('index123hello'));
