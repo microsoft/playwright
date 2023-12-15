@@ -131,6 +131,15 @@ We currently publish images based on the following [Ubuntu](https://hub.docker.c
 
 Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikipedia.org/wiki/Glibc) library. Alpine Linux and other distributions that are based on the [musl](https://en.wikipedia.org/wiki/Musl) standard library are not supported.
 
+## Using a different .NET version
+* langs: csharp
+
+You can use the [.NET install script](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script) in order to install different SDK versions:
+
+```bash
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir /usr/share/dotnet --channel 6.0
+```
+
 ## Development
 * langs: js
 
