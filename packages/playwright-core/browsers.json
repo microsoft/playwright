@@ -21,13 +21,13 @@
     },
     {
       "name": "firefox",
-      "revision": "1433",
+      "revision": "1434",
       "installByDefault": true,
       "browserVersion": "120.0.1"
     },
     {
       "name": "firefox-asan",
-      "revision": "1433",
+      "revision": "1434",
       "installByDefault": false,
       "browserVersion": "120.0.1"
     },
