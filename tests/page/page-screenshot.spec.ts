@@ -857,8 +857,9 @@ it.describe('page screenshot animations', () => {
     ]);
   });
 
-  it('should wait for fonts to load', async ({ page, server, isWindows, browserName, isLinux }) => {
+  it('should wait for fonts to load', async ({ page, server, isWindows, isAndroid }) => {
     it.fixme(isWindows, 'This requires a windows-specific test expectations. https://github.com/microsoft/playwright/issues/12707');
+    it.skip(isAndroid, 'Different viewport');
     await page.setViewportSize({ width: 500, height: 500 });
     const fontRequestPromise = new Promise<any>(resolve => {
       // Stall font loading.
