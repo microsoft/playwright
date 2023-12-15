@@ -735,6 +735,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'block'`: Playwright will block all registration of Service Workers.
 
 ## unroute-all-options-behavior
+* langs: js, csharp, python
 * since: v1.41
 - `behavior` <[UnrouteBehavior]<"wait"|"ignoreErrors"|"default">>
 
