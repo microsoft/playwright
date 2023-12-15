@@ -1141,3 +1141,45 @@ it('page.close does not wait for active route handlers', async ({ page, server }
   await new Promise(f => setTimeout(f, 500));
   expect(secondHandlerCalled).toBe(false);
 });
+
+it('route.continue should not throw if page has been closed', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
+  let routeCallback;
+  const routePromise = new Promise<Route>(f => routeCallback = f);
+  await page.route(/.*/, async route => {
+    routeCallback(route);
+  });
+  page.goto(server.EMPTY_PAGE).catch(() => {});
+  const route = await routePromise;
+  await page.close();
+  // Should not throw.
+  await route.continue();
+});
+
+it('route.fallback should not throw if page has been closed', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
+  let routeCallback;
+  const routePromise = new Promise<Route>(f => routeCallback = f);
+  await page.route(/.*/, async route => {
+    routeCallback(route);
+  });
+  page.goto(server.EMPTY_PAGE).catch(() => {});
+  const route = await routePromise;
+  await page.close();
+  // Should not throw.
+  await route.fallback();
+});
+
+it('route.fulfill should not throw if page has been closed', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });
+  let routeCallback;
+  const routePromise = new Promise<Route>(f => routeCallback = f);
+  await page.route(/.*/, async route => {
+    routeCallback(route);
+  });
+  page.goto(server.EMPTY_PAGE).catch(() => {});
+  const route = await routePromise;
+  await page.close();
+  // Should not throw.
+  await route.fulfill();
+});
