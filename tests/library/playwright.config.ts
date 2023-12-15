@@ -80,7 +80,6 @@ if (mode === 'service2') {
 }
 
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
-  botName: process.env.PWTEST_BOT_NAME,
   testDir,
   outputDir,
   expect: {

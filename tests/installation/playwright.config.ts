@@ -34,7 +34,6 @@ const reporters = () => {
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 export default defineConfig({
-  botName: process.env.PWTEST_BOT_NAME,
   globalSetup: path.join(__dirname, 'globalSetup'),
   outputDir,
   testIgnore: '**\/fixture-scripts/**',
