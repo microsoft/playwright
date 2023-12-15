@@ -240,7 +240,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.botName, [], testEntries);
+        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.metadata?.reportName, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);

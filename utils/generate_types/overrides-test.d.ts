@@ -39,7 +39,6 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullProjectInternal instead.
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
-  botName?: string;
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
@@ -76,7 +75,6 @@ export type Metadata = { [key: string]: any };
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  botName?: string;
   forbidOnly: boolean;
   fullyParallel: boolean;
   globalSetup: string | null;

@@ -41,7 +41,6 @@ export type JsonPattern = {
 
 export type JsonProject = {
   id: string;
-  botName?: string;
   grep: JsonPattern[];
   grepInvert: JsonPattern[];
   metadata: Metadata;
@@ -335,7 +334,6 @@ export class TeleReporterReceiver {
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
       __projectId: project.id,
-      botName: project.botName,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),

@@ -17,23 +17,6 @@ export default defineConfig({
 });
 ```
 
-## property: TestConfig.botName
-* since: v1.41
-- type: ?<[string]>
-
-Unique name of the environment where the tests run. It may be composed of, e.g., operating system name and
-test run parameters. Test reporters can access the name via `TestProject.botName` property.
-
-**Usage**
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  botName: process.env.BOT_NAME,
-});
-```
-
 ## property: TestConfig.build
 * since: v1.35
 - type: ?<[Object]>

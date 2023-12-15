@@ -1204,9 +1204,9 @@ test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => 
 
       class EchoReporter {
         onBegin(config, suite) {
-          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.botName.localeCompare(b.botName));
+          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
           console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('botNames: ' + projects.map(p => p.botName));
+          console.log('botNames: ' + projects.map(p => p.metadata.reportName));
         }
       }
       module.exports = EchoReporter;
@@ -1226,8 +1226,8 @@ test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => 
     `,
   });
 
-  await runInlineTest(files('first'));
-  await runInlineTest(files('second'), undefined, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
