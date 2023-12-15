@@ -500,7 +500,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._updateInterceptionPatterns();
     if (!behavior || behavior === 'default')
       return;
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this, behavior === 'ignoreErrors'));
+    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
     await Promise.all(promises);
   }
 

@@ -365,7 +365,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateInterceptionPatterns();
     if (!behavior || behavior === 'default')
       return;
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, behavior === 'ignoreErrors'));
+    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
     await Promise.all(promises);
   }
 
