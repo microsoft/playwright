@@ -30,7 +30,7 @@
 }
 
 .image-diff-view .image-wrapper {
-  flex: auto;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
