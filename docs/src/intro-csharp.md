@@ -69,7 +69,7 @@ dotnet add package Microsoft.Playwright.MSTest
 dotnet build
 ```
 
-4. Install required browsers by replacing `netX` with the actual output folder name, e.g. `net6.0`:
+4. Install required browsers by replacing `netX` with the actual output folder name, e.g. `net8.0`:
 
 ```bash
 pwsh bin/Debug/netX/playwright.ps1 install

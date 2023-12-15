@@ -167,11 +167,11 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: sdk
-    version: '6.0.x'
+    version: '8.0.x'
   displayName: 'Use .NET SDK'
 - script: dotnet build --configuration Release
   displayName: 'Build'
-- script: pwsh bin/Release/net6.0/playwright.ps1 install --with-deps
+- script: pwsh bin/Release/net8.0/playwright.ps1 install --with-deps
   displayName: 'Install Playwright browsers'
 - script: dotnet test --configuration Release
   displayName: 'Run tests'
@@ -367,7 +367,7 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: sdk
-    version: '6.0.x'
+    version: '8.0.x'
   displayName: 'Use .NET SDK'
 
 - script: dotnet build --configuration Release
