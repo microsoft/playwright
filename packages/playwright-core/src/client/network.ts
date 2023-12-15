@@ -647,15 +647,14 @@ export class RouteHandler {
   private readonly _times: number;
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
-  readonly noWaitOnUnrouteOrClose: boolean;
-  private _activeInvocations: MultiMap<Page|null, { ignoreException: boolean, complete: Promise<void>, route: Route }> = new MultiMap();
+  private _ignoreException: boolean = false;
+  private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER, noWaitOnUnrouteOrClose: boolean = false) {
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this.noWaitOnUnrouteOrClose = noWaitOnUnrouteOrClose;
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -679,38 +678,32 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
-    const page = route.request()._safePage();
-    const handlerInvocation = { ignoreException: false, complete: new ManualPromise(), route } ;
-    this._activeInvocations.set(page, handlerInvocation);
+    const handlerInvocation = { complete: new ManualPromise(), route } ;
+    this._activeInvocations.add(handlerInvocation);
     try {
       return await this._handleInternal(route);
     } catch (e) {
       // If the handler was stopped (without waiting for completion), we ignore all exceptions.
-      if (handlerInvocation.ignoreException)
+      if (this._ignoreException)
         return false;
       throw e;
     } finally {
       handlerInvocation.complete.resolve();
-      this._activeInvocations.delete(page, handlerInvocation);
+      this._activeInvocations.delete(handlerInvocation);
     }
   }
 
-  async stopAndWaitForRunningHandlers(page: Page | null, noWait?: boolean) {
+  async stop(behavior: 'wait' | 'ignoreErrors') {
     // When a handler is manually unrouted or its page/context is closed we either
     // - wait for the current handler invocations to finish
     // - or do not wait, if the user opted out of it, but swallow all exceptions
     //   that happen after the unroute/close.
-    // Note that context.route handler may be later invoked on a different page,
-    // so we only swallow errors for the current page's routes.
-    const handlerActivations = page ? this._activeInvocations.get(page) : [...this._activeInvocations.values()];
-    if (this.noWaitOnUnrouteOrClose || noWait) {
-      handlerActivations.forEach(h => h.ignoreException = true);
+    if (behavior === 'ignoreErrors') {
+      this._ignoreException = true;
     } else {
       const promises = [];
-      for (const activation of handlerActivations) {
-        if (activation.route._didThrow)
-          activation.ignoreException = true;
-        else
+      for (const activation of this._activeInvocations) {
+        if (!activation.route._didThrow)
           promises.push(activation.complete);
       }
       await Promise.all(promises);

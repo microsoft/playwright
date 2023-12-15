@@ -736,7 +736,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 
 ## unroute-all-options-behavior
 * since: v1.41
-- `behavior` <[UnrouteAllBehavior]<"wait"|"ignoreErrors"|"default">>
+- `behavior` <[UnrouteBehavior]<"wait"|"ignoreErrors"|"default">>
 
 Specifies wether to wait for already running handlers and what to do if they throw errors:
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error

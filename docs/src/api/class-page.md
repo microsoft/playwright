@@ -3324,13 +3324,6 @@ handler function to route the request.
 
 handler function to route the request.
 
-### option: Page.route.noWaitForFinish
-* since: v1.41
-- `noWaitForFinish` <[boolean]>
-
-If set to true, [`method: Page.close`] and [`method: BrowserContext.close`] will not wait for the handler to finish and all
-errors thrown by then handler after the page has been closed are silently caught. Defaults to false.
-
 ### option: Page.route.times
 * since: v1.15
 - `times` <[int]>
@@ -3903,13 +3896,6 @@ Optional handler function to route the request.
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function to route the request.
-
-### option: Page.unroute.noWaitForActive
-* since: v1.41
-- `noWaitForActive` <[boolean]>
-
-If set to true, [`method: Page.unroute`] will not wait for current handler call (if any) to finish and all
-errors thrown by the handler after unrouting are silently caught. Defaults to false.
 
 ## method: Page.url
 * since: v1.8

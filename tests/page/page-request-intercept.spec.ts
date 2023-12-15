@@ -184,7 +184,7 @@ it('should intercept multipart/form-data request body', async ({ page, server, a
   const requestPromise = new Promise<Request>(async fulfill => {
     await page.route('**/upload', route => {
       fulfill(route.request());
-    }, { noWaitForFinish: true });
+    });
   });
   const [request] = await Promise.all([
     requestPromise,
@@ -219,7 +219,7 @@ it('should support timeout option in route.fetch', async ({ page, server, isElec
   await page.route('**/*', async route => {
     const error = await route.fetch({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`Request timed out after 1000ms`);
-  }, { noWaitForFinish: true });
+  });
   const error = await page.goto(server.PREFIX + '/slow', { timeout: 2000 }).catch(e => e);
   expect(error.message).toContain(`Timeout 2000ms exceeded`);
 });

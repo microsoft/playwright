@@ -310,8 +310,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._bindings.set(name, binding);
   }
 
-  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number, noWaitForFinish?: boolean } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times, options.noWaitForFinish));
+  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
+    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
@@ -344,11 +344,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
-    await this._unrouteInternal(this._routes, [], options);
+    await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
 
-  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
+  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
     for (const route of this._routes) {
@@ -357,16 +357,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       else
         remaining.push(route);
     }
-    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
-    await this._unrouteInternal(removed, remaining, { behavior });
+    await this._unrouteInternal(removed, remaining, 'default');
   }
 
-  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    if (!options?.behavior || options?.behavior === 'default')
+    if (!behavior || behavior === 'default')
       return;
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null, options?.behavior === 'ignoreErrors'));
+    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
     await Promise.all(promises);
   }
 
@@ -435,7 +434,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     this._closeReason = options.reason;
     this._closeWasCalled = true;
-    await this._waitForActiveRouteHandlersToFinish();
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {
@@ -455,12 +453,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     }, true);
     await this._channel.close(options);
     await this._closedPromise;
-  }
-
-  private async _waitForActiveRouteHandlersToFinish() {
-    const promises = this._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(null));
-    promises.push(...[...this._pages].map(page => page._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(page))).flat());
-    await Promise.all(promises);
   }
 
   async _enableRecorder(params: {

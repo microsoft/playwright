@@ -458,8 +458,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.addInitScript({ source });
   }
 
-  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number, noWaitForFinish?: boolean } = {}): Promise<void> {
-    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times, options.noWaitForFinish));
+  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
+    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
@@ -479,11 +479,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
-    await this._unrouteInternal(this._routes, [], options);
+    await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
 
-  async unroute(url: URLMatch, handler?: RouteHandlerCallback, options?: { noWaitForActive?: boolean }): Promise<void> {
+  async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
     for (const route of this._routes) {
@@ -492,16 +492,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         remaining.push(route);
     }
-    const behavior = options?.noWaitForActive ? 'ignoreErrors' : 'wait';
-    await this._unrouteInternal(removed, remaining, { behavior });
+    await this._unrouteInternal(removed, remaining, 'default');
   }
 
-  private async _unrouteInternal(removed: RouteHandler[], remaining: RouteHandler[], options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+  private async _unrouteInternal(removed: RouteHandler[], remaining: RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    if (!options?.behavior || options?.behavior === 'default')
+    if (!behavior || behavior === 'default')
       return;
-    const promises = removed.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this, options?.behavior === 'ignoreErrors'));
+    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
     await Promise.all(promises);
   }
 
@@ -560,17 +559,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this.close();
   }
 
-  private async _waitForActiveRouteHandlersToFinish() {
-    const promises = this._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this));
-    promises.push(...this._browserContext._routes.map(routeHandler => routeHandler.stopAndWaitForRunningHandlers(this)));
-    await Promise.all(promises);
-  }
-
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     this._closeReason = options.reason;
     this._closeWasCalled = true;
-    if (!options.runBeforeUnload)
-      await this._waitForActiveRouteHandlersToFinish();
     try {
       if (this._ownedContext)
         await this._ownedContext.close();
