@@ -1197,24 +1197,23 @@ test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
 
-test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => {
-  const files = (botName: string) => ({
+test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) => {
+  const files = (reportName: string) => ({
     'echo-reporter.js': `
       import fs from 'fs';
 
       class EchoReporter {
         onBegin(config, suite) {
-          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.botName.localeCompare(b.botName));
+          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
           console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('botNames: ' + projects.map(p => p.botName));
+          console.log('reportNames: ' + projects.map(p => p.metadata.reportName));
         }
       }
       module.exports = EchoReporter;
     `,
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { fileName: '${botName}.zip' }]],
-        botName: '${botName}',
+        reporter: [['blob', { fileName: '${reportName}.zip' }]],
         projects: [
           { name: 'foo' },
         ]
@@ -1226,14 +1225,14 @@ test('preserve botName on projects', async ({ runInlineTest, mergeReports }) => 
     `,
   });
 
-  await runInlineTest(files('first'));
-  await runInlineTest(files('second'), undefined, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
   expect(output).toContain(`projectNames: foo,foo`);
-  expect(output).toContain(`botNames: first,second`);
+  expect(output).toContain(`reportNames: first,second`);
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {

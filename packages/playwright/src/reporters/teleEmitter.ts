@@ -162,7 +162,6 @@ export class TeleReporterEmitter implements ReporterV2 {
     const project = suite.project()!;
     const report: JsonProject = {
       id: getProjectId(project),
-      botName: project.botName,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._relativePath(project.outputDir),
