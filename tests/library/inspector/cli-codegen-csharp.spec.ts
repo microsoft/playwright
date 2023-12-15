@@ -20,7 +20,7 @@ import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
-  return channel ? `Channel = "${channel}",\n            Headless = false,` : `Headless = false,`;
+  return channel ? `Channel = "${channel}",\n    Headless = false,` : `Headless = false,`;
 };
 
 function capitalize(browserName: string): string {
