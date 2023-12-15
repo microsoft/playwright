@@ -49,7 +49,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).first().click();`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsync();`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsync();`);
 
     expect(message.text()).toBe('click1');
   });
@@ -84,7 +84,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).nth(1).click();`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsync();`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsync();`);
 
     expect(message.text()).toBe('click2');
   });
@@ -133,7 +133,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").get_by_text("Hello1").click()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("#frame1").GetByText("Hello1").ClickAsync();`);
+await page.FrameLocator("#frame1").GetByText("Hello1").ClickAsync();`);
 
 
     [sources] = await Promise.all([
@@ -154,7 +154,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").frame_locator("iframe").get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("#frame1").FrameLocator("iframe").GetByText("Hello2").ClickAsync();`);
+await page.FrameLocator("#frame1").FrameLocator("iframe").GetByText("Hello2").ClickAsync();`);
 
 
     [sources] = await Promise.all([
@@ -175,7 +175,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe[name=\\"one\\"]").get_by_text("HelloNameOne").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe[name=\\"one\\"]").GetByText("HelloNameOne").ClickAsync();`);
+await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe[name=\\"one\\"]").GetByText("HelloNameOne").ClickAsync();`);
 
     [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'HelloNameAnonymous'),
@@ -195,7 +195,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe >> nth=2").get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe >> nth=2").GetByText("HelloNameAnonymous").ClickAsync();`);
+await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe >> nth=2").GetByText("HelloNameAnonymous").ClickAsync();`);
   });
 
   test('should generate frame locators with special characters in name attribute', async ({ page, openRecorder, server }) => {
@@ -223,7 +223,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").get_by_role("button", name="Click me").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
+await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
   });
 
   test('should generate frame locators with title attribute', async ({ page, openRecorder, server }) => {
@@ -377,7 +377,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
 
   test('should generate getByTestId', async ({ page, openRecorder }) => {
@@ -407,7 +407,7 @@ test.describe('cli codegen', () => {
       page.getByTestId("testid").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByTestId("testid").ClickAsync();`);
+await page.GetByTestId("testid").ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -438,7 +438,7 @@ test.describe('cli codegen', () => {
       page.getByPlaceholder("Country").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByPlaceholder("Country").ClickAsync();`);
+await page.GetByPlaceholder("Country").ClickAsync();`);
   });
 
   test('should generate getByAltText', async ({ page, openRecorder }) => {
@@ -467,7 +467,7 @@ test.describe('cli codegen', () => {
       page.getByAltText("Country").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByAltText("Country").ClickAsync();`);
+await page.GetByAltText("Country").ClickAsync();`);
   });
 
   test('should generate getByLabel', async ({ page, openRecorder }) => {
@@ -496,7 +496,7 @@ test.describe('cli codegen', () => {
       page.getByLabel("Country").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByLabel("Country").ClickAsync();`);
+await page.GetByLabel("Country").ClickAsync();`);
   });
 
   test('should generate getByLabel without regex', async ({ page, openRecorder }) => {
@@ -525,7 +525,7 @@ test.describe('cli codegen', () => {
       page.getByLabel("Coun\\"try").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByLabel("Coun\\"try").ClickAsync();`);
+await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
   test('should consume pointer events', async ({ page, openRecorder }) => {
