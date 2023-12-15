@@ -40,7 +40,7 @@ test.describe('cli codegen', () => {
     page = await context.new_page()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        var page = await context.NewPageAsync();`);
+var page = await context.NewPageAsync();`);
   });
 
   test('should contain second page', async ({ openRecorder, page }) => {
@@ -63,7 +63,7 @@ test.describe('cli codegen', () => {
     page1 = await context.new_page()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        var page1 = await context.NewPageAsync();`);
+var page1 = await context.NewPageAsync();`);
   });
 
   test('should contain close page', async ({ openRecorder, page }) => {
@@ -87,7 +87,7 @@ test.describe('cli codegen', () => {
     await page.close()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.CloseAsync();`);
+await page.CloseAsync();`);
   });
 
   test('should not lead to an error if html gets clicked', async ({ page, openRecorder }) => {
@@ -132,7 +132,7 @@ test.describe('cli codegen', () => {
     await page.get_by_role("textbox").set_input_files(\"file-to-upload.txt\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
+await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
   test('should upload multiple files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
@@ -163,7 +163,7 @@ test.describe('cli codegen', () => {
     await page.get_by_role("textbox").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
+await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
   test('should clear files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
@@ -194,7 +194,7 @@ test.describe('cli codegen', () => {
     await page.get_by_role("textbox").set_input_files([])`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
+await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
   });
 
   test('should download files', async ({ page, openRecorder, server }) => {
@@ -262,15 +262,15 @@ test.describe('cli codegen', () => {
     download1 = await download1_info.value`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        var download = await page.RunAndWaitForDownloadAsync(async () =>
-        {
-            await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
-        });`);
+var download = await page.RunAndWaitForDownloadAsync(async () =>
+{
+    await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
+});`);
     expect.soft(sources.get('C#')!.text).toContain(`
-        var download1 = await page.RunAndWaitForDownloadAsync(async () =>
-        {
-            await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
-        });`);
+var download1 = await page.RunAndWaitForDownloadAsync(async () =>
+{
+    await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
+});`);
   });
 
   test('should handle dialogs', async ({ page, openRecorder }) => {
@@ -310,14 +310,14 @@ test.describe('cli codegen', () => {
     await page.get_by_role("button", name="click me").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        void page_Dialog_EventHandler(object sender, IDialog dialog)
-        {
-            Console.WriteLine($\"Dialog message: {dialog.Message}\");
-            dialog.DismissAsync();
-            page.Dialog -= page_Dialog_EventHandler;
-        }
-        page.Dialog += page_Dialog_EventHandler;
-        await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();`);
+void page_Dialog_EventHandler(object sender, IDialog dialog)
+{
+    Console.WriteLine($\"Dialog message: {dialog.Message}\");
+    dialog.DismissAsync();
+    page.Dialog -= page_Dialog_EventHandler;
+}
+page.Dialog += page_Dialog_EventHandler;
+await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();`);
 
   });
 
@@ -355,8 +355,8 @@ test.describe('cli codegen', () => {
     page1 = await context.new_page()
     await page1.goto("about:blank?foo")`);
       expect(sources.get('C#')!.text).toContain(`
-        var page1 = await context.NewPageAsync();
-        await page1.GotoAsync("about:blank?foo");`);
+var page1 = await context.NewPageAsync();
+await page1.GotoAsync("about:blank?foo");`);
     } else {
       expect(sources.get('JavaScript')!.text).toContain(`
   const page1Promise = page.waitForEvent('popup');
@@ -541,7 +541,7 @@ test.describe('cli codegen', () => {
     await page.locator("#textarea").fill(\"Hello'\\"\`\\nWorld\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
+await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
 
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });

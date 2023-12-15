@@ -46,7 +46,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -144,14 +144,14 @@ test.describe('cli codegen', () => {
         .setPosition(250, 250));`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("canvas").ClickAsync(new LocatorClickOptions
-        {
-            Position = new Position
-            {
-                X = 250,
-                Y = 250,
-            },
-        });`);
+await page.Locator("canvas").ClickAsync(new LocatorClickOptions
+{
+    Position = new Position
+    {
+        X = 250,
+        Y = 250,
+    },
+});`);
     expect(message.text()).toBe('click 250 250');
   });
 
@@ -188,7 +188,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -249,7 +249,7 @@ test.describe('cli codegen', () => {
     await page.locator("#input").fill(\"John\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#input").FillAsync(\"John\");`);
+await page.Locator("#input").FillAsync(\"John\");`);
 
     expect(message.text()).toBe('John');
   });
@@ -283,7 +283,7 @@ test.describe('cli codegen', () => {
     await page.locator("#input").fill(\"てすと\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#input").FillAsync(\"てすと\");`);
+await page.Locator("#input").FillAsync(\"てすと\");`);
 
     expect(message.text()).toBe('てすと');
   });
@@ -366,7 +366,7 @@ test.describe('cli codegen', () => {
     await page.get_by_role("textbox").press("Shift+Enter")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
+await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
 
     expect(messages[0].text()).toBe('press');
   });
@@ -474,7 +474,7 @@ test.describe('cli codegen', () => {
     await page.locator("#checkbox").check()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#checkbox").CheckAsync();`);
+await page.Locator("#checkbox").CheckAsync();`);
 
     expect(message.text()).toBe('true');
   });
@@ -544,7 +544,7 @@ test.describe('cli codegen', () => {
     await page.locator("#checkbox").uncheck()`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#checkbox").UncheckAsync();`);
+await page.Locator("#checkbox").UncheckAsync();`);
 
     expect(message.text()).toBe('false');
   });
@@ -576,7 +576,7 @@ test.describe('cli codegen', () => {
     await page.locator("#age").select_option("2")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
+await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
 
     expect(message.text()).toBe('2');
   });
@@ -617,7 +617,7 @@ test.describe('cli codegen', () => {
     await page.locator(\"#age\").select_option(\"2\")`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
+await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
   });
@@ -656,10 +656,10 @@ test.describe('cli codegen', () => {
     page1 = await page1_info.value`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        var page1 = await page.RunAndWaitForPopupAsync(async () =>
-        {
-            await page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
-        });`);
+var page1 = await page.RunAndWaitForPopupAsync(async () =>
+{
+    await page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
+});`);
 
     expect(popup.url()).toBe('about:blank');
   });
@@ -696,7 +696,7 @@ test.describe('cli codegen', () => {
     page.get_by_text("link").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-        await page.GetByText("link").ClickAsync();`);
+await page.GetByText("link").ClickAsync();`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -741,9 +741,9 @@ test.describe('cli codegen', () => {
         .setButton(MouseButton.MIDDLE));`);
 
     expect(sources.get('C#')!.text).toContain(`
-        await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
-        {
-            Button = MouseButton.Middle,
-        });`);
+await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
+{
+    Button = MouseButton.Middle,
+});`);
   });
 });
