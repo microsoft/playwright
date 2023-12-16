@@ -29,7 +29,7 @@
     }
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "0.2.10",
+    "@analogjs/vite-plugin-angular": "0.2.28",
     "@angular-devkit/build-angular": "^16.1.0",
     "@playwright/experimental-ct-core": "1.42.0-next",
     "vite": "^4.4.9"
