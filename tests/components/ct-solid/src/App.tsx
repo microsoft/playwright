@@ -6,8 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 export default function App() {
   return <>
     <header>
-      { /* 2023-05-03: remove elementtiming and fetchpriority from img when this issue is resolved: https://github.com/ryansolid/dom-expressions/pull/244 */}
-      <img src={logo} alt="logo" width={125} height={125} elementtiming="0" fetchpriority="auto" />
+      <img src={logo} alt="logo" width={125} height={125} />
       <A href="/">Login</A>
       <A href="/dashboard">Dashboard</A>
     </header>
