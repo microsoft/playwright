@@ -542,7 +542,7 @@ set NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
 $Env:NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
 ```
 
-If your network is slow to connect to Playwright browser archive, you can increase the overall download timeout in milliseconds with `PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT` environment variable:
+If your network is slow to connect to Playwright browser archive, you can increase the connection and idle timeout in milliseconds with `PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT` environment variable:
 
 ```bash tab=bash-bash lang=js
 PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 npx playwright install
