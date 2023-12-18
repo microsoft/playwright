@@ -207,9 +207,9 @@ export const UIModeView: React.FC<{}> = ({
         <button className='button secondary' onClick={closeInstallDialog}>Dismiss</button>
       </div>
     </dialog>}
-    {isDisconnected && <div className='drop-target'>
+    {isDisconnected && <div className='disconnected'>
       <div className='title'>UI Mode disconnected</div>
-      <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
+      <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
     </div>}
     <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
       <div className='vbox'>
