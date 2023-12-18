@@ -28,7 +28,6 @@ export class TimeoutError extends Error {
 export class TargetClosedError extends Error {
   constructor(cause?: string) {
     super(cause || 'Target page, context or browser has been closed');
-    this.name = 'TargetClosedError';
   }
 }
 
