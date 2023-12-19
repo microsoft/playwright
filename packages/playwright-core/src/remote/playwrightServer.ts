@@ -56,7 +56,7 @@ export class PlaywrightServer {
       this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android.attribution.playwright;
   }
 
-  async listen(port: number = 0, hostname: string = 'localhost'): Promise<string> {
+  async listen(port: number = 0, hostname?: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
     const server = createHttpServer((request: http.IncomingMessage, response: http.ServerResponse) => {
@@ -79,7 +79,7 @@ export class PlaywrightServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${this._options.path}` : `ws://${hostname}:${address.port}${this._options.path}`;
+        const wsEndpoint = typeof address === 'string' ? `${address}${this._options.path}` : `ws://${hostname || 'localhost'}:${address.port}${this._options.path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });
