@@ -19,7 +19,12 @@
     "sirv-cli": "^2.0.0"
   },
   "dependencies": {
-    "svelte": "^3.0.0",
+    "svelte": "^4.2.8",
     "svelte-navigator": "^3.2.2"
+  },
+  "overrides": {
+    "svelte-navigator": {
+      "svelte": "$svelte"
+    }
   }
 }
