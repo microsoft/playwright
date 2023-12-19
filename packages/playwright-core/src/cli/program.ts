@@ -257,12 +257,14 @@ program
 program
     .command('run-server', { hidden: true })
     .option('--port <port>', 'Server port')
+    .option('--host <host>', 'Server host')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,
+        host: options.host,
         path: options.path,
         maxConnections: options.maxClients ? +options.maxClients : Infinity,
         extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
