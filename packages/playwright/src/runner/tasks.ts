@@ -102,7 +102,7 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: ReporterV2, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
+  taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: true }));
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
 }
