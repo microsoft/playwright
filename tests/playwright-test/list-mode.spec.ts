@@ -152,7 +152,8 @@ test('should report errors', async ({ runInlineTest }) => {
   expect(result.output).toContain('> 3 |       oh = 2;');
 });
 
-test('should ignore .only', async ({ runInlineTest }) => {
+test('should respect .only', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28709' });
   const result = await runInlineTest({
     'a.test.js': `
       const { test, expect } = require('@playwright/test');
@@ -167,9 +168,8 @@ test('should ignore .only', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain([
     `Listing tests:`,
-    `  a.test.js:3:7 › example1`,
     `  a.test.js:6:12 › example2`,
-    `Total: 2 tests in 1 file`
+    `Total: 1 test in 1 file`
   ].join('\n'));
 });
 
