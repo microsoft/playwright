@@ -53,6 +53,7 @@ export function runDriver() {
 
 export type RunServerOptions = {
   port?: number,
+  host?: string,
   path?: string,
   extension?: boolean,
   maxConnections?: number,
@@ -63,12 +64,13 @@ export type RunServerOptions = {
 export async function runServer(options: RunServerOptions) {
   const {
     port,
+    host,
     path = '/',
     maxConnections = Infinity,
     extension,
   } = options;
   const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections });
-  const wsEndpoint = await server.listen(port);
+  const wsEndpoint = await server.listen(port, host);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
