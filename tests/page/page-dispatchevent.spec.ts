@@ -221,11 +221,11 @@ it('should throw if argument is from different frame', async ({ page, server }) 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   {
     const dataTransfer = await page.frames()[1].evaluateHandle(() => new DataTransfer());
-    await page.frameLocator('iframe').locator('div').dispatchEvent("drop", { dataTransfer });
+    await page.frameLocator('iframe').locator('div').dispatchEvent('drop', { dataTransfer });
   }
   {
     const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
-    await expect(page.frameLocator('iframe').locator('div').dispatchEvent("drop", { dataTransfer }))
-      .rejects.toThrow('JSHandles can be evaluated only in the context they were created!');
+    await expect(page.frameLocator('iframe').locator('div').dispatchEvent('drop', { dataTransfer }))
+        .rejects.toThrow('JSHandles can be evaluated only in the context they were created!');
   }
 });
