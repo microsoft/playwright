@@ -28,7 +28,7 @@ export const GlassPane: React.FC<{
       return;
 
     const glassPaneDiv = document.createElement('div');
-    glassPaneDiv.style.position = 'absolute';
+    glassPaneDiv.style.position = 'fixed';
     glassPaneDiv.style.top = '0';
     glassPaneDiv.style.right = '0';
     glassPaneDiv.style.bottom = '0';

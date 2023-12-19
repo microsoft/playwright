@@ -22,8 +22,8 @@ import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
-import type { ImageDiff } from './imageDiffView';
-import { ImageDiffView } from './imageDiffView';
+import type { ImageDiff } from '@web/shared/imageDiffView';
+import { ImageDiffView } from '@web/shared/imageDiffView';
 import { TestErrorView } from './testErrorView';
 import './testResultView.css';
 
@@ -102,7 +102,7 @@ export const TestResultView: React.FC<{
 
     {diffs.map((diff, index) =>
       <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
-        <ImageDiffView key='image-diff' imageDiff={diff}></ImageDiffView>
+        <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}
 
@@ -110,7 +110,7 @@ export const TestResultView: React.FC<{
       {screenshots.map((a, i) => {
         return <div key={`screenshot-${i}`}>
           <a href={a.path}>
-            <img src={a.path} />
+            <img className='screenshot' src={a.path} />
           </a>
           <AttachmentLink attachment={a}></AttachmentLink>
         </div>;
@@ -120,7 +120,7 @@ export const TestResultView: React.FC<{
     {!!traces.length && <AutoChip header='Traces'>
       {<div>
         <a href={generateTraceUrl(traces)}>
-          <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
+          <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
         {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
       </div>}

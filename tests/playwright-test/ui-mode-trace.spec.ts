@@ -172,7 +172,7 @@ test('should show image diff', async ({ runUITest }) => {
   await expect(page.getByText('Diff', { exact: true })).toBeVisible();
   await expect(page.getByText('Actual', { exact: true })).toBeVisible();
   await expect(page.getByText('Expected', { exact: true })).toBeVisible();
-  await expect(page.locator('.image-diff-view .image-wrapper img')).toBeVisible();
+  await expect(page.getByTestId('test-result-image-mismatch').locator('img')).toBeVisible();
 });
 
 test('should show screenshot', async ({ runUITest }) => {

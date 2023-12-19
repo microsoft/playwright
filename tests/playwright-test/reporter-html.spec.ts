@@ -152,32 +152,44 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('text=Image mismatch')).toBeVisible();
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
 
-      const set = new Set();
+      await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
+        'Diff',
+        'Actual',
+        'Expected',
+        'Side by side',
+        'Slider',
+      ]);
 
-      const imageDiff = page.locator('data-testid=test-result-image-mismatch');
-      await imageDiff.locator('text="Actual"').click();
-      const expectedImage = imageDiff.locator('img').first();
-      const actualImage = imageDiff.locator('img').last();
-      await expect(expectedImage).toHaveAttribute('src', /.*png/);
-      await expect(actualImage).toHaveAttribute('src', /.*png/);
-      set.add(await expectedImage.getAttribute('src'));
-      set.add(await actualImage.getAttribute('src'));
-      expect(set.size, 'Should be two images overlaid').toBe(2);
-      await expect(imageDiff).toContainText('200x200');
+      const imageDiff = page.getByTestId('test-result-image-mismatch');
+      await test.step('Diff', async () => {
+        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Diff');
+      });
 
-      const sliderElement = imageDiff.locator('data-testid=test-result-image-mismatch-grip');
-      await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('590px');
+      await test.step('Actual', async () => {
+        await imageDiff.getByText('Actual', { exact: true }).click();
+        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Actual');
+      });
 
-      await imageDiff.locator('text="Expected"').click();
-      set.add(await expectedImage.getAttribute('src'));
-      set.add(await actualImage.getAttribute('src'));
-      expect(set.size).toBe(2);
+      await test.step('Expected', async () => {
+        await imageDiff.getByText('Expected', { exact: true }).click();
+        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Expected');
+      });
 
-      await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('350px');
+      await test.step('Side by side', async () => {
+        await imageDiff.getByText('Side by side').click();
+        await expect(imageDiff.locator('img')).toHaveCount(2);
+        await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
+        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+        await imageDiff.locator('img').last().click();
+        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Diff');
+      });
 
-      await imageDiff.locator('text="Diff"').click();
-      set.add(await imageDiff.locator('img').getAttribute('src'));
-      expect(set.size, 'Should be three images altogether').toBe(3);
+      await test.step('Slider', async () => {
+        await imageDiff.getByText('Slider', { exact: true }).click();
+        await expect(imageDiff.locator('img')).toHaveCount(2);
+        await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
+        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+      });
     });
 
     test('should include multiple image diffs', async ({ runInlineTest, page, showReport }) => {
@@ -280,18 +292,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('text=Image mismatch')).toHaveCount(1);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
       await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
-      const imageDiff = page.locator('data-testid=test-result-image-mismatch');
-      await imageDiff.locator('text="Actual"').click();
-      const image = imageDiff.locator('img');
-      await expect(image.first()).toHaveAttribute('src', /.*png/);
-      await expect(image.last()).toHaveAttribute('src', /.*png/);
-      const previousSrc = await image.first().getAttribute('src');
-      const actualSrc = await image.last().getAttribute('src');
-      await imageDiff.locator('text="Previous"').click();
-      await imageDiff.locator('text="Diff"').click();
-      const diffSrc = await image.getAttribute('src');
-      const set = new Set([previousSrc, actualSrc, diffSrc]);
-      expect(set.size).toBe(3);
+      await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
+        'Diff',
+        'Actual',
+        'Expected',
+        'Side by side',
+        'Slider',
+      ]);
     });
 
     test('should not include image diff with non-images', async ({ runInlineTest, page, showReport }) => {
