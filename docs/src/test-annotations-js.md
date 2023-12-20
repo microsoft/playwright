@@ -84,7 +84,7 @@ npx playwright test --grep @fast
 ```
 
 ```powershell tab=bash-powershell
-npx playwright test --grep '@fast'
+npx playwright test --grep "@fast"
 ```
 
 ```batch tab=bash-batch
@@ -98,7 +98,7 @@ npx playwright test --grep-invert @fast
 ```
 
 ```powershell tab=bash-powershell
-npx playwright test --grep-invert '@fast'
+npx playwright test --grep-invert "@fast"
 ```
 
 ```batch tab=bash-batch
