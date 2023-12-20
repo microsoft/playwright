@@ -287,3 +287,18 @@ it('should wait for multiple options to be present', async ({ page, server }) =>
   const items = await selectPromise;
   expect(items).toStrictEqual(['green', 'scarlet']);
 });
+
+it('input event.composed should be true', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
+  await page.goto(server.PREFIX + '/input/select.html');
+  await page.locator('select').evaluate(select => {
+    (window as any).firedEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+  await page.selectOption('select', 'blue');
+  expect(await page.evaluate(() => window['firedEvents'])).toEqual(['input:true', 'change:false']);
+});

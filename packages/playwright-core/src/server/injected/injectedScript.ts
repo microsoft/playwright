@@ -720,7 +720,7 @@ export class InjectedScript {
     select.value = undefined as any;
     selectedOptions.forEach(option => option.selected = true);
     progress.log('    selected specified option(s)');
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
+    select.dispatchEvent(new Event('input', { 'bubbles': true, 'composed': true }));
     select.dispatchEvent(new Event('change', { 'bubbles': true }));
     return selectedOptions.map(option => option.value);
   }
