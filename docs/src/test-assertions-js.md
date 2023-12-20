@@ -223,7 +223,7 @@ await expect(async () => {
 }).toPass();
 ```
 
-You can also specify custom timeout for retry intervals:
+You can also specify custom timeout and retry intervals:
 
 ```js
 await expect(async () => {
@@ -236,6 +236,8 @@ await expect(async () => {
   timeout: 60_000
 });
 ```
+
+Note that by default `toPass` has timeout 0 and does not respect custom [expect timeout](./test-timeouts.md#expect-timeout).
 
 ## Add custom matchers using expect.extend
 
