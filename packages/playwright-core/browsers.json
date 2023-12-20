@@ -33,7 +33,7 @@
     },
     {
       "name": "firefox-beta",
-      "revision": "1433",
+      "revision": "1435",
       "installByDefault": false,
       "browserVersion": "121.0b8"
     },
