@@ -382,6 +382,10 @@ export class CRPage implements PageDelegate {
       throw new Error('Frame has been detached.');
     return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
   }
+
+  shouldToggleStyleSheetToSyncAnimations(): boolean {
+    return false;
+  }
 }
 
 class FrameSession {

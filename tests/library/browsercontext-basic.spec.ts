@@ -233,11 +233,21 @@ it('setContent should work after disabling javascript', async ({ contextFactory 
   await expect(page.locator('h1')).toHaveText('Hello');
 });
 
-it('should work with offline option', async ({ browser, server }) => {
+it('should work with offline option', async ({ browser, server, browserName }) => {
   const context = await browser.newContext({ offline: true });
   const page = await context.newPage();
   let error = null;
-  await page.goto(server.EMPTY_PAGE).catch(e => error = e);
+  if (browserName === 'firefox') {
+    // Firefox navigates to an error page, and this navigation might conflict with the
+    // next navigation we do in test.
+    // So we need to wait for the navigation explicitly.
+    await Promise.all([
+      page.goto(server.EMPTY_PAGE).catch(e => error = e),
+      page.waitForEvent('framenavigated'),
+    ]);
+  } else {
+    await page.goto(server.EMPTY_PAGE).catch(e => error = e);
+  }
   expect(error).toBeTruthy();
   await context.setOffline(false);
   const response = await page.goto(server.EMPTY_PAGE);

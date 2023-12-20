@@ -190,7 +190,10 @@ export class TraceModel {
       }
       case 'log': {
         const existing = actionMap.get(event.callId);
-        existing!.log.push({
+        // We have some corrupted traces out there, tolerate them.
+        if (!existing)
+          return;
+        existing.log.push({
           time: event.time,
           message: event.message,
         });
@@ -203,6 +206,8 @@ export class TraceModel {
         existing!.result = event.result;
         existing!.error = event.error;
         existing!.attachments = event.attachments;
+        if (event.point)
+          existing!.point = event.point;
         for (const attachment of event.attachments?.filter(a => a.sha1) || [])
           this._attachments.set(attachment.sha1!, attachment);
         break;

@@ -79,7 +79,7 @@ import childProcess from 'child_process';
 
 const EXECUTABLE_PATH = path.join(
     __dirname,
-    '../../webview2-app/bin/Debug/net6.0-windows/webview2.exe',
+    '../../webview2-app/bin/Debug/net8.0-windows/webview2.exe',
 );
 
 export const test = base.extend({
@@ -148,7 +148,7 @@ public class WebView2Process {
   public int cdpPort;
   private Path _dataDir;
   private Process _process;
-  private Path _executablePath = Path.of("../webview2-app/bin/Debug/net6.0-windows/webview2.exe");
+  private Path _executablePath = Path.of("../webview2-app/bin/Debug/net8.0-windows/webview2.exe");
 
   public WebView2Process() throws IOException {
     cdpPort = nextFreePort();
@@ -268,7 +268,7 @@ EXECUTABLE_PATH = (
     / "webview2-app"
     / "bin"
     / "Debug"
-    / "net6.0-windows"
+    / "net8.0-windows"
     / "webview2.exe"
 )
 
@@ -361,7 +361,7 @@ public class WebView2Test : PlaywrightTest
     public IPage Page { get; internal set; } = null!;
     private Process? _webView2Process = null;
     private string _userDataDir = null!;
-    private string _executablePath = Path.Join(Directory.GetCurrentDirectory(), @"..\..\..\..\webview2-app\bin\Debug\net6.0-windows\webview2.exe");
+    private string _executablePath = Path.Join(Directory.GetCurrentDirectory(), @"..\..\..\..\webview2-app\bin\Debug\net8.0-windows\webview2.exe");
 
     [SetUp]
     public async Task BrowserSetUp()

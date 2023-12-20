@@ -111,7 +111,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.didNotRun).toBe(1);
+  expect(result.skipped).toBe(1);
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
@@ -634,9 +634,9 @@ test('should not hang on worker error in test file', async ({ runInlineTest }) =
     `,
   }, { 'timeout': 3000 });
   expect(result.exitCode).toBe(1);
-  expect(result.results).toHaveLength(1);
   expect(result.results[0].status).toBe('failed');
   expect(result.results[0].error.message).toContain('Error: worker process exited unexpectedly');
+  expect(result.results[1].status).toBe('skipped');
 });
 
 test('fast double SIGINT should be ignored', async ({ interactWithTestRunner }) => {

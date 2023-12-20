@@ -327,6 +327,20 @@ it('should emit filechooser event for iframe', async ({ page, server, browser })
   expect(chooser).toBeTruthy();
 });
 
+it('should be able to click in iframe', async ({ page, server, browser }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28023' });
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(await countOOPIFs(browser)).toBe(1);
+  expect(page.frames().length).toBe(2);
+  const frame = page.frames()[1];
+  await frame.setContent(`<button onclick="console.log('clicked')">OK</button>`);
+  const [message] = await Promise.all([
+    page.waitForEvent('console'),
+    frame.click('button'),
+  ]);
+  expect(message.text()).toBe('clicked');
+});
+
 it('should not throw on exposeFunction when oopif detaches', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);

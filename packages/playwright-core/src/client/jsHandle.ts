@@ -72,7 +72,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async _objectCount() {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const { count } = await this._channel.objectCount();
       return count;
     });

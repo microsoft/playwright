@@ -470,7 +470,7 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
     tokens.push(snippet);
   }
 
-  if (parsedStack) {
+  if (parsedStack && parsedStack.stackLines.length) {
     tokens.push('');
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
   }

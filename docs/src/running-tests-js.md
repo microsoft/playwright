@@ -133,7 +133,7 @@ To debug a specific test from the line number where the `test(..` is defined, ad
 npx playwright test example.spec.ts:10 --debug
 ```
 
-While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You an also edit the locator and see it highlighting live on the Browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into you test.
+While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator and see it highlighting live on the Browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
 ![Locator picker in the Playwright Inspector](https://github.com/microsoft/playwright/assets/13063165/013d5edb-583e-423a-bb53-9f57bab7f3e1)
 

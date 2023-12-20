@@ -47,7 +47,7 @@ import { TargetClosedError, parseError } from './errors';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
-  private _routes: network.RouteHandler[] = [];
+  _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -62,8 +62,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
-  private _closeWasCalled = false;
+  _closeWasCalled = false;
   private _closeReason: string | undefined;
+  private _harRouters: HarRouter[] = [];
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -193,19 +194,28 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _onRoute(route: network.Route) {
     route._context = this;
+    const page = route.request()._safePage();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
+      // If the page or the context was closed we stall all requests right away.
+      if (page?._closeWasCalled || this._closeWasCalled)
+        return;
       if (!routeHandler.matches(route.request().url()))
         continue;
+      const index = this._routes.indexOf(routeHandler);
+      if (index === -1)
+        continue;
       if (routeHandler.willExpire())
-        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+        this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
         this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
       if (handled)
         return;
     }
-    await route._innerContinue(true);
+    // If the page is closed or unrouteAll() was called without waiting and interception disabled,
+    // the method will throw an error - silence it.
+    await route._innerContinue(true).catch(() => {});
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -324,12 +334,39 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
-    harRouter.addContextRoute(this);
+    this._harRouters.push(harRouter);
+    await harRouter.addContextRoute(this);
+  }
+
+  private _disposeHarRouters() {
+    this._harRouters.forEach(router => router.dispose());
+    this._harRouters = [];
+  }
+
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
+    await this._unrouteInternal(this._routes, [], options?.behavior);
+    this._disposeHarRouters();
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
+    const removed = [];
+    const remaining = [];
+    for (const route of this._routes) {
+      if (urlMatchesEqual(route.url, url) && (!handler || route.handler === handler))
+        removed.push(route);
+      else
+        remaining.push(route);
+    }
+    await this._unrouteInternal(removed, remaining, 'default');
+  }
+
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
+    this._routes = remaining;
     await this._updateInterceptionPatterns();
+    if (!behavior || behavior === 'default')
+      return;
+    const promises = removed.map(routeHandler => routeHandler.stop(behavior));
+    await Promise.all(promises);
   }
 
   private async _updateInterceptionPatterns() {
@@ -342,7 +379,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
@@ -384,6 +421,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._disposeHarRouters();
     this.emit(Events.BrowserContext.Close, this);
   }
 

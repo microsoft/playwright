@@ -18,7 +18,12 @@ import type { SerializedError } from '@protocol/channels';
 import { isError } from '../utils';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
-export class TimeoutError extends Error {}
+export class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
 
 export class TargetClosedError extends Error {
   constructor(cause?: string) {

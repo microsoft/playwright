@@ -181,6 +181,7 @@ async function run() {
                 const allowedCodeLangs = new Set([
                   'csharp',
                   'java',
+                  'css',
                   'js',
                   'ts',
                   'python',
@@ -199,6 +200,7 @@ async function run() {
                   'html',
                   'bash',
                   'sh',
+                  'Dockerfile',
                 ]);
                 if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
                   throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);

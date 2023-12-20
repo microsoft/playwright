@@ -64,7 +64,8 @@ page = context.new_page()
 ```
 
 ```csharp
-await using var browser = playwright.Chromium.LaunchAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Chromium.LaunchAsync();
 var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
 ```

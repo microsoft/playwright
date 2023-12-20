@@ -30,10 +30,19 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.41.0-next",
-    "@sveltejs/vite-plugin-svelte": "^2.1.1"
+    "@sveltejs/vite-plugin-svelte": "^3.0.1"
   },
   "devDependencies": {
-    "svelte": "^3.55.1"
+    "svelte": "^4.2.8"
+  },
+  "peerDependencies": {
+    "svelte": "^4.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sveltejs/vite-plugin-svelte": {
+      "optional": true
+    }
   },
   "bin": {
     "playwright": "cli.js"

@@ -150,10 +150,10 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - run: dotnet build
     - name: Ensure browsers are installed
-      run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
+      run: pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
     - name: Run your tests
       run: dotnet test
 ```
@@ -268,7 +268,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
       - run: dotnet build
       - name: Run your tests
         run: dotnet test
@@ -372,10 +372,10 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - run: dotnet build
     - name: Ensure browsers are installed
-      run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
+      run: pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
     - name: Run tests
       run: dotnet test
       env:

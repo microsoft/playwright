@@ -244,6 +244,12 @@ Attribute name.
 
 Expected attribute value.
 
+### option: LocatorAssertions.NotToHaveAttribute.ignoreCase
+* since: v1.40
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -1535,6 +1541,9 @@ Snapshot name.
 ### option: LocatorAssertions.toHaveScreenshot#1.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
 
+### option: LocatorAssertions.toHaveScreenshot#1.stylePath = %%-screenshot-option-style-path-%%
+* since: v1.41
+
 ### option: LocatorAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23
 
@@ -1580,6 +1589,9 @@ Note that screenshot assertions only work with Playwright test runner.
 
 ### option: LocatorAssertions.toHaveScreenshot#2.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
+
+### option: LocatorAssertions.toHaveScreenshot#2.stylePath = %%-screenshot-option-style-path-%%
+* since: v1.41
 
 ### option: LocatorAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23

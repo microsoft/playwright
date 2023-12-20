@@ -35,7 +35,7 @@ await Expect(Page.GetByPlaceholder("Search docs")).ToHaveValueAsync("locator");
 ### Other Changes
 
 - Methods [`method: Download.path`] and [`method: Download.createReadStream`] throw an error for failed and cancelled downloads.
-- Playwright [docker image](./docker.md) now comes with Node.js v20.
+- Playwright [docker image](./docker.md) now comes with .NET 8 (new LTS).
 
 ### Browser Versions
 

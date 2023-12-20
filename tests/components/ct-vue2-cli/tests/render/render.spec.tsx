@@ -12,8 +12,9 @@ test('render attributes', async ({ mount }) => {
   await expect(component).toHaveClass('primary');
 });
 
-test('get textContent of the empty template', async ({ mount }) => {
+test('render an empty component', async ({ page, mount }) => {
   const component = await mount(<EmptyTemplate />);
+  expect(await page.evaluate(() => 'slots' in window && window.slots)).toEqual({});
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');

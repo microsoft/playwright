@@ -201,10 +201,15 @@ it('should show custom HTTP headers', async ({ page, server }) => {
 });
 
 // @see https://github.com/GoogleChrome/puppeteer/issues/4337
-it('should work with redirect inside sync XHR', async ({ page, server }) => {
+it('should work with redirect inside sync XHR', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28461' });
+  it.fixme(browserName === 'webkit', 'No Network.requestIntercepted for the request');
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/logo.png', '/pptr.png');
-  await page.route('**/*', route => route.continue());
+  let continuePromise;
+  await page.route('**/*', route => {
+    continuePromise = route.continue();
+  });
   const status = await page.evaluate(async () => {
     const request = new XMLHttpRequest();
     request.open('GET', '/logo.png', false);  // `false` makes the request synchronous
@@ -212,6 +217,8 @@ it('should work with redirect inside sync XHR', async ({ page, server }) => {
     return request.status;
   });
   expect(status).toBe(200);
+  expect(continuePromise).toBeTruthy();
+  await continuePromise;
 });
 
 it('should pause intercepted XHR until continue', async ({ page, server, browserName }) => {
@@ -306,6 +313,24 @@ it('should be abortable with custom error codes', async ({ page, server, browser
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
   else
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
+});
+
+it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route));
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.abort(); // Should not throw.
 });
 
 it('should send referer', async ({ page, server }) => {
@@ -900,6 +925,25 @@ it('should support the times parameter with route matching', async ({ page, serv
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
+});
+
+it('should work if handler with times parameter was removed from another handler', async ({ page, server }) => {
+  const intercepted = [];
+  const handler = async route => {
+    intercepted.push('first');
+    void route.continue();
+  };
+  await page.route('**/*', handler, { times: 1 });
+  await page.route('**/*', async route => {
+    intercepted.push('second');
+    await page.unroute('**/*', handler);
+    await route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual(['second']);
+  intercepted.length = 0;
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual(['second']);
 });
 
 it('should support async handler w/ times', async ({ page, server }) => {

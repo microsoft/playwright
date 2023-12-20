@@ -243,6 +243,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
+      // We assume that the matcher will read the current expect timeout the first thing.
+      setCurrentExpectConfigureTimeout(this._info.timeout);
       if (!testInfo)
         return matcher.call(target, ...args);
 
@@ -282,8 +284,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       const expectZone: ExpectZone = { title, wallTime };
-      // We assume that the matcher will read the current expect timeout the first thing.
-      setCurrentExpectConfigureTimeout(this._info.timeout);
+
       try {
         const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => matcher.call(target, ...args));
         if (result instanceof Promise)

@@ -118,8 +118,8 @@ export class Highlight {
     this._innerUpdateHighlight(elements, options);
   }
 
-  maskElements(elements: Element[], color?: string) {
-    this._innerUpdateHighlight(elements, { color: color ? color : '#F0F' });
+  maskElements(elements: Element[], color: string) {
+    this._innerUpdateHighlight(elements, { color: color });
   }
 
   private _innerUpdateHighlight(elements: Element[], options: HighlightOptions) {

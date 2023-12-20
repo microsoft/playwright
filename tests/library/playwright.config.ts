@@ -46,7 +46,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob'],
+    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
     ['html', { open: 'on-failure' }]
   ];

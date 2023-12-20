@@ -254,7 +254,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any) => {
         const testInfo = currentTestInfo();
-        if (!testInfo || apiName.startsWith('expect.') || apiName.includes('setTestIdAttribute'))
+        if (!testInfo || apiName.includes('setTestIdAttribute'))
           return { userObject: null };
         const step = testInfo._addStep({
           location: frames[0] as any,

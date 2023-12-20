@@ -19,7 +19,7 @@ import { test, expect, retries } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
-test('should merge trace events', async ({ runUITest, server }) => {
+test('should merge trace events', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -99,7 +99,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
   ]);
 });
 
-test('should locate sync assertions in source', async ({ runUITest, server }) => {
+test('should locate sync assertions in source', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -118,7 +118,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
   ).toHaveText('4        expect(1).toBe(1);');
 });
 
-test('should show snapshots for sync assertions', async ({ runUITest, server }) => {
+test('should show snapshots for sync assertions', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -150,7 +150,7 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
   ).toHaveText('Submit');
 });
 
-test('should show image diff', async ({ runUITest, server }) => {
+test('should show image diff', async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.js': `
       module.exports = {
@@ -175,7 +175,7 @@ test('should show image diff', async ({ runUITest, server }) => {
   await expect(page.locator('.image-diff-view .image-wrapper img')).toBeVisible();
 });
 
-test('should show screenshot', async ({ runUITest, server }) => {
+test('should show screenshot', async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.js': `
       module.exports = {
@@ -196,4 +196,33 @@ test('should show screenshot', async ({ runUITest, server }) => {
   await page.getByText(/Attachments/).click();
   await expect(page.getByText('Screenshots', { exact: true })).toBeVisible();
   await expect(page.locator('.attachment-item img')).toHaveCount(1);
+});
+
+test('should not fail on internal page logs', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ browser }, testInfo) => {
+        const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+        const page = await context.newPage();
+        await page.goto("${server.EMPTY_PAGE}");
+        await page.context().storageState({ path: testInfo.outputPath('storage.json') });
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /browser.newContext[\d.]+m?s/,
+    /browserContext.newPage[\d.]+m?s/,
+    /page.goto/,
+    /browserContext.storageState[\d.]+m?s/,
+    /After Hooks/,
+  ]);
 });

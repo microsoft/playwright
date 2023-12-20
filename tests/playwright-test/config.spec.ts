@@ -557,3 +557,37 @@ test('should merge configs', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should merge ct configs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig, expect } from '@playwright/experimental-ct-react';
+      const baseConfig = defineConfig({
+        timeout: 10,
+        use: {
+          foo: 1,
+        },
+      });
+      const derivedConfig = defineConfig(baseConfig, {
+        grep: 'hi',
+        use: {
+          bar: 2,
+        },
+      });
+
+      // Make sure ct-specific properties are preserved
+      // and config properties are merged.
+      expect(derivedConfig).toEqual(expect.objectContaining({
+        use: { foo: 1, bar: 2 },
+        grep: 'hi',
+        build: { babelPlugins: [expect.anything()] },
+        _plugins: [expect.anything()],
+      }));
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/experimental-ct-react';
+      test('pass', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

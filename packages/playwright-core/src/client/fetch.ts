@@ -106,42 +106,42 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 
   async delete(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'DELETE',
     });
   }
 
   async head(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'HEAD',
     });
   }
 
   async get(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'GET',
     });
   }
 
   async patch(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'PATCH',
     });
   }
 
   async post(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'POST',
     });
   }
 
   async put(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
-    return this.fetch(url, {
+    return await this.fetch(url, {
       ...options,
       method: 'PUT',
     });
@@ -150,11 +150,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   async fetch(urlOrRequest: string | api.Request, options: FetchOptions = {}): Promise<APIResponse> {
     const url = isString(urlOrRequest) ? urlOrRequest : undefined;
     const request = isString(urlOrRequest) ? undefined : urlOrRequest;
-    return this._innerFetch({ url, request, ...options });
+    return await this._innerFetch({ url, request, ...options });
   }
 
   async _innerFetch(options: FetchOptions & { url?: string, request?: api.Request } = {}): Promise<APIResponse> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
       assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' should be greater than or equal to '0'`);

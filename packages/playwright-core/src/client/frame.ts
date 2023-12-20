@@ -113,7 +113,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return this._page!._wrapApiCall(async () => {
+    return await this._page!._wrapApiCall(async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       const waiter = this._setupNavigationWaiter(options);
 
@@ -149,7 +149,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
     state = verifyLoadState('state', state);
-    return this._page!._wrapApiCall(async () => {
+    return await this._page!._wrapApiCall(async () => {
       const waiter = this._setupNavigationWaiter(options);
       if (this._loadStates.has(state)) {
         waiter.log(`  not waiting, "${state}" event already fired`);

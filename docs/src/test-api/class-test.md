@@ -55,6 +55,8 @@ When called in the scope of a test file, runs after all tests in the file. When 
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
+Playwright will continue running all applicable hooks even if some of them have failed.
+
 **Usage**
 
 ```js
@@ -75,6 +77,10 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 * since: v1.38
 
 Declares an `afterAll` hook with a title that is executed once per worker after all tests.
+
+**Details**
+
+See [`method: Test.afterAll#1`].
 
 **Usage**
 
@@ -110,6 +116,8 @@ When called in the scope of a test file, runs after each test in the file. When 
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can check whether the test succeeded or failed.
 
+Playwright will continue running all applicable hooks even if some of them have failed.
+
 **Usage**
 
 ```js title="example.spec.ts"
@@ -138,6 +146,10 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 * since: v1.38
 
 Declares an `afterEach` hook with a title that is executed after each test.
+
+**Details**
+
+See [`method: Test.afterEach#1`].
 
 **Usage**
 
@@ -181,6 +193,8 @@ When called in the scope of a test file, runs before all tests in the file. When
 
 Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
+Playwright will continue running all applicable hooks even if some of them have failed.
+
 You can use [`method: Test.afterAll#1`] to teardown any resources set up in `beforeAll`.
 
 **Usage**
@@ -212,6 +226,10 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 * since: v1.38
 
 Declares a `beforeAll` hook with a title that is executed once per worker process before all tests.
+
+**Details**
+
+See [`method: Test.beforeAll#1`].
 
 **Usage**
 
@@ -252,6 +270,8 @@ When called in the scope of a test file, runs before each test in the file. When
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
 
+Playwright will continue running all applicable hooks even if some of them have failed.
+
 You can use [`method: Test.afterEach#1`] to teardown any resources set up in `beforeEach`.
 
 **Usage**
@@ -280,6 +300,10 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 * since: v1.38
 
 Declares a `beforeEach` hook with a title that is executed before each test.
+
+**Details**
+
+See [`method: Test.beforeEach#1`].
 
 **Usage**
 

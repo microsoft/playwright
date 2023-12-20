@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import { test as it, expect } from './pageTest';
 import { verifyViewport, attachFrame } from '../config/utils';
 import type { Route } from 'playwright-core';
@@ -308,8 +309,9 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should work for webgl', async ({ page, server, browserName, channel, browserMajorVersion }) => {
+  it('should work for webgl', async ({ page, server, browserName, platform }) => {
     it.fixme(browserName === 'firefox');
+    it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
 
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');
@@ -543,6 +545,36 @@ it.describe('page screenshot', () => {
         maskColor: '#00FF00',
       })).toMatchSnapshot('mask-color-should-work.png');
     });
+
+    it('should hide elements based on attr', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.locator('div').nth(5).evaluate(element => {
+        element.setAttribute('data-test-screenshot', 'hide');
+      });
+      expect(await page.screenshot({
+        style: `[data-test-screenshot="hide"] {
+          visibility: hidden;
+        }`
+      })).toMatchSnapshot('hide-should-work.png');
+      const visibility = await page.locator('div').nth(5).evaluate(element => element.style.visibility);
+      expect(visibility).toBe('');
+    });
+
+    it('should remove elements based on attr', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.locator('div').nth(5).evaluate(element => {
+        element.setAttribute('data-test-screenshot', 'remove');
+      });
+      expect(await page.screenshot({
+        style: `[data-test-screenshot="remove"] {
+          display: none;
+        }`
+      })).toMatchSnapshot('remove-should-work.png');
+      const display = await page.locator('div').nth(5).evaluate(element => element.style.display);
+      expect(display).toBe('');
+    });
   });
 });
 
@@ -658,7 +690,7 @@ it.describe('page screenshot animations', () => {
     expect(comparePNGs(buffer1, buffer2, { maxDiffPixels: 50 })).not.toBe(null);
   });
 
-  it('should fire transitionend for finite transitions', async ({ page, server }) => {
+  it('should fire transitionend for finite transitions', async ({ page, server, browserName, platform }) => {
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
     await div.evaluate(el => {
@@ -684,7 +716,7 @@ it.describe('page screenshot animations', () => {
     expect(await page.evaluate(() => window['__TRANSITION_END'])).toBe(true);
   });
 
-  it('should capture screenshots after layoutchanges in transitionend event', async ({ page, server }) => {
+  it('should capture screenshots after layoutchanges in transitionend event', async ({ page, server, browserName, platform }) => {
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
     await div.evaluate(el => {
@@ -825,8 +857,9 @@ it.describe('page screenshot animations', () => {
     ]);
   });
 
-  it('should wait for fonts to load', async ({ page, server, isWindows, browserName, isLinux }) => {
+  it('should wait for fonts to load', async ({ page, server, isWindows, isAndroid }) => {
     it.fixme(isWindows, 'This requires a windows-specific test expectations. https://github.com/microsoft/playwright/issues/12707');
+    it.skip(isAndroid, 'Different viewport');
     await page.setViewportSize({ width: 500, height: 500 });
     const fontRequestPromise = new Promise<any>(resolve => {
       // Stall font loading.

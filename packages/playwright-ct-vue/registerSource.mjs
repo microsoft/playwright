@@ -72,7 +72,7 @@ async function __pwResolveComponent(component) {
   if (componentFactory)
     __pwRegistry.set(component.type, await componentFactory());
 
-  if ('children' in component)
+  if ('children' in component && component.children?.length)
     await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
@@ -156,7 +156,7 @@ function __pwCreateComponent(component) {
       if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
         const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
         const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
-        slots[slot] = child.children.map(__pwCreateChild);
+        slots[slot] = child.children?.map(__pwCreateChild);
       } else {
         children.push(__pwCreateChild(child));
       }

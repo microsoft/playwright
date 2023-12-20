@@ -6,7 +6,7 @@ title: "Chrome extensions"
 ## Introduction
 
 :::note
-Extensions only work in Chrome / Chromium launched with a persistent context.
+Extensions only work in Chrome / Chromium launched with a persistent context. Use custom browser args at your own risk, as some of them may break Playwright functionality.
 :::
 
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of a [Manifest v2](https://developer.chrome.com/docs/extensions/mv2/) extension whose source is located in `./my-extension`:
@@ -213,6 +213,10 @@ def test_popup_page(page: Page, extension_id: str) -> None:
 ```
 
 ## Headless mode
+
+:::danger
+`headless=new` mode is not officially supported by Playwright and might result in unexpected behavior.
+:::
 
 By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using the following code:
 

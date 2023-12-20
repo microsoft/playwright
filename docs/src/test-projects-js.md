@@ -214,6 +214,9 @@ You can also teardown your setup by adding a [`property: TestProject.teardown`] 
 
 <img style={{display: 'flex', margin: 'auto'}} alt="global setup and teardown" loading="lazy" src="https://github.com/microsoft/playwright/assets/13063165/dfcf10a9-f601-4d0c-bd8d-9490e6efbf7a" />
 
+### Test filtering
+
+If `--grep/--grep-invert` [option](./test-cli.md#reference) is used, test file name filter is specified in [command line](./test-cli.md) or [test.only()](./api/class-test.md#test-only) is used, the will only apply to the tests from the deepest projects in the project dependency chain. In other words, if a matching test belongs to a project that has project dependencies, Playwright will run all the tests from the project depdencies ignoring the filters.
 
 ## Custom project parameters
 

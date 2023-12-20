@@ -672,3 +672,20 @@ test('should be able to use mergeTests/mergeExpect', async ({ runInlineTest }) =
   expect(result.outputLines).toContain('myFixture1: 1');
   expect(result.outputLines).toContain('myFixture2: 2');
 });
+
+test('should exit after merge-reports', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28699' });
+  const result = await runInlineTest({
+    'merge.config.ts': `
+      export default { reporter: 'line' };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'nested/folder/a.esm.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', ({}, testInfo) => {});
+    `
+  }, undefined, undefined, { additionalArgs: ['--reporter', 'blob'] });
+  expect(result.exitCode).toBe(0);
+  const { exitCode } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['-c', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
+});

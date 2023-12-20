@@ -19,7 +19,7 @@ import playwright from 'playwright';
 
 export default async () => {
   const cdpPort = 9876;
-  const spawnedProcess = childProcess.spawn(path.join(__dirname, 'webview2-app/bin/Debug/net6.0-windows/webview2.exe'), {
+  const spawnedProcess = childProcess.spawn(path.join(__dirname, 'webview2-app/bin/Debug/net8.0-windows/webview2.exe'), {
     shell: true,
     env: {
       ...process.env,

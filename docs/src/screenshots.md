@@ -31,7 +31,7 @@ await Page.ScreenshotAsync(new()
 });
 ```
 
-Screenshots API accepts many parameters for image format, clip area, quality, etc. Make sure to check them out.
+[Screenshots API](./api/class-page#page-screenshot) accepts many parameters for image format, clip area, quality, etc. Make sure to check them out.
 
 <!-- TOC -->
 
