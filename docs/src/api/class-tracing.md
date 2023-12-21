@@ -86,14 +86,14 @@ context.tracing().stop(new Tracing.StopOptions()
 ```
 
 ```python async
-await context.tracing.start(name="trace", screenshots=True, snapshots=True)
+await context.tracing.start(screenshots=True, snapshots=True)
 page = await context.new_page()
 await page.goto("https://playwright.dev")
 await context.tracing.stop(path = "trace.zip")
 ```
 
 ```python sync
-context.tracing.start(name="trace", screenshots=True, snapshots=True)
+context.tracing.start(screenshots=True, snapshots=True)
 page = context.new_page()
 page.goto("https://playwright.dev")
 context.tracing.stop(path = "trace.zip")
@@ -120,8 +120,10 @@ await context.Tracing.StopAsync(new()
 * since: v1.12
 - `name` <[string]>
 
-If specified, the trace is going to be saved into the file with the
-given name inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+If specified, intermediate trace files are going to be saved into the files with the
+given name prefix inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+To specify the final trace zip file name, you need to pass `path` option to
+[`method: Tracing.stop`] instead.
 
 ### option: Tracing.start.screenshots
 * since: v1.12
@@ -204,7 +206,7 @@ context.tracing().stopChunk(new Tracing.StopChunkOptions()
 ```
 
 ```python async
-await context.tracing.start(name="trace", screenshots=True, snapshots=True)
+await context.tracing.start(screenshots=True, snapshots=True)
 page = await context.new_page()
 await page.goto("https://playwright.dev")
 
@@ -220,7 +222,7 @@ await context.tracing.stop_chunk(path = "trace2.zip")
 ```
 
 ```python sync
-context.tracing.start(name="trace", screenshots=True, snapshots=True)
+context.tracing.start(screenshots=True, snapshots=True)
 page = context.new_page()
 page.goto("https://playwright.dev")
 
@@ -274,8 +276,10 @@ Trace name to be shown in the Trace Viewer.
 * since: v1.32
 - `name` <[string]>
 
-If specified, the trace is going to be saved into the file with the
-given name inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+If specified, intermediate trace files are going to be saved into the files with the
+given name prefix inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+To specify the final trace zip file name, you need to pass `path` option to
+[`method: Tracing.stopChunk`] instead.
 
 ## async method: Tracing.stop
 * since: v1.12
