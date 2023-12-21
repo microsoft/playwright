@@ -1354,8 +1354,8 @@ test('should step w/ box', async ({ runInlineTest }) => {
       /*2*/ test('fail', async () => {
       /*3*/   const helper = async () => {
       /*4*/     await test.step('boxed step', async () => {
-      /*5*/       await expect(page.locator('body')).toHaveText('Good page', { timeout: 1 });
-      /*6*/     }, { box: 'self' });
+      /*5*/       expect(1).toBe(2);
+      /*6*/     }, { box: true });
       /*7*/   };
       /*8*/   await helper();
       /*9*/ });
@@ -1370,14 +1370,59 @@ test('should step w/ box', async ({ runInlineTest }) => {
       title: 'Before Hooks',
     },
     {
+      title: 'boxed step',
       category: 'test.step',
       error: expect.not.stringMatching(/a.test.ts:[^8]/),
-      location: {
-        column: 21,
-        file: 'a.test.ts',
-        line: 8,
-      },
+      location: { file: 'a.test.ts', line: 8, column: 21 },
+      steps: [{
+        title: 'expect.toBe',
+        category: 'expect',
+        error: expect.stringContaining('expect(received).toBe(expected)'),
+        location: { file: 'a.test.ts', column: 29, line: 5 }
+      }],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});
+
+test('should soft step w/ box', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts':
+    ` /*1*/ import { test, expect } from '@playwright/test';
+      /*2*/ test('fail', async () => {
+      /*3*/   const helper = async () => {
+      /*4*/     await test.step('boxed step', async () => {
+      /*5*/       expect.soft(1).toBe(2);
+      /*6*/     }, { box: true });
+      /*7*/   };
+      /*8*/   await helper();
+      /*9*/ });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
       title: 'boxed step',
+      category: 'test.step',
+      error: expect.not.stringMatching(/a.test.ts:[^8]/),
+      location: { file: 'a.test.ts', line: 8, column: 21 },
+      steps: [{
+        title: 'expect.soft.toBe',
+        category: 'expect',
+        error: expect.stringContaining('expect(received).toBe(expected)'),
+        location: { file: 'a.test.ts', column: 34, line: 5, }
+      }],
     },
     {
       category: 'hook',
