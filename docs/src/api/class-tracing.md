@@ -278,7 +278,7 @@ Trace name to be shown in the Trace Viewer.
 
 If specified, intermediate trace files are going to be saved into the files with the
 given name prefix inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
-If you are looking for an option to specify ouput zip file name, you need to pass `path` option to
+To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 
 ## async method: Tracing.stop
