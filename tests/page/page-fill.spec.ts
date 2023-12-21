@@ -127,9 +127,9 @@ for (const [type, value] of Object.entries({
     await page.locator('input').fill(value);
 
     expect(await page.evaluate(() => window['firedEvents'])).toEqual(
-      (browserName !== 'chromium' && (type === 'month' || type === 'week')) ?
-      ['input:true'] :
-      ['input:true', 'change:false']
+        (browserName !== 'chromium' && (type === 'month' || type === 'week')) ?
+          ['input:true'] :
+          ['input:true', 'change:false']
     );
     expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
   });
