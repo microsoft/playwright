@@ -19213,8 +19213,8 @@ export interface Tracing {
     /**
      * If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
      * `tracesDir` folder specified in
-     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). If you are
-     * looking for an option to specify ouput zip file name, you need to pass `path` option to
+     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
+     * the final trace zip file name, you need to pass `path` option to
      * [tracing.stop([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop) instead.
      */
     name?: string;
@@ -19273,8 +19273,8 @@ export interface Tracing {
     /**
      * If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
      * `tracesDir` folder specified in
-     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). If you are
-     * looking for an option to specify ouput zip file name, you need to pass `path` option to
+     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
+     * the final trace zip file name, you need to pass `path` option to
      * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) instead.
      */
     name?: string;
