@@ -720,8 +720,8 @@ export class InjectedScript {
     select.value = undefined as any;
     selectedOptions.forEach(option => option.selected = true);
     progress.log('    selected specified option(s)');
-    select.dispatchEvent(new Event('input', { 'bubbles': true, 'composed': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
+    select.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
     return selectedOptions.map(option => option.value);
   }
 
@@ -749,8 +749,8 @@ export class InjectedScript {
         input.value = value;
         if (input.value !== value)
           throw this.createStacklessError('Malformed value');
-        element.dispatchEvent(new Event('input', { 'bubbles': true, 'composed': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
+        element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
         return 'done';  // We have already changed the value, no need to input it.
       }
     } else if (element.nodeName.toLowerCase() === 'textarea') {
@@ -852,8 +852,8 @@ export class InjectedScript {
     for (const file of files)
       dt.items.add(file);
     input.files = dt.files;
-    input.dispatchEvent(new Event('input', { 'bubbles': true }));
-    input.dispatchEvent(new Event('change', { 'bubbles': true }));
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
