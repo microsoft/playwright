@@ -22,7 +22,7 @@ import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/uti
 import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
-  addSuffixToFilePath, serializeError,
+  addSuffixToFilePath,
   trimLongString, callLogText,
   expectTypes  } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
@@ -206,7 +206,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
+      this.testInfo._failWithError(new Error(message), false /* isHardError */);
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);

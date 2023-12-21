@@ -248,45 +248,46 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       if (!testInfo)
         return matcher.call(target, ...args);
 
-      const rawStack = captureRawStack();
-      const stackFrames = filteredStackTrace(rawStack);
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
       const wallTime = Date.now();
-      const step = matcherName !== 'toPass' ? testInfo._addStep({
-        location: stackFrames[0],
+
+      // This looks like it is unnecessary, but it isn't - we need to filter
+      // out all the frames that belong to the test runner from caught runtime errors.
+      const rawStack = captureRawStack();
+      const stackFrames = filteredStackTrace(rawStack);
+
+      // Enclose toPass in a step to maintain async stacks, toPass matcher is always async.
+      const stepInfo = {
         category: 'expect',
         title: trimLongString(title, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
         wallTime,
         infectParentStepsWithError: this._info.isSoft,
         laxParent: true,
-      }) : undefined;
+        isSoft: this._info.isSoft,
+      };
+
+      const step = testInfo._addStep(stepInfo);
 
       const reportStepError = (jestError: ExpectError) => {
         const error = new ExpectError(jestError, customMessage, stackFrames);
-        const serializedError = {
-          message: error.message,
-          stack: error.stack,
-        };
-        step?.complete({ error: serializedError });
-        if (this._info.isSoft)
-          testInfo._failWithError(serializedError, false /* isHardError */);
-        else
+        step.complete({ error });
+        if (!this._info.isSoft)
           throw error;
       };
 
       const finalizer = () => {
-        step?.complete({});
+        step.complete({});
       };
 
-      const expectZone: ExpectZone = { title, wallTime };
-
       try {
-        const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => matcher.call(target, ...args));
+        const expectZone: ExpectZone | null = matcherName !== 'toPass' ? { title, wallTime } : null;
+        const callback = () => matcher.call(target, ...args);
+        const result = expectZone ? zones.run<ExpectZone, any>('expectZone', expectZone, callback) : zones.preserve(callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();
