@@ -287,3 +287,37 @@ it('should wait for multiple options to be present', async ({ page, server }) =>
   const items = await selectPromise;
   expect(items).toStrictEqual(['green', 'scarlet']);
 });
+
+it('input event.composed should be true and cross shadow dom boundary', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<body><script>
+  const div = document.createElement('div');
+  const shadowRoot = div.attachShadow({mode: 'open'});
+  shadowRoot.innerHTML = \`<select>
+    <option value="black">Black</option>
+    <option value="blue">Blue</option>
+  </select>\`;
+  document.body.appendChild(div);
+</script></body>`);
+  await page.locator('body').evaluate(select => {
+    (window as any).firedBodyEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedBodyEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+
+  await page.locator('select').evaluate(select => {
+    (window as any).firedEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+  await page.selectOption('select', 'blue');
+  expect(await page.evaluate(() => window['firedEvents'])).toEqual(['input:true', 'change:false']);
+  expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
+});

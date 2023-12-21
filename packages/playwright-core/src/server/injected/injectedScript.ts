@@ -720,8 +720,8 @@ export class InjectedScript {
     select.value = undefined as any;
     selectedOptions.forEach(option => option.selected = true);
     progress.log('    selected specified option(s)');
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
+    select.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
     return selectedOptions.map(option => option.value);
   }
 
@@ -732,7 +732,7 @@ export class InjectedScript {
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime', 'datetime-local', 'month', 'range', 'week']);
+      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime-local', 'month', 'range', 'week']);
       const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
       if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type)) {
         progress.log(`    input of type "${type}" cannot be filled`);
@@ -749,8 +749,8 @@ export class InjectedScript {
         input.value = value;
         if (input.value !== value)
           throw this.createStacklessError('Malformed value');
-        element.dispatchEvent(new Event('input', { 'bubbles': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
+        element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
         return 'done';  // We have already changed the value, no need to input it.
       }
     } else if (element.nodeName.toLowerCase() === 'textarea') {
@@ -852,8 +852,8 @@ export class InjectedScript {
     for (const file of files)
       dt.items.add(file);
     input.files = dt.files;
-    input.dispatchEvent(new Event('input', { 'bubbles': true }));
-    input.dispatchEvent(new Event('change', { 'bubbles': true }));
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {

@@ -89,6 +89,52 @@ it('should fill date input after clicking', async ({ page, server }) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
+for (const [type, value] of Object.entries({
+  'color': '#aaaaaa',
+  'date': '2020-03-02',
+  'time': '13:15',
+  'datetime-local': '2020-03-02T13:15:30',
+  'month': '2020-03',
+  'range': '42',
+  'week': '2020-W50'
+})) {
+  it(`input event.composed should be true and cross shadow dom boundary - ${type}`, async ({ page, server, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<body><script>
+    const div = document.createElement('div');
+    const shadowRoot = div.attachShadow({mode: 'open'});
+    shadowRoot.innerHTML = '<input type=${type}></input>';
+    document.body.appendChild(div);
+  </script></body>`);
+    await page.locator('body').evaluate(select => {
+      (window as any).firedBodyEvents = [];
+      for (const event of ['input', 'change']) {
+        select.addEventListener(event, e => {
+          (window as any).firedBodyEvents.push(e.type + ':' + e.composed);
+        }, false);
+      }
+    });
+
+    await page.locator('input').evaluate(select => {
+      (window as any).firedEvents = [];
+      for (const event of ['input', 'change']) {
+        select.addEventListener(event, e => {
+          (window as any).firedEvents.push(e.type + ':' + e.composed);
+        }, false);
+      }
+    });
+    await page.locator('input').fill(value);
+
+    expect(await page.evaluate(() => window['firedEvents'])).toEqual(
+        (browserName !== 'chromium' && (type === 'month' || type === 'week')) ?
+          ['input:true'] :
+          ['input:true', 'change:false']
+    );
+    expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
+  });
+}
+
 it('should throw on incorrect date', async ({ page, browserName }) => {
   it.skip(browserName === 'webkit', 'WebKit does not support date inputs');
 

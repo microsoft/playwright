@@ -533,6 +533,41 @@ it('should emit input and change events', async ({ page, asset }) => {
   expect(events[1].type).toBe('change');
 });
 
+it('input event.composed should be true and cross shadow dom boundary', async ({ page, server, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<body><script>
+  const div = document.createElement('div');
+  const shadowRoot = div.attachShadow({mode: 'open'});
+  shadowRoot.innerHTML = '<input type=file></input>';
+  document.body.appendChild(div);
+</script></body>`);
+  await page.locator('body').evaluate(select => {
+    (window as any).firedBodyEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedBodyEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+
+  await page.locator('input').evaluate(select => {
+    (window as any).firedEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+  await page.locator('input').setInputFiles({
+    name: 'test.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('this is a test')
+  });
+  expect(await page.evaluate(() => window['firedEvents'])).toEqual(['input:true', 'change:false']);
+  expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
+});
+
 it('should work for single file pick', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser] = await Promise.all([
