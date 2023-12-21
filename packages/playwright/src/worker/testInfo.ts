@@ -27,6 +27,7 @@ import type { Location } from '../../types/testReporter';
 import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
+import type { StackFrame } from '@protocol/channels';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError, attachments?: Attachment[] }): void;
@@ -35,6 +36,7 @@ export interface TestStepInternal {
   category: string;
   wallTime: number;
   location?: Location;
+  boxedStack?: StackFrame[];
   steps: TestStepInternal[];
   laxParent?: boolean;
   endWallTime?: number;
@@ -246,12 +248,9 @@ export class TestInfoImpl implements TestInfo {
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
-    const rawStack = data.box || !data.location || !parentStep ? captureRawStack() : null;
-    const filteredStack = rawStack ? filteredStackTrace(rawStack) : [];
+    const rawStack = captureRawStack();
     if (!parentStep)
       parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
-    const boxedStack = data.box ? filteredStack.slice(1) : undefined;
-    const location = data.location || boxedStack?.[0] || filteredStack[0];
 
     // For out-of-stack calls, locate the enclosing step.
     let isLaxParent = false;
@@ -268,10 +267,17 @@ export class TestInfoImpl implements TestInfo {
       isLaxParent = !!parentStep;
     }
 
+    const filteredStack = filteredStackTrace(rawStack);
+    data.boxedStack = parentStep?.boxedStack;
+    if (!data.boxedStack && data.box) {
+      data.boxedStack = filteredStack.slice(1);
+      data.location = data.location || data.boxedStack[0];
+    }
+    data.location = data.location || filteredStack[0];
+
     const step: TestStepInternal = {
       stepId,
       ...data,
-      location,
       laxParent: isLaxParent,
       steps: [],
       complete: result => {
@@ -281,13 +287,15 @@ export class TestInfoImpl implements TestInfo {
         let error: TestInfoError | undefined;
         if (result.error instanceof Error) {
           // Step function threw an error.
-          if (boxedStack) {
+          if (data.boxedStack) {
             const errorTitle = `${result.error.name}: ${result.error.message}`;
-            result.error.stack = `${errorTitle}\n${stringifyStackFrames(boxedStack).join('\n')}`;
+            result.error.stack = `${errorTitle}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
           }
           error = serializeError(result.error);
         } else if (result.error) {
           // Internal API step reported an error.
+          if (data.boxedStack)
+            result.error.stack = `${result.error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
           error = result.error;
         }
         step.error = error;
@@ -326,10 +334,10 @@ export class TestInfoImpl implements TestInfo {
       title: data.title,
       category: data.category,
       wallTime: data.wallTime,
-      location,
+      location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, location ? [location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []);
     return step;
   }
 
