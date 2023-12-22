@@ -226,3 +226,35 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
     /After Hooks/,
   ]);
 });
+
+test('should not show caught errors in the errors tab', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }, testInfo) => {
+        await page.setContent("<input id='checkbox' type='checkbox'></input>");
+        await expect(page.locator('input')).toBeChecked({ timeout: 1 }).catch(() => {});
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /page.setContent/,
+    /expect.toBeCheckedlocator.*[\d.]+m?s/,
+    /After Hooks/,
+  ]);
+
+  await page.getByText('Source', { exact: true }).click();
+  await expect(page.locator('.source-line-running')).toContainText('toBeChecked');
+  await expect(page.locator('.CodeMirror-linewidget')).toHaveCount(0);
+
+  await page.getByText('Errors', { exact: true }).click();
+  await expect(page.locator('.tab-errors')).toHaveText('No errors');
+});
