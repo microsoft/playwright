@@ -26,7 +26,7 @@
 }
 
 .test-result video,
-.test-result img {
+.test-result img.screenshot {
   flex: none;
   box-shadow: var(--box-shadow-thick);
   margin: 24px auto;

@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import './attachmentsTab.css';
-import { ImageDiffView } from '@web/components/imageDiffView';
+import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
@@ -63,7 +63,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...diffMap.values()].map(({ expected, actual, diff }) => {
       return <>
         {expected && actual && <div className='attachments-section'>Image diff</div>}
-        {expected && actual && <ImageDiffView imageDiff={{
+        {expected && actual && <ImageDiffView diff={{
           name: 'Image diff',
           expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
           actual: { attachment: { ...actual, path: attachmentURL(actual) } },

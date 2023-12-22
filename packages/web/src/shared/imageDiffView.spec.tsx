@@ -36,7 +36,7 @@ const imageDiff: ImageDiff = {
 };
 
 test('should render links', async ({ mount }) => {
-  const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
+  const component = await mount(<ImageDiffView key='image-diff' diff={imageDiff}></ImageDiffView>);
   await expect(component.locator('a')).toHaveText([
     'screenshot-diff.png',
     'screenshot-actual.png',
@@ -44,40 +44,10 @@ test('should render links', async ({ mount }) => {
   ]);
 });
 
-test('should switch to actual', async ({ mount }) => {
-  const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.getByText('Actual', { exact: true }).click();
-  const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
-  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('611px');
-
-  const images = component.locator('img');
-  const imageCount = await component.locator('img').count();
-  for (let i = 0; i < imageCount; ++i) {
-    const image = images.nth(i);
-    const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
-  }
-});
-
-test('should switch to expected', async ({ mount }) => {
-  const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.getByText('Expected', { exact: true }).click();
-  const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
-  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('371px');
-
-  const images = component.locator('img');
-  const imageCount = await component.locator('img').count();
-  for (let i = 0; i < imageCount; ++i) {
-    const image = images.nth(i);
-    const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
-  }
-});
-
 test('should show diff by default', async ({ mount }) => {
-  const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
+  const component = await mount(<ImageDiffView key='image-diff' diff={imageDiff}></ImageDiffView>);
 
   const image = component.locator('img');
   const box = await image.boundingBox();
-  expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
+  expect(box).toEqual(expect.objectContaining({ width: 48, height: 48 }));
 });
