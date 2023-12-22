@@ -393,6 +393,25 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
+it('continue should propagate headers to redirects', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' });
+  it.fixme(browserName !== 'webkit');
+  await server.setRedirect('/redirect', '/empty.html');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        'custom': 'value'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  expect(serverRequest.headers['custom']).toBe('value');
+});
+
 it('should intercept css variable with background url', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
 
