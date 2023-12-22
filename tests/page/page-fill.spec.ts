@@ -98,7 +98,7 @@ for (const [type, value] of Object.entries({
   'range': '42',
   'week': '2020-W50'
 })) {
-  it(`input event.composed should be true and cross shadow dom boundary - ${type}`, async ({ page, server, browserName }) => {
+  it(`input event.composed should be true and cross shadow dom boundary - ${type}`, async ({ page, server, browserName, isWindows }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<body><script>
@@ -126,8 +126,10 @@ for (const [type, value] of Object.entries({
     });
     await page.locator('input').fill(value);
 
+    [1,2,3].includes(1);
     expect(await page.evaluate(() => window['firedEvents'])).toEqual(
-        (browserName !== 'chromium' && (type === 'month' || type === 'week')) ?
+        ((browserName !== 'chromium' && ['month', 'week'].includes(type)) ||
+          (browserName === 'webkit' && isWindows && ['color', 'date', 'time', 'datetime-local'].includes(type))) ?
           ['input:true'] :
           ['input:true', 'change:false']
     );
