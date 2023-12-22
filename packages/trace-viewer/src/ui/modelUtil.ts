@@ -19,6 +19,7 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
+import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -48,6 +49,12 @@ export type ActionTreeItem = {
   action?: ActionTraceEventInContext;
 };
 
+type ErrorDescription = {
+  action?: ActionTraceEventInContext;
+  stack?: StackFrame[];
+  message: string;
+};
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
@@ -62,7 +69,9 @@ export class MultiTraceModel {
   readonly events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   readonly stdio: trace.StdioTraceEvent[];
   readonly errors: trace.ErrorTraceEvent[];
+  readonly errorDescriptors: ErrorDescription[];
   readonly hasSource: boolean;
+  readonly hasStepData: boolean;
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
@@ -89,16 +98,45 @@ export class MultiTraceModel {
     this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
     this.errors = ([] as trace.ErrorTraceEvent[]).concat(...contexts.map(c => c.errors));
     this.hasSource = contexts.some(c => c.hasSource);
+    this.hasStepData = contexts.some(context => !context.isPrimary);
     this.resources = [...contexts.map(c => c.resources)].flat();
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
-    this.sources = collectSources(this.actions);
+    this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
+    this.sources = collectSources(this.actions, this.errorDescriptors);
   }
 
   failedAction() {
     // This find innermost action for nested ones.
     return this.actions.findLast(a => a.error);
+  }
+
+  private _errorDescriptorsFromActions(): ErrorDescription[] {
+    const errors: ErrorDescription[] = [];
+    for (const action of this.actions || []) {
+      if (!action.error?.message)
+        continue;
+      errors.push({
+        action,
+        stack: action.stack,
+        message: action.error.message,
+      });
+    }
+    return errors;
+  }
+
+  private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
+    const errors: ErrorDescription[] = [];
+    for (const error of this.errors || []) {
+      if (!error.message)
+        continue;
+      errors.push({
+        stack: error.stack,
+        message: error.message
+      });
+    }
+    return errors;
   }
 }
 
@@ -248,7 +286,7 @@ export function eventsForAction(action: ActionTraceEvent): (trace.EventTraceEven
   return result;
 }
 
-function collectSources(actions: trace.ActionTraceEvent[]): Map<string, SourceModel> {
+function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: ErrorDescription[]): Map<string, SourceModel> {
   const result = new Map<string, SourceModel>();
   for (const action of actions) {
     for (const frame of action.stack || []) {
@@ -258,8 +296,16 @@ function collectSources(actions: trace.ActionTraceEvent[]): Map<string, SourceMo
         result.set(frame.file, source);
       }
     }
-    if (action.error && action.stack?.[0])
-      result.get(action.stack[0].file)!.errors.push({ line: action.stack?.[0].line || 0, message: action.error.message });
+  }
+
+  for (const error of errorDescriptors) {
+    const { action, stack, message } = error;
+    if (!action || !stack)
+      continue;
+    result.get(stack[0].file)?.errors.push({
+      line: stack[0].line || 0,
+      message
+    });
   }
   return result;
 }
