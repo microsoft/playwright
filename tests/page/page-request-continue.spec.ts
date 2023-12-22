@@ -397,9 +397,7 @@ it('continue should propagate headers to redirects', async ({ page, server, brow
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' });
   it.fixme(browserName !== 'webkit');
   await server.setRedirect('/redirect', '/empty.html');
-  let intercepted = false;
   await page.route('**/redirect', route => {
-    intercepted = true;
     void route.continue({
       headers: {
         ...route.request().headers(),
