@@ -30,7 +30,7 @@ import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | TestInfoError, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
   category: string;
@@ -45,6 +45,7 @@ export interface TestStepInternal {
   error?: TestInfoError;
   infectParentStepsWithError?: boolean;
   box?: boolean;
+  isSoft?: boolean;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -231,7 +232,7 @@ export class TestInfoImpl implements TestInfo {
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
-  async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
+  async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<Error | undefined> {
     try {
       await fn();
     } catch (error) {
@@ -239,9 +240,8 @@ export class TestInfoImpl implements TestInfo {
         if (this.status === 'passed')
           this.status = 'skipped';
       } else {
-        const serialized = serializeError(error);
-        this._failWithError(serialized, true /* isHardError */);
-        return serialized;
+        this._failWithError(error, true /* isHardError */);
+        return error;
       }
     }
   }
@@ -256,10 +256,9 @@ export class TestInfoImpl implements TestInfo {
     let isLaxParent = false;
     if (!parentStep && data.laxParent) {
       const visit = (step: TestStepInternal) => {
-        // Never nest into under another lax element, it could be a series
-        // of no-reply actions, ala page.continue().
-        const canNest = step.category === data.category || step.category === 'expect' && data.category === 'attach';
-        if (!step.endWallTime && canNest && !step.laxParent)
+        // Do not nest chains of route.continue.
+        const shouldNest = step.title !== data.title;
+        if (!step.endWallTime && shouldNest)
           parentStep = step;
         step.steps.forEach(visit);
       };
@@ -283,24 +282,18 @@ export class TestInfoImpl implements TestInfo {
       complete: result => {
         if (step.endWallTime)
           return;
-        step.endWallTime = Date.now();
-        let error: TestInfoError | undefined;
-        if (result.error instanceof Error) {
-          // Step function threw an error.
-          if (data.boxedStack) {
-            const errorTitle = `${result.error.name}: ${result.error.message}`;
-            result.error.stack = `${errorTitle}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
-          }
-          error = serializeError(result.error);
-        } else if (result.error) {
-          // Internal API step reported an error.
-          if (data.boxedStack)
-            result.error.stack = `${result.error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
-          error = result.error;
-        }
-        step.error = error;
 
-        if (!error) {
+        step.endWallTime = Date.now();
+        if (result.error) {
+          if (!(result.error as any)[stepSymbol])
+            (result.error as any)[stepSymbol] = step;
+          const error = serializeError(result.error);
+          if (data.boxedStack)
+            error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
+          step.error = error;
+        }
+
+        if (!step.error) {
           // Soft errors inside try/catch will make the test fail.
           // In order to locate the failing step, we are marking all the parent
           // steps as failing unconditionally.
@@ -311,18 +304,20 @@ export class TestInfoImpl implements TestInfo {
               break;
             }
           }
-          error = step.error;
         }
 
         const payload: StepEndPayload = {
           testId: this._test.id,
           stepId,
           wallTime: step.endWallTime,
-          error,
+          error: step.error,
         };
         this._onStepEnd(payload);
-        const errorForTrace = error ? { name: '', message: error.message || '', stack: error.stack } : undefined;
+        const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
+
+        if (step.isSoft && result.error)
+          this._failWithError(result.error, false /* isHardError */);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -350,7 +345,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: TestInfoError, isHardError: boolean) {
+  _failWithError(error: Error, isHardError: boolean) {
     // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.
@@ -361,7 +356,11 @@ export class TestInfoImpl implements TestInfo {
       this._hasHardError = true;
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
-    this.errors.push(error);
+    const serialized = serializeError(error);
+    const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
+    if (step && step.boxedStack)
+      serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+    this.errors.push(serialized);
   }
 
   async _runAsStepWithRunnable<T>(
@@ -486,3 +485,5 @@ export class TestInfoImpl implements TestInfo {
 
 class SkipError extends Error {
 }
+
+const stepSymbol = Symbol('step');

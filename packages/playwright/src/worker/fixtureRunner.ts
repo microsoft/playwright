@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, debugTest, filterStackFile, serializeError } from '../util';
+import { formatLocation, debugTest, filterStackFile } from '../util';
 import { ManualPromise, zones } from 'playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
@@ -143,7 +143,7 @@ class Fixture {
       this._selfTeardownComplete?.then(() => {
         afterStep?.complete({});
       }).catch(e => {
-        afterStep?.complete({ error: serializeError(e) });
+        afterStep?.complete({ error: e });
       });
     }
     testInfo._timeoutManager.setCurrentFixture(undefined);
