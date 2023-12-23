@@ -44,7 +44,6 @@
 }
 
 .tab-network .toolbar {
-  margin-top: 3px !important;
   min-height: 30px !important;
   background-color: initial !important;
   border-bottom: 1px solid var(--vscode-panel-border);

@@ -25,12 +25,11 @@ export type SplitViewProps = {
   orientation?: 'vertical' | 'horizontal';
   minSidebarSize?: number;
   settingName?: string;
-  children: JSX.Element | JSX.Element[] | string;
 };
 
 const kMinSize = 50;
 
-export const SplitView: React.FC<SplitViewProps> = ({
+export const SplitView: React.FC<React.PropsWithChildren<SplitViewProps>> = ({
   sidebarSize,
   sidebarHidden = false,
   sidebarIsFirst = false,

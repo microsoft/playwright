@@ -3,6 +3,7 @@
 ../third_party/vscode/codicon.css
 ../uiUtils.ts
 ../ansi2html.ts
+../shared
 
 [expandable.spec.tsx]
 ***
