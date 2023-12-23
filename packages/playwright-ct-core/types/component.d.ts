@@ -22,6 +22,7 @@ export type JsonObject = { [Key in string]?: JsonValue };
 // JsxComponentChild can be anything, consider cases like: <>{1}</>, <>{null}</>
 export type JsxComponentChild = JsxComponent | string | number | boolean | null;
 export type JsxComponent = {
+  __pw_component_marker: true,
   kind: 'jsx',
   type: string,
   props: Record<string, any>,
@@ -36,6 +37,7 @@ export type MountOptions = {
 };
 
 export type ObjectComponent = {
+  __pw_component_marker: true,
   kind: 'object',
   type: string,
   options?: MountOptions

@@ -32,7 +32,7 @@ const __pwRegistry = new Map();
 const __pwRootRegistry = new Map();
 
 /**
- * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
+ * @param {Record<string, () => Promise<FrameworkComponent>>} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
@@ -44,7 +44,7 @@ export function pwRegister(components) {
  * @returns {component is JsxComponent}
  */
 function isComponent(component) {
-  return !(typeof component !== 'object' || Array.isArray(component));
+  return component.__pw_component_marker === true && component.kind === 'jsx';
 }
 
 /**
@@ -73,6 +73,23 @@ async function __pwResolveComponent(component) {
 
   if (component.children?.length)
     await Promise.all(component.children.map(child => __pwResolveComponent(child)));
+
+  if (component.props)
+    await __resolveProps(component.props);
+}
+
+/**
+  * @param {Record<string, any>} props
+  */
+async function __resolveProps(props) {
+  for (const prop of Object.values(props)) {
+    if (Array.isArray(prop))
+      await Promise.all(prop.map(child => __pwResolveComponent(child)));
+    else if (isComponent(prop))
+      await __pwResolveComponent(prop);
+    else if (typeof prop === 'object' && prop !== null)
+      await __resolveProps(prop);
+  }
 }
 
 /**
@@ -87,16 +104,36 @@ function __renderChild(child) {
 }
 
 /**
+  * @param {Record<string, any>} props
+  */
+function __renderProps(props) {
+  const newProps = {};
+  for (const [key, prop] of Object.entries(props)) {
+    if (Array.isArray(prop))
+      newProps[key] = prop.map(child => __renderChild(child));
+    else if (isComponent(prop))
+      newProps[key] = __renderChild(prop);
+    else if (typeof prop === 'object' && prop !== null)
+      newProps[key] = __renderProps(prop);
+    else
+      newProps[key] = prop;
+  }
+  return newProps;
+}
+
+/**
  * @param {JsxComponent} component
  */
 function __pwRender(component) {
   const componentFunc = __pwRegistry.get(component.type);
+  const props = __renderProps(component.props || {});
   const children = component.children?.map(child => __renderChild(child)).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
     return true;
   });
-  return __pwReact.createElement(componentFunc || component.type, component.props, children);
+  const reactChildren = Array.isArray(children) && children.length === 1 ? children[0] : children;
+  return __pwReact.createElement(componentFunc || component.type, props, reactChildren);
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
@@ -116,7 +153,6 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
         'Attempting to mount a component into an container that already has a React root'
     );
   }
-
   const root = __pwCreateRoot(rootElement);
   __pwRootRegistry.set(rootElement, root);
   root.render(App());

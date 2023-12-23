@@ -95,7 +95,8 @@ function __pwRender(component) {
       return !!child.trim();
     return true;
   });
-  return __pwReact.createElement(componentFunc || component.type, component.props, children);
+  const reactChildren = Array.isArray(children) && children.length === 1 ? children[0] : children;
+  return __pwReact.createElement(componentFunc || component.type, component.props, reactChildren);
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
