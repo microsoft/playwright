@@ -140,7 +140,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
 
 function createComponent(jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Component {
   if (typeof jsxOrType !== 'string') return jsxOrType;
-  return { kind: 'object', type: jsxOrType, options };
+  return { __pw_component_marker: true, kind: 'object', type: jsxOrType, options };
 }
 
 function wrapFunctions(object: any, page: Page, callbacks: Function[]) {
