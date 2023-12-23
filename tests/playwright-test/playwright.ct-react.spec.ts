@@ -461,3 +461,37 @@ test('should prioritize the vite host config over the baseUrl config', async ({ 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should normalize children', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.tsx': `
+      import React from 'react';
+      export const OneChild: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
+        React.Children.only(children);
+        return <>{children}</>;
+      };
+      export const OtherComponent: React.FC = () => <p>othercomponent</p>;   
+    `,
+
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { OneChild, OtherComponent } from './component';
+
+      test("can pass an HTML element to OneChild", async ({ mount }) => {
+        const component = await mount(<OneChild><p>child</p> </OneChild>);
+        await expect(component).toHaveText("child");
+      });
+      
+      test("can pass another component to OneChild", async ({ mount }) => {
+        const component = await mount(<OneChild><OtherComponent /></OneChild>);
+        await expect(component).toHaveText("othercomponent");
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
