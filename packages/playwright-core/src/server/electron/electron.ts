@@ -23,10 +23,11 @@ import type { CRSession } from '../chromium/crConnection';
 import { CRConnection } from '../chromium/crConnection';
 import type { CRPage } from '../chromium/crPage';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
+import type { Protocol } from '../chromium/protocol';
 import * as js from '../javascript';
 import type { Page } from '../page';
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import { wrapInASCIIBox } from '../../utils';
+import { ManualPromise, wrapInASCIIBox } from '../../utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
@@ -54,7 +55,7 @@ export class ElectronApplication extends SdkObject {
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
-  _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
+  _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
 
@@ -68,14 +69,18 @@ export class ElectronApplication extends SdkObject {
     });
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
-    this._nodeElectronHandlePromise = new Promise(f => {
-      this._nodeSession.on('Runtime.executionContextCreated', async (event: any) => {
-        if (event.context.auxData && event.context.auxData.isDefault) {
-          this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context), 'electron');
-          const source = `process.mainModule.require('electron')`;
-          f(await this._nodeExecutionContext.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', objectId)));
-        }
+    this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
+      if (!event.context.auxData || !event.context.auxData.isDefault)
+        return;
+      const crExecutionContext = new CRExecutionContext(this._nodeSession, event.context);
+      this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
+      const { result: remoteObject } = await crExecutionContext._client.send('Runtime.evaluate', {
+        expression: `require('electron')`,
+        contextId: event.context.id,
+        // Needed after Electron 28 to get access to require: https://github.com/microsoft/playwright/issues/28048
+        includeCommandLineAPI: true,
       });
+      this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
@@ -112,7 +117,7 @@ export class ElectronApplication extends SdkObject {
     const electronHandle = await this._nodeElectronHandlePromise;
     return await electronHandle.evaluateHandle(({ BrowserWindow, webContents }, targetId) => {
       const wc = webContents.fromDevToolsTargetId(targetId);
-      return BrowserWindow.fromWebContents(wc);
+      return BrowserWindow.fromWebContents(wc!)!;
     }, targetId);
   }
 }

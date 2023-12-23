@@ -28,24 +28,37 @@ import { MultiMap } from '../utils/multimap';
 
 declare global {
   interface Window {
-    __cleanupScreenshot?: () => void;
+    __pwCleanupScreenshot?: () => void;
   }
 }
 
 export type ScreenshotOptions = {
-  type?: 'png' | 'jpeg',
-  quality?: number,
-  omitBackground?: boolean,
-  animations?: 'disabled' | 'allow',
-  mask?: { frame: Frame, selector: string}[],
-  maskColor?: string,
-  fullPage?: boolean,
-  clip?: Rect,
-  scale?: 'css' | 'device',
-  caret?: 'hide' | 'initial',
+  type?: 'png' | 'jpeg';
+  quality?: number;
+  omitBackground?: boolean;
+  animations?: 'disabled' | 'allow';
+  mask?: { frame: Frame, selector: string}[];
+  maskColor?: string;
+  fullPage?: boolean;
+  clip?: Rect;
+  scale?: 'css' | 'device';
+  caret?: 'hide' | 'initial';
+  style?: string;
 };
 
-function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: boolean) {
+function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean, disableAnimations: boolean, syncAnimations: boolean) {
+  // In WebKit, sync the animations.
+  if (syncAnimations) {
+    const style = document.createElement('style');
+    style.textContent = 'body {}';
+    document.head.appendChild(style);
+    document.documentElement.getBoundingClientRect();
+    style.remove();
+  }
+
+  if (!screenshotStyle && !hideCaret && !disableAnimations)
+    return;
+
   const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
     roots.push(root);
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -58,29 +71,43 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
     return roots;
   };
 
-  let documentRoots: (Document|ShadowRoot)[] | undefined;
-  const memoizedRoots = () => documentRoots ??= collectRoots(document);
+  const roots = collectRoots(document);
+  const cleanupCallbacks: (() => void)[] = [];
 
-  const styleTags: Element[] = [];
-  if (hideCaret) {
-    for (const root of memoizedRoots()) {
+  if (screenshotStyle) {
+    for (const root of roots) {
       const styleTag = document.createElement('style');
-      styleTag.textContent = `
-        *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
-          caret-color: transparent !important;
-        }
-      `;
+      styleTag.textContent = screenshotStyle;
       if (root === document)
         document.documentElement.append(styleTag);
       else
         root.append(styleTag);
-      styleTags.push(styleTag);
+
+      cleanupCallbacks.push(() => {
+        styleTag.remove();
+      });
     }
   }
-  const infiniteAnimationsToResume: Set<Animation> = new Set();
-  const cleanupCallbacks: (() => void)[] = [];
+
+  if (hideCaret) {
+    const elements = new Map<HTMLElement, { value: string, priority: string }>();
+    for (const root of roots) {
+      root.querySelectorAll('input,textarea,[contenteditable]').forEach(element => {
+        elements.set(element as HTMLElement, {
+          value: (element as HTMLElement).style.getPropertyValue('caret-color'),
+          priority: (element as HTMLElement).style.getPropertyPriority('caret-color')
+        });
+        (element as HTMLElement).style.setProperty('caret-color', 'transparent', 'important');
+      });
+    }
+    cleanupCallbacks.push(() => {
+      for (const [element, value] of elements)
+        element.style.setProperty('caret-color', value.value, value.priority);
+    });
+  }
 
   if (disableAnimations) {
+    const infiniteAnimationsToResume: Set<Animation> = new Set();
     const handleAnimations = (root: Document|ShadowRoot): void => {
       for (const animation of root.getAnimations()) {
         if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
@@ -106,7 +133,7 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
         }
       }
     };
-    for (const root of memoizedRoots()) {
+    for (const root of roots) {
       const handleRootAnimations: (() => void) = handleAnimations.bind(null, root);
       handleRootAnimations();
       root.addEventListener('transitionrun', handleRootAnimations);
@@ -116,23 +143,22 @@ function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: bool
         root.removeEventListener('animationstart', handleRootAnimations);
       });
     }
+    cleanupCallbacks.push(() => {
+      for (const animation of infiniteAnimationsToResume) {
+        try {
+          animation.play();
+        } catch (e) {
+          // animation.play() should never throw, but
+          // we'd like to be on the safe side.
+        }
+      }
+    });
   }
 
-  window.__cleanupScreenshot = () => {
-    for (const styleTag of styleTags)
-      styleTag.remove();
-
-    for (const animation of infiniteAnimationsToResume) {
-      try {
-        animation.play();
-      } catch (e) {
-        // animation.play() should never throw, but
-        // we'd like to be on the safe side.
-      }
-    }
+  window.__pwCleanupScreenshot = () => {
     for (const cleanupCallback of cleanupCallbacks)
       cleanupCallback();
-    delete window.__cleanupScreenshot;
+    delete window.__pwCleanupScreenshot;
   };
 }
 
@@ -178,7 +204,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -207,7 +233,7 @@ export class Screenshotter {
       progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
@@ -231,14 +257,12 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean) {
-    if (!hideCaret && !disableAnimations)
-      return;
-
+  async _preparePageForScreenshot(progress: Progress, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
+    const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
+      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, false, 'utility').catch(() => {});
     }));
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');
@@ -252,7 +276,7 @@ export class Screenshotter {
 
   async _restorePageAfterScreenshot() {
     await Promise.all(this._page.frames().map(async frame => {
-      frame.nonStallingEvaluateInExistingContext('window.__cleanupScreenshot && window.__cleanupScreenshot()', false, 'utility').catch(() => {});
+      frame.nonStallingEvaluateInExistingContext('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', false, 'utility').catch(() => {});
     }));
   }
 
@@ -276,7 +300,7 @@ export class Screenshotter {
     progress.throwIfAborted(); // Avoid extra work.
 
     await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
-      await frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor);
+      await frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor || '#F0F');
     }));
     progress.cleanupWhenAborted(cleanup);
     return cleanup;

@@ -10,16 +10,20 @@
     "typecheck": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.0.3",
-    "@tsconfig/svelte": "^3.0.0",
-    "svelte-check": "^2.2.7",
-    "svelte-preprocess": "^4.9.8",
-    "tslib": "^2.3.1",
-    "typescript": "^4.5.4",
-    "vite": "^4.2.1"
+    "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@tsconfig/svelte": "^5.0.2",
+    "svelte-check": "^3.6.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
   },
   "dependencies": {
-    "svelte": "^3.49.0",
+    "svelte": "^4.2.8",
     "svelte-navigator": "^3.2.2"
+  },
+  "overrides": {
+    "svelte-navigator": {
+      "svelte": "$svelte"
+    }
   }
 }

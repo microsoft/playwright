@@ -47,7 +47,7 @@ export class Video implements api.Video {
     const artifact = await this._artifact;
     if (!artifact)
       throw new Error('Page did not produce any video frames');
-    return artifact.saveAs(path);
+    return await artifact.saveAs(path);
   }
 
   async delete(): Promise<void> {

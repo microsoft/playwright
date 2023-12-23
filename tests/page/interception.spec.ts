@@ -172,3 +172,21 @@ it('should not break remote worker importScripts', async ({ page, server, browse
   await page.goto(server.PREFIX + '/worker/worker-http-import.html');
   await page.waitForSelector("#status:has-text('finished')");
 });
+
+it('should disable memory cache when intercepting', async ({ page, server }) => {
+  let interceted = 0;
+  await page.route('**/page.html', route => {
+    ++interceted;
+    void route.fulfill({
+      body: 'success'
+    });
+  });
+  await page.goto(server.PREFIX + '/page.html');
+  expect(await page.locator('body').textContent()).toContain('success');
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page).toHaveURL(server.EMPTY_PAGE);
+  expect(interceted).toBe(1);
+  await page.goBack();
+  await expect(page).toHaveURL(server.PREFIX + '/page.html');
+  expect(interceted).toBe(2);
+});

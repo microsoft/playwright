@@ -78,6 +78,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 | Option | Description |
 | :- | :- |
+| Non-option arguments | Each argument is treated as a regular expression matched against the full test file path. Only tests from the files matching the pattern will be executed. Special symbols like `$` or `*` should be escaped with `\`. In many shells/terminals you may need to quote the arguments. |
 | `--headed` | Run tests in headed browsers. Useful for debugging. |
 |`--browser`| Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time. |
 | `--debug`| Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options.|

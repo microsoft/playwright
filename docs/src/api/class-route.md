@@ -44,14 +44,14 @@ Continues route's request with optional overrides.
 **Usage**
 
 ```js
-await page.route('**/*', (route, request) => {
+await page.route('**/*', async (route, request) => {
   // Override headers
   const headers = {
     ...request.headers(),
     foo: 'foo-value', // set "foo" header
     bar: undefined, // remove "bar" header
   };
-  route.continue({ headers });
+  await route.continue({ headers });
 });
 ```
 
@@ -154,17 +154,17 @@ in the end will be aborted by the first registered route.
 **Usage**
 
 ```js
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   // Runs last.
-  route.abort();
+  await route.abort();
 });
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   // Runs second.
-  route.fallback();
+  await route.fallback();
 });
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   // Runs first.
-  route.fallback();
+  await route.fallback();
 });
 ```
 
@@ -220,9 +220,9 @@ GET requests vs POST requests as in the example below.
 
 ```js
 // Handle GET requests.
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   if (route.request().method() !== 'GET') {
-    route.fallback();
+    await route.fallback();
     return;
   }
   // Handling GET only.
@@ -230,9 +230,9 @@ await page.route('**/*', route => {
 });
 
 // Handle POST requests.
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   if (route.request().method() !== 'POST') {
-    route.fallback();
+    await route.fallback();
     return;
   }
   // Handling POST only.
@@ -330,14 +330,14 @@ One can also modify request while falling back to the subsequent handler, that w
 route handler can modify url, method, headers and postData of the request.
 
 ```js
-await page.route('**/*', (route, request) => {
+await page.route('**/*', async (route, request) => {
   // Override headers
   const headers = {
     ...request.headers(),
     foo: 'foo-value', // set "foo" header
     bar: undefined, // remove "bar" header
   };
-  route.fallback({ headers });
+  await route.fallback({ headers });
 });
 ```
 
@@ -554,8 +554,8 @@ Fulfills route's request with given response.
 An example of fulfilling all requests with 404 responses:
 
 ```js
-await page.route('**/*', route => {
-  route.fulfill({
+await page.route('**/*', async route => {
+  await route.fulfill({
     status: 404,
     contentType: 'text/plain',
     body: 'Not Found!'

@@ -79,35 +79,45 @@ test('Test full report @slow', async ({ page }) => {
 
 You will then be able to run only that test:
 
-```bash
+```bash tab=bash-bash
+npx playwright test --grep @fast
+```
+
+```powershell tab=bash-powershell
+npx playwright test --grep "@fast"
+```
+
+```batch tab=bash-batch
 npx playwright test --grep @fast
 ```
 
 Or if you want the opposite, you can skip the tests with a certain tag:
 
-```bash
-npx playwright test --grep-invert @slow
+```bash tab=bash-bash
+npx playwright test --grep-invert @fast
+```
+
+```powershell tab=bash-powershell
+npx playwright test --grep-invert "@fast"
+```
+
+```batch tab=bash-batch
+npx playwright test --grep-invert @fast
 ```
 
 To run tests containing either tag (logical `OR` operator):
 
-```bash
+```bash tab=bash-bash
 npx playwright test --grep "@fast|@slow"
 ```
 
-On Windows shells:
+```powershell tab=bash-powershell
+npx playwright test --grep --% "@fast^|@slow"
+```
 
-- PowerShell
-
-  ```bash
-  npx playwright test --grep --% "@fast^|@slow"
-  ```
-
-- Command Prompt(cmd.exe) / Git Bash:
-
-  ```bash
-  npx playwright test --grep "@fast^|@slow"
-  ```
+```batch tab=bash-batch
+npx playwright test --grep "@fast^|@slow"
+```
 
 Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
 

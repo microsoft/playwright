@@ -53,7 +53,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   generateAction(actionInContext: ActionInContext): string {
     const action = this._generateActionInner(actionInContext);
     if (action)
-      return action + '\n';
+      return action;
     return '';
   }
 
@@ -64,7 +64,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     let pageAlias = actionInContext.frame.pageAlias;
     if (this._mode !== 'library')
       pageAlias = pageAlias.replace('page', 'Page');
-    const formatter = new CSharpFormatter(8);
+    const formatter = new CSharpFormatter(this._mode === 'library' ? 0 : 8);
 
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);
@@ -184,13 +184,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       using System;
       using System.Threading.Tasks;
 
-      class Program
-      {
-          public static async Task Main()
-          {
-              using var playwright = await Playwright.CreateAsync();
-              await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
-              var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
+      var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     formatter.newLine();
     return formatter.format();
   }
@@ -220,9 +216,11 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n        await context.StorageStateAsync(new BrowserContextStorageStateOptions\n        {\n            Path = ${quote(saveStorage)}\n        });\n` : '';
-    return `${storageStateLine}    }
-}\n`;
+    const offset = this._mode === 'library' ? '' : '        ';
+    let storageStateLine = saveStorage ? `\n${offset}await context.StorageStateAsync(new BrowserContextStorageStateOptions\n${offset}{\n${offset}    Path = ${quote(saveStorage)}\n${offset}});\n` : '';
+    if (this._mode !== 'library')
+      storageStateLine += `    }\n}\n`;
+    return storageStateLine;
   }
 }
 

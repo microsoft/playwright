@@ -24,6 +24,6 @@ const plugin = () => {
     path.join(__dirname, 'registerSource.mjs'),
     () => import('@vitejs/plugin-vue').then(plugin => plugin.default()));
 }
-const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
+const defineConfig = (config, ...configs) => originalDefineConfig({ ...config, _plugins: [plugin] }, ...configs);
 
 module.exports = { test, expect, devices, defineConfig };

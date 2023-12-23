@@ -208,6 +208,25 @@ it('should support the times parameter with route matching', async ({ context, p
   expect(intercepted).toHaveLength(1);
 });
 
+it('should work if handler with times parameter was removed from another handler', async ({ context, page, server }) => {
+  const intercepted = [];
+  const handler = async route => {
+    intercepted.push('first');
+    void route.continue();
+  };
+  await context.route('**/*', handler, { times: 1 });
+  await context.route('**/*', async route => {
+    intercepted.push('second');
+    await context.unroute('**/*', handler);
+    await route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual(['second']);
+  intercepted.length = 0;
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual(['second']);
+});
+
 it('should support async handler w/ times', async ({ context, page, server }) => {
   await context.route('**/empty.html', async route => {
     await new Promise(f => setTimeout(f, 100));

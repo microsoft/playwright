@@ -296,7 +296,7 @@ export class FrameManager {
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
       if (route)
-        route.continue(request, { isFallback: true });
+        route.continue(request, { isFallback: true }).catch(() => {});
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
@@ -308,7 +308,7 @@ export class FrameManager {
         return;
       if (this._page._browserContext._requestInterceptor?.(r, request))
         return;
-      r.continue({ isFallback: true });
+      r.continue({ isFallback: true }).catch(() => {});
     }
   }
 
@@ -847,7 +847,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  async maskSelectors(selectors: ParsedSelector[], color?: string): Promise<void> {
+  async maskSelectors(selectors: ParsedSelector[], color: string): Promise<void> {
     const context = await this._utilityContext();
     const injectedScript = await context.injectedScript();
     await injectedScript.evaluate((injected, { parsed, color }) => {

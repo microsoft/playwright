@@ -594,6 +594,10 @@ export class FFPage implements PageDelegate {
       throw new Error('Frame has been detached.');
     return context.createHandle(result.remoteObject) as dom.ElementHandle;
   }
+
+  shouldToggleStyleSheetToSyncAnimations(): boolean {
+    return false;
+  }
 }
 
 function webSocketId(frameId: string, wsid: string): string {

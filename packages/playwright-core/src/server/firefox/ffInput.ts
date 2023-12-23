@@ -62,10 +62,6 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
-    if (code === 'MetaLeft')
-      code = 'OSLeft';
-    if (code === 'MetaRight')
-      code = 'OSRight';
     // Firefox will figure out Enter by itself
     if (text === '\r')
       text = '';
@@ -81,10 +77,6 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
-    if (code === 'MetaLeft')
-      code = 'OSLeft';
-    if (code === 'MetaRight')
-      code = 'OSRight';
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keyup',
       key,

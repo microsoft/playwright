@@ -49,6 +49,7 @@ export class ExpectError extends Error {
     log?: string[];
     timeout?: number;
   };
+
   constructor(jestError: ExpectError, customMessage: string, stackFrames: StackFrame[]) {
     super('');
     // Copy to erase the JestMatcherError constructor name from the console.log(error).

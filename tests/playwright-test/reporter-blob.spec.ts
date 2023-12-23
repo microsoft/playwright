@@ -1173,8 +1173,32 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   await expect(page.getByText('expect.toBe')).toBeVisible();
 });
 
-test('same project different suffixes', async ({ runInlineTest, mergeReports }) => {
-  const files = {
+test('support fileName option', async ({ runInlineTest, mergeReports }) => {
+  const files = (fileSuffix: string) => ({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { fileName: 'report-${fileSuffix}.zip' }]],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  });
+
+  await runInlineTest(files('one'));
+  await runInlineTest(files('two'), undefined, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+});
+
+test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) => {
+  const files = (reportName: string) => ({
     'echo-reporter.js': `
       import fs from 'fs';
 
@@ -1189,7 +1213,7 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
     `,
     'playwright.config.ts': `
       module.exports = {
-        reporter: 'blob',
+        reporter: [['blob', { fileName: '${reportName}.zip' }]],
         projects: [
           { name: 'foo' },
         ]
@@ -1199,10 +1223,10 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
       import { test, expect } from '@playwright/test';
       test('math 1 @smoke', async ({}) => {});
     `,
-  };
+  });
 
-  await runInlineTest(files, undefined, { PWTEST_BLOB_REPORT_NAME: 'first' });
-  await runInlineTest(files, undefined, { PWTEST_BLOB_REPORT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
@@ -1267,7 +1291,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
 
 async function extractReport(reportZipFile: string, unzippedReportDir: string): Promise<any[]> {
   await extractZip(reportZipFile, { dir: unzippedReportDir });
-  const reportFile = path.join(unzippedReportDir, path.basename(reportZipFile).replace(/\.zip$/, '.jsonl'));
+  const reportFile = path.join(unzippedReportDir, 'report.jsonl');
   const data = await fs.promises.readFile(reportFile, 'utf8');
   const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
   return events;

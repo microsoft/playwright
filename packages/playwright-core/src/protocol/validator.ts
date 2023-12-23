@@ -1071,6 +1071,7 @@ scheme.PageExpectScreenshotParams = tObject({
       selector: tString,
     }))),
     maskColor: tOptional(tString),
+    style: tOptional(tString),
   })),
 });
 scheme.PageExpectScreenshotResult = tObject({
@@ -1095,6 +1096,7 @@ scheme.PageScreenshotParams = tObject({
     selector: tString,
   }))),
   maskColor: tOptional(tString),
+  style: tOptional(tString),
 });
 scheme.PageScreenshotResult = tObject({
   binary: tBinary,
@@ -1896,6 +1898,7 @@ scheme.ElementHandleScreenshotParams = tObject({
     selector: tString,
   }))),
   maskColor: tOptional(tString),
+  style: tOptional(tString),
 });
 scheme.ElementHandleScreenshotResult = tObject({
   binary: tBinary,

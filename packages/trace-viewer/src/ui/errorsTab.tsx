@@ -31,39 +31,14 @@ type ErrorsTabModel = {
   errors: Map<string, ErrorDescription>;
 };
 
-function errorsFromActions(model: modelUtil.MultiTraceModel): Map<string, ErrorDescription> {
-  const errors = new Map<string, ErrorDescription>();
-  for (const action of model.actions || []) {
-    // Overwrite errors with the last one.
-    if (!action.error?.message || errors.has(action.error.message))
-      continue;
-    errors.set(action.error.message, {
-      action,
-      stack: action.stack,
-    });
-  }
-  return errors;
-}
-
-function errorsFromTestRunner(model: modelUtil.MultiTraceModel): Map<string, ErrorDescription> {
-  const actionErrors = errorsFromActions(model);
-  const errors = new Map<string, ErrorDescription>();
-  for (const error of model.errors || []) {
-    if (!error.message || errors.has(error.message))
-      continue;
-    errors.set(error.message, actionErrors.get(error.message) || error);
-  }
-  return errors;
-}
-
 export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
     if (!model)
       return { errors: new Map() };
-    // Feature detection: if there is test runner info, pick errors from the 'error' trace events.
-    // If there are no test errors, but there are action errors - render those instead.
-    const testHasErrors = !!model.errors.length;
-    return { errors: testHasErrors ? errorsFromTestRunner(model) : errorsFromActions(model) };
+    const errors = new Map<string, ErrorDescription>();
+    for (const error of model.errorDescriptors)
+      errors.set(error.message, error);
+    return { errors };
   }, [model]);
 }
 

@@ -15,7 +15,7 @@
  */
 
 import { msToString, useMeasure } from '@web/uiUtils';
-import { GlassPane } from '@web/components/glassPane';
+import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';

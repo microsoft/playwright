@@ -266,7 +266,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (context._connection.isRemote()) {
       const streams: channels.WritableStreamChannel[] = await Promise.all((items as string[]).map(async item => {
         const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
-        const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item), lastModifiedMs });
+        const { writableStream: stream } = await context._wrapApiCall(() => context._channel.createTempFile({ name: path.basename(item), lastModifiedMs }), true);
         const writable = WritableStream.from(stream);
         await pipelineAsync(fs.createReadStream(item), writable.stream());
         return stream;

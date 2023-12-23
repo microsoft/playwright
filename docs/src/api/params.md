@@ -734,6 +734,15 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## unroute-all-options-behavior
+* langs: js, csharp, python
+* since: v1.41
+- `behavior` <[UnrouteBehavior]<"wait"|"ignoreErrors"|"default">>
+
+Specifies wether to wait for already running handlers and what to do if they throw errors:
+* `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
+* `'wait'` - wait for current handler calls (if any) to finish
+* `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers after unrouting are silently caught
 
 ## select-options-values
 * langs: java, js, csharp
@@ -903,8 +912,12 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 ## browser-option-args
 - `args` <[Array]<[string]>>
 
+:::warning
+Use custom browser args at your own risk, as some of them may break Playwright functionality.
+:::
+
 Additional arguments to pass to the browser instance. The list of Chromium flags can be found
-[here](http://peter.sh/experiments/chromium-command-line-switches/).
+[here](https://peter.sh/experiments/chromium-command-line-switches/).
 
 ## browser-option-channel
 - `channel` <[string]>
@@ -1023,8 +1036,10 @@ For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 ## locator-option-has
 - `has` <[Locator]>
 
-Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+Narrows down the results of the method to those which contain elements matching this relative locator.
 For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+
+Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not the document root. For example, you can find `content` that has `div` in `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
@@ -1131,6 +1146,18 @@ Defaults to `"css"`.
 - `caret` <[ScreenshotCaret]<"hide"|"initial">>
 
 When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.  Defaults to `"hide"`.
+
+## screenshot-option-style
+- `style` <string>
+
+Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements invisible
+or change their properties to help you creating repeatable screenshots. This stylesheet pierces the Shadow DOM and applies
+to the inner frames.
+
+## screenshot-option-style-path
+- `stylePath` <[string]|[Array]<[string]>>
+
+File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces the Shadow DOM and applies to the inner frames.
 
 ## screenshot-options-common-list-v1.8
 - %%-screenshot-option-animations-%%

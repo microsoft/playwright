@@ -20,7 +20,7 @@ cd PlaywrightDemo
 dotnet add package Microsoft.Playwright
 # Build the project
 dotnet build
-# Install required browsers - replace netX with actual output folder name, e.g. net6.0.
+# Install required browsers - replace netX with actual output folder name, e.g. net8.0.
 pwsh bin/Debug/netX/playwright.ps1 install
 
 # If the pwsh command does not work (throws TypeNotFound), make sure to use an up-to-date version of PowerShell.

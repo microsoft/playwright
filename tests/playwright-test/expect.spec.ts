@@ -16,6 +16,7 @@
 
 import path from 'path';
 import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
+const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -219,6 +220,20 @@ test('should compile generic matchers', async ({ runTSC }) => {
       // @ts-expect-error
       expect({}).toBeInstanceOf({});
     `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should work when passing a ReadonlyArray', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example', async ({ page }) => {
+        const readonlyArray: ReadonlyArray<string> = ['1', '2', '3'];
+        expect(page.locator('.foo')).toHaveText(readonlyArray);
+        await page.locator('.foo').setInputFiles(readonlyArray);
+      });
+    `
   });
   expect(result.exitCode).toBe(0);
 });
@@ -949,4 +964,39 @@ test('should support mergeExpects', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should respect timeout from configured expect when used outside of the test runner', async ({ runInlineTest, writeFiles, runTSC }) => {
+
+  const files = {
+    'script.mjs': `
+      import { test, expect as baseExpect, chromium } from '@playwright/test';
+
+      const configuredExpect = baseExpect.configure({
+        timeout: 10,
+      });
+
+      let browser;
+      try {
+        browser = await chromium.launch();
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await configuredExpect(page.getByTestId("does-not-exist")).toBeAttached();
+      } catch(e) {
+        console.error(e);
+        process.exit(1);
+      }
+      finally {
+        await browser?.close();
+      }
+    
+    `
+  };
+  const baseDir = await writeFiles(files);
+  const { code, stdout, stderr } = await spawnAsync('node', ['script.mjs'], { stdio: 'pipe', cwd: baseDir });
+
+
+  expect(code).toBe(1);
+  expect(stdout).toBe('');
+  expect(stripAnsi(stderr)).toContain('Timed out 10ms waiting for expect(locator).toBeAttached()');
 });
