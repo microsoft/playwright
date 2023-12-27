@@ -342,7 +342,7 @@ it('should disambiguate by header', async ({ contextFactory, server }, testInfo)
 it('should update har.zip for context', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
-  await context1.routeFromHAR(harPath, { update: true });
+  await context1.routeFromHAR(harPath, { update: 'always' });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
@@ -359,7 +359,7 @@ it('should update har.zip for page', async ({ contextFactory, server }, testInfo
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
-  await page1.routeFromHAR(harPath, { update: true });
+  await page1.routeFromHAR(harPath, { update: 'always' });
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
 
@@ -376,7 +376,7 @@ it('should update har.zip for page with different options', async ({ contextFact
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
-  await page1.routeFromHAR(harPath, { update: true, updateContent: 'embed', updateMode: 'full' });
+  await page1.routeFromHAR(harPath, { update: 'always', updateContent: 'embed', updateMode: 'full' });
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
 
@@ -403,7 +403,7 @@ it('should update har.zip on passed test', async ({ contextFactory, server }, te
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
   await page1.routeFromHAR(harPath, {
-    update: true,
+    update: 'always',
     updateContent: 'embed',
     updateMode: 'full',
     saveHarFilesOn: _ => testInfo.status === 'passed'
@@ -418,7 +418,7 @@ it('should not update har.zip on passed test', async ({ contextFactory, server }
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
   await page1.routeFromHAR(harPath, {
-    update: true,
+    update: 'always',
     updateContent: 'embed',
     updateMode: 'full',
     saveHarFilesOn: _ => testInfo.status !== 'passed'
@@ -433,7 +433,7 @@ it('should not update har.zip on true resolved promise', async ({ contextFactory
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
   await page1.routeFromHAR(harPath, {
-    update: true,
+    update: 'always',
     updateContent: 'embed',
     updateMode: 'full',
     saveHarFilesOn: _ => Promise.resolve(true)
@@ -448,7 +448,7 @@ it('should not update har.zip on false resolved promise', async ({ contextFactor
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
   await page1.routeFromHAR(harPath, {
-    update: true,
+    update: 'always',
     updateContent: 'embed',
     updateMode: 'full',
     saveHarFilesOn: _ => Promise.resolve(false)
@@ -462,7 +462,7 @@ it('should update extracted har.zip for page', async ({ contextFactory, server }
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
-  await page1.routeFromHAR(harPath, { update: true });
+  await page1.routeFromHAR(harPath, { update: 'always' });
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
 

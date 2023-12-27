@@ -237,7 +237,7 @@ test('records or updates the HAR file', async ({ page }) => {
   // Get the response from the HAR file
   await page.routeFromHAR('./hars/fruit.har', {
     url: '*/**/api/v1/fruits',
-    update: true,
+    update: 'always',
   });
 
   // Go to the page
@@ -302,7 +302,7 @@ assertThat(page.getByText("Strawberry")).isVisible();
 
 ### Modifying a HAR file
 
-Once you have recorded a HAR file you can modify it by opening the hashed .txt file inside your 'hars' folder and editing the JSON. This file should be committed to your source control. Anytime you run this test with `update: true` it will update your HAR file with the request from the API.
+Once you have recorded a HAR file you can modify it by opening the hashed .txt file inside your 'hars' folder and editing the JSON. This file should be committed to your source control. Anytime you run this test with `update: 'always'` it will update your HAR file with the request from the API.
 
 ```json
 [
@@ -325,7 +325,7 @@ test('gets the json from HAR and checks the new fruit has been added', async ({ 
   // or abort the request if nothing matches.
   await page.routeFromHAR('./hars/fruit.har', {
     url: '*/**/api/v1/fruits',
-    update: false,
+    update: 'never',
   });
 
   // Go to the page

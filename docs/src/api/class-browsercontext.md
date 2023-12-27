@@ -1225,9 +1225,13 @@ Defaults to abort.
 
 ### option: BrowserContext.routeFromHAR.update
 * since: v1.23
-- `update` ?<[HarUpdateType]<boolean|"ifNotExists">>
+- `update` ?<[HarUpdate]<"always"|"never"|"ifNotExists">>
+* If set to 'always' the har files will be updated at every run.
+* If set to 'never' the har files will not be updated.
+* If set to 'ifNotExists' the har files will be created if they not exist.
 
-If specified as `true`, updates the given HAR with the actual network information instead of serving from file. If we specify it to `ifNotExists` it only updates the har-file if it not exists. The file is written to disk when [`method: BrowserContext.close`] is called.
+The file is written to disk when [`method: BrowserContext.close`] is called.
+
 
 ### option: BrowserContext.routeFromHAR.url
 * since: v1.23
@@ -1249,7 +1253,6 @@ Optional setting to control resource content management. If `attach` is specifie
 
 ### option: BrowserContext.routeFromHAR.saveHarFilesOn
 * since: v1.42
-* langs: js
 - `saveHarFilesOn` <[function]\([BrowserContext]\):[Promise]<[boolean]>|[boolean]>
 
 Optional setting to control when to save the updated har files to disk. Defaults to `() => true`

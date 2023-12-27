@@ -28,7 +28,15 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, URLMatch, WaitForEventOptions } from './types';
+import type {
+  BrowserContextOptions,
+  HarUpdateType,
+  Headers,
+  LaunchOptions,
+  StorageState,
+  URLMatch,
+  WaitForEventOptions
+} from './types';
 import { headersObjectToArray, isRegExp, isString, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type * as api from '../../types/types';
@@ -44,8 +52,7 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { parseError, TargetClosedError } from './errors';
-
-type HarUpdateType = boolean | 'ifNotExists';
+import { shouldUpdate } from './harHelper';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -378,20 +385,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     updateContent?: 'attach' | 'embed',
     updateMode?: 'minimal' | 'full'
   } = {}): Promise<void> {
-    if (this._shouldUpdate(har, options.update)) {
+    if (shouldUpdate(har, options.update)) {
       await this._recordIntoHAR(har, null, options);
       return;
     }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
     this._harRouters.push(harRouter);
     await harRouter.addContextRoute(this);
-  }
-
-  private _shouldUpdate(harPath: string, update?: HarUpdateType): boolean {
-    if (update === 'ifNotExists')
-      return !fs.existsSync(harPath);
-
-    return !!update;
   }
 
   private _disposeHarRouters() {

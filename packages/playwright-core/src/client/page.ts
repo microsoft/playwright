@@ -44,11 +44,23 @@ import type { FrameLocator, Locator, LocatorOptions } from './locator';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
 import { trimStringWithEllipsis } from '../utils/isomorphic/stringUtils';
 import { type RouteHandlerCallback, type Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
-import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
+import type {
+  FilePayload,
+  HarUpdateType,
+  Headers,
+  LifecycleEvent,
+  SelectOption,
+  SelectOptionOptions,
+  Size,
+  URLMatch,
+  WaitForEventOptions,
+  WaitForFunctionOptions
+} from './types';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { HarRouter } from './harRouter';
+import { shouldUpdate } from './harHelper';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -463,8 +475,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._updateInterceptionPatterns();
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
-    if (this._shouldUpdate(har, options.update)) {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: HarUpdateType, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
+    if (shouldUpdate(har, options.update)) {
       await this._browserContext._recordIntoHAR(har, this, options);
       return;
     }
@@ -473,12 +485,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await harRouter.addPageRoute(this);
   }
 
-  private _shouldUpdate(harPath: string, update?: boolean | 'ifNotExists'): boolean {
-    if (update === 'ifNotExists')
-      return !fs.existsSync(harPath);
-
-    return !!update;
-  }
 
   private _disposeHarRouters() {
     this._harRouters.forEach(router => router.dispose());
