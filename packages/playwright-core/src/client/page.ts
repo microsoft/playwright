@@ -465,9 +465,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
 
   shouldUpdate(harPath: string, update?: boolean | 'ifNotExists'): boolean {
-    if (update === 'ifNotExists') {
+    if (update === 'ifNotExists')
       return !fs.existsSync(harPath);
-    }
+
     return !!update;
   }
 
