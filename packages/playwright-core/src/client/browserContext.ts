@@ -45,6 +45,8 @@ import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { parseError, TargetClosedError } from './errors';
 
+type HarUpdateType = boolean | 'ifNotExists';
+
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
   _routes: network.RouteHandler[] = [];
@@ -347,7 +349,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async _recordIntoHAR(har: string, page: Page | null, options: {
     url?: string | RegExp,
     notFound?: 'abort' | 'fallback',
-    update?: boolean | 'always' | 'ifNotExists',
+    update?: HarUpdateType,
     updateContent?: 'attach' | 'embed',
     updateMode?: 'minimal' | 'full',
     saveHarFilesOn?: (context: BrowserContext) => (boolean | Promise<boolean>)
@@ -372,11 +374,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     url?: string | RegExp,
     saveHarFilesOn?: (context: BrowserContext) => (boolean | Promise<boolean>),
     notFound?: 'abort' | 'fallback',
-    update?: boolean | 'ifNotExists',
+    update?: HarUpdateType,
     updateContent?: 'attach' | 'embed',
     updateMode?: 'minimal' | 'full'
   } = {}): Promise<void> {
-    if (this.shouldUpdate(har, options.update)) {
+    if (this._shouldUpdate(har, options.update)) {
       await this._recordIntoHAR(har, null, options);
       return;
     }
@@ -385,7 +387,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await harRouter.addContextRoute(this);
   }
 
-  shouldUpdate(harPath: string, update?: boolean | 'ifNotExists'): boolean {
+  private _shouldUpdate(harPath: string, update?: HarUpdateType): boolean {
     if (update === 'ifNotExists')
       return !fs.existsSync(harPath);
 

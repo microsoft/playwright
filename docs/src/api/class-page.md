@@ -3351,10 +3351,9 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 
 Defaults to abort.
 
-### option: Page.routeFromHAR.update
+### option: BrowserContext.routeFromHAR.update
 * since: v1.23
-- `update` ?<boolean|"ifNotExists">
-
+- `update` ?<[HarUpdateType]<boolean|"ifNotExists">>
 If specified as `true`, updates the given HAR with the actual network information instead of serving from file. If we specify it to `ifNotExists` it only updates the har-file if it not exists. The file is written to disk when [`method: BrowserContext.close`] is called.
 
 ### option: Page.routeFromHAR.url

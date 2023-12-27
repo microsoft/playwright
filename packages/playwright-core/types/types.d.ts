@@ -3643,14 +3643,6 @@ export interface Page {
     saveHarFilesOn?: ((browsercontext: BrowserContext) => Promise<boolean>|boolean);
 
     /**
-     * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
-     * written to disk when
-     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
-     * called.
-     */
-    update?: boolean|"ifNotExists";
-
-    /**
      * Optional setting to control resource content management. If `attach` is specified, resources are persisted as
      * separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
      */
@@ -8451,12 +8443,14 @@ export interface BrowserContext {
     saveHarFilesOn?: ((browsercontext: BrowserContext) => Promise<boolean>|boolean);
 
     /**
-     * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
-     * written to disk when
+     * If specified as `true`, updates the given HAR with the actual network information instead of serving from file. If
+     * we specify it to `ifNotExists` it only updates the har-file if it not exists. The file is written to disk when
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
      * called.
      */
-    update?: boolean|"ifNotExists";
+    update?: HarUpdateType<boolean|"ifNotExists">;
+
+    update?: HarUpdateType<boolean|"ifNotExists">;
 
     /**
      * Optional setting to control resource content management. If `attach` is specified, resources are persisted as
