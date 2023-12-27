@@ -28,15 +28,7 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type {
-  BrowserContextOptions,
-  HarUpdateType,
-  Headers,
-  LaunchOptions,
-  StorageState,
-  URLMatch,
-  WaitForEventOptions
-} from './types';
+import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions, HarUpdateType } from './types';
 import { headersObjectToArray, isRegExp, isString, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type * as api from '../../types/types';
@@ -63,7 +55,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = {};
+  _options: channels.BrowserNewContextParams = { };
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
@@ -143,21 +135,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
       }
     });
-    this._channel.on('request', ({
-      request,
-      page
-    }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
-    this._channel.on('requestFailed', ({
-      request,
-      failureText,
-      responseEndTiming,
-      page
-    }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
+    this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
-    this._channel.on('response', ({
-      response,
-      page
-    }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
+    this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
@@ -172,12 +153,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
     this._options = contextOptions;
-    if (this._options.recordHar) {
-      this._harRecorders.set('', {
-        path: this._options.recordHar.path,
-        content: this._options.recordHar.content
-      });
-    }
+    if (this._options.recordHar)
+      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
@@ -237,17 +214,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       if (routeHandler.willExpire())
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
-      if (!this._routes.length) {
-        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {
-        });
-      }
+      if (!this._routes.length)
+        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
       if (handled)
         return;
     }
     // If the page is closed or unrouteAll() was called without waiting and interception disabled,
     // the method will throw an error - silence it.
-    await route._innerContinue(true).catch(() => {
-    });
+    await route._innerContinue(true).catch(() => {});
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -260,16 +234,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {
-      });
+      this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {});
     }, true);
   }
 
   setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {
-      });
+      this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
     }, true);
   }
 
@@ -333,9 +305,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.addInitScript({ source });
   }
 
-  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: {
-    handle?: boolean
-  } = {}): Promise<void> {
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
     await this._channel.exposeBinding({ name, needsHandle: options.handle });
     this._bindings.set(name, callback);
   }
@@ -397,7 +367,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._harRouters = [];
   }
 
-  async unrouteAll(options?: { behavior?: 'wait' | 'ignoreErrors' | 'default' }): Promise<void> {
+  async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
@@ -414,7 +384,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._unrouteInternal(removed, remaining, 'default');
   }
 
-  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait' | 'ignoreErrors' | 'default'): Promise<void> {
+  private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
     if (!behavior || behavior === 'default')
@@ -434,8 +404,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
+      const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
@@ -519,15 +489,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _enableRecorder(params: {
-    language: string,
-    launchOptions?: LaunchOptions,
-    contextOptions?: BrowserContextOptions,
-    device?: string,
-    saveStorage?: string,
-    mode?: 'recording' | 'inspecting',
-    testIdAttributeName?: string,
-    outputFile?: string,
-    handleSIGINT?: boolean,
+      language: string,
+      launchOptions?: LaunchOptions,
+      contextOptions?: BrowserContextOptions,
+      device?: string,
+      saveStorage?: string,
+      mode?: 'recording' | 'inspecting',
+      testIdAttributeName?: string,
+      outputFile?: string,
+      handleSIGINT?: boolean,
   }) {
     await this._channel.recorderSupplementEnable(params);
   }
