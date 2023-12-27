@@ -3648,7 +3648,7 @@ export interface Page {
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
      * called.
      */
-    update?: boolean;
+    update?: boolean|"ifNotExists";
 
     /**
      * Optional setting to control resource content management. If `attach` is specified, resources are persisted as
@@ -8456,7 +8456,7 @@ export interface BrowserContext {
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
      * called.
      */
-    update?: boolean;
+    update?: boolean|"ifNotExists";
 
     /**
      * Optional setting to control resource content management. If `attach` is specified, resources are persisted as

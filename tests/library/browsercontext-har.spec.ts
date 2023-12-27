@@ -388,6 +388,16 @@ it('should update har.zip for page with different options', async ({ contextFact
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+it('should not update har.zip for page with different options', async ({ contextFactory, server, asset }, testInfo) => {
+  const harPath = asset('har-fulfill.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: 'ifNotExists', updateContent: 'embed', updateMode: 'full' });
+  const error = await page1.goto(server.PREFIX + '/one-style.html').catch(e => e);
+  await context1.close();
+  expect(error instanceof Error).toBe(true);
+});
+
 it('should update har.zip on passed test', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();

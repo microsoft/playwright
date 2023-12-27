@@ -463,8 +463,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._updateInterceptionPatterns();
   }
 
+
+  shouldUpdate(harPath: string, update?: boolean | 'ifNotExists'): boolean {
+    if (update === 'ifNotExists') {
+      return !fs.existsSync(harPath);
+    }
+    return !!update;
+  }
+
+
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
-    if (options.update) {
+    if (this.shouldUpdate(har, options.update)) {
       await this._browserContext._recordIntoHAR(har, this, options);
       return;
     }

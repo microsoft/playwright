@@ -1225,9 +1225,9 @@ Defaults to abort.
 
 ### option: BrowserContext.routeFromHAR.update
 * since: v1.23
-- `update` ?<boolean>
+- `update` ?<boolean|"ifNotExists">
 
-If specified, updates the given HAR with the actual network information instead of serving from file. The file is written to disk when [`method: BrowserContext.close`] is called.
+If specified as `true`, updates the given HAR with the actual network information instead of serving from file. If we specify it to `ifNotExists` it only updates the har-file if it not exists. The file is written to disk when [`method: BrowserContext.close`] is called.
 
 ### option: BrowserContext.routeFromHAR.url
 * since: v1.23
