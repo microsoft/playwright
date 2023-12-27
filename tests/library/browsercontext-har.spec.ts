@@ -388,6 +388,66 @@ it('should update har.zip for page with different options', async ({ contextFact
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+it('should update har.zip on passed test', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, {
+    update: true,
+    updateContent: 'embed',
+    updateMode: 'full',
+    saveHarFilesOn: _ => testInfo.status === 'passed'
+  });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+  expect(fs.existsSync(harPath)).toBeTruthy();
+});
+
+it('should not update har.zip on passed test', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, {
+    update: true,
+    updateContent: 'embed',
+    updateMode: 'full',
+    saveHarFilesOn: _ => testInfo.status !== 'passed'
+  });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+  expect(fs.existsSync(harPath)).toBeFalsy();
+});
+
+it('should not update har.zip on true resolved promise', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, {
+    update: true,
+    updateContent: 'embed',
+    updateMode: 'full',
+    saveHarFilesOn: _ => Promise.resolve(true)
+  });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+  expect(fs.existsSync(harPath)).toBeTruthy();
+});
+
+it('should not update har.zip on false resolved promise', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, {
+    update: true,
+    updateContent: 'embed',
+    updateMode: 'full',
+    saveHarFilesOn: _ => Promise.resolve(false)
+  });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+  expect(fs.existsSync(harPath)).toBeFalsy();
+});
+
 it('should update extracted har.zip for page', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory();

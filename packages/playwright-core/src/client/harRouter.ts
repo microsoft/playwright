@@ -25,7 +25,7 @@ type HarNotFoundAction = 'abort' | 'fallback';
 
 export class HarRouter {
   private _localUtils: LocalUtils;
-  private _harId: string;
+  harId: string;
   private _notFoundAction: HarNotFoundAction;
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
@@ -38,7 +38,7 @@ export class HarRouter {
 
   private constructor(localUtils: LocalUtils, harId: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }) {
     this._localUtils = localUtils;
-    this._harId = harId;
+    this.harId = harId;
     this._options = options;
     this._notFoundAction = notFoundAction;
   }
@@ -47,7 +47,7 @@ export class HarRouter {
     const request = route.request();
 
     const response = await this._localUtils._channel.harLookup({
-      harId: this._harId,
+      harId: this.harId,
       url: request.url(),
       method: request.method(),
       headers: (await request.headersArray()),
@@ -95,6 +95,6 @@ export class HarRouter {
   }
 
   dispose() {
-    this._localUtils._channel.harClose({ harId: this._harId }).catch(() => {});
+    this._localUtils._channel.harClose({ harId: this.harId }).catch(() => {});
   }
 }

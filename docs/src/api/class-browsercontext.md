@@ -1247,6 +1247,13 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
+### option: BrowserContext.routeFromHAR.saveHarFilesOn
+* since: v1.42
+* langs: js
+- `saveHarFilesOn` <[function]\([BrowserContext]\):[Promise]<[boolean]>|[boolean]>
+
+Optional setting to control when to save the updated har files to disk. Defaults to `() => true`
+
 ## method: BrowserContext.serviceWorkers
 * since: v1.11
 * langs: js, python

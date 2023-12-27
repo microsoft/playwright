@@ -3638,6 +3638,11 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
+     * Optional setting to control when to save the updated har files to disk. Defaults to `() => true`
+     */
+    saveHarFilesOn?: ((browsercontext: BrowserContext) => Promise<boolean>|boolean);
+
+    /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
@@ -8439,6 +8444,11 @@ export interface BrowserContext {
      * Defaults to abort.
      */
     notFound?: "abort"|"fallback";
+
+    /**
+     * Optional setting to control when to save the updated har files to disk. Defaults to `() => true`
+     */
+    saveHarFilesOn?: ((browsercontext: BrowserContext) => Promise<boolean>|boolean);
 
     /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
