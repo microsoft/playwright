@@ -136,13 +136,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         // on the client side due to a possible race condition between two async calls:
         // a) removing "dialog" listener subscription (client->server)
         // b) actual "dialog" event (server->client)
-        if (dialogObject.type() === 'beforeunload') {
-          dialog.accept({}).catch(() => {
-          });
-        } else {
-          dialog.dismiss().catch(() => {
-          });
-        }
+        if (dialogObject.type() === 'beforeunload')
+          dialog.accept({}).catch(() => {});
+        else
+          dialog.dismiss().catch(() => {});
+
       }
     });
     this._channel.on('request', ({

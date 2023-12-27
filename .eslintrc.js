@@ -2,6 +2,8 @@ module.exports = {
     parser: "@typescript-eslint/parser",
     plugins: ["@typescript-eslint", "notice"],
     parserOptions: {
+      // needed for intellij to map tsconfig correctly
+      tsconfigRootDir: __dirname,
       ecmaVersion: 9,
       sourceType: "module",
     },
