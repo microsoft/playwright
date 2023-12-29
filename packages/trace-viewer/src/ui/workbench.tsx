@@ -50,7 +50,8 @@ export const Workbench: React.FunctionComponent<{
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
-}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status }) => {
+  showOpenNewTab?: boolean,
+}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, showOpenNewTab }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
@@ -224,7 +225,8 @@ export const Workbench: React.FunctionComponent<{
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           highlightedLocator={highlightedLocator}
-          setHighlightedLocator={locatorPicked} />
+          setHighlightedLocator={locatorPicked}
+          showOpenNewTab={showOpenNewTab} />
         <TabbedPane
           tabs={[
             {
