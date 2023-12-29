@@ -157,6 +157,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   }, [isServer, traceURLs, uploadedTraceNames]);
 
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
+    {showTitle && (
     <div className='hbox header'>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
@@ -166,6 +167,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='spacer'></div>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </div>
+    )}
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
