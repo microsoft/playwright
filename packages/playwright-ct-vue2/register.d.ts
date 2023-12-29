@@ -21,4 +21,4 @@ export default function pwRegister(
     setDevtoolsHook: any,
     h: any,
   }
-): void
+): void;
