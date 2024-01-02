@@ -8,7 +8,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "^3.2.31",
+    "vue": "^3.4.0",
     "vue-router": "^4.1.5"
   },
   "devDependencies": {

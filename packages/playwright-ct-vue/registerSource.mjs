@@ -288,6 +288,9 @@ window.playwrightUpdate = async (rootElement, component) => {
   wrapper.component.slots = __pwWrapFunctions(slots);
   __pwAllListeners.set(wrapper, listeners);
 
+  if (typeof slots !== 'undefined')
+    wrapper.component.effect.run();
+
   for (const [key, value] of Object.entries(props))
     wrapper.component.props[key] = value;
 
