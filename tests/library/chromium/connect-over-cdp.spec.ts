@@ -40,6 +40,33 @@ test('should connect to an existing cdp session', async ({ browserType, mode }, 
   }
 });
 
+test('should use logger in default context', async ({ browserType }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28813' });
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const log = [];
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      logger: {
+        log: (name, severity, message) => log.push({ name, severity, message }),
+        isEnabled: (name, severity) => severity !== 'verbose'
+      }
+    });
+    const page = await browser.contexts()[0].newPage();
+    await page.setContent('<button>Button</button>');
+    await page.click('button');
+    await browser.close();
+    expect(log.length > 0).toBeTruthy();
+    expect(log.filter(item => item.message.includes('page.setContent')).length > 0).toBeTruthy();
+    expect(log.filter(item => item.message.includes('page.click')).length > 0).toBeTruthy();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('should cleanup artifacts dir after connectOverCDP disconnects due to ws close', async ({ browserType, toImpl, mode }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
