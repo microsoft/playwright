@@ -51,7 +51,8 @@ export const Workbench: React.FunctionComponent<{
   isLive?: boolean,
   status?: UITestStatus,
   showOpenNewTab?: boolean,
-}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, showOpenNewTab }) => {
+  showTimeline?: boolean,
+}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, showOpenNewTab, showTimeline }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
@@ -206,7 +207,7 @@ export const Workbench: React.FunctionComponent<{
     time = Date.now() - model.wallTime;
 
   return <div className='vbox workbench'>
-    <Timeline
+    {showTimeline && <Timeline
       model={model}
       boundaries={boundaries}
       highlightedAction={highlightedAction}
@@ -215,7 +216,7 @@ export const Workbench: React.FunctionComponent<{
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
-    />
+    />}
     <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
         <SnapshotTab

@@ -126,6 +126,11 @@ export const WorkbenchLoader: React.FunctionComponent<{
     return params.has("showOpenNewTab");
   }, [window.location.href]);
 
+  const showTimeline = React.useMemo(() => {
+    const params = new URL(window.location.href).searchParams;
+    return params.has("showTimeline");
+  }, [window.location.href]);
+
   React.useEffect(() => {
     (async () => {
       if (traceURLs.length) {
@@ -176,7 +181,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} showOpenNewTab={showOpenNewTab} />
+    <Workbench model={model} showOpenNewTab={showOpenNewTab} showTimeline={showTimeline} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
       <div style={{ paddingTop: 20 }}>
