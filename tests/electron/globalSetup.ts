@@ -24,5 +24,5 @@ export default async () => {
   const chromiumVersion = result.stdout.trim();
   assert(result.code === 0);
   assert(chromiumVersion.length > 0);
-  process.env.CHROMIUM_VERSION_OVERRIDE = chromiumVersion;
+  process.env.ELECTRON_CHROMIUM_VERSION = chromiumVersion;
 };
