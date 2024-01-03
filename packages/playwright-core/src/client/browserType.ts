@@ -216,7 +216,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const browser = Browser.from(result.browser);
     this._didLaunchBrowser(browser, {}, params.logger);
     if (result.defaultContext)
-      await this._didCreateContext(BrowserContext.from(result.defaultContext), {}, {}, undefined);
+      await this._didCreateContext(BrowserContext.from(result.defaultContext), {}, {}, params.logger);
     return browser;
   }
 
