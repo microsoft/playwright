@@ -1,8 +1,8 @@
-name: 'Download blob report'
-description: 'Download blob report from GitHub artifacts'
+name: 'Download artifacts'
+description: 'Download artifacts from GitHub'
 inputs:
-  name:
-    description: 'Name of the artifact to download'
+  namePrefix:
+    description: 'Name prefix of the artifacts to download'
     required: true
     type: string
     default: 'blob-report'
@@ -10,11 +10,14 @@ inputs:
     description: 'Directory with downloaded artifacts'
     required: true
     type: string
-    default: 'blob-report'
+    default: '.'
 runs:
   using: "composite"
   steps:
-    - name: Download blob report
+    - name: Create temp downloads dir
+      shell: bash
+      run: mkdir -p '${{ inputs.path }}/artifacts'
+    - name: Download artifacts
       uses: actions/github-script@v6
       with:
         script: |
@@ -25,16 +28,19 @@ runs:
             run_id: context.payload.workflow_run.id
           });
           console.log('total = ', data.total_count);
-          const name = '${{ inputs.name }}';
-          const report = data.artifacts.filter(a => a.name === name)[0];
-          const result = await github.rest.actions.downloadArtifact({
-            ...context.repo,
-            artifact_id: report.id,
-            archive_format: 'zip'
-          });
-          console.log('download result', result);
+          const artifacts = data.artifacts.filter(a => a.name.startsWith('${{ inputs.namePrefix }}'));
           const fs = require('fs');
-          fs.writeFileSync(`${name}.zip`, Buffer.from(result.data));
-    - name: Unzip blob report
+          for (const artifact of artifacts) {
+            const result = await github.rest.actions.downloadArtifact({
+              ...context.repo,
+              artifact_id: artifact.id,
+              archive_format: 'zip'
+            });
+            console.log('downloaded artifact', result);
+            fs.writeFileSync(`${{ inputs.path }}/artifacts/${artifact.name}.zip`, Buffer.from(result.data));
+          }
+    - name: Unzip artifacts
       shell: bash
-      run: unzip ${{ inputs.name }}.zip -d ${{ inputs.path }}
+      run: |
+        unzip -n '${{ inputs.path }}/artifacts/*.zip' -d ${{ inputs.path }}
+        rm -rf '${{ inputs.path }}/artifacts'
