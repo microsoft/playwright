@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - 'docs/src/api/**/*',
+      - 'docs/src/api/**/*'
       - 'packages/playwright-core/src/client/**/*'
       - 'packages/playwright-core/src/utils/isomorphic/**/*'
       - 'packages/playwright/src/matchers/matchers.ts'
