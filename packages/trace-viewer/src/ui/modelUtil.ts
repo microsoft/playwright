@@ -94,6 +94,13 @@ export class MultiTraceModel {
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.sources = collectSources(this.actions);
+
+    console.log("Start times");
+    contexts.filter(c => c.startTime !== undefined).forEach(c => console.log(c));
+
+    console.log("End times");
+    contexts.filter(c => c.endTime !== undefined).forEach(c => console.log(c));
+
   }
 
   failedAction() {
