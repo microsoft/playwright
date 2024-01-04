@@ -1,5 +1,5 @@
 name: 'Upload blob report'
-description: 'Upload blob report to GitHub artifacts'
+description: 'Upload blob report to GitHub artifacts (for pull requests)'
 inputs:
   report_dir:
     description: 'Directory containing blob report'
@@ -15,7 +15,7 @@ runs:
   using: "composite"
   steps:
     - name: Upload blob report to GitHub
-      if: always()
+      if: always() && github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ inputs.job_name }}
