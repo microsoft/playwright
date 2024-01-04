@@ -457,7 +457,8 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 
 ### Firefox
 
-Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches. Instead you can test against the recent Firefox Stable build.
+Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches. 
+
 ### WebKit
 
 Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead you can test against the recent WebKit build.
