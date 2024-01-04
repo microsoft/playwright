@@ -42,6 +42,8 @@ jobs:
             node-version: 20
             browser: chromium
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -54,8 +56,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
-      env:
-        PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -65,6 +65,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
@@ -73,6 +74,8 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.os }}-chromium-tip-of-tree"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -96,6 +99,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_test_runner:
     name: Test Runner
@@ -104,21 +108,28 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [18]
-        shard: [1/2, 2/2]
+        shardIndex: [1, 2]
+        shardTotal: [2]
         include:
           - os: ubuntu-latest
             node-version: 16
-            shard: 1/2
+            shardIndex: 1
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 16
-            shard: 2/2
+            shardIndex: 2
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 20
-            shard: 1/2
+            shardIndex: 1
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 20
-            shard: 2/2
+            shardIndex: 2
+            shardTotal: 2
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -129,13 +140,9 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run ttest -- --shard ${{ matrix.shard }}
-      env:
-        PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shard }}"
+    - run: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run ttest --  --shard ${{ matrix.shard }}
-      env:
-        PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shard }}"
+    - run: xvfb-run npm run ttest --  --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -145,6 +152,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_web_components:
     name: Web Components
@@ -168,6 +176,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: packages/html-reporter/blob-report
+        job_name: "web-components-html-reporter"
 
     - run: npm run test-web
       if: always()
@@ -178,10 +187,13 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: packages/web/blob-report
+        job_name: "web-components-web"
 
   test_vscode_extension:
     name: VSCode Extension
     runs-on: ubuntu-latest
+    env:
+      PWTEST_BOT_NAME: "vscode-extension"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -205,18 +217,16 @@ jobs:
       working-directory: ./playwright-vscode
     - name: Run extension tests
       run: npm run test -- --workers=1
-      env:
-        PWTEST_BOT_NAME: "vscode-extension"
       working-directory: ./playwright-vscode
     - name: Upload blob report
       if: always()
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: ./playwright-vscode/blob-report
+        report_dir: playwright-vscode/blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_package_installations:
     name: "Installation Test ${{ matrix.os }}"
-    runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
       matrix:
@@ -224,7 +234,10 @@ jobs:
         - ubuntu-latest
         - macos-latest
         - windows-latest
+    runs-on: ${{ matrix.os  }}
     timeout-minutes: 30
+    env:
+      PWTEST_BOT_NAME: "package-installations-${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -239,12 +252,8 @@ jobs:
     - run: npm install -g pnpm@8
     - run: npm run itest
       if: matrix.os != 'ubuntu-latest'
-      env:
-        PWTEST_BOT_NAME: "package-installations-${{ matrix.os }}"
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
       if: matrix.os == 'ubuntu-latest'
-      env:
-        PWTEST_BOT_NAME: "package-installations-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -253,3 +262,4 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}

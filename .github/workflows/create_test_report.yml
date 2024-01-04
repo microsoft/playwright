@@ -26,8 +26,8 @@ jobs:
     - name: Download blob report artifact
       uses: ./.github/actions/download-artifact
       with:
-        name: all-blob-reports
-        path: all-blob-reports
+        namePrefix: 'blob-report'
+        path: 'all-blob-reports'
 
     - name: Merge reports
       run: |
@@ -49,8 +49,8 @@ jobs:
     - name: Read pull request number
       uses: ./.github/actions/download-artifact
       with:
-        name: 'pull-request'
-        path: './'
+        namePrefix: 'pull-request'
+        path: '.'
 
     - name: Comment on PR
       uses: actions/github-script@v6

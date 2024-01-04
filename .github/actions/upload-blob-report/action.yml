@@ -5,15 +5,20 @@ inputs:
     description: 'Directory containing blob report'
     required: true
     type: string
-    default: 'blob-report'
+    default: 'test-results/blob-report'
+  job_name:
+    description: 'Unique job name'
+    required: true
+    type: string
+    default: ''
 runs:
   using: "composite"
   steps:
     - name: Upload blob report to GitHub
       if: always() && github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: all-blob-reports
+        name: blob-report-${{ inputs.job_name }}
         path: ${{ inputs.report_dir }}
         retention-days: 7
     - name: Write triggering pull request number in a file
@@ -22,7 +27,7 @@ runs:
       run: echo '${{ github.event.number }}' > pull_request_number.txt;
     - name: Upload artifact with the pull request number
       if: always() && github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: pull-request
+        name: pull-request-${{ inputs.job_name }}
         path: pull_request_number.txt
