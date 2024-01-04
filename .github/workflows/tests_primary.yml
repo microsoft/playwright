@@ -108,23 +108,28 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [18]
-        shard: [1/2, 2/2]
+        shardIndex: [1, 2]
+        shardTotal: [2]
         include:
           - os: ubuntu-latest
             node-version: 16
-            shard: 1/2
+            shardIndex: 1
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 16
-            shard: 2/2
+            shardIndex: 2
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 20
-            shard: 1/2
+            shardIndex: 1
+            shardTotal: 2
           - os: ubuntu-latest
             node-version: 20
-            shard: 2/2
+            shardIndex: 2
+            shardTotal: 2
     runs-on: ${{ matrix.os }}
     env:
-      PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shard }}"
+      PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -135,9 +140,9 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run ttest -- --shard ${{ matrix.shard }}
+    - run: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run ttest --  --shard ${{ matrix.shard }}
+    - run: xvfb-run npm run ttest --  --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
