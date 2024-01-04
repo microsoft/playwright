@@ -51,9 +51,9 @@ GitHub Actions supports [sharding tests between multiple jobs](https://docs.gith
 
 The following example shows you how to configure a job to run your tests on four machines in parallel and then merge the reports into a single report. Don't forget to add `reporter: process.env.CI ? 'blob' : 'html',` to your `playwright.config.ts` file as in the example above.
 
-1. First we add a `matrix` option to our job configuration with the `shard` option containing the number of shards we want to create. `shard: [1/4, 2/4, 3/4, 4/4]` will create four shards, each with a different shard number.
+1. First we add a `matrix` option to our job configuration with the `shardTotal: [4]` option containing the total number of shards we want to create and `shardIndex: [1, 2, 3, 4]` with an array of the shard numbers.
 
-1. Then we run our Playwright tests with the `--shard ${{ matrix.shard }}` option. This will our test command for each shard.
+1. Then we run our Playwright tests with the `--shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}` option. This will run our test command for each shard.
 
 1. Finally we upload our blob report to the GitHub Actions Artifacts. This will make the blob report available to other jobs in the workflow. 
 
