@@ -14,6 +14,7 @@
   "exports": {
     ".": {
       "types": "./index.d.ts",
+      "bun": "./index.js",
       "import": "./index.mjs",
       "require": "./index.js",
       "default": "./index.js"
@@ -27,6 +28,7 @@
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
     "./jsx-runtime": {
+      "bun": "./jsx-runtime.js",
       "import": "./jsx-runtime.mjs",
       "require": "./jsx-runtime.js",
       "default": "./jsx-runtime.js"
@@ -41,6 +43,7 @@
     },
     "./test": {
       "types": "./test.d.ts",
+      "bun": "./test.js",
       "import": "./test.mjs",
       "require": "./test.js",
       "default": "./test.js"
