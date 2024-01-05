@@ -449,7 +449,7 @@ it('should not allow to access frame on popup main request', async ({ page, serv
   await clicked;
 });
 
-it.only('page.reload return 304 status code', async ({ page, server, browserName }) => {
+it('page.reload return 304 status code', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28779' });
   it.fixme(browserName === 'chromium', 'Returns 200 instead of 304');
   it.fixme(browserName === 'firefox', 'Does not send second request');
