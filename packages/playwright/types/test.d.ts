@@ -5655,8 +5655,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the {@link Locator} points to an element that contains the given text. You can use regular expressions for
-   * the value as well.
+   * Ensures the {@link Locator} points to an element that contains the given text. All nested elements will be
+   * considered when computing the text content of the element. You can use regular expressions for the value as well.
    *
    * **Details**
    *
@@ -6069,8 +6069,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the {@link Locator} points to an element with the given text. You can use regular expressions for the value
-   * as well.
+   * Ensures the {@link Locator} points to an element with the given text. All nested elements will be considered when
+   * computing the text content of the element. You can use regular expressions for the value as well.
    *
    * **Details**
    *

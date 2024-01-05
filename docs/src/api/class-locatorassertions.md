@@ -933,7 +933,7 @@ await Expect(
 * langs:
   - alias-java: containsText
 
-Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
+Ensures the [Locator] points to an element that contains the given text. All nested elements will be considered when computing the text content of the element. You can use regular expressions for the value as well.
 
 **Details**
 
@@ -1613,7 +1613,7 @@ Note that screenshot assertions only work with Playwright test runner.
 * langs:
   - alias-java: hasText
 
-Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
+Ensures the [Locator] points to an element with the given text. All nested elements will be considered when computing the text content of the element. You can use regular expressions for the value as well.
 
 **Details**
 
