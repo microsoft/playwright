@@ -448,3 +448,31 @@ it('should not allow to access frame on popup main request', async ({ page, serv
   await popupPromise;
   await clicked;
 });
+
+it('page.reload return 304 status code', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28779' });
+  it.fixme(browserName === 'chromium', 'Returns 200 instead of 304');
+  it.fixme(browserName === 'firefox', 'Does not send second request');
+  let requestNumber = 0;
+  server.setRoute('/test.html', (req, res) => {
+    ++requestNumber;
+    const headers = {
+      'cf-cache-status': 'DYNAMIC',
+      'Content-Type': 'text/html;charset=UTF-8',
+      'Last-Modified': 'Fri, 05 Jan 2024 01:56:20 GMT',
+      'Vary': 'Access-Control-Request-Headers',
+    };
+    if (requestNumber === 1)
+      res.writeHead(200, headers);
+    else
+      res.writeHead(304, 'Not Modified', headers);
+    res.write(`<div>Test</div>`);
+    res.end();
+  });
+  const response1 = await page.goto(server.PREFIX + '/test.html');
+  expect(response1.status()).toBe(200);
+  const response2 = await page.reload();
+  expect(requestNumber).toBe(2);
+  expect(response2.status()).toBe(304);
+  expect(response2.statusText()).toBe('Not Modified');
+});
