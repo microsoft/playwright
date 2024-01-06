@@ -451,16 +451,13 @@ it('should not allow to access frame on popup main request', async ({ page, serv
 
 it('page.reload return 304 status code', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28779' });
-  it.fixme(browserName === 'chromium', 'Returns 200 instead of 304');
   it.fixme(browserName === 'firefox', 'Does not send second request');
   let requestNumber = 0;
   server.setRoute('/test.html', (req, res) => {
     ++requestNumber;
     const headers = {
-      'cf-cache-status': 'DYNAMIC',
       'Content-Type': 'text/html;charset=UTF-8',
       'Last-Modified': 'Fri, 05 Jan 2024 01:56:20 GMT',
-      'Vary': 'Access-Control-Request-Headers',
     };
     if (requestNumber === 1)
       res.writeHead(200, headers);

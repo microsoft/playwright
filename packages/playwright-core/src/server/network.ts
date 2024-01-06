@@ -489,6 +489,11 @@ export class Response extends SdkObject {
       this._rawResponseHeadersPromise.resolve(headers || this._headers);
   }
 
+  setRawStatus(status: number, statusText: string) {
+    this._status = status;
+    this._statusText = statusText;
+  }
+
   setTransferSize(size: number | null) {
     this._transferSizePromise.resolve(size);
   }

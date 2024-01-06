@@ -26,7 +26,7 @@ import type * as contexts from '../browserContext';
 import type * as frames from '../frames';
 import type * as types from '../types';
 import type { CRPage } from './crPage';
-import { assert, headersObjectToArray } from '../../utils';
+import { MultiMap, assert, headersObjectToArray } from '../../utils';
 import type { CRServiceWorker } from './crServiceWorker';
 
 type SessionInfo = {
@@ -396,8 +396,10 @@ export class CRNetworkManager {
     response.setEncodedBodySize(null);
     response._requestFinished((timestamp - request._timestamp) * 1000);
     this._deleteRequest(request);
-    (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response);
-    (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
+    this._responseExtraInfoTracker.dispatchWhenResponseReady(request._requestId, response, () => {
+      (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response);
+      (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
+    });
   }
 
   _onResponseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
@@ -421,7 +423,7 @@ export class CRNetworkManager {
     if (!request)
       return;
     const response = this._createResponse(request, event.response, event.hasExtraInfo);
-    (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response);
+    this._responseExtraInfoTracker.dispatchWhenResponseReady(event.requestId, response, () => (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response));
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
@@ -444,7 +446,7 @@ export class CRNetworkManager {
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._deleteRequest(request);
-    (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
+    this._responseExtraInfoTracker.dispatchWhenResponseReady(event.requestId, response, () => (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request!.request, response));
   }
 
   _onLoadingFailed(sessionInfo: SessionInfo, event: Protocol.Network.loadingFailedPayload) {
@@ -478,7 +480,7 @@ export class CRNetworkManager {
     }
     this._deleteRequest(request);
     request.request._setFailureText(event.errorText);
-    (this._page?._frameManager || this._serviceWorker)!.requestFailed(request.request, !!event.canceled);
+    this._responseExtraInfoTracker.dispatchWhenResponseReady(event.requestId, response, () => (this._page?._frameManager || this._serviceWorker)!.requestFailed(request!.request, !!event.canceled));
   }
 
   private _maybeAdoptMainRequest(requestId: Protocol.Network.RequestId): InterceptableRequest | undefined {
@@ -636,27 +638,28 @@ type RequestInfo = {
   servedFromCache?: boolean,
 };
 
-// This class aligns responses with response headers from extra info:
+// This class aligns responses with response headers and status from extra info:
 //   - Network.requestWillBeSent, Network.responseReceived, Network.loadingFinished/loadingFailed are
 //     dispatched using one channel.
 //   - Network.requestWillBeSentExtraInfo and Network.responseReceivedExtraInfo are dispatched on
 //     another channel. Those channels are not associated, so events come in random order.
 //
-// This class will associate responses with the new headers. These extra info headers will become
+// This class will associate responses with the new headers and status. These extra info will become
 // available to client reliably upon requestfinished event only. It consumes CDP
 // signals on one end and processResponse(network.Response) signals on the other hands. It then makes
-// sure that responses have all the extra headers in place by the time request finishes.
+// sure that responses have all the extra headers and status in place by the time request finishes.
 //
 // The shape of the instrumentation API is deliberately following the CDP, so that it
 // is clear what is called when and what this means to the tracker without extra
 // documentation.
 class ResponseExtraInfoTracker {
   private _requests = new Map<string, RequestInfo>();
+  private _pendingResponseEvents = new MultiMap<network.Response, () => void>();
 
   requestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.requestWillBeSentExtraInfo.push(event);
-    this._patchHeaders(info, info.requestWillBeSentExtraInfo.length - 1);
+    this._patchHeadersAndStatus(info, info.requestWillBeSentExtraInfo.length - 1);
     this._checkFinished(info);
   }
 
@@ -673,7 +676,7 @@ class ResponseExtraInfoTracker {
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.responseReceivedExtraInfo.push(event);
-    this._patchHeaders(info, info.responseReceivedExtraInfo.length - 1);
+    this._patchHeadersAndStatus(info, info.responseReceivedExtraInfo.length - 1);
     this._checkFinished(info);
   }
 
@@ -691,7 +694,7 @@ class ResponseExtraInfoTracker {
 
     info = this._getOrCreateEntry(requestId);
     info.responses.push(response);
-    this._patchHeaders(info, info.responses.length - 1);
+    this._patchHeadersAndStatus(info, info.responses.length - 1);
   }
 
   loadingFinished(event: Protocol.Network.loadingFinishedPayload) {
@@ -710,7 +713,26 @@ class ResponseExtraInfoTracker {
     this._checkFinished(info);
   }
 
-  _getOrCreateEntry(requestId: string): RequestInfo {
+  dispatchWhenResponseReady(requestId: string, response: network.Response | null, callback: () => void) {
+    if (!response) {
+      callback();
+      return;
+    }
+    const info = this._requests.get(requestId);
+    // If the response doesn't have extra info, dispatch right away.
+    if (!info) {
+      callback();
+      return;
+    }
+    const index = info.responses.indexOf(response);
+    if (info.responseReceivedExtraInfo[index]) {
+      callback();
+      return;
+    }
+    this._pendingResponseEvents.set(response, callback);
+  }
+
+  private _getOrCreateEntry(requestId: string): RequestInfo {
     let info = this._requests.get(requestId);
     if (!info) {
       info = {
@@ -724,7 +746,7 @@ class ResponseExtraInfoTracker {
     return info;
   }
 
-  private _patchHeaders(info: RequestInfo, index: number) {
+  private _patchHeadersAndStatus(info: RequestInfo, index: number) {
     const response = info.responses[index];
     const requestExtraInfo = info.requestWillBeSentExtraInfo[index];
     if (response && requestExtraInfo) {
@@ -735,7 +757,10 @@ class ResponseExtraInfoTracker {
     if (response && responseExtraInfo) {
       response.setResponseHeadersSize(responseExtraInfo.headersText?.length || 0);
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
-      info.responseReceivedExtraInfo[index] = undefined;
+      response.setRawStatus(responseExtraInfo.statusCode, getStatusText(responseExtraInfo.headersText));
+      for (const callback of this._pendingResponseEvents.get(response))
+        callback();
+      this._pendingResponseEvents.deleteAll(response);
     }
   }
 
@@ -755,4 +780,12 @@ class ResponseExtraInfoTracker {
   private _stopTracking(requestId: string) {
     this._requests.delete(requestId);
   }
+}
+
+function getStatusText(headersText?: string): string {
+  if (!headersText)
+    return '';
+  const statusLine = headersText.split('\n')[0];
+  const match = statusLine.match(/\S+\s+\d+\s*(.*)/);
+  return match?.[1] ?? '';
 }
