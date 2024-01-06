@@ -282,7 +282,7 @@ export class CRNetworkManager {
       return;
     }
 
-    let route = null;
+    let route: RouteImpl | null = null;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled))
@@ -311,7 +311,11 @@ export class CRNetworkManager {
       // right away, so that client can call it from the route handler.
       request.request.setRawRequestHeaders(headersObjectToArray(requestPausedEvent.request.headers, '\n'));
     }
-    (this._page?._frameManager || this._serviceWorker)!.requestStarted(request.request, route || undefined);
+    const dispatchRequestStarted = () => (this._page?._frameManager || this._serviceWorker)!.requestStarted(request.request, route || undefined);
+    if (redirectedFrom)
+      this._responseExtraInfoTracker.dispatchWhenResponseReady(redirectedFrom._requestId, redirectedFrom.request._existingResponse(), dispatchRequestStarted);
+    else
+      dispatchRequestStarted();
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
