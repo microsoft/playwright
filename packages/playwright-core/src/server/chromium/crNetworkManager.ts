@@ -666,6 +666,9 @@ class ResponseExtraInfoTracker {
   requestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.servedFromCache = true;
+    // TODO: should the info be deleted if the response is already there?
+    if (info.responses.length)
+      this._dispatchPendingResponseEvents(info.responses[info.responses.length - 1]);
   }
 
   servedFromCache(requestId: string): boolean {
@@ -725,11 +728,17 @@ class ResponseExtraInfoTracker {
       return;
     }
     const index = info.responses.indexOf(response);
-    if (info.responseReceivedExtraInfo[index]) {
+    if (info.responseReceivedExtraInfo[index] || info.servedFromCache) {
       callback();
       return;
     }
     this._pendingResponseEvents.set(response, callback);
+  }
+
+  private _dispatchPendingResponseEvents(response: network.Response) {
+    for (const callback of this._pendingResponseEvents.get(response))
+      callback();
+    this._pendingResponseEvents.deleteAll(response);
   }
 
   private _getOrCreateEntry(requestId: string): RequestInfo {
@@ -758,9 +767,7 @@ class ResponseExtraInfoTracker {
       response.setResponseHeadersSize(responseExtraInfo.headersText?.length || 0);
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
       response.setRawStatus(responseExtraInfo.statusCode, getStatusText(responseExtraInfo.headersText));
-      for (const callback of this._pendingResponseEvents.get(response))
-        callback();
-      this._pendingResponseEvents.deleteAll(response);
+      this._dispatchPendingResponseEvents(response);
     }
   }
 
