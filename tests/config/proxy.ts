@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type { IncomingMessage, Server } from 'http';
+import type { IncomingMessage } from 'http';
 import type { Socket } from 'net';
-import createProxy from 'proxy';
+import type { ProxyServer } from 'proxy';
+import { createProxy } from 'proxy';
 
 export class TestProxy {
   readonly PORT: number;
@@ -25,7 +26,7 @@ export class TestProxy {
   connectHosts: string[] = [];
   requestUrls: string[] = [];
 
-  private readonly _server: Server;
+  private readonly _server: ProxyServer;
   private readonly _sockets = new Set<Socket>();
   private _handlers: { event: string, handler: (...args: any[]) => void }[] = [];
 
@@ -66,11 +67,11 @@ export class TestProxy {
   }
 
   setAuthHandler(handler: (req: IncomingMessage) => boolean) {
-    (this._server as any).authenticate = (req: IncomingMessage, callback) => {
+    this._server.authenticate = (req: IncomingMessage) => {
       try {
-        callback(null, handler(req));
+        return handler(req);
       } catch (e) {
-        callback(e, false);
+        return false;
       }
     };
   }
@@ -81,7 +82,7 @@ export class TestProxy {
     for (const { event, handler } of this._handlers)
       this._server.removeListener(event, handler);
     this._handlers = [];
-    (this._server as any).authenticate = undefined;
+    this._server.authenticate = undefined;
   }
 
   private _prependHandler(event: string, handler: (...args: any[]) => void) {
