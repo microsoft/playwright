@@ -384,6 +384,7 @@ jobs:
     name: Chromium TOT headed ${{ matrix.os }}
     runs-on: ${{ matrix.os  }}
     env:
+      PWTEST_CHANNEL: chromium-tip-of-tree
       PWTEST_BOT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     strategy:
       fail-fast: false
@@ -403,8 +404,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - run: npm run ctest -- --headed
       if: matrix.os != 'ubuntu-latest'
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
