@@ -55,7 +55,11 @@ export function readDockerVersionSync(): null | { driverVersion: string, dockerI
   }
 }
 
-const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
+const checkExecutable = (filePath: string) => {
+  if (process.platform === 'win32')
+    return filePath.endsWith('.exe');
+  return fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(() => false);
+};
 
 function isSupportedWindowsVersion(): boolean {
   if (os.platform() !== 'win32' || os.arch() !== 'x64')
