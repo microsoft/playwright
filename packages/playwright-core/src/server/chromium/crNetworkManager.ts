@@ -48,6 +48,7 @@ export class CRNetworkManager {
   private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
   private _eventListeners: RegisteredListener[];
   private _responseExtraInfoTracker = new ResponseExtraInfoTracker();
+  private _networkStateMachine: CDPNetworkStateMachine;
 
   constructor(session: CRSession, page: Page | null, serviceWorker: CRServiceWorker | null, parentManager: CRNetworkManager | null) {
     this._session = session;
@@ -55,19 +56,20 @@ export class CRNetworkManager {
     this._serviceWorker = serviceWorker;
     this._parentManager = parentManager;
     this._eventListeners = this.instrumentNetworkEvents({ session });
+    this._networkStateMachine = new CDPNetworkStateMachine(this, { session });
   }
 
   instrumentNetworkEvents(sessionInfo: SessionInfo): RegisteredListener[] {
     const listeners = [
-      eventsHelper.addEventListener(sessionInfo.session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, sessionInfo)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, sessionInfo)),
       eventsHelper.addEventListener(sessionInfo.session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceived', this._onResponseReceived.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
-      eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, sessionInfo)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, sessionInfo)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceived', this._onResponseReceived.bind(this, sessionInfo)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
+      // eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, sessionInfo)),
     ];
     if (this._page) {
       listeners.push(...[
@@ -622,6 +624,231 @@ const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
   'failed': 'Failed',
 };
 
+class NetworkRequestState {
+  requestId: string;
+  requestPaused?: Protocol.Fetch.requestPausedPayload;
+  // Events are replaced with "undefined" to avoid updating the same headers twice.
+  requestWillBeSentExtraInfo: (Protocol.Network.requestWillBeSentExtraInfoPayload | undefined)[] = [];
+  requestWillBeSent: (Protocol.Network.requestWillBeSentPayload | undefined)[] = [];
+  responseReceivedExtraInfo: (Protocol.Network.responseReceivedExtraInfoPayload | undefined)[] = [];
+  // Note: we only put the responses that expect extra info in this list.
+  // Since the order of responses and extraInfo events is the same, each response
+  // will get a pair of matching request/response extraInfo events in this list.
+  responseReceived: (Protocol.Network.responseReceivedPayload | undefined)[] = [];
+  loadingFinished?: Protocol.Network.loadingFinishedPayload;
+  loadingFailed?: Protocol.Network.loadingFailedPayload;
+  requestServedFromCache?: Protocol.Network.requestServedFromCachePayload;
+
+  index: number = 0;
+  state: 'initial'|'redirected'|'requestWillBeSent'|'requestPaused'|'requestResumed'|'responseReceived'|'finished' = 'initial';
+
+  constructor(requestId: string) {
+    this.requestId = requestId;
+  }
+};
+
+
+
+// requestWillBeSent goes before requestPaused
+// requestWillBeSent and requestWillBeSentExtraInfo are synchronized
+// responseReceived and responseReceivedExtraInfo are synchronized
+class CDPNetworkStateMachine {
+  private _requests = new Map<string, NetworkRequestState>();
+  private _networkManager: CRNetworkManager;
+  private _sessionInfo: SessionInfo;
+  private _listeners: RegisteredListener[];
+
+  constructor(networkManager: CRNetworkManager, sessionInfo: SessionInfo) {
+    this._networkManager = networkManager;
+    this._sessionInfo = sessionInfo
+    this._listeners = [
+      eventsHelper.addEventListener(sessionInfo.session, 'Fetch.requestPaused', this._onRequestPaused.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
+      eventsHelper.addEventListener(sessionInfo.session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
+    ];
+  }
+
+  dispose() {
+    eventsHelper.removeEventListeners(this._listeners);
+  }
+
+  private _onRequestPaused(event: Protocol.Fetch.requestPausedPayload) {
+    if (!event.networkId) {
+      this._networkManager._onRequestPaused(this._sessionInfo, event);
+      return;
+    }
+    const state = this._getOrCreateEntry(event.networkId);
+    state.requestPaused = event;
+    this._updateState(state, state.requestWillBeSent.length - 1);
+  }
+  private _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.requestWillBeSent.push(event);
+    // We'll not get actual responseReceived event for the redirected request,
+    // make sure the response array index is in sync with requestWillBeSent.
+    if (event.redirectResponse)
+      state.responseReceived.push(undefined);
+    this._updateState(state, state.requestWillBeSent.length - 1);
+    this._updateState(state, state.index);
+  }
+  private _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.requestWillBeSentExtraInfo.push(event);
+    this._updateState(state, state.requestWillBeSentExtraInfo.length - 1);
+    this._updateState(state, state.index);
+  }
+  private _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.requestServedFromCache = event;
+    this._updateState(state, state.index);
+  }
+  private _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.responseReceived.push(event);
+    this._updateState(state, state.responseReceived.length - 1);
+  }
+  private _onResponseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.responseReceivedExtraInfo.push(event);
+    this._updateState(state, state.responseReceivedExtraInfo.length - 1);
+  }
+  private _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.loadingFinished = event;
+    this._updateState(state, state.index);
+  }
+  private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+    const state = this._getOrCreateEntry(event.requestId);
+    state.loadingFailed = event;
+    this._updateState(state, state.index);
+  }
+
+  private _updateState(state: NetworkRequestState, index: number) {
+    console.log('_updateState', state.index === index, state.requestId, state.state, index);
+    if (state.index !== index)
+      return;
+    if (state.state === 'initial' || state.state === 'redirected') {
+      if (state.requestWillBeSent[index]) {
+        if (state.requestWillBeSentExtraInfo[index]) {
+          this._requestWillBeSent(state);
+        } else if (state.requestPaused) {
+          // Dispatch as is, without extra info. It will be received after resume.
+          this._requestWillBeSent(state);
+        } else if (state.responseReceived[index] && !state.responseReceived[index]?.hasExtraInfo) {
+          this._requestWillBeSent(state);
+        } else if (state.responseReceived[index]?.hasExtraInfo && state.requestServedFromCache) {
+          // Cached responses have erroneous "hasExtraInfo" flag.
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1340398
+          this._requestWillBeSent(state);
+        } else if (state.requestWillBeSent[index + 1]?.redirectResponse && !state.requestWillBeSent[index + 1]?.redirectHasExtraInfo) {
+          this._requestWillBeSent(state);
+        } else {
+          return;
+        }
+      }
+    }
+    // TODO: or redirected?
+    if (state.state === 'requestWillBeSent') {
+      if (state.requestPaused) {
+        this._requestPaused(state);
+      } else if (state.responseReceived[index] && !state.responseReceived[index]?.hasExtraInfo) {
+        this._responseReceived(state);
+      } else if (state.responseReceived[index]?.hasExtraInfo && state.requestServedFromCache) {
+        // Cached responses have erroneous "hasExtraInfo" flag.
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=1340398
+        this._responseReceived(state);
+      } else if (state.responseReceived[index] && state.responseReceivedExtraInfo[index]) {
+        this._responseReceived(state);
+      } else if (state.requestWillBeSent[index + 1]?.redirectResponse) {
+        state.index++;
+        state.state = 'redirected';
+        this._updateState(state, state.index);
+        return;
+      } else {
+        return;
+      }
+    }
+    if (state.state === 'requestPaused') {
+      if (state.requestWillBeSentExtraInfo[index]) {
+        this._rquestResumed(state);
+      } else {
+        return;
+      }
+    }
+    if (state.state === 'responseReceived') {
+      if (state.loadingFailed) {
+        this._loadingFailed(state);
+      } else if (state.loadingFinished) {
+        this._loadingFinished(state);
+      }
+    }
+
+    if (state.state === 'finished')
+      this._requests.delete(state.requestId);
+  }
+
+  private _loadingFinished(state: NetworkRequestState) {
+    console.log('_loadingFinished', state.requestId, state.state);
+    this._networkManager._onLoadingFinished(state.loadingFinished!);
+    state.state = 'finished';
+  }
+
+  private _loadingFailed(state: NetworkRequestState) {
+    console.log('_loadingFailed', state.requestId, state.state);
+    this._networkManager._onLoadingFailed(this._sessionInfo, state.loadingFailed!);
+    state.state = 'finished';
+  }
+
+  private _rquestResumed(state: NetworkRequestState) {
+    console.log('_rquestResumed', state.requestId, state.state);
+    if (state.requestWillBeSentExtraInfo[state.index])
+      this._networkManager._onRequestWillBeSentExtraInfo(state.requestWillBeSentExtraInfo[state.index]!);
+    state.state = 'requestWillBeSent';
+  }
+
+  private _requestWillBeSent(state: NetworkRequestState) {
+    console.log('_requestWillBeSent', state.requestId, state.state);
+    this._networkManager._onRequestWillBeSent(this._sessionInfo, state.requestWillBeSent[state.index]!);
+    if (state.requestWillBeSentExtraInfo[state.index])
+      this._networkManager._onRequestWillBeSentExtraInfo(state.requestWillBeSentExtraInfo[state.index]!);
+    state.state = 'requestWillBeSent';
+  }
+
+  private _requestPaused(state: NetworkRequestState) {
+    console.log('_requestPaused', state.requestId, state.state);
+    this._networkManager._onRequestPaused(this._sessionInfo, state.requestPaused!);
+    // Reset the state to initial, so that we can process the next requestPaused event.
+    state.requestPaused = undefined;
+    state.state = 'requestPaused';
+  }
+
+  private _responseReceived(state: NetworkRequestState) {
+    console.log('_responseReceived', state.requestId, state.state, ' has extra info ' + !!state.responseReceivedExtraInfo[state.index]);
+    if (state.requestServedFromCache) {
+      this._networkManager._onRequestServedFromCache(state.requestServedFromCache);
+      state.requestServedFromCache = undefined;
+    }
+    this._networkManager._onResponseReceived(this._sessionInfo, state.responseReceived[state.index]!);
+    if (state.responseReceivedExtraInfo[state.index])
+      this._networkManager._onResponseReceivedExtraInfo(state.responseReceivedExtraInfo[state.index]!);
+    state.state = 'responseReceived';
+  }
+
+  private _getOrCreateEntry(requestId: string): NetworkRequestState {
+    let state = this._requests.get(requestId);
+    if (!state) {
+      state = new NetworkRequestState(requestId);
+      this._requests.set(requestId, state);
+    }
+    return state;
+  }
+}
+
 type RequestInfo = {
   requestId: string,
   // Events are replaced with "undefined" to avoid updating the same headers twice.
@@ -671,6 +898,7 @@ class ResponseExtraInfoTracker {
   }
 
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
+    console.log('responseReceivedExtraInfo', event.requestId);
     const info = this._getOrCreateEntry(event.requestId);
     info.responseReceivedExtraInfo.push(event);
     this._patchHeaders(info, info.responseReceivedExtraInfo.length - 1);
