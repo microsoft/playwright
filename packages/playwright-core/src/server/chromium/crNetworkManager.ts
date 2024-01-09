@@ -305,7 +305,7 @@ export class CRNetworkManager {
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
 
-    if (requestPausedEvent && !requestPausedEvent.responseStatusCode && !requestPausedEvent.responseErrorReason) {
+    if (requestPausedEvent) {
       // We will not receive extra info when intercepting the request.
       // Use the headers from the Fetch.requestPausedPayload and release the allHeaders()
       // right away, so that client can call it from the route handler.
