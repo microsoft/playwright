@@ -15464,7 +15464,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -15598,7 +15598,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -15692,7 +15692,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -15772,7 +15772,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -15852,7 +15852,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -15983,7 +15983,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type
@@ -16063,7 +16063,7 @@ export interface APIRequestContext {
       /**
        * File name
        */
-      name: string;
+      name?: string;
 
       /**
        * File type

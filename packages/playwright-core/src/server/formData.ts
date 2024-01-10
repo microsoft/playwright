@@ -38,8 +38,9 @@ export class MultipartFormData {
 
   addFileField(name: string, value: NonNullable<channels.FormField['file']>) {
     this._beginMultiPartHeader(name);
-    this._chunks.push(Buffer.from(`; filename="${value.name}"`));
-    this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || mime.getType(value.name) || 'application/octet-stream'}`));
+    if (value.name !== undefined)
+      this._chunks.push(Buffer.from(`; filename="${value.name}"`));
+    this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || (value.name && mime.getType(value.name)) || 'application/octet-stream'}`));
     this._finishMultiPartHeader();
     this._chunks.push(value.buffer);
     this._finishMultiPartField();

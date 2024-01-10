@@ -36,7 +36,7 @@ Field name.
 ### param: FormData.set.value
 * since: v1.18
 - `value` <[string]|[boolean]|[int]|[Path]|[Object]>
-  - `name` <[string]> File name
+  - `name` ?<[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
@@ -46,7 +46,7 @@ Field value.
 * since: v1.18
 * langs: csharp
 - `value` <[string]|[boolean]|[int]|[Object]>
-  - `name` <[string]> File name
+  - `name` ?<[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 

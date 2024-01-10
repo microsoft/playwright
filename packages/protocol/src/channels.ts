@@ -290,7 +290,7 @@ export type FormField = {
   name: string,
   value?: string,
   file?: {
-    name: string,
+    name?: string,
     mimeType?: string,
     buffer: Binary,
   },

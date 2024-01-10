@@ -161,7 +161,7 @@ scheme.FormField = tObject({
   name: tString,
   value: tOptional(tString),
   file: tOptional(tObject({
-    name: tString,
+    name: tOptional(tString),
     mimeType: tOptional(tString),
     buffer: tBinary,
   })),

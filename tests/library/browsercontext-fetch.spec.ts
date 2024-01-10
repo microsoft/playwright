@@ -983,6 +983,90 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
+it('should support multipart/form-data with optional fileName', async ({ context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28811' });
+  const formReceived = new Promise<{ error: any, files: Record<string, formidable.File> }>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const form = new formidable.IncomingForm();
+      form.parse(serverRequest, (error, fields, files) => {
+        server.serveFile(serverRequest, res);
+        resolve({ error, files: files as Record<string, formidable.File> });
+      });
+    });
+  });
+  const [{ error, files }, response] = await Promise.all([
+    formReceived,
+    context.request.post(server.EMPTY_PAGE, {
+      multipart: {
+        '1withFileName': {
+          name: 'test',
+          mimeType: 'test/plain',
+          buffer: Buffer.from('test1')
+        },
+        '2withoutFileName': {
+          mimeType: 'test/plain',
+          buffer: Buffer.from('test2')
+        },
+        '3withNullFileName': {
+          name: null,
+          mimeType: 'test/plain',
+          buffer: Buffer.from('test3')
+        },
+        '4withUndefinedFileName': {
+          name: undefined,
+          mimeType: 'test/plain',
+          buffer: Buffer.from('test4')
+        },
+        '5withEmptyFileName': {
+          name: '',
+          mimeType: 'test/plain',
+          buffer: Buffer.from('test5')
+        }
+      },
+    })
+  ]);
+  expect(error).toBeFalsy();
+  expect(response.status()).toBe(200);
+  const parsed = Object.keys(files).map(key => ({
+    key,
+    originalFilename: files[key].originalFilename,
+    mimeType: files[key].mimetype,
+    content: fs.readFileSync(files[key].filepath).toString()
+  })).sort((a, b) => a.key.localeCompare(b.key));
+  expect(parsed).toEqual([
+    {
+      'key': '1withFileName',
+      'originalFilename': 'test',
+      'mimeType': 'test/plain',
+      'content': 'test1'
+    },
+    {
+      'key': '2withoutFileName',
+      'originalFilename': null,
+      'mimeType': 'test/plain',
+      'content': 'test2'
+    },
+    {
+      'key': '3withNullFileName',
+      'originalFilename': null,
+      'mimeType': 'test/plain',
+      'content': 'test3'
+    },
+    {
+      'key': '4withUndefinedFileName',
+      'originalFilename': null,
+      'mimeType': 'test/plain',
+      'content': 'test4'
+    },
+    {
+      'key': '5withEmptyFileName',
+      'originalFilename': '',
+      'mimeType': 'test/plain',
+      'content': 'test5'
+    }
+  ]);
+});
+
 it('should serialize data to json regardless of content-type', async function({ context, server }) {
   const data = {
     firstName: 'John',

@@ -333,7 +333,7 @@ type ServerFilePayload = NonNullable<channels.FormField['file']>;
 
 function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   return {
-    name: payload.name,
+    name: payload.name === null ? undefined : payload.name,
     mimeType: payload.mimeType,
     buffer: payload.buffer,
   };
@@ -373,5 +373,5 @@ function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
 }
 
 function isFilePayload(value: any): boolean {
-  return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
+  return typeof value === 'object' && value['mimeType'] && value['buffer'];
 }

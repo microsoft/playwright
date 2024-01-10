@@ -46,7 +46,7 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(projectNames: string[] | undefined): Promise<any> {
+  async listTestFiles(projectNames: string[] | undefined): Promise<ConfigListFilesReport> {
     const projects = filterProjects(this._config.projects, projectNames);
     const report: ConfigListFilesReport = {
       projects: []

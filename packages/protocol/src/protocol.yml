@@ -265,7 +265,7 @@ FormField:
     file:
       type: object?
       properties:
-        name: string
+        name: string?
         mimeType: string?
         buffer: binary
 
