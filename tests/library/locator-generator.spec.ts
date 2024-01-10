@@ -356,6 +356,16 @@ it('reverse engineer hasNot', async ({ page }) => {
   });
 });
 
+it('reverse engineer has + hasText', async ({ page }) => {
+  const locator = page.locator('section').filter({ hasText: 'foo', has: page.locator('div') }).locator('a');
+  expect.soft(generate(locator)).toEqual({
+    csharp: `Locator("section").Filter(new() { HasText = "foo" }).Filter(new() { Has = Locator("div") }).Locator("a")`,
+    java: `locator("section").filter(new Locator.FilterOptions().setHasText("foo")).filter(new Locator.FilterOptions().setHas(locator("div"))).locator("a")`,
+    javascript: `locator('section').filter({ hasText: 'foo' }).filter({ has: locator('div') }).locator('a')`,
+    python: `locator("section").filter(has_text="foo").filter(has=locator("div")).locator("a")`,
+  });
+});
+
 it('reverse engineer frameLocator', async ({ page }) => {
   const locator = page
       .frameLocator('iframe')
