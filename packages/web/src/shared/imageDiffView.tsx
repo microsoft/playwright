@@ -15,8 +15,8 @@
 */
 
 import * as React from 'react';
-import { GlassPane } from './glassPane';
 import { useMeasure } from '../uiUtils';
+import { ResizeView } from './resizeView';
 
 type TestAttachment = {
   name: string;
@@ -141,25 +141,8 @@ export const ImageDiffSlider: React.FC<{
 
   const [slider, setSlider] = React.useState<number>(canvasWidth / 2);
   const sameSize = expectedImage.naturalWidth === actualImage.naturalWidth && expectedImage.naturalHeight === actualImage.naturalHeight;
-  const [resizing, setResizing] = React.useState<{ offset: number, slider: number } | null>(null);
 
   return <div style={{ flex: 'none', display: 'flex', alignItems: 'center', flexDirection: 'column', userSelect: 'none' }}>
-    <GlassPane
-      enabled={!!resizing}
-      cursor={'ew-resize'}
-      onPaneMouseUp={() => setResizing(null)}
-      onPaneMouseMove={event => {
-        if (!event.buttons) {
-          setResizing(null);
-        } else if (resizing) {
-          const offset = event.clientX;
-          const delta = offset - resizing.offset;
-          const newSlider = resizing.slider + delta;
-          const slider = Math.min(Math.max(0, newSlider), canvasWidth);
-          setSlider(slider);
-        }
-      }}
-    />
     <div style={{ margin: 5 }}>
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>Expected </span>}
       <span>{expectedImage.naturalWidth}</span>
@@ -170,8 +153,13 @@ export const ImageDiffSlider: React.FC<{
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>x</span>}
       {!sameSize && <span>{actualImage.naturalHeight}</span>}
     </div>
-    <div style={{ position: 'relative', width: canvasWidth, height: canvasHeight, margin: 15, ...checkerboardStyle }}
-      onMouseDown={event => setResizing({ offset: event.clientX, slider: slider })}>
+    <div style={{ position: 'relative', width: canvasWidth, height: canvasHeight, margin: 15, ...checkerboardStyle }}>
+      <ResizeView
+        orientation={'horizontal'}
+        offsets={[slider]}
+        setOffsets={offsets => setSlider(offsets[0])}
+        resizerColor={'#57606a80'}
+        resizerWidth={6}></ResizeView>
       <img alt='Expected' style={{
         width: expectedImage.naturalWidth * scale,
         height: expectedImage.naturalHeight * scale,
@@ -181,9 +169,6 @@ export const ImageDiffSlider: React.FC<{
           width: actualImage.naturalWidth * scale,
           height: actualImage.naturalHeight * scale,
         }} draggable='false' src={actualImage.src} />
-      </div>
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: slider, width: 6, background: '#57606a80', cursor: 'ew-resize', overflow: 'visible', display: 'flex', alignItems: 'center' }}>
-        <svg style={{ fill: '#57606a80', width: 30, flex: 'none', marginLeft: -12, pointerEvents: 'none' }} viewBox="0 0 27 20"><path d="M9.6 0L0 9.6l9.6 9.6z"></path><path d="M17 19.2l9.5-9.6L16.9 0z"></path></svg>
       </div>
     </div>
   </div>;

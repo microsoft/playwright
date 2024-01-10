@@ -29,6 +29,14 @@
   background-color: var(--vscode-statusBarItem-remoteBackground);
 }
 
+.network-request-column {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0.5;
+  padding: 0 5px;
+  display: flex;
+}
+
 .network-request-start {
   flex: 0 0 65px;
   justify-content: right;
@@ -36,7 +44,7 @@
 }
 
 .network-request-status {
-  flex: 0 0 65px;
+  flex: 0 0 75px;
 }
 
 .network-request-method {
@@ -54,21 +62,15 @@
   flex: 1;
 }
 
-.network-request-content-type,
-.network-request-duration,
-.network-request-route,
-.network-request-size {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 0.5;
-}
-
-.network-request-route {
-  flex: 0.25;
+.network-request-body .network-request-start,
+.network-request-body .network-request-status,
+.network-request-body .network-request-duration,
+.network-request-body .network-request-size {
+  justify-content: end;
 }
 
 .network-request-header {
-  margin-top: 3px;
+  margin: 3px 14px 0 5px;
   height: 30px;
   border-bottom: 1px solid var(--vscode-panel-border);
   flex: none;
@@ -90,53 +92,18 @@
   white-space: nowrap;
   height: 100%;
   overflow: hidden;
+  padding: 0 5px;
+  justify-content: space-between;
 }
 
-.network-request-header.filter-start.positive .network-request-start .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-start.negative .network-request-start .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-status.positive .network-request-status .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-status.negative .network-request-status .codicon-triangle-up {
+.network-request-header > .filter-positive .codicon-triangle-down {
   display: initial !important;
 }
 
-.network-request-header.filter-method.positive .network-request-method .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-method.negative .network-request-method .codicon-triangle-up {
+.network-request-header > .filter-negative .codicon-triangle-up {
   display: initial !important;
 }
 
-.network-request-header.filter-file.positive .network-request-file .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-file.negative .network-request-file .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-content-type.positive .network-request-content-type .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-content-type.negative .network-request-content-type .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-duration.positive .network-request-duration .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-duration.negative .network-request-duration .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-size.positive .network-request-size .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-size.negative .network-request-size .codicon-triangle-up {
-  display: initial !important;
+.network-request-header .network-request-column {
+  border-right: 1px solid var(--vscode-panel-border);
 }

@@ -29,6 +29,7 @@
   flex: auto;
   overflow: hidden;
   position: relative;
+  flex-direction: column;
 }
 
 .tabbed-pane-tab {

@@ -17,16 +17,12 @@
 import React from 'react';
 
 export const GlassPane: React.FC<{
-  enabled: boolean;
   cursor: string;
   onPaneMouseMove?: (e: MouseEvent) => void;
   onPaneMouseUp?: (e: MouseEvent) => void;
   onPaneDoubleClick?: (e: MouseEvent) => void;
-}> = ({ enabled, cursor, onPaneMouseMove, onPaneMouseUp, onPaneDoubleClick }) => {
+}> = ({ cursor, onPaneMouseMove, onPaneMouseUp, onPaneDoubleClick }) => {
   React.useEffect(() => {
-    if (!enabled)
-      return;
-
     const glassPaneDiv = document.createElement('div');
     glassPaneDiv.style.position = 'fixed';
     glassPaneDiv.style.top = '0';
@@ -54,7 +50,7 @@ export const GlassPane: React.FC<{
         document.body.removeEventListener('dblclick', onPaneDoubleClick);
       document.body.removeChild(glassPaneDiv);
     };
-  }, [enabled, cursor, onPaneMouseMove, onPaneMouseUp, onPaneDoubleClick]);
+  }, [cursor, onPaneMouseMove, onPaneMouseUp, onPaneDoubleClick]);
 
   return <></>;
 };
