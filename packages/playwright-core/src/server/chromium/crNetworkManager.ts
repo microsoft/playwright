@@ -142,29 +142,17 @@ export class CRNetworkManager {
     await this._session.send('Network.clearBrowserCache');
   }
 
-  _onRequestWillBeSent(sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload) {
-    // Request interception doesn't happen for data URLs with Network Service.
-    if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {
-      const requestId = event.requestId;
-      const requestPausedEvent = this._requestIdToRequestPausedEvent.get(requestId);
-      if (requestPausedEvent) {
-        this._onRequest(sessionInfo, event, requestPausedEvent);
-        this._requestIdToRequestPausedEvent.delete(requestId);
-      } else {
-        this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
-      }
-    } else {
-      this._onRequest(sessionInfo, event, null);
-    }
+  _onRequestWillBeSent(sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload, extraInfoEvent: Protocol.Network.requestWillBeSentExtraInfoPayload | undefined) {
+      this._onRequest(sessionInfo, event, null, extraInfoEvent);
   }
 
-  _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
-    this._responseExtraInfoTracker.requestServedFromCache(event);
-  }
+  // _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
+  //   this._responseExtraInfoTracker.requestServedFromCache(event);
+  // }
 
-  _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
-    this._responseExtraInfoTracker.requestWillBeSentExtraInfo(event);
-  }
+  // _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+  //   this._responseExtraInfoTracker.requestWillBeSentExtraInfo(event);
+  // }
 
   _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {
     let response: 'Default' | 'CancelAuth' | 'ProvideCredentials' = 'Default';
@@ -188,7 +176,7 @@ export class CRNetworkManager {
     return !this._credentials.origin || new URL(url).origin.toLowerCase() === this._credentials.origin.toLowerCase();
   }
 
-  _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload) {
+  _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload) {
     if (!event.networkId) {
       // Fetch without networkId means that request was not recognized by inspector, and
       // it will never receive Network.requestWillBeSent. Continue the request to not affect it.
@@ -199,37 +187,35 @@ export class CRNetworkManager {
       return;
 
     const requestId = event.networkId;
-    const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
-    if (requestWillBeSentEvent) {
-      this._onRequest(sessionInfo, requestWillBeSentEvent, event);
-      this._requestIdToRequestWillBeSentEvent.delete(requestId);
-    } else {
-      const existingRequest = this._requestIdToRequest.get(requestId);
-      const alreadyContinuedParams = existingRequest?._route?._alreadyContinuedParams;
-      if (alreadyContinuedParams && !event.redirectedRequestId) {
-        // Sometimes Chromium network stack restarts the request internally.
-        // For example, when no-cors request hits a "less public address space", it should be resent with cors.
-        // There are some more examples here: https://source.chromium.org/chromium/chromium/src/+/main:services/network/url_loader.cc;l=1205-1234;drc=d5dd931e0ad3d9ffe74888ec62a3cc106efd7ea6
-        // There are probably even more cases deep inside the network stack.
-        //
-        // Anyway, in this case, continue the request in the same way as before, and it should go through.
-        //
-        // Note: make sure not to prematurely continue the redirect, which shares the
-        // `networkId` between the original request and the redirect.
-        this._session._sendMayFail('Fetch.continueRequest', {
-          ...alreadyContinuedParams,
-          requestId: event.requestId,
-        });
-        return;
-      }
-      this._requestIdToRequestPausedEvent.set(requestId, event);
-    }
+    this._onRequest(sessionInfo, requestWillBeSentEvent, event, undefined);
+    // } else {
+    //   const existingRequest = this._requestIdToRequest.get(requestId);
+    //   const alreadyContinuedParams = existingRequest?._route?._alreadyContinuedParams;
+    //   if (alreadyContinuedParams && !event.redirectedRequestId) {
+    //     // Sometimes Chromium network stack restarts the request internally.
+    //     // For example, when no-cors request hits a "less public address space", it should be resent with cors.
+    //     // There are some more examples here: https://source.chromium.org/chromium/chromium/src/+/main:services/network/url_loader.cc;l=1205-1234;drc=d5dd931e0ad3d9ffe74888ec62a3cc106efd7ea6
+    //     // There are probably even more cases deep inside the network stack.
+    //     //
+    //     // Anyway, in this case, continue the request in the same way as before, and it should go through.
+    //     //
+    //     // Note: make sure not to prematurely continue the redirect, which shares the
+    //     // `networkId` between the original request and the redirect.
+    //     this._session._sendMayFail('Fetch.continueRequest', {
+    //       ...alreadyContinuedParams,
+    //       requestId: event.requestId,
+    //     });
+    //     return;
+    //   }
+    //   this._requestIdToRequestPausedEvent.set(requestId, event);
+    // }
   }
 
   _onRequestResumed(sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+    // We cannot update raw headers as they have already been set.
   }
 
-  _onRequest(sessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
+  _onRequest(sessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null, extraInfoEvent: Protocol.Network.requestWillBeSentExtraInfoPayload | undefined) {
     if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
     let redirectedFrom: InterceptableRequest | null = null;
@@ -309,8 +295,9 @@ export class CRNetworkManager {
       redirectedFrom
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
-
-    if (requestPausedEvent) {
+    if (extraInfoEvent) {
+      request.request.setRawRequestHeaders(headersObjectToArray(extraInfoEvent.headers, '\n'));
+    } else if (requestPausedEvent) {
       // We will not receive extra info when intercepting the request.
       // Use the headers from the Fetch.requestPausedPayload and release the allHeaders()
       // right away, so that client can call it from the route handler.
@@ -418,7 +405,7 @@ export class CRNetworkManager {
       const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
       if (requestWillBeSentEvent) {
         this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-        this._onRequest(sessionInfo, requestWillBeSentEvent, null /* requestPausedPayload */);
+        this._onRequest(sessionInfo, requestWillBeSentEvent, null /* requestPausedPayload */, undefined);
         request = this._requestIdToRequest.get(event.requestId);
       }
     }
@@ -466,7 +453,7 @@ export class CRNetworkManager {
         // We stop waiting for Fetch.requestPaused (it might never come), and dispatch request event
         // right away, followed by requestfailed event.
         this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-        this._onRequest(sessionInfo, requestWillBeSentEvent, null);
+        this._onRequest(sessionInfo, requestWillBeSentEvent, null, undefined);
         request = this._requestIdToRequest.get(event.requestId);
       }
     }
@@ -741,7 +728,7 @@ class CDPNetworkStateMachine {
           this._requestWillBeSent(state);
         } else if (state.requestPaused) {
           // Dispatch as is, without extra info. It will be received after resume.
-          this._requestWillBeSent(state);
+          this._requestPaused(state);
         } else if (state.responseReceived[index] && !state.responseReceived[index]?.hasExtraInfo) {
           this._requestWillBeSent(state);
         } else if (state.responseReceived[index]?.hasExtraInfo && state.requestServedFromCache) {
@@ -757,9 +744,7 @@ class CDPNetworkStateMachine {
     }
     // TODO: or redirected?
     if (state.state === 'requestWillBeSent') {
-      if (state.requestPaused) {
-        this._requestPaused(state);
-      } else if (state.responseReceived[index] && !state.responseReceived[index]?.hasExtraInfo) {
+      if (state.responseReceived[index] && !state.responseReceived[index]?.hasExtraInfo) {
         this._responseReceived(state);
       } else if (state.responseReceived[index]?.hasExtraInfo && state.requestServedFromCache) {
         // Cached responses have erroneous "hasExtraInfo" flag.
@@ -812,22 +797,19 @@ class CDPNetworkStateMachine {
 
   private _rquestResumed(state: NetworkRequestState) {
     console.log('_rquestResumed', state.requestId, state.state);
-    if (state.requestWillBeSentExtraInfo[state.index])
-      this._networkManager._onRequestWillBeSentExtraInfo(state.requestWillBeSentExtraInfo[state.index]!);
+    this._networkManager._onRequestResumed(this._sessionInfo, state.requestWillBeSentExtraInfo[state.index]!);
     state.state = 'requestWillBeSent';
   }
 
   private _requestWillBeSent(state: NetworkRequestState) {
     console.log('_requestWillBeSent', state.requestId, state.state);
-    this._networkManager._onRequestWillBeSent(this._sessionInfo, state.requestWillBeSent[state.index]!);
-    if (state.requestWillBeSentExtraInfo[state.index])
-      this._networkManager._onRequestWillBeSentExtraInfo(state.requestWillBeSentExtraInfo[state.index]!);
+    this._networkManager._onRequestWillBeSent(this._sessionInfo, state.requestWillBeSent[state.index]!, state.requestWillBeSentExtraInfo[state.index]);
     state.state = 'requestWillBeSent';
   }
 
   private _requestPaused(state: NetworkRequestState) {
     console.log('_requestPaused', state.requestId, state.state);
-    this._networkManager._onRequestPaused(this._sessionInfo, state.requestPaused!);
+    this._networkManager._onRequestPaused(this._sessionInfo, state.requestPaused!, state.requestWillBeSent[index]!);
     // Reset the state to initial, so that we can process the next requestPaused event.
     state.requestPaused = undefined;
     state.state = 'requestPaused';
@@ -836,7 +818,8 @@ class CDPNetworkStateMachine {
   private _responseReceived(state: NetworkRequestState) {
     console.log('_responseReceived', state.requestId, state.state, ' has extra info ' + !!state.responseReceivedExtraInfo[state.index]);
     if (state.requestServedFromCache) {
-      this._networkManager._onRequestServedFromCache(state.requestServedFromCache);
+      // this._networkManager._onRequestServedFromCache(state.requestServedFromCache);
+      // TODO: pass boolean to _onResponseReceived to indicate that it's a cached response.
       state.requestServedFromCache = undefined;
     }
     // Redirected requests have responseReceivedExtraInfo without responseReceived.
