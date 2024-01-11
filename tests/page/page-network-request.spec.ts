@@ -395,9 +395,11 @@ it('should report raw response headers in redirects', async ({ page, server, bro
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
   const redirectChain = [];
   const headersChain = [];
+  let i = 0;
   for (let req = response.request(); req; req = req.redirectedFrom()) {
     redirectChain.unshift(req.url());
     const res = await req.response();
+    console.log('getting headers for', res.url());
     const headers = await res.allHeaders();
     headersChain.unshift(headers['sec-test-header']);
   }

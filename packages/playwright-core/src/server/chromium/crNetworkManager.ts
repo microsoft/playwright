@@ -226,6 +226,9 @@ export class CRNetworkManager {
     }
   }
 
+  _onRequestResumed(sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+  }
+
   _onRequest(sessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
     if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
@@ -764,6 +767,9 @@ class CDPNetworkStateMachine {
         this._responseReceived(state);
       } else if (state.responseReceived[index] && state.responseReceivedExtraInfo[index]) {
         this._responseReceived(state);
+      } else if (state.requestWillBeSent[index + 1]?.redirectHasExtraInfo && state.responseReceivedExtraInfo[index]) {
+        // Redirected response has responseReceivedExtraInfo without responseReceived.
+        this._responseReceived(state);
       } else if (state.requestWillBeSent[index + 1]?.redirectResponse) {
         state.index++;
         state.state = 'redirected';
@@ -833,7 +839,9 @@ class CDPNetworkStateMachine {
       this._networkManager._onRequestServedFromCache(state.requestServedFromCache);
       state.requestServedFromCache = undefined;
     }
-    this._networkManager._onResponseReceived(this._sessionInfo, state.responseReceived[state.index]!);
+    // Redirected requests have responseReceivedExtraInfo without responseReceived.
+    if (state.responseReceived[state.index])
+      this._networkManager._onResponseReceived(this._sessionInfo, state.responseReceived[state.index]!);
     if (state.responseReceivedExtraInfo[state.index])
       this._networkManager._onResponseReceivedExtraInfo(state.responseReceivedExtraInfo[state.index]!);
     state.state = 'responseReceived';
