@@ -748,5 +748,3 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
-
-export default test;
