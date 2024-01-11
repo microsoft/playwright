@@ -7,6 +7,7 @@ title: "Assertions"
 
 | Assertion | Description |
 | :- | :- |
+| [`method: LocatorAssertions.toBeAttached`] | Element is attached |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
@@ -14,6 +15,7 @@ title: "Assertions"
 | [`method: LocatorAssertions.toBeEnabled`] | Element is enabled |
 | [`method: LocatorAssertions.toBeFocused`] | Element is focused |
 | [`method: LocatorAssertions.toBeHidden`] | Element is not visible |
+| [`method: LocatorAssertions.toBeInViewport`] | Element intersects viewport |
 | [`method: LocatorAssertions.toBeVisible`] | Element is visible |
 | [`method: LocatorAssertions.toContainText`] | Element contains text |
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
@@ -44,7 +46,7 @@ The error would look like this:
     def test_foobar(page: Page) -> None:
 >       expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 E       AssertionError: should be logged in
-E       Actual value: None 
+E       Actual value: None
 E       Call log:
 E       LocatorAssertions.to_be_visible with timeout 5000ms
 E       waiting for get_by_text("Name")

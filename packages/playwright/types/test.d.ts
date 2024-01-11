@@ -5425,7 +5425,8 @@ interface APIResponseAssertions {
  */
 interface LocatorAssertions {
   /**
-   * Ensures that {@link Locator} points to an [attached](https://playwright.dev/docs/actionability#attached) DOM node.
+   * Ensures that {@link Locator} points to an element that is
+   * [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
    *
    * **Usage**
    *
@@ -5620,8 +5621,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that {@link Locator} points to an [attached](https://playwright.dev/docs/actionability#attached) and
-   * [visible](https://playwright.dev/docs/actionability#visible) DOM node.
+   * Ensures that {@link Locator} points to an attached and [visible](https://playwright.dev/docs/actionability#visible) DOM node.
    *
    * To check that at least one element from the list is visible, use
    * [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first).
