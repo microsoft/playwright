@@ -58,9 +58,9 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     proxy: {
-      server: "http://my-proxy:8080",
-      username: "user",
-      password: "secret"
+      server: 'http://my-proxy:8080',
+      username: 'user',
+      password: 'secret'
     },
   }
 });
