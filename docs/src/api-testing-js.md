@@ -48,6 +48,24 @@ export default defineConfig({
 });
 ```
 
+**Proxy configuration**
+
+If your tests need to run behind a proxy, you can specify this in the config and the `request` fixture
+will pick it up automatically:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  use: {
+    proxy: {
+      server: 'http://my-proxy:8080',
+      username: 'user',
+      password: 'secret'
+    },
+  }
+});
+```
+
 ### Writing tests
 
 Playwright Test comes with the built-in `request` fixture that respects configuration options like `baseURL` or `extraHTTPHeaders` we specified and is ready to send some requests.
