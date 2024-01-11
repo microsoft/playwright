@@ -162,6 +162,47 @@ Each worker process is assigned two ids: a unique worker index that starts with 
 
 You can read an index from environment variables `process.env.TEST_WORKER_INDEX` and `process.env.TEST_PARALLEL_INDEX`, or access them through [`property: TestInfo.workerIndex`] and [`property: TestInfo.parallelIndex`].
 
+### Isolate test data between parallel workers
+
+You can leverage `process.env.TEST_PARALLEL_INDEX` or [`property: TestInfo.parallelIndex`] mentioned above to
+isolate test data between tests running on parallel workers (e.g. each worker could use separate user account).
+All tests run by the worker reuse the same test data.
+
+Create `playwright/fixtures.ts` file that will [create `workerTestData` fixture](./test-fixtures#creating-a-fixture)
+to load worker specific data. Use [`property: TestInfo.parallelIndex`] to differentiate between workers.
+
+```js title="playwright/fixtures.ts"
+import { test as baseTest, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+export * from '@playwright/test';
+export const test = baseTest.extend<{}, { workerTestData: string }>({
+  // Returns per worker data with a worker-scoped fixture.
+  workerTestData: [async ({ browser }, use) => {
+    // Use parallelIndex as a unique identifier for each worker.
+    const id = test.info().parallelIndex;
+    // Load data from worker-specific file.
+    const fileName = path.join(__dirname, '.data', `file-${id}.json`);
+    const data = await fs.promises.readFile(fileName, 'utf8');
+    const json = JSON.parse(data);
+    await use(json);
+  }, { scope: 'worker' }],
+});
+```
+
+Now, each test file should import `test` from our fixtures file instead of `@playwright/test`.
+
+```js title="tests/example.spec.ts"
+// Important: import our fixtures.
+import { test, expect } from '../playwright/fixtures';
+
+test('test', async ({ workerTestData }) => {
+  // Use workerTestData JSON object
+});
+```
+
+
 ## Control test order
 
 Playwright Test runs tests from a single file in the order of declaration, unless you [parallelize tests in a single file](#parallelize-tests-in-a-single-file).
