@@ -31,11 +31,11 @@ Sets a field on the form. File values can be passed either as `Path` or as `File
 import com.microsoft.playwright.options.FormData;
 ...
 FormData form = FormData.create()
-    // Only name and value is set.
+    // Only name and value are set.
     .set("firstName", "John")
-    // Name, value + filename and Content-Type is set. Both is inferred from the file path.
+    // Name and value are set, filename and Content-Type are inferred from the file path.
     .set("profilePicture1", Paths.get("john.jpg"))
-    // Name, value + filename and Content-Type is set.
+    // Name, value, filename and Content-Type are set.
     .set("profilePicture2", new FilePayload("john.jpg", "image/jpeg", Files.readAllBytes(Paths.get("john.jpg"))));
     .set("age", 30);
 page.request().post("http://localhost/submit", RequestOptions.create().setForm(form));
@@ -43,9 +43,9 @@ page.request().post("http://localhost/submit", RequestOptions.create().setForm(f
 
 ```csharp
 var multipart = Context.APIRequest.CreateFormData();
-// Only name and value is set.
+// Only name and value are set.
 multipart.Set("firstName", "John");
-// Name, value + filename and Content-Type is set.
+// Name, value, filename and Content-Type are set.
 multipart.Set("profilePicture", new FilePayload()
 {
     Name = "john.jpg",
