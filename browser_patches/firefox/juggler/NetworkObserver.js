@@ -231,8 +231,12 @@ class NetworkRequest {
     this._expectingResumedRequest = undefined;
 
     if (headers) {
-      for (const header of requestHeaders(this.httpChannel))
+      for (const header of requestHeaders(this.httpChannel)) {
+        // We cannot remove the "host" header.
+        if (header.name.toLowerCase() === 'host')
+          continue;
         this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
+      }
       for (const header of headers)
         this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
     } else if (this._pageNetwork) {

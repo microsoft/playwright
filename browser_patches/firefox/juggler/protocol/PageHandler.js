@@ -394,7 +394,7 @@ class PageHandler {
           'nsIReferrerInfo',
           'init'
         );
-        referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, referrerURI);
+        referrerInfo = new ReferrerInfo(Ci.nsIReferrerInfo.UNSAFE_URL, true, referrerURI);
       } catch (e) {
         throw new Error(`Invalid referer: "${referer}"`);
       }
