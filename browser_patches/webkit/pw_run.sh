@@ -26,11 +26,11 @@ function runLinux() {
   GIO_DIR="";
   LD_PATH="";
   BUNDLE_DIR="";
-  DEPENDENCIES_FOLDER="DependenciesGTK";
+  DEPENDENCIES_FOLDER="WebKitBuild/DependenciesGTK";
   MINIBROWSER_FOLDER="minibrowser-gtk";
   BUILD_FOLDER="WebKitBuild/GTK";
   if [[ "$*" == *--headless* ]]; then
-    DEPENDENCIES_FOLDER="DependenciesWPE";
+    DEPENDENCIES_FOLDER="WebKitBuild/DependenciesWPE";
     MINIBROWSER_FOLDER="minibrowser-wpe";
     BUILD_FOLDER="WebKitBuild/WPE";
   fi
@@ -41,15 +41,15 @@ function runLinux() {
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
     MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
   elif [[ -d $WK_CHECKOUT_PATH/$BUILD_FOLDER ]]; then
-    LD_PATH="$WK_CHECKOUT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
-    GIO_DIR="$WK_CHECKOUT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    LD_PATH="$WK_CHECKOUT_PATH/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
+    GIO_DIR="$WK_CHECKOUT_PATH/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
     BUNDLE_DIR="$WK_CHECKOUT_PATH/$BUILD_FOLDER/Release/lib"
     MINIBROWSER="$WK_CHECKOUT_PATH/$BUILD_FOLDER/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/$BUILD_FOLDER ]]; then
-    LD_PATH="$SCRIPT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/$BUILD_FOLDER/Release/bin"
-    GIO_DIR="$SCRIPT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    LD_PATH="$SCRIPT_PATH/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/$BUILD_FOLDER/Release/bin"
+    GIO_DIR="$SCRIPT_PATH/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
     BUNDLE_DIR="$SCRIPT_PATH/$BUILD_FOLDER/Release/lib"
     MINIBROWSER="$SCRIPT_PATH/$BUILD_FOLDER/Release/bin/MiniBrowser"
   else
