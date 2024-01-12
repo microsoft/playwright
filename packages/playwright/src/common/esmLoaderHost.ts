@@ -14,16 +14,36 @@
  * limitations under the License.
  */
 
+import url from 'url';
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { transformConfig } from '../transform/transform';
 import { PortTransport } from '../transform/portTransport';
 
-const port = (globalThis as any).__esmLoaderPort;
+let loaderChannel: PortTransport | undefined;
+// Node.js < 20
+if ((globalThis as any).__esmLoaderPortPreV20)
+  loaderChannel = createPortTransport((globalThis as any).__esmLoaderPortPreV20);
 
-const loaderChannel = port ? new PortTransport(port, async (method, params) => {
-  if (method === 'pushToCompilationCache')
-    addToCompilationCache(params.cache);
-}) : undefined;
+// Node.js >= 20
+export let esmLoaderRegistered = false;
+export function registerESMLoader() {
+  const { port1, port2 } = new MessageChannel();
+  // register will wait until the loader is initialized.
+  require('node:module').register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
+    parentURL: url.pathToFileURL(__filename),
+    data: { port: port2 },
+    transferList: [port2],
+  });
+  loaderChannel = createPortTransport(port1);
+  esmLoaderRegistered = true;
+}
+
+function createPortTransport(port: MessagePort) {
+  return new PortTransport(port, async (method, params) => {
+    if (method === 'pushToCompilationCache')
+      addToCompilationCache(params.cache);
+  });
+}
 
 export async function startCollectingFileDeps() {
   if (!loaderChannel)

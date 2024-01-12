@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { execArgvWithoutExperimentalLoaderOptions, execArgvWithExperimentalLoaderOptions, fileIsModule, serializeError } from './util';
+import { fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, resolveConfigFile } from './common/configLoader';
@@ -33,6 +33,8 @@ import type { FullConfigInternal } from './common/config';
 import program from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
+import { registerESMLoader } from './common/esmLoaderHost';
+import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from './transform/esmUtils';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -277,26 +279,33 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  if (process.env.PW_TS_ESM_ON) {
+  // Node.js < 20
+  if ((globalThis as any).__esmLoaderPortPreV20) {
     // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
   }
   if (!fileIsModule(configFile))
     return false;
-  const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
-    env: {
-      ...process.env,
-      PW_TS_ESM_ON: '1',
-    },
-    execArgv: execArgvWithExperimentalLoaderOptions(),
-  });
+    // Node.js < 20
+  if (!require('node:module').register) {
+    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
+      env: {
+        ...process.env,
+        PW_TS_ESM_LEGACY_LOADER_ON: '1',
+      },
+      execArgv: execArgvWithExperimentalLoaderOptions(),
+    });
 
-  innerProcess.on('close', (code: number | null) => {
-    if (code !== 0 && code !== null)
-      gracefullyProcessExitDoNotHang(code);
-  });
-  return true;
+    innerProcess.on('close', (code: number | null) => {
+      if (code !== 0 && code !== null)
+        gracefullyProcessExitDoNotHang(code);
+    });
+    return true;
+  }
+  // Nodejs >= 21
+  registerESMLoader();
+  return false;
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure'];

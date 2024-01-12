@@ -286,22 +286,6 @@ function folderIsModule(folder: string): boolean {
   return require(packageJsonPath).type === 'module';
 }
 
-const kExperimentalLoaderOptions = [
-  '--no-warnings',
-  `--experimental-loader=${url.pathToFileURL(require.resolve('playwright/lib/transform/esmLoader')).toString()}`,
-];
-
-export function execArgvWithExperimentalLoaderOptions() {
-  return [
-    ...process.execArgv,
-    ...kExperimentalLoaderOptions,
-  ];
-}
-
-export function execArgvWithoutExperimentalLoaderOptions() {
-  return process.execArgv.filter(arg => !kExperimentalLoaderOptions.includes(arg));
-}
-
 // This follows the --moduleResolution=bundler strategy from tsc.
 // https://devblogs.microsoft.com/typescript/announcing-typescript-5-0-beta/#moduleresolution-bundler
 const kExtLookups = new Map([
