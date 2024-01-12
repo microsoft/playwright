@@ -162,6 +162,48 @@ Each worker process is assigned two ids: a unique worker index that starts with 
 
 You can read an index from environment variables `process.env.TEST_WORKER_INDEX` and `process.env.TEST_PARALLEL_INDEX`, or access them through [`property: TestInfo.workerIndex`] and [`property: TestInfo.parallelIndex`].
 
+### Isolate test data between parallel workers
+
+You can leverage `process.env.TEST_WORKER_INDEX` or [`property: TestInfo.workerIndex`] mentioned above to
+isolate user data in the database between tests running on different workers. All tests run by the worker
+reuse the same user.
+
+Create `playwright/fixtures.ts` file that will [create `dbUserName` fixture](./test-fixtures#creating-a-fixture)
+and initialize a new user in the test database. Use [`property: TestInfo.workerIndex`] to differentiate
+between workers.
+
+```js title="playwright/fixtures.ts"
+import { test as baseTest, expect } from '@playwright/test';
+// Import project utils for managing users in the test database.
+import { createUserInTestDatabase, deleteUserFromTestDatabase } from './my-db-utils';
+
+export * from '@playwright/test';
+export const test = baseTest.extend<{}, { dbUserName: string }>({
+  // Returns db user name unique for the worker.
+  dbUserName: [async ({ }, use) => {
+    // Use workerIndex as a unique identifier for each worker.
+    const userName = `user-${test.info().workerIndex}`;
+    // Inialize user in the database.
+    await createUserInTestDatabase(userName);
+    await use(userName);
+    // Clean up after the tests are done.
+    await deleteUserFromTestDatabase(userName);
+  }, { scope: 'worker' }],
+});
+```
+
+Now, each test file should import `test` from our fixtures file instead of `@playwright/test`.
+
+```js title="tests/example.spec.ts"
+// Important: import our fixtures.
+import { test, expect } from '../playwright/fixtures';
+
+test('test', async ({ dbUserName }) => {
+  // Use the user name in the test.
+});
+```
+
+
 ## Control test order
 
 Playwright Test runs tests from a single file in the order of declaration, unless you [parallelize tests in a single file](#parallelize-tests-in-a-single-file).
