@@ -164,29 +164,30 @@ You can read an index from environment variables `process.env.TEST_WORKER_INDEX`
 
 ### Isolate test data between parallel workers
 
-You can leverage `process.env.TEST_PARALLEL_INDEX` or [`property: TestInfo.parallelIndex`] mentioned above to
-isolate test data between tests running on parallel workers (e.g. each worker could use separate user account).
-All tests run by the worker reuse the same test data.
+You can leverage `process.env.TEST_WORKER_INDEX` or [`property: TestInfo.workerIndex`] mentioned above to
+isolate user data in the database between tests running on different workers. All tests run by the worker
+reuse the same user.
 
-Create `playwright/fixtures.ts` file that will [create `workerTestData` fixture](./test-fixtures#creating-a-fixture)
-to load worker specific data. Use [`property: TestInfo.parallelIndex`] to differentiate between workers.
+Create `playwright/fixtures.ts` file that will [create `dbUserName` fixture](./test-fixtures#creating-a-fixture)
+and initialize a new user in the test database. Use [`property: TestInfo.workerIndex`] to differentiate
+between workers.
 
 ```js title="playwright/fixtures.ts"
 import { test as baseTest, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
+// Import project utils for managing users in the test database.
+import { createUserInTestDatabase, deleteUserFromTestDatabase } from './my-db-utils';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{}, { workerTestData: string }>({
-  // Returns per worker data with a worker-scoped fixture.
-  workerTestData: [async ({ browser }, use) => {
-    // Use parallelIndex as a unique identifier for each worker.
-    const id = test.info().parallelIndex;
-    // Load data from worker-specific file.
-    const fileName = path.join(__dirname, '.data', `file-${id}.json`);
-    const data = await fs.promises.readFile(fileName, 'utf8');
-    const json = JSON.parse(data);
-    await use(json);
+export const test = baseTest.extend<{}, { dbUserName: string }>({
+  // Returns db user name unique for the worker.
+  dbUserName: [async ({ }, use) => {
+    // Use workerIndex as a unique identifier for each worker.
+    const userName = `user-${test.info().workerIndex}`;
+    // Inialize user in the database.
+    await createUserInTestDatabase(userName);
+    await use(userName);
+    // Clean up after the tests are done.
+    await deleteUserFromTestDatabase(userName);
   }, { scope: 'worker' }],
 });
 ```
@@ -197,8 +198,8 @@ Now, each test file should import `test` from our fixtures file instead of `@pla
 // Important: import our fixtures.
 import { test, expect } from '../playwright/fixtures';
 
-test('test', async ({ workerTestData }) => {
-  // Use workerTestData JSON object
+test('test', async ({ dbUserName }) => {
+  // Use the user name in the test.
 });
 ```
 
