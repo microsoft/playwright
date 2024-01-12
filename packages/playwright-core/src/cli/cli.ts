@@ -53,13 +53,18 @@ const kExternalPlaywrightTestCommands = [
   ['show-report', 'Show Playwright Test HTML report.'],
   ['merge-reports', 'Merge Playwright Test Blob reports'],
 ];
-for (const [command, description] of kExternalPlaywrightTestCommands) {
-  const playwrightTest = program.command(command).allowUnknownOption(true);
-  playwrightTest.description(`${description} Available in @playwright/test package.`);
-  playwrightTest.action(async () => {
-    printPlaywrightTestError(command);
-    gracefullyProcessExitDoNotHang(1);
-  });
+function addExternalPlaywrightTestCommands() {
+  for (const [command, description] of kExternalPlaywrightTestCommands) {
+    const playwrightTest = program.command(command).allowUnknownOption(true);
+    playwrightTest.description(`${description} Available in @playwright/test package.`);
+    playwrightTest.action(async () => {
+      printPlaywrightTestError(command);
+      gracefullyProcessExitDoNotHang(1);
+    });
+  }
 }
+
+if (!process.env.PW_LANG_NAME)
+  addExternalPlaywrightTestCommands();
 
 program.parse(process.argv);
