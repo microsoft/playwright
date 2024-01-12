@@ -285,10 +285,16 @@ export class CRNetworkManager {
     let route = null;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
-      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled))
-        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
-      else
+      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
+        let headers = undefined;
+        const previousHeaderOverrides = redirectedFrom?._latestRoute?._headerOverrides;
+        // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
+        if (previousHeaderOverrides)
+          headers = network.mergeHeaders([headersObjectToArray(requestPausedEvent.request.headers, '\n'), previousHeaderOverrides]);
+        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
+      } else {
         route = new RouteImpl(this._session, requestPausedEvent.requestId);
+      }
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
@@ -508,6 +514,7 @@ class InterceptableRequest {
   readonly _timestamp: number;
   readonly _wallTime: number;
   readonly _route: RouteImpl | null;
+  readonly _latestRoute: RouteImpl | undefined;
   session: CRSession;
 
   constructor(options: {
@@ -529,6 +536,7 @@ class InterceptableRequest {
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
     this._route = route;
+    this._latestRoute = route ?? redirectedFrom?._latestRoute;
 
     const {
       headers,
@@ -549,6 +557,7 @@ class RouteImpl implements network.RouteDelegate {
   private readonly _session: CRSession;
   private _interceptionId: string;
   _alreadyContinuedParams: Protocol.Fetch.continueRequestParameters | undefined;
+  _headerOverrides: types.HeadersArray | undefined;
 
   constructor(session: CRSession, interceptionId: string) {
     this._session = session;
@@ -563,6 +572,7 @@ class RouteImpl implements network.RouteDelegate {
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
     };
+    this._headerOverrides = overrides.headers;
     await this._session.send('Fetch.continueRequest', this._alreadyContinuedParams);
   }
 

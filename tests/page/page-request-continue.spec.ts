@@ -395,7 +395,7 @@ it('should continue preload link requests', async ({ page, server, browserName }
 
 it('continue should propagate headers to redirects', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' });
-  it.fixme(browserName !== 'webkit');
+  it.fixme(browserName === 'firefox');
   await server.setRedirect('/redirect', '/empty.html');
   await page.route('**/redirect', route => {
     void route.continue({
