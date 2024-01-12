@@ -21,8 +21,6 @@ const kExperimentalLoaderOptions = [
   `--experimental-loader=${url.pathToFileURL(require.resolve('playwright/lib/transform/esmLoader')).toString()}`,
 ];
 
-export const kSupportsModuleRegister = !!require('node:module').register;
-
 export function execArgvWithExperimentalLoaderOptions() {
   return [
     ...process.execArgv,

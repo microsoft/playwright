@@ -34,7 +34,7 @@ import program from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import { registerESMLoader } from './common/esmLoaderHost';
-import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions, kSupportsModuleRegister } from './transform/esmUtils';
+import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from './transform/esmUtils';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -280,7 +280,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
   // Node.js < 20
-  if ((globalThis as any).__legacyEsmLoaderPort) {
+  if ((globalThis as any).__esmLoaderPortPreV20) {
     // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
@@ -288,7 +288,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (!fileIsModule(configFile))
     return false;
     // Node.js < 20
-  if (!kSupportsModuleRegister) {
+  if (!require('node:module').register) {
     const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
       env: {
         ...process.env,

@@ -21,8 +21,8 @@ import { PortTransport } from '../transform/portTransport';
 
 let loaderChannel: PortTransport | undefined;
 // Node.js < 20
-if ((globalThis as any).__legacyEsmLoaderPort)
-  loaderChannel = createPortTransport((globalThis as any).__legacyEsmLoaderPort);
+if ((globalThis as any).__esmLoaderPortPreV20)
+  loaderChannel = createPortTransport((globalThis as any).__esmLoaderPortPreV20);
 
 // Node.js >= 20
 export let esmLoaderRegistered = false;

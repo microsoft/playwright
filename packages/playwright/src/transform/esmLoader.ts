@@ -70,7 +70,7 @@ let transport: PortTransport | undefined;
 function globalPreload(context: { port: MessagePort }) {
   transport = createTransport(context.port);
   return `
-    globalThis.__legacyEsmLoaderPort = port;
+    globalThis.__esmLoaderPortPreV20 = port;
   `;
 }
 
