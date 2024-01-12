@@ -285,10 +285,16 @@ export class CRNetworkManager {
     let route = null;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
-      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled))
-        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
-      else
+      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
+        let headers = undefined;
+        const previousHeaderOverrides = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
+        // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
+        if (previousHeaderOverrides)
+          headers = network.mergeHeaders([headersObjectToArray(requestPausedEvent.request.headers, '\n'), previousHeaderOverrides]);
+        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
+      } else {
         route = new RouteImpl(this._session, requestPausedEvent.requestId);
+      }
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
@@ -384,8 +390,6 @@ export class CRNetworkManager {
 
   _deleteRequest(request: InterceptableRequest) {
     this._requestIdToRequest.delete(request._requestId);
-    if (request._route)
-      request._route._alreadyContinuedParams = undefined;
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
   }
@@ -508,6 +512,9 @@ class InterceptableRequest {
   readonly _timestamp: number;
   readonly _wallTime: number;
   readonly _route: RouteImpl | null;
+  // Only first request in the chain can be intercepted, so this will
+  // store the first and only Route in the chain (if any).
+  readonly _originalRequestRoute: RouteImpl | undefined;
   session: CRSession;
 
   constructor(options: {
@@ -529,6 +536,7 @@ class InterceptableRequest {
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
     this._route = route;
+    this._originalRequestRoute = route ?? redirectedFrom?._originalRequestRoute;
 
     const {
       headers,

@@ -395,13 +395,13 @@ it('should continue preload link requests', async ({ page, server, browserName }
 
 it('continue should propagate headers to redirects', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' });
-  it.fixme(browserName !== 'webkit');
+  it.fixme(browserName === 'firefox');
   await server.setRedirect('/redirect', '/empty.html');
   await page.route('**/redirect', route => {
     void route.continue({
       headers: {
         ...route.request().headers(),
-        'custom': 'value'
+        custom: 'value'
       }
     });
   });
@@ -410,6 +410,38 @@ it('continue should propagate headers to redirects', async ({ page, server, brow
     page.goto(server.PREFIX + '/redirect')
   ]);
   expect(serverRequest.headers['custom']).toBe('value');
+});
+
+it('continue should delete headers on redirects', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.PREFIX + '/empty.html');
+  server.setRoute('/something', (request, response) => {
+    response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+    response.end('done');
+  });
+  await server.setRedirect('/redirect', '/something');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        foo: undefined
+      }
+    });
+  });
+  const [text, serverRequest] = await Promise.all([
+    page.evaluate(async url => {
+      const data = await fetch(url, {
+        headers: {
+          foo: 'a',
+        }
+      });
+      return data.text();
+    }, server.PREFIX + '/redirect'),
+    server.waitForRequest('/something')
+  ]);
+  expect(text).toBe('done');
+  expect(serverRequest.headers.foo).toBeFalsy();
 });
 
 it('should intercept css variable with background url', async ({ page, server }) => {
