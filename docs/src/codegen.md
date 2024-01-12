@@ -42,8 +42,9 @@ Once you are done recording click the **cancel** button or close the browser win
 
 ### Record at Cursor
 
-To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar. If your browser window is not already open then first run the test with 'Show browser' checked and then click the **Record at cursor** button.
+To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar.
 
+**Important:** This feature does not start the test and execute the lines before the cursor. It only attaches to an existing VSCode web view and gets it into recording mode. You have to get VSCode web view into a correct state manually. The easiest way to do this is by adding a breakpoint where you want to continue recording, starting the test in debugging mode and exiting the debugger after it stops at your breakpoint. You have to have 'Show browser' checked in the sidebar in order for VSCode web view to remain open after exiting the debugger.
 
 ![record at cursor in vs code](https://github.com/microsoft/playwright/assets/13063165/77948ab8-92a2-435f-9833-0944da5ae664)
 
