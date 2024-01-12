@@ -523,11 +523,13 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
       const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
         expect(component).toEqual({
+          __pw_type: 'jsx',
           type: 'div',
           props: {
             children: [
               'Hello ',
               {
+                __pw_type: 'jsx',
                 type: 'span',
                 props: {
                   children: 'world'

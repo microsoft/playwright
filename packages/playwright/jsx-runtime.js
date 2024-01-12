@@ -16,6 +16,7 @@
 
 function jsx(type, props) {
   return {
+    __pw_type: 'jsx',
     type,
     props,
   };
@@ -23,6 +24,7 @@ function jsx(type, props) {
 
 function jsxs(type, props) {
   return {
+    __pw_type: 'jsx',
     type,
     props,
   };

@@ -196,7 +196,7 @@ test('should work with stray JSX import', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
+test('should work with stray JS import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
@@ -481,7 +481,7 @@ test('should normalize children', async ({ runInlineTest }) => {
       import { OneChild, OtherComponent } from './component';
 
       test("can pass an HTML element to OneChild", async ({ mount }) => {
-        const component = await mount(<OneChild><p>child</p> </OneChild>);
+        const component = await mount(<OneChild><p>child</p></OneChild>);
         await expect(component).toHaveText("child");
       });
       
