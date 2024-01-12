@@ -1121,3 +1121,21 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
     expect(Math.abs(elementBox.y - highlightBox.y)).toBeLessThan(5);
   }
 });
+
+test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ javaScriptEnabled: false });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <body>
+      <noscript>javascript is disabled!</noscript>
+    </body>
+  `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.getByText('javascript is disabled!')).toBeVisible();
+});

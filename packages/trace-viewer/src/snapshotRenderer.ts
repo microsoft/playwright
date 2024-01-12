@@ -65,15 +65,18 @@ export class SnapshotRenderer {
           }
         } else if (typeof n[0] === 'string') {
           // Element node.
-          const builder: string[] = [];
-          builder.push('<', n[0]);
+          // Note that <noscript> will not be rendered by default in the trace viewer, because
+          // JS is enabled. So rename it to <x-noscript>.
+          const nodeName = n[0] === 'NOSCRIPT' ? 'X-NOSCRIPT' : n[0];
           const attrs = Object.entries(n[1] || {});
+          const builder: string[] = [];
+          builder.push('<', nodeName);
           const kCurrentSrcAttribute = '__playwright_current_src__';
-          const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
-          const isAnchor = n[0] === 'A';
-          const isImg = n[0] === 'IMG';
+          const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
+          const isAnchor = nodeName === 'A';
+          const isImg = nodeName === 'IMG';
           const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
-          const isSourceInsidePictureWithCurrentSrc = n[0] === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+          const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
           for (const [attr, value] of attrs) {
             let attrName = attr;
             if (isFrame && attr.toLowerCase() === 'src') {
@@ -99,9 +102,9 @@ export class SnapshotRenderer {
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex, n[0], attrs));
-          if (!autoClosing.has(n[0]))
-            builder.push('</', n[0], '>');
+            builder.push(visit(n[i], snapshotIndex, nodeName, attrs));
+          if (!autoClosing.has(nodeName))
+            builder.push('</', nodeName, '>');
           (n as any)._string = builder.join('');
         } else {
           // Why are we here? Let's not throw, just in case.
