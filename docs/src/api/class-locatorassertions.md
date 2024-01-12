@@ -403,7 +403,7 @@ Expected options currently selected.
 * langs:
   - alias-java: isAttached
 
-Ensures that [Locator] points to an [attached](../actionability.md#attached) DOM node.
+Ensures that [Locator] points to an element that is [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 **Usage**
 
@@ -837,7 +837,7 @@ element should intersect viewport at any positive ratio. Defaults to `0`.
 * langs:
   - alias-java: isVisible
 
-Ensures that [Locator] points to an [attached](../actionability.md#attached) and [visible](../actionability.md#visible) DOM node.
+Ensures that [Locator] points to an attached and [visible](../actionability.md#visible) DOM node.
 
 To check that at least one element from the list is visible, use [`method: Locator.first`].
 

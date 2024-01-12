@@ -1090,7 +1090,7 @@ Depending on the [`param: state`] parameter, this method waits for one of the [a
 to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
 * `"visible"` Wait until the element is [visible](../actionability.md#visible).
 * `"hidden"` Wait until the element is [not visible](../actionability.md#visible) or
-  [not attached](../actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
+  not attached. Note that waiting for hidden does not throw when the element detaches.
 * `"stable"` Wait until the element is both [visible](../actionability.md#visible) and
   [stable](../actionability.md#stable).
 * `"enabled"` Wait until the element is [enabled](../actionability.md#enabled).
