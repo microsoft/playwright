@@ -642,12 +642,11 @@ export class InjectedScript {
     });
   }
 
-  // Returns the element state that is not satisfied.
-  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | ElementState | undefined> {
+  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
     if (states.includes('stable')) {
       const stableResult = await this._checkElementIsStable(node);
       if (stableResult === false)
-        return 'stable';
+        return { missingState: 'stable' };
       if (stableResult === 'error:notconnected')
         return stableResult;
     }
@@ -655,7 +654,7 @@ export class InjectedScript {
       if (state !== 'stable') {
         const result = this.elementState(node, state);
         if (result === false)
-          return state;
+          return { missingState: state };
         if (result === 'error:notconnected')
           return result;
       }
@@ -745,9 +744,7 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[],
-    node: Node, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
-
+  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -783,13 +780,10 @@ export class InjectedScript {
         break;
       }
     }
-    if (remainingOptionsToSelect.length) {
-      progress.logRepeating('    did not find some options - waiting... ');
-      return progress.continuePolling;
-    }
+    if (remainingOptionsToSelect.length)
+      return 'error:optionsnotfound';
     select.value = undefined as any;
     selectedOptions.forEach(option => option.selected = true);
-    progress.log('    selected specified option(s)');
     select.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     select.dispatchEvent(new Event('change', { bubbles: true }));
     return selectedOptions.map(option => option.value);

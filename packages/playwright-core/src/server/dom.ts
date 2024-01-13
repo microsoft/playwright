@@ -36,7 +36,7 @@ export type InputFilesItems = {
 };
 
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
-type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { elementState: ElementState } | { hitTargetDescription: string } | 'done';
+type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
 }
@@ -341,12 +341,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         progress.log('  element is outside of the viewport');
         continue;
       }
+      if (result === 'error:optionsnotfound') {
+        progress.log('  did not find some options');
+        continue;
+      }
       if (typeof result === 'object' && 'hitTargetDescription' in result) {
         progress.log(`  ${result.hitTargetDescription} intercepts pointer events`);
         continue;
       }
-      if (typeof result === 'object' && 'elementState' in result) {
-        progress.log(`  element is not ${result.elementState}`);
+      if (typeof result === 'object' && 'missingState' in result) {
+        progress.log(`  element is not ${result.missingState}`);
         continue;
       }
       return result;
@@ -404,10 +408,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const result = await this.evaluateInUtility(async ([injected, node, { elementStates }]) => {
         return await injected.checkElementStates(node, elementStates);
       }, { elementStates });
-      if (result === 'error:notconnected')
-        return result;
       if (result)
-        return { elementState: result };
+        return result;
       progress.log(`  element is ${elementStatesJoined}`);
     }
 
@@ -550,16 +552,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions): Promise<string[] | 'error:notconnected'> {
-    const optionsToSelect = [...elements, ...values];
-    await progress.beforeInputAction(this);
-    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      progress.log('  selecting specified option(s)');
-      const result = await this.evaluatePoll(progress, ([injected, node, { optionsToSelect, force }]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
+    let resultingOptions: string[] = [];
+    await this._retryAction(progress, 'select option', async retry => {
+      await progress.beforeInputAction(this);
+      if (!options.force)
+        progress.log(`  waiting for element to be visible and enabled`);
+      const optionsToSelect = [...elements, ...values];
+      const result = await this.evaluateInUtility(async ([injected, node, { optionsToSelect, force }]) => {
+        if (!force) {
+          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled']);
+          if (checkResult)
+            return checkResult;
+        }
+        return injected.selectOptions(node, optionsToSelect);
       }, { optionsToSelect, force: options.force });
+      if (Array.isArray(result)) {
+        progress.log('  selected specified option(s)');
+        resultingOptions = result;
+        return 'done';
+      }
       return result;
-    });
+    }, options);
+    return resultingOptions;
   }
 
   async fill(metadata: CallMetadata, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<void> {
