@@ -23,7 +23,8 @@ it('should timeout waiting for display:none to be gone', async ({ page, server }
   const error = await page.click('button', { timeout: 5000 }).catch(e => e);
   expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
   expect(error.message).toContain('waiting for element to be visible, enabled and stable');
-  expect(error.message).toContain('element is not visible - waiting');
+  expect(error.message).toContain('element is not visible');
+  expect(error.message).toContain('retrying click action');
 });
 
 it('should timeout waiting for visibility:hidden to be gone', async ({ page, server }) => {
@@ -32,5 +33,6 @@ it('should timeout waiting for visibility:hidden to be gone', async ({ page, ser
   const error = await page.click('button', { timeout: 5000 }).catch(e => e);
   expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
   expect(error.message).toContain('waiting for element to be visible, enabled and stable');
-  expect(error.message).toContain('element is not visible - waiting');
+  expect(error.message).toContain('element is not visible');
+  expect(error.message).toContain('retrying click action');
 });

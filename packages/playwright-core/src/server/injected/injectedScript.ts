@@ -642,6 +642,76 @@ export class InjectedScript {
     });
   }
 
+  // Returns the element state that is not satisfied.
+  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | ElementState | undefined> {
+    if (states.includes('stable')) {
+      const stableResult = await this._checkElementIsStable(node);
+      if (stableResult === false)
+        return 'stable';
+      if (stableResult === 'error:notconnected')
+        return stableResult;
+    }
+    for (const state of states) {
+      if (state !== 'stable') {
+        const result = this.elementState(node, state);
+        if (result === false)
+          return state;
+        if (result === 'error:notconnected')
+          return result;
+      }
+    }
+  }
+
+  async _checkElementIsStable(node: Node): Promise<'error:notconnected' | boolean> {
+    const continuePolling = Symbol('continuePolling');
+    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
+    let stableRafCounter = 0;
+    let lastTime = 0;
+
+    const check = () => {
+      const element = this.retarget(node, 'no-follow-label');
+      if (!element)
+        return 'error:notconnected';
+
+      // Drop frames that are shorter than 16ms - WebKit Win bug.
+      const time = performance.now();
+      if (this._stableRafCount > 1 && time - lastTime < 15)
+        return continuePolling;
+      lastTime = time;
+
+      const clientRect = element.getBoundingClientRect();
+      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+      if (lastRect) {
+        const samePosition = rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+        if (!samePosition)
+          return false;
+        if (++stableRafCounter >= this._stableRafCount)
+          return true;
+      }
+      lastRect = rect;
+      return continuePolling;
+    };
+
+    let fulfill: (result: 'error:notconnected' | boolean) => void;
+    let reject: (error: Error) => void;
+    const result = new Promise<'error:notconnected' | boolean>((f, r) => { fulfill = f; reject = r; });
+
+    const raf = () => {
+      try {
+        const success = check();
+        if (success !== continuePolling)
+          fulfill(success);
+        else
+          requestAnimationFrame(raf);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    requestAnimationFrame(raf);
+
+    return result;
+  }
+
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
     const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {

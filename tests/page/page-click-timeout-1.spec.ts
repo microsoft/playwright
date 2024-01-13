@@ -32,5 +32,6 @@ it('should timeout waiting for button to be enabled', async ({ page }) => {
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
-  expect(error.message).toContain('element is not enabled - waiting');
+  expect(error.message).toContain('element is not enabled');
+  expect(error.message).toContain('retrying click action');
 });

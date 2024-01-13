@@ -36,6 +36,7 @@ export type InputFilesItems = {
 };
 
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
+type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { elementState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
 }
@@ -308,22 +309,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
-    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _retryAction(progress: Progress, actionName: string, action: (retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean }): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
     const waitTime = [0, 20, 100, 100, 500];
-
-    // By default, we scroll with protocol method to reveal the action point.
-    // However, that might not work to scroll from under position:sticky elements
-    // that overlay the target element. To fight this, we cycle through different
-    // scroll alignments. This works in most scenarios.
-    const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
-      undefined,
-      { block: 'end', inline: 'end' },
-      { block: 'center', inline: 'center' },
-      { block: 'start', inline: 'start' },
-    ];
 
     while (progress.isRunning()) {
       if (retry) {
@@ -338,8 +327,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
-      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
-      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
+      const result = await action(retry);
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
@@ -357,12 +345,34 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         progress.log(`  ${result.hitTargetDescription} intercepts pointer events`);
         continue;
       }
+      if (typeof result === 'object' && 'elementState' in result) {
+        progress.log(`  element is not ${result.elementState}`);
+        continue;
+      }
       return result;
     }
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    return await this._retryAction(progress, actionName, async retry => {
+      // By default, we scroll with protocol method to reveal the action point.
+      // However, that might not work to scroll from under position:sticky elements
+      // that overlay the target element. To fight this, we cycle through different
+      // scroll alignments. This works in most scenarios.
+      const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
+        undefined,
+        { block: 'end', inline: 'end' },
+        { block: 'center', inline: 'center' },
+        { block: 'start', inline: 'start' },
+      ];
+      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
+      return await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
+    }, options);
+  }
+
+  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<PerformActionResult> {
     const { force = false, position } = options;
 
     const doScrollIntoView = async () => {
@@ -386,9 +396,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
-    const result = await this._waitForElementStates(progress, waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'], force);
-    if (result !== 'done')
-      return result;
+
+    if (!force) {
+      const elementStates: ElementState[] = waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
+      const elementStatesJoined = joinWithAnd(elementStates);
+      progress.log(`  waiting for element to be ${elementStatesJoined}`);
+      const result = await this.evaluateInUtility(async ([injected, node, { elementStates }]) => {
+        return await injected.checkElementStates(node, elementStates);
+      }, { elementStates });
+      if (result === 'error:notconnected')
+        return result;
+      if (result)
+        return { elementState: result };
+      progress.log(`  element is ${elementStatesJoined}`);
+    }
+
     if ((options as any).__testHookAfterStable)
       await (options as any).__testHookAfterStable();
 
@@ -407,7 +429,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
-    if (!options.force) {
+    if (force) {
+      progress.log(`  forcing action`);
+    } else {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
