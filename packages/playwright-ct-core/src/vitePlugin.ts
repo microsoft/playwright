@@ -19,7 +19,6 @@ import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } fro
 
 import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig, UserConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
-import type { ComponentInfo } from './tsxTransform';
 import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
 import { debug } from 'playwright-core/lib/utilsBundle';
@@ -31,13 +30,22 @@ import { stoppable } from 'playwright/lib/utilsBundle';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
-import { collectComponentUsages, componentInfo } from './tsxTransform';
+import { collectComponentUsages, importInfo } from './tsxTransform';
 import { version as viteVersion, build, preview, mergeConfig } from 'vite';
+import type { ImportInfo } from './tsxTransform';
 
 const log = debug('pw:vite');
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
+
+type ComponentInfo = {
+  id: string;
+  importPath: string;
+  isModuleOrAlias: boolean;
+  remoteName: string | undefined;
+  deps: string[];
+};
 
 type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctPort?: number;
@@ -107,7 +115,13 @@ export function createPlugin(
       let buildExists = false;
       let buildInfo: BuildInfo;
 
-      const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
+      const importRegistryFile = await fs.promises.readFile(path.resolve(__dirname, 'importRegistry.js'), 'utf-8');
+      assert(importRegistryFile.includes(importRegistryPrefix));
+      assert(importRegistryFile.includes(importRegistrySuffix));
+      const importRegistrySource = importRegistryFile.replace(importRegistryPrefix, '').replace(importRegistrySuffix, '') + `
+      window.__pwRegistry = new ImportRegistry();
+      `;
+      const registerSource = importRegistrySource + await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
 
       try {
@@ -269,11 +283,19 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
   for (const testFile of testFiles) {
     const timestamp = (await fs.promises.stat(testFile)).mtimeMs;
     if (buildInfo.tests[testFile]?.timestamp !== timestamp) {
-      const components = await parseTestFile(testFile);
+      const componentImports = await parseTestFile(testFile);
       log('changed test:', testFile);
-      for (const component of components)
-        componentRegistry.set(component.fullName, component);
-      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName) };
+      for (const componentImport of componentImports) {
+        const ci: ComponentInfo = {
+          id: componentImport.id,
+          isModuleOrAlias: componentImport.isModuleOrAlias,
+          importPath: componentImport.importPath,
+          remoteName: componentImport.remoteName,
+          deps: [],
+        };
+        componentRegistry.set(componentImport.id, { ...ci, deps: [] });
+      }
+      buildInfo.tests[testFile] = { timestamp, components: componentImports.map(c => c.id) };
       hasNewTests = true;
     }
   }
@@ -283,7 +305,7 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
 
 async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
   const newComponents = [...componentRegistry.keys()];
-  const oldComponents = new Map(buildInfo.components.map(c => [c.fullName, c]));
+  const oldComponents = new Map(buildInfo.components.map(c => [c.id, c]));
 
   let hasNewComponents = false;
   for (const c of newComponents) {
@@ -293,17 +315,17 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
     }
   }
   for (const c of oldComponents.values())
-    componentRegistry.set(c.fullName, c);
+    componentRegistry.set(c.id, c);
 
   return hasNewComponents;
 }
 
-async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
+async function parseTestFile(testFile: string): Promise<ImportInfo[]> {
   const text = await fs.promises.readFile(testFile, 'utf-8');
   const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
   const componentUsages = collectComponentUsages(ast);
   const componentNames = componentUsages.names;
-  const result: ComponentInfo[] = [];
+  const result: ImportInfo[] = [];
 
   traverse(ast, {
     enter: p => {
@@ -313,13 +335,12 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
           return;
 
         for (const specifier of importNode.specifiers) {
-          const specifierName = specifier.local.name;
-          const componentName = componentNames.has(specifierName) ? specifierName : [...componentNames].find(c => c.startsWith(specifierName + '.'));
-          if (!componentName)
-            continue;
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          result.push(componentInfo(specifier, importNode.source.value, testFile, componentName));
+          const info = importInfo(importNode, specifier, testFile);
+          if (!componentNames.has(info.localName))
+            continue;
+          result.push(info);
         }
       }
     }
@@ -370,13 +391,10 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
       for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
-        if (value.importedName)
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName + (value.importedNameProperty || '')});`);
-        else
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default${value.importedNameProperty || ''});`);
+        lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.remoteName || 'default'});`);
       }
 
-      lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
+      lines.push(`__pwRegistry.initialize({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
       return {
         code: lines.join('\n'),
         map: { mappings: '' }
@@ -418,3 +436,13 @@ function hasJSComponents(components: ComponentInfo[]): boolean {
   }
   return false;
 }
+
+
+const importRegistryPrefix = `"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ImportRegistry = void 0;`;
+
+const importRegistrySuffix = `exports.ImportRegistry = ImportRegistry;`;

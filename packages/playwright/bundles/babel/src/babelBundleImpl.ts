@@ -66,6 +66,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   // Support JSX/TSX at all times, regardless of the file extension.
   plugins.push([require('@babel/plugin-transform-react-jsx'), {
+    throwIfNamespace: false,
     runtime: 'automatic',
     importSource: path.dirname(require.resolve('playwright')),
   }]);
