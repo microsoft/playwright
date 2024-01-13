@@ -32,6 +32,7 @@ import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { collectComponentUsages, importInfo } from './tsxTransform';
 import { version as viteVersion, build, preview, mergeConfig } from 'vite';
+import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 
 const log = debug('pw:vite');
@@ -115,13 +116,7 @@ export function createPlugin(
       let buildExists = false;
       let buildInfo: BuildInfo;
 
-      const importRegistryFile = await fs.promises.readFile(path.resolve(__dirname, 'importRegistry.js'), 'utf-8');
-      assert(importRegistryFile.includes(importRegistryPrefix));
-      assert(importRegistryFile.includes(importRegistrySuffix));
-      const importRegistrySource = importRegistryFile.replace(importRegistryPrefix, '').replace(importRegistrySuffix, '') + `
-      window.__pwRegistry = new ImportRegistry();
-      `;
-      const registerSource = importRegistrySource + await fs.promises.readFile(registerSourceFile, 'utf-8');
+      const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
 
       try {
@@ -436,13 +431,3 @@ function hasJSComponents(components: ComponentInfo[]): boolean {
   }
   return false;
 }
-
-
-const importRegistryPrefix = `"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.ImportRegistry = void 0;`;
-
-const importRegistrySuffix = `exports.ImportRegistry = ImportRegistry;`;

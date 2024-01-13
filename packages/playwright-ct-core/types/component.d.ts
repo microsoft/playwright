@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-import type { ImportRegistry } from '../src/importRegistry';
+import type { ImportRegistry } from '../src/injected/importRegistry';
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 export type JsonObject = { [Key in string]?: JsonValue };
-
-export type ImportRef = {
-  __pw_type: 'importRef',
-  id: string,
-  property?: string,
-};
 
 export type JsxComponent = {
   __pw_type: 'jsx',
@@ -62,5 +56,8 @@ declare global {
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<void>)[];
     __pwRegistry: ImportRegistry;
+    // Can't start with __pw due to core reuse bindings logic for __pw*.
+    __ctDispatchFunction: (ordinal: number, args: any[]) => void;
+    __pwUnwrapObject: (value: any) => Promise<any>;
   }
 }

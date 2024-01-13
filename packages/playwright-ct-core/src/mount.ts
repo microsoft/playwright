@@ -15,8 +15,10 @@
  */
 
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from 'playwright/test';
-import type { Component, ImportRef, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
+import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
 import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
+import type { ImportRef } from './injected/importRegistry';
+import { wrapObject } from './injected/serializers';
 
 let boundCallbacksForMount: Function[] = [];
 
@@ -46,7 +48,7 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
     await (page as any)._wrapApiCall(async () => {
-      await page.exposeFunction('__ct_dispatch', (ordinal: number, args: any[]) => {
+      await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
         boundCallbacksForMount[ordinal](...args);
       });
       await page.goto(process.env.PLAYWRIGHT_TEST_BASE_URL!);
@@ -83,59 +85,29 @@ function isJsxComponent(component: any): component is JsxComponent {
 }
 
 async function innerUpdate(page: Page, componentRef: JsxComponent | ImportRef, options: ObjectComponentOptions = {}): Promise<void> {
-  const component = createComponent(componentRef, options);
-  wrapFunctions(component, page, boundCallbacksForMount);
+  const component = wrapObject(createComponent(componentRef, options), boundCallbacksForMount);
 
   await page.evaluate(async ({ component }) => {
-    const unwrapFunctions = (object: any) => {
-      for (const [key, value] of Object.entries(object)) {
-        if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
-          const ordinal = +value.substring('__pw_func_'.length);
-          object[key] = (...args: any[]) => {
-            (window as any)['__ct_dispatch'](ordinal, args);
-          };
-        } else if (typeof value === 'object' && value) {
-          unwrapFunctions(value);
-        }
-      }
-    };
-
-    unwrapFunctions(component);
-    component = await window.__pwRegistry.resolveImports(component);
+    component = await window.__pwUnwrapObject(component);
     const rootElement = document.getElementById('root')!;
     return await window.playwrightUpdate(rootElement, component);
   }, { component });
 }
 
 async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, options: ObjectComponentOptions & MountOptions = {}): Promise<string> {
-  const component = createComponent(componentRef, options);
-  wrapFunctions(component, page, boundCallbacksForMount);
+  const component = wrapObject(createComponent(componentRef, options), boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!window.playwrightMount);
 
   const selector = await page.evaluate(async ({ component, hooksConfig }) => {
-    const unwrapFunctions = (object: any) => {
-      for (const [key, value] of Object.entries(object)) {
-        if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
-          const ordinal = +value.substring('__pw_func_'.length);
-          object[key] = (...args: any[]) => {
-            (window as any)['__ct_dispatch'](ordinal, args);
-          };
-        } else if (typeof value === 'object' && value) {
-          unwrapFunctions(value);
-        }
-      }
-    };
-
-    unwrapFunctions(component);
+    component = await window.__pwUnwrapObject(component);
     let rootElement = document.getElementById('root');
     if (!rootElement) {
       rootElement = document.createElement('div');
       rootElement.id = 'root';
       document.body.appendChild(rootElement);
     }
-    component = await window.__pwRegistry.resolveImports(component);
     await window.playwrightMount(component, rootElement, hooksConfig);
 
     return '#root >> internal:control=component';
@@ -151,17 +123,4 @@ function createComponent(component: JsxComponent | ImportRef, options: ObjectCom
     type: component,
     ...options,
   };
-}
-
-function wrapFunctions(object: any, page: Page, callbacks: Function[]) {
-  for (const [key, value] of Object.entries(object)) {
-    const type = typeof value;
-    if (type === 'function') {
-      const functionName = '__pw_func_' + callbacks.length;
-      callbacks.push(value as Function);
-      object[key] = functionName;
-    } else if (type === 'object' && value) {
-      wrapFunctions(value, page, callbacks);
-    }
-  }
 }

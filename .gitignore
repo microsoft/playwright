@@ -9,7 +9,8 @@ node_modules/
 .vscode
 .idea
 yarn.lock
-/packages/playwright-core/src/generated/*
+/packages/playwright-core/src/generated
+/packages/playwright-ct-core/src/generated
 packages/*/lib/
 drivers/
 .android-sdk/
