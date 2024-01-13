@@ -25,50 +25,12 @@ import { detach as __pwDetach, insert as __pwInsert, noop as __pwNoop } from 'sv
 /** @typedef {any} FrameworkComponent */
 /** @typedef {import('svelte').SvelteComponent} SvelteComponent */
 
-/** @type {Map<string, () => Promise<FrameworkComponent>>} */
-const __pwLoaderRegistry = new Map();
-/** @type {Map<string, FrameworkComponent>} */
-const __pwRegistry = new Map();
-
-/**
- * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
- */
-export function pwRegister(components) {
-  for (const [name, value] of Object.entries(components))
-    __pwLoaderRegistry.set(name, value);
-}
-
 /**
  * @param {any} component
  * @returns {component is ObjectComponent}
  */
-function isComponent(component) {
-  return !(typeof component !== 'object' || Array.isArray(component));
-}
-
-/**
- * @param {ObjectComponent} component
- */
-async function __pwResolveComponent(component) {
-  if (!isComponent(component))
-    return;
-
-  let componentFactory = __pwLoaderRegistry.get(component.type);
-  if (!componentFactory) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwLoaderRegistry) {
-      if (component.type.endsWith(`_${name}_svelte`)) {
-        componentFactory = value;
-        break;
-      }
-    }
-  }
-
-  if (!componentFactory)
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
-  if (componentFactory)
-    __pwRegistry.set(component.type, await componentFactory());
+function isObjectComponent(component) {
+  return typeof component === 'object' && component && component.__pw_type === 'object-component';
 }
 
 /**
@@ -105,19 +67,19 @@ function __pwCreateSlots(slots) {
 const __pwSvelteComponentKey = Symbol('svelteComponent');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  if (component.kind !== 'object')
+  if (!isObjectComponent(component))
     throw new Error('JSX mount notation is not supported');
 
-  await __pwResolveComponent(component);
-  const componentCtor = __pwRegistry.get(component.type);
+  const objectComponent = component;
+  const componentCtor = component.type;
 
   class App extends componentCtor {
     constructor(options = {}) {
       super({
         target: rootElement,
         props: {
-          ...component.options?.props,
-          $$slots: __pwCreateSlots(component.options?.slots),
+          ...objectComponent.props,
+          $$slots: __pwCreateSlots(objectComponent.slots),
           $$scope: {},
         },
         ...options
@@ -134,7 +96,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
 
-  for (const [key, listener] of Object.entries(component.options?.on || {}))
+  for (const [key, listener] of Object.entries(objectComponent.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
 
   for (const hook of window.__pw_hooks_after_mount || [])
@@ -149,17 +111,16 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  if (component.kind !== 'object')
+  if (!isObjectComponent(component))
     throw new Error('JSX mount notation is not supported');
 
-  await __pwResolveComponent(component);
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');
 
-  for (const [key, listener] of Object.entries(component.options?.on || {}))
+  for (const [key, listener] of Object.entries(component.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
 
-  if (component.options?.props)
-    svelteComponent.$set(component.options.props);
+  if (component.props)
+    svelteComponent.$set(component.props);
 };
