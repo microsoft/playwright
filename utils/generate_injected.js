@@ -22,11 +22,40 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const esbuild = require('esbuild');
 
+/**
+ * @type {[string, string, string, boolean][]}
+ */
 const injectedScripts = [
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'utilityScript.ts'),
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'injectedScript.ts'),
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'consoleApi.ts'),
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder.ts'),
+  [
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'utilityScript.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'injectedScript.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'consoleApi.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'injected', 'index.ts'),
+    path.join(ROOT, 'packages', 'playwright-ct-core', 'lib', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'generated'),
+    false,
+  ]
 ];
 
 const modulePrefix = `
@@ -79,10 +108,8 @@ const inlineCSSPlugin = {
 };
 
 (async () => {
-  const generatedFolder = path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated');
-  await fs.promises.mkdir(generatedFolder, { recursive: true });
-  for (const injected of injectedScripts) {
-    const outdir = path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed');
+  for (const [injected, outdir, generatedFolder, hasExports] of injectedScripts) {
+    await fs.promises.mkdir(generatedFolder, { recursive: true });
     const buildOutput = await esbuild.build({
       entryPoints: [injected],
       bundle: true,
@@ -97,7 +124,8 @@ const inlineCSSPlugin = {
     const baseName = path.basename(injected);
     const outFileJs = path.join(outdir, baseName.replace('.ts', '.js'));
     let content = await fs.promises.readFile(outFileJs, 'utf-8');
-    content = await replaceEsbuildHeader(content, outFileJs);
+    if (hasExports)
+      content = await replaceEsbuildHeader(content, outFileJs);
     const newContent = `export const source = ${JSON.stringify(content)};`;
     await fs.promises.writeFile(path.join(generatedFolder, baseName.replace('.ts', 'Source.ts')), newContent);
   }
