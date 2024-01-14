@@ -207,3 +207,81 @@ test('should watch component', async ({ runUITest, writeFiles }) => {
         ❌ pass <=
   `);
 });
+
+test('should watch component via util', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    ...basicTestTree,
+    'src/button.tsx': undefined,
+    'src/button.ts': `
+      import { Button } from './buttonComponent';
+      export { Button };
+    `,
+    'src/buttonComponent.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ button.test.tsx
+        ◯ pass
+  `);
+
+  await page.getByTitle('Watch all').click();
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ button.test.tsx
+        ✅ pass
+  `);
+
+  await writeFiles({
+    'src/buttonComponent.tsx': `
+      export const Button = () => <button>Button2</button>;
+    `
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ button.test.tsx
+        ❌ pass <=
+  `);
+});
+
+test('should watch component when editing util', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    ...basicTestTree,
+    'src/button.tsx': undefined,
+    'src/button.ts': `
+      import { Button } from './buttonComponent';
+      export { Button };
+    `,
+    'src/buttonComponent.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/buttonComponent2.tsx': `
+      export const Button = () => <button>Button2</button>;
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ button.test.tsx
+        ◯ pass
+  `);
+
+  await page.getByTitle('Watch all').click();
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ button.test.tsx
+        ✅ pass
+  `);
+
+  await writeFiles({
+    'src/button.ts': `
+      import { Button } from './buttonComponent2';
+      export { Button };
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ button.test.tsx
+        ❌ pass <=
+  `);
+});
