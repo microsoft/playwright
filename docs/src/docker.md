@@ -5,7 +5,7 @@ title: "Docker"
 
 ## Introduction
 
-[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. These image includes all the dependencies needed to run browsers in a Docker container, and also include the browsers themselves.
+[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. These image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
 
 ## Usage
 
@@ -107,8 +107,7 @@ See our [Continuous Integration guides](./ci.md) for sample configs.
 
 See [all available image tags].
 
-Docker images are published automatically by GitHub Actions. We currently publish images with the
-following tags:
+We currently publish images with the following tags:
 - `:next` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
 - `:next-jammy` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
 - `:v%%VERSION%%` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
@@ -165,3 +164,18 @@ The image will be tagged as `playwright:localbuild-jammy` and could be run as:
 docker run --rm -it playwright:localbuild /bin/bash
 ```
 
+## Development
+* langs: python
+
+### Build the image
+
+To run Playwright inside Docker, you need to have Python, [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
+
+```Dockerfile
+FROM python:3.12-bookworm
+
+RUN pip install playwright==@%%VERSION%% && \
+    playwright install --with-deps
+```
+
+Note: official images published to [Microsoft Artifact Registry] are built using [`//utils/docker/build.sh`](https://github.com/microsoft/playwright-python/blob/main/utils/docker/build.sh) script.
