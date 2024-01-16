@@ -139,10 +139,8 @@ You can use the [.NET install script](https://learn.microsoft.com/en-us/dotnet/c
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir /usr/share/dotnet --channel 6.0
 ```
 
-## Development
+## Build your own image
 * langs: js
-
-### Build the image
 
 To run Playwright inside Docker, you need to have Node.js, [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
 
@@ -152,22 +150,8 @@ FROM node:20-bookworm
 RUN npx -y playwright@%%VERSION%% install --with-deps
 ```
 
-Note: official images published to [Microsoft Artifact Registry] are built using [`//utils/docker/build.sh`](https://github.com/microsoft/playwright/blob/main/utils/docker/build.sh) script.
-
-```txt
-./utils/docker/build.sh jammy playwright:localbuild-jammy
-```
-
-The image will be tagged as `playwright:localbuild-jammy` and could be run as:
-
-```txt
-docker run --rm -it playwright:localbuild /bin/bash
-```
-
-## Development
+## Build your own image
 * langs: python
-
-### Build the image
 
 To run Playwright inside Docker, you need to have Python, [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
 
@@ -177,5 +161,3 @@ FROM python:3.12-bookworm
 RUN pip install playwright==@%%VERSION%% && \
     playwright install --with-deps
 ```
-
-Note: official images published to [Microsoft Artifact Registry] are built using [`//utils/docker/build.sh`](https://github.com/microsoft/playwright-python/blob/main/utils/docker/build.sh) script.
