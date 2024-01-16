@@ -798,3 +798,29 @@ var import_test = __toModule(require("@playwright/test"));
     });
   });
 }
+
+test('should report a stable test.id', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onTestBegin(test) {
+          console.log('\\n%%testbegin-' + test.id);
+        }
+      }
+      export default Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: [[ './reporter.ts' ]] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example test', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'testbegin-20289bcdad95a5e18c38-8b63c3695b9c8bd62d98',
+  ]);
+});

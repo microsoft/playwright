@@ -15,7 +15,7 @@
 */
 
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils';
+import { calculateSha1, toPosixPath } from 'playwright-core/lib/utils';
 import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './config';
 import type { Matcher, TestFileFilter } from '../util';
@@ -39,9 +39,10 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCa
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
   return !!suite._entries.length;
 }
+
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
-  const relativeFile = path.relative(project.project.testDir, suite.location!.file).split(path.sep).join('/');
-  const fileId = calculateSha1(relativeFile).slice(0, 20);
+  const relativeFile = path.relative(project.project.testDir, suite.location!.file);
+  const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
 
   // Clone suite.
   const result = suite._deepClone();
@@ -51,7 +52,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
   result.forEachTest((test, suite) => {
     suite._fileId = fileId;
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-    const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')}`;
+    const [file, ...titles] = test.titlePath();
+    const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test._projectId = project.id;
