@@ -68,6 +68,7 @@ export type RemoteServerOptions = {
   exitOnWarning?: boolean;
   inCluster?: boolean;
   url?: string;
+  startStopAndRunHttp?: boolean;
 };
 
 export class RemoteServer implements PlaywrightServer {
@@ -148,6 +149,10 @@ export class RemoteServer implements PlaywrightServer {
 
   async childExitCode() {
     return await this._process.exitCode;
+  }
+
+  async childSignal() {
+    return (await this._process.exited).signal;
   }
 
   async close() {
