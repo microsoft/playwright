@@ -695,8 +695,7 @@ interface TestConfig {
     };
 
     /**
-     * Configuration for the [expect(value).toPass([, options])](https://playwright.dev/docs/test-assertions#expecttopass)
-     * method.
+     * Configuration for the [expect(value).toPass()](https://playwright.dev/docs/test-assertions#expecttopass) method.
      */
     toPass?: {
       /**
@@ -6840,8 +6839,7 @@ interface TestProject {
     };
 
     /**
-     * Configuration for the [expect(value).toPass([, options])](https://playwright.dev/docs/test-assertions#expecttopass)
-     * method.
+     * Configuration for the [expect(value).toPass()](https://playwright.dev/docs/test-assertions) method.
      */
     toPass?: {
       /**
