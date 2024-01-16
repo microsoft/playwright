@@ -52,3 +52,7 @@ export async function copyFileAndMakeWritable(from: string, to: string) {
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
+
+export function toPosixPath(aPath: string): string {
+  return aPath.split(path.sep).join(path.posix.sep);
+}

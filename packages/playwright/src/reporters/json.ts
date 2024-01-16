@@ -18,14 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
 import { formatError, prepareErrorStack } from './base';
-import { MultiMap } from 'playwright-core/lib/utils';
-import { assert } from 'playwright-core/lib/utils';
+import { MultiMap, assert, toPosixPath } from 'playwright-core/lib/utils';
 import { getProjectId } from '../common/config';
 import EmptyReporter from './empty';
-
-export function toPosixPath(aPath: string): string {
-  return aPath.split(path.sep).join(path.posix.sep);
-}
 
 class JSONReporter extends EmptyReporter {
   config!: FullConfig;
