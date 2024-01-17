@@ -19,7 +19,7 @@ import * as injectedScriptSource from '../generated/injectedScriptSource';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as frames from './frames';
-import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
+import type { InjectedScript, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import * as js from './javascript';
 import type { Page } from './page';
@@ -36,6 +36,7 @@ export type InputFilesItems = {
 };
 
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
+type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
 }
@@ -156,19 +157,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
   }
 
-  async evaluatePoll<R, Arg>(progress: Progress, pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], InjectedScriptPoll<R>>, arg: Arg): Promise<R | 'error:notconnected'> {
-    try {
-      const utility = await this._frame._utilityContext();
-      const poll = await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      return await pollHandler.finish();
-    } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
-        throw e;
-      return 'error:notconnected';
-    }
-  }
-
   async ownerFrame(): Promise<frames.Frame | null> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
     if (!frameId)
@@ -224,24 +212,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitAndScrollIntoViewIfNeeded(progress: Progress, waitForVisible: boolean): Promise<void> {
-    const timeouts = [0, 50, 100, 250];
-    while (progress.isRunning()) {
-      assertDone(throwRetargetableDOMError(await this._waitForElementStates(progress, waitForVisible ? ['visible', 'stable'] : ['stable'], false /* force */)));
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      const result = throwRetargetableDOMError(await this._scrollRectIntoViewIfNeeded());
-      if (result === 'error:notvisible') {
-        if (!waitForVisible) {
-          // Wait for a timeout to avoid retrying too often when not waiting for visible.
-          // If we wait for visible, this should be covered by _waitForElementStates instead.
-          const timeout = timeouts.shift() ?? 500;
-          progress.log(`  element is not displayed, retrying in ${timeout}ms`);
-          await new Promise(f => setTimeout(f, timeout));
-        }
-        continue;
-      }
-      assertDone(result);
-      return;
-    }
+    const result = await this._retryAction(progress, 'scroll into view', async () => {
+      progress.log(`  waiting for element to be stable`);
+      const waitResult = await this.evaluateInUtility(async ([injected, node, { waitForVisible }]) => {
+        return await injected.checkElementStates(node, waitForVisible ? ['visible', 'stable'] : ['stable']);
+      }, { waitForVisible });
+      if (waitResult)
+        return waitResult;
+      return await this._scrollRectIntoViewIfNeeded();
+    }, {});
+    assertDone(throwRetargetableDOMError(result));
   }
 
   async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions = {}) {
@@ -308,22 +288,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
-    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _retryAction(progress: Progress, actionName: string, action: (retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean }): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
     const waitTime = [0, 20, 100, 100, 500];
-
-    // By default, we scroll with protocol method to reveal the action point.
-    // However, that might not work to scroll from under position:sticky elements
-    // that overlay the target element. To fight this, we cycle through different
-    // scroll alignments. This works in most scenarios.
-    const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
-      undefined,
-      { block: 'end', inline: 'end' },
-      { block: 'center', inline: 'center' },
-      { block: 'start', inline: 'start' },
-    ];
 
     while (progress.isRunning()) {
       if (retry) {
@@ -338,8 +306,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
-      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
-      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
+      const result = await action(retry);
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
@@ -353,8 +320,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         progress.log('  element is outside of the viewport');
         continue;
       }
+      if (result === 'error:optionsnotfound') {
+        progress.log('  did not find some options');
+        continue;
+      }
       if (typeof result === 'object' && 'hitTargetDescription' in result) {
         progress.log(`  ${result.hitTargetDescription} intercepts pointer events`);
+        continue;
+      }
+      if (typeof result === 'object' && 'missingState' in result) {
+        progress.log(`  element is not ${result.missingState}`);
         continue;
       }
       return result;
@@ -362,7 +337,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    return await this._retryAction(progress, actionName, async retry => {
+      // By default, we scroll with protocol method to reveal the action point.
+      // However, that might not work to scroll from under position:sticky elements
+      // that overlay the target element. To fight this, we cycle through different
+      // scroll alignments. This works in most scenarios.
+      const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
+        undefined,
+        { block: 'end', inline: 'end' },
+        { block: 'center', inline: 'center' },
+        { block: 'start', inline: 'start' },
+      ];
+      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
+      return await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
+    }, options);
+  }
+
+  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<PerformActionResult> {
     const { force = false, position } = options;
 
     const doScrollIntoView = async () => {
@@ -386,9 +379,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
-    const result = await this._waitForElementStates(progress, waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'], force);
-    if (result !== 'done')
-      return result;
+
+    if (!force) {
+      const elementStates: ElementState[] = waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
+      progress.log(`  waiting for element to be ${waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
+      const result = await this.evaluateInUtility(async ([injected, node, { elementStates }]) => {
+        return await injected.checkElementStates(node, elementStates);
+      }, { elementStates });
+      if (result)
+        return result;
+      progress.log(`  element is ${waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
+    }
+
     if ((options as any).__testHookAfterStable)
       await (options as any).__testHookAfterStable();
 
@@ -407,7 +409,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
-    if (!options.force) {
+    if (force) {
+      progress.log(`  forcing action`);
+    } else {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
@@ -526,16 +530,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions): Promise<string[] | 'error:notconnected'> {
-    const optionsToSelect = [...elements, ...values];
-    await progress.beforeInputAction(this);
-    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      progress.log('  selecting specified option(s)');
-      const result = await this.evaluatePoll(progress, ([injected, node, { optionsToSelect, force }]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
+    let resultingOptions: string[] = [];
+    await this._retryAction(progress, 'select option', async () => {
+      await progress.beforeInputAction(this);
+      if (!options.force)
+        progress.log(`  waiting for element to be visible and enabled`);
+      const optionsToSelect = [...elements, ...values];
+      const result = await this.evaluateInUtility(async ([injected, node, { optionsToSelect, force }]) => {
+        if (!force) {
+          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled']);
+          if (checkResult)
+            return checkResult;
+        }
+        return injected.selectOptions(node, optionsToSelect);
       }, { optionsToSelect, force: options.force });
+      if (Array.isArray(result)) {
+        progress.log('  selected specified option(s)');
+        resultingOptions = result;
+        return 'done';
+      }
       return result;
-    });
+    }, options);
+    return resultingOptions;
   }
 
   async fill(metadata: CallMetadata, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<void> {
@@ -547,37 +563,49 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.fill("${value}")`);
-    await progress.beforeInputAction(this);
-    return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      progress.log('  waiting for element to be visible, enabled and editable');
-      const filled = await this.evaluatePoll(progress, ([injected, node, { value, force }]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled', 'editable'], force, injected.fill.bind(injected, value));
-      }, { value, force: options.force });
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (filled === 'error:notconnected')
-        return filled;
-      progress.log('  element is visible, enabled and editable');
-      if (filled === 'needsinput') {
+    progress.log(`  fill("${value}")`);
+    return await this._retryAction(progress, 'fill', async () => {
+      await progress.beforeInputAction(this);
+      return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+        if (!options.force)
+          progress.log('  waiting for element to be visible, enabled and editable');
+        const result = await this.evaluateInUtility(async ([injected, node, { value, force }]) => {
+          if (!force) {
+            const checkResult = await injected.checkElementStates(node, ['visible', 'enabled', 'editable']);
+            if (checkResult)
+              return checkResult;
+          }
+          return injected.fill(node, value);
+        }, { value, force: options.force });
         progress.throwIfAborted();  // Avoid action that has side-effects.
-        if (value)
-          await this._page.keyboard.insertText(value);
-        else
-          await this._page.keyboard.press('Delete');
-      } else {
-        assertDone(filled);
-      }
-      return 'done';
-    }, 'input');
+        if (result === 'needsinput') {
+          if (value)
+            await this._page.keyboard.insertText(value);
+          else
+            await this._page.keyboard.press('Delete');
+          return 'done';
+        } else {
+          return result;
+        }
+      }, 'input');
+    }, options);
   }
 
   async selectText(metadata: CallMetadata, options: types.TimeoutOptions & types.ForceOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      const result = await this.evaluatePoll(progress, ([injected, node, force]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
-      }, options.force);
+      const result = await this._retryAction(progress, 'selectText', async () => {
+        if (!options.force)
+          progress.log('  waiting for element to be visible');
+        return await this.evaluateInUtility(async ([injected, node, { force }]) => {
+          if (!force) {
+            const checkResult = await injected.checkElementStates(node, ['visible']);
+            if (checkResult)
+              return checkResult;
+          }
+          return injected.selectText(node);
+        }, { force: options.force });
+      }, options);
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -765,10 +793,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      progress.log(`  waiting for element to be ${state}`);
-      const result = await this.evaluatePoll(progress, ([injected, node, state]) => {
-        return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
-      }, state);
+      const actionName = `wait for ${state}`;
+      const result = await this._retryAction(progress, actionName, async () => {
+        return await this.evaluateInUtility(async ([injected, node, state]) => {
+          return (await injected.checkElementStates(node, [state])) || 'done';
+        }, state);
+      }, {});
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -784,18 +814,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return adopted;
     }
     return this;
-  }
-
-  async _waitForElementStates(progress: Progress, states: ElementState[], force: boolean): Promise<'error:notconnected' | 'done'> {
-    const title = joinWithAnd(states);
-    progress.log(`  waiting for element to be ${title}`);
-    const result = await this.evaluatePoll(progress, ([injected, node, { states, force }]) => {
-      return injected.waitForElementStatesAndPerformAction(node, states, force, () => 'done' as const);
-    }, { states, force });
-    if (result === 'error:notconnected')
-      return result;
-    progress.log(`  element is ${title}`);
-    return result;
   }
 
   async _checkFrameIsHitTarget(point: types.Point): Promise<{ framePoint: types.Point | undefined } | 'error:notconnected' | { hitTargetDescription: string }> {
@@ -835,72 +853,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 }
 
-// Handles an InjectedScriptPoll running in injected script:
-// - streams logs into progress;
-// - cancels the poll when progress cancels.
-export class InjectedScriptPollHandler<T> {
-  private _progress: Progress;
-  private _poll: js.JSHandle<InjectedScriptPoll<T>> | null;
-
-  constructor(progress: Progress, poll: js.JSHandle<InjectedScriptPoll<T>>) {
-    this._progress = progress;
-    this._poll = poll;
-    // Ensure we cancel the poll before progress aborts and returns:
-    //   - no unnecessary work in the page;
-    //   - no possible side effects after progress promise rejects.
-    this._progress.cleanupWhenAborted(() => this.cancel());
-    this._streamLogs();
-  }
-
-  private async _streamLogs() {
-    while (this._poll && this._progress.isRunning()) {
-      const log = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as LogEntry[]);
-      if (!this._poll || !this._progress.isRunning())
-        return;
-      for (const entry of log)
-        this._progress.logEntry(entry);
-    }
-  }
-
-  async finishHandle(): Promise<js.SmartHandle<T>> {
-    try {
-      const result = await this._poll!.evaluateHandle(poll => poll.run());
-      await this._finishInternal();
-      return result;
-    } finally {
-      await this.cancel();
-    }
-  }
-
-  async finish(): Promise<T> {
-    try {
-      const result = await this._poll!.evaluate(poll => poll.run());
-      await this._finishInternal();
-      return result;
-    } finally {
-      await this.cancel();
-    }
-  }
-
-  private async _finishInternal() {
-    if (!this._poll)
-      return;
-    // Retrieve all the logs before continuing.
-    const log = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as LogEntry[]);
-    for (const entry of log)
-      this._progress.logEntry(entry);
-  }
-
-  async cancel() {
-    if (!this._poll)
-      return;
-    const copy = this._poll;
-    this._poll = null;
-    await copy.evaluate(p => p.cancel()).catch(e => {});
-    copy.dispose();
-  }
-}
-
 export function throwRetargetableDOMError<T>(result: T | 'error:notconnected'): T {
   if (result === 'error:notconnected')
     throw new Error('Element is not attached to the DOM');
@@ -936,14 +888,6 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
   const remainderY = point.y - Math.floor(point.y);
   if (remainderY > 0.49 && remainderY < 0.51)
     point.y -= 0.02;
-}
-
-export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-
-function joinWithAnd(strings: string[]): string {
-  if (strings.length <= 1)
-    return strings.join('');
-  return strings.slice(0, strings.length - 1).join(', ') + ' and ' + strings[strings.length - 1];
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

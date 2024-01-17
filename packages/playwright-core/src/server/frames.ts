@@ -34,7 +34,7 @@ import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
-import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
+import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
 import { type ParsedSelector, isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import type { ScreenshotOptions } from './screenshotter';
@@ -80,8 +80,6 @@ export type NavigationEvent = {
   isPublic?: boolean;
 };
 
-export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[]) => R | symbol;
 type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: T) => R;
 
 export class NavigationAbortedError extends Error {
