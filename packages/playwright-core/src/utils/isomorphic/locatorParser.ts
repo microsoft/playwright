@@ -220,14 +220,17 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   try {
     const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
     const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
-    const digest = digestForComparison(locator);
-    if (locators.some(candidate => digestForComparison(candidate) === digest))
+    const digest = digestForComparison(language, locator);
+    if (locators.some(candidate => digestForComparison(language, candidate) === digest))
       return selector;
   } catch (e) {
   }
   return '';
 }
 
-function digestForComparison(locator: string) {
-  return locator.replace(/\s/g, '').replace(/["`]/g, '\'');
+function digestForComparison(language: Language, locator: string) {
+  locator = locator.replace(/\s/g, '');
+  if (language === 'javascript')
+    locator = locator.replace(/\\?["`]/g, '\'');
+  return locator;
 }
