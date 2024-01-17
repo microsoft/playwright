@@ -102,6 +102,7 @@ The viewport is included in the device but you can override it for some tests wi
 
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
+
 export default defineConfig({
   projects: [
     {
