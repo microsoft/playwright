@@ -2927,6 +2927,66 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
+   * Registers a handler for an element that might block certain actions like click. The handler should get rid of the
+   * blocking element so that an action may proceed. This is useful for nondeterministic interstitial pages or dialogs,
+   * like a cookie consent dialog.
+   *
+   * The handler will be executed before [actionability checks](https://playwright.dev/docs/actionability) for each action, and also before
+   * each attempt of the [web assertions](https://playwright.dev/docs/test-assertions). When no actions or assertions are executed, the
+   * handler will not be run at all, even if the interstitial element appears on the page.
+   *
+   * Note that execution time of the handler counts towards the timeout of the action/assertion that executed the
+   * handler.
+   *
+   * **Usage**
+   *
+   * An example that closes a cookie dialog when it appears:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.handleLocator(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
+   *   await page.getByRole('button', { name: 'Reject all cookies' }).click();
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * An example that skips the "Confirm your security details" page when it is shown:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.handleLocator(page.getByText('Confirm your security details'), async () => {
+   *   await page.getByRole('button', 'Remind me later').click();
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
+   * so the handler is called before every actionability check:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.handleLocator(page.locator('body'), async () => {
+   *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * @param locator Locator that triggers the handler.
+   * @param handler Function that should be run once `locator` appears. This function should get rid of the element that blocks actions
+   * like click.
+   */
+  handleLocator(locator: Locator, handler: Function): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *

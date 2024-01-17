@@ -3130,6 +3130,202 @@ return value resolves to `[]`.
 ### param: Page.querySelectorAll.selector = %%-query-selector-%%
 * since: v1.9
 
+
+## async method: Page.handleLocator
+* since: v1.42
+
+Registers a handler for an element that might block certain actions like click. The handler should get rid of the blocking element so that an action may proceed. This is useful for nondeterministic interstitial pages or dialogs, like a cookie consent dialog.
+
+The handler will be executed before [actionability checks](../actionability.md) for each action, and also before each attempt of the [web assertions](../test-assertions.md). When no actions or assertions are executed, the handler will not be run at all, even if the interstitial element appears on the page.
+
+Note that execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
+
+**Usage**
+
+An example that closes a cookie dialog when it appears:
+
+```js
+// Setup the handler.
+await page.handleLocator(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
+  await page.getByRole('button', { name: 'Reject all cookies' }).click();
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.handleLocator(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept all cookies")), () => {
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reject all cookies")).click();
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.get_by_role("button", name="Reject all cookies").click()
+page.handle_locator(page.get_by_role("button", name="Accept all cookies"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.get_by_role("button", name="Reject all cookies").click()
+await page.handle_locator(page.get_by_role("button", name="Accept all cookies"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.HandleLocatorAsync(page.GetByRole(AriaRole.Button, new() { Name = "Accept all cookies" }), async () => {
+  await page.GetByRole(AriaRole.Button, new() { Name = "Reject all cookies" }).ClickAsync();
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+An example that skips the "Confirm your security details" page when it is shown:
+
+```js
+// Setup the handler.
+await page.handleLocator(page.getByText('Confirm your security details'), async () => {
+  await page.getByRole('button', 'Remind me later').click();
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.handleLocator(page.getByText("Confirm your security details")), () => {
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Remind me later")).click();
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.get_by_role("button", name="Remind me later").click()
+page.handle_locator(page.get_by_text("Confirm your security details"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.get_by_role("button", name="Remind me later").click()
+await page.handle_locator(page.get_by_text("Confirm your security details"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.HandleLocatorAsync(page.GetByText("Confirm your security details"), async () => {
+  await page.GetByRole(AriaRole.Button, new() { Name = "Remind me later" }).ClickAsync();
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check:
+
+```js
+// Setup the handler.
+await page.handleLocator(page.locator('body'), async () => {
+  await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.handleLocator(page.locator("body")), () => {
+  page.evaluate("window.removeObstructionsForTestIfNeeded()");
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.evaluate("window.removeObstructionsForTestIfNeeded()")
+page.handle_locator(page.locator("body"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.evaluate("window.removeObstructionsForTestIfNeeded()")
+await page.handle_locator(page.locator("body"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.HandleLocatorAsync(page.Locator("body"), async () => {
+  await page.EvaluateAsync("window.removeObstructionsForTestIfNeeded()");
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+### param: Page.handleLocator.locator
+* since: v1.42
+- `locator` <[Locator]>
+
+Locator that triggers the handler.
+
+### param: Page.handleLocator.handler
+* since: v1.42
+- `handler` <[function]>
+
+Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+
 ## async method: Page.reload
 * since: v1.8
 - returns: <[null]|[Response]>
