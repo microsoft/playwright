@@ -18,17 +18,17 @@ runs:
       shell: bash
       run: mkdir -p '${{ inputs.path }}/artifacts'
     - name: Download artifacts
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           console.log(`downloading artifacts for workflow_run: ${context.payload.workflow_run.id}`);
           console.log(`workflow_run: ${JSON.stringify(context.payload.workflow_run, null, 2)}`);
-          const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+          const allArtifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
             ...context.repo,
             run_id: context.payload.workflow_run.id
           });
-          console.log('total = ', data.total_count);
-          const artifacts = data.artifacts.filter(a => a.name.startsWith('${{ inputs.namePrefix }}'));
+          console.log('total = ', allArtifacts.length);
+          const artifacts = allArtifacts.filter(a => a.name.startsWith('${{ inputs.namePrefix }}'));
           const fs = require('fs');
           for (const artifact of artifacts) {
             const result = await github.rest.actions.downloadArtifact({
