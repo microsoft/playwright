@@ -23,7 +23,15 @@ import { isWorkerProcess } from '../common/globals';
 export type MemoryCache = {
   codePath: string;
   sourceMapPath: string;
+  dataPath: string;
   moduleUrl?: string;
+};
+
+type SerializedCompilationCache = {
+  sourceMaps: [string, string][],
+  memoryCache: [string, MemoryCache][],
+  fileDependencies: [string, string[]][],
+  externalDependencies: [string, string[]][],
 };
 
 // Assumptions for the compilation cache:
@@ -84,12 +92,12 @@ export function installSourceMapSupportIfNeeded() {
   });
 }
 
-function _innerAddToCompilationCache(filename: string, options: { codePath: string, sourceMapPath: string, moduleUrl?: string }) {
-  sourceMaps.set(options.moduleUrl || filename, options.sourceMapPath);
-  memoryCache.set(filename, options);
+function _innerAddToCompilationCache(filename: string, entry: MemoryCache) {
+  sourceMaps.set(entry.moduleUrl || filename, entry.sourceMapPath);
+  memoryCache.set(filename, entry);
 }
 
-export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
+export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => void } {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -105,27 +113,30 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
+  const dataPath = cachePath + '.data';
   try {
     const cachedCode = fs.readFileSync(codePath, 'utf8');
-    _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
+    _innerAddToCompilationCache(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
     return { cachedCode };
   } catch {
   }
 
   return {
-    addToCache: (code: string, map: any) => {
+    addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
         return;
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
+      if (data.size)
+        fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
       fs.writeFileSync(codePath, code, 'utf8');
-      _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
+      _innerAddToCompilationCache(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
     }
   };
 }
 
-export function serializeCompilationCache(): any {
+export function serializeCompilationCache(): SerializedCompilationCache {
   return {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
@@ -200,6 +211,10 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
   }
 }
 
+export function internalDependenciesForTestFile(filename: string): Set<string> | undefined{
+  return fileDependencies.get(filename);
+}
+
 export function dependenciesForTestFile(filename: string): Set<string> {
   const result = new Set<string>();
   for (const dep of fileDependencies.get(filename) || [])
@@ -223,4 +238,18 @@ export function belongsToNodeModules(file: string) {
   if (file.startsWith(kPlaywrightCoveragePrefix) && file.endsWith('.js'))
     return true;
   return false;
+}
+
+export async function getUserData(pluginName: string): Promise<Map<string, any>> {
+  const result = new Map<string, any>();
+  for (const [fileName, cache] of memoryCache) {
+    if (!cache.dataPath)
+      continue;
+    if (!fs.existsSync(cache.dataPath))
+      continue;
+    const data = JSON.parse(await fs.promises.readFile(cache.dataPath, 'utf8'));
+    if (data[pluginName])
+      result.set(fileName, data[pluginName]);
+  }
+  return result;
 }
