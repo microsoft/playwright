@@ -76,3 +76,4 @@ test('drag resize', async ({ page, mount }) => {
   expect.soft(mainBox).toEqual({ x: 0, y: 0, width: 500, height: 100 });
   expect.soft(sidebarBox).toEqual({ x: 0, y: 101, width: 500, height: 399 });
 });
+

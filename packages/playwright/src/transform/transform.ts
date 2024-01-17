@@ -16,8 +16,8 @@
 
 import crypto from 'crypto';
 import path from 'path';
-import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
+import { sourceMapSupport, pirates } from '../utilsBundle';
 import type { Location } from '../../types/testReporter';
 import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
@@ -159,6 +159,12 @@ export function shouldTransform(filename: string): boolean {
   return !belongsToNodeModules(filename);
 }
 
+let transformData: Map<string, any>;
+
+export function setTransformData(pluginName: string, value: any) {
+  transformData.set(pluginName, value);
+}
+
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
@@ -177,9 +183,10 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  transformData = new Map<string, any>();
   const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   if (code)
-    addToCache!(code, map);
+    addToCache!(code, map, transformData);
   return code || '';
 }
 

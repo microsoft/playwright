@@ -25,12 +25,10 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 
 import fs from 'fs';
 import path from 'path';
-import { parse, traverse, types as t } from 'playwright/lib/transform/babelBundle';
 import { stoppable } from 'playwright/lib/utilsBundle';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
-import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
-import { collectComponentUsages, importInfo } from './tsxTransform';
+import { getUserData, internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { version as viteVersion, build, preview, mergeConfig } from 'vite';
 import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
@@ -39,14 +37,6 @@ const log = debug('pw:vite');
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
-
-type ComponentInfo = {
-  id: string;
-  importPath: string;
-  isModuleOrAlias: boolean;
-  remoteName: string | undefined;
-  deps: string[];
-};
 
 type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctPort?: number;
@@ -131,16 +121,16 @@ export function createPlugin(
           viteVersion,
           registerSourceHash,
           components: [],
-          tests: {},
           sources: {},
+          deps: {},
         };
       }
       log('build exists:', buildExists);
 
       const componentRegistry: ComponentRegistry = new Map();
-      // 1. Re-parse changed tests and collect required components.
-      const hasNewTests = await checkNewTests(suite, buildInfo, componentRegistry);
-      log('has new tests:', hasNewTests);
+      const componentsByImportingFile = new Map<string, string[]>();
+      // 1. Populate component registry based on tests' component imports.
+      await populateComponentsFromTests(componentRegistry, componentsByImportingFile);
 
       // 2. Check if the set of required components has changed.
       const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
@@ -177,8 +167,9 @@ export function createPlugin(
         frameworkOverrides.plugins = [await frameworkPluginFactory()];
 
       // But only add out own plugin when we actually build / transform.
+      const depsCollector = new Map<string, string[]>();
       if (sourcesDirty)
-        frameworkOverrides.plugins!.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry));
+        frameworkOverrides.plugins!.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry, depsCollector));
 
       frameworkOverrides.build = {
         target: 'esnext',
@@ -198,20 +189,31 @@ export function createPlugin(
         log('build');
         await build(finalConfig);
         await fs.promises.rename(`${finalConfig.build.outDir}/${relativeTemplateDir}/index.html`, `${finalConfig.build.outDir}/index.html`);
+        buildInfo.deps = Object.fromEntries(depsCollector.entries());
       }
 
-      if (hasNewTests || hasNewComponents || sourcesDirty) {
+      if (hasNewComponents || sourcesDirty) {
         log('write manifest');
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
       }
 
-      for (const [filename, testInfo] of Object.entries(buildInfo.tests)) {
-        const deps = new Set<string>();
-        for (const componentName of testInfo.components) {
-          const component = componentRegistry.get(componentName);
-          component?.deps.forEach(d => deps.add(d));
+      for (const projectSuite of suite.suites) {
+        for (const fileSuite of projectSuite.suites) {
+          // For every test file...
+          const testFile = fileSuite.location!.file;
+          const deps = new Set<string>();
+          // Collect its JS dependencies (helpers).
+          for (const file of [testFile, ...(internalDependenciesForTestFile(testFile) || [])]) {
+            // For each helper, get all the imported components.
+            for (const componentFile of componentsByImportingFile.get(file) || []) {
+              // For each component, get all the dependencies.
+              for (const d of depsCollector.get(componentFile) || [])
+                deps.add(d);
+            }
+          }
+          // Now we have test file => all components along with dependencies.
+          setExternalDependencies(testFile, [...deps]);
         }
-        setExternalDependencies(filename, [...deps]);
       }
 
       const previewServer = await preview(finalConfig);
@@ -240,16 +242,13 @@ type BuildInfo = {
       timestamp: number;
     }
   };
-  components: ComponentInfo[];
-  tests: {
-    [key: string]: {
-      timestamp: number;
-      components: string[];
-    }
-  };
+  components: ImportInfo[];
+  deps: {
+    [key: string]: string[];
+  }
 };
 
-type ComponentRegistry = Map<string, ComponentInfo>;
+type ComponentRegistry = Map<string, ImportInfo>;
 
 async function checkSources(buildInfo: BuildInfo): Promise<boolean> {
   for (const [source, sourceInfo] of Object.entries(buildInfo.sources)) {
@@ -267,35 +266,13 @@ async function checkSources(buildInfo: BuildInfo): Promise<boolean> {
   return false;
 }
 
-async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
-  const testFiles = new Set<string>();
-  for (const project of suite.suites) {
-    for (const file of project.suites)
-      testFiles.add(file.location!.file);
+async function populateComponentsFromTests(componentRegistry: ComponentRegistry, componentsByImportingFile: Map<string, string[]>) {
+  const importInfos: Map<string, ImportInfo[]> = await getUserData('playwright-ct-core');
+  for (const [file, importList] of importInfos) {
+    for (const importInfo of importList)
+      componentRegistry.set(importInfo.id, importInfo);
+    componentsByImportingFile.set(file, importList.filter(i => !i.isModuleOrAlias).map(i => i.importPath));
   }
-
-  let hasNewTests = false;
-  for (const testFile of testFiles) {
-    const timestamp = (await fs.promises.stat(testFile)).mtimeMs;
-    if (buildInfo.tests[testFile]?.timestamp !== timestamp) {
-      const componentImports = await parseTestFile(testFile);
-      log('changed test:', testFile);
-      for (const componentImport of componentImports) {
-        const ci: ComponentInfo = {
-          id: componentImport.id,
-          isModuleOrAlias: componentImport.isModuleOrAlias,
-          importPath: componentImport.importPath,
-          remoteName: componentImport.remoteName,
-          deps: [],
-        };
-        componentRegistry.set(componentImport.id, { ...ci, deps: [] });
-      }
-      buildInfo.tests[testFile] = { timestamp, components: componentImports.map(c => c.id) };
-      hasNewTests = true;
-    }
-  }
-
-  return hasNewTests;
 }
 
 async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
@@ -315,36 +292,7 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
   return hasNewComponents;
 }
 
-async function parseTestFile(testFile: string): Promise<ImportInfo[]> {
-  const text = await fs.promises.readFile(testFile, 'utf-8');
-  const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
-  const componentUsages = collectComponentUsages(ast);
-  const componentNames = componentUsages.names;
-  const result: ImportInfo[] = [];
-
-  traverse(ast, {
-    enter: p => {
-      if (t.isImportDeclaration(p.node)) {
-        const importNode = p.node;
-        if (!t.isStringLiteral(importNode.source))
-          return;
-
-        for (const specifier of importNode.specifiers) {
-          if (t.isImportNamespaceSpecifier(specifier))
-            continue;
-          const info = importInfo(importNode, specifier, testFile);
-          if (!componentNames.has(info.localName))
-            continue;
-          result.push(info);
-        }
-      }
-    }
-  });
-
-  return result;
-}
-
-function vitePlugin(registerSource: string, templateDir: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
+function vitePlugin(registerSource: string, templateDir: string, buildInfo: BuildInfo, importInfos: Map<string, ImportInfo>, depsCollector: Map<string, string[]>): Plugin {
   buildInfo.sources = {};
   let moduleResolver: ResolveFn;
   return {
@@ -384,12 +332,12 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
       const lines = [content, ''];
       lines.push(registerSource);
 
-      for (const [alias, value] of componentRegistry) {
+      for (const value of importInfos.values()) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
-        lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.remoteName || 'default'});`);
+        lines.push(`const ${value.id} = () => import('${importPath}').then((mod) => mod.${value.remoteName || 'default'});`);
       }
 
-      lines.push(`__pwRegistry.initialize({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
+      lines.push(`__pwRegistry.initialize({ ${[...importInfos.keys()].join(',\n  ')} });`);
       return {
         code: lines.join('\n'),
         map: { mappings: '' }
@@ -397,13 +345,13 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     },
 
     async writeBundle(this: PluginContext) {
-      for (const component of componentRegistry.values()) {
-        const id = (await moduleResolver(component.importPath));
+      for (const importInfo of importInfos.values()) {
+        const deps = new Set<string>();
+        const id = await moduleResolver(importInfo.importPath);
         if (!id)
           continue;
-        const deps = new Set<string>();
         collectViteModuleDependencies(this, id, deps);
-        component.deps = [...deps];
+        depsCollector.set(importInfo.importPath, [...deps]);
       }
     },
   };
@@ -423,7 +371,7 @@ function collectViteModuleDependencies(context: PluginContext, id: string, deps:
     collectViteModuleDependencies(context, importedId, deps);
 }
 
-function hasJSComponents(components: ComponentInfo[]): boolean {
+function hasJSComponents(components: ImportInfo[]): boolean {
   for (const component of components) {
     const extname = path.extname(component.importPath);
     if (extname === '.js' || !extname && fs.existsSync(component.importPath + '.js'))

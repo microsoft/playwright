@@ -44,7 +44,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
   expect(metainfo.version).toEqual(require('playwright-core/package.json').version);
   expect(metainfo.viteVersion).toEqual(require('vite/package.json').version);
-  expect(Object.entries(metainfo.tests)).toHaveLength(1);
+  expect(Object.entries(metainfo.deps)).toHaveLength(0);
   expect(Object.entries(metainfo.sources)).toHaveLength(9);
 });
 
@@ -139,92 +139,57 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     remoteName: 'Button',
     importPath: expect.stringContaining('button.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('button.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }, {
     id: expect.stringContaining('playwright_test_src_clashingNames1_tsx_ClashingName'),
     remoteName: 'ClashingName',
     importPath: expect.stringContaining('clashingNames1.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('clashingNames1.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }, {
     id: expect.stringContaining('playwright_test_src_clashingNames2_tsx_ClashingName'),
     remoteName: 'ClashingName',
     importPath: expect.stringContaining('clashingNames2.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('clashingNames2.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }, {
     id: expect.stringContaining('playwright_test_src_components_tsx_Component1'),
     remoteName: 'Component1',
     importPath: expect.stringContaining('components.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('components.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }, {
     id: expect.stringContaining('playwright_test_src_components_tsx_Component2'),
     remoteName: 'Component2',
     importPath: expect.stringContaining('components.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('components.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }, {
     id: expect.stringContaining('playwright_test_src_defaultExport_tsx'),
     importPath: expect.stringContaining('defaultExport.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('defaultExport.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }]);
 
-  for (const [file, test] of Object.entries(metainfo.tests)) {
-    if (file.endsWith('clashing-imports.spec.tsx')) {
-      expect(test).toEqual({
-        timestamp: expect.any(Number),
-        components: [
-          expect.stringContaining('clashingNames1_tsx_ClashingName'),
-          expect.stringContaining('clashingNames2_tsx_ClashingName'),
-        ],
-      });
-    }
-    if (file.endsWith('default-import.spec.tsx')) {
-      expect(test).toEqual({
-        timestamp: expect.any(Number),
-        components: [
-          expect.stringContaining('defaultExport_tsx'),
-        ],
-      });
-    }
-    if (file.endsWith('named-imports.spec.tsx')) {
-      expect(test).toEqual({
-        timestamp: expect.any(Number),
-        components: [
-          expect.stringContaining('components_tsx_Component1'),
-          expect.stringContaining('components_tsx_Component2'),
-        ],
-      });
-    }
-    if (file.endsWith('one-import.spec.tsx')) {
-      expect(test).toEqual({
-        timestamp: expect.any(Number),
-        components: [
-          expect.stringContaining('button_tsx_Button'),
-        ],
-      });
-    }
-  }
+  for (const [, value] of Object.entries(metainfo.deps))
+    (value as string[]).sort();
+
+  expect(Object.entries(metainfo.deps)).toEqual([
+    [expect.stringContaining('clashingNames1.tsx'), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining('clashingNames1.tsx'),
+    ]],
+    [expect.stringContaining('clashingNames2.tsx'), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining('clashingNames2.tsx'),
+    ]],
+    [expect.stringContaining('defaultExport.tsx'), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining('defaultExport.tsx'),
+    ]],
+    [expect.stringContaining('components.tsx'), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining('components.tsx'),
+    ]],
+    [expect.stringContaining('button.tsx'), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining('button.tsx'),
+    ]],
+  ]);
 });
 
 test('should cache build', async ({ runInlineTest }, testInfo) => {
@@ -495,21 +460,74 @@ test('should retain deps when test changes', async ({ runInlineTest }, testInfo)
     remoteName: 'Button',
     importPath: expect.stringContaining('button.tsx'),
     isModuleOrAlias: false,
-    deps: [
-      expect.stringContaining('button.tsx'),
-      expect.stringContaining('jsx-runtime.js'),
-    ]
   }]);
 
-  expect(Object.entries(metainfo.tests)).toEqual([
+  for (const [, value] of Object.entries(metainfo.deps))
+    (value as string[]).sort();
+
+  expect(Object.entries(metainfo.deps)).toEqual([
     [
-      expect.stringContaining('button.test.tsx'),
-      {
-        components: [
-          expect.stringContaining('src_button_tsx_Button'),
-        ],
-        timestamp: expect.any(Number)
-      }
+      expect.stringContaining('button.tsx'),
+      [
+        expect.stringContaining('jsx-runtime.js'),
+        expect.stringContaining('button.tsx'),
+      ],
     ]
   ]);
+});
+
+test('should render component via re-export', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/buttonHelper.ts': `
+      import { Button } from './button.tsx';
+      export { Button };
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './buttonHelper';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should render component exported via fixture', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/buttonFixture.tsx': `
+      import { Button } from './button';
+      import { test as baseTest } from '@playwright/experimental-ct-react';
+      export { expect } from '@playwright/experimental-ct-react';
+      export const test = baseTest.extend({
+        button: async ({ mount }, use) => {
+          await use(await mount(<Button></Button>));
+        }
+      });
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from './buttonFixture';
+      test('pass', async ({ button }) => {
+        await expect(button).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });

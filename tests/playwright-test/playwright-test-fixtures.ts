@@ -76,6 +76,8 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
+    if (files[name] === undefined)
+      return;
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
     await fs.promises.writeFile(fullName, files[name]);
   }));

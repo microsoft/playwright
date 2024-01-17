@@ -18,10 +18,11 @@ import path from 'path';
 import type { T, BabelAPI, PluginObj } from 'playwright/src/transform/babelBundle';
 import { types, declare, traverse } from 'playwright/lib/transform/babelBundle';
 import { resolveImportSpecifierExtension } from 'playwright/lib/util';
+import { setTransformData } from 'playwright/lib/transform/transform';
 const t: typeof T = types;
 
-let componentNames: Set<string>;
-let componentImports: Map<string, ImportInfo>;
+let jsxComponentNames: Set<string>;
+let importInfos: Map<string, ImportInfo>;
 
 export default declare((api: BabelAPI) => {
   api.assertVersion(7);
@@ -31,9 +32,8 @@ export default declare((api: BabelAPI) => {
     visitor: {
       Program: {
         enter(path) {
-          const result = collectComponentUsages(path.node);
-          componentNames = result.names;
-          componentImports = new Map();
+          jsxComponentNames = collectJsxComponentUsages(path.node);
+          importInfos = new Map();
         },
         exit(path) {
           let firstDeclaration: any;
@@ -47,13 +47,14 @@ export default declare((api: BabelAPI) => {
           const insertionPath = lastImportDeclaration || firstDeclaration;
           if (!insertionPath)
             return;
-          for (const componentImport of [...componentImports.values()].reverse()) {
+
+          for (const [localName, componentImport] of [...importInfos.entries()].reverse()) {
             insertionPath.insertAfter(
                 t.variableDeclaration(
                     'const',
                     [
                       t.variableDeclarator(
-                          t.identifier(componentImport.localName),
+                          t.identifier(localName),
                           t.objectExpression([
                             t.objectProperty(t.identifier('__pw_type'), t.stringLiteral('importRef')),
                             t.objectProperty(t.identifier('id'), t.stringLiteral(componentImport.id)),
@@ -63,6 +64,7 @@ export default declare((api: BabelAPI) => {
                 )
             );
           }
+          setTransformData('playwright-ct-core', [...importInfos.values()]);
         }
       },
 
@@ -71,19 +73,35 @@ export default declare((api: BabelAPI) => {
         if (!t.isStringLiteral(importNode.source))
           return;
 
-        let components = 0;
+        const ext = path.extname(importNode.source.value);
+
+        // Convert all non-JS imports into refs.
+        if (!allJsExtensions.has(ext)) {
+          for (const specifier of importNode.specifiers) {
+            if (t.isImportNamespaceSpecifier(specifier))
+              continue;
+            const { localName, info } = importInfo(importNode, specifier, this.filename!);
+            importInfos.set(localName, info);
+          }
+          p.skip();
+          p.remove();
+          return;
+        }
+
+        // Convert JS imports that are used as components in JSX expressions into refs.
+        let importCount = 0;
         for (const specifier of importNode.specifiers) {
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          const info = importInfo(importNode, specifier, this.filename!);
-          if (!componentNames.has(info.localName))
-            continue;
-          componentImports.set(info.localName, info);
-          ++components;
+          const { localName, info } = importInfo(importNode, specifier, this.filename!);
+          if (jsxComponentNames.has(localName)) {
+            importInfos.set(localName, info);
+            ++importCount;
+          }
         }
 
-        // All the imports were components => delete.
-        if (components && components === importNode.specifiers.length) {
+        // All the imports were from JSX => delete.
+        if (importCount && importCount === importNode.specifiers.length) {
           p.skip();
           p.remove();
         }
@@ -92,7 +110,7 @@ export default declare((api: BabelAPI) => {
       MemberExpression(path) {
         if (!t.isIdentifier(path.node.object))
           return;
-        if (!componentImports.has(path.node.object.name))
+        if (!importInfos.has(path.node.object.name))
           return;
         if (!t.isIdentifier(path.node.property))
           return;
@@ -108,25 +126,10 @@ export default declare((api: BabelAPI) => {
   return result;
 });
 
-export function collectComponentUsages(node: T.Node) {
-  const importedLocalNames = new Set<string>();
+function collectJsxComponentUsages(node: T.Node): Set<string> {
   const names = new Set<string>();
   traverse(node, {
     enter: p => {
-
-      // First look at all the imports.
-      if (t.isImportDeclaration(p.node)) {
-        const importNode = p.node;
-        if (!t.isStringLiteral(importNode.source))
-          return;
-
-        for (const specifier of importNode.specifiers) {
-          if (t.isImportNamespaceSpecifier(specifier))
-            continue;
-          importedLocalNames.add(specifier.local.name);
-        }
-      }
-
       // Treat JSX-everything as component usages.
       if (t.isJSXElement(p.node)) {
         if (t.isJSXIdentifier(p.node.openingElement.name))
@@ -134,30 +137,19 @@ export function collectComponentUsages(node: T.Node) {
         if (t.isJSXMemberExpression(p.node.openingElement.name) && t.isJSXIdentifier(p.node.openingElement.name.object) && t.isJSXIdentifier(p.node.openingElement.name.property))
           names.add(p.node.openingElement.name.object.name);
       }
-
-      // Treat mount(identifier, ...) as component usage if it is in the importedLocalNames list.
-      if (t.isAwaitExpression(p.node) && t.isCallExpression(p.node.argument) && t.isIdentifier(p.node.argument.callee) && p.node.argument.callee.name === 'mount') {
-        const callExpression = p.node.argument;
-        const arg = callExpression.arguments[0];
-        if (!t.isIdentifier(arg) || !importedLocalNames.has(arg.name))
-          return;
-
-        names.add(arg.name);
-      }
     }
   });
-  return { names };
+  return names;
 }
 
 export type ImportInfo = {
   id: string;
   isModuleOrAlias: boolean;
   importPath: string;
-  localName: string;
   remoteName: string | undefined;
 };
 
-export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): ImportInfo {
+export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
   const importSource = importNode.source.value;
   const isModuleOrAlias = !importSource.startsWith('.');
   const unresolvedImportPath = path.resolve(path.dirname(filename), importSource);
@@ -171,7 +163,6 @@ export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportS
     id: idPrefix,
     importPath,
     isModuleOrAlias,
-    localName: specifier.local.name,
     remoteName: undefined,
   };
 
@@ -184,5 +175,7 @@ export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportS
 
   if (result.remoteName)
     result.id += '_' + result.remoteName;
-  return result;
+  return { localName: specifier.local.name, info: result };
 }
+
+const allJsExtensions = new Set(['.js', '.jsx', '.cjs', '.mjs', '.ts', '.tsx', '.cts', '.mts', '']);
