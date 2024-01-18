@@ -331,7 +331,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
             const packageManagerCommand = getPackageManagerExecCommand();
             resultLines.push(colors.cyan(`    Usage:`));
             resultLines.push('');
-            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace "${relativePath}"`));
+            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace ${quoteIfContainsWhitespace(relativePath)}`));
             resultLines.push('');
           }
         } else {
@@ -371,6 +371,12 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     message: lines.join('\n'),
     annotations
   };
+}
+
+function quoteIfContainsWhitespace(path: string): string {
+  if (/\s/.test(path))
+    return `"${path}"`;
+  return path;
 }
 
 export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
