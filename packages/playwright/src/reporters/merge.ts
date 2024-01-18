@@ -26,12 +26,14 @@ import { Multiplexer } from './multiplexer';
 import { ZipFile, calculateSha1 } from 'playwright-core/lib/utils';
 import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
+import type { TestError } from '../../types/testReporter';
 
 type StatusCallback = (message: string) => void;
 
 type ReportData = {
   eventPatchers: JsonEventPatchers;
   reportFile: string;
+  metadata: BlobReportMetadata;
 };
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
@@ -65,11 +67,13 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
 
   await dispatchEvents(eventData.prologue);
-  for (const { reportFile, eventPatchers } of eventData.reports) {
+  for (const { reportFile, eventPatchers, metadata } of eventData.reports) {
     const reportJsonl = await fs.promises.readFile(reportFile);
     const events = parseTestEvents(reportJsonl);
     new JsonStringInternalizer(stringPool).traverse(events);
     eventPatchers.patchers.push(new AttachmentPathPatcher(dir));
+    if (metadata.name)
+      eventPatchers.patchers.push(new GlobalErrorPatcher(metadata.name));
     eventPatchers.patchEvents(events);
     await dispatchEvents(events);
   }
@@ -213,6 +217,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     reports.push({
       eventPatchers,
       reportFile: localPath,
+      metadata,
     });
   }
 
@@ -462,6 +467,24 @@ class PathSeparatorPatcher {
 
   private _updatePath(text: string): string {
     return text.split(this._from).join(this._to);
+  }
+}
+
+class GlobalErrorPatcher {
+  private _prefix: string;
+
+  constructor(botName: string) {
+    this._prefix = `(${botName}) `;
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method !== 'onError')
+      return;
+    const error = event.params.error as TestError;
+    if (error.message !== undefined)
+      error.message = this._prefix + error.message;
+    if (error.stack !== undefined)
+      error.stack = this._prefix + error.stack;
   }
 }
 
