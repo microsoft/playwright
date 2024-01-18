@@ -98,7 +98,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot({ styleFile: path.join(__dirname, 'screenshot.css') });
+  await expect(page).toHaveScreenshot({ stylePath: path.join(__dirname, 'screenshot.css') });
 });
 ```
 
@@ -109,7 +109,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   expect: {
     toHaveScreenshot: {
-      styleFile: './screenshot.css'
+      stylePath: './screenshot.css'
     },
   },
 });
