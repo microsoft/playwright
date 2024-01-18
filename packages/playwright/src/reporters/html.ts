@@ -181,6 +181,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)
     url += `#?testId=${testId}`;
+  url = url.replace('0.0.0.0', 'localhost');
   await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
 }
