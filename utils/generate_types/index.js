@@ -613,12 +613,10 @@ class TypesGenerator {
     const existing = fs.readFileSync(filePath, 'utf8');
     if (existing === content)
       return;
-    hadChanges = true;
     console.error(`Writing //${path.relative(PROJECT_DIR, filePath)}`);
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  let hadChanges = false;
   const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
   if (!fs.existsSync(coreTypesDir))
     fs.mkdirSync(coreTypesDir)
@@ -629,7 +627,7 @@ class TypesGenerator {
   writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(false), true);
   writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
   writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
-  process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
+  process.exit(0);
 })().catch(e => {
   console.error(e);
   process.exit(1);

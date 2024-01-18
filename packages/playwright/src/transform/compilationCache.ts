@@ -54,7 +54,7 @@ const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
   // since `os.userInfo()` is not always available.
   // Note: `process.geteuid()` is not available on windows.
   // See https://github.com/microsoft/playwright/issues/22721
-  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
+  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid?.());
 })();
 
 const sourceMaps: Map<string, string> = new Map();
