@@ -66,7 +66,7 @@ test('render trace attachment', async ({ runInlineTest }) => {
       test('one', async ({}, testInfo) => {
         testInfo.attachments.push({
           name: 'trace',
-          path: testInfo.outputPath('trace.zip'),
+          path: testInfo.outputPath('my dir with space', 'trace.zip'),
           contentType: 'application/zip'
         });
         expect(1).toBe(0);
@@ -75,8 +75,8 @@ test('render trace attachment', async ({ runInlineTest }) => {
   }, { reporter: 'line' });
   const text = result.output.replace(/\\/g, '/');
   expect(text).toContain('    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────');
-  expect(text).toContain('    test-results/a-one/trace.zip');
-  expect(text).toContain('npx playwright show-trace test-results/a-one/trace.zip');
+  expect(text).toContain('    test-results/a-one/my dir with space/trace.zip');
+  expect(text).toContain('npx playwright show-trace "test-results/a-one/my dir with space/trace.zip"');
   expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });

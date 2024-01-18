@@ -331,7 +331,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
             const packageManagerCommand = getPackageManagerExecCommand();
             resultLines.push(colors.cyan(`    Usage:`));
             resultLines.push('');
-            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace ${relativePath}`));
+            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace "${relativePath}"`));
             resultLines.push('');
           }
         } else {
