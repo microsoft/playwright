@@ -15,7 +15,8 @@
  */
 
 import { ImportRegistry } from './importRegistry';
-import { unwrapObject } from './serializers';
+import { transformObject, unwrapObject } from './serializers';
 
 window.__pwRegistry = new ImportRegistry();
 window.__pwUnwrapObject = unwrapObject;
+window.__pwTransformObject = transformObject;

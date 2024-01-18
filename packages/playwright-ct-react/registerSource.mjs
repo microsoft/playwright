@@ -36,23 +36,13 @@ function isJsxComponent(component) {
  * @param {any} value
  */
 function __pwRender(value) {
-  if (value === null || typeof value !== 'object')
-    return value;
-  if (isJsxComponent(value)) {
-    const component = value;
-    const props = component.props ? __pwRender(component.props) : {};
-    return __pwReact.createElement(/** @type { any } */ (component.type), { ...props, children: undefined }, props.children);
-  }
-  if (Array.isArray(value)) {
-    const result = [];
-    for (const item of value)
-      result.push(__pwRender(item));
-    return result;
-  }
-  const result = {};
-  for (const [key, prop] of Object.entries(value))
-    result[key] = __pwRender(prop);
-  return result;
+  return window.__pwTransformObject(value, v => {
+    if (isJsxComponent(v)) {
+      const component = v;
+      const props = component.props ? __pwRender(component.props) : {};
+      return { result: __pwReact.createElement(/** @type { any } */ (component.type), { ...props, children: undefined }, props.children) };
+    }
+  });
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {

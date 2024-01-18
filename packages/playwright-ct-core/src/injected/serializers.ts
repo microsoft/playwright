@@ -26,48 +26,68 @@ function isFunctionRef(value: any): value is FunctionRef {
 }
 
 export function wrapObject(value: any, callbacks: Function[]): any {
-  if (typeof value === 'function') {
-    const ordinal = callbacks.length;
-    callbacks.push(value as Function);
-    const result: FunctionRef = {
-      __pw_type: 'function',
-      ordinal,
-    };
-    return result;
-  }
-  if (value === null || typeof value !== 'object')
-    return value;
-  if (Array.isArray(value)) {
-    const result = [];
-    for (const item of value)
-      result.push(wrapObject(item, callbacks));
-    return result;
-  }
-  const result: any = {};
-  for (const [key, prop] of Object.entries(value))
-    result[key] = wrapObject(prop, callbacks);
-  return result;
+  return transformObject(value, (v: any) => {
+    if (typeof v === 'function') {
+      const ordinal = callbacks.length;
+      callbacks.push(v as Function);
+      const result: FunctionRef = {
+        __pw_type: 'function',
+        ordinal,
+      };
+      return { result };
+    }
+  });
 }
 
 export async function unwrapObject(value: any): Promise<any> {
+  return transformObjectAsync(value, async (v: any) => {
+    if (isFunctionRef(v)) {
+      const result = (...args: any[]) => {
+        window.__ctDispatchFunction(v.ordinal, args);
+      };
+      return { result };
+    }
+    if (isImportRef(v))
+      return { result: await window.__pwRegistry.resolveImportRef(v) };
+  });
+}
+
+export function transformObject(value: any, mapping: (v: any) => { result: any } | undefined): any {
+  const result = mapping(value);
+  if (result)
+    return result.result;
   if (value === null || typeof value !== 'object')
     return value;
-  if (isFunctionRef(value)) {
-    return (...args: any[]) => {
-      window.__ctDispatchFunction(value.ordinal, args);
-    };
-  }
-  if (isImportRef(value))
-    return window.__pwRegistry.resolveImportRef(value);
-
+  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
+    return value;
   if (Array.isArray(value)) {
     const result = [];
     for (const item of value)
-      result.push(await unwrapObject(item));
+      result.push(transformObject(item, mapping));
     return result;
   }
-  const result: any = {};
+  const result2: any = {};
   for (const [key, prop] of Object.entries(value))
-    result[key] = await unwrapObject(prop);
-  return result;
+    result2[key] = transformObject(prop, mapping);
+  return result2;
+}
+
+export async function transformObjectAsync(value: any, mapping: (v: any) => Promise<{ result: any } | undefined>): Promise<any> {
+  const result = await mapping(value);
+  if (result)
+    return result.result;
+  if (value === null || typeof value !== 'object')
+    return value;
+  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
+    return value;
+  if (Array.isArray(value)) {
+    const result = [];
+    for (const item of value)
+      result.push(await transformObjectAsync(item, mapping));
+    return result;
+  }
+  const result2: any = {};
+  for (const [key, prop] of Object.entries(value))
+    result2[key] = await transformObjectAsync(prop, mapping);
+  return result2;
 }
