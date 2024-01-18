@@ -93,7 +93,6 @@
     "formidable": "^2.1.1",
     "license-checker": "^25.0.1",
     "mime": "^3.0.0",
-    "ncp": "^2.0.0",
     "node-stream-zip": "^1.15.0",
     "proxy": "^2.1.1",
     "react": "^18.1.0",
