@@ -904,7 +904,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
       test.skip('skipped 3', async ({}) => {});
     `
   };
-  const result = await runInlineTest(files, { shard: `1/3` });
+  const result = await runInlineTest(files, { shard: `1/3` }, { PWTEST_BOT_NAME: 'macos-node16-ttest' });
   expect(result.exitCode).toBe(1);
 
   const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
@@ -917,6 +917,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+  await expect(page.getByTestId('report-errors')).toContainText('(macos-node16-ttest) Error: Error in teardown');
 });
 
 test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
