@@ -35,15 +35,6 @@
   "devDependencies": {
     "svelte": "^4.2.8"
   },
-  "peerDependencies": {
-    "svelte": "^4.0.0",
-    "@sveltejs/vite-plugin-svelte": "^3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@sveltejs/vite-plugin-svelte": {
-      "optional": true
-    }
-  },
   "bin": {
     "playwright": "cli.js"
   }
