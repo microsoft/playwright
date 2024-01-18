@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.42.0-next",
-    "@vitejs/plugin-react": "^4.0.0"
+    "@vitejs/plugin-react": "^4.2.1"
   },
   "bin": {
     "playwright": "cli.js"

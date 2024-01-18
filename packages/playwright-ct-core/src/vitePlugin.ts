@@ -16,20 +16,18 @@
 
 import type { Suite } from 'playwright/types/testReporter';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from 'playwright/test';
-
+import type http from 'http';
 import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig, UserConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
 import { debug } from 'playwright-core/lib/utilsBundle';
-
 import fs from 'fs';
 import path from 'path';
 import { stoppable } from 'playwright/lib/utilsBundle';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { getUserData, internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
-import { version as viteVersion, build, preview, mergeConfig } from 'vite';
 import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 
@@ -90,13 +88,16 @@ export function createPlugin(
           outDir: use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache')
         },
         preview: {
-          https: baseURL.protocol.startsWith('https:'),
+          https: baseURL.protocol.startsWith('https:') ? {} : undefined,
           host: baseURL.hostname,
           port: use.ctPort || Number(baseURL.port) || 3100
         },
         // Vite preview server will otherwise always return the index.html with 200.
-        appType: 'custom',
+        appType: 'mpa',
       };
+
+      // Vite 5 refuses to support CJS.
+      const { version: viteVersion, build, preview, mergeConfig } = await import('vite');
 
       // Apply user config on top of the base config. This could have changed root and build.outDir.
       const userConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
@@ -217,7 +218,7 @@ export function createPlugin(
       }
 
       const previewServer = await preview(finalConfig);
-      stoppableServer = stoppable(previewServer.httpServer, 0);
+      stoppableServer = stoppable(previewServer.httpServer as http.Server, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {

@@ -15,7 +15,7 @@
     "svelte-check": "^3.6.2",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
-    "vite": "^5.0.8"
+    "vite": "^5.0.11"
   },
   "dependencies": {
     "svelte": "^4.2.8",
