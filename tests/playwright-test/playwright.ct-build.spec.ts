@@ -551,3 +551,65 @@ test('should pass imported images from test to component', async ({ runInlineTes
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should pass dates, regex, urls and bigints', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.tsx': `
+      export const Button = ({ props }: any) => {
+        const { date, url, bigint, regex } = props;
+        const types = [
+          date instanceof Date,
+          url instanceof URL,
+          typeof bigint === 'bigint',
+          regex instanceof RegExp,
+        ];
+        return <div>{types.join(' ')}</div>;
+      };
+    `,
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      test('renders props with builtin types', async ({ mount, page }) => {
+        const component = await mount(<Button props={{
+          date: new Date(),
+          url: new URL('https://example.com'),
+          bigint: BigInt(42),
+          regex: /foo/,
+        }} />);
+        await expect(component).toHaveText('true true true true');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should pass undefined value as param', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.tsx': `
+      export const Component = ({ value }: { value?: number }) => {
+        return <div>{typeof value}</div>;
+      };
+    `,
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('renders props with undefined type', async ({ mount, page }) => {
+        const component = await mount(<Component value={undefined} />);
+        await expect(component).toHaveText('undefined');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
