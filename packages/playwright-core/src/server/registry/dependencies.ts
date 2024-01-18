@@ -217,7 +217,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     }
   }
 
-  const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
+  const maybeSudo = process.getuid?.() && os.platform() !== 'win32' ? 'sudo ' : '';
   const dockerInfo = readDockerVersionSync();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
@@ -366,7 +366,7 @@ function quoteProcessArgs(args: string[]): string[] {
 }
 
 export async function transformCommandsForRoot(commands: string[]): Promise<{ command: string, args: string[], elevatedPermissions: boolean}> {
-  const isRoot = process.getuid() === 0;
+  const isRoot = process.getuid?.() === 0;
   if (isRoot)
     return { command: 'sh', args: ['-c', `${commands.join('&& ')}`], elevatedPermissions: false };
   const sudoExists = await spawnAsync('which', ['sudo']);

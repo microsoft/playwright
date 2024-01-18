@@ -225,7 +225,7 @@ export abstract class BrowserType extends SdkObject {
       },
     });
     async function closeOrKill(timeout: number): Promise<void> {
-      let timer: NodeJS.Timer;
+      let timer: NodeJS.Timeout;
       try {
         await Promise.race([
           gracefullyClose(),

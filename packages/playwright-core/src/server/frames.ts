@@ -480,7 +480,7 @@ export class Frame extends SdkObject {
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
-  private _networkIdleTimer: NodeJS.Timer | undefined;
+  private _networkIdleTimer: NodeJS.Timeout | undefined;
   private _setContentCounter = 0;
   readonly _detachedScope = new LongStandingScope();
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();

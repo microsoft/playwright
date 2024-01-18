@@ -29,6 +29,7 @@
     "noEmit": true,
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
   },
   "compileOnSave": true,
   "include": ["packages"],

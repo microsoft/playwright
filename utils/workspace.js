@@ -22,6 +22,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const child_process = require('child_process');
 
 const readJSON = async (filePath) => JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
 const writeJSON = async (filePath, json) => {
@@ -33,7 +34,6 @@ class PWPackage {
     this.name = descriptor.name;
     this.path = descriptor.path;
     this.files = descriptor.files;
-    this.noConsistent = descriptor.noConsistent;
     this.packageJSONPath = path.join(this.path, 'package.json');
     this.packageJSON = JSON.parse(fs.readFileSync(this.packageJSONPath, 'utf8'));
     this.isPrivate = !!this.packageJSON.private;
@@ -107,13 +107,8 @@ class Workspace {
         await fs.promises.copyFile(fromPath, toPath);
       }
 
-      // 2. Make sure package-lock and package's package.json are consistent.
-      //    All manual package-lock management is a workaround for
-      //    https://github.com/npm/cli/issues/3940
-      const pkgLockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
-      const depLockEntry = packageLock['dependencies'][pkg.name];
+      // 2. Make sure package's package.jsons are consistent.
       if (!pkg.isPrivate) {
-        pkgLockEntry.version = version;
         pkg.packageJSON.version = version;
         pkg.packageJSON.repository = workspacePackageJSON.repository;
         pkg.packageJSON.engines = workspacePackageJSON.engines;
@@ -122,16 +117,7 @@ class Workspace {
         pkg.packageJSON.license = workspacePackageJSON.license;
       }
 
-      if (pkg.noConsistent)
-        continue;
-
       for (const otherPackage of this._packages) {
-        if (pkgLockEntry.dependencies && pkgLockEntry.dependencies[otherPackage.name])
-          pkgLockEntry.dependencies[otherPackage.name] = version;
-        if (pkgLockEntry.devDependencies && pkgLockEntry.devDependencies[otherPackage.name])
-          pkgLockEntry.devDependencies[otherPackage.name] = version;
-        if (depLockEntry.requires && depLockEntry.requires[otherPackage.name])
-          depLockEntry.requires[otherPackage.name] = version;
         if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
           pkg.packageJSON.dependencies[otherPackage.name] = version;
         if (pkg.packageJSON.devDependencies && pkg.packageJSON.devDependencies[otherPackage.name])
@@ -139,7 +125,9 @@ class Workspace {
       }
       await maybeWriteJSON(pkg.packageJSONPath, pkg.packageJSON);
     }
-    await maybeWriteJSON(packageLockPath, packageLock);
+  
+    // Re-run npm i to make package-lock dirty.
+    child_process.execSync('npm i');
     return hasChanges;
   }
 }
@@ -248,6 +236,14 @@ async function parseCLI() {
       const hasChanges = await workspace.ensureConsistent();
       if (hasChanges)
         die(`\n  ERROR: workspace is inconsistent! Run '//utils/workspace.js --ensure-consistent' and commit changes!`);
+      // check that there are no dirty git files.
+      const gitStatus = child_process.execSync('git status --porcelain').toString();
+      if (gitStatus.trim())
+        die(`\n  ERROR: some git files are dirty, run build and commit changes!\n${gitStatus}`);
+      // Ensure lockfileVersion is 3
+      const packageLock = require(ROOT_PATH +  '/package-lock.json');
+      if (packageLock.lockfileVersion !== 3)
+        die(`\n  ERROR: package-lock.json lockfileVersion must be 3`);
     },
     '--list-public-package-paths': () => {
       for (const pkg of workspace.packages()) {
