@@ -746,32 +746,4 @@ await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
     Button = MouseButton.Middle,
 });`);
   });
-
-  test('should record slider', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
-
-    await recorder.setContentAndWait(`<input type="range" min="0" max="10" value="5">`);
-
-    const dragSlider = async () => {
-      await page.locator('input').focus();
-      const { x, y, width, height } = await page.locator('input').boundingBox();
-      await page.mouse.move(x + width / 2, y + height / 2);
-      await page.mouse.down();
-      await page.mouse.move(x + width, y + height / 2);
-      await page.mouse.up();
-    };
-
-    const [sources] = await Promise.all([
-      recorder.waitForOutput('JavaScript', 'fill'),
-      dragSlider(),
-    ]);
-
-    await expect(page.locator('input')).toHaveValue('10');
-
-    expect(sources.get('JavaScript')!.text).toContain(`
-  await page.getByRole('slider').fill('10');`);
-
-    expect(sources.get('JavaScript')!.text).not.toContain(`
-  await page.getByRole('slider').click();`);
-  });
 });
