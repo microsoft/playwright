@@ -12,3 +12,15 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
   await expect(component.getByRole('main')).toHaveText('Dashboard');
   await expect(page).toHaveURL('/dashboard');
 });
+
+test('update should not reset mount hooks', async ({ page, mount }) => {
+  const component = await mount<HooksConfig>(<App title='before'/>, {
+    hooksConfig: { routing: true },
+  });
+  await expect(component.getByRole('heading')).toHaveText('before');
+  await expect(component.getByRole('main')).toHaveText('Login');
+
+  await component.update(<App title='after'/>);
+  await expect(component.getByRole('heading')).toHaveText('after');
+  await expect(component.getByRole('main')).toHaveText('Login');
+});

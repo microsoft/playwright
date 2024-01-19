@@ -21,6 +21,9 @@ import __pwReact from 'react';
 import __pwReactDOM from 'react-dom';
 /** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
 
+/** @type {Map<Element, { setRenderer: (renderer: any) => void }>} */
+const __pwRootRegistry = new Map();
+
 /**
  * @param {any} component
  * @returns {component is JsxComponent}
@@ -45,15 +48,29 @@ function __pwRender(value) {
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   if (!isJsxComponent(component))
     throw new Error('Object mount notation is not supported');
-
-  let App = () => __pwRender(component);
-  for (const hook of window.__pw_hooks_before_mount || []) {
-    const wrapper = await hook({ App, hooksConfig });
-    if (wrapper)
-      App = () => wrapper;
+  if (__pwRootRegistry.has(rootElement)) {
+    throw new Error(
+        'Attempting to mount a component into an container that already has a React root'
+    );
   }
 
-  __pwReactDOM.render(App(), rootElement);
+  const entry = { setRenderer: () => undefined };
+  __pwRootRegistry.set(rootElement, entry);
+
+  const App = () => {
+    /** @type {any} */
+    const [renderer, setRenderer] = __pwReact.useState(() => __pwRender(component));
+    entry.setRenderer = setRenderer;
+    return renderer;
+  };
+  let AppWrapper = App;
+  for (const hook of window.__pw_hooks_before_mount || []) {
+    const wrapper = await hook({ App: AppWrapper, hooksConfig });
+    if (wrapper)
+      AppWrapper = () => wrapper;
+  }
+
+  __pwReactDOM.render(__pwReact.createElement(AppWrapper), rootElement);
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
@@ -68,5 +85,8 @@ window.playwrightUpdate = async (rootElement, component) => {
   if (!isJsxComponent(component))
     throw new Error('Object mount notation is not supported');
 
-  __pwReactDOM.render(__pwRender(component), rootElement);
+  const entry = __pwRootRegistry.get(rootElement);
+  if (!entry)
+    throw new Error('Component was not mounted');
+  entry.setRenderer(() => __pwRender(component));
 };

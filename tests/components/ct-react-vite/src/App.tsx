@@ -3,10 +3,11 @@ import logo from './assets/logo.svg';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 
-export default function App() {
+export default function App({ title }: { title?: string }) {
   return <>
     <header>
       <img src={logo} alt="logo" width={125} height={125} />
+      {title && <h1>{title}</h1>}
       <Link to="/">Login</Link>
       <Link to="/dashboard">Dashboard</Link>
     </header>
