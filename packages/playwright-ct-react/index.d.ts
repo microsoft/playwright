@@ -22,7 +22,7 @@ export interface MountOptions<HooksConfig extends JsonObject> {
   hooksConfig?: HooksConfig;
 }
 
-export interface MountResult extends Locator {
+interface MountResult extends Locator {
   unmount(): Promise<void>;
   update(component: JSX.Element): Promise<void>;
 }
