@@ -188,7 +188,7 @@ class RecordActionTool implements RecorderTool {
       return;
     if (this._actionInProgress(event))
       return;
-    if (this._consumedDueWrongTarget(event, this._hoveredModel))
+    if (this._consumedDueToNoModel(event, this._hoveredModel))
       return;
 
     const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
@@ -283,7 +283,7 @@ class RecordActionTool implements RecorderTool {
       }
 
       // Non-navigating actions are simply recorded by Playwright.
-      if (this._consumedDueWrongTarget(event, this._activeModel))
+      if (this._consumedDueWrongTarget(event))
         return;
       this._recorder.delegate.recordAction?.({
         name: 'fill',
@@ -313,7 +313,7 @@ class RecordActionTool implements RecorderTool {
       this._expectProgrammaticKeyUp = true;
       return;
     }
-    if (this._consumedDueWrongTarget(event, this._activeModel))
+    if (this._consumedDueWrongTarget(event))
       return;
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
@@ -373,7 +373,7 @@ class RecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
@@ -387,8 +387,15 @@ class RecordActionTool implements RecorderTool {
     return false;
   }
 
-  private _consumedDueWrongTarget(event: Event, model: HighlightModel | null): boolean {
-    if (model && model.elements[0] === this._recorder.deepEventTarget(event))
+  private _consumedDueToNoModel(event: Event, model: HighlightModel | null): boolean {
+    if (model)
+      return false;
+    consumeEvent(event);
+    return true;
+  }
+
+  private _consumedDueWrongTarget(event: Event): boolean {
+    if (this._activeModel && this._activeModel.elements[0] === this._recorder.deepEventTarget(event))
       return false;
     consumeEvent(event);
     return true;
