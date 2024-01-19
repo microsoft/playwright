@@ -156,7 +156,7 @@ For example, consider the following test file that needs a username and a passwo
 ```js title="example.spec.ts"
 test(`example test`, async ({ page }) => {
   // ...
-  await page.getByLabel('User Name').fill(process.env.USERNAME);
+  await page.getByLabel('User Name').fill(process.env.USER_NAME);
   await page.getByLabel('Password').fill(process.env.PASSWORD);
 });
 ```
@@ -164,17 +164,17 @@ test(`example test`, async ({ page }) => {
 You can run this test with your secret username and password set in the command line.
 
 ```bash tab=bash-bash
-USERNAME=me PASSWORD=secret npx playwright test
+USER_NAME=me PASSWORD=secret npx playwright test
 ```
 
 ```batch tab=bash-batch
-set USERNAME=me
+set USER_NAME=me
 set PASSWORD=secret
 npx playwright test
 ```
 
 ```powershell tab=bash-powershell
-$env:USERNAME=me
+$env:USER_NAME=me
 $env:PASSWORD=secret
 npx playwright test
 ```
@@ -234,7 +234,7 @@ Now, you can just edit `.env` file to set any variables you'd like.
 ```bash
 # .env file
 STAGING=0
-USERNAME=me
+USER_NAME=me
 PASSWORD=secret
 ```
 
