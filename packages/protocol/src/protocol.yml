@@ -1349,6 +1349,16 @@ Page:
         slowMo: true
         snapshot: true
 
+    registerLocatorHandler:
+      parameters:
+        selector: string
+      returns:
+        uid: number
+
+    resolveLocatorHandlerNoReply:
+      parameters:
+        uid: number
+
     reload:
       parameters:
         timeout: number?
@@ -1667,6 +1677,10 @@ Page:
     frameDetached:
       parameters:
         frame: Frame
+
+    locatorHandlerTriggered:
+      parameters:
+        uid: number
 
     route:
       parameters:

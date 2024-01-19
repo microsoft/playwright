@@ -288,7 +288,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryAction(progress: Progress, actionName: string, action: (retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean }): Promise<'error:notconnected' | 'done'> {
+  async _retryAction(progress: Progress, actionName: string, action: (retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean, skipLocatorHandlersCheckpoint?: boolean }): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
     const waitTime = [0, 20, 100, 100, 500];
@@ -306,6 +306,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
+      if (!options.skipLocatorHandlersCheckpoint)
+        await this._frame._page.performLocatorHandlersCheckpoint(progress);
       const result = await action(retry);
       ++retry;
       if (result === 'error:notvisible') {
@@ -339,6 +341,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
+    const skipLocatorHandlersCheckpoint = actionName === 'move and up';
     return await this._retryAction(progress, actionName, async retry => {
       // By default, we scroll with protocol method to reveal the action point.
       // However, that might not work to scroll from under position:sticky elements
@@ -352,7 +356,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       ];
       const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
       return await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
-    }, options);
+    }, { ...options, skipLocatorHandlersCheckpoint });
   }
 
   async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<PerformActionResult> {
