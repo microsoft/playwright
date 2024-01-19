@@ -10,7 +10,7 @@ export type HooksConfig = {
 
 beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
   if (hooksConfig?.routing)
-    app.use(router);
+    app.use(router as any);
   app.component('Button', Button);
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}, app: ${!!app}`);
 });
