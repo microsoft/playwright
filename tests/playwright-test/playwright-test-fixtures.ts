@@ -346,6 +346,7 @@ const TSCONFIG = {
     'rootDir': '.',
     'lib': ['esnext', 'dom', 'DOM.Iterable'],
     'noEmit': true,
+    'skipLibCheck': true,
   },
   'exclude': [
     'node_modules'
