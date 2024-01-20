@@ -19,7 +19,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ inputs.job_name }}
-        path: ${{ inputs.report_dir }}
+        path: ${{ inputs.report_dir }}/**
         retention-days: 7
     - name: Write triggering pull request number in a file
       if: always() && github.event_name == 'pull_request'
@@ -29,5 +29,6 @@ runs:
       if: always() && github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
-        name: pull-request-${{ inputs.job_name }}
+        name: pull-request-number
         path: pull_request_number.txt
+        overwrite: true
