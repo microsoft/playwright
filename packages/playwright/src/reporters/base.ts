@@ -374,7 +374,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
 }
 
 function quotePathIfNeeded(path: string): string {
-  if (/\W/.test(path))
+  if (/\s/.test(path))
     return `"${path}"`;
   return path;
 }
