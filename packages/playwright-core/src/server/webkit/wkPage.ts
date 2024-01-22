@@ -786,7 +786,7 @@ export class WKPage implements PageDelegate {
       scripts.push('delete window.ondevicemotion');
       scripts.push('delete window.ondeviceorientation');
     }
-    scripts.push('if (!window.safari) window.safari = {};');
+    scripts.push('if (!window.safari) window.safari = { pushNotification: {} };');
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
 
     for (const binding of this._page.allBindings())
