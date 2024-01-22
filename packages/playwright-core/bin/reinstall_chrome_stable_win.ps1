@@ -18,6 +18,7 @@ if (Test-Path "${env:ProgramFiles(x86)}$suffix") {
 } elseif (Test-Path "${env:ProgramFiles}$suffix") {
     (Get-Item "${env:ProgramFiles}$suffix").VersionInfo
 } else {
-    Write-Host "ERROR: failed to install Google Chrome"
+    Write-Host "ERROR: Failed to install Google Chrome."
+    Write-Host "ERROR: This could be due to insufficient privileges, in which case re-running as Administrator may help."
     exit 1
 }
