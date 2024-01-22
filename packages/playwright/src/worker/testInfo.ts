@@ -88,8 +88,6 @@ export class TestInfoImpl implements TestInfo {
   readonly annotations: Annotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
-  readonly stdout: TestInfo['stdout'] = [];
-  readonly stderr: TestInfo['stderr'] = [];
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;

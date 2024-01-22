@@ -416,18 +416,6 @@ test.afterEach(async ({}, testInfo) => {
 });
 ```
 
-## property: TestInfo.stderr
-* since: v1.10
-- type: <[Array]<[string]|[Buffer]>>
-
-Output written to `process.stderr` or `console.error` during the test execution.
-
-## property: TestInfo.stdout
-* since: v1.10
-- type: <[Array]<[string]|[Buffer]>>
-
-Output written to `process.stdout` or `console.log` during the test execution.
-
 ## property: TestInfo.timeout
 * since: v1.10
 - type: <[int]>

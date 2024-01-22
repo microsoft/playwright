@@ -2308,16 +2308,6 @@ export interface TestInfo {
   status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
-   * Output written to `process.stderr` or `console.error` during the test execution.
-   */
-  stderr: Array<string|Buffer>;
-
-  /**
-   * Output written to `process.stdout` or `console.log` during the test execution.
-   */
-  stdout: Array<string|Buffer>;
-
-  /**
    * Test id matching the test case id in the reporter API.
    */
   testId: string;
