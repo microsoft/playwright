@@ -323,7 +323,18 @@ function queryInAriaOwned(element: Element, selector: string): Element[] {
   return result;
 }
 
-function getPseudoContent(pseudoStyle: CSSStyleDeclaration | undefined) {
+function getPseudoContent(element: Element, pseudo: '::before' | '::after') {
+  const cache = pseudo === '::before' ? cachePseudoContentBefore : cachePseudoContentAfter;
+  if (cache?.has(element))
+    return cache?.get(element) || '';
+  const pseudoStyle = getElementComputedStyle(element, pseudo);
+  const content = getPseudoContentImpl(pseudoStyle);
+  if (cache)
+    cache.set(element, content);
+  return content;
+}
+
+function getPseudoContentImpl(pseudoStyle: CSSStyleDeclaration | undefined) {
   if (!pseudoStyle)
     return '';
   const content = pseudoStyle.content;
@@ -677,7 +688,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
         tokens.push(node.textContent || '');
       }
     };
-    tokens.push(getPseudoContent(getElementComputedStyle(element, '::before')));
+    tokens.push(getPseudoContent(element, '::before'));
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
@@ -692,7 +703,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
         visit(owned, true);
     }
-    tokens.push(getPseudoContent(getElementComputedStyle(element, '::after')));
+    tokens.push(getPseudoContent(element, '::after'));
     const accessibleName = tokens.join('');
     if (accessibleName.trim())
       return accessibleName;
@@ -837,6 +848,8 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
 let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
+let cachePseudoContentBefore: Map<Element, string> | undefined;
+let cachePseudoContentAfter: Map<Element, string> | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
@@ -844,6 +857,8 @@ export function beginAriaCaches() {
   cacheAccessibleName ??= new Map();
   cacheAccessibleNameHidden ??= new Map();
   cacheIsHidden ??= new Map();
+  cachePseudoContentBefore ??= new Map();
+  cachePseudoContentAfter ??= new Map();
 }
 
 export function endAriaCaches() {
@@ -851,5 +866,7 @@ export function endAriaCaches() {
     cacheAccessibleName = undefined;
     cacheAccessibleNameHidden = undefined;
     cacheIsHidden = undefined;
+    cachePseudoContentBefore = undefined;
+    cachePseudoContentAfter = undefined;
   }
 }
