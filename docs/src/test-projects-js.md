@@ -216,7 +216,7 @@ You can also teardown your setup by adding a [`property: TestProject.teardown`] 
 
 ### Test filtering
 
-If `--grep/--grep-invert` [option](./test-cli.md#reference) is used, test file name filter is specified in [command line](./test-cli.md) or [test.only()](./api/class-test.md#test-only) is used, the will only apply to the tests from the deepest projects in the project dependency chain. In other words, if a matching test belongs to a project that has project dependencies, Playwright will run all the tests from the project depdencies ignoring the filters.
+If `--grep/--grep-invert` or `--shard` [option](./test-cli.md#reference) is used, test file name filter is specified in [command line](./test-cli.md) or [test.only()](./api/class-test.md#test-only) is used, it will only apply to the tests from the deepest projects in the project dependency chain. In other words, if a matching test belongs to a project that has project dependencies, Playwright will run all the tests from the project depdencies ignoring the filters.
 
 ## Custom project parameters
 
