@@ -32,6 +32,7 @@ test('basics should work', async ({ runTSC }) => {
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
+        test.fail('my test', async () => {});
       });
       test.describe(() => {
         test('my test', () => {});

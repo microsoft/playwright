@@ -145,6 +145,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fail(): void;
   fail(condition: boolean, description?: string): void;
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  fail(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   slow(): void;
   slow(condition: boolean, description?: string): void;
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
