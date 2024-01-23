@@ -19,9 +19,12 @@
       "default": "./index.js"
     },
     "./package.json": "./package.json",
+    "./lib/common/configLoader": "./lib/common/configLoader.js",
+    "./lib/fsWatcher": "./lib/fsWatcher.js",
     "./lib/program": "./lib/program.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
     "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
+    "./lib/runner/runner": "./lib/runner/runner.js",
     "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
     "./lib/transform/transform": "./lib/transform/transform.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",

@@ -104,6 +104,24 @@ export class Runner {
     return status;
   }
 
+  async loadAllTests(outOfProcess?: boolean): Promise<FullResult['status']> {
+    const config = this._config;
+    const reporter = new InternalReporter(new Multiplexer([]));
+    const taskRunner = createTaskRunnerForList(config, reporter, outOfProcess ? 'out-of-process' : 'in-process', { failOnLoadErrors: true });
+    const testRun = new TestRun(config, reporter);
+    reporter.onConfigure(config.config);
+
+    const taskStatus = await taskRunner.run(testRun, 0);
+    let status: FullResult['status'] = testRun.failureTracker.result();
+    if (status === 'passed' && taskStatus !== 'passed')
+      status = taskStatus;
+    const modifiedResult = await reporter.onEnd({ status });
+    if (modifiedResult && modifiedResult.status)
+      status = modifiedResult.status;
+    await reporter.onExit();
+    return status;
+  }
+
   async watchAllTests(): Promise<FullResult['status']> {
     const config = this._config;
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));

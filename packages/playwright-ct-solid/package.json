@@ -36,6 +36,7 @@
     "solid-js": "^1.7.0"
   },
   "bin": {
-    "playwright": "cli.js"
+    "playwright": "cli.js",
+    "pw-solid": "cli.js"
   }
 }

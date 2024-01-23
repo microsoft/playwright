@@ -271,7 +271,7 @@ function resolveReporter(id: string) {
   return require.resolve(id, { paths: [process.cwd()] });
 }
 
-function restartWithExperimentalTsEsm(configFile: string | null): boolean {
+export function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   const nodeVersion = +process.versions.node.split('.')[0];
   // New experimental loader is only supported on Node 16+.
   if (nodeVersion < 16)

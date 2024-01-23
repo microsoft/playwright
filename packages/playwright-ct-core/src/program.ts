@@ -14,4 +14,27 @@
  * limitations under the License.
  */
 
+import type { Command } from 'playwright-core/lib/utilsBundle';
+
+import { program } from 'playwright/lib/program';
+import { runDevServer } from './devServer';
 export { program } from 'playwright/lib/program';
+
+let registerSourceFile: string;
+let frameworkPluginFactory: () => Promise<any>;
+
+export function initializePlugin(registerSource: string, factory: () => Promise<any>) {
+  registerSourceFile = registerSource;
+  frameworkPluginFactory = factory;
+}
+
+function addDevServerCommand(program: Command) {
+  const command = program.command('dev-server');
+  command.description('start dev server');
+  command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
+  command.action(options => {
+    runDevServer(options.config, registerSourceFile, frameworkPluginFactory);
+  });
+}
+
+addDevServerCommand(program);

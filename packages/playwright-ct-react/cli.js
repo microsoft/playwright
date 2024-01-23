@@ -15,5 +15,8 @@
  * limitations under the License.
  */
 
-const { program } = require('@playwright/experimental-ct-core/lib/program');
+const path = require('path');
+const { program, initializePlugin } = require('@playwright/experimental-ct-core/lib/program');
+
+initializePlugin(path.join(__dirname, 'registerSource.mjs'), () => import('@vitejs/plugin-react').then(plugin => plugin.default()))
 program.parse(process.argv);
