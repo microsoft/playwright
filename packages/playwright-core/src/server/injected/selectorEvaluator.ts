@@ -450,7 +450,7 @@ const textEngine: SelectorEngine = {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
     const text = normalizeWhiteSpace(args[0]).toLowerCase();
-    const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
+    const matcher = (elementText: ElementText) => elementText.normalized.toLowerCase().includes(text);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
@@ -486,7 +486,7 @@ const hasTextEngine: SelectorEngine = {
     if (shouldSkipForTextMatching(element))
       return false;
     const text = normalizeWhiteSpace(args[0]).toLowerCase();
-    const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
+    const matcher = (elementText: ElementText) => elementText.normalized.toLowerCase().includes(text);
     return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
   },
 };
