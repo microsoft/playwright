@@ -32,7 +32,7 @@ export default defineConfig({
   ]
 });
 ```
-Then we add the [`property: TestProject.dependencies`] property to our projects that depend on the setup project and pass into the array the name of of our dependency project, which we defined in the previous step:
+Then we add the [`property: TestProject.dependencies`] property to our projects that depend on the setup project and pass into the array the name of our dependency project, which we defined in the previous step:
 
 ```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
@@ -40,38 +40,6 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   // ...
-  projects: [
-    {
-      name: 'setup',
-      testMatch: /global\.setup\.ts/,
-    },
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
-    },
-  ]
-});
-```
-### Setup Example
-
-This example will show you how to use project dependencies to create a global setup that logins into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a signed-in state and to avoid repeating login steps for each test.
-
-The setup project will write the storage state into an 'playwright/.auth/user.json' file next to your playwright.config. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`StorageState`](./test-use-options#basic-options) method. This applies the storage state on the browser context with its cookies and a local storage snapshot.
-
-In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project does not depend on the setup project, and does not use the `storageState` option.
-
-```js title="playwright.config.ts"
-import { defineConfig, devices } from '@playwright/test';
-
-export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
-
-export default defineConfig({
-  testDir: './tests',
-  // ...
-  use: {
-    baseURL: 'http://localhost:3000/',
-  },
   projects: [
     {
       name: 'setup',
@@ -79,38 +47,21 @@ export default defineConfig({
     },
     {
       name: 'logged in chromium',
-      testMatch: '**/*.loggedin.spec.ts',
-      dependencies: ['setup'],
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: STORAGE_STATE,
-      },
-    },
-    {
-      name: 'logged out chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: ['**/*loggedin.spec.ts']
+      dependencies: ['setup'],
     },
-  ],
+  ]
 });
 ```
 
-We then create a setup test, stored at root level of your project, that logs in to an application and populates the context with the storage state after the login actions have been performed. By doing this you only have to log in once and the credentials will be stored in the `STORAGE_STATE` file, meaning you don't need to log in again for every test. Start by importing the `STORAGE_STATE` from the Playwright config file and then use this as the path to save your storage state to the page's context.
+In this example the 'logged in chromium' project depends on the setup project. We then create a setup test, stored at root level of your project:
 
 ```js title="tests/global.setup.ts"
 import { test as setup, expect } from '@playwright/test';
-import { STORAGE_STATE } from '../playwright.config';
 
 setup('do login', async ({ page }) => {
-  await page.goto('/');
-  await page.getByLabel('User Name').fill('user');
-  await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
-
-  // Wait until the page actually signs in.
-  await expect(page.getByText('Hello, user!')).toBeVisible();
-
-  await page.context().storageState({ path: STORAGE_STATE });
+  console.log('signing in...');
+  // Your sign in steps here
 });
 ```
 
@@ -126,7 +77,10 @@ test('menu', async ({ page }) => {
 });
 ```
 
-For a more detailed example check out our blog post: [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14) or check the [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo.
+For a more detailed example check out:
+- out [authentication](./auth.md) doc
+- our blog post [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14)
+- [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo
 
 ### Teardown
 
