@@ -5,7 +5,7 @@ title: "Global setup and teardown"
 
 ## Introduction
 
-There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#option-2-configure-globalsetup-and-globalteardown) or using [project dependencies](#option-1-project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#option-2-configure-globalsetup-and-globalteardown) or using [project dependencies](#option-1-project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used. In the latter case, setup and teardown code must be defined as regular tests by calling [test()](https://playwright.dev/docs/api/class-test#test-call) function.
 
 ## Option 1: Project Dependencies
 
@@ -55,7 +55,7 @@ export default defineConfig({
 ```
 ### Setup Example
 
-This example will show you how to use project dependencies to create a global setup that logins into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a sign sign-in state and you want to avoid login for each test.
+This example will show you how to use project dependencies to create a global setup that logins into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a signed-in state and to avoid repeating login steps for each test.
 
 The setup project will write the storage state into an 'playwright/.auth/user.json' file next to your playwright.config. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`StorageState`](./test-use-options#basic-options) method. This applies the storage state on the browser context with its cookies and a local storage snapshot.
 
@@ -184,12 +184,21 @@ export default defineConfig({
 Start by creating a `global.setup.ts` file in the tests directory of your project. This will be used to seed the database with some data before all tests have run.
 
 ```js title="tests/global.setup.ts"
-// seed the database with some data
+import { test as setup } from '@playwright/test';
+
+setup('create new database', async ({ }) => {
+  console.log('creating new database...');
+});
+
 ```
 Then create a `global.teardown.ts` file in the tests directory of your project. This will be used to delete the data from the database after all tests have run.
 
 ```js title="tests/global.teardown.ts"
-// delete the data from the database
+import { test as teardown } from '@playwright/test';
+
+teardown('delete database', async ({ }) => {
+  console.log('deleting test database...');
+});
 ```
 In the Playwright config file:
  - Add a project into the projects array and give it a name such as 'setup db'. Give it a [`property: TestProject.testMatch`] property in order to match the file called `global.setup.ts`.
