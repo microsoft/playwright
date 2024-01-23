@@ -74,12 +74,6 @@ const { _android: android } = require('playwright');
 })();
 ```
 
-Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download via setting the following environment variable when installing Playwright:
-
-```bash js
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
-```
-
 ## async method: Android.connect
 * since: v1.28
 - returns: <[AndroidDevice]>
