@@ -143,6 +143,8 @@ test.describe('test modifier annotations', () => {
           test('skip inner', () => { test.skip(); });
           test.fixme('fixme wrap', () => {});
           test('fixme inner', () => { test.fixme(); });
+          test.fail('fail wrap', () => { expect(1).toBe(2); });
+          test('fail inner', () => { test.fail(); expect(1).toBe(2); });
         });
 
         test('example', () => {});
@@ -151,13 +153,15 @@ test.describe('test modifier annotations', () => {
     const expectTest = expectTestHelper(result);
 
     expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(2);
+    expect(result.passed).toBe(4);
     expect(result.skipped).toBe(4);
     expectTest('no marker', 'passed', 'expected', []);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip']);
     expectTest('skip inner', 'skipped', 'skipped', ['skip']);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme']);
+    expectTest('fail wrap', 'failed', 'expected', ['fail']);
+    expectTest('fail inner', 'failed', 'expected', ['fail']);
     expectTest('example', 'passed', 'expected', []);
   });
 

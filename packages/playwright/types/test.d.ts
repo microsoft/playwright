@@ -2947,6 +2947,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
+   * Declares a test that "should fail". Playwright Test runs this test and ensures that it is actually failing. This is
+   * useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail('not yet ready', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   */
+  fail(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  /**
    * Unconditionally marks a test as "slow". Slow test will be given triple the default timeout.
    *
    * **Details**

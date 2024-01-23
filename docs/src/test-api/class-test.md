@@ -823,6 +823,34 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 
 
 
+## method: Test.fail#4
+* since: v1.42
+
+Declares a test that "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+
+**Usage**
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.fail('not yet ready', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.fail#4.title
+* since: v1.42
+- `title` <[string]>
+
+Test title.
+
+### param: Test.fail#4.testFunction
+* since: v1.42
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
 ## method: Test.fail#1
 * since: v1.10
 
