@@ -15,7 +15,7 @@
  */
 
 import type * as actions from '../recorder/recorderActions';
-import type { InjectedScript } from '../injected/injectedScript';
+import { InjectedScript, type InjectedScriptCreationParams } from '../injected/injectedScript';
 import { generateSelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
@@ -863,7 +863,8 @@ export class Recorder {
   readonly document: Document;
   delegate: RecorderDelegate = {};
 
-  constructor(injectedScript: InjectedScript) {
+  constructor(params: InjectedScriptCreationParams) {
+    const injectedScript = new InjectedScript(params);
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
     this.highlight = new Highlight(injectedScript);
@@ -1189,11 +1190,11 @@ export class PollingRecorder implements RecorderDelegate {
   private _embedder: Embedder;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
 
-  constructor(injectedScript: InjectedScript) {
-    this._recorder = new Recorder(injectedScript);
-    this._embedder = injectedScript.window as any;
+  constructor(params: InjectedScriptCreationParams) {
+    this._recorder = new Recorder(params);
+    this._embedder = this._recorder.injectedScript.window as any;
 
-    injectedScript.onGlobalListenersRemoved.add(() => this._recorder.installListeners());
+    this._recorder.injectedScript.onGlobalListenersRemoved.add(() => this._recorder.installListeners());
 
     const refreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console

@@ -19,7 +19,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import type { InjectedScript } from './injectedScript';
+import { InjectedScript, type InjectedScriptCreationParams } from './injectedScript';
 
 const selectorSymbol = Symbol('selector');
 const injectedScriptSymbol = Symbol('injectedScript');
@@ -76,8 +76,8 @@ declare global {
 class ConsoleAPI {
   private _injectedScript: InjectedScript;
 
-  constructor(injectedScript: InjectedScript) {
-    this._injectedScript = injectedScript;
+  constructor(params: InjectedScriptCreationParams) {
+    this._injectedScript = new InjectedScript(params);
     if (this._injectedScript.window.playwright)
       return;
     this._injectedScript.window.playwright = {
@@ -87,7 +87,7 @@ class ConsoleAPI {
       selector: (element: Element) => this._selector(element),
       generateLocator: (element: Element, language?: Language) => this._generateLocator(element, language),
       resume: () => this._resume(),
-      ...new Locator(injectedScript, ''),
+      ...new Locator(this._injectedScript, ''),
     };
     delete this._injectedScript.window.playwright.filter;
     delete this._injectedScript.window.playwright.first;

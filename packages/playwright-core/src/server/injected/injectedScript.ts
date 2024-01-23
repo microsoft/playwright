@@ -52,6 +52,17 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
   readonly initDeviceMotionEvent: (type: string, bubbles: boolean, cancelable: boolean, acceleration: DeviceMotionEventAcceleration, accelerationIncludingGravity: DeviceMotionEventAcceleration, rotationRate: DeviceMotionEventRotationRate, interval: number) => void;
 }
 
+export type InjectedScriptCreationParams = {
+  // eslint-disable-next-line no-restricted-globals
+  window: Window & typeof globalThis;
+  isUnderTest: boolean;
+  sdkLanguage: Language;
+  testIdAttributeName: string;
+  stableRafCount: number;
+  browserName: string;
+  customEngines: { name: string, engine: SelectorEngine }[];
+};
+
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
@@ -67,13 +78,12 @@ export class InjectedScript {
   readonly window: Window & typeof globalThis;
   readonly document: Document;
 
-  // eslint-disable-next-line no-restricted-globals
-  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
-    this.window = window;
-    this.document = window.document;
-    this.isUnderTest = isUnderTest;
-    this._sdkLanguage = sdkLanguage;
-    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
+  constructor(params: InjectedScriptCreationParams) {
+    this.window = params.window;
+    this.document = params.window.document;
+    this.isUnderTest = params.isUnderTest;
+    this._sdkLanguage = params.sdkLanguage;
+    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = params.testIdAttributeName;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -109,17 +119,17 @@ export class InjectedScript {
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
 
-    for (const { name, engine } of customEngines)
+    for (const { name, engine } of params.customEngines)
       this._engines.set(name, engine);
 
-    this._stableRafCount = stableRafCount;
-    this._browserName = browserName;
-    setBrowserName(browserName);
+    this._stableRafCount = params.stableRafCount;
+    this._browserName = params.browserName;
+    setBrowserName(params.browserName);
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
 
-    if (isUnderTest)
+    if (params.isUnderTest)
       (this.window as any).__injectedScript = this;
   }
 
@@ -397,16 +407,6 @@ export class InjectedScript {
       return this.querySelectorAll(body.parsed, root);
     };
     return { queryAll };
-  }
-
-  extend(source: string, params: any): any {
-    const constrFunction = this.window.eval(`
-    (() => {
-      const module = {};
-      ${source}
-      return module.exports.default();
-    })()`);
-    return new constrFunction(this, params);
   }
 
   isVisible(element: Element): boolean {
@@ -1491,3 +1491,5 @@ function deepEquals(a: any, b: any): boolean {
 
   return false;
 }
+
+export default InjectedScript;

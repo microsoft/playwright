@@ -21,7 +21,6 @@ import { context, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useMeasure } from '@web/uiUtils';
-import { InjectedScript } from '@injected/injectedScript';
 import { Recorder  } from '@injected/recorder';
 import ConsoleAPI from '@injected/consoleApi';
 import { asLocator } from '@isomorphic/locatorGenerators';
@@ -192,8 +191,15 @@ export const SnapshotTab: React.FunctionComponent<{
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
         const win = window.open(popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
-          const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-          new ConsoleAPI(injectedScript);
+          new ConsoleAPI({
+            window: win as any,
+            isUnderTest: false,
+            sdkLanguage,
+            testIdAttributeName,
+            stableRafCount: 1,
+            browserName: 'chromium',
+            customEngines: []
+          });
         });
       }}></ToolbarButton>
     </Toolbar>
@@ -270,9 +276,16 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
     return;
   const win = frameWindow as any;
   if (!win._recorder) {
-    const injectedScript = new InjectedScript(frameWindow as any, isUnderTest, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-    const recorder = new Recorder(injectedScript);
-    win._injectedScript = injectedScript;
+    const recorder = new Recorder({
+      window: frameWindow as any,
+      isUnderTest,
+      sdkLanguage,
+      testIdAttributeName,
+      stableRafCount: 1,
+      browserName: 'chromium',
+      customEngines: []
+    });
+    win._injectedScript = recorder.injectedScript;
     win._recorder = { recorder, frameSelector: parentFrameSelector };
   }
   recorders.push(win._recorder);

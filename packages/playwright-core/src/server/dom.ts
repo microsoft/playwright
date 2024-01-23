@@ -84,30 +84,34 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return super.createHandle(remoteObject);
   }
 
-  injectedScript(): Promise<js.JSHandle<InjectedScript>> {
-    if (!this._injectedScriptPromise) {
-      const custom: string[] = [];
-      const selectorsRegistry = this.frame._page.context().selectors();
-      for (const [name, { source }] of selectorsRegistry._engines)
-        custom.push(`{ name: '${name}', engine: (${source}) }`);
-      const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
-      const source = `
-        (() => {
+  async instantiateWithInjectedScriptCreationParams(source: string) {
+    const custom: string[] = [];
+    const selectorsRegistry = this.frame._page.context().selectors();
+    for (const [name, { source }] of selectorsRegistry._engines)
+      custom.push(`{ name: '${name}', engine: (${source}) }`);
+    const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
+    const fullSource = `
+      (() => {
         const module = {};
-        ${injectedScriptSource.source}
-        return new (module.exports.InjectedScript())(
-          globalThis,
-          ${isUnderTest()},
-          "${sdkLanguage}",
-          ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
-          ${this.frame._page._delegate.rafCountForStablePosition()},
-          "${this.frame._page._browserContext._browser.options.name}",
-          [${custom.join(',\n')}]
-        );
-        })();
-      `;
-      this._injectedScriptPromise = this.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', 'InjectedScript', objectId));
-    }
+        ${source}
+        return new (module.exports.default())({
+          window: globalThis,
+          isUnderTest: ${isUnderTest()},
+          sdkLanguage: "${sdkLanguage}",
+          testIdAttributeName: ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
+          stableRafCount: ${this.frame._page._delegate.rafCountForStablePosition()},
+          browserName: "${this.frame._page._browserContext._browser.options.name}",
+          customEngines: [${custom.join(',\n')}]
+        });
+      })();
+    `;
+    const objectId = await this.rawEvaluateHandle(fullSource);
+    return new js.JSHandle(this, 'object', 'InjectedScript', objectId);
+  }
+
+  injectedScript(): Promise<js.JSHandle<InjectedScript>> {
+    if (!this._injectedScriptPromise)
+      this._injectedScriptPromise = this.instantiateWithInjectedScriptCreationParams(injectedScriptSource.source);
     return this._injectedScriptPromise;
   }
 }

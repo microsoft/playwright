@@ -560,8 +560,8 @@ export abstract class BrowserContext extends SdkObject {
     }
   }
 
-  async extendInjectedScript(source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
+  async extendInjectedScript(source: string) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source).catch(() => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
