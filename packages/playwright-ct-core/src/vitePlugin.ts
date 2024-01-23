@@ -76,8 +76,9 @@ export function createPlugin(
 
       // Compose base config from the playwright config only.
       const baseConfig: InlineConfig = {
-        root: configDir,
+        root: templateDir,
         configFile: false,
+        publicDir: path.join(configDir, 'public'),
         define: {
           __VUE_PROD_DEVTOOLS__: true,
         },
@@ -189,7 +190,6 @@ export function createPlugin(
       if (sourcesDirty) {
         log('build');
         await build(finalConfig);
-        await fs.promises.rename(`${finalConfig.build.outDir}/${relativeTemplateDir}/index.html`, `${finalConfig.build.outDir}/index.html`);
         buildInfo.deps = Object.fromEntries(depsCollector.entries());
       }
 
