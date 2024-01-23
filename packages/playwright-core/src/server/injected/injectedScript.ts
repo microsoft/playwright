@@ -24,7 +24,7 @@ import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../
 import { visitAllSelectorParts, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText, getElementLabels } from './selectorUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
-import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost, setBrowserName } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
@@ -66,6 +66,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
+  readonly utils = { isInsideScope, elementText, asLocator, normalizeWhiteSpace };
 
   // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
@@ -140,7 +141,11 @@ export class InjectedScript {
     return result;
   }
 
-  generateSelector(targetElement: Element, options?: GenerateSelectorOptions): string {
+  generateSelector(targetElement: Element, options: GenerateSelectorOptions) {
+    return generateSelector(this, targetElement, options);
+  }
+
+  generateSelectorSimple(targetElement: Element, options?: GenerateSelectorOptions): string {
     return generateSelector(this, targetElement, { ...options, testIdAttributeName: this._testIdAttributeNameForStrictErrorAndConsoleCodegen }).selector;
   }
 
@@ -996,7 +1001,7 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: this.generateSelector(m),
+      selector: this.generateSelectorSimple(m),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
@@ -1015,6 +1020,10 @@ export class InjectedScript {
     // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;
+  }
+
+  createHighlight() {
+    return new Highlight(this);
   }
 
   maskSelectors(selectors: ParsedSelector[], color: string) {
