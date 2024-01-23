@@ -14,4 +14,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright-core/lib/cli/cli');
+const { program } = require('./lib/cli/programWithTestStub');
+program.parse(process.argv);

@@ -30,7 +30,8 @@ import type { FullResult, TestError } from '../types/testReporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
-import program from 'playwright-core/lib/cli/program';
+import { program } from 'playwright-core/lib/cli/program';
+export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import { registerESMLoader } from './common/esmLoaderHost';
@@ -289,7 +290,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
     // Node.js < 20
   if (!require('node:module').register) {
-    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
+    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../cli'), process.argv.slice(2), {
       env: {
         ...process.env,
         PW_TS_ESM_LEGACY_LOADER_ON: '1',
@@ -346,5 +347,3 @@ addTestCommand(program);
 addShowReportCommand(program);
 addListFilesCommand(program);
 addMergeReportsCommand(program);
-
-program.parse(process.argv);

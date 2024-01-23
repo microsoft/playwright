@@ -21,6 +21,7 @@ import os from 'os';
 import path from 'path';
 import type { Command } from '../utilsBundle';
 import { program } from '../utilsBundle';
+export { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import type { OpenTraceViewerOptions } from '../server/trace/viewer/traceViewer';
 import { openTraceInBrowser, openTraceViewerApp } from '../server/trace/viewer/traceViewer';
@@ -690,5 +691,3 @@ function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): strin
     }
   }
 }
-
-export default program;

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -15,5 +14,4 @@
  * limitations under the License.
  */
 
-const { program } = require('./lib/program');
-program.parse(process.argv);
+export { program } from 'playwright/lib/program';

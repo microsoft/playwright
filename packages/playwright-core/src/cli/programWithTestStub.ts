@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -19,7 +17,8 @@
 /* eslint-disable no-console */
 
 import { getPackageManager, gracefullyProcessExitDoNotHang } from '../utils';
-import program from './program';
+import { program } from './program';
+export { program } from './program';
 
 function printPlaywrightTestError(command: string) {
   const packages: string[] = [];
@@ -66,5 +65,3 @@ function addExternalPlaywrightTestCommands() {
 
 if (!process.env.PW_LANG_NAME)
   addExternalPlaywrightTestCommands();
-
-program.parse(process.argv);
