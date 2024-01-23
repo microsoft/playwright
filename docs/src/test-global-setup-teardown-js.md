@@ -5,7 +5,7 @@ title: "Global setup and teardown"
 
 ## Introduction
 
-There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#option-2-configure-globalsetup-and-globalteardown) or using [project dependencies](#option-1-project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used. In the latter case, setup and teardown code must be defined as regular tests by calling [test()](https://playwright.dev/docs/api/class-test#test-call) function.
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#option-2-configure-globalsetup-and-globalteardown) or using [project dependencies](#option-1-project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used. In the latter case, setup and teardown code must be defined as regular tests by calling [test()](./api/class-test#test-call) function.
 
 ## Option 1: Project Dependencies
 
