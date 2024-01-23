@@ -40,12 +40,6 @@ const { _electron: electron } = require('playwright');
 })();
 ```
 
-Note that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download via setting the following environment variable when installing Playwright:
-
-```bash js
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
-```
-
 **Supported Electron versions are:**
 * v12.2.0+
 * v13.4.0+
