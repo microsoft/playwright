@@ -120,13 +120,13 @@ class ConsoleAPI {
   private _selector(element: Element) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
-    return this._injectedScript.generateSelector(element);
+    return this._injectedScript.generateSelectorSimple(element);
   }
 
   private _generateLocator(element: Element, language?: Language) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.locator(element).`);
-    const selector = this._injectedScript.generateSelector(element);
+    const selector = this._injectedScript.generateSelectorSimple(element);
     return asLocator(language || 'javascript', selector);
   }
 

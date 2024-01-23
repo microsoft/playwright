@@ -1,0 +1,4 @@
+# Recorder must use any external dependencies through InjectedScript.
+# Otherwise it will end up with a copy of all modules it uses, and any
+# module-level globals will be duplicated, which leads to subtle bugs.
+[*]

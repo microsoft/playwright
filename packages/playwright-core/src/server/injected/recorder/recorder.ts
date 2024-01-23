@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import type * as actions from '../recorder/recorderActions';
-import type { InjectedScript } from '../injected/injectedScript';
-import { generateSelector } from '../injected/selectorGenerator';
-import type { Point } from '../../common/types';
+import type * as actions from '../../recorder/recorderActions';
+import type { InjectedScript } from '../injectedScript';
+import type { Point } from '../../../common/types';
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import { Highlight, type HighlightOptions } from '../injected/highlight';
-import { isInsideScope } from './domUtils';
-import { elementText } from './selectorUtils';
-import type { ElementText } from './selectorUtils';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
+import type { ElementText } from '../selectorUtils';
+import type { Highlight, HighlightOptions } from '../highlight';
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -121,7 +116,7 @@ class InspectTool implements RecorderTool {
     if (this._hoveredElement === target)
       return;
     this._hoveredElement = target;
-    const model = this._hoveredElement ? generateSelector(this._recorder.injectedScript, this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
+    const model = this._hoveredElement ? this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     if (this._hoveredModel?.selector === model?.selector)
       return;
     this._hoveredModel = model;
@@ -361,7 +356,7 @@ class RecordActionTool implements RecorderTool {
     // We'd like to ignore this stray event.
     if (userGesture && activeElement === this._recorder.document.body)
       return;
-    const result = activeElement ? generateSelector(this._recorder.injectedScript, activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
+    const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     this._activeModel = result && result.selector ? result : null;
     if (userGesture)
       this._hoveredElement = activeElement as HTMLElement | null;
@@ -458,7 +453,7 @@ class RecordActionTool implements RecorderTool {
       this._recorder.updateHighlight(null, true);
       return;
     }
-    const { selector, elements } = generateSelector(this._recorder.injectedScript, this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+    const { selector, elements } = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName });
     if (this._hoveredModel && this._hoveredModel.selector === selector)
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
@@ -531,9 +526,9 @@ class TextAssertionTool implements RecorderTool {
     if (this._hoverHighlight?.elements[0] === target)
       return;
     if (this._kind === 'text')
-      this._hoverHighlight = elementText(this._textCache, target).full ? { elements: [target], selector: '' } : null;
+      this._hoverHighlight = this._recorder.injectedScript.utils.elementText(this._textCache, target).full ? { elements: [target], selector: '' } : null;
     else
-      this._hoverHighlight = this._elementHasValue(target) ? generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
+      this._hoverHighlight = this._elementHasValue(target) ? this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     this._recorder.updateHighlight(this._hoverHighlight, true, { color: '#8acae480' });
   }
 
@@ -559,7 +554,7 @@ class TextAssertionTool implements RecorderTool {
     if (this._kind === 'value') {
       if (!this._elementHasValue(target))
         return null;
-      const { selector } = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      const { selector } = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         return {
           name: 'assertChecked',
@@ -577,7 +572,7 @@ class TextAssertionTool implements RecorderTool {
         };
       }
     } else {
-      this._hoverHighlight = generateSelector(this._recorder.injectedScript, target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      this._hoverHighlight = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
       // forTextExpect can update the target, re-highlight it.
       this._recorder.updateHighlight(this._hoverHighlight, true, { color: '#8acae480' });
 
@@ -585,7 +580,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertText',
         selector: this._hoverHighlight.selector,
         signals: [],
-        text: elementText(this._textCache, target).normalized,
+        text: this._recorder.injectedScript.utils.elementText(this._textCache, target).normalized,
         substring: true,
       };
     }
@@ -593,7 +588,7 @@ class TextAssertionTool implements RecorderTool {
 
   private _renderValue(action: actions.Action) {
     if (action?.name === 'assertText')
-      return normalizeWhiteSpace(action.text);
+      return this._recorder.injectedScript.utils.normalizeWhiteSpace(action.text);
     if (action?.name === 'assertChecked')
       return String(action.checked);
     if (action?.name === 'assertValue')
@@ -648,12 +643,12 @@ class TextAssertionTool implements RecorderTool {
     textElement.classList.add('text-editor');
 
     const updateAndValidate = () => {
-      const newValue = normalizeWhiteSpace(textElement.value);
+      const newValue = this._recorder.injectedScript.utils.normalizeWhiteSpace(textElement.value);
       const target = this._hoverHighlight?.elements[0];
       if (!target)
         return;
       action.text = newValue;
-      const targetText = elementText(this._textCache, target).normalized;
+      const targetText = this._recorder.injectedScript.utils.elementText(this._textCache, target).normalized;
       const matches = newValue && targetText.includes(newValue);
       textElement.classList.toggle('does-not-match', !matches);
     };
@@ -771,7 +766,7 @@ class Overlay {
   }
 
   contains(element: Element) {
-    return isInsideScope(this._overlayElement, element);
+    return this._recorder.injectedScript.utils.isInsideScope(this._overlayElement, element);
   }
 
   setUIState(state: UIState) {
@@ -866,7 +861,7 @@ export class Recorder {
   constructor(injectedScript: InjectedScript) {
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
-    this.highlight = new Highlight(injectedScript);
+    this.highlight = injectedScript.createHighlight();
     this._tools = {
       'none': new NoneTool(),
       'standby': new NoneTool(),
@@ -1077,7 +1072,7 @@ export class Recorder {
 
   updateHighlight(model: HighlightModel | null, userGesture: boolean, options: HighlightOptions = {}) {
     if (options.tooltipText === undefined && model?.selector)
-      options.tooltipText = asLocator(this.state.language, model.selector);
+      options.tooltipText = this.injectedScript.utils.asLocator(this.state.language, model.selector);
     this.highlight.updateHighlight(model?.elements || [], options);
     if (userGesture)
       this.delegate.highlightUpdated?.();

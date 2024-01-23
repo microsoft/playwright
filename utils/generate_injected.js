@@ -45,7 +45,7 @@ const injectedScripts = [
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'recorder.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,

@@ -22,7 +22,7 @@ import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useMeasure } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
-import { Recorder  } from '@injected/recorder';
+import { Recorder } from '@injected/recorder/recorder';
 import ConsoleAPI from '@injected/consoleApi';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
@@ -279,7 +279,7 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
 
   for (let i = 0; i < frameWindow.frames.length; ++i) {
     const childFrame = frameWindow.frames[i];
-    const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelector(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
+    const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelectorSimple(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
     createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
   }
 }

@@ -739,7 +739,7 @@ async function findFrameSelector(frame: Frame): Promise<string | undefined> {
     const utility = await parent._utilityContext();
     const injected = await utility.injectedScript();
     const selector = await injected.evaluate((injected, element) => {
-      return injected.generateSelector(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
+      return injected.generateSelectorSimple(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
     }, frameElement);
     return selector;
   } catch (e) {

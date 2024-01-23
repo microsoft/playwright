@@ -519,8 +519,8 @@ it.describe('selector generator', () => {
     const selectors = await page.evaluate(() => {
       const target = document.querySelector('section > span');
       const root = document.querySelector('section');
-      const relative = (window as any).__injectedScript.generateSelector(target, { root });
-      const absolute = (window as any).__injectedScript.generateSelector(target);
+      const relative = (window as any).__injectedScript.generateSelectorSimple(target, { root });
+      const absolute = (window as any).__injectedScript.generateSelectorSimple(target);
       return { relative, absolute };
     });
     expect(selectors).toEqual({
