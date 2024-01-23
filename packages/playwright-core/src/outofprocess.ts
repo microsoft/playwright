@@ -34,7 +34,7 @@ class PlaywrightClient {
   private _closePromise = new ManualPromise<void>();
 
   constructor(env: any) {
-    this._driverProcess = childProcess.fork(path.join(__dirname, 'cli', 'cli.js'), ['run-driver'], {
+    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
       env: {

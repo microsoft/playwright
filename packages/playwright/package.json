@@ -18,9 +18,8 @@
       "require": "./index.js",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./package.json": "./package.json",
-    "./lib/cli": "./lib/cli.js",
+    "./lib/program": "./lib/program.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
     "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
     "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
