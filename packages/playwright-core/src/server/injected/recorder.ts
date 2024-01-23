@@ -585,7 +585,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertText',
         selector: this._hoverHighlight.selector,
         signals: [],
-        text: normalizeWhiteSpace(elementText(this._textCache, target).full),
+        text: elementText(this._textCache, target).normalized,
         substring: true,
       };
     }
@@ -653,7 +653,7 @@ class TextAssertionTool implements RecorderTool {
       if (!target)
         return;
       action.text = newValue;
-      const targetText = normalizeWhiteSpace(elementText(this._textCache, target).full);
+      const targetText = elementText(this._textCache, target).normalized;
       const matches = newValue && targetText.includes(newValue);
       textElement.classList.toggle('does-not-match', !matches);
     };

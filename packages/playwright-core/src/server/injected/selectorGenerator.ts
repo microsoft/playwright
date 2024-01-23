@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
@@ -237,7 +237,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
 
   const labels = getElementLabels(injectedScript._evaluator._cacheText, element);
   for (const label of labels) {
-    const labelText = label.full.trim();
+    const labelText = label.normalized;
     candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
     for (const alternative of suitableTextAlternatives(labelText))
       candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(alternative.text, false), score: kLabelScore - alternative.scoreBouns });
@@ -281,7 +281,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBouns }]);
   }
 
-  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
+  const text = elementText(injectedScript._evaluator._cacheText, element).normalized;
   if (text) {
     const alternatives = suitableTextAlternatives(text);
     if (isTargetNode) {

@@ -1385,7 +1385,7 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
   selector = normalizeWhiteSpace(selector);
   if (strict) {
     if (internal)
-      return { kind: 'strict', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full) === selector };
+      return { kind: 'strict', matcher: (elementText: ElementText) => elementText.normalized === selector };
 
     const strictTextNodeMatcher = (elementText: ElementText) => {
       if (!selector && !elementText.immediate.length)
@@ -1395,7 +1395,7 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
     return { matcher: strictTextNodeMatcher, kind: 'strict' };
   }
   selector = selector.toLowerCase();
-  return { kind: 'lax', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(selector) };
+  return { kind: 'lax', matcher: (elementText: ElementText) => elementText.normalized.toLowerCase().includes(selector) };
 }
 
 class ExpectedTextMatcher {
