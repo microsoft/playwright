@@ -785,4 +785,36 @@ await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
   });
+
+  test('should click button with nested div', async ({ page, openRecorder }) => {
+    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29067' });
+
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<button><div role="none">Submit</div></button>`);
+
+    // we hover the nested div, but it must record the button
+    const locator = await recorder.hoverOverElement('div');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Submit'),
+      recorder.trustedClick(),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).click();`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_role("button", name="Submit").click()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_role("button", name="Submit").click()`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+  });
 });
