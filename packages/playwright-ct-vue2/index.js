@@ -19,7 +19,7 @@ const path = require('path');
 
 const plugin = () => {
   // Only fetch upon request to avoid resolution in workers.
-  const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
+  const { createPlugin } = require('@playwright/experimental-ct-core/plugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
     () => import('@vitejs/plugin-vue2').then(plugin => plugin.default()));
