@@ -13,148 +13,7 @@ There are two ways to configure global setup and teardown: using a global setup 
 
 ### Setup
 
-First we add a new project with the name 'setup'. We then give it a [`property: TestProject.testMatch`] property in order to match the file called `global.setup.ts`:
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests',
-  // ...
-  projects: [
-    {
-      name: 'setup',
-      testMatch: /global.setup\.ts/,
-    },
-    // {
-    //   other project
-    // }
-  ]
-});
-```
-Then we add the [`property: TestProject.dependencies`] property to our projects that depend on the setup project and pass into the array the name of of our dependency project, which we defined in the previous step:
-
-```js title="playwright.config.ts"
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests',
-  // ...
-  projects: [
-    {
-      name: 'setup',
-      testMatch: /global\.setup\.ts/,
-    },
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
-    },
-  ]
-});
-```
-### Setup Example
-
-This example will show you how to use project dependencies to create a global setup that logins into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a sign sign-in state and you want to avoid login for each test.
-
-The setup project will write the storage state into an 'playwright/.auth/user.json' file next to your playwright.config. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`StorageState`](./test-use-options#basic-options) method. This applies the storage state on the browser context with its cookies and a local storage snapshot.
-
-In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project does not depend on the setup project, and does not use the `storageState` option.
-
-```js title="playwright.config.ts"
-import { defineConfig, devices } from '@playwright/test';
-
-export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
-
-export default defineConfig({
-  testDir: './tests',
-  // ...
-  use: {
-    baseURL: 'http://localhost:3000/',
-  },
-  projects: [
-    {
-      name: 'setup',
-      testMatch: /global\.setup\.ts/,
-    },
-    {
-      name: 'logged in chromium',
-      testMatch: '**/*.loggedin.spec.ts',
-      dependencies: ['setup'],
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: STORAGE_STATE,
-      },
-    },
-    {
-      name: 'logged out chromium',
-      use: { ...devices['Desktop Chrome'] },
-      testIgnore: ['**/*loggedin.spec.ts']
-    },
-  ],
-});
-```
-
-We then create a setup test, stored at root level of your project, that logs in to an application and populates the context with the storage state after the login actions have been performed. By doing this you only have to log in once and the credentials will be stored in the `STORAGE_STATE` file, meaning you don't need to log in again for every test. Start by importing the `STORAGE_STATE` from the Playwright config file and then use this as the path to save your storage state to the page's context.
-
-```js title="tests/global.setup.ts"
-import { test as setup, expect } from '@playwright/test';
-import { STORAGE_STATE } from '../playwright.config';
-
-setup('do login', async ({ page }) => {
-  await page.goto('/');
-  await page.getByLabel('User Name').fill('user');
-  await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
-
-  // Wait until the page actually signs in.
-  await expect(page.getByText('Hello, user!')).toBeVisible();
-
-  await page.context().storageState({ path: STORAGE_STATE });
-});
-```
-
-```js title="tests/menu.loggedin.spec.ts"
-import { test, expect } from '@playwright/test';
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
-
-test('menu', async ({ page }) => {
-  // You are signed in!
-});
-```
-
-For a more detailed example check out our blog post: [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14) or check the [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo.
-
-### Teardown
-
-You can teardown your setup by adding a [`property: TestProject.teardown`] property to your setup project. This will run after all dependent projects have run.
-
-First we add a new project into the projects array and give it a name such as 'cleanup db'. We then give it a [`property: TestProject.testMatch`] property in order to match the file called `global.teardown.ts`:
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests',
-  // ...
-  projects: [
-    // {
-    //   setup project
-    // },
-    {
-      name: 'cleanup db',
-      testMatch: /global\.teardown\.ts/,
-    },
-    // {
-    //   other project
-    // }
-  ]
-});
-```
-Then we add the [`property: TestProject.teardown`] property to our setup project with the name 'cleanup db' which is the name we gave to our teardown project in the previous step:
+First we add a new project with the name 'setup db'. We then give it a [`property: TestProject.testMatch`] property in order to match the file called `global.setup.ts`:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -166,11 +25,6 @@ export default defineConfig({
     {
       name: 'setup db',
       testMatch: /global\.setup\.ts/,
-      teardown: 'cleanup db',
-    },
-    {
-      name: 'cleanup db',
-      testMatch: /global\.teardown\.ts/,
     },
     // {
     //   other project
@@ -178,26 +32,52 @@ export default defineConfig({
   ]
 });
 ```
+Then we add the [`property: TestProject.dependencies`] property to our projects that depend on the setup project and pass into the array the name of our dependency project, which we defined in the previous step:
 
-### Teardown Example
+```js title="playwright.config.ts"
+import { defineConfig, devices } from '@playwright/test';
 
-Start by creating a `global.setup.ts` file in the tests directory of your project. This will be used to seed the database with some data before all tests have run.
+export default defineConfig({
+  testDir: './tests',
+  // ...
+  projects: [
+    {
+      name: 'setup db',
+      testMatch: /global\.setup\.ts/,
+    },
+    {
+      name: 'chromium with db',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup db'],
+    },
+  ]
+});
+```
+
+In this example the 'chromium with db' project depends on the 'setup db' project. We then create a setup test, stored at root level of your project (note that setup and teardown code must be defined as regular tests by calling [test()](./api/class-test#test-call) function):
 
 ```js title="tests/global.setup.ts"
-// seed the database with some data
+import { test as setup } from '@playwright/test';
+
+setup('create new database', async ({ }) => {
+  console.log('creating new database...');
+  // Initialize the database
+});
 ```
-Then create a `global.teardown.ts` file in the tests directory of your project. This will be used to delete the data from the database after all tests have run.
 
-```js title="tests/global.teardown.ts"
-// delete the data from the database
+```js title="tests/menu.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test('menu', async ({ page }) => {
+  // Your test that depends on the database
+});
 ```
-In the Playwright config file:
- - Add a project into the projects array and give it a name such as 'setup db'. Give it a [`property: TestProject.testMatch`] property in order to match the file called `global.setup.ts`.
 
- - Create another project and give it a name such as 'cleanup db'. Give it a [`property: TestProject.testMatch`] property in order to match the file called `global.teardown.ts`.
+### Teardown
 
- - Add the [`property: TestProject.teardown`] property to our setup project with the name 'cleanup db' which is the name given to our teardown project in the previous step. Finally add the 'chromium' project with the [`property: TestProject.dependencies`] on the 'setup db' project.
+You can teardown your setup by adding a [`property: TestProject.teardown`] property to your setup project. This will run after all dependent projects have run.
 
+First we add the [`property: TestProject.teardown`] property to our setup project with the name 'cleanup db' which is the name we gave to our teardown project in the previous step:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -223,6 +103,24 @@ export default defineConfig({
   ]
 });
 ```
+
+Then we create a `global.teardown.ts` file in the tests directory of your project. This will be used to delete the data from the database after all tests have run.
+
+```js title="tests/global.teardown.ts"
+import { test as teardown } from '@playwright/test';
+
+teardown('delete database', async ({ }) => {
+  console.log('deleting test database...');
+  // Delete the database
+});
+```
+
+### More examples
+
+For more detailed examples check out:
+- our [authentication](./auth.md) guide
+- our blog post [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14)
+- [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo
 
 ## Option 2: Configure globalSetup and globalTeardown
 
