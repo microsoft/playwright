@@ -257,10 +257,6 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       `Alternatively, use apt:`,
       `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
       ``,
-      `Or just install the browsers you actually want to run:`,
-      ``,
-      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install --with-deps chromium')}`,
-      ``,
       `<3 Playwright Team`,
     ]);
   } else {

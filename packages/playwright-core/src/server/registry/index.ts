@@ -866,9 +866,8 @@ export class Registry {
     if (!executable.directory)
       return;
     const markerFile = path.join(executable.directory, 'DEPENDENCIES_VALIDATED');
-    const depsValidationFileExists: boolean = await fs.promises.access(markerFile).then(() => true).catch(() => false);
     // Executable is already validated.
-    if (depsValidationFileExists && await fs.promises.stat(markerFile).then(stat => (Date.now() - stat.mtime.getTime()) < kMaximumReValidationPeriod))
+    if (await fs.promises.stat(markerFile).then(stat => (Date.now() - stat.mtime.getTime()) < kMaximumReValidationPeriod).catch(() => false))
       return;
 
     debugLogger.log('install', `validating host requirements for "${executable.name}"`);
@@ -880,12 +879,8 @@ export class Registry {
       throw error;
     }
 
-    if (updateMarkerFile) {
-      if (depsValidationFileExists)
-        await fs.promises.utimes(markerFile, new Date(), new Date());
-      else
-        await fs.promises.writeFile(markerFile, '');
-    }
+    if (updateMarkerFile)
+      await fs.promises.writeFile(markerFile, '');
   }
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
