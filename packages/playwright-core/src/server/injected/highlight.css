@@ -33,7 +33,30 @@ x-pw-tooltip {
   max-width: 600px;
   position: absolute;
   top: 0;
-  padding: 4px;
+  padding: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+x-pw-tooltip-line {
+  display: flex;
+  max-width: 600px;
+  padding: 6px;
+  user-select: none;
+  cursor: pointer;
+}
+
+x-pw-tooltip-line.selectable:hover {
+  background-color: hsl(0, 0%, 95%);
+  overflow: hidden;
+}
+
+x-pw-tooltip-footer {
+  display: flex;
+  max-width: 600px;
+  padding: 6px;
+  user-select: none;
+  color: #777;
 }
 
 x-pw-dialog {

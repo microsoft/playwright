@@ -21,6 +21,10 @@ async function generate(pageOrFrame: Page | Frame, target: string): Promise<stri
   return pageOrFrame.$eval(target, e => (window as any).playwright.selector(e));
 }
 
+async function generateMultiple(pageOrFrame: Page | Frame, target: string): Promise<string> {
+  return pageOrFrame.$eval(target, e => (window as any).__injectedScript.generateSelector(e, { multiple: true, testIdAttributeName: 'data-testid' }).selectors);
+}
+
 it.describe('selector generator', () => {
   it.skip(({ mode }) => mode !== 'default');
 
@@ -527,5 +531,45 @@ it.describe('selector generator', () => {
       relative: `internal:text="Hello"i`,
       absolute: `section >> internal:text="Hello"i`,
     });
+  });
+
+  it('should generate multiple: noText in role', async ({ page }) => {
+    await page.setContent(`
+      <button>Click me</button>
+    `);
+    expect(await generateMultiple(page, 'button')).toEqual([`internal:role=button[name="Click me"i]`, `internal:role=button`]);
+  });
+
+  it('should generate multiple: noText in text', async ({ page }) => {
+    await page.setContent(`
+      <div>Some div</div>
+    `);
+    expect(await generateMultiple(page, 'div')).toEqual([`internal:text="Some div"i`, `div`]);
+  });
+
+  it('should generate multiple: noId', async ({ page }) => {
+    await page.setContent(`
+      <div id=first><button>Click me</button></div>
+      <div id=second><button>Click me</button></div>
+    `);
+    expect(await generateMultiple(page, '#second button')).toEqual([
+      `#second >> internal:role=button[name="Click me"i]`,
+      `#second >> internal:role=button`,
+      `internal:role=button[name="Click me"i] >> nth=1`,
+      `internal:role=button >> nth=1`,
+    ]);
+  });
+
+  it('should generate multiple: noId noText', async ({ page }) => {
+    await page.setContent(`
+      <div id=first><span>Some span</span></div>
+      <div id=second><span>Some span</span></div>
+    `);
+    expect(await generateMultiple(page, '#second span')).toEqual([
+      `#second >> internal:text="Some span"i`,
+      `#second span`,
+      `internal:text="Some span"i >> nth=1`,
+      `span >> nth=1`,
+    ]);
   });
 });
