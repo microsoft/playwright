@@ -67,7 +67,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
     if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
       const isOfficiallySupportedPlatform = distroInfo?.id === 'ubuntu';
       if (parseInt(distroInfo.version, 10) <= 19)
-        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       if (parseInt(distroInfo.version, 10) <= 21)
         return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
