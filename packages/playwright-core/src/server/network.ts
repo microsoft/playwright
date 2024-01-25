@@ -26,7 +26,6 @@ import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 import type { NormalizedContinueOverrides } from './types';
 import { BrowserContext } from './browserContext';
-import { isProtocolError } from './protocolError';
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -259,7 +258,7 @@ export class Route extends SdkObject {
   async abort(errorCode: string = 'failed') {
     this._startHandling();
     this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
-    await catchDisallowedErrors(() => this._delegate.abort(errorCode));
+    await this._delegate.abort(errorCode);
     this._endHandling();
   }
 
@@ -287,12 +286,12 @@ export class Route extends SdkObject {
     const headers = [...(overrides.headers || [])];
     this._maybeAddCorsHeaders(headers);
     this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
-    await catchDisallowedErrors(() => this._delegate.fulfill({
+    await this._delegate.fulfill({
       status: overrides.status || 200,
       headers,
       body: body!,
       isBase64,
-    }));
+    });
     this._endHandling();
   }
 
@@ -325,7 +324,7 @@ export class Route extends SdkObject {
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
-    await catchDisallowedErrors(() => this._delegate.continue(this._request, overrides));
+    await this._delegate.continue(this._request, overrides);
     this._endHandling();
   }
 
@@ -336,15 +335,6 @@ export class Route extends SdkObject {
 
   private _endHandling() {
     this._request._context.removeRouteInFlight(this);
-  }
-}
-
-async function catchDisallowedErrors(callback: () => Promise<void>) {
-  try {
-    return await callback();
-  } catch (e) {
-    if (isProtocolError(e) && e.message.includes('Invalid http status code or phrase'))
-      throw e;
   }
 }
 
