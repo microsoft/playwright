@@ -57,7 +57,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  readonly _tracing = new TestTracing();
+  readonly _tracing: TestTracing;
 
   _didTimeout = false;
   _wasInterrupted = false;
@@ -187,6 +187,8 @@ export class TestInfoImpl implements TestInfo {
         this._attach(a.name, a);
       return this.attachments.length;
     };
+
+    this._tracing = new TestTracing(this, workerParams.artifactsDir);
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
@@ -223,6 +225,7 @@ export class TestInfoImpl implements TestInfo {
     if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
       this.errors.push(timeoutError);
+      this._tracing.appendForError(timeoutError);
       // Do not overwrite existing failure upon hook/teardown timeout.
       if (this.status === 'passed' || this.status === 'skipped')
         this.status = 'timedOut';
@@ -359,6 +362,7 @@ export class TestInfoImpl implements TestInfo {
     if (step && step.boxedStack)
       serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
     this.errors.push(serialized);
+    this._tracing.appendForError(serialized);
   }
 
   async _runAsStepWithRunnable<T>(

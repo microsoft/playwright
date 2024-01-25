@@ -288,3 +288,63 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
     /expect.not.toBeCheckedlocator\('input'\)[\d.]/,
   ]);
 });
+
+test('should show live trace from hooks', async ({ runUITest, createLatch }) => {
+  const latch1 = createLatch();
+  const latch2 = createLatch();
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(async ({ browser }) => {
+        const page = await browser.newPage();
+        ${latch1.blockingCode}
+        await page.close();
+      });
+      test.beforeEach(async ({ browser }) => {
+        const page = await browser.newPage();
+        ${latch2.blockingCode}
+        await page.close();
+      });
+      test('test one', async ({ page }) => {
+        await page.setContent('Page content');
+      });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ test one
+  `);
+  await page.getByText('test one').dblclick();
+
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks/,
+    /beforeAll hook/,
+    /fixture: browser/,
+    /browser.newPage/,
+  ]);
+  latch1.open();
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks/,
+    /beforeAll hook/,
+    /beforeEach hook/,
+    /browser.newPage/,
+  ]);
+  latch2.open();
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks/,
+    /page.setContent/,
+    /After Hooks/,
+  ]);
+});
