@@ -18,7 +18,12 @@ import { test, expect } from './playwright-test-fixtures';
 
 const playwrightConfig = `
   import { defineConfig } from '@playwright/experimental-ct-react';
-  export default defineConfig({ projects: [{name: 'foo'}] });
+  export default defineConfig({
+    use: {
+      ctPort: ${3200 + (+process.env.TEST_PARALLEL_INDEX)}
+    },
+    projects: [{name: 'foo'}],
+  });
 `;
 
 test('should work with TSX', async ({ runInlineTest }) => {
@@ -420,7 +425,8 @@ test('should handle the vite host config', async ({ runInlineTest }) => {
 
       test('pass component', async ({ page, mount }) => {
         const component = await mount(<Component />);
-        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+        const host = await page.evaluate(() => window.location.hostname);
+        await expect(host).toBe('127.0.0.1');
       });
     `,
   }, { workers: 1 });

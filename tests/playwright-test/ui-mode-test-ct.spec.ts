@@ -21,7 +21,11 @@ test.describe.configure({ mode: 'parallel', retries });
 const basicTestTree = {
   'playwright.config.ts': `
     import { defineConfig } from '@playwright/experimental-ct-react';
-    export default defineConfig({});
+    export default defineConfig({
+      use: {
+        ctPort: ${3200 + (+process.env.TEST_PARALLEL_INDEX)}
+      }  
+    });
   `,
   'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
   'playwright/index.ts': ``,

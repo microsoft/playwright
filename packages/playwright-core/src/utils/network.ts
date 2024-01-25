@@ -181,8 +181,9 @@ export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog
 
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void): Promise<number> {
   return new Promise(resolve => {
-    onLog?.(`HTTP GET: ${url}`);
+    onLog?.(`HTTP HEAD: ${url}`);
     httpRequest({
+      method: 'HEAD',
       url: url.toString(),
       headers: { Accept: '*/*' },
       rejectUnauthorized: !ignoreHTTPSErrors
