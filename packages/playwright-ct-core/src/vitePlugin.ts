@@ -70,8 +70,11 @@ export function createPlugin(
 
       let buildExists = false;
       let buildInfo: BuildInfo;
-
+      console.log({ registerSourceFile });
+      console.log('before registerSource');
       const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
+      console.log('registerSource.length', registerSource.length);
+
       const registerSourceHash = calculateSha1(registerSource);
 
       const { version: viteVersion, build, preview, mergeConfig } = await import('vite');
@@ -120,6 +123,7 @@ export function createPlugin(
         const buildConfig = mergeConfig(viteConfig, {
           plugins: [vitePlugin(registerSource, dirs.templateDir, buildInfo, componentRegistry, depsCollector)]
         });
+        console.log('before build!!');
         await build(buildConfig);
         buildInfo.deps = Object.fromEntries(depsCollector.entries());
 
