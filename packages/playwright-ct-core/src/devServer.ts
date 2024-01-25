@@ -44,7 +44,7 @@ export async function runDevServer(configFile: string, registerSourceFile: strin
   const componentRegistry: ComponentRegistry = new Map();
   await populateComponentsFromTests(componentRegistry);
 
-  const dirs = resolveDirs(config.configDir, config.config);
+  const dirs = await resolveDirs(config.configDir, config.config);
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
   const viteConfig = await createConfig(dirs, config.config, frameworkPluginFactory, false);
   viteConfig.plugins.push({
