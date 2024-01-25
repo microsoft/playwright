@@ -45,6 +45,7 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
   _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
 
   page: async ({ page }, use, info) => {
+    page.on('pageerror', error => console.error(error));
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
     await (page as any)._wrapApiCall(async () => {
@@ -95,10 +96,17 @@ async function innerUpdate(page: Page, componentRef: JsxComponent | ImportRef, o
 }
 
 async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, options: ObjectComponentOptions & MountOptions = {}): Promise<string> {
+  console.log('innerMount 1.0');
   const component = wrapObject(createComponent(componentRef, options), boundCallbacksForMount);
-
+  console.log('innerMount 2.0', page.url());
+  const firstScriptSrc = await page.$eval('script', e => e.src);
+  console.log('innerMount 2.0.1', firstScriptSrc);
+  const scriptContent = await (await page.request.get(firstScriptSrc)).text()
+  console.log(scriptContent)
+  console.log('innerMount 2.1', await page.content());
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!window.playwrightMount);
+  console.log('innerMount 3.0');
 
   const selector = await page.evaluate(async ({ component, hooksConfig }) => {
     component = await window.__pwUnwrapObject(component);
@@ -112,6 +120,7 @@ async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, op
 
     return '#root >> internal:control=component';
   }, { component, hooksConfig: options.hooksConfig });
+  console.log('innerMount 4.0');
   return selector;
 }
 

@@ -51,6 +51,7 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
+      console.log('Hello from Vite plugin!');
       {
         // Detect a running dev server and use it if available.
         const endpoint = resolveEndpoint(config);

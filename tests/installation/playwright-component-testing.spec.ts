@@ -24,7 +24,9 @@ test('pnpm: @playwright/experimental-ct-react should work', async ({ exec, tmpWo
   await writeFiles({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({});
+      export default defineConfig({
+        timeout: 20_000,
+      });
     `,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
@@ -48,7 +50,7 @@ test('pnpm: @playwright/experimental-ct-react should work', async ({ exec, tmpWo
       });
     `,
   });
-  await exec('pnpm exec playwright test -c . --browser=chromium --reporter=list,json example.spec.tsx', { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
+  await exec('pnpm exec playwright test -c . --browser=chromium --reporter=list,json example.spec.tsx', { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json', DEBUG: 'pw:api,pw:browser', PWDEBUGIMPL: '1' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'), '--validate-chromium-project-only');
 });
 

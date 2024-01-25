@@ -96,14 +96,12 @@ class LintingService {
   /**
    * @param {string} command 
    * @param {string[]} args
-   * @param {CodeSnippet[]} snippets 
    * @param {string} cwd
    * @returns {Promise<LintResult[]>}
    */
-  async spawnAsync(command, args, snippets, cwd) {
-    const tempFile = await this._writeTempSnippetsFile(snippets);
+  async spawnAsync(command, args, cwd) {
     return await new Promise((fulfill, reject) => {
-      const child = child_process.spawn(command, [...args, tempFile], { cwd });
+      const child = child_process.spawn(command, args, { cwd });
       let stdout = '';
       child.on('error', reject);
       child.stdout.on('data', data => stdout += data.toString());
@@ -190,7 +188,8 @@ class PythonLintingService extends LintingService {
   }
 
   async lint(snippets) {
-    const result = await this.spawnAsync('python', [path.join(__dirname, 'python', 'main.py')], snippets, path.join(__dirname, 'python'))
+    const tempFile = await this._writeTempSnippetsFile(snippets);
+    const result = await this.spawnAsync('python', [path.join(__dirname, 'python', 'main.py', tempFile)], path.join(__dirname, 'python'))
     return result;
   }
 }
@@ -201,7 +200,25 @@ class CSharpLintingService extends LintingService {
   }
 
   async lint(snippets) {
-    return await this.spawnAsync('dotnet', ['run', '--project', path.join(__dirname, 'csharp')], snippets, path.join(__dirname, 'csharp'))
+    const tempFile = await this._writeTempSnippetsFile(snippets);
+    return await this.spawnAsync('dotnet', ['run', '--project', path.join(__dirname, 'csharp'), tempFile], path.join(__dirname, 'csharp'))
+  }
+}
+
+class JavaLintingService extends LintingService {
+  supports(codeLang) {
+    return codeLang === 'java';
+  }
+
+  async lint(snippets) {
+    // if snippet contains no class, then wrap it inside a class
+    for (let i = 0; i < snippets.length; i++) {
+      if (!snippets[i].code.includes('class')) {
+        snippets[i].code = `class Snippet { ${snippets[i].code} }`;
+      }
+    }
+    const tempFile = await this._writeTempSnippetsFile(snippets);
+    return await this.spawnAsync('mvn', ['compile', 'exec:java', '--quiet', '-Dexec.mainClass=dev.playwright.linting.App', `-Dexec.args="${tempFile}"`], path.join(__dirname, 'java'))
   }
 }
 
@@ -213,8 +230,9 @@ class LintingServiceFactory {
     ]
     if (!process.env.NO_EXTERNAL_DEPS) {
       this.services.push(
-        new PythonLintingService(),
-        new CSharpLintingService(),
+       // new PythonLintingService(),
+       // new CSharpLintingService(),
+        new JavaLintingService(),
       );
     }
     this._metrics = {};

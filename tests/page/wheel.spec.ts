@@ -48,7 +48,7 @@ async function expectEvent(page: Page, expected: any) {
   expect(received).toEqual(expected);
 }
 
-it('should dispatch wheel events @smoke', async ({ page, server }) => {
+it('should dispatch wheel events @smoke', async ({ page, server }, testInfo) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
