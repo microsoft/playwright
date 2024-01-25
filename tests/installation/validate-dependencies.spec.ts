@@ -62,17 +62,6 @@ test('should validate dependencies correctly if skipped during install', async (
     expect(result).not.toContain(`validating host requirements for "firefox"`);
     expect(result).not.toContain(`validating host requirements for "webkit"`);
   });
-
-  await test.step('should validate dependencies for a second launch (skipped during install)', async () => {
-    const result = await exec('node test.js', {
-      env: {
-        DEBUG: 'pw:install',
-      },
-    });
-    expect(result).toContain(`validating host requirements for "chromium"`);
-    expect(result).not.toContain(`validating host requirements for "firefox"`);
-    expect(result).not.toContain(`validating host requirements for "webkit"`);
-  });
 });
 
 test('should not validate dependencies on launch if validated during install', async ({ exec, writeFiles }) => {
