@@ -53,14 +53,24 @@ export function resolveDirs(configDir: string, config: FullConfig): ComponentDir
   };
 }
 
+export function resolveEndpoint(config: FullConfig) {
+  const use = config.projects[0].use as CtConfig;
+  const baseURL = new URL(use.baseURL || 'http://localhost');
+  return {
+    https: baseURL.protocol.startsWith('https:') ? {} : undefined,
+    host: baseURL.hostname,
+    port: use.ctPort || Number(baseURL.port) || 3100
+  };
+}
+
 export async function createConfig(dirs: ComponentDirs, config: FullConfig, frameworkPluginFactory: (() => Promise<Plugin>) | undefined, supportJsxInJs: boolean) {
   // We are going to have 3 config files:
   // - the defaults that user config overrides (baseConfig)
   // - the user config (userConfig)
   // - frameworks overrides (frameworkOverrides);
 
+  const endpoint = resolveEndpoint(config);
   const use = config.projects[0].use as CtConfig;
-  const baseURL = new URL(use.baseURL || 'http://localhost');
 
   // Compose base config from the playwright config only.
   const baseConfig: InlineConfig = {
@@ -76,16 +86,8 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
     build: {
       outDir: dirs.outDir
     },
-    preview: {
-      https: baseURL.protocol.startsWith('https:') ? {} : undefined,
-      host: baseURL.hostname,
-      port: use.ctPort || Number(baseURL.port) || 3100
-    },
-    server: {
-      https: baseURL.protocol.startsWith('https:') ? {} : undefined,
-      host: baseURL.hostname,
-      port: use.ctPort || Number(baseURL.port) || 3100
-    },
+    preview: endpoint,
+    server: endpoint,
     // Vite preview server will otherwise always return the index.html with 200.
     appType: 'mpa',
   };

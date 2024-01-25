@@ -8,3 +8,4 @@
 ../util.ts
 ../utilsBundle.ts
 ../isomorphic/folders.ts
+../fsWatcher.ts

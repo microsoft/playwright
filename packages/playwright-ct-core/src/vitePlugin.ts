@@ -18,7 +18,7 @@ import fs from 'fs';
 import type http from 'http';
 import type { AddressInfo } from 'net';
 import path from 'path';
-import { assert, calculateSha1, getPlaywrightVersion } from 'playwright-core/lib/utils';
+import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { stoppable } from 'playwright/lib/utilsBundle';
@@ -30,7 +30,7 @@ import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
-import { createConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
+import { createConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 
 const log = debug('pw:vite');
 
@@ -51,6 +51,19 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
+      {
+        // Detect a running dev server and use it if available.
+        const endpoint = resolveEndpoint(config);
+        const protocol = endpoint.https ? 'https:' : 'http:';
+        const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
+        if (process.env.PW_CT_DEV && await isURLAvailable(url, true)) {
+          // eslint-disable-next-line no-console
+          console.log(`Test Server is already running at ${url.toString()}, using it.\n`);
+          process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
+          return;
+        }
+      }
+
       const dirs = resolveDirs(configDir, config);
       const buildInfoFile = path.join(dirs.outDir, 'metainfo.json');
 

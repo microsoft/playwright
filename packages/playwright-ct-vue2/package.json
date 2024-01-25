@@ -36,6 +36,7 @@
     "vue": "^2.7.14"
   },
   "bin": {
-    "playwright": "cli.js"
+    "playwright": "cli.js",
+    "pw-vue2": "cli.js"
   }
 }
