@@ -26,6 +26,7 @@ import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 import type { NormalizedContinueOverrides } from './types';
 import { BrowserContext } from './browserContext';
+import { isProtocolError } from './protocolError';
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -132,18 +133,6 @@ export class Request extends SdkObject {
   _setFailureText(failureText: string) {
     this._failureText = failureText;
     this._waitForResponsePromise.resolve(null);
-  }
-
-  async _waitForRequestFailure() {
-    const response = await this._waitForResponsePromise;
-    // If response is null it was a failure an we are done.
-    if (!response)
-      return;
-    await response._finishedPromise;
-    if (this.failure())
-      return;
-    // If request finished without errors, we stall.
-    await new Promise(() => {});
   }
 
   _setOverrides(overrides: types.NormalizedContinueOverrides) {
@@ -270,13 +259,7 @@ export class Route extends SdkObject {
   async abort(errorCode: string = 'failed') {
     this._startHandling();
     this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
-    await Promise.race([
-      this._delegate.abort(errorCode),
-      // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed event and will ignore route handling error.
-      this._request._waitForRequestFailure()
-    ]);
-
+    await catchDisallowedErrors(() => this._delegate.abort(errorCode));
     this._endHandling();
   }
 
@@ -304,17 +287,12 @@ export class Route extends SdkObject {
     const headers = [...(overrides.headers || [])];
     this._maybeAddCorsHeaders(headers);
     this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
-    await Promise.race([
-      this._delegate.fulfill({
-        status: overrides.status || 200,
-        headers,
-        body,
-        isBase64,
-      }),
-      // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed event and will ignore route handling error.
-      this._request._waitForRequestFailure()
-    ]);
+    await catchDisallowedErrors(() => this._delegate.fulfill({
+      status: overrides.status || 200,
+      headers,
+      body: body!,
+      isBase64,
+    }));
     this._endHandling();
   }
 
@@ -347,13 +325,7 @@ export class Route extends SdkObject {
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
-    await Promise.race([
-      this._delegate.continue(this._request, overrides),
-      // If the request is already cancelled by the page before we handle the route,
-      // we'll receive loading failed event and will ignore route handling error.
-      this._request._waitForRequestFailure()
-    ]);
-
+    await catchDisallowedErrors(() => this._delegate.continue(this._request, overrides));
     this._endHandling();
   }
 
@@ -364,6 +336,15 @@ export class Route extends SdkObject {
 
   private _endHandling() {
     this._request._context.removeRouteInFlight(this);
+  }
+}
+
+async function catchDisallowedErrors(callback: () => Promise<void>) {
+  try {
+    return await callback();
+  } catch (e) {
+    if (isProtocolError(e) && e.message.includes('Invalid http status code or phrase'))
+      throw e;
   }
 }
 
