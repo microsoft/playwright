@@ -64,7 +64,7 @@ export function createPlugin(
         }
       }
 
-      const dirs = resolveDirs(configDir, config);
+      const dirs = await resolveDirs(configDir, config);
       const buildInfoFile = path.join(dirs.outDir, 'metainfo.json');
 
       let buildExists = false;
