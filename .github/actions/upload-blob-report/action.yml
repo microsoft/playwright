@@ -29,6 +29,5 @@ runs:
       if: always() && github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
-        name: pull-request-number
+        name: pull-request-${{ inputs.job_name }}
         path: pull_request_number.txt
-        overwrite: true
