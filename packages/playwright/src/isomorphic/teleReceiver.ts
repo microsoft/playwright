@@ -209,8 +209,8 @@ export class TeleReporterReceiver {
       this._rootSuite.suites.push(projectSuite);
       projectSuite.parent = this._rootSuite;
     }
-    const p = this._parseProject(project);
-    projectSuite.project = () => p;
+    // Always update project in watch mode.
+    projectSuite._project = this._parseProject(project);
     this._mergeSuitesInto(project.suites, projectSuite);
 
     // Remove deleted tests when listing. Empty suites will be auto-filtered
@@ -428,6 +428,7 @@ export class TeleSuite implements SuitePrivate {
   _timeout: number | undefined;
   _retries: number | undefined;
   _fileId: string | undefined;
+  _project: TeleFullProject | undefined;
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
@@ -459,7 +460,7 @@ export class TeleSuite implements SuitePrivate {
   }
 
   project(): TeleFullProject | undefined {
-    return undefined;
+    return this._project ?? this.parent?.project();
   }
 }
 
