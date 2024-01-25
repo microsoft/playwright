@@ -160,7 +160,7 @@ program
         } else {
           const forceReinstall = hasNoArguments ? false : !!options.force;
           await registry.install(executables, forceReinstall);
-          await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript', /* updateMarkerFile */ true).catch((e: Error) => {
+          await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
             e.name = 'Playwright Host validation warning';
             console.error(e);
           });

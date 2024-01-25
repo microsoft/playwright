@@ -851,16 +851,16 @@ export class Registry {
     };
   }
 
-  async validateHostRequirementsForExecutablesIfNeeded(executables: Executable[], sdkLanguage: string, updateMarkerFile: boolean) {
+  async validateHostRequirementsForExecutablesIfNeeded(executables: Executable[], sdkLanguage: string) {
     if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
       process.stderr.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
       return;
     }
     for (const executable of executables)
-      await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage, updateMarkerFile);
+      await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage);
   }
 
-  private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string, updateMarkerFile: boolean) {
+  private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string) {
     const kMaximumReValidationPeriod = 30 * 24 * 60 * 60 * 1000; // 30 days
     // Executable does not require validation.
     if (!executable.directory)
@@ -879,8 +879,7 @@ export class Registry {
       throw error;
     }
 
-    if (updateMarkerFile)
-      await fs.promises.writeFile(markerFile, '');
+    await fs.promises.writeFile(markerFile, '').catch(() => {});
   }
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
