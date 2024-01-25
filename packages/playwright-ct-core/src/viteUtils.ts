@@ -172,6 +172,13 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   const indexJs = path.join(templateDir, 'index.js');
   const indexJsx = path.join(templateDir, 'index.jsx');
   const idResolved = path.resolve(id);
+  console.log({
+    indexTs,
+    indexTsx,
+    indexJs,
+    indexJsx,
+    idResolved,
+  })
   if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx)) {
     console.log('return 1');
     return null;
