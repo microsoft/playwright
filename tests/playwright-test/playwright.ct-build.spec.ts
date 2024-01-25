@@ -21,7 +21,12 @@ test.describe.configure({ mode: 'parallel' });
 
 const playwrightConfig = `
   import { defineConfig } from '@playwright/experimental-ct-react';
-  export default defineConfig({ projects: [{name: 'foo'}] });
+  export default defineConfig({
+    use: {
+      ctPort: ${3200 + (+process.env.TEST_PARALLEL_INDEX)}
+    },
+    projects: [{name: 'foo'}],
+  });
 `;
 
 test('should work with the empty component list', async ({ runInlineTest }, testInfo) => {
