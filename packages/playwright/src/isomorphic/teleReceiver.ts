@@ -206,10 +206,11 @@ export class TeleReporterReceiver {
     let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.__projectId === project.id);
     if (!projectSuite) {
       projectSuite = new TeleSuite(project.name, 'project');
-      projectSuite._project = this._parseProject(project);
       this._rootSuite.suites.push(projectSuite);
       projectSuite.parent = this._rootSuite;
     }
+    // Always update project in watch mode.
+    projectSuite._project = this._parseProject(project);
     this._mergeSuitesInto(project.suites, projectSuite);
 
     // Remove deleted tests when listing. Empty suites will be auto-filtered
