@@ -33,6 +33,9 @@ type HighlightEntry = {
 
 export type HighlightOptions = {
   tooltipText?: string;
+  tooltipList?: string[];
+  tooltipFooter?: string;
+  tooltipListItemSelected?: (index: number | undefined) => void;
   color?: string;
 };
 
@@ -40,6 +43,7 @@ export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
   private _highlightEntries: HighlightEntry[] = [];
+  private _highlightOptions: HighlightOptions = {};
   private _actionPointElement: HTMLElement;
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
@@ -64,6 +68,8 @@ export class Highlight {
       this._glassPaneElement.addEventListener(eventName, e => {
         e.stopPropagation();
         e.stopImmediatePropagation();
+        if (e.type === 'click' && (e as MouseEvent).button === 0 && this._highlightOptions.tooltipListItemSelected)
+          this._highlightOptions.tooltipListItemSelected(undefined);
       });
     }
     this._actionPointElement = document.createElement('x-pw-action-point');
@@ -112,6 +118,8 @@ export class Highlight {
       entry.tooltipElement?.remove();
     }
     this._highlightEntries = [];
+    this._highlightOptions = {};
+    this._glassPaneElement.style.pointerEvents = 'none';
   }
 
   updateHighlight(elements: Element[], options: HighlightOptions) {
@@ -130,27 +138,48 @@ export class Highlight {
     // Code below should trigger one layout and leave with the
     // destroyed layout.
 
-    if (this._highlightIsUpToDate(elements, options.tooltipText))
+    if (this._highlightIsUpToDate(elements, options))
       return;
 
     // 1. Destroy the layout
     this.clearHighlight();
+    this._highlightOptions = options;
+    this._glassPaneElement.style.pointerEvents = options.tooltipListItemSelected ? 'initial' : 'none';
 
     for (let i = 0; i < elements.length; ++i) {
       const highlightElement = this._createHighlightElement();
       this._glassPaneShadow.appendChild(highlightElement);
 
       let tooltipElement;
-      if (options.tooltipText) {
+      if (options.tooltipList || options.tooltipText || options.tooltipFooter) {
         tooltipElement = this._injectedScript.document.createElement('x-pw-tooltip');
         this._glassPaneShadow.appendChild(tooltipElement);
-        const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-        tooltipElement.textContent = options.tooltipText + suffix;
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
+        let lines: string[] = [];
+        if (options.tooltipList) {
+          lines = options.tooltipList;
+        } else if (options.tooltipText) {
+          const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
+          lines = [options.tooltipText + suffix];
+        }
+        for (let index = 0; index < lines.length; index++) {
+          const element = this._injectedScript.document.createElement('x-pw-tooltip-line');
+          element.textContent = lines[index];
+          tooltipElement.appendChild(element);
+          if (options.tooltipListItemSelected) {
+            element.classList.add('selectable');
+            element.addEventListener('click', () => options.tooltipListItemSelected?.(index));
+          }
+        }
+        if (options.tooltipFooter) {
+          const footer = this._injectedScript.document.createElement('x-pw-tooltip-footer');
+          footer.textContent = options.tooltipFooter;
+          tooltipElement.appendChild(footer);
+        }
       }
-      this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement, tooltipText: options.tooltipText });
+      this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
@@ -212,12 +241,26 @@ export class Highlight {
     return { anchorLeft, anchorTop };
   }
 
-  private _highlightIsUpToDate(elements: Element[], tooltipText: string | undefined): boolean {
+  private _highlightIsUpToDate(elements: Element[], options: HighlightOptions): boolean {
+    if (options.tooltipText !== this._highlightOptions.tooltipText)
+      return false;
+    if (options.tooltipListItemSelected !== this._highlightOptions.tooltipListItemSelected)
+      return false;
+    if (options.tooltipFooter !== this._highlightOptions.tooltipFooter)
+      return false;
+
+    if (options.tooltipList?.length !== this._highlightOptions.tooltipList?.length)
+      return false;
+    if (options.tooltipList && this._highlightOptions.tooltipList) {
+      for (let i = 0; i < options.tooltipList.length; i++) {
+        if (options.tooltipList[i] !== this._highlightOptions.tooltipList[i])
+          return false;
+      }
+    }
+
     if (elements.length !== this._highlightEntries.length)
       return false;
     for (let i = 0; i < this._highlightEntries.length; ++i) {
-      if (tooltipText !== this._highlightEntries[i].tooltipText)
-        return false;
       if (elements[i] !== this._highlightEntries[i].targetElement)
         return false;
       const oldBox = this._highlightEntries[i].box;
@@ -227,6 +270,7 @@ export class Highlight {
       if (box.top !== oldBox.top || box.right !== oldBox.right || box.bottom !== oldBox.bottom || box.left !== oldBox.left)
         return false;
     }
+
     return true;
   }
 
