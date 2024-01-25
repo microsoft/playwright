@@ -115,6 +115,8 @@ To update Playwright to the latest version run the following command:
 
 ```bash
 npm install -D @playwright/test@latest
+# Also download new browser binaries and their dependencies:
+npx playwright install --with-deps
 ```
 You can always check which version of Playwright you have by running the following command:
 
