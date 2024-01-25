@@ -1677,3 +1677,35 @@ test('merge reports without --config preserves path separators', async ({ runInl
   expect(output).toContain(`test: ${test.info().outputPath('dir1', 'tests2', 'b.test.js').replaceAll(path.sep, otherSeparator)}`);
   expect(output).toContain(`test title: ${'tests2' + otherSeparator + 'b.test.js'}`);
 });
+
+test('TestSuite.project() should return owning project', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29173' });
+  const files1 = {
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        onTestBegin(test) {
+          console.log('test project:', test.parent?.project()?.name);
+        }
+      };
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+      reporter: './echo-reporter.js'
+     };`,
+    'playwright.config.ts': `module.exports = {
+      testDir: 'tests',
+      reporter: [['blob', { outputDir: 'blob-report' }]],
+      projects: [{name: 'my-project'}]
+    };`,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => { });
+    `,
+  };
+  await runInlineTest(files1);
+
+  const { exitCode, output } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
+  console.log(output);
+  expect(output).toContain(`test project: my-project`);
+});
