@@ -230,17 +230,17 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     const pwVersion = getPlaywrightVersion();
     const requiredDockerImage = dockerInfo.dockerImageName.replace(dockerInfo.driverVersion, pwVersion);
     errorLines.push(...[
-      `This is most likely due to docker image version not matching Playwright version:`,
-      `- Playwright: ${pwVersion}`,
-      `-     Docker: ${dockerInfo.driverVersion}`,
+      `This is most likely due to Docker image version not matching Playwright version:`,
+      `- Playwright  : ${pwVersion}`,
+      `- Docker image: ${dockerInfo.driverVersion}`,
       ``,
       `Either:`,
-      `- (recommended) use docker image "${requiredDockerImage}"`,
-      `- (alternative 1) run the following command inside docker to install missing dependencies:`,
+      `- (recommended) use Docker image "${requiredDockerImage}"`,
+      `- (alternative 1) run the following command inside Docker to install missing dependencies:`,
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `- (alternative 2) use apt inside docker:`,
+      `- (alternative 2) use apt inside Docker:`,
       ``,
       `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
       ``,
