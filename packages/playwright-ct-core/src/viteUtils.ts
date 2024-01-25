@@ -160,7 +160,7 @@ const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function transformIndexFile(id: string, content: string, templateDir: string, registerSource: string, importInfos: Map<string, ImportInfo>): TransformResult  | null {
-  console.log('transformIndexFile', id, content, templateDir, registerSource, importInfos);
+  console.log('transformIndexFile', {id, content, templateDir, registerSource, importInfos});
   // Vite React plugin will do this for .jsx files, but not .js files.
   if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
     const code = `import React from 'react';\n${content}`;
