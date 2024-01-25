@@ -49,7 +49,7 @@ jobs:
     - name: Read pull request number
       uses: ./.github/actions/download-artifact
       with:
-        namePrefix: 'pull-request-number'
+        namePrefix: 'pull-request'
         path: '.'
 
     - name: Comment on PR
