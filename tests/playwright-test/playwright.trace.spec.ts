@@ -326,13 +326,13 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
-    '  attach \"trace\"',
     '  afterAll hook',
     '    fixture: request',
     '      apiRequest.newContext',
     '    apiRequestContext.get',
     '  fixture: request',
     '    apiRequestContext.dispose',
+    '  fixture: browser',
   ]);
   expect(trace1.errors).toEqual([`'oh no!'`]);
 
@@ -407,18 +407,16 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
       'a.spec.ts': `
         import { test as base, expect } from '@playwright/test';
         import fs from 'fs';
-        const test = base.extend<{
-          locale: string | undefined,
-          _artifactsDir: () => string,
-        }>({
-          // Override locale fixture to check in teardown that no temporary trace zip was created.
-          locale: [async ({ locale, _artifactsDir }, use) => {
-            await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir);
+        let artifactsDir;
+        const test = base.extend({
+          workerAuto: [async ({}, use) => {
+            await use();
+            const entries =  fs.readdirSync(artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
-          }, { option: true }],
+          }, { scope: 'worker', auto: true }],
         });
         test('passing test', async ({ page }) => {
+          artifactsDir = test.info()._tracing.artifactsDir();
           await page.goto('about:blank');
         });
       `,
@@ -432,18 +430,16 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
       'a.spec.ts': `
         import { test as base, expect } from '@playwright/test';
         import fs from 'fs';
-        const test = base.extend<{
-          locale: string | undefined,
-          _artifactsDir: () => string,
-        }>({
-          // Override locale fixture to check in teardown that no temporary trace zip was created.
-          locale: [async ({ locale, _artifactsDir }, use) => {
-            await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir);
+        let artifactsDir;
+        const test = base.extend({
+          workerAuto: [async ({}, use) => {
+            await use();
+            const entries =  fs.readdirSync(artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
-          }, { option: true }],
+          }, { scope: 'worker', auto: true }],
         });
         test('passing test', async ({ request }) => {
+          artifactsDir = test.info()._tracing.artifactsDir();
           expect(await request.get('${server.EMPTY_PAGE}')).toBeOK();
         });
       `,
@@ -671,8 +667,49 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
+    '  fixture: browser',
   ]);
   expect(trace.errors).toEqual(['ReferenceError: undefinedVariable1 is not defined']);
+});
+
+test('should show error from beforeAll in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on' } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(async () => {
+        throw new Error('Oh my!');
+      })
+      test('fail', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  expect(trace.errors).toEqual(['Error: Oh my!']);
+});
+
+test('should throw when trace fixture is a function', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({
+        trace: async ({}, use) => {
+          await use('on');
+        },
+      });
+      test('skipped', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: "trace" option cannot be a function');
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest }, testInfo) => {

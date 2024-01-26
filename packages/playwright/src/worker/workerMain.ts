@@ -62,7 +62,6 @@ export class WorkerMain extends ProcessRunner {
     super();
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
-    process.env.TEST_ARTIFACTS_DIR = params.artifactsDir;
     setIsWorkerProcess();
 
     this._params = params;
@@ -313,6 +312,21 @@ export class WorkerMain extends ProcessRunner {
     let shouldRunAfterEachHooks = false;
 
     await testInfo._runWithTimeout(async () => {
+      const traceError = await testInfo._runAndFailOnError(async () => {
+        // Ideally, "trace" would be an config-level option belonging to the
+        // test runner instead of a fixture belonging to Playwright.
+        // However, for backwards compatibility, we have to read it from a fixture today.
+        // We decided to not introduce the config-level option just yet.
+        const traceFixtureRegistration = test._pool!.registrations.get('trace');
+        if (!traceFixtureRegistration)
+          return;
+        if (typeof traceFixtureRegistration.fn === 'function')
+          throw new Error(`"trace" option cannot be a function`);
+        await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
+      });
+      if (traceError)
+        return;
+
       if (this._isStopped || isSkipped) {
         // Two reasons to get here:
         // - Last test is skipped, so we should not run the test, but run the cleanup.
@@ -379,9 +393,6 @@ export class WorkerMain extends ProcessRunner {
         await fn(testFunctionParams, testInfo);
         debugTest(`test function finished`);
       }, 'allowSkips');
-
-      for (const error of testInfo.errors)
-        testInfo._tracing.appendForError(error);
     });
 
     if (didFailBeforeAllForSuite) {
@@ -472,6 +483,10 @@ export class WorkerMain extends ProcessRunner {
 
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
+    });
+
+    await testInfo._runAndFailOnError(async () => {
+      await testInfo._tracing.stopIfNeeded();
     });
 
     this._currentTest = null;
