@@ -41,7 +41,7 @@ async def test_mock_the_fruit_api(page: Page):
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Strawberry fruit is visible
-    await page.get_by_text("Strawberry").to_be_visible()
+    await expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```python sync
@@ -58,7 +58,7 @@ def test_mock_the_fruit_api(page: Page):
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Strawberry fruit is visible
-    page.get_by_text("Strawberry").to_be_visible()
+    expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```csharp
@@ -142,13 +142,13 @@ async def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
         # with the given JSON object.
         await route.fulfill(response=response, json=json)
 
-    await page.route("https://dog.ceo/api/breeds/list/all", handle)
+    await page.route("https://demo.playwright.dev/api-mocking/api/v1/fruits", handle)
 
     # Go to the page
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the new fruit is visible
-    await page.get_by_text("Loquat", exact=True).to_be_visible()
+    await expect(page.get_by_text("Loquat", exact=True)).to_be_visible()
 ```
 
 ```python sync
@@ -161,13 +161,13 @@ def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
         # with the given JSON object.
         route.fulfill(response=response, json=json)
 
-    page.route("https://dog.ceo/api/breeds/list/all", handle)
+    page.route("https://demo.playwright.dev/api-mocking/api/v1/fruits", handle)
 
     # Go to the page
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the new fruit is visible
-    page.get_by_text("Loquat", exact=True).to_be_visible()
+    expect(page.get_by_text("Loquat", exact=True)).to_be_visible()
 ```
 
 ```csharp
