@@ -60,6 +60,10 @@ export class Download implements api.Download {
     return await this._artifact.createReadStream();
   }
 
+  async readIntoBuffer(): Promise<Buffer> {
+    return await this._artifact.readIntoBuffer();
+  }
+
   async cancel(): Promise<void> {
     return await this._artifact.cancel();
   }
