@@ -67,7 +67,7 @@ export const SourceTab: React.FunctionComponent<{
         let response = await fetch(`sha1/src@${sha1}.txt`);
         if (response.status === 404)
           response = await fetch(`file?path=${encodeURIComponent(file)}`);
-        if (response.status === 404)
+        if (response.status >= 400)
           source.content = `<Unable to read "${file}">`;
         else
           source.content = await response.text();
