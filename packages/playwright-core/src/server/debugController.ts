@@ -30,7 +30,6 @@ const internalMetadata = serverSideCallMetadata();
 
 export class DebugController extends SdkObject {
   static Events = {
-    BrowsersChanged: 'browsersChanged',
     StateChanged: 'stateChanged',
     InspectRequested: 'inspectRequested',
     SourceChanged: 'sourceChanged',
@@ -194,8 +193,6 @@ export class DebugController extends SdkObject {
         pageCount += context.pages().length;
       }
     }
-    // TODO: browsers is deprecated, remove it.
-    this.emit(DebugController.Events.BrowsersChanged, browsers);
     this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 
