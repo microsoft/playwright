@@ -17,9 +17,9 @@
 const { app } = require('electron');
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
-// [Electron, -r, loader.js, --inspect=0, --remote-debugging-port=0, ...args]
-process.argv.splice(1, 4);
-
+// [Electron, -r, loader.js, ...args, --inspect=0, --remote-debugging-port=0[, --no-sandbox>]]
+process.argv.splice(1, 2);
+process.argv.splice(process.argv.lastIndexOf('--inspect=0'));
 
 for (const arg of chromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
