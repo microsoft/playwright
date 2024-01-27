@@ -547,12 +547,7 @@ class TextAssertionTool implements RecorderTool {
   onClick(event: MouseEvent) {
     consumeEvent(event);
     if (this._kind === 'value') {
-      const action = this._generateAction();
-      if (action) {
-        this._recorder.delegate.recordAction?.(action);
-        this._recorder.delegate.setMode?.('recording');
-        this._recorder.overlay?.flashToolSucceeded('assertingValue');
-      }
+      this._commitAssertValue();
     } else {
       if (!this._dialogElement)
         this._showDialog();
@@ -563,6 +558,15 @@ class TextAssertionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
     if (this._elementHasValue(target))
       event.preventDefault();
+  }
+
+  onPointerUp(event: PointerEvent) {
+    const target = this._hoverHighlight?.elements[0];
+    if (this._kind === 'value' && target && target.nodeName === 'INPUT' && (target as HTMLInputElement).disabled) {
+      // Click on a disabled input does not produce a "click" event, but we still want
+      // to assert the value.
+      this._commitAssertValue();
+    }
   }
 
   onMouseMove(event: MouseEvent) {
@@ -718,6 +722,17 @@ class TextAssertionTool implements RecorderTool {
     this._dialogElement.remove();
     this._recorder.document.removeEventListener('keydown', this._keyboardListener!);
     this._dialogElement = null;
+  }
+
+  private _commitAssertValue() {
+    if (this._kind !== 'value')
+      return;
+    const action = this._generateAction();
+    if (!action)
+      return;
+    this._recorder.delegate.recordAction?.(action);
+    this._recorder.delegate.setMode?.('recording');
+    this._recorder.overlay?.flashToolSucceeded('assertingValue');
   }
 }
 
@@ -1138,8 +1153,10 @@ export class Recorder {
   }
 
   private _ignoreOverlayEvent(event: Event) {
-    const target = event.composedPath()[0] as Element;
-    return target.nodeName.toLowerCase() === 'x-pw-glass';
+    return event.composedPath().some(e => {
+      const nodeName = (e as Element).nodeName || '';
+      return nodeName.toLowerCase() === 'x-pw-glass';
+    });
   }
 
   deepEventTarget(event: Event): HTMLElement {
