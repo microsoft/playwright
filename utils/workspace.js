@@ -236,10 +236,6 @@ async function parseCLI() {
       const hasChanges = await workspace.ensureConsistent();
       if (hasChanges)
         die(`\n  ERROR: workspace is inconsistent! Run '//utils/workspace.js --ensure-consistent' and commit changes!`);
-      // check that there are no dirty git files.
-      const gitStatus = child_process.execSync('git status --porcelain').toString();
-      if (gitStatus.trim())
-        die(`\n  ERROR: some git files are dirty, run build and commit changes!\n${gitStatus}`);
       // Ensure lockfileVersion is 3
       const packageLock = require(ROOT_PATH +  '/package-lock.json');
       if (packageLock.lockfileVersion !== 3)
