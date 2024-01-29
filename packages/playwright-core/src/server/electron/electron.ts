@@ -135,12 +135,13 @@ export class Electron extends SdkObject {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
+      // --remote-debugging-port=0 must be the last playwright's argument, loader.ts relies on it.
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
         if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
-          electronArguments.push('--no-sandbox');
+          electronArguments.unshift('--no-sandbox');
       }
 
       const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
