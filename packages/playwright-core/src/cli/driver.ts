@@ -38,7 +38,15 @@ export function runDriver() {
   });
   const transport = new PipeTransport(process.stdout, process.stdin);
   transport.onmessage = (message: string) => dispatcherConnection.dispatch(JSON.parse(message));
-  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
+  // Certain Language Binding JSON parsers (e.g. .NET) do not like strings with lone surrogates.
+  const isJavaScriptLanguageBinding = !process.env.PW_LANG_NAME || process.env.PW_LANG_NAME === 'javascript';
+  const replacer = !isJavaScriptLanguageBinding && (String.prototype as any).toWellFormed ? (key: string, value: any): any => {
+    if (typeof value === 'string')
+      // @ts-expect-error
+      return value.toWellFormed();
+    return value;
+  } : undefined;
+  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message, replacer));
   transport.onclose = () => {
     // Drop any messages during shutdown on the floor.
     dispatcherConnection.onmessage = () => {};
