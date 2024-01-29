@@ -32,8 +32,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -65,8 +65,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -96,8 +96,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-windows-latest"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -135,8 +135,8 @@ jobs:
           node_version: 20
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node_version }}
     - run: npm ci
@@ -165,8 +165,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -199,8 +199,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.mode }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -237,8 +237,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "tracing-${{ matrix.channel || matrix.browser }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -267,8 +267,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-stable-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -295,8 +295,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-stable-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -324,8 +324,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-stable-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -357,8 +357,8 @@ jobs:
       matrix:
         os: [ubuntu-20.04, macos-12, windows-latest]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -391,8 +391,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -420,8 +420,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "firefox-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -448,8 +448,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "firefox-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -477,8 +477,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "firefox-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -505,8 +505,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-stable-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -533,8 +533,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-stable-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -562,8 +562,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-stable-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -590,8 +590,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -618,8 +618,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -647,8 +647,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -675,8 +675,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-dev-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -703,8 +703,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-dev-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -732,8 +732,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "edge-dev-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -760,8 +760,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -788,8 +788,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -817,8 +817,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "chrome-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -843,8 +843,8 @@ jobs:
     name: "build-playwright-driver"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -858,8 +858,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "headless-new"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci

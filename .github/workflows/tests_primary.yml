@@ -45,8 +45,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
@@ -77,8 +77,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.os }}-chromium-tip-of-tree"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -131,8 +131,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: ${{matrix.node-version}}
     - run: npm ci
@@ -158,8 +158,8 @@ jobs:
     name: Web Components
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -195,8 +195,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "vscode-extension"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -239,8 +239,8 @@ jobs:
     env:
       PWTEST_BOT_NAME: "package-installations-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
