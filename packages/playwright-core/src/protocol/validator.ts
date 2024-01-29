@@ -382,13 +382,6 @@ scheme.DebugControllerSourceChangedEvent = tObject({
 scheme.DebugControllerPausedEvent = tObject({
   paused: tBoolean,
 });
-scheme.DebugControllerBrowsersChangedEvent = tObject({
-  browsers: tArray(tObject({
-    contexts: tArray(tObject({
-      pages: tArray(tString),
-    })),
-  })),
-});
 scheme.DebugControllerInitializeParams = tObject({
   codegenId: tString,
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),

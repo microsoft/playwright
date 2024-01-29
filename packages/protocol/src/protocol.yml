@@ -785,23 +785,6 @@ DebugController:
       parameters:
         paused: boolean
 
-    # Deprecated
-    browsersChanged:
-      parameters:
-        browsers:
-          type: array
-          items:
-            type: object
-            properties:
-              contexts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    pages:
-                      type: array
-                      items: string
-
 SocksSupport:
   type: interface
 
