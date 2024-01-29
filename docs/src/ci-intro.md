@@ -64,7 +64,7 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npx playwright test
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report
@@ -102,7 +102,7 @@ jobs:
       run: python -m playwright install --with-deps
     - name: Run your tests
       run: pytest --tracing=retain-on-failure
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-traces
