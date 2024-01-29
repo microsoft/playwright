@@ -214,3 +214,11 @@ it('should handle malformed file', async ({ contextFactory }, testInfo) => {
   else
     expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token o in JSON at position 1`);
 });
+
+it('should serialize storageState with lone surrogates', async ({ page, context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-dotnet/issues/2819' });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => window.localStorage.setItem('foo', String.fromCharCode(55934)));
+  const storageState = await context.storageState();
+  expect(storageState.origins[0].localStorage[0].value).toBe(String.fromCharCode(55934));
+});
