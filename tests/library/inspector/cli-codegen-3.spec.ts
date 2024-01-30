@@ -558,4 +558,94 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
       'click',
     ]);
   });
+
+  test('should assert value', async ({ openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <input id=first value=foo>
+      <input id=second disabled value=bar>
+      <input id=third>
+      <input id=fourth type=checkbox checked>
+    `);
+
+    await recorder.page.click('x-pw-tool-item.value');
+    await recorder.hoverOverElement('#first');
+    const [sources1] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '#first'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources1.get('JavaScript')!.text).toContain(`await expect(page.locator('#first')).toHaveValue('foo')`);
+    expect.soft(sources1.get('Python')!.text).toContain(`expect(page.locator("#first")).to_have_value("foo")`);
+    expect.soft(sources1.get('Python Async')!.text).toContain(`await expect(page.locator("#first")).to_have_value("foo")`);
+    expect.soft(sources1.get('Java')!.text).toContain(`assertThat(page.locator("#first")).hasValue("foo")`);
+    expect.soft(sources1.get('C#')!.text).toContain(`await Expect(page.Locator("#first")).ToHaveValueAsync("foo")`);
+
+    await recorder.page.click('x-pw-tool-item.value');
+    await recorder.hoverOverElement('#third');
+    const [sources3] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '#third'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources3.get('JavaScript')!.text).toContain(`await expect(page.locator('#third')).toBeEmpty()`);
+    expect.soft(sources3.get('Python')!.text).toContain(`expect(page.locator("#third")).to_be_empty()`);
+    expect.soft(sources3.get('Python Async')!.text).toContain(`await expect(page.locator("#third")).to_be_empty()`);
+    expect.soft(sources3.get('Java')!.text).toContain(`assertThat(page.locator("#third")).isEmpty()`);
+    expect.soft(sources3.get('C#')!.text).toContain(`await Expect(page.Locator("#third")).ToBeEmptyAsync()`);
+
+    await recorder.page.click('x-pw-tool-item.value');
+    await recorder.hoverOverElement('#fourth');
+    const [sources4] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '#fourth'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources4.get('JavaScript')!.text).toContain(`await expect(page.locator('#fourth')).toBeChecked()`);
+    expect.soft(sources4.get('Python')!.text).toContain(`expect(page.locator("#fourth")).to_be_checked()`);
+    expect.soft(sources4.get('Python Async')!.text).toContain(`await expect(page.locator("#fourth")).to_be_checked()`);
+    expect.soft(sources4.get('Java')!.text).toContain(`assertThat(page.locator("#fourth")).isChecked()`);
+    expect.soft(sources4.get('C#')!.text).toContain(`await Expect(page.Locator("#fourth")).ToBeCheckedAsync()`);
+  });
+
+  test('should assert value on disabled input', async ({ openRecorder, browserName }) => {
+    test.fixme(browserName === 'firefox', 'pointerup event is not dispatched on a disabled input');
+
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <input id=first value=foo>
+      <input id=second disabled value=bar>
+      <input id=third>
+      <input id=fourth type=checkbox checked>
+    `);
+
+    await recorder.page.click('x-pw-tool-item.value');
+    await recorder.hoverOverElement('#second');
+    const [sources2] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '#second'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources2.get('JavaScript')!.text).toContain(`await expect(page.locator('#second')).toHaveValue('bar')`);
+    expect.soft(sources2.get('Python')!.text).toContain(`expect(page.locator("#second")).to_have_value("bar")`);
+    expect.soft(sources2.get('Python Async')!.text).toContain(`await expect(page.locator("#second")).to_have_value("bar")`);
+    expect.soft(sources2.get('Java')!.text).toContain(`assertThat(page.locator("#second")).hasValue("bar")`);
+    expect.soft(sources2.get('C#')!.text).toContain(`await Expect(page.Locator("#second")).ToHaveValueAsync("bar")`);
+  });
+
+  test('should assert visibility', async ({ openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<input>`);
+
+    await recorder.page.click('x-pw-tool-item.visibility');
+    await recorder.hoverOverElement('input');
+    const [sources1] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'textbox'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources1.get('JavaScript')!.text).toContain(`await expect(page.getByRole('textbox')).toBeVisible()`);
+    expect.soft(sources1.get('Python')!.text).toContain(`expect(page.get_by_role("textbox")).to_be_visible()`);
+    expect.soft(sources1.get('Python Async')!.text).toContain(`await expect(page.get_by_role("textbox")).to_be_visible()`);
+    expect.soft(sources1.get('Java')!.text).toContain(`assertThat(page.getByRole(AriaRole.TEXTBOX)).isVisible()`);
+    expect.soft(sources1.get('C#')!.text).toContain(`await Expect(page.GetByRole(AriaRole.Textbox)).ToBeVisibleAsync()`);
+  });
 });

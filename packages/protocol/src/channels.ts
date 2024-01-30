@@ -640,7 +640,6 @@ export interface DebugControllerEventTarget {
   on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
   on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
   on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
-  on(event: 'browsersChanged', callback: (params: DebugControllerBrowsersChangedEvent) => void): this;
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
@@ -673,13 +672,6 @@ export type DebugControllerSourceChangedEvent = {
 };
 export type DebugControllerPausedEvent = {
   paused: boolean,
-};
-export type DebugControllerBrowsersChangedEvent = {
-  browsers: {
-    contexts: {
-      pages: string[],
-    }[],
-  }[],
 };
 export type DebugControllerInitializeParams = {
   codegenId: string,
@@ -740,7 +732,6 @@ export interface DebugControllerEvents {
   'stateChanged': DebugControllerStateChangedEvent;
   'sourceChanged': DebugControllerSourceChangedEvent;
   'paused': DebugControllerPausedEvent;
-  'browsersChanged': DebugControllerBrowsersChangedEvent;
 }
 
 // ----------- SocksSupport -----------

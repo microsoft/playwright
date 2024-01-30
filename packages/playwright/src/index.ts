@@ -19,13 +19,12 @@ import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import { currentTestInfo } from './common/globals';
-import { mergeTraceFiles } from './worker/testTracing';
 export { expect } from './matchers/expect';
 export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -54,7 +53,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
-  _artifactsDir: string;
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -73,11 +71,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
 
-  _artifactsDir: [async ({}, use) => {
-    await use(process.env.TEST_ARTIFACTS_DIR!);
-  }, { scope: 'worker', _title: 'playwright configuration' } as any],
-
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions, _artifactsDir }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
@@ -86,7 +80,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
-    options.tracesDir = path.join(_artifactsDir, 'traces');
+    options.tracesDir = tracing().tracesDir();
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
       (browserType as any)._defaultLaunchOptions = options;
@@ -225,7 +219,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   },
 
-  _setupContextOptions: [async ({ playwright, _combinedContextOptions, _artifactsDir, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
@@ -237,7 +231,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._defaultContextNavigationTimeout = navigationTimeout || 0;
     }
     (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
-    (playwright.request as any)._defaultContextOptions.tracesDir = path.join(_artifactsDir, 'traces');
+    (playwright.request as any)._defaultContextOptions.tracesDir = tracing().tracesDir();
     (playwright.request as any)._defaultContextOptions.timeout = actionTimeout || 0;
     await use();
     (playwright.request as any)._defaultContextOptions = undefined;
@@ -248,8 +242,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
 
-  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use, testInfo) => {
-    const artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir, trace, screenshot);
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any) => {
@@ -297,11 +291,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use();
 
     clientInstrumentation.removeListener(csiListener);
-    await artifactsRecorder?.didFinishTest();
+    await artifactsRecorder.didFinishTest();
 
   }, { auto: 'all-hooks-included',  _title: 'trace recording' } as any],
 
-  _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
+  _contextFactory: [async ({ browser, video, _reuseContext }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
@@ -318,7 +312,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
-          dir: _artifactsDir,
+          dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
         }
       } : {};
@@ -333,7 +327,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let counter = 0;
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await Promise.all([...contexts.keys()].map(async context => {
-      (context as any)[kStartedContextTearDown] = true;
       await (context as any)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
       }, true);
@@ -395,7 +388,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   request: async ({ playwright }, use) => {
     const request = await playwright.request.newContext();
     await use(request);
-    (request as any)[kStartedContextTearDown] = true;
     await request.dispose();
   },
 });
@@ -414,7 +406,6 @@ type StackFrame = {
 };
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
-type TraceOption =  PlaywrightWorkerOptions['trace'] | undefined;
 type Playwright = PlaywrightWorkerArgs['playwright'];
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
@@ -428,19 +419,6 @@ function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: Vide
 
 function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
   return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
-}
-
-function normalizeTraceMode(trace: TraceOption): TraceMode {
-  if (!trace)
-    return 'off';
-  let traceMode = typeof trace === 'string' ? trace : trace.mode;
-  if (traceMode === 'retry-with-trace')
-    traceMode = 'on-first-retry';
-  return traceMode;
-}
-
-function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
-  return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0);
 }
 
 function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
@@ -467,8 +445,6 @@ function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | nu
 
 const kTracingStarted = Symbol('kTracingStarted');
 const kIsReusedContext = Symbol('kReusedContext');
-const kStartedContextTearDown = Symbol('kStartedContextTearDown');
-let traceOrdinal = 0;
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
@@ -487,11 +463,7 @@ class ArtifactsRecorder {
   private _playwright: Playwright;
   private _artifactsDir: string;
   private _screenshotMode: ScreenshotMode;
-  private _traceMode: TraceMode;
-  private _captureTrace = false;
   private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
-  private _traceOptions: { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, _live: boolean, mode?: TraceMode };
-  private _temporaryTraceFiles: string[] = [];
   private _temporaryScreenshots: string[] = [];
   private _temporaryArtifacts: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
@@ -499,14 +471,11 @@ class ArtifactsRecorder {
   private _screenshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
 
-  constructor(playwright: Playwright, artifactsDir: string, trace: TraceOption, screenshot: ScreenshotOption) {
+  constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     this._screenshotMode = normalizeScreenshotMode(screenshot);
     this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
-    this._traceMode = normalizeTraceMode(trace);
-    const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, _live: false };
-    this._traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
     this._screenshottedSymbol = Symbol('screenshotted');
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
   }
@@ -520,9 +489,6 @@ class ArtifactsRecorder {
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
-    this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
-    if (this._captureTrace)
-      this._testInfo._tracing.start(this._createTemporaryArtifact('traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
 
     // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
     // overwrite previous screenshots.
@@ -555,7 +521,7 @@ class ArtifactsRecorder {
     // Do not record empty traces and useless screenshots for them.
     if (this._reusedContexts.has(context))
       return;
-    await this._stopTracing(context.tracing, (context as any)[kStartedContextTearDown]);
+    await this._stopTracing(context.tracing);
     if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure') {
       // Capture screenshot for now. We'll know whether we have to preserve them
       // after the test finishes.
@@ -570,7 +536,7 @@ class ArtifactsRecorder {
 
   async willCloseRequestContext(context: APIRequestContext) {
     const tracing = (context as any)._tracing as Tracing;
-    await this._stopTracing(tracing, (context as any)[kStartedContextTearDown]);
+    await this._stopTracing(tracing);
   }
 
   async didFinishTestFunction() {
@@ -591,10 +557,10 @@ class ArtifactsRecorder {
 
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {
-      await this._stopTracing(context.tracing, true);
+      await this._stopTracing(context.tracing);
     }).concat(leftoverApiRequests.map(async context => {
       const tracing = (context as any)._tracing as Tracing;
-      await this._stopTracing(tracing, true);
+      await this._stopTracing(tracing);
     })));
 
     // Attach temporary screenshots for contexts closed before collecting the test trace.
@@ -608,32 +574,6 @@ class ArtifactsRecorder {
         }
       }
     }
-
-    // Collect test trace.
-    if (this._preserveTrace()) {
-      const tracePath = this._createTemporaryArtifact(createGuid() + '.zip');
-      this._temporaryTraceFiles.push(tracePath);
-      await this._testInfo._tracing.stop(tracePath);
-    }
-
-    // Either remove or attach temporary traces for contexts closed before the
-    // test has finished.
-    if (this._preserveTrace() && this._temporaryTraceFiles.length) {
-      const tracePath = this._testInfo.outputPath(`trace.zip`);
-      // This could be: beforeHooks, or beforeHooks + test, etc.
-      const beforeHooksHadTrace = fs.existsSync(tracePath);
-      if (beforeHooksHadTrace) {
-        await fs.promises.rename(tracePath, tracePath + '.tmp');
-        this._temporaryTraceFiles.unshift(tracePath + '.tmp');
-      }
-      await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
-      // Do not add attachment twice.
-      if (!beforeHooksHadTrace)
-        this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
-    }
-
-    for (const file of this._temporaryArtifacts)
-      await fs.promises.unlink(file).catch(() => {});
   }
 
   private _createScreenshotAttachmentPath() {
@@ -675,15 +615,12 @@ class ArtifactsRecorder {
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
-    if (this._captureTrace) {
-      const title = [path.relative(this._testInfo.project.testDir, this._testInfo.file) + ':' + this._testInfo.line, ...this._testInfo.titlePath.slice(1)].join(' › ');
-      const ordinalSuffix = traceOrdinal ? `-context${traceOrdinal}` : '';
-      ++traceOrdinal;
-      const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
-      // Note that trace name must start with testId for live tracing to work.
-      const name = `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
+    const options = this._testInfo._tracing.traceOptions();
+    if (options) {
+      const title = this._testInfo._tracing.traceTitle();
+      const name = this._testInfo._tracing.generateNextTraceRecordingName();
       if (!(tracing as any)[kTracingStarted]) {
-        await tracing.start({ ...this._traceOptions, title, name });
+        await tracing.start({ ...options, title, name });
         (tracing as any)[kTracingStarted] = true;
       } else {
         await tracing.startChunk({ title, name });
@@ -696,26 +633,12 @@ class ArtifactsRecorder {
     }
   }
 
-  private _preserveTrace() {
-    const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
-    return this._captureTrace && (this._traceMode === 'on' || (testFailed && this._traceMode === 'retain-on-failure') || (this._traceMode === 'on-first-retry' && this._testInfo.retry === 1) || (this._traceMode === 'on-all-retries' && this._testInfo.retry > 0));
-  }
-
-  private async _stopTracing(tracing: Tracing, contextTearDownStarted: boolean) {
+  private async _stopTracing(tracing: Tracing) {
     if ((tracing as any)[this._startedCollectingArtifacts])
       return;
     (tracing as any)[this._startedCollectingArtifacts] = true;
-    if (this._captureTrace) {
-      let tracePath;
-      // Create a trace file if we know that:
-      // - it is's going to be used due to the config setting and the test status or
-      // - we are inside a test or afterEach and the user manually closed the context.
-      if (this._preserveTrace() || !contextTearDownStarted) {
-        tracePath = this._createTemporaryArtifact(createGuid() + '.zip');
-        this._temporaryTraceFiles.push(tracePath);
-      }
-      await tracing.stopChunk({ path: tracePath });
-    }
+    if (this._testInfo._tracing.traceOptions())
+      await tracing.stopChunk({ path: this._testInfo._tracing.generateNextTraceRecordingPath() });
   }
 }
 
@@ -741,6 +664,10 @@ function renderApiCall(apiName: string, params: any) {
   }
   const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
   return apiName + paramsText;
+}
+
+function tracing() {
+  return (test.info() as TestInfoImpl)._tracing;
 }
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);

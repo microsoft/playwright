@@ -35,6 +35,7 @@ import { kLifecycleEvents } from './types';
 import { urlMatches } from '../utils/network';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
+import { addSourceUrlToScript } from './clientHelper';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -266,7 +267,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     const copy = { ...options };
     if (copy.path) {
       copy.content = (await fs.promises.readFile(copy.path)).toString();
-      copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
+      copy.content = addSourceUrlToScript(copy.content, copy.path);
     }
     return ElementHandle.from((await this._channel.addScriptTag({ ...copy })).element);
   }

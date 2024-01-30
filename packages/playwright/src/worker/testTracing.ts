@@ -19,31 +19,104 @@ import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, monotonicTime, createGuid } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 import type { TestInfo, TestInfoError } from '../../types/test';
 import { filteredStackTrace } from '../util';
-
+import type { TraceMode, PlaywrightWorkerOptions } from '../../types/test';
+import type { TestInfoImpl } from './testInfo';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
+let traceOrdinal = 0;
+
+type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
+type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, _live: boolean, mode: TraceMode };
 
 export class TestTracing {
+  private _testInfo: TestInfoImpl;
+  private _options: TraceOptions | undefined;
   private _liveTraceFile: string | undefined;
   private _traceEvents: trace.TraceEvent[] = [];
-  private _options: { sources: boolean; attachments: boolean; _live: boolean; } | undefined;
+  private _temporaryTraceFiles: string[] = [];
+  private _artifactsDir: string;
+  private _tracesDir: string;
 
-  start(liveFileName: string, options: { sources: boolean, attachments: boolean, _live: boolean }) {
-    this._options = options;
-    if (!this._liveTraceFile && options._live) {
-      this._liveTraceFile = liveFileName;
-      fs.mkdirSync(path.dirname(this._liveTraceFile), { recursive: true });
+  constructor(testInfo: TestInfoImpl, artifactsDir: string) {
+    this._testInfo = testInfo;
+    this._artifactsDir = artifactsDir;
+    this._tracesDir = path.join(this._artifactsDir, 'traces');
+  }
+
+  async startIfNeeded(value: TraceFixtureValue) {
+    const defaultTraceOptions: TraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, _live: false, mode: 'off' };
+    if (!value) {
+      this._options = defaultTraceOptions;
+    } else if (typeof value === 'string') {
+      this._options = { ...defaultTraceOptions, mode: value === 'retry-with-trace' ? 'on-first-retry' : value as TraceMode };
+    } else {
+      const mode = value.mode || 'off';
+      this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
+    }
+
+    let shouldCaptureTrace = this._options.mode === 'on' || this._options.mode === 'retain-on-failure' || (this._options.mode === 'on-first-retry' && this._testInfo.retry === 1) || (this._options.mode === 'on-all-retries' && this._testInfo.retry > 0);
+    shouldCaptureTrace = shouldCaptureTrace && !process.env.PW_TEST_DISABLE_TRACING;
+    if (!shouldCaptureTrace) {
+      this._options = undefined;
+      return;
+    }
+
+    if (!this._liveTraceFile && this._options._live) {
+      // Note that trace name must start with testId for live tracing to work.
+      this._liveTraceFile = path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`);
+      await fs.promises.mkdir(path.dirname(this._liveTraceFile), { recursive: true });
       const data = this._traceEvents.map(e => JSON.stringify(e)).join('\n') + '\n';
-      fs.writeFileSync(this._liveTraceFile, data);
+      await fs.promises.writeFile(this._liveTraceFile, data);
     }
   }
 
-  async stop(fileName: string) {
+  artifactsDir() {
+    return this._artifactsDir;
+  }
+
+  tracesDir() {
+    return this._tracesDir;
+  }
+
+  traceTitle() {
+    return [path.relative(this._testInfo.project.testDir, this._testInfo.file) + ':' + this._testInfo.line, ...this._testInfo.titlePath.slice(1)].join(' › ');
+  }
+
+  generateNextTraceRecordingName() {
+    const ordinalSuffix = traceOrdinal ? `-recording${traceOrdinal}` : '';
+    ++traceOrdinal;
+    const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
+    // Note that trace name must start with testId for live tracing to work.
+    return `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
+  }
+
+  generateNextTraceRecordingPath() {
+    const file = path.join(this._artifactsDir, createGuid() + '.zip');
+    this._temporaryTraceFiles.push(file);
+    return file;
+  }
+
+  traceOptions() {
+    return this._options;
+  }
+
+  async stopIfNeeded() {
+    if (!this._options)
+      return;
+
+    const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
+    const shouldAbandonTrace = !testFailed && this._options.mode === 'retain-on-failure';
+    if (shouldAbandonTrace) {
+      for (const file of this._temporaryTraceFiles)
+        await fs.promises.unlink(file).catch(() => {});
+      return;
+    }
+
     const zipFile = new yazl.ZipFile();
 
     if (!this._options?.attachments) {
@@ -97,9 +170,13 @@ export class TestTracing {
 
     await new Promise(f => {
       zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
+        zipFile.outputStream.pipe(fs.createWriteStream(this.generateNextTraceRecordingPath())).on('close', f);
       });
     });
+
+    const tracePath = this._testInfo.outputPath('trace.zip');
+    await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
+    this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
   appendForError(error: TestInfoError) {
@@ -185,7 +262,7 @@ function generatePreview(value: any, visited = new Set<any>()): string {
   return String(value);
 }
 
-export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
+async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
   if (temporaryTraceFiles.length === 1) {
     await fs.promises.rename(temporaryTraceFiles[0], fileName);
     return;

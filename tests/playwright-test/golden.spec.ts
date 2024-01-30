@@ -577,6 +577,31 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
   expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
 });
 
+test('should correctly handle different JPEG image signatures', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('test1', ({}) => {
+        expect(Buffer.from([0xff, 0xd8, 0xff, 0xe1, 0x00, 0xbc, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00, 0x49])).toMatchSnapshot();
+      });
+      test('test2', ({}) => {
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64')).toMatchSnapshot();
+      });
+      test('test3', ({}) => {
+        expect(Buffer.from('/9j/4AAQSkZJRgABJD+3EOqoh+DYbgljkJTDA0AfvKeYZU/uxcluvipXU7hAGOoguGFv/Tq3/azTyFRJjgsQRp4mu0elkP9IxBh6uj5gpJVpNk9XJdE+51Nk7kUSQSZtPiXYUR2zd7JxzAVMvGFsjQ==', 'base64')).toMatchSnapshot();
+      });
+    `,
+  }, { 'update-snapshots': true });
+  const expectedTest1ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test1-1.jpg');
+  const expectedTest2ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test2-1.png');
+  const expectedTest3ArtifactPath = testInfo.outputPath('a.spec.js-snapshots', 'test3-1.jpg');
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${expectedTest1ArtifactPath}, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${expectedTest2ArtifactPath}, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${expectedTest3ArtifactPath}, writing actual`);
+});
+
 test('should respect threshold', async ({ runInlineTest }) => {
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
