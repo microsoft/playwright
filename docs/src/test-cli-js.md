@@ -89,6 +89,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--global-timeout <number>` | Total timeout for the whole test run in milliseconds. By default, there is no global timeout. Learn more about [various timeouts](./test-timeouts.md).|
 | `--list` | list all the tests, but do not run them.|
 | `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
+| `--no-deps` | Ignore the dependencies between projects and behave as if they were not specified. |
 | `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
 | `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
 | `--project <name>` | Only run tests from one of the specified [projects](./test-projects.md). Defaults to running all projects defined in the configuration file.|
