@@ -37,7 +37,7 @@ import { getUserAgent } from '../../utils/userAgent';
 import { wrapInASCIIBox } from '../../utils/ascii';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
-import { RecentLogsCollector } from '../../common/debugLogger';
+import { RecentLogsCollector } from '../../utils/debugLogger';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../common/timeoutSettings';

@@ -30,7 +30,7 @@ import { ProgressController } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { PipeTransport } from '../../protocol/transport';
-import { RecentLogsCollector } from '../../common/debugLogger';
+import { RecentLogsCollector } from '../../utils/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '@protocol/channels';

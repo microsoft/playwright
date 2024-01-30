@@ -42,7 +42,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
-import { debugLogger } from '../../common/debugLogger';
+import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
