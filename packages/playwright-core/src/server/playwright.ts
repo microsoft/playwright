@@ -24,7 +24,7 @@ import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import type { CallMetadata } from './instrumentation';
 import { createInstrumentation, SdkObject } from './instrumentation';
-import { debugLogger } from '../common/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 import type { Page } from './page';
 import { DebugController } from './debugController';
 import type { Language } from '../utils/isomorphic/locatorGenerators';

@@ -32,6 +32,7 @@ export * from './network';
 export * from './processLauncher';
 export * from './profiler';
 export * from './rtti';
+export * from './semaphore';
 export * from './spawnAsync';
 export * from './stackTrace';
 export * from './task';

@@ -33,7 +33,7 @@ import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { LongStandingScope, assert, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
-import { debugLogger } from '../common/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
 import { getComparator } from '../utils/comparators';
 import type { CallMetadata } from './instrumentation';

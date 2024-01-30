@@ -16,7 +16,7 @@
 
 import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
-import type { LogName } from '../common/debugLogger';
+import type { LogName } from '../utils/debugLogger';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { ElementHandle } from './dom';
 import { ManualPromise } from '../utils/manualPromise';

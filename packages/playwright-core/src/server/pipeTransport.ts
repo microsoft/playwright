@@ -17,7 +17,7 @@
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
 import { makeWaitForNextTask } from '../utils';
-import { debugLogger } from '../common/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeRead: NodeJS.ReadableStream;

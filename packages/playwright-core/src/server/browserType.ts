@@ -35,7 +35,7 @@ import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
-import { RecentLogsCollector } from '../common/debugLogger';
+import { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
