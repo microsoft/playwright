@@ -114,8 +114,10 @@ export class WebSocketTransport implements ConnectionTransport {
     });
 
     if (result.redirect) {
-      // Strip access key headers from the redirected request.
-      const newHeaders = Object.fromEntries(Object.entries(headers || {}).filter(([name]) => !name.includes('access-key')));
+      // Strip authorization headers from the redirected request.
+      const newHeaders = Object.fromEntries(Object.entries(headers || {}).filter(([name]) => {
+        return !name.includes('access-key') && name.toLowerCase() !== 'authorization';
+      }));
       return WebSocketTransport._connect(progress, result.redirect.headers.location!, newHeaders, { follow: true, hadRedirects: true }, debugLogHeader);
     }
 
