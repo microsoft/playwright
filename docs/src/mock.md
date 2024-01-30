@@ -249,7 +249,7 @@ test('records or updates the HAR file', async ({ page }) => {
 ```
 
 ```python async
-async def records_or_updates_the_har_file(page: Page):
+async def test_records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -261,7 +261,7 @@ async def records_or_updates_the_har_file(page: Page):
 ```
 
 ```python sync
-def records_or_updates_the_har_file(page: Page):
+def test_records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -347,7 +347,7 @@ async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(pa
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Playwright fruit is visible
-    await page.get_by_text("Playwright", exact=True).to_be_visible()
+    await expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 ```
 
 ```python sync
@@ -361,7 +361,7 @@ def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page: Pa
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Playwright fruit is visible
-    page.get_by_text("Playwright", exact=True).to_be_visible()
+    expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 ```
 
 ```csharp
@@ -425,7 +425,7 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="op
 
 ```bash python
 # Save API requests from example.com as "example.har" archive.
-playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.coms
+playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.com
 ```
 
 ```bash csharp
