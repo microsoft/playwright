@@ -45,7 +45,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   sdkLanguage: Language,
-  revealInSource: (action: modelUtil.ActionTraceEventInContext) => void,
+  revealInSource: (error: ErrorDescription) => void,
 }> = ({ errorsModel, sdkLanguage, revealInSource }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
@@ -70,7 +70,7 @@ export const ErrorsTab: React.FunctionComponent<{
         }}>
           {error.action && renderAction(error.action, { sdkLanguage })}
           {location && <div className='action-location'>
-            @ <span title={longLocation} onClick={() => error.action && revealInSource(error.action)}>{location}</span>
+            @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
         </div>
         <ErrorMessage error={message} />
