@@ -69,6 +69,8 @@ export class TestInfoImpl implements TestInfo {
   _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
 
+  _hasNonRetriableError = false;
+
   // ------------ TestInfo fields ------------
   readonly testId: string;
   readonly repeatEachIndex: number;
@@ -241,7 +243,7 @@ export class TestInfoImpl implements TestInfo {
         if (this.status === 'passed')
           this.status = 'skipped';
       } else {
-        this._failWithError(error, true /* isHardError */);
+        this._failWithError(error, true /* isHardError */, true /* retriable */);
         return error;
       }
     }
@@ -318,7 +320,7 @@ export class TestInfoImpl implements TestInfo {
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
 
         if (step.isSoft && result.error)
-          this._failWithError(result.error, false /* isHardError */);
+          this._failWithError(result.error, false /* isHardError */, true /* retriable */);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -346,7 +348,9 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error, isHardError: boolean) {
+  _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
+    if (!retriable)
+      this._hasNonRetriableError = true;
     // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.

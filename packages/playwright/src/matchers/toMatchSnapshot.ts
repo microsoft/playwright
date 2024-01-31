@@ -141,8 +141,6 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.locator = locator;
 
     this.updateSnapshots = testInfo.config.updateSnapshots;
-    if (this.updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
-      this.updateSnapshots = 'none';
     this.mimeType = mime.getType(path.basename(this.snapshotPath)) ?? 'application/octet-string';
     this.comparator = getComparator(this.mimeType);
 
@@ -206,7 +204,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(new Error(message), false /* isHardError */);
+      this.testInfo._failWithError(new Error(message), false /* isHardError */, false /* retriable */);
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);

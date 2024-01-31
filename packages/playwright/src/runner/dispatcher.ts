@@ -243,6 +243,7 @@ class JobDispatcher {
 
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
+  private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();
   private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
@@ -293,8 +294,18 @@ class JobDispatcher {
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
+    if (params.hasNonRetriableError)
+      this._addNonretriableTestAndSerialModeParents(test);
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
+  }
+
+  private _addNonretriableTestAndSerialModeParents(test: TestCase) {
+    this._failedWithNonRetriableError.add(test);
+    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial')
+        this._failedWithNonRetriableError.add(parent);
+    }
   }
 
   private _onStepBegin(params: StepBeginPayload) {
@@ -435,6 +446,8 @@ class JobDispatcher {
     const serialSuitesWithFailures = new Set<Suite>();
 
     for (const failedTest of this._failedTests) {
+      if (this._failedWithNonRetriableError.has(failedTest))
+        continue;
       retryCandidates.add(failedTest);
 
       let outermostSerialSuite: Suite | undefined;
@@ -442,7 +455,7 @@ class JobDispatcher {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
-      if (outermostSerialSuite)
+      if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite))
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 

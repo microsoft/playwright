@@ -169,7 +169,7 @@ export class WorkerMain extends ProcessRunner {
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
     // and we restart the worker.
-    this._currentTest._failWithError(error, true /* isHardError */);
+    this._currentTest._failWithError(error, true /* isHardError */, true /* retriable */);
 
     // For tests marked with test.fail(), this might be a problem when unhandled error
     // is not coming from the user test code (legit failure), but from fixtures or test runner.
@@ -624,6 +624,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     duration: testInfo.duration,
     status: testInfo.status!,
     errors: testInfo.errors,
+    hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,

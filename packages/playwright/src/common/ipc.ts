@@ -84,6 +84,7 @@ export type TestEndPayload = {
   duration: number;
   status: TestStatus;
   errors: TestInfoError[];
+  hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
