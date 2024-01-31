@@ -262,6 +262,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
     if (result.received !== undefined)
       result.received = serializeResult(result.received);
+    if (result.matches === params.isNot)
+      metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     return result;
   }
 }
