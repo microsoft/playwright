@@ -66,6 +66,9 @@ You can do the following to leverage Playwright's web-first assertions when you 
 using Microsoft.Playwright;
 using static Microsoft.Playwright.Assertions;
 
+// Increasing the default timeout to 10 seconds. Default is 5 seconds.
+SetDefaultExpectTimeout(10_000);
+
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync();
 var page = await browser.NewPageAsync();

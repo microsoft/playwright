@@ -91,7 +91,7 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
 }>
 <TabItem value="nunit">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -130,7 +130,7 @@ public class Tests : PageTest
 </TabItem>
 <TabItem value="mstest">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;

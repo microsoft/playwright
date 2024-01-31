@@ -56,7 +56,7 @@ tests/test_foobar.py:22: AssertionError
 ```
 
 ## Setting a custom timeout
-* langs: python
+* langs: python, csharp
 
 You can specify a custom timeout for assertions either globally or per assertion. The default timeout is 5 seconds.
 
@@ -68,6 +68,61 @@ from playwright.sync_api import expect
 expect.set_options(timeout=10_000)
 ```
 
+<Tabs
+  groupId="test-runners"
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class Tests : PageTest
+{
+    [OneTimeSetUp]
+    public void GlobalSetup()
+    {
+        SetDefaultExpectTimeout(10_000);
+    }
+    // ...
+}
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class UnitTest1 : PageTest
+{
+    [ClassInitialize]
+    public static void GlobalSetup(TestContext context)
+    {
+        SetDefaultExpectTimeout(10_000);
+    }
+    // ...
+}
+```
+
+</TabItem>
+</Tabs>
+
 ### Per assertion timeout
 
 ```python title="test_foobar.py"
@@ -75,4 +130,8 @@ from playwright.sync_api import expect
 
 def test_foobar(page: Page) -> None:
     expect(page.get_by_text("Name")).to_be_visible(timeout=10_000)
+```
+
+```csharp title="UnitTest1.cs"
+Expect(Page.GetByName("Name")).ToBeVisible(new() { Timeout = 10_000 });
 ```
