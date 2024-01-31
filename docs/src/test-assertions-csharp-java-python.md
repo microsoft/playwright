@@ -61,12 +61,16 @@ tests/test_foobar.py:22: AssertionError
 You can specify a custom timeout for assertions either globally or per assertion. The default timeout is 5 seconds.
 
 ### Global timeout
+* langs: python
 
 ```python title="conftest.py"
 from playwright.sync_api import expect
 
 expect.set_options(timeout=10_000)
 ```
+
+### Global timeout
+* langs: csharp
 
 <Tabs
   groupId="test-runners"
