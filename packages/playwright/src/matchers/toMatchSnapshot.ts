@@ -29,7 +29,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import { NonRetriableError, type TestInfoImpl } from '../worker/testInfo';
+import type { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
 import type { MatcherResult } from './matcherHint';
 
@@ -204,7 +204,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(new NonRetriableError(message), false /* isHardError */);
+      this.testInfo._failWithError(new Error(message), false /* isHardError */, false /* retriable */);
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);

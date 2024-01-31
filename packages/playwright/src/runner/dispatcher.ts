@@ -243,6 +243,7 @@ class JobDispatcher {
 
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
+  private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();
   private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
@@ -290,20 +291,20 @@ class JobDispatcher {
     test.expectedStatus = params.expectedStatus;
     test.annotations = params.annotations;
     test.timeout = params.timeout;
-    if (params.hasNonRetriableError)
-      this._markTestAndSerialModeParentsNonRetryable(test);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
+    if (params.hasNonRetriableError)
+      this._addNonretriableTestAndSerialModeParents(test);
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
   }
 
-  private _markTestAndSerialModeParentsNonRetryable(test: TestCase) {
-    test._hasNonRetriableError = true;
+  private _addNonretriableTestAndSerialModeParents(test: TestCase) {
+    this._failedWithNonRetriableError.add(test);
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial')
-        parent._hasNonRetriableError = true;
+        this._failedWithNonRetriableError.add(parent);
     }
   }
 
@@ -445,7 +446,7 @@ class JobDispatcher {
     const serialSuitesWithFailures = new Set<Suite>();
 
     for (const failedTest of this._failedTests) {
-      if (failedTest._hasNonRetriableError)
+      if (this._failedWithNonRetriableError.has(failedTest))
         continue;
       retryCandidates.add(failedTest);
 
@@ -454,7 +455,7 @@ class JobDispatcher {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
-      if (outermostSerialSuite && !outermostSerialSuite._hasNonRetriableError)
+      if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite))
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 

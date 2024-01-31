@@ -54,7 +54,6 @@ export class Suite extends Base implements SuitePrivate {
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
-  _hasNonRetriableError: boolean | undefined;
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
     super(title);
@@ -242,7 +241,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Annotations known statically before running the test, e.g. `test.skip()` or `test.describe.skip()`.
   _staticAnnotations: Annotation[] = [];
-  _hasNonRetriableError: boolean | undefined;
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);

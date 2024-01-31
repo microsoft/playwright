@@ -94,7 +94,6 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoError[] = [];
-
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
 
   get error(): TestInfoError | undefined {
@@ -244,7 +243,7 @@ export class TestInfoImpl implements TestInfo {
         if (this.status === 'passed')
           this.status = 'skipped';
       } else {
-        this._failWithError(error, true /* isHardError */);
+        this._failWithError(error, true /* isHardError */, true /* retriable */);
         return error;
       }
     }
@@ -321,7 +320,7 @@ export class TestInfoImpl implements TestInfo {
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
 
         if (step.isSoft && result.error)
-          this._failWithError(result.error, false /* isHardError */);
+          this._failWithError(result.error, false /* isHardError */, true /* retriable */);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -349,7 +348,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error, isHardError: boolean) {
+  _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
     // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.
@@ -364,7 +363,7 @@ export class TestInfoImpl implements TestInfo {
     const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
     if (step && step.boxedStack)
       serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
-    if (error instanceof NonRetriableError)
+    if (!retriable)
       this._hasNonRetriableError = true;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
@@ -494,6 +493,3 @@ class SkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');
-
-export class NonRetriableError extends Error {
-}
