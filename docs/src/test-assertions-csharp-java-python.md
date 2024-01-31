@@ -133,5 +133,5 @@ def test_foobar(page: Page) -> None:
 ```
 
 ```csharp title="UnitTest1.cs"
-Expect(Page.GetByName("Name")).ToBeVisible(new() { Timeout = 10_000 });
+await Expect(Page.GetByText("Name")).ToBeVisibleAsync(new() { Timeout = 10_000 });
 ```
