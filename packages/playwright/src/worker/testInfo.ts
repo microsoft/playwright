@@ -69,6 +69,8 @@ export class TestInfoImpl implements TestInfo {
   _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
 
+  _hasNonRetriableError = false;
+
   // ------------ TestInfo fields ------------
   readonly testId: string;
   readonly repeatEachIndex: number;
@@ -92,6 +94,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoError[] = [];
+
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
 
   get error(): TestInfoError | undefined {
@@ -361,6 +364,8 @@ export class TestInfoImpl implements TestInfo {
     const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
     if (step && step.boxedStack)
       serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+    if (error instanceof NonRetriableError)
+      this._hasNonRetriableError = true;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }
@@ -489,3 +494,6 @@ class SkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');
+
+export class NonRetriableError extends Error {
+}

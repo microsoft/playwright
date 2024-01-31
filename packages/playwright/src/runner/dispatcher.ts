@@ -290,11 +290,21 @@ class JobDispatcher {
     test.expectedStatus = params.expectedStatus;
     test.annotations = params.annotations;
     test.timeout = params.timeout;
+    if (params.hasNonRetriableError)
+      this._markTestAndSerialModeParentsNonRetryable(test);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
+  }
+
+  private _markTestAndSerialModeParentsNonRetryable(test: TestCase) {
+    test._hasNonRetriableError = true;
+    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial')
+        parent._hasNonRetriableError = true;
+    }
   }
 
   private _onStepBegin(params: StepBeginPayload) {
@@ -435,6 +445,8 @@ class JobDispatcher {
     const serialSuitesWithFailures = new Set<Suite>();
 
     for (const failedTest of this._failedTests) {
+      if (failedTest._hasNonRetriableError)
+        continue;
       retryCandidates.add(failedTest);
 
       let outermostSerialSuite: Suite | undefined;
@@ -442,7 +454,7 @@ class JobDispatcher {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
-      if (outermostSerialSuite)
+      if (outermostSerialSuite && !outermostSerialSuite._hasNonRetriableError)
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 

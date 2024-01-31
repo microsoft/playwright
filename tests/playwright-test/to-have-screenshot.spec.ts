@@ -74,6 +74,56 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
   expect(result.exitCode).toBe(0);
 });
 
+test('should not retry missing expectation errors', async ({ runInlineTest }, testInfo) => {
+  const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      retries: 2,
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await page.goto('${cssTransitionURL}');
+        await expect(page).toHaveScreenshot('foo.png', { timeout: 1000 });
+        await expect(page).toHaveScreenshot('bar.png', { timeout: 1000 });
+      });
+    `
+  });
+  expect(result.output).not.toContain(`retry #`);
+  expect(result.output).toMatch(/A snapshot doesn't exist.*foo.*, writing actual./);
+  expect(result.output).toMatch(/A snapshot doesn't exist.*bar.*, writing actual./);
+  expect(result.exitCode).toBe(1);
+});
+
+test('should not retry serial mode suites with missing expectation errors', async ({ runInlineTest }, testInfo) => {
+  const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      retries: 2,
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test.describe.serial('outer', () => {
+        test('last', async ({ page }) => {
+        });
+        test.describe('nested', () => {
+          test('is a test', async ({ page }) => {
+            await page.goto('${cssTransitionURL}');
+            await expect(page).toHaveScreenshot({ timeout: 1000 });
+            await expect(page).toHaveScreenshot({ timeout: 1000 });
+          });
+          test('last', async ({ page }) => {
+          });
+        });
+      });
+    `
+  });
+  expect(result.output).not.toContain(`retry #`);
+  expect(result.output).toMatch(/A snapshot doesn't exist.*1.*, writing actual./);
+  expect(result.output).toMatch(/A snapshot doesn't exist.*2.*, writing actual./);
+  expect(result.exitCode).toBe(1);
+});
+
 test.describe('expect config animations option', () => {
   test('disabled', async ({ runInlineTest }, testInfo) => {
     const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
