@@ -127,6 +127,15 @@ jobs:
             node-version: 20
             shardIndex: 2
             shardTotal: 2
+          # Can be moved to Node.js 22 once its released (right now we have it there to test different ESM loader behavior).
+          - os: ubuntu-latest
+            node-version: current
+            shardIndex: 1
+            shardTotal: 2
+          - os: ubuntu-latest
+            node-version: current
+            shardIndex: 2
+            shardTotal: 2
     runs-on: ${{ matrix.os }}
     env:
       PWTEST_BOT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
