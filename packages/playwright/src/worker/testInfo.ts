@@ -349,6 +349,8 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
+    if (!retriable)
+      this._hasNonRetriableError = true;
     // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.
@@ -363,8 +365,6 @@ export class TestInfoImpl implements TestInfo {
     const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
     if (step && step.boxedStack)
       serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
-    if (!retriable)
-      this._hasNonRetriableError = true;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }
