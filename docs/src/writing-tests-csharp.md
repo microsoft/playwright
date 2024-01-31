@@ -19,7 +19,7 @@ Take a look at the example test below to see how to write a test using using [lo
 }>
 <TabItem value="nunit">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -60,7 +60,7 @@ public class Tests : PageTest
 </TabItem>
 <TabItem value="mstest">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -132,7 +132,7 @@ The Playwright NUnit and MSTest test framework base classes will isolate each te
 }>
 <TabItem value="nunit">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
@@ -154,7 +154,7 @@ public class Tests : PageTest
 </TabItem>
 <TabItem value="mstest">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
 using Microsoft.Playwright.MSTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -189,7 +189,7 @@ You can use `SetUp`/`TearDown` in NUnit or `TestInitialize`/`TestCleanup` in MST
 }>
 <TabItem value="nunit">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
@@ -218,7 +218,7 @@ public class Tests : PageTest
 </TabItem>
 <TabItem value="mstest">
 
-```csharp
+```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
 using Microsoft.Playwright.MSTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
