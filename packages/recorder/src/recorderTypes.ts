@@ -16,12 +16,27 @@
 
 import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
 
-export type Point = { x: number, y: number };
+export type Point = { x: number; y: number };
 
-export type Mode = 'inspecting' | 'recording' | 'none' | 'assertingText' | 'recording-inspecting' | 'standby' | 'assertingVisibility' | 'assertingValue';
+export type Mode =
+  | 'inspecting'
+  | 'recording'
+  | 'none'
+  | 'assertingText'
+  | 'recording-inspecting'
+  | 'standby'
+  | 'assertingVisibility'
+  | 'assertingValue';
 
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'fileChanged';
+  event:
+    | 'clear'
+    | 'resume'
+    | 'step'
+    | 'pause'
+    | 'setMode'
+    | 'selectorUpdated'
+    | 'fileChanged';
   params: any;
 };
 
@@ -33,7 +48,7 @@ export type UIState = {
   mode: Mode;
   actionPoint?: Point;
   actionSelector?: string;
-  language: 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+  language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;
 };
@@ -49,8 +64,8 @@ export type CallLog = {
   reveal?: boolean;
   duration?: number;
   params: {
-    url?: string,
-    selector?: string,
+    url?: string;
+    selector?: string;
   };
 };
 
