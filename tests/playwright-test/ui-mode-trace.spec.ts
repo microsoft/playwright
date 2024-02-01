@@ -258,3 +258,29 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
   await page.getByText('Errors', { exact: true }).click();
   await expect(page.locator('.tab-errors')).toHaveText('No errors');
 });
+
+test('should reveal errors in the sourcetab', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        throw new Error('Oh my');
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+
+  await expect(
+      listItem,
+      'action list'
+  ).toContainText([
+    /Before Hooks/,
+    /After Hooks/,
+  ]);
+
+  await page.getByText('Errors', { exact: true }).click();
+  await page.getByText('a.spec.ts:4', { exact: true }).click();
+  await expect(page.locator('.source-line-running')).toContainText(`throw new Error('Oh my');`);
+});

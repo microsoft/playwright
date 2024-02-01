@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { ActionTraceEvent } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
 import { useAsyncMemo } from '@web/uiUtils';
@@ -23,26 +22,27 @@ import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import type { SourceLocation, SourceModel } from './modelUtil';
+import type { StackFrame } from '@protocol/channels';
 
 export const SourceTab: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
+  stack: StackFrame[] | undefined,
   sources: Map<string, SourceModel>,
   hideStackFrames?: boolean,
   rootDir?: string,
   fallbackLocation?: SourceLocation,
-}> = ({ action, sources, hideStackFrames, rootDir, fallbackLocation }) => {
-  const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
+}> = ({ stack, sources, hideStackFrames, rootDir, fallbackLocation }) => {
+  const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
   React.useEffect(() => {
-    if (lastAction !== action) {
-      setLastAction(action);
+    if (lastStack !== stack) {
+      setLastStack(stack);
       setSelectedFrame(0);
     }
-  }, [action, lastAction, setLastAction, setSelectedFrame]);
+  }, [stack, lastStack, setLastStack, setSelectedFrame]);
 
   const { source, highlight, targetLine, fileName } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[] }>(async () => {
-    const actionLocation = action?.stack?.[selectedFrame];
+    const actionLocation = stack?.[selectedFrame];
     const shouldUseFallback = !actionLocation?.file;
     if (shouldUseFallback && !fallbackLocation)
       return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
@@ -76,14 +76,14 @@ export const SourceTab: React.FunctionComponent<{
       }
     }
     return { source, highlight, targetLine, fileName };
-  }, [action, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
+  }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
   return <SplitView sidebarSize={200} orientation='horizontal' sidebarHidden={hideStackFrames}>
     <div className='vbox' data-testid='source-code'>
       {fileName && <div className='source-tab-file-name'>{fileName}</div>}
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
     </div>
-    <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
+    <StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
   </SplitView>;
 };
 
