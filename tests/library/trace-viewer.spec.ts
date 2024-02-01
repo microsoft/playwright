@@ -243,7 +243,9 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
   await expect(traceViewer.networkRequests).toContainText([/style.cssGET200text\/css/]);
+  await expect(traceViewer.networkRequests).toContainText([/404GET404text\/plain/]);
   await expect(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript/]);
+  await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {

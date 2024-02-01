@@ -22,7 +22,7 @@ import { NetworkResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { MultiTraceModel } from './modelUtil';
-import { GridView } from '@web/components/gridView';
+import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
 
 type NetworkTabModel = {
@@ -32,7 +32,7 @@ type NetworkTabModel = {
 type RenderedEntry = {
   name: { name: string, url: string },
   method: string,
-  status: { code: number, text: string, className: string },
+  status: { code: number, text: string },
   contentType: string,
   duration: number,
   size: number,
@@ -83,7 +83,9 @@ export const NetworkTab: React.FunctionComponent<{
     onHighlighted={item => onEntryHovered(item?.resource)}
     columns={selectedEntry ? ['name'] : ['name', 'method', 'status', 'contentType', 'duration', 'size', 'start', 'route']}
     columnTitle={columnTitle}
-    columnWidth={column => column === 'name' ? 200 : 100}
+    columnWidth={columnWidth}
+    isError={item => item.status.code >= 400}
+    isInfo={item => !!item.route}
     render={(item, column) => renderCell(item, column)}
     sorting={sorting}
     setSorting={setSorting}
@@ -117,23 +119,44 @@ const columnTitle = (column: ColumnName) => {
   return '';
 };
 
-const renderCell = (entry: RenderedEntry, column: ColumnName) => {
+const columnWidth = (column: ColumnName) => {
   if (column === 'name')
-    return <span title={entry.name.url}>{entry.name.name}</span>;
+    return 200;
   if (column === 'method')
-    return <span>{entry.method}</span>;
+    return 60;
   if (column === 'status')
-    return <span className={entry.status.className} title={entry.status.text}>{entry.status.code > 0 ? entry.status.code : ''}</span>;
+    return 60;
   if (column === 'contentType')
-    return <span>{entry.contentType}</span>;
+    return 200;
+  return 100;
+};
+
+const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell => {
+  if (column === 'name') {
+    return {
+      body: entry.name.name,
+      title: entry.name.url,
+    };
+  }
+  if (column === 'method')
+    return { body: entry.method };
+  if (column === 'status') {
+    return {
+      body: entry.status.code > 0 ? entry.status.code : '',
+      title: entry.status.text
+    };
+  }
+  if (column === 'contentType')
+    return { body: entry.contentType };
   if (column === 'duration')
-    return <span>{msToString(entry.duration)}</span>;
+    return { body: msToString(entry.duration) };
   if (column === 'size')
-    return <span>{bytesToString(entry.size)}</span>;
+    return { body: bytesToString(entry.size) };
   if (column === 'start')
-    return <span>{msToString(entry.start)}</span>;
+    return { body: msToString(entry.start) };
   if (column === 'route')
-    return entry.route && <span className={`status-route ${entry.route}`}>{entry.route}</span>;
+    return { body: entry.route };
+  return { body: '' };
 };
 
 const renderEntry = (resource: Entry, boundaries: Boundaries): RenderedEntry => {
@@ -155,7 +178,7 @@ const renderEntry = (resource: Entry, boundaries: Boundaries): RenderedEntry => 
   return {
     name: { name: resourceName, url: resource.request.url },
     method: resource.request.method,
-    status: { code: resource.response.status, text: resource.response.statusText, className: statusClassName(resource.response.status) },
+    status: { code: resource.response.status, text: resource.response.statusText },
     contentType: contentType,
     duration: resource.time,
     size: resource.response._transferSize! > 0 ? resource.response._transferSize! : resource.response.bodySize,
@@ -164,14 +187,6 @@ const renderEntry = (resource: Entry, boundaries: Boundaries): RenderedEntry => 
     resource
   };
 };
-
-function statusClassName(status: number): string {
-  if (status >= 200 && status < 400)
-    return 'status-success';
-  if (status >= 400)
-    return 'status-failure';
-  return '';
-}
 
 function formatRouteStatus(request: Entry): string {
   if (request._wasAborted)
