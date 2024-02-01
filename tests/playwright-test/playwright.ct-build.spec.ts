@@ -143,31 +143,25 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     id: expect.stringContaining('playwright_test_src_button_tsx_Button'),
     remoteName: 'Button',
     importPath: expect.stringContaining('button.tsx'),
-    isModuleOrAlias: false,
   }, {
     id: expect.stringContaining('playwright_test_src_clashingNames1_tsx_ClashingName'),
     remoteName: 'ClashingName',
     importPath: expect.stringContaining('clashingNames1.tsx'),
-    isModuleOrAlias: false,
   }, {
     id: expect.stringContaining('playwright_test_src_clashingNames2_tsx_ClashingName'),
     remoteName: 'ClashingName',
     importPath: expect.stringContaining('clashingNames2.tsx'),
-    isModuleOrAlias: false,
   }, {
     id: expect.stringContaining('playwright_test_src_components_tsx_Component1'),
     remoteName: 'Component1',
     importPath: expect.stringContaining('components.tsx'),
-    isModuleOrAlias: false,
   }, {
     id: expect.stringContaining('playwright_test_src_components_tsx_Component2'),
     remoteName: 'Component2',
     importPath: expect.stringContaining('components.tsx'),
-    isModuleOrAlias: false,
   }, {
     id: expect.stringContaining('playwright_test_src_defaultExport_tsx'),
     importPath: expect.stringContaining('defaultExport.tsx'),
-    isModuleOrAlias: false,
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))
@@ -464,7 +458,6 @@ test('should retain deps when test changes', async ({ runInlineTest }, testInfo)
     id: expect.stringContaining('playwright_test_src_button_tsx_Button'),
     remoteName: 'Button',
     importPath: expect.stringContaining('button.tsx'),
-    isModuleOrAlias: false,
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))
@@ -549,6 +542,31 @@ test('should pass imported images from test to component', async ({ runInlineTes
       test('pass', async ({ mount }) => {
         const component = await mount(<img src={imageSrc}></img>);
         await expect(component).toHaveJSProperty('naturalWidth', 48);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should import from file shortcuts (no .ts ext)', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/tab.types.ts': `
+      export enum ALLOWED_TABS {
+        DRAW = "DRAW",
+        TYPE = "TYPE",
+        IMAGE = "IMAGE",
+      }    
+    `,
+    'src/image.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { ALLOWED_TABS } from './tab.types';
+      test('pass', async ({ mount }) => {
+        expect(ALLOWED_TABS.DRAW).toBe('DRAW');
       });
     `,
   }, { workers: 1 });
