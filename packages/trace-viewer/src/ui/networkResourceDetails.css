@@ -43,6 +43,27 @@
   overflow: hidden;
 }
 
+.tab-network .filters {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  align-items: center;
+}
+
+.tab-network .filters .filter {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #004a77;
+  background-color: transparent;
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+.tab-network .filters .filter.enabled {
+  background-color: #004a77;
+  color: #e3e3e3;
+}
+
 .tab-network .toolbar {
   min-height: 30px !important;
   background-color: initial !important;
@@ -52,7 +73,7 @@
 .tab-network .toolbar::after {
   box-shadow: none !important;
 }
- 
+
 .tab-network .tabbed-pane-tab.selected {
   font-weight: bold;
 }
