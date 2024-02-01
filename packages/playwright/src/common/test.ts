@@ -54,10 +54,12 @@ export class Suite extends Base implements SuitePrivate {
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
+  readonly _testTypeImpl: TestTypeImpl | undefined;
 
-  constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
+  constructor(title: string, type: 'root' | 'project' | 'file' | 'describe', testTypeImpl?: TestTypeImpl) {
     super(title);
     this._type = type;
+    this._testTypeImpl = testTypeImpl;
   }
 
   get suites(): Suite[] {
