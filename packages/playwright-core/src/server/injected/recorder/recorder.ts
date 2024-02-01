@@ -225,6 +225,10 @@ class RecordActionTool implements RecorderTool {
   }
 
   onClick(event: MouseEvent) {
+    // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
+    // So we check the hovered element instead, and if it is a range input, we skip click handling
+    if (isRangeInput(this._hoveredElement))
+      return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -313,6 +317,17 @@ class RecordActionTool implements RecorderTool {
         selector: this._activeModel!.selector,
         signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
+      });
+      return;
+    }
+
+    if (isRangeInput(target)) {
+      this._recorder.delegate.recordAction?.({
+        name: 'fill',
+        // must use hoveredModel instead of activeModel for it to work in webkit
+        selector: this._hoveredModel!.selector,
+        signals: [],
+        text: target.value,
       });
       return;
     }
@@ -414,7 +429,7 @@ class RecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
@@ -1224,6 +1239,13 @@ function asCheckbox(node: Node | null): HTMLInputElement | null {
     return null;
   const inputElement = node as HTMLInputElement;
   return ['checkbox', 'radio'].includes(inputElement.type) ? inputElement : null;
+}
+
+function isRangeInput(node: Node | null): node is HTMLInputElement {
+  if (!node || node.nodeName !== 'INPUT')
+    return false;
+  const inputElement = node as HTMLInputElement;
+  return inputElement.type.toLowerCase() === 'range';
 }
 
 function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {

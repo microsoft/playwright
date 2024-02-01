@@ -746,4 +746,75 @@ await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
     Button = MouseButton.Middle,
 });`);
   });
+
+  test('should record slider', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<input type="range" min="0" max="10" value="5">`);
+
+    const dragSlider = async () => {
+      const { x, y, width, height } = await page.locator('input').boundingBox();
+      await page.mouse.move(x + width / 2, y + height / 2);
+      await page.mouse.down();
+      await page.mouse.move(x + width, y + height / 2);
+      await page.mouse.up();
+    };
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'fill'),
+      dragSlider(),
+    ]);
+
+    await expect(page.locator('input')).toHaveValue('10');
+
+    expect(sources.get('JavaScript')!.text).not.toContain(`
+  await page.getByRole('slider').click();`);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('slider').fill('10');`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_role("slider").fill("10")`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_role("slider").fill("10")`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByRole(AriaRole.SLIDER).fill("10")`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
+  });
+
+  test('should click button with nested div', async ({ page, openRecorder }) => {
+    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29067' });
+
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<button><div role="none">Submit</div></button>`);
+
+    // we hover the nested div, but it must record the button
+    const locator = await recorder.hoverOverElement('div');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Submit'),
+      recorder.trustedClick(),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).click();`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_role("button", name="Submit").click()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_role("button", name="Submit").click()`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+  });
 });
