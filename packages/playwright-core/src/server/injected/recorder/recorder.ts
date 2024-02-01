@@ -738,7 +738,9 @@ class TextAssertionTool implements RecorderTool {
 
 class Overlay {
   private _recorder: Recorder;
+  private _listeners: (() => void)[] = [];
   private _overlayElement: HTMLElement;
+  private _dragHandle: HTMLElement;
   private _recordToggle: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
   private _assertVisibilityToggle: HTMLElement;
@@ -756,76 +758,84 @@ class Overlay {
     const toolsListElement = document.createElement('x-pw-tools-list');
     this._overlayElement.appendChild(toolsListElement);
 
-    const dragHandle = document.createElement('x-pw-tool-gripper');
-    dragHandle.addEventListener('mousedown', event => {
-      this._dragState = { offsetX: this._offsetX, dragStart: { x: event.clientX, y: 0 } };
-    });
-    dragHandle.appendChild(document.createElement('x-div'));
-    toolsListElement.appendChild(dragHandle);
+    this._dragHandle = document.createElement('x-pw-tool-gripper');
+    this._dragHandle.appendChild(document.createElement('x-div'));
+    toolsListElement.appendChild(this._dragHandle);
 
     this._recordToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._recordToggle.title = 'Record';
     this._recordToggle.classList.add('record');
     this._recordToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._recordToggle.addEventListener('click', () => {
-      this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'standby' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'standby');
-    });
     toolsListElement.appendChild(this._recordToggle);
 
     this._pickLocatorToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._pickLocatorToggle.title = 'Pick locator';
     this._pickLocatorToggle.classList.add('pick-locator');
     this._pickLocatorToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._pickLocatorToggle.addEventListener('click', () => {
-      const newMode: Record<Mode, Mode> = {
-        'inspecting': 'standby',
-        'none': 'inspecting',
-        'standby': 'inspecting',
-        'recording': 'recording-inspecting',
-        'recording-inspecting': 'recording',
-        'assertingText': 'recording-inspecting',
-        'assertingVisibility': 'recording-inspecting',
-        'assertingValue': 'recording-inspecting',
-      };
-      this._recorder.delegate.setMode?.(newMode[this._recorder.state.mode]);
-    });
     toolsListElement.appendChild(this._pickLocatorToggle);
 
     this._assertVisibilityToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._assertVisibilityToggle.title = 'Assert visibility';
     this._assertVisibilityToggle.classList.add('visibility');
     this._assertVisibilityToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._assertVisibilityToggle.addEventListener('click', () => {
-      if (!this._assertVisibilityToggle.classList.contains('disabled'))
-        this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility');
-    });
     toolsListElement.appendChild(this._assertVisibilityToggle);
 
     this._assertTextToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._assertTextToggle.title = 'Assert text';
     this._assertTextToggle.classList.add('text');
     this._assertTextToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._assertTextToggle.addEventListener('click', () => {
-      if (!this._assertTextToggle.classList.contains('disabled'))
-        this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
-    });
     toolsListElement.appendChild(this._assertTextToggle);
 
     this._assertValuesToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
     this._assertValuesToggle.title = 'Assert value';
     this._assertValuesToggle.classList.add('value');
     this._assertValuesToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
-    this._assertValuesToggle.addEventListener('click', () => {
-      if (!this._assertValuesToggle.classList.contains('disabled'))
-        this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingValue' ? 'recording' : 'assertingValue');
-    });
     toolsListElement.appendChild(this._assertValuesToggle);
 
     this._updateVisualPosition();
+    this._refreshListeners();
+  }
+
+  private _refreshListeners() {
+    removeEventListeners(this._listeners);
+    this._listeners = [
+      addEventListener(this._dragHandle, 'mousedown', event => {
+        this._dragState = { offsetX: this._offsetX, dragStart: { x: (event as MouseEvent).clientX, y: 0 } };
+      }),
+      addEventListener(this._recordToggle, 'click', () => {
+        this._recorder.delegate.setMode?.(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'standby' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'standby');
+      }),
+      addEventListener(this._pickLocatorToggle, 'click', () => {
+        const newMode: Record<Mode, Mode> = {
+          'inspecting': 'standby',
+          'none': 'inspecting',
+          'standby': 'inspecting',
+          'recording': 'recording-inspecting',
+          'recording-inspecting': 'recording',
+          'assertingText': 'recording-inspecting',
+          'assertingVisibility': 'recording-inspecting',
+          'assertingValue': 'recording-inspecting',
+        };
+        this._recorder.delegate.setMode?.(newMode[this._recorder.state.mode]);
+      }),
+      addEventListener(this._assertVisibilityToggle, 'click', () => {
+        if (!this._assertVisibilityToggle.classList.contains('disabled'))
+          this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility');
+      }),
+      addEventListener(this._assertTextToggle, 'click', () => {
+        if (!this._assertTextToggle.classList.contains('disabled'))
+          this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
+      }),
+      addEventListener(this._assertValuesToggle, 'click', () => {
+        if (!this._assertValuesToggle.classList.contains('disabled'))
+          this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingValue' ? 'recording' : 'assertingValue');
+      }),
+    ];
   }
 
   install() {
     this._recorder.highlight.appendChild(this._overlayElement);
+    this._refreshListeners();
     this._updateVisualPosition();
   }
 
