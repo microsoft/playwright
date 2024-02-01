@@ -22,11 +22,16 @@ import { ResizeView } from '@web/shared/resizeView';
 
 export type Sorting<T> = { by: keyof T, negate: boolean };
 
+export type RenderedGridCell = {
+  body: React.ReactNode;
+  title?: string;
+};
+
 export type GridViewProps<T> = Omit<ListViewProps<T>, 'render'> & {
   columns: (keyof T)[],
   columnTitle: (column: keyof T) => string,
   columnWidth: (column: keyof T) => number,
-  render: (item: T, column: keyof T, index: number) => React.ReactNode,
+  render: (item: T, column: keyof T, index: number) => RenderedGridCell,
   sorting?: Sorting<T>,
   setSorting?: (sorting: Sorting<T> | undefined) => void,
 };
@@ -43,7 +48,7 @@ export function GridView<T>(model: GridViewProps<T>) {
     model.setSorting?.({ by: f, negate: model.sorting?.by === f ? !model.sorting.negate : false });
   }, [model]);
 
-  return <div className='grid-view'>
+  return <div className={`grid-view ${model.name}-grid-view`}>
     <ResizeView
       orientation={'horizontal'}
       offsets={offsets}
@@ -75,10 +80,12 @@ export function GridView<T>(model: GridViewProps<T>) {
         render={(item, index) => {
           return <>
             {model.columns.map((column, i) => {
+              const { body, title } = model.render(item, column, index);
               return <div
-                className='grid-view-cell'
+                className={`grid-view-cell grid-view-column-${String(column)}`}
+                title={title}
                 style={{ width: offsets[i] - (offsets[i - 1] || 0) }}>
-                {model.render(item, column, index)}
+                {body}
               </div>;
             })}
           </>;
@@ -87,6 +94,7 @@ export function GridView<T>(model: GridViewProps<T>) {
         indent={model.indent}
         isError={model.isError}
         isWarning={model.isWarning}
+        isInfo={model.isInfo}
         selectedItem={model.selectedItem}
         onAccepted={model.onAccepted}
         onSelected={model.onSelected}

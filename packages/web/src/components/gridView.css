@@ -20,6 +20,10 @@
   flex: auto;
 }
 
+.grid-view .list-view-entry {
+  padding-left: 0;
+}
+
 .grid-view-cell {
   overflow: hidden;
   text-overflow: ellipsis;
