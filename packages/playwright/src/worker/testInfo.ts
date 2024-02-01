@@ -489,7 +489,7 @@ export class TestInfoImpl implements TestInfo {
   }
 }
 
-export class SkipError extends Error {
+class SkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');
