@@ -231,6 +231,10 @@ export function fixtureParameterNames(fn: Function | any, location: Location, on
   return fn[signatureSymbol];
 }
 
+export function inheritFixutreNames(from: Function, to: Function) {
+  (to as any)[signatureSymbol] = (from as any)[signatureSymbol];
+}
+
 function innerFixtureParameterNames(fn: Function, location: Location, onError: LoadErrorSink): string[] {
   const text = filterOutComments(fn.toString());
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
