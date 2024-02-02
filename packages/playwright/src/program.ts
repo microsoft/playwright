@@ -65,7 +65,7 @@ function addListFilesCommand(program: Command) {
   const command = program.command('list-files [file-filter...]', { hidden: true });
   command.description('List files with Playwright Test tests');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: list all projects)`);
+  command.option('--project <project-name...>', `Only run tests from the projects matching this regular expression (default: list all projects)`);
   command.action(async (args, opts) => {
     try {
       await listTestFiles(opts);
@@ -327,7 +327,7 @@ const testOptions: [string, string][] = [
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
-  ['--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`],
+  ['--project <project-name...>', `Only run tests from the projects matching this regular expression (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
   ['--repeat-each <N>', `Run each test N times (default: 1)`],
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],

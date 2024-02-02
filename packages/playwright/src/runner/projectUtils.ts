@@ -24,26 +24,32 @@ import { createFileMatcher } from '../util';
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
+// The difference to forceRegExp is that we want to match the whole string.
+function forceBoundedRegExp(pattern: string): RegExp {
+  const match = pattern.match(/^\/(.*)\/([gi]*)$/);
+  if (match)
+    return new RegExp(match[1], match[2]);
+  return new RegExp(`^${pattern}$`, 'gi');
+}
+
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
     return [...projects];
-  const projectsToFind = new Set<string>();
-  const unknownProjects = new Map<string, string>();
-  projectNames.forEach(n => {
-    const name = n.toLocaleLowerCase();
-    projectsToFind.add(name);
-    unknownProjects.set(name, n);
-  });
+  const unmatchedProjectFilters = new Set<string>(projectNames);
   const result = projects.filter(project => {
-    const name = project.project.name.toLocaleLowerCase();
-    unknownProjects.delete(name);
-    return projectsToFind.has(name);
+    for (const projectName of projectNames) {
+      if (forceBoundedRegExp(projectName).test(project.project.name)) {
+        unmatchedProjectFilters.delete(projectName);
+        return true;
+      }
+    }
+    return false;
   });
-  if (unknownProjects.size) {
+  if (unmatchedProjectFilters.size) {
     const names = projects.map(p => p.project.name).filter(name => !!name);
     if (!names.length)
       throw new Error(`No named projects are specified in the configuration file`);
-    const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
+    const unknownProjectNames = Array.from(unmatchedProjectFilters.values()).map(n => `"${n}"`).join(', ');
     throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
   }
   return result;
