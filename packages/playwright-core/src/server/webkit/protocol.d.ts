@@ -2211,6 +2211,123 @@ export module Protocol {
       pseudoId?: CSS.PseudoId;
     }
     /**
+     * A structure holding media element statistics and configurations.
+     */
+    export interface MediaStats {
+      audio?: AudioMediaStats;
+      video?: VideoMediaStats;
+      /**
+       * The ratio between physical screen pixels and CSS pixels.
+       */
+      devicePixelRatio?: number;
+      /**
+       * The viewport size occupied by the media element.
+       */
+      viewport?: ViewportSize;
+      quality?: VideoPlaybackQuality;
+      /**
+       * The source type of the media element.
+       */
+      source?: string;
+    }
+    /**
+     * A structure holding media element's audio-specific statistics and configurations.
+     */
+    export interface AudioMediaStats {
+      /**
+       * The data rate of the primary audio track in bits/s.
+       */
+      bitrate: number;
+      /**
+       * The codec string of the primary audio track. (E.g., "hvc1.1.6.L123.B0")
+       */
+      codec: string;
+      /**
+       * A human readable version of the `codec` parameter.
+       */
+      humanReadableCodecString: string;
+      /**
+       * The number of audio channels in the primary audio track.
+       */
+      numberOfChannels: number;
+      /**
+       * The sample rate of the primary audio track in hertz.
+       */
+      sampleRate: number;
+    }
+    /**
+     * A structure holding media element's audio-specific statistics and configurations.
+     */
+    export interface VideoMediaStats {
+      /**
+       * The data rate of the video track in bits/s.
+       */
+      bitrate: number;
+      /**
+       * The codec string of the video track. (E.g., "hvc1.1.6.L123.B0")
+       */
+      codec: string;
+      /**
+       * A human readable version of the `codec` parameter.
+       */
+      humanReadableCodecString: string;
+      colorSpace: VideoColorSpace;
+      /**
+       * The nominal frame rate of video track in frames per second.
+       */
+      framerate: number;
+      /**
+       * The native height of the video track in CSS pixels
+       */
+      height: number;
+      /**
+       * The native width of the video track in CSS pixels
+       */
+      width: number;
+    }
+    /**
+     * WebCodecs VideoColorSpace
+     */
+    export interface VideoColorSpace {
+      /**
+       * A flag indicating whether the colorspace is Full range (true) or Video range (false)
+       */
+      fullRange?: boolean;
+      /**
+       * The matrix specification of the colorspace
+       */
+      matrix?: string;
+      /**
+       * The color primaries specification of the colorspace
+       */
+      primaries?: string;
+      /**
+       * The transfer function specification of the colorspace
+       */
+      transfer?: string;
+    }
+    /**
+     * A count of frames enqueued for display by the media element, and a subset count of dropped and display composited frames.
+     */
+    export interface VideoPlaybackQuality {
+      /**
+       * The number of frames of the total which were composited by the display.
+       */
+      displayCompositedVideoFrames: number;
+      /**
+       * The number of frames of the total which were dropped without being displayed.
+       */
+      droppedVideoFrames: number;
+      /**
+       * The total number of frames enqueued for display by the media element.
+       */
+      totalVideoFrames: number;
+    }
+    export interface ViewportSize {
+      width: number;
+      height: number;
+    }
+    /**
      * Data to construct File object.
      */
     export interface FilePayload {
@@ -3215,6 +3332,21 @@ export module Protocol {
       allow: boolean;
     }
     export type setAllowEditingUserAgentShadowTreesReturnValue = {
+    }
+    /**
+     * Returns media stats for the selected node.
+     */
+    export type getMediaStatsParameters = {
+      /**
+       * Id of the node to retrieve mediastats for.
+       */
+      nodeId: NodeId;
+    }
+    export type getMediaStatsReturnValue = {
+      /**
+       * An interleaved array of node attribute names and values.
+       */
+      mediaStats: MediaStats;
     }
     /**
      * Returns node description.
@@ -9305,6 +9437,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.focus": DOM.focusParameters;
     "DOM.setInspectedNode": DOM.setInspectedNodeParameters;
     "DOM.setAllowEditingUserAgentShadowTrees": DOM.setAllowEditingUserAgentShadowTreesParameters;
+    "DOM.getMediaStats": DOM.getMediaStatsParameters;
     "DOM.describeNode": DOM.describeNodeParameters;
     "DOM.scrollIntoViewIfNeeded": DOM.scrollIntoViewIfNeededParameters;
     "DOM.getContentQuads": DOM.getContentQuadsParameters;
@@ -9614,6 +9747,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.focus": DOM.focusReturnValue;
     "DOM.setInspectedNode": DOM.setInspectedNodeReturnValue;
     "DOM.setAllowEditingUserAgentShadowTrees": DOM.setAllowEditingUserAgentShadowTreesReturnValue;
+    "DOM.getMediaStats": DOM.getMediaStatsReturnValue;
     "DOM.describeNode": DOM.describeNodeReturnValue;
     "DOM.scrollIntoViewIfNeeded": DOM.scrollIntoViewIfNeededReturnValue;
     "DOM.getContentQuads": DOM.getContentQuadsReturnValue;
