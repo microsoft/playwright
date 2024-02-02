@@ -59,7 +59,6 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
-  private _nodeChromiumExecutionContext: CRExecutionContext | undefined;
   private readonly _bufferedConsoleMessageEvents: Protocol.Runtime.consoleAPICalledPayload[] = [];
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
@@ -78,15 +77,14 @@ export class ElectronApplication extends SdkObject {
       if (!event.context.auxData || !event.context.auxData.isDefault)
         return;
       const crExecutionContext = new CRExecutionContext(this._nodeSession, event.context);
-      this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
       const { result: remoteObject } = await crExecutionContext._client.send('Runtime.evaluate', {
         expression: `require('electron')`,
         contextId: event.context.id,
         // Needed after Electron 28 to get access to require: https://github.com/microsoft/playwright/issues/28048
         includeCommandLineAPI: true,
       });
+      this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
-      this._nodeChromiumExecutionContext = crExecutionContext;
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     this._browserContext.setCustomCloseHandler(async () => {
@@ -113,13 +111,12 @@ export class ElectronApplication extends SdkObject {
       // @see https://github.com/GoogleChrome/puppeteer/issues/3865
       return;
     }
-    const [crExecutionContext, nodeExecutionContext] = [this._nodeChromiumExecutionContext, this._nodeExecutionContext];
-    if (!crExecutionContext || !nodeExecutionContext) {
+    if (!this._nodeExecutionContext) {
       this._bufferedConsoleMessageEvents.push(event);
       return;
     }
-    const args = event.args.map(arg => crExecutionContext.createHandle(nodeExecutionContext, arg));
-    const message = new ConsoleMessage(this, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
+    const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
   }
 

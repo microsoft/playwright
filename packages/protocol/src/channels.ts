@@ -1453,7 +1453,6 @@ export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type BrowserContextConsoleEvent = {
-  page?: PageChannel,
   type: string,
   text: string,
   args: JSHandleChannel[],
@@ -1462,6 +1461,7 @@ export type BrowserContextConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  page: PageChannel,
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextDialogEvent = {
@@ -4094,7 +4094,6 @@ export interface ElectronApplicationChannel extends ElectronApplicationEventTarg
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
-  page?: PageChannel,
   type: string,
   text: string,
   args: JSHandleChannel[],

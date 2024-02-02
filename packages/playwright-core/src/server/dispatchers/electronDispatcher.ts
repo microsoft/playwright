@@ -42,13 +42,11 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
   _type_EventTarget = true;
   _type_ElectronApplication = true;
   private readonly _subscriptions = new Set<channels.ElectronApplicationUpdateSubscriptionParams['event']>();
-  private readonly _electronApplication: ElectronApplication;
 
   constructor(scope: ElectronDispatcher, electronApplication: ElectronApplication) {
     super(scope, electronApplication, 'ElectronApplication', {
       context: new BrowserContextDispatcher(scope, electronApplication.context())
     });
-    this._electronApplication = electronApplication;
     this.addObjectListener(ElectronApplication.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -87,7 +85,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     else
       this._subscriptions.delete(params.event);
     if (params.event === 'console' && params.enabled)
-      this._electronApplication._emitBufferedConsoleMessages();
+      this._object._emitBufferedConsoleMessages();
   }
 
   async close(): Promise<void> {

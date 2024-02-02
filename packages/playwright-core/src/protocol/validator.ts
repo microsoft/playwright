@@ -765,7 +765,6 @@ scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.BrowserContextConsoleEvent = tObject({
-  page: tOptional(tChannel(['Page'])),
   type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
@@ -774,6 +773,7 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tNumber,
     columnNumber: tNumber,
   }),
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -2259,7 +2259,6 @@ scheme.ElectronApplicationInitializer = tObject({
 });
 scheme.ElectronApplicationCloseEvent = tOptional(tObject({}));
 scheme.ElectronApplicationConsoleEvent = tObject({
-  page: tOptional(tChannel(['Page'])),
   type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),

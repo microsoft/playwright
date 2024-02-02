@@ -973,7 +973,6 @@ Browser:
 ConsoleMessage:
   type: mixin
   properties:
-    page: Page?
     type: string
     text: string
     args:
@@ -1192,6 +1191,7 @@ BrowserContext:
     console:
       parameters:
         $mixin: ConsoleMessage
+        page: Page
 
     close:
 

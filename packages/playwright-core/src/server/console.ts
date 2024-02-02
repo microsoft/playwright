@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-import { SdkObject } from './instrumentation';
 import type * as js from './javascript';
 import type { ConsoleMessageLocation } from './types';
-import { Page } from './page';
+import type { Page } from './page';
 
-export class ConsoleMessage extends SdkObject {
+export class ConsoleMessage {
   private _type: string;
   private _text?: string;
   private _args: js.JSHandle[];
   private _location: ConsoleMessageLocation;
-  private _page: Page | undefined;
+  private _page: Page | null;
 
-  constructor(parent: SdkObject, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
-    super(parent, 'console-message');
-    this._page = parent instanceof Page ? parent : undefined;
+  constructor(page: Page | null, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
+    this._page = page;
     this._type = type;
     this._text = text;
     this._args = args;
     this._location = location || { url: '', lineNumber: 0, columnNumber: 0 };
   }
 
-  page(): Page | undefined {
+  page() {
     return this._page;
   }
 
