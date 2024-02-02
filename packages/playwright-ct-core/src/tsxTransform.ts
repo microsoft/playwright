@@ -17,8 +17,7 @@
 import path from 'path';
 import type { T, BabelAPI, PluginObj } from 'playwright/src/transform/babelBundle';
 import { types, declare, traverse } from 'playwright/lib/transform/babelBundle';
-import { resolveImportSpecifierExtension } from 'playwright/lib/util';
-import { setTransformData } from 'playwright/lib/transform/transform';
+import { resolveHook, setTransformData } from 'playwright/lib/transform/transform';
 const t: typeof T = types;
 
 let jsxComponentNames: Set<string>;
@@ -72,15 +71,15 @@ export default declare((api: BabelAPI) => {
         const importNode = p.node;
         if (!t.isStringLiteral(importNode.source))
           return;
-
-        const ext = path.extname(importNode.source.value);
+        const importPath = resolveImportSource(importNode.source.value, this.filename!);
+        const ext = path.extname(importPath);
 
         // Convert all non-JS imports into refs.
         if (!allJsExtensions.has(ext)) {
           for (const specifier of importNode.specifiers) {
             if (t.isImportNamespaceSpecifier(specifier))
               continue;
-            const { localName, info } = importInfo(importNode, specifier, this.filename!);
+            const { localName, info } = importInfo(importPath, specifier, this.filename!);
             importInfos.set(localName, info);
           }
           p.skip();
@@ -93,7 +92,7 @@ export default declare((api: BabelAPI) => {
         for (const specifier of importNode.specifiers) {
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          const { localName, info } = importInfo(importNode, specifier, this.filename!);
+          const { localName, info } = importInfo(importPath, specifier, this.filename!);
           if (jsxComponentNames.has(localName)) {
             importInfos.set(localName, info);
             ++importCount;
@@ -144,25 +143,22 @@ function collectJsxComponentUsages(node: T.Node): Set<string> {
 
 export type ImportInfo = {
   id: string;
-  isModuleOrAlias: boolean;
   importPath: string;
   remoteName: string | undefined;
 };
 
-export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
-  const importSource = importNode.source.value;
-  const isModuleOrAlias = !importSource.startsWith('.');
+function resolveImportSource(importSource: string, filename: string): string {
   const unresolvedImportPath = path.resolve(path.dirname(filename), importSource);
-  // Support following notations for Button.tsx:
-  // - import { Button } from './Button.js' - via resolveImportSpecifierExtension
-  // - import { Button } from './Button' - via require.resolve
-  const importPath = isModuleOrAlias ? importSource : resolveImportSpecifierExtension(unresolvedImportPath) || require.resolve(unresolvedImportPath);
+  const importPath = resolveHook(filename, importSource) || unresolvedImportPath;
+  return importPath;
+}
+
+function importInfo(importPath: string, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
   const idPrefix = importPath.replace(/[^\w_\d]/g, '_');
 
   const result: ImportInfo = {
     id: idPrefix,
     importPath,
-    isModuleOrAlias,
     remoteName: undefined,
   };
 
