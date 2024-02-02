@@ -24,12 +24,14 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
-import { TimeoutManager, type TimeSlot } from './timeoutManager';
+import { TimeoutManager } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
+import type { Location } from '../../types/testReporter';
+import { inheritFixutreNames } from '../common/fixtures';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -52,11 +54,10 @@ export class WorkerMain extends ProcessRunner {
   private _currentTest: TestInfoImpl | null = null;
   private _lastRunningTests: TestInfoImpl[] = [];
   private _totalRunningTests = 0;
-  // Dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _extraSuiteAnnotations = new Map<Suite, Annotation[]>();
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
-  private _activeSuites = new Set<Suite>();
+  // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
+  private _activeSuites = new Map<Suite, Annotation[]>();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -207,8 +208,7 @@ export class WorkerMain extends ProcessRunner {
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
         this._poolBuilder.buildPools(suite);
-        this._extraSuiteAnnotations = new Map();
-        this._activeSuites = new Set();
+        this._activeSuites = new Map();
         this._didRunFullCleanup = false;
         const tests = suite.allTests();
         for (let i = 0; i < tests.length; i++) {
@@ -284,7 +284,7 @@ export class WorkerMain extends ProcessRunner {
 
     // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
-      const extraAnnotations = this._extraSuiteAnnotations.get(suite) || [];
+      const extraAnnotations = this._activeSuites.get(suite) || [];
       for (const annotation of extraAnnotations)
         processAnnotation(annotation);
     }
@@ -342,47 +342,42 @@ export class WorkerMain extends ProcessRunner {
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
         testInfo._beforeHooksStep = step;
-        // Note: wrap all preparation steps together, because failure/skip in any of them
-        // prevents further setup and/or test from running.
-        const beforeHooksError = await testInfo._runAndFailOnError(async () => {
-          // Run "beforeAll" modifiers on parent suites, unless already run during previous tests.
-          for (const suite of suites) {
-            if (this._extraSuiteAnnotations.has(suite))
-              continue;
-            const extraAnnotations: Annotation[] = [];
-            this._extraSuiteAnnotations.set(suite, extraAnnotations);
-            didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
-            // Separate timeout for each "beforeAll" modifier.
-            const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-            await this._runModifiersForSuite(suite, testInfo, 'worker', timeSlot, extraAnnotations);
-          }
 
-          // Run "beforeAll" hooks, unless already run during previous tests.
-          for (const suite of suites) {
-            didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
-            await this._runBeforeAllHooksForSuite(suite, testInfo);
+        // Run "beforeAll" hooks, unless already run during previous tests.
+        for (const suite of suites) {
+          didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
+          const beforeAllError = await this._runBeforeAllHooksForSuite(suite, testInfo);
+          if (beforeAllError) {
+            step.complete({ error: beforeAllError });
+            return;
           }
-
-          // Running "beforeAll" succeeded for all suites!
           didFailBeforeAllForSuite = undefined;
+          if (testInfo.expectedStatus === 'skipped')
+            return;
+        }
 
-          // Run "beforeEach" modifiers.
-          for (const suite of suites)
-            await this._runModifiersForSuite(suite, testInfo, 'test', undefined);
-
+        const beforeEachError = await testInfo._runAndFailOnError(async () => {
           // Run "beforeEach" hooks. Once started with "beforeEach", we must run all "afterEach" hooks as well.
           shouldRunAfterEachHooks = true;
           await this._runEachHooksForSuites(suites, 'beforeEach', testInfo);
+        }, 'allowSkips');
+        if (beforeEachError) {
+          step.complete({ error: beforeEachError });
+          return;
+        }
+        if (testInfo.expectedStatus === 'skipped')
+          return;
 
+        const fixturesError = await testInfo._runAndFailOnError(async () => {
           // Setup fixtures required by the test.
           testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test');
         }, 'allowSkips');
-        if (beforeHooksError)
-          step.complete({ error: beforeHooksError });
+        if (fixturesError)
+          step.complete({ error: fixturesError });
       });
 
       if (testFunctionParams === null) {
-        // Fixture setup failed, we should not run the test now.
+        // Fixture setup failed or was skipped, we should not run the test now.
         return;
       }
 
@@ -499,107 +494,94 @@ export class WorkerMain extends ProcessRunner {
       await removeFolders([testInfo.outputDir]);
   }
 
-  private async _runModifiersForSuite(suite: Suite, testInfo: TestInfoImpl, scope: 'worker' | 'test', timeSlot: TimeSlot | undefined, extraAnnotations?: Annotation[]) {
+  private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
+    type Runnable = { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll' | 'fixme' | 'skip' | 'slow' | 'fail', fn: Function, title: string, location: Location };
+    const runnables: Runnable[] = [];
     for (const modifier of suite._modifiers) {
-      const actualScope = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'worker' : 'test';
-      if (actualScope !== scope)
+      const modifierType = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'beforeAll' : 'beforeEach';
+      if (modifierType !== type)
         continue;
-      debugTest(`modifier at "${formatLocation(modifier.location)}" started`);
-      const result = await testInfo._runAsStepWithRunnable({
-        category: 'hook',
+      const fn = async (fixtures: any) => {
+        const result = await modifier.fn(fixtures);
+        testInfo[modifier.type](!!result, modifier.description);
+      };
+      inheritFixutreNames(modifier.fn, fn);
+      runnables.push({
         title: `${modifier.type} modifier`,
         location: modifier.location,
-        runnableType: modifier.type,
-        runnableSlot: timeSlot,
-      }, () => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope));
-      debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
-      if (result && extraAnnotations)
-        extraAnnotations.push({ type: modifier.type, description: modifier.description });
-      testInfo[modifier.type](!!result, modifier.description);
+        type: modifier.type,
+        fn,
+      });
     }
+    // Modifiers first, then hooks.
+    runnables.push(...suite._hooks.filter(hook => hook.type === type));
+    return runnables;
   }
 
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
-    this._activeSuites.add(suite);
-    let beforeAllError: Error | undefined;
-    for (const hook of suite._hooks) {
-      if (hook.type !== 'beforeAll')
-        continue;
+    const extraAnnotations: Annotation[] = [];
+    this._activeSuites.set(suite, extraAnnotations);
+    return await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
+  }
+
+  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
+    const allowSkips = type === 'beforeAll';
+    let firstError: Error | undefined;
+    for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
-      try {
-        // Separate time slot for each "beforeAll" hook.
+      const error = await testInfo._runAndFailOnError(async () => {
+        // Separate time slot for each beforeAll/afterAll hook.
         const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
         await testInfo._runAsStepWithRunnable({
           category: 'hook',
-          title: `${hook.title}`,
+          title: hook.title,
           location: hook.location,
-          runnableType: 'beforeAll',
+          runnableType: hook.type,
           runnableSlot: timeSlot,
         }, async () => {
+          const existingAnnotations = new Set(testInfo.annotations);
           try {
             await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
           } finally {
-            // Each beforeAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
-            // Note: we must teardown even after beforeAll fails, because we'll run more beforeAlls.
+            if (extraAnnotations) {
+              // Inherit all annotations defined in the beforeAll/modifer to all tests in the suite.
+              const newAnnotations = testInfo.annotations.filter(a => !existingAnnotations.has(a));
+              extraAnnotations.push(...newAnnotations);
+            }
+            // Each beforeAll/afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
+            // Note: we must teardown even after hook fails, because we'll run more hooks.
             await this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
           }
         });
-      } catch (e) {
-        // Always run all the hooks, and capture the first error.
-        beforeAllError = beforeAllError || e;
-      }
+      }, allowSkips ? 'allowSkips' : undefined);
+      firstError = firstError || error;
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
+      // Skip inside a beforeAll hook/modifier prevents others from running.
+      if (allowSkips && testInfo.expectedStatus === 'skipped')
+        break;
     }
-    if (beforeAllError)
-      throw beforeAllError;
+    return firstError;
   }
 
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl): Promise<Error | undefined> {
     if (!this._activeSuites.has(suite))
       return;
     this._activeSuites.delete(suite);
-    let firstError: Error | undefined;
-    for (const hook of suite._hooks) {
-      if (hook.type !== 'afterAll')
-        continue;
-      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
-      const afterAllError = await testInfo._runAndFailOnError(async () => {
-        // Separate time slot for each "afterAll" hook.
-        const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-        await testInfo._runAsStepWithRunnable({
-          category: 'hook',
-          title: `${hook.title}`,
-          location: hook.location,
-          runnableType: 'afterAll',
-          runnableSlot: timeSlot,
-        }, async () => {
-          try {
-            await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
-          } finally {
-            // Each afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
-            // Note: we must teardown even after afterAll fails, because we'll run more afterAlls.
-            await this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
-          }
-        });
-      });
-      firstError = firstError || afterAllError;
-      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
-    }
-    return firstError;
+    return await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
 
   private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl) {
-    const hooks = suites.map(suite => suite._hooks.filter(hook => hook.type === type)).flat();
+    const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
     let error: Error | undefined;
     for (const hook of hooks) {
       try {
         await testInfo._runAsStepWithRunnable({
           category: 'hook',
-          title: `${hook.title}`,
+          title: hook.title,
           location: hook.location,
-          runnableType: type,
+          runnableType: hook.type,
         }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
       } catch (e) {
         // Always run all the hooks, and capture the first error.
