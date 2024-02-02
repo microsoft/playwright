@@ -43,6 +43,7 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
         return true;
       }
     }
+    return false;
   });
   if (unmatchedProjectFilters.size) {
     const names = projects.map(p => p.project.name).filter(name => !!name);
