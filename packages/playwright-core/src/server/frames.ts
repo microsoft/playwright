@@ -1374,7 +1374,7 @@ export class Frame extends SdkObject {
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const result = await this._expectImpl(metadata, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
-    if (metadata.result && metadata.result.matches === metadata.params?.isNot)
+    if (result.matches === options.isNot)
       metadata.fakeError = { error: { name: 'Expect', message: 'Expect failed' }};
     return result;
   }
