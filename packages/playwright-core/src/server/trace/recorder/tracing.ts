@@ -563,7 +563,7 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     type: 'after',
     callId: metadata.id,
     endTime: metadata.endTime,
-    error: metadata.error?.error ?? metadata.fakeError?.error,
+    error: metadata.error?.error,
     result: metadata.result,
     point: metadata.point,
   };

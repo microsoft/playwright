@@ -1375,7 +1375,7 @@ export class Frame extends SdkObject {
     const result = await this._expectImpl(metadata, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
     if (result.matches === options.isNot)
-      metadata.fakeError = { error: { name: 'Expect', message: 'Expect failed' }};
+      metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     return result;
   }
 
