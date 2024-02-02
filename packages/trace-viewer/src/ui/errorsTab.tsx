@@ -56,7 +56,7 @@ export const ErrorsTab: React.FunctionComponent<{
       let longLocation: string | undefined;
       const stackFrame = error.stack?.[0];
       if (stackFrame) {
-        const file = stackFrame.file.replace(/.*\/(.*)/, '$1');
+        const file = stackFrame.file.replace(/.*[/\\](.*)/, '$1');
         location = file + ':' + stackFrame.line;
         longLocation = stackFrame.file + ':' + stackFrame.line;
       }
