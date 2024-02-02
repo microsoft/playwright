@@ -143,7 +143,7 @@ export async function populateComponentsFromTests(componentRegistry: ComponentRe
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
-      componentsByImportingFile.set(file, importList.map(i => i.importPath));
+      componentsByImportingFile.set(file, importList.filter(i => !i.isModuleOrAlias).map(i => i.importPath));
   }
 }
 
@@ -179,7 +179,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
-    const importPath = './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
+    const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
     lines.push(`const ${value.id} = () => import('${importPath}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
