@@ -14,13 +14,6 @@ body:
     validations:
       required: true
   - type: textarea
-    id: motivation
-    attributes:
-      label: Motivation
-      description: Outline your motivation for the proposal. How will it make Playwright better?
-    validations:
-      required: true
-  - type: textarea
     id: example
     attributes:
       label: Example
@@ -28,10 +21,10 @@ body:
     validations:
       required: false
   - type: textarea
-    id: pitch
+    id: motivation
     attributes:
-      label: Pitch
+      label: Motivation
       description: |
-        Why does this feature belong in the Playwright core and should not be a third party module?
+        Outline your motivation for the proposal. How will it make Playwright better?
     validations:
       required: true
