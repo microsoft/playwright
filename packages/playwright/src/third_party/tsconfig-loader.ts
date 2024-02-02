@@ -31,7 +31,7 @@ import { json5 } from '../utilsBundle';
 /**
  * Typing for the parts of tsconfig that we care about
  */
-interface Tsconfig {
+interface TsConfig {
   extends?: string;
   compilerOptions?: {
     baseUrl?: string;
@@ -39,55 +39,29 @@ interface Tsconfig {
     strict?: boolean;
     allowJs?: boolean;
   };
-  references?: any[];
+  references?: { path: string }[];
 }
 
-export interface TsConfigLoaderResult {
-  tsConfigPath: string | undefined;
-  baseUrl: string | undefined;
-  paths: { [key: string]: Array<string> } | undefined;
-  serialized: string | undefined;
-  allowJs: boolean;
+export interface LoadedTsConfig {
+  tsConfigPath: string;
+  baseUrl?: string;
+  paths?: { [key: string]: Array<string> };
+  allowJs?: boolean;
 }
 
 export interface TsConfigLoaderParams {
   cwd: string;
 }
 
-export function tsConfigLoader({
-  cwd,
-}: TsConfigLoaderParams): TsConfigLoaderResult {
-  const loadResult = loadSyncDefault(cwd);
-  loadResult.serialized = JSON.stringify(loadResult);
-  return loadResult;
-}
-
-function loadSyncDefault(
-  cwd: string,
-): TsConfigLoaderResult {
-  // Tsconfig.loadSync uses path.resolve. This is why we can use an absolute path as filename
-
+export function tsConfigLoader({ cwd, }: TsConfigLoaderParams): LoadedTsConfig[] {
   const configPath = resolveConfigPath(cwd);
 
-  if (!configPath) {
-    return {
-      tsConfigPath: undefined,
-      baseUrl: undefined,
-      paths: undefined,
-      serialized: undefined,
-      allowJs: false,
-    };
-  }
-  const config = loadTsconfig(configPath);
+  if (!configPath)
+    return [];
 
-  return {
-    tsConfigPath: configPath,
-    baseUrl:
-      (config && config.compilerOptions && config.compilerOptions.baseUrl),
-    paths: config && config.compilerOptions && config.compilerOptions.paths,
-    serialized: undefined,
-    allowJs: !!config?.compilerOptions?.allowJs,
-  };
+  const references: LoadedTsConfig[] = [];
+  const config = loadTsConfig(configPath, references);
+  return [config, ...references];
 }
 
 function resolveConfigPath(cwd: string): string | undefined {
@@ -122,79 +96,64 @@ export function walkForTsConfig(
   return walkForTsConfig(parentDirectory, existsSync);
 }
 
-function loadTsconfig(
+function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
+  if (!referencedConfigFile.endsWith('.json'))
+    referencedConfigFile += '.json';
+  const currentDir = path.dirname(baseConfigFile);
+  let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
+  if (referencedConfigFile.indexOf('/') !== -1 && referencedConfigFile.indexOf('.') !== -1 && !fs.existsSync(referencedConfigFile))
+    resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
+  return resolvedConfigFile;
+}
+
+function loadTsConfig(
   configFilePath: string,
-): Tsconfig | undefined {
-  if (!fs.existsSync(configFilePath)) {
-    return undefined;
-  }
+  references: LoadedTsConfig[],
+  visited = new Map<string, LoadedTsConfig>(),
+): LoadedTsConfig {
+  if (visited.has(configFilePath))
+    return visited.get(configFilePath)!;
+
+  let result: LoadedTsConfig = {
+    tsConfigPath: configFilePath,
+  };
+  visited.set(configFilePath, result);
+
+  if (!fs.existsSync(configFilePath))
+    return result;
 
   const configString = fs.readFileSync(configFilePath, 'utf-8');
   const cleanedJson = StripBom(configString);
-  const parsedConfig: Tsconfig = json5.parse(cleanedJson);
-
-  let config: Tsconfig = {};
+  const parsedConfig: TsConfig = json5.parse(cleanedJson);
 
   const extendsArray = Array.isArray(parsedConfig.extends) ? parsedConfig.extends : (parsedConfig.extends ? [parsedConfig.extends] : []);
-  for (let extendedConfig of extendsArray) {
-    if (
-      typeof extendedConfig === "string" &&
-      extendedConfig.indexOf(".json") === -1
-    ) {
-      extendedConfig += ".json";
-    }
-    const currentDir = path.dirname(configFilePath);
-    let extendedConfigPath = path.join(currentDir, extendedConfig);
-    if (
-      extendedConfig.indexOf("/") !== -1 &&
-      extendedConfig.indexOf(".") !== -1 &&
-      !fs.existsSync(extendedConfigPath)
-    ) {
-      extendedConfigPath = path.join(
-        currentDir,
-        "node_modules",
-        extendedConfig
-      );
-    }
-
-    const base =
-      loadTsconfig(extendedConfigPath) || {};
+  for (const extendedConfig of extendsArray) {
+    const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
+    const base = loadTsConfig(extendedConfigPath, references, visited);
 
     // baseUrl should be interpreted as relative to the base tsconfig,
     // but we need to update it so it is relative to the original tsconfig being loaded
-    if (base.compilerOptions && base.compilerOptions.baseUrl) {
+    if (base.baseUrl && base.baseUrl) {
       const extendsDir = path.dirname(extendedConfig);
-      base.compilerOptions.baseUrl = path.join(
-        extendsDir,
-        base.compilerOptions.baseUrl
-      );
+      base.baseUrl = path.join(extendsDir, base.baseUrl);
     }
-
-    config = mergeConfigs(config, base);
+    result = { ...result, ...base };
   }
 
-  config = mergeConfigs(config, parsedConfig);
-  // The only top-level property that is excluded from inheritance is "references".
-  // https://www.typescriptlang.org/tsconfig#extends
-  config.references = parsedConfig.references;
+  const loadedConfig = Object.fromEntries(Object.entries({
+    baseUrl: parsedConfig.compilerOptions?.baseUrl,
+    paths: parsedConfig.compilerOptions?.paths,
+    allowJs: parsedConfig?.compilerOptions?.allowJs,
+  }).filter(([, value]) => value !== undefined));
 
-  if (path.basename(configFilePath) === 'jsconfig.json' && config.compilerOptions?.allowJs === undefined) {
-    config.compilerOptions = config.compilerOptions || {};
-    config.compilerOptions.allowJs = true;
-  }
+  result = { ...result, ...loadedConfig };
 
-  return config;
-}
+  for (const ref of parsedConfig.references || [])
+    references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
 
-function mergeConfigs(base: Tsconfig, override: Tsconfig): Tsconfig {
-  return {
-    ...base,
-    ...override,
-    compilerOptions: {
-      ...base.compilerOptions,
-      ...override.compilerOptions,
-    },
-  };
+  if (path.basename(configFilePath) === 'jsconfig.json' && result.allowJs === undefined)
+    result.allowJs = true;
+  return result;
 }
 
 function StripBom(string: string) {

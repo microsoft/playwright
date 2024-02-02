@@ -19,7 +19,7 @@ import path from 'path';
 import url from 'url';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import type { Location } from '../../types/testReporter';
-import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
+import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
@@ -34,7 +34,7 @@ type ParsedTsConfigData = {
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
 };
-const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
+const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 
 export type TransformConfig = {
   babelPlugins: [string, any?][];
@@ -57,9 +57,7 @@ export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
 
-function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
-  if (!tsconfig.tsConfigPath)
-    return;
+function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   // When no explicit baseUrl is set, resolve paths relative to the tsconfig file.
   // See https://www.typescriptlang.org/tsconfig#paths
@@ -67,21 +65,19 @@ function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | 
   // Only add the catch-all mapping when baseUrl is specified
   const pathsFallback = tsconfig.baseUrl ? [{ key: '*', values: ['*'] }] : [];
   return {
-    allowJs: tsconfig.allowJs,
+    allowJs: !!tsconfig.allowJs,
     absoluteBaseUrl,
     paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
-function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | undefined {
+function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
   const cwd = path.dirname(file);
   if (!cachedTSConfigs.has(cwd)) {
-    const loaded = tsConfigLoader({
-      cwd
-    });
-    cachedTSConfigs.set(cwd, validateTsConfig(loaded));
+    const loaded = tsConfigLoader({ cwd });
+    cachedTSConfigs.set(cwd, loaded.map(validateTsConfig));
   }
-  return cachedTSConfigs.get(cwd);
+  return cachedTSConfigs.get(cwd)!;
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
@@ -97,8 +93,10 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (tsconfig && (isTypeScript || tsconfig.allowJs)) {
+  const tsconfigs = loadAndValidateTsconfigsForFile(filename);
+  for (const tsconfig of tsconfigs) {
+    if (!isTypeScript && !tsconfig.allowJs)
+      continue;
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
