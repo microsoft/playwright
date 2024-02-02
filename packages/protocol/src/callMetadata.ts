@@ -37,6 +37,8 @@ export type CallMetadata = {
   location?: { file: string, line?: number, column?: number };
   log: string[];
   error?: SerializedError;
+  // This is used to pass expect failure as error to the trace recorder.
+  fakeError?: SerializedError;
   result?: any;
   point?: Point;
   objectId?: string;

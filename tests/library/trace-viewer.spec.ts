@@ -696,7 +696,7 @@ test('should highlight expect failure', async ({ page, server, runAndTrace }) =>
     }
   });
 
-  expect(await traceViewer.actionTitles.getByText('expect.toHaveTitle').evaluate(div => getComputedStyle(div).color)).toBe('rgb(176, 16, 17)');
+  await expect(traceViewer.actionTitles.getByText('expect.toHaveTitle')).toHaveCSS('color', 'rgb(176, 16, 17)');
   await traceViewer.showErrorsTab();
   await expect(traceViewer.errorMessages.nth(0)).toHaveText('Expect failed');
 });
