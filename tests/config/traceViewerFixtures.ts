@@ -39,6 +39,7 @@ class TraceViewerPage {
   callLines: Locator;
   consoleLines: Locator;
   logLines: Locator;
+  errorMessages: Locator;
   consoleLineMessages: Locator;
   consoleStacks: Locator;
   stackFrames: Locator;
@@ -51,6 +52,7 @@ class TraceViewerPage {
     this.logLines = page.getByTestId('log-list').locator('.list-view-entry');
     this.consoleLines = page.locator('.console-line');
     this.consoleLineMessages = page.locator('.console-line-message');
+    this.errorMessages = page.locator('.error-message');
     this.consoleStacks = page.locator('.console-stack');
     this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
     this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
@@ -73,6 +75,10 @@ class TraceViewerPage {
 
   async selectSnapshot(name: string) {
     await this.page.click(`.snapshot-tab .tabbed-pane-tab-label:has-text("${name}")`);
+  }
+
+  async showErrorsTab() {
+    await this.page.click('text="Errors"');
   }
 
   async showConsoleTab() {

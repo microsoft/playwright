@@ -559,11 +559,17 @@ function createActionLogTraceEvent(metadata: CallMetadata, message: string): tra
 function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
+  let error = metadata.error?.error;
+  // Library mode special case for expect errors which are return values, not exceptions.
+  if (!error && metadata.method === 'expect') {
+    if (metadata.result.matches === metadata.params.isNot)
+      error = { name: 'Expect', message: 'Expect failed' };
+  }
   return {
     type: 'after',
     callId: metadata.id,
     endTime: metadata.endTime,
-    error: metadata.error?.error,
+    error,
     result: metadata.result,
     point: metadata.point,
   };
