@@ -91,7 +91,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
       if (this._shouldDispatchEvent(message.page(), 'console')) {
-        const pageDispatcher = PageDispatcher.from(this, message.page());
+        const pageDispatcher = PageDispatcher.from(this, message.page()!);
         this._dispatchEvent('console', {
           page: pageDispatcher,
           type: message.type(),

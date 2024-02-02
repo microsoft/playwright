@@ -970,6 +970,22 @@ Browser:
 
     close:
 
+ConsoleMessage:
+  type: mixin
+  properties:
+    page: Page?
+    type: string
+    text: string
+    args:
+      type: array
+      items: JSHandle
+    location:
+      type: object
+      properties:
+        url: string
+        lineNumber: number
+        columnNumber: number
+
 
 EventTarget:
   type: interface
@@ -1175,18 +1191,7 @@ BrowserContext:
 
     console:
       parameters:
-        page: Page
-        type: string
-        text: string
-        args:
-          type: array
-          items: JSHandle
-        location:
-          type: object
-          properties:
-            url: string
-            lineNumber: number
-            columnNumber: number
+        $mixin: ConsoleMessage
 
     close:
 
@@ -3208,11 +3213,21 @@ ElectronApplication:
       returns:
         handle: JSHandle
 
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
+
     close:
 
   events:
     close:
-
+    console:
+      parameters: 
+        $mixin: ConsoleMessage
 
 Android:
   type: interface

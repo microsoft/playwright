@@ -18,6 +18,7 @@ import type { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { electronTest as test, expect } from './electronTest';
+import type { ConsoleMessage } from 'playwright';
 
 test('should fire close event', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
@@ -29,6 +30,91 @@ test('should fire close event', async ({ launchElectronApp }) => {
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
   expect(events.join('|')).toBe('context|application');
+});
+
+test('should fire console events', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const messages = [];
+  electronApp.on('console', message => messages.push({ type: message.type(), text: message.text() }));
+  await electronApp.evaluate(() => {
+    console.log('its type log');
+    console.debug('its type debug');
+    console.info('its type info');
+    console.error('its type error');
+    console.warn('its type warn');
+  });
+  await electronApp.close();
+  expect(messages).toEqual([
+    { type: 'log', text: 'its type log' },
+    { type: 'debug', text: 'its type debug' },
+    { type: 'info', text: 'its type info' },
+    { type: 'error', text: 'its type error' },
+    { type: 'warning', text: 'its type warn' },
+  ]);
+});
+
+test('should fire console events with handles and complex objects', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const messages: ConsoleMessage[] = [];
+  electronApp.on('console', message => messages.push(message));
+  await electronApp.evaluate(() => {
+    globalThis.complexObject = [{ a: 1, b: 2, c: 3 }, { a: 4, b: 5, c: 6 }, { a: 7, b: 8, c: 9 }];
+    console.log(globalThis.complexObject[0], globalThis.complexObject[1], globalThis.complexObject[2]);
+  });
+  expect(messages.length).toBe(1);
+  const message = messages[0];
+  expect(message.text()).toBe('{a: 1, b: 2, c: 3} {a: 4, b: 5, c: 6} {a: 7, b: 8, c: 9}');
+  expect(message.args().length).toBe(3);
+  expect(await message.args()[0].jsonValue()).toEqual({ a: 1, b: 2, c: 3 });
+  expect(await message.args()[0].evaluate(part => part === globalThis.complexObject[0])).toBeTruthy();
+  expect(await message.args()[1].jsonValue()).toEqual({ a: 4, b: 5, c: 6 });
+  expect(await message.args()[1].evaluate(part => part === globalThis.complexObject[1])).toBeTruthy();
+  expect(await message.args()[2].jsonValue()).toEqual({ a: 7, b: 8, c: 9 });
+  expect(await message.args()[2].evaluate(part => part === globalThis.complexObject[2])).toBeTruthy();
+  await electronApp.close();
+});
+
+test('should fire console events before appReady event has been fired', async ({ launchElectronApp }) => {
+  let resolvePromise = null;
+  const promise = new Promise(f => resolvePromise = f);
+
+  const electronApp = await launchElectronApp('electron-app-console-messages-before-app-ready.js');
+  const messages = [];
+  electronApp.on('console', message => {
+    messages.push({ type: message.type(), text: message.text() });
+    if (messages.length === 5)
+      resolvePromise();
+  });
+  await promise;
+  await electronApp.close();
+  expect(messages).toEqual([
+    { type: 'log', text: 'its type log' },
+    { type: 'debug', text: 'its type debug' },
+    { type: 'info', text: 'its type info' },
+    { type: 'error', text: 'its type error' },
+    { type: 'warning', text: 'its type warn' },
+  ]);
+});
+
+test('should fire console events if an unhandled exception ocurrs ', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const messagePromise = electronApp.waitForEvent('console');
+  await electronApp.evaluate(() => {
+    process.on('uncaughtException', error => {
+      console.error('An error occurred: ', error);
+      // Return true to indicate we're handling this error.
+      return true;
+    });
+    setTimeout(() => {
+      const error = new Error('error thrown!');
+      error.name = 'CustomError';
+      throw error;
+    }, 100);
+  });
+  const message = await messagePromise;
+  expect(message.text()).toContain('CustomError: error thrown!');
+  expect(message.type()).toBe('error');
+  await electronApp.close();
 });
 
 test('should dispatch ready event', async ({ launchElectronApp }) => {

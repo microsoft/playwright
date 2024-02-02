@@ -13932,6 +13932,27 @@ export interface ElectronApplication {
   on(event: 'close', listener: () => void): this;
 
   /**
+   * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Also emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
    * can be used for Playwright automation.
    */
@@ -13945,12 +13966,38 @@ export interface ElectronApplication {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'window', listener: (page: Page) => void): this;
 
   /**
    * This event is issued when the application closes.
    */
   addListener(event: 'close', listener: () => void): this;
+
+  /**
+   * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Also emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
@@ -13966,6 +14013,11 @@ export interface ElectronApplication {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'window', listener: (page: Page) => void): this;
 
   /**
@@ -13976,12 +14028,38 @@ export interface ElectronApplication {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'window', listener: (page: Page) => void): this;
 
   /**
    * This event is issued when the application closes.
    */
   prependListener(event: 'close', listener: () => void): this;
+
+  /**
+   * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Also emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
@@ -14038,6 +14116,27 @@ export interface ElectronApplication {
    * This event is issued when the application closes.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean | Promise<boolean>, timeout?: number } | (() => boolean | Promise<boolean>)): Promise<void>;
+
+  /**
+   * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Also emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that

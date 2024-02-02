@@ -43,12 +43,15 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
+import { ConsoleMessage } from '../console';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class ElectronApplication extends SdkObject {
   static Events = {
     Close: 'close',
+    Console: 'console',
   };
 
   private _browserContext: CRBrowserContext;
@@ -56,6 +59,8 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
+  private _nodeChromiumExecutionContext: CRExecutionContext | undefined;
+  private readonly _bufferedConsoleMessageEvents: Protocol.Runtime.consoleAPICalledPayload[] = [];
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
 
@@ -81,7 +86,9 @@ export class ElectronApplication extends SdkObject {
         includeCommandLineAPI: true,
       });
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
+      this._nodeChromiumExecutionContext = crExecutionContext;
     });
+    this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
@@ -89,10 +96,42 @@ export class ElectronApplication extends SdkObject {
     });
   }
 
+  async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
+    if (event.executionContextId === 0) {
+      // DevTools protocol stores the last 1000 console messages. These
+      // messages are always reported even for removed execution contexts. In
+      // this case, they are marked with executionContextId = 0 and are
+      // reported upon enabling Runtime agent.
+      //
+      // Ignore these messages since:
+      // - there's no execution context we can use to operate with message
+      //   arguments
+      // - these messages are reported before Playwright clients can subscribe
+      //   to the 'console'
+      //   page event.
+      //
+      // @see https://github.com/GoogleChrome/puppeteer/issues/3865
+      return;
+    }
+    const [crExecutionContext, nodeExecutionContext] = [this._nodeChromiumExecutionContext, this._nodeExecutionContext];
+    if (!crExecutionContext || !nodeExecutionContext) {
+      this._bufferedConsoleMessageEvents.push(event);
+      return;
+    }
+    const args = event.args.map(arg => crExecutionContext.createHandle(nodeExecutionContext, arg));
+    const message = new ConsoleMessage(this, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    this.emit(ElectronApplication.Events.Console, message);
+  }
+
   async initialize() {
     await this._nodeSession.send('Runtime.enable', {});
     // Delay loading the app until browser is started and the browser targets are configured to auto-attach.
     await this._nodeSession.send('Runtime.evaluate', { expression: '__playwright_run()' });
+  }
+
+  _emitBufferedConsoleMessages() {
+    while (this._bufferedConsoleMessageEvents.length)
+      this._onConsoleAPI(this._bufferedConsoleMessageEvents.shift()!);
   }
 
   process(): childProcess.ChildProcess {

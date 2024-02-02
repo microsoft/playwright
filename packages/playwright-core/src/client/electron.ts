@@ -26,6 +26,7 @@ import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
+import { ConsoleMessage } from './consoleMessage';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
 import { TargetClosedError } from './errors';
@@ -81,6 +82,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this._isClosed = true;
       this.emit(Events.ElectronApplication.Close);
     });
+    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(event)));
+    this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
+      [Events.ElectronApplication.Console, 'console'],
+    ]));
   }
 
   process(): childProcess.ChildProcess {
