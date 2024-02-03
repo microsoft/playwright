@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -481,10 +481,7 @@ test('should resolve no-extension import to .jsx file in ESM mode', async ({ run
 test('should resolve .js import to .tsx file in ESM mode for components', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'foo'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 
