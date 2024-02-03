@@ -3,9 +3,7 @@
 set -e
 
 if [[ -z "${ANDROID_HOME}" ]]; then
-    SDKDIR=$PWD/.android-sdk
-    export ANDROID_HOME=${SDKDIR}
-    export ANDROID_SDK_ROOT=${SDKDIR}
+    export ANDROID_HOME="$PWD/.android-sdk"
 fi
 
 echo "Killing previous emulators"
