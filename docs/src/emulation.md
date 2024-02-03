@@ -792,5 +792,5 @@ context = browser.new_context(
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new() { JavaScriptEnabled = true });
+var context = await browser.NewContextAsync(new() { JavaScriptEnabled = false });
 ```
