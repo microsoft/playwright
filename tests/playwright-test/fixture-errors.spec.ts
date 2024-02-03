@@ -647,3 +647,32 @@ test('should provide helpful error message when digests do not match', async ({ 
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Playwright detected inconsistent test.use() options.');
 });
+
+test('tear down base fixture after error in derived', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        context: async ({}, use, testInfo) => {
+          console.log('\\n%%context setup ' + testInfo.status);
+          await use();
+          console.log('\\n%%context teardown ' + testInfo.status);
+        },
+        page: async ({ context }, use, testInfo) => {
+          console.log('\\n%%page setup ' + testInfo.status);
+          await use();
+          console.log('\\n%%page teardown ' + testInfo.status);
+          throw new Error('Error in page teardown');
+        },
+      });
+      test('test', async ({ page }) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toEqual([
+    'context setup passed',
+    'page setup passed',
+    'page teardown passed',
+    'context teardown failed',
+  ]);
+});

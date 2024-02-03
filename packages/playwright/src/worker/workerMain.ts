@@ -31,6 +31,7 @@ import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySui
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import type { FixtureScope } from '../common/fixtures';
 import { inheritFixutreNames } from '../common/fixtures';
 
 export class WorkerMain extends ProcessRunner {
@@ -144,13 +145,29 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
+  private async _teardownScope(scope: FixtureScope, testInfo: TestInfoImpl) {
+    const error = await this._teardownScopeAndReturnFirstError(scope, testInfo);
+    if (error)
+      throw error;
+  }
+
+  private async _teardownScopeAndReturnFirstError(scope: FixtureScope, testInfo: TestInfoImpl): Promise<Error | undefined> {
+    let error: Error | undefined;
+    await this._fixtureRunner.teardownScope(scope, testInfo._timeoutManager, e => {
+      testInfo._failWithError(e, true, false);
+      if (error === undefined)
+        error = e;
+    });
+    return error;
+  }
+
   private async _teardownScopes() {
     // TODO: separate timeout for teardown?
     const timeoutManager = new TimeoutManager(this._project.project.timeout);
     await timeoutManager.withRunnable({ type: 'teardown' }, async () => {
       const timeoutError = await timeoutManager.runWithTimeout(async () => {
-        await this._fixtureRunner.teardownScope('test', timeoutManager);
-        await this._fixtureRunner.teardownScope('worker', timeoutManager);
+        await this._fixtureRunner.teardownScope('test', timeoutManager, e => this._fatalErrors.push(serializeError(e)));
+        await this._fixtureRunner.teardownScope('worker', timeoutManager, e => this._fatalErrors.push(serializeError(e)));
       });
       if (timeoutError)
         this._fatalErrors.push(timeoutError);
@@ -421,9 +438,7 @@ export class WorkerMain extends ProcessRunner {
         // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
         // they should probably increase the test timeout to fix this issue.
         debugTest(`tearing down test scope started`);
-        const testScopeError = await testInfo._runAndFailOnError(() => {
-          return this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
-        });
+        const testScopeError = await this._teardownScopeAndReturnFirstError('test', testInfo);
         debugTest(`tearing down test scope finished`);
         firstAfterHooksError = firstAfterHooksError || testScopeError;
 
@@ -454,9 +469,7 @@ export class WorkerMain extends ProcessRunner {
           await testInfo._timeoutManager.withRunnable({ type: 'teardown', slot: teardownSlot }, async () => {
             // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
             debugTest(`tearing down test scope started`);
-            const testScopeError = await testInfo._runAndFailOnError(() => {
-              return this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
-            });
+            const testScopeError = await this._teardownScopeAndReturnFirstError('test', testInfo);
             debugTest(`tearing down test scope finished`);
             firstAfterHooksError = firstAfterHooksError || testScopeError;
 
@@ -467,9 +480,7 @@ export class WorkerMain extends ProcessRunner {
 
             // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
             debugTest(`tearing down worker scope started`);
-            const workerScopeError = await testInfo._runAndFailOnError(() => {
-              return this._fixtureRunner.teardownScope('worker', testInfo._timeoutManager);
-            });
+            const workerScopeError = await this._teardownScopeAndReturnFirstError('worker', testInfo);
             debugTest(`tearing down worker scope finished`);
             firstAfterHooksError = firstAfterHooksError || workerScopeError;
           });
@@ -552,7 +563,7 @@ export class WorkerMain extends ProcessRunner {
             }
             // Each beforeAll/afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
             // Note: we must teardown even after hook fails, because we'll run more hooks.
-            await this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
+            await this._teardownScope('test', testInfo);
           }
         });
       }, allowSkips ? 'allowSkips' : undefined);

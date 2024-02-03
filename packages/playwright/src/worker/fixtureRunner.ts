@@ -163,17 +163,10 @@ class Fixture {
     await this._teardownWithDepsComplete;
   }
 
-  private _setTeardownDescription(timeoutManager: TimeoutManager) {
-    this._runnableDescription.phase = 'teardown';
-    timeoutManager.setCurrentFixture(this._runnableDescription);
-  }
-
   private async _teardownInternal(timeoutManager: TimeoutManager) {
     if (typeof this.registration.fn !== 'function')
       return;
     try {
-      for (const fixture of this._usages)
-        await fixture.teardown(timeoutManager);
       if (this._usages.size !== 0) {
         // TODO: replace with assert.
         console.error('Internal error: fixture integrity at', this._runnableDescription.title);  // eslint-disable-line no-console
@@ -191,6 +184,19 @@ class Fixture {
         dep._usages.delete(this);
       this.runner.instanceForId.delete(this.registration.id);
     }
+  }
+
+  private _setTeardownDescription(timeoutManager: TimeoutManager) {
+    this._runnableDescription.phase = 'teardown';
+    timeoutManager.setCurrentFixture(this._runnableDescription);
+  }
+
+  _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
+    if (this.registration.scope !== scope)
+      return;
+    for (const fixture of this._usages)
+      fixture._collectFixturesInTeardownOrder(scope, collector);
+    collector.add(this);
   }
 }
 
@@ -213,24 +219,16 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  async teardownScope(scope: FixtureScope, timeoutManager: TimeoutManager) {
-    let error: Error | undefined;
+  async teardownScope(scope: FixtureScope, timeoutManager: TimeoutManager, onFixtureError: (error: Error) => void) {
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
-    for (const fixture of fixtures) {
-      if (fixture.registration.scope === scope) {
-        try {
-          await fixture.teardown(timeoutManager);
-        } catch (e) {
-          if (error === undefined)
-            error = e;
-        }
-      }
-    }
+    const collector = new Set<Fixture>();
+    for (const fixture of fixtures)
+      fixture._collectFixturesInTeardownOrder(scope, collector);
+    for (const fixture of collector)
+      await fixture.teardown(timeoutManager).catch(onFixtureError);
     if (scope === 'test')
       this.testScopeClean = true;
-    if (error !== undefined)
-      throw error;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
