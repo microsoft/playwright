@@ -346,10 +346,12 @@ export class DispatcherConnection {
     }
 
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
+    const response: any = { id };
     try {
       const result = await dispatcher._handleCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
-      callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+      response.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+      callMetadata.result = response.result;
     } catch (e) {
       if (isTargetClosedError(e) && sdkObject) {
         const reason = closeReason(sdkObject);
@@ -363,19 +365,16 @@ export class DispatcherConnection {
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
         }
       }
-      callMetadata.error = serializeError(e);
+      response.error = serializeError(e);
+      // The command handler could have set error in the metada, do not reset it if there was no exception.
+      callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
-    const response: any = { id };
-    if (callMetadata.result)
-      response.result = callMetadata.result;
-    if (callMetadata.error) {
-      response.error = callMetadata.error;
+    if (response.error)
       response.log = callMetadata.log;
-    }
     this.onmessage(response);
   }
 }

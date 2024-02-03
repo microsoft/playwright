@@ -1372,6 +1372,14 @@ export class Frame extends SdkObject {
   }
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const result = await this._expectImpl(metadata, selector, options);
+    // Library mode special case for the expect errors which are return values, not exceptions.
+    if (result.matches === options.isNot)
+      metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
+    return result;
+  }
+
+  private async _expectImpl(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     let timeout = this._page._timeoutSettings.timeout(options);
     const start = timeout > 0 ? monotonicTime() : 0;
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };

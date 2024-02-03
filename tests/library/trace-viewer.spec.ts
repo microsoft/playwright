@@ -686,6 +686,21 @@ test('should highlight target element in shadow dom', async ({ page, server, run
   await expect(frameExpect.locator('h1')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
 });
 
+test('should highlight expect failure', async ({ page, server, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-python/issues/2258' });
+  const traceViewer = await runAndTrace(async () => {
+    try {
+      await page.goto(server.EMPTY_PAGE);
+      await expect(page).toHaveTitle('foo', { timeout: 100 });
+    } catch (e) {
+    }
+  });
+
+  await expect(traceViewer.actionTitles.getByText('expect.toHaveTitle')).toHaveCSS('color', 'rgb(176, 16, 17)');
+  await traceViewer.showErrorsTab();
+  await expect(traceViewer.errorMessages.nth(0)).toHaveText('Expect failed');
+});
+
 test('should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');
