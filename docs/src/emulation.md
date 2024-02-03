@@ -781,13 +781,13 @@ BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 
 ```python async
 context = await browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
 ```python sync
 context = browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
