@@ -59,7 +59,6 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
-  private readonly _bufferedConsoleMessageEvents: Protocol.Runtime.consoleAPICalledPayload[] = [];
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
 
@@ -77,13 +76,13 @@ export class ElectronApplication extends SdkObject {
       if (!event.context.auxData || !event.context.auxData.isDefault)
         return;
       const crExecutionContext = new CRExecutionContext(this._nodeSession, event.context);
+      this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
       const { result: remoteObject } = await crExecutionContext._client.send('Runtime.evaluate', {
         expression: `require('electron')`,
         contextId: event.context.id,
         // Needed after Electron 28 to get access to require: https://github.com/microsoft/playwright/issues/28048
         includeCommandLineAPI: true,
       });
-      this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
@@ -111,10 +110,8 @@ export class ElectronApplication extends SdkObject {
       // @see https://github.com/GoogleChrome/puppeteer/issues/3865
       return;
     }
-    if (!this._nodeExecutionContext) {
-      this._bufferedConsoleMessageEvents.push(event);
+    if (!this._nodeExecutionContext)
       return;
-    }
     const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
     const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
@@ -124,11 +121,6 @@ export class ElectronApplication extends SdkObject {
     await this._nodeSession.send('Runtime.enable', {});
     // Delay loading the app until browser is started and the browser targets are configured to auto-attach.
     await this._nodeSession.send('Runtime.evaluate', { expression: '__playwright_run()' });
-  }
-
-  _emitBufferedConsoleMessages() {
-    while (this._bufferedConsoleMessageEvents.length)
-      this._onConsoleAPI(this._bufferedConsoleMessageEvents.shift()!);
   }
 
   process(): childProcess.ChildProcess {

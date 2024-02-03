@@ -84,8 +84,6 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
       this._subscriptions.add(params.event);
     else
       this._subscriptions.delete(params.event);
-    if (params.event === 'console' && params.enabled)
-      this._object._emitBufferedConsoleMessages();
   }
 
   async close(): Promise<void> {

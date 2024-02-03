@@ -74,28 +74,6 @@ test('should fire console events with handles and complex objects', async ({ lau
   await electronApp.close();
 });
 
-test('should fire console events before appReady event has been fired', async ({ launchElectronApp }) => {
-  let resolvePromise = null;
-  const promise = new Promise(f => resolvePromise = f);
-
-  const electronApp = await launchElectronApp('electron-app-console-messages-before-app-ready.js');
-  const messages = [];
-  electronApp.on('console', message => {
-    messages.push({ type: message.type(), text: message.text() });
-    if (messages.length === 5)
-      resolvePromise();
-  });
-  await promise;
-  await electronApp.close();
-  expect(messages).toEqual([
-    { type: 'log', text: 'its type log' },
-    { type: 'debug', text: 'its type debug' },
-    { type: 'info', text: 'its type info' },
-    { type: 'error', text: 'its type error' },
-    { type: 'warning', text: 'its type warn' },
-  ]);
-});
-
 test('should fire console events if an unhandled exception ocurrs ', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
   const messagePromise = electronApp.waitForEvent('console');
