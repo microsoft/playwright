@@ -781,16 +781,16 @@ BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 
 ```python async
 context = await browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
 ```python sync
 context = browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new() { JavaScriptEnabled = true });
+var context = await browser.NewContextAsync(new() { JavaScriptEnabled = false });
 ```
