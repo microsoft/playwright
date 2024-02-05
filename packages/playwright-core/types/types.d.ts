@@ -901,8 +901,7 @@ export interface Page {
   on(event: 'close', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -1197,8 +1196,7 @@ export interface Page {
   addListener(event: 'close', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -1588,8 +1586,7 @@ export interface Page {
   prependListener(event: 'close', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -4340,8 +4337,7 @@ export interface Page {
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -7663,8 +7659,7 @@ export interface BrowserContext {
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` and the page are available on the {@link ConsoleMessage} event handler
    * argument.
@@ -7855,8 +7850,7 @@ export interface BrowserContext {
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` and the page are available on the {@link ConsoleMessage} event handler
    * argument.
@@ -8102,8 +8096,7 @@ export interface BrowserContext {
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` and the page are available on the {@link ConsoleMessage} event handler
    * argument.
@@ -8720,8 +8713,7 @@ export interface BrowserContext {
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
    *
    * The arguments passed into `console.log` and the page are available on the {@link ConsoleMessage} event handler
    * argument.
@@ -13933,7 +13925,7 @@ export interface ElectronApplication {
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
-   * `console.dir`. Also emitted if the page throws an error or a warning.
+   * `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -13980,7 +13972,7 @@ export interface ElectronApplication {
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
-   * `console.dir`. Also emitted if the page throws an error or a warning.
+   * `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -14042,7 +14034,7 @@ export interface ElectronApplication {
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
-   * `console.dir`. Also emitted if the page throws an error or a warning.
+   * `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *
@@ -14119,7 +14111,7 @@ export interface ElectronApplication {
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
-   * `console.dir`. Also emitted if the page throws an error or a warning.
+   * `console.dir`.
    *
    * The arguments passed into `console.log` are available on the {@link ConsoleMessage} event handler argument.
    *

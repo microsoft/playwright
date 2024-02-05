@@ -74,27 +74,6 @@ test('should fire console events with handles and complex objects', async ({ lau
   await electronApp.close();
 });
 
-test('should fire console events if an unhandled exception ocurrs ', async ({ launchElectronApp }) => {
-  const electronApp = await launchElectronApp('electron-app.js');
-  const messagePromise = electronApp.waitForEvent('console');
-  await electronApp.evaluate(() => {
-    process.on('uncaughtException', error => {
-      console.error('An error occurred: ', error);
-      // Return true to indicate we're handling this error.
-      return true;
-    });
-    setTimeout(() => {
-      const error = new Error('error thrown!');
-      error.name = 'CustomError';
-      throw error;
-    }, 100);
-  });
-  const message = await messagePromise;
-  expect(message.text()).toContain('CustomError: error thrown!');
-  expect(message.type()).toBe('error');
-  await electronApp.close();
-});
-
 test('should dispatch ready event', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app-ready-event.js');
   const events = await electronApp.evaluate(() => globalThis.__playwrightLog);
