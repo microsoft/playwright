@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-`TestInfo` contains information about currently running test. It is available to test functions, [`method: Test.beforeEach#1`], [`method: Test.afterEach#1`], [`method: Test.beforeAll#1`] and [`method: Test.afterAll#1`] hooks, and test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which test is currently running and whether it was retried, etc.
+`TestInfo` contains information about currently running test. It is available to test functions, [`method: Test.beforeEach`], [`method: Test.afterEach`], [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks, and test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which test is currently running and whether it was retried, etc.
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -20,7 +20,7 @@ test('basic test', async ({ page }, testInfo) => {
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
 
-The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe#1`] groups the test belongs to and file-level annotations for the test file.
+The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 
 Learn more about [test annotations](../test-annotations.md).
 
@@ -115,7 +115,7 @@ Processed configuration from the [configuration file](../test-configuration.md).
 * since: v1.10
 - type: <[int]>
 
-The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not. Can be used in [`method: Test.afterEach#1`] hook.
+The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not. Can be used in [`method: Test.afterEach`] hook.
 
 
 ## property: TestInfo.error
@@ -137,8 +137,8 @@ Errors thrown during test execution, if any.
 - type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-* `'skipped'` for skipped tests, e.g. with [`method: Test.skip#2`];
-* `'failed'` for tests marked as failed with [`method: Test.fail#1`].
+* `'skipped'` for skipped tests, e.g. with [`method: Test.skip`];
+* `'failed'` for tests marked as failed with [`method: Test.fail`].
 
 Expected status is usually compared with the actual [`property: TestInfo.status`]:
 
@@ -154,12 +154,12 @@ test.afterEach(async ({}, testInfo) => {
 ## method: TestInfo.fail#1
 * since: v1.10
 
-Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail#1`].
+Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail`].
 
 ## method: TestInfo.fail#2
 * since: v1.10
 
-Conditionally mark the currently running test as "should fail" with an optional description. This is similar to [`method: Test.fail#2`].
+Conditionally mark the currently running test as "should fail" with an optional description. This is similar to [`method: Test.fail`].
 
 ### param: TestInfo.fail#2.condition
 * since: v1.10
@@ -184,12 +184,12 @@ Absolute path to a file where the currently running test is declared.
 ## method: TestInfo.fixme#1
 * since: v1.10
 
-Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to [`method: Test.fixme#2`].
+Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to [`method: Test.fixme`].
 
 ## method: TestInfo.fixme#2
 * since: v1.10
 
-Conditionally mark the currently running test as "fixme" with an optional description. This is similar to [`method: Test.fixme#3`].
+Conditionally mark the currently running test as "fixme" with an optional description. This is similar to [`method: Test.fixme`].
 
 ### param: TestInfo.fixme#2.condition
 * since: v1.10
@@ -330,12 +330,12 @@ Timeout in milliseconds.
 ## method: TestInfo.skip#1
 * since: v1.10
 
-Unconditionally skip the currently running test. Test is immediately aborted. This is similar to [`method: Test.skip#2`].
+Unconditionally skip the currently running test. Test is immediately aborted. This is similar to [`method: Test.skip`].
 
 ## method: TestInfo.skip#2
 * since: v1.10
 
-Conditionally skips the currently running test with an optional description. This is similar to [`method: Test.skip#3`].
+Conditionally skips the currently running test with an optional description. This is similar to [`method: Test.skip`].
 
 ### param: TestInfo.skip#2.condition
 * since: v1.10
@@ -353,12 +353,12 @@ Optional description that will be reflected in a test report.
 ## method: TestInfo.slow#1
 * since: v1.10
 
-Marks the currently running test as "slow", giving it triple the default timeout. This is similar to [`method: Test.slow#1`].
+Marks the currently running test as "slow", giving it triple the default timeout. This is similar to [`method: Test.slow`].
 
 ## method: TestInfo.slow#2
 * since: v1.10
 
-Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default timeout. This is similar to [`method: Test.slow#2`].
+Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default timeout. This is similar to [`method: Test.slow`].
 
 ### param: TestInfo.slow#2.condition
 * since: v1.10
@@ -403,7 +403,7 @@ Suffix used to differentiate snapshots between multiple test configurations. For
 * since: v1.10
 - type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
-Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach#1`] hook and fixtures.
+Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach`] hook and fixtures.
 
 Status is usually compared with the [`property: TestInfo.expectedStatus`]:
 

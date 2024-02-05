@@ -10,7 +10,7 @@
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
 
-The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe#1`] groups the test belongs to and file-level annotations for the test file.
+The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 
 Annotations are available during test execution through [`property: TestInfo.annotations`].
 
@@ -21,8 +21,8 @@ Learn more about [test annotations](../test-annotations.md).
 - type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Expected test status.
-* Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme#1`] are expected to be `'skipped'`.
-* Tests marked as [`method: Test.fail#1`] are expected to be `'failed'`.
+* Tests marked as [`method: Test.skip`] or [`method: Test.fixme`] are expected to be `'skipped'`.
+* Tests marked as [`method: Test.fail`] are expected to be `'failed'`.
 * Other tests are expected to be `'passed'`.
 
 See also [`property: TestResult.status`] for the actual status.
@@ -83,7 +83,7 @@ Learn more about [test retries](../test-retries.md#retries).
 * since: v1.10
 - type: <[float]>
 
-The timeout given to the test. Affected by [`property: TestConfig.timeout`], [`property: TestProject.timeout`], [`method: Test.setTimeout`], [`method: Test.slow#1`] and [`method: TestInfo.setTimeout`].
+The timeout given to the test. Affected by [`property: TestConfig.timeout`], [`property: TestProject.timeout`], [`method: Test.setTimeout`], [`method: Test.slow`] and [`method: TestInfo.setTimeout`].
 
 ## property: TestCase.title
 * since: v1.10

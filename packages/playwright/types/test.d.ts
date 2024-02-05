@@ -707,8 +707,9 @@ interface TestConfig {
 
   /**
    * Whether to exit with an error if any tests or groups are marked as
-   * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
-   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
+   * [test.only(title, body)](https://playwright.dev/docs/api/class-test#test-only) or
+   * [test.describe.only([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on
+   * CI.
    *
    * **Usage**
    *
@@ -1463,8 +1464,9 @@ export type Metadata = { [key: string]: any };
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to exit with an error if any tests or groups are marked as
-   * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
-   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
+   * [test.only(title, body)](https://playwright.dev/docs/api/class-test#test-only) or
+   * [test.describe.only([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on
+   * CI.
    *
    * **Usage**
    *
@@ -1916,12 +1918,12 @@ export interface WorkerInfo {
 
 /**
  * `TestInfo` contains information about currently running test. It is available to test functions,
- * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1),
- * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1),
- * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all-1) and
- * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1) hooks, and test-scoped
- * fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine
- * which test is currently running and whether it was retried, etc.
+ * [test.beforeEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-each),
+ * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each),
+ * [test.beforeAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-all) and
+ * [test.afterAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and
+ * test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout,
+ * determine which test is currently running and whether it was retried, etc.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -1998,13 +2000,14 @@ export interface TestInfo {
   /**
    * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
-   * fixed. This is similar to [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
+   * fixed. This is similar to
+   * [test.fail([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
    */
   fail(): void;
 
   /**
    * Conditionally mark the currently running test as "should fail" with an optional description. This is similar to
-   * [test.fail(condition[, description])](https://playwright.dev/docs/api/class-test#test-fail-2).
+   * [test.fail([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
    * @param condition Test is marked as "should fail" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -2012,13 +2015,13 @@ export interface TestInfo {
 
   /**
    * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to
-   * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
    */
   fixme(): void;
 
   /**
    * Conditionally mark the currently running test as "fixme" with an optional description. This is similar to
-   * [test.fixme(condition[, description])](https://playwright.dev/docs/api/class-test#test-fixme-3).
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme).
    * @param condition Test is marked as "fixme" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -2070,13 +2073,13 @@ export interface TestInfo {
 
   /**
    * Unconditionally skip the currently running test. Test is immediately aborted. This is similar to
-   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
+   * [test.skip([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
    */
   skip(): void;
 
   /**
    * Conditionally skips the currently running test with an optional description. This is similar to
-   * [test.skip(condition[, description])](https://playwright.dev/docs/api/class-test#test-skip-3).
+   * [test.skip([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip).
    * @param condition A skip condition. Test is skipped when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -2084,14 +2087,14 @@ export interface TestInfo {
 
   /**
    * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
-   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1).
+   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
    */
   slow(): void;
 
   /**
    * Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default
    * timeout. This is similar to
-   * [test.slow(condition[, description])](https://playwright.dev/docs/api/class-test#test-slow-2).
+   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow).
    * @param condition Test is marked as "slow" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -2112,7 +2115,7 @@ export interface TestInfo {
 
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups the test
    * belongs to and file-level annotations for the test file.
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
@@ -2166,8 +2169,8 @@ export interface TestInfo {
 
   /**
    * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
-   * not. Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1)
-   * hook.
+   * not. Can be used in
+   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook.
    */
   duration: number;
 
@@ -2184,9 +2187,10 @@ export interface TestInfo {
 
   /**
    * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
+   * - `'skipped'` for skipped tests, e.g. with
+   *   [test.skip([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip);
    * - `'failed'` for tests marked as failed with
-   *   [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
+   *   [test.fail([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
    *
    * Expected status is usually compared with the actual
    * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
@@ -2290,7 +2294,8 @@ export interface TestInfo {
 
   /**
    * Actual status for the currently running test. Available after the test has finished in
-   * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1) hook and fixtures.
+   * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) hook and
+   * fixtures.
    *
    * Status is usually compared with the
    * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
@@ -2353,8 +2358,13 @@ export interface TestInfo {
 interface SuiteFunction {
   /**
    * Declares a group of tests.
+   * - `test.describe(title, callback)`
+   * - `test.describe(callback)`
    *
    * **Usage**
+   *
+   * You can declare a group of tests with a title. The title will be visible in the test report as a part of each
+   * test's title.
    *
    * ```js
    * test.describe('two tests', () => {
@@ -2368,17 +2378,8 @@ interface SuiteFunction {
    * });
    * ```
    *
-   * @param title Group title.
-   * @param callback A callback that is run immediately when calling
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
-   * this callback will belong to the group.
-   */
-  (title: string, callback: () => void): void;
-  /**
-   * Declares an anonymous group of tests. This is convenient to give a group of tests a common option with
-   * [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
-   *
-   * **Usage**
+   * Without a title, this method declares an **anonymous** group of tests. This is convenient to give a group of tests
+   * a common option with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
    *
    * ```js
    * test.describe(() => {
@@ -2394,9 +2395,55 @@ interface SuiteFunction {
    * });
    * ```
    *
+   * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe(callback)](https://playwright.dev/docs/api/class-test#test-describe-2). Any tests added in this
-   * callback will belong to the group.
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe). Any tests declared in
+   * this callback will belong to the group.
+   */
+  (title: string, callback: () => void): void;
+  /**
+   * Declares a group of tests.
+   * - `test.describe(title, callback)`
+   * - `test.describe(callback)`
+   *
+   * **Usage**
+   *
+   * You can declare a group of tests with a title. The title will be visible in the test report as a part of each
+   * test's title.
+   *
+   * ```js
+   * test.describe('two tests', () => {
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * Without a title, this method declares an **anonymous** group of tests. This is convenient to give a group of tests
+   * a common option with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
+   *
+   * ```js
+   * test.describe(() => {
+   *   test.use({ colorScheme: 'dark' });
+   *
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe). Any tests declared in
+   * this callback will belong to the group.
    */
   (callback: () => void): void;
 }
@@ -2432,13 +2479,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
    */
   only: TestFunction<TestArgs & WorkerArgs>;
   /**
    * Declares a group of tests.
+   * - `test.describe(title, callback)`
+   * - `test.describe(callback)`
    *
    * **Usage**
+   *
+   * You can declare a group of tests with a title. The title will be visible in the test report as a part of each
+   * test's title.
    *
    * ```js
    * test.describe('two tests', () => {
@@ -2452,15 +2504,34 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Without a title, this method declares an **anonymous** group of tests. This is convenient to give a group of tests
+   * a common option with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
+   *
+   * ```js
+   * test.describe(() => {
+   *   test.use({ colorScheme: 'dark' });
+   *
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe). Any tests declared in
    * this callback will belong to the group.
    */
   describe: SuiteFunction & {
     /**
    * Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing
    * else.
+   * - `test.describe.only(title, callback)`
+   * - `test.describe.only(callback)`
    *
    * **Usage**
    *
@@ -2475,16 +2546,26 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.only(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Any tests
+   * [test.describe.only([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-only). Any tests
    * added in this callback will belong to the group.
    */
   only: SuiteFunction;
     /**
    * Declares a skipped test group, similarly to
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in the skipped
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe). Tests in the skipped
    * group are never run.
+   * - `test.describe.skip(title, callback)`
+   * - `test.describe.skip(title)`
    *
    * **Usage**
    *
@@ -2496,6 +2577,14 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.skip(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
    * [test.describe.skip(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-skip). Any tests
@@ -2504,22 +2593,32 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   skip: SuiteFunction;
     /**
    * Declares a test group similarly to
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe). Tests in this group
    * are marked as "fixme" and will not be executed.
+   * - `test.describe.fixme(title, callback)`
+   * - `test.describe.fixme(callback)`
    *
    * **Usage**
    *
    * ```js
-   * test.describe.fixme('broken tests', () => {
+   * test.describe.fixme('broken tests that should be fixed', () => {
    *   test('example', async ({ page }) => {
    *     // This test will not run
    *   });
    * });
    * ```
    *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.fixme(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe.fixme(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests
+   * [test.describe.fixme([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests
    * added in this callback will belong to the group, and will not be run.
    */
   fixme: SuiteFunction;
@@ -2532,6 +2631,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   * - `test.describe.serial(title, callback)`
+   * - `test.describe.serial(title)`
    *
    * **Usage**
    *
@@ -2542,10 +2643,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.serial(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe.serial(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial). Any tests
-   * added in this callback will belong to the group.
+   * [test.describe.serial([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-serial). Any
+   * tests added in this callback will belong to the group.
    */
   serial: SuiteFunction & {
       /**
@@ -2558,6 +2667,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   * - `test.describe.serial.only(title, callback)`
+   * - `test.describe.serial.only(title)`
    *
    * **Usage**
    *
@@ -2567,6 +2678,14 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *   });
    *   test('runs second', async ({ page }) => {
    *   });
+   * });
+   * ```
+   *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.serial.only(() => {
+   *   // ...
    * });
    * ```
    *
@@ -2583,8 +2702,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after
    * another, but using
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows
-   * them to run in parallel.
+   * [test.describe.parallel([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel)
+   * allows them to run in parallel.
+   * - `test.describe.parallel(title, callback)`
+   * - `test.describe.parallel(callback)`
    *
    * **Usage**
    *
@@ -2597,9 +2718,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of
    * the parallel tests executes all relevant hooks.
+   *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.parallel(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel). Any
+   * [test.describe.parallel([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel). Any
    * tests added in this callback will belong to the group.
    */
   parallel: SuiteFunction & {
@@ -2608,8 +2738,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * the preferred way of configuring the execution mode.
    *
    * Declares a focused group of tests that could be run in parallel. This is similar to
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
+   * [test.describe.parallel([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
    * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
+   * - `test.describe.parallel.only(title, callback)`
+   * - `test.describe.parallel.only(callback)`
    *
    * **Usage**
    *
@@ -2620,9 +2752,17 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * You can also omit the title.
+   *
+   * ```js
+   * test.describe.parallel.only(() => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
-   * [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
+   * [test.describe.parallel.only([title, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
    * Any tests added in this callback will belong to the group.
    */
   only: SuiteFunction;
@@ -2687,226 +2827,599 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   /**
-   * Declares a skipped test, similarly to
-   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). Skipped test is never
-   * run.
+   * Skip a test. Playwright will not run the test past the `test.skip()` call.
+   *
+   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   * instead.
+   * - `test.skip(title, body)`
+   * - `test.skip()`
+   * - `test.skip(condition, description)`
+   * - `test.skip(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a skipped test, and Playwright will not run it.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.skip('broken test', async ({ page }) => {
+   * test.skip('never run', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
-   */
-  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  /**
-   * Unconditionally skip a test. Test is immediately aborted when you call
-   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
-   *
-   * **Usage**
+   * If your test should be skipped in some configurations, but not all, you can skip the test inside the test body
+   * based on some condition. We recommend passing a `description` argument in this case. Playwright will run the test,
+   * but abort it immediately after the `test.skip` call.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test('skipped test', async ({ page }) => {
+   * test('Safari-only test', async ({ page, browserName }) => {
+   *   test.skip(browserName !== 'webkit', 'This feature is Safari-only');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can skip all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group based on some
+   * condition with a single `test.skip(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip(({ browserName }) => browserName !== 'webkit', 'Safari-only');
+   *
+   * test('Safari-only test 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('Safari-only test 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.skip()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.skip(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
    *   test.skip();
    *   // ...
    * });
    * ```
    *
-   * Unconditionally skip all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group:
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.skip();
-   *
-   * test('skipped test 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('skipped test 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   */
-  skip(): void;
-  /**
-   * Conditionally skip a test with an optional description.
-   *
-   * **Usage**
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('skip in WebKit', async ({ page, browserName }) => {
-   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * Skip from [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1) hook:
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition A skip condition. Test is skipped when the condition is `true`.
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  skip(condition: boolean, description?: string): void;
+  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
-   * Conditionally skips all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
+   * Skip a test. Playwright will not run the test past the `test.skip()` call.
+   *
+   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   * instead.
+   * - `test.skip(title, body)`
+   * - `test.skip()`
+   * - `test.skip(condition, description)`
+   * - `test.skip(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a skipped test, and Playwright will not run it.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.skip(({ browserName }) => browserName === 'webkit');
-   *
-   * test('skip in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('skip in WebKit 2', async ({ page }) => {
+   * test.skip('never run', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * @param callback A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is
-   * `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  /**
-   * Declares a test to be fixed, similarly to
-   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). This test will not be
-   * run.
-   *
-   * **Usage**
+   * If your test should be skipped in some configurations, but not all, you can skip the test inside the test body
+   * based on some condition. We recommend passing a `description` argument in this case. Playwright will run the test,
+   * but abort it immediately after the `test.skip` call.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.fixme('test to be fixed', async ({ page }) => {
+   * test('Safari-only test', async ({ page, browserName }) => {
+   *   test.skip(browserName !== 'webkit', 'This feature is Safari-only');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can skip all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group based on some
+   * condition with a single `test.skip(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip(({ browserName }) => browserName !== 'webkit', 'Safari-only');
+   *
+   * test('Safari-only test 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('Safari-only test 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.skip()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.skip(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.skip();
    *   // ...
    * });
    * ```
    *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
    */
-  fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(): void;
   /**
-   * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted when you call
-   * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   * Skip a test. Playwright will not run the test past the `test.skip()` call.
+   *
+   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   * instead.
+   * - `test.skip(title, body)`
+   * - `test.skip()`
+   * - `test.skip(condition, description)`
+   * - `test.skip(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a skipped test, and Playwright will not run it.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test('test to be fixed', async ({ page }) => {
+   * test.skip('never run', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test should be skipped in some configurations, but not all, you can skip the test inside the test body
+   * based on some condition. We recommend passing a `description` argument in this case. Playwright will run the test,
+   * but abort it immediately after the `test.skip` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('Safari-only test', async ({ page, browserName }) => {
+   *   test.skip(browserName !== 'webkit', 'This feature is Safari-only');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can skip all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group based on some
+   * condition with a single `test.skip(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip(({ browserName }) => browserName !== 'webkit', 'Safari-only');
+   *
+   * test('Safari-only test 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('Safari-only test 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.skip()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.skip(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.skip();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  skip(condition: boolean, description?: string): void;
+  /**
+   * Skip a test. Playwright will not run the test past the `test.skip()` call.
+   *
+   * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
+   * [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   * instead.
+   * - `test.skip(title, body)`
+   * - `test.skip()`
+   * - `test.skip(condition, description)`
+   * - `test.skip(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can declare a skipped test, and Playwright will not run it.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip('never run', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test should be skipped in some configurations, but not all, you can skip the test inside the test body
+   * based on some condition. We recommend passing a `description` argument in this case. Playwright will run the test,
+   * but abort it immediately after the `test.skip` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('Safari-only test', async ({ page, browserName }) => {
+   *   test.skip(browserName !== 'webkit', 'This feature is Safari-only');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can skip all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group based on some
+   * condition with a single `test.skip(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip(({ browserName }) => browserName !== 'webkit', 'Safari-only');
+   *
+   * test('Safari-only test 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('Safari-only test 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.skip()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.skip(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.skip();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  /**
+   * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
+   * call.
+   * - `test.fixme(title, body)`
+   * - `test.fixme()`
+   * - `test.fixme(condition, description)`
+   * - `test.fixme(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can declare a test as to be fixed, and Playwright will not run it.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme('to be fixed', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test should be fixed in some configurations, but not all, you can mark the test as "fixme" inside the test
+   * body based on some condition. We recommend passing a `description` argument in this case. Playwright will run the
+   * test, but abort it immediately after the `test.fixme` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('to be fixed in Safari', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature breaks in Safari for some reason');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme" based
+   * on some condition with a single `test.fixme(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit', 'Should figure out the issue');
+   *
+   * test('to be fixed in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('to be fixed in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fixme()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.fixme(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
    *   test.fixme();
    *   // ...
    * });
    * ```
    *
-   * Mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "fixme".
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fixme();
-   *
-   * test('test to be fixed 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('test to be fixed 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
    */
-  fixme(): void;
+  fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
-   * Conditionally mark a test as "fixme" with an optional description.
+   * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
+   * call.
+   * - `test.fixme(title, body)`
+   * - `test.fixme()`
+   * - `test.fixme(condition, description)`
+   * - `test.fixme(callback, description)`
    *
    * **Usage**
    *
+   * You can declare a test as to be fixed, and Playwright will not run it.
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test('broken in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented on Mac yet');
+   * test.fixme('to be fixed', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * If your test should be fixed in some configurations, but not all, you can mark the test as "fixme" inside the test
+   * body based on some condition. We recommend passing a `description` argument in this case. Playwright will run the
+   * test, but abort it immediately after the `test.fixme` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('to be fixed in Safari', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature breaks in Safari for some reason');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme" based
+   * on some condition with a single `test.fixme(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit', 'Should figure out the issue');
+   *
+   * test('to be fixed in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('to be fixed in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fixme()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.fixme(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fixme(): void;
+  /**
+   * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
+   * call.
+   * - `test.fixme(title, body)`
+   * - `test.fixme()`
+   * - `test.fixme(condition, description)`
+   * - `test.fixme(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can declare a test as to be fixed, and Playwright will not run it.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme('to be fixed', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test should be fixed in some configurations, but not all, you can mark the test as "fixme" inside the test
+   * body based on some condition. We recommend passing a `description` argument in this case. Playwright will run the
+   * test, but abort it immediately after the `test.fixme` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('to be fixed in Safari', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature breaks in Safari for some reason');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme" based
+   * on some condition with a single `test.fixme(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit', 'Should figure out the issue');
+   *
+   * test('to be fixed in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('to be fixed in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fixme()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.fixme(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(condition: boolean, description?: string): void;
   /**
-   * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "fixme".
+   * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
+   * call.
+   * - `test.fixme(title, body)`
+   * - `test.fixme()`
+   * - `test.fixme(condition, description)`
+   * - `test.fixme(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a test as to be fixed, and Playwright will not run it.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('broken in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('broken in WebKit 2', async ({ page }) => {
+   * test.fixme('to be fixed', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
-   * when the return value is `true`.
+   * If your test should be fixed in some configurations, but not all, you can mark the test as "fixme" inside the test
+   * body based on some condition. We recommend passing a `description` argument in this case. Playwright will run the
+   * test, but abort it immediately after the `test.fixme` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('to be fixed in Safari', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature breaks in Safari for some reason');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme" based
+   * on some condition with a single `test.fixme(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit', 'Should figure out the issue');
+   *
+   * test('to be fixed in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('to be fixed in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fixme()` without arguments inside the test body to always mark the test as failed. We
+   * recommend using `test.fixme(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Unconditionally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
-   * fixed.
+   * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
+   * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * - `test.fail(title, body)`
+   * - `test.fail()`
+   * - `test.fail(condition, description)`
+   * - `test.fail(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a test as failing, so that Playwright ensures it actually fails.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
+   * test.fail('not yet ready', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   */
-  fail(): void;
-  /**
-   * Conditionally mark a test as "should fail" with an optional description.
-   *
-   * **Usage**
+   * If your test fails in some configurations, but not all, you can mark the test as failing inside the test body based
+   * on some condition. We recommend passing a `description` argument in this case.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2917,21 +3430,14 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition Test is marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(condition: boolean, description?: string): void;
-  /**
-   * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "should
-   * fail".
-   *
-   * **Usage**
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail"
+   * based on some condition with a single `test.fail(callback, description)` call.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.fail(({ browserName }) => browserName === 'webkit');
+   * test.fail(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
    *   // ...
@@ -2941,16 +3447,37 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * You can also call `test.fail()` without arguments inside the test body to always mark the test as failed. We
+   * recommend declaring a failing test with `test.fail(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
    * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  fail(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
-   * Declares a test that "should fail". Playwright Test runs this test and ensures that it is actually failing. This is
-   * useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
+   * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * - `test.fail(title, body)`
+   * - `test.fail()`
+   * - `test.fail(condition, description)`
+   * - `test.fail(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a test as failing, so that Playwright ensures it actually fails.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2960,19 +3487,206 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * If your test fails in some configurations, but not all, you can mark the test as failing inside the test body based
+   * on some condition. We recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail"
+   * based on some condition with a single `test.fail(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit', 'not implemented yet');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fail()` without arguments inside the test body to always mark the test as failed. We
+   * recommend declaring a failing test with `test.fail(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
    */
-  fail(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  fail(condition: boolean, description?: string): void;
   /**
-   * Unconditionally marks a test as "slow". Slow test will be given triple the default timeout.
-   *
-   * **Details**
-   *
-   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or `afterAll`
-   * hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
+   * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
+   * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * - `test.fail(title, body)`
+   * - `test.fail()`
+   * - `test.fail(condition, description)`
+   * - `test.fail(callback, description)`
    *
    * **Usage**
+   *
+   * You can declare a test as failing, so that Playwright ensures it actually fails.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail('not yet ready', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test fails in some configurations, but not all, you can mark the test as failing inside the test body based
+   * on some condition. We recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail"
+   * based on some condition with a single `test.fail(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit', 'not implemented yet');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fail()` without arguments inside the test body to always mark the test as failed. We
+   * recommend declaring a failing test with `test.fail(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  /**
+   * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
+   * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * - `test.fail(title, body)`
+   * - `test.fail()`
+   * - `test.fail(condition, description)`
+   * - `test.fail(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can declare a test as failing, so that Playwright ensures it actually fails.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail('not yet ready', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test fails in some configurations, but not all, you can mark the test as failing inside the test body based
+   * on some condition. We recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail"
+   * based on some condition with a single `test.fail(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit', 'not implemented yet');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fail()` without arguments inside the test body to always mark the test as failed. We
+   * recommend declaring a failing test with `test.fail(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fail(): void;
+  /**
+   * Marks a test as "slow". Slow test will be given triple the default timeout.
+   *
+   * Note that [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow)
+   * cannot be used in a `beforeAll` or `afterAll` hook. Use
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
+   * - `test.slow()`
+   * - `test.slow(condition, description)`
+   * - `test.slow(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can mark a test as slow by calling `test.slow()` inside the test body.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2983,47 +3697,152 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   */
-  slow(): void;
-  /**
-   * Conditionally mark a test as "slow" with an optional description. Slow test will be given triple the default
-   * timeout.
-   *
-   * **Usage**
+   * If your test is slow in some configurations, but not all, you can mark it as slow based on a condition. We
+   * recommend passing a `description` argument in this case.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   * test('slow in Safari', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow in Safari');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "slow" based
+   * on some condition by passing a callback.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit', 'all tests are slow in Safari');
+   *
+   * test('slow in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in Safari 2', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
    * @param condition Test is marked as "slow" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when
+   * the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  slow(condition: boolean, description?: string): void;
+  slow(): void;
   /**
-   * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "slow". Slow
-   * tests will be given triple the default timeout.
+   * Marks a test as "slow". Slow test will be given triple the default timeout.
+   *
+   * Note that [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow)
+   * cannot be used in a `beforeAll` or `afterAll` hook. Use
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
+   * - `test.slow()`
+   * - `test.slow(condition, description)`
+   * - `test.slow(callback, description)`
    *
    * **Usage**
+   *
+   * You can mark a test as slow by calling `test.slow()` inside the test body.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
    *   // ...
    * });
    * ```
    *
+   * If your test is slow in some configurations, but not all, you can mark it as slow based on a condition. We
+   * recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in Safari', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow in Safari');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "slow" based
+   * on some condition by passing a callback.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit', 'all tests are slow in Safari');
+   *
+   * test('slow in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Test is marked as "slow" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when
+   * the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  slow(condition: boolean, description?: string): void;
+  /**
+   * Marks a test as "slow". Slow test will be given triple the default timeout.
+   *
+   * Note that [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow)
+   * cannot be used in a `beforeAll` or `afterAll` hook. Use
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
+   * - `test.slow()`
+   * - `test.slow(condition, description)`
+   * - `test.slow(callback, description)`
+   *
+   * **Usage**
+   *
+   * You can mark a test as slow by calling `test.slow()` inside the test body.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test is slow in some configurations, but not all, you can mark it as slow based on a condition. We
+   * recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in Safari', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow in Safari');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as "slow" based
+   * on some condition by passing a callback.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit', 'all tests are slow in Safari');
+   *
+   * test('slow in Safari 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in Safari 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Test is marked as "slow" when the condition is `true`.
    * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when
    * the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
@@ -3066,7 +3885,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *   ```
    *
    * - Changing timeout for all tests in a
-   *   [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
+   *   [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group.
    *
    *   ```js
    *   test.describe('group', () => {
@@ -3085,20 +3904,23 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a `beforeEach` hook that is executed before each test.
    *
-   * **Details**
-   *
    * When called in the scope of a test file, runs before each test in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before
-   * each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their
-   * registration.
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs before
+   * each test in the group.
    *
-   * You can access all the same {@link Fixtures} as the test function itself, and also the {@link TestInfo} object that
+   * You can access all the same {@link Fixtures} as the test body itself, and also the {@link TestInfo} object that
    * gives a lot of useful information. For example, you can navigate the page before starting the test.
    *
-   * Playwright will continue running all applicable hooks even if some of them have failed.
-   *
-   * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1) to
+   * You can use [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) to
    * teardown any resources set up in `beforeEach`.
+   * - `test.beforeEach(hookFunction)`
+   * - `test.beforeEach(title, hookFunction)`
+   *
+   * **Details**
+   *
+   * When multiple `beforeEach` hooks are added, they will run in the order of their registration.
+   *
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3106,8 +3928,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   console.log(`Running ${testInfo.title}`);
+   * test.beforeEach(async ({ page }) => {
+   *   console.log(`Running ${test.info().title}`);
    *   await page.goto('https://my.start.url/');
    * });
    *
@@ -3116,15 +3938,40 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Alternatively, you can declare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.beforeEach('Open start URL', async ({ page }) => {
+   *   console.log(`Running ${test.info().title}`);
+   *   await page.goto('https://my.start.url/');
+   * });
+   * ```
+   *
+   * @param title Hook title.
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
    */
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares a `beforeEach` hook with a title that is executed before each test.
+   * Declares a `beforeEach` hook that is executed before each test.
+   *
+   * When called in the scope of a test file, runs before each test in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs before
+   * each test in the group.
+   *
+   * You can access all the same {@link Fixtures} as the test body itself, and also the {@link TestInfo} object that
+   * gives a lot of useful information. For example, you can navigate the page before starting the test.
+   *
+   * You can use [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each) to
+   * teardown any resources set up in `beforeEach`.
+   * - `test.beforeEach(hookFunction)`
+   * - `test.beforeEach(title, hookFunction)`
    *
    * **Details**
    *
-   * See [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1).
+   * When multiple `beforeEach` hooks are added, they will run in the order of their registration.
+   *
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3132,13 +3979,23 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.beforeEach('Open start URL', async ({ page }, testInfo) => {
-   *   console.log(`Running ${testInfo.title}`);
+   * test.beforeEach(async ({ page }) => {
+   *   console.log(`Running ${test.info().title}`);
    *   await page.goto('https://my.start.url/');
    * });
    *
    * test('my test', async ({ page }) => {
    *   expect(page.url()).toBe('https://my.start.url/');
+   * });
+   * ```
+   *
+   * Alternatively, you can declare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.beforeEach('Open start URL', async ({ page }) => {
+   *   console.log(`Running ${test.info().title}`);
+   *   await page.goto('https://my.start.url/');
    * });
    * ```
    *
@@ -3149,14 +4006,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares an `afterEach` hook that is executed after each test.
    *
+   * When called in the scope of a test file, runs after each test in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each
+   * test in the group.
+   *
+   * You can access all the same {@link Fixtures} as the test body itself, and also the {@link TestInfo} object that
+   * gives a lot of useful information. For example, you can check whether the test succeeded or failed.
+   * - `test.afterEach(hookFunction)`
+   * - `test.afterEach(title, hookFunction)`
+   *
    * **Details**
    *
-   * When called in the scope of a test file, runs after each test in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after each
-   * test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
-   *
-   * You can access all the same {@link Fixtures} as the test function itself, and also the {@link TestInfo} object that
-   * gives a lot of useful information. For example, you can check whether the test succeeded or failed.
+   * When multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
    * Playwright will continue running all applicable hooks even if some of them have failed.
    *
@@ -3166,10 +4027,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.afterEach(async ({ page }, testInfo) => {
-   *   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+   * test.afterEach(async ({ page }) => {
+   *   console.log(`Finished ${test.info().title} with status ${test.info().status}`);
    *
-   *   if (testInfo.status !== testInfo.expectedStatus)
+   *   if (test.info().status !== test.info().expectedStatus)
    *     console.log(`Did not run as expected, ended up at ${page.url()}`);
    * });
    *
@@ -3178,15 +4039,37 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Alternatively, you can delcare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.afterEach('Status check', async ({ page }) => {
+   *   if (test.info().status !== test.info().expectedStatus)
+   *     console.log(`Did not run as expected, ended up at ${page.url()}`);
+   * });
+   * ```
+   *
+   * @param title Hook title.
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterEach` hook with a title that is executed after each test.
+   * Declares an `afterEach` hook that is executed after each test.
+   *
+   * When called in the scope of a test file, runs after each test in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each
+   * test in the group.
+   *
+   * You can access all the same {@link Fixtures} as the test body itself, and also the {@link TestInfo} object that
+   * gives a lot of useful information. For example, you can check whether the test succeeded or failed.
+   * - `test.afterEach(hookFunction)`
+   * - `test.afterEach(title, hookFunction)`
    *
    * **Details**
    *
-   * See [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1).
+   * When multiple `afterEach` hooks are added, they will run in the order of their registration.
+   *
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3194,15 +4077,25 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.afterEach('Status check', async ({ page }, testInfo) => {
-   *   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+   * test.afterEach(async ({ page }) => {
+   *   console.log(`Finished ${test.info().title} with status ${test.info().status}`);
    *
-   *   if (testInfo.status !== testInfo.expectedStatus)
+   *   if (test.info().status !== test.info().expectedStatus)
    *     console.log(`Did not run as expected, ended up at ${page.url()}`);
    * });
    *
    * test('my test', async ({ page }) => {
    *   // ...
+   * });
+   * ```
+   *
+   * Alternatively, you can delcare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.afterEach('Status check', async ({ page }) => {
+   *   if (test.info().status !== test.info().expectedStatus)
+   *     console.log(`Did not run as expected, ended up at ${page.url()}`);
    * });
    * ```
    *
@@ -3213,19 +4106,23 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a `beforeAll` hook that is executed once per worker process before all tests.
    *
+   * When called in the scope of a test file, runs before all tests in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all
+   * tests in the group.
+   *
+   * You can use [test.afterAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-all) to
+   * teardown any resources set up in `beforeAll`.
+   * - `test.beforeAll(hookFunction)`
+   * - `test.beforeAll(title, hookFunction)`
+   *
    * **Details**
    *
-   * When called in the scope of a test file, runs before all tests in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before all
-   * tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
+   * When multiple `beforeAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
    *
    * Playwright will continue running all applicable hooks even if some of them have failed.
-   *
-   * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1) to teardown
-   * any resources set up in `beforeAll`.
    *
    * **Usage**
    *
@@ -3246,15 +4143,39 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Alternatively, you can declare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.beforeAll('Setup', async () => {
+   *   console.log('Before tests');
+   * });
+   * ```
+   *
+   * @param title Hook title.
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional {@link TestInfo}.
    */
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares a `beforeAll` hook with a title that is executed once per worker process before all tests.
+   * Declares a `beforeAll` hook that is executed once per worker process before all tests.
+   *
+   * When called in the scope of a test file, runs before all tests in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all
+   * tests in the group.
+   *
+   * You can use [test.afterAll([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-all) to
+   * teardown any resources set up in `beforeAll`.
+   * - `test.beforeAll(hookFunction)`
+   * - `test.beforeAll(title, hookFunction)`
    *
    * **Details**
    *
-   * See [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all-1).
+   * When multiple `beforeAll` hooks are added, they will run in the order of their registration.
+   *
+   * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
+   * more about [workers and failures](https://playwright.dev/docs/test-retries).
+   *
+   * Playwright will continue running all applicable hooks even if some of them have failed.
    *
    * **Usage**
    *
@@ -3262,12 +4183,25 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.beforeAll('Setup', async () => {
+   * test.beforeAll(async () => {
    *   console.log('Before tests');
+   * });
+   *
+   * test.afterAll(async () => {
+   *   console.log('After tests');
    * });
    *
    * test('my test', async ({ page }) => {
    *   // ...
+   * });
+   * ```
+   *
+   * Alternatively, you can declare a hook **with a title**.
+   *
+   * ```js
+   * // example.spec.ts
+   * test.beforeAll('Setup', async () => {
+   *   console.log('Before tests');
    * });
    * ```
    *
@@ -3278,16 +4212,20 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares an `afterAll` hook that is executed once per worker after all tests.
    *
+   * When called in the scope of a test file, runs after all tests in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all
+   * tests in the group.
+   *
    * **Details**
    *
-   * When called in the scope of a test file, runs after all tests in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after all
-   * tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
+   * When multiple `afterAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
    *
    * Playwright will continue running all applicable hooks even if some of them have failed.
+   * - `test.afterAll(hookFunction)`
+   * - `test.afterAll(title, hookFunction)`
    *
    * **Usage**
    *
@@ -3298,17 +4236,47 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Alternatively, you can declare a hook **with a title**.
+   *
+   * ```js
+   * test.afterAll('Teardown', async () => {
+   *   console.log('Done with tests');
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Hook title.
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional {@link TestInfo}.
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterAll` hook with a title that is executed once per worker after all tests.
+   * Declares an `afterAll` hook that is executed once per worker after all tests.
+   *
+   * When called in the scope of a test file, runs after all tests in the file. When called inside a
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all
+   * tests in the group.
    *
    * **Details**
    *
-   * See [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1).
+   * When multiple `afterAll` hooks are added, they will run in the order of their registration.
+   *
+   * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn
+   * more about [workers and failures](https://playwright.dev/docs/test-retries).
+   *
+   * Playwright will continue running all applicable hooks even if some of them have failed.
+   * - `test.afterAll(hookFunction)`
+   * - `test.afterAll(title, hookFunction)`
    *
    * **Usage**
+   *
+   * ```js
+   * test.afterAll(async () => {
+   *   console.log('Done with tests');
+   *   // ...
+   * });
+   * ```
+   *
+   * Alternatively, you can declare a hook **with a title**.
    *
    * ```js
    * test.afterAll('Teardown', async () => {
@@ -3323,7 +4291,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   afterAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Specifies options or fixtures to use in a single test file or a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group. Most useful to
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to
    * set an option, for example set `locale` to configure `context` fixture.
    *
    * **Usage**

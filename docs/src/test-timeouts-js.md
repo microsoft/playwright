@@ -54,7 +54,7 @@ test('very slow test', async ({ page }) => {
 });
 ```
 
-API reference: [`method: Test.setTimeout`] and [`method: Test.slow#1`].
+API reference: [`method: Test.setTimeout`] and [`method: Test.slow`].
 
 ### Change timeout from a `beforeEach` hook
 

@@ -26,7 +26,7 @@ export type { FullConfig, TestStatus } from './test';
  *       - {@link TestCase} #1
  *       - {@link TestCase} #2
  *       - Suite corresponding to a
- *         [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group
+ *         [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group
  *         - {@link TestCase} #1 in a group
  *         - {@link TestCase} #2 in a group
  *       - < more test cases ... >
@@ -71,7 +71,7 @@ export interface Suite {
 
   /**
    * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
-   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
+   * defined in nested [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe)
    * groups are listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
    */
   tests: Array<TestCase>;
@@ -81,27 +81,29 @@ export interface Suite {
    * - Empty for root suite.
    * - Project name for project suite.
    * - File path for file suite.
-   * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
+   * - Title passed to [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe)
    *   for a group suite.
    */
   title: string;
 }
 
 /**
- * `TestCase` corresponds to every
- * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call in a test file. When
- * a single [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) is running in
- * multiple projects or repeated multiple times, it will have multiple `TestCase` objects in corresponding projects'
- * suites.
+ * `TestCase` corresponds to every [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call)
+ * call in a test file. When a single [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call)
+ * is running in multiple projects or repeated multiple times, it will have multiple `TestCase` objects in
+ * corresponding projects' suites.
  */
 export interface TestCase {
   /**
    * Expected test status.
-   * - Tests marked as [test.skip(title, testFunction)](https://playwright.dev/docs/api/class-test#test-skip-1) or
-   *   [test.fixme(title, testFunction)](https://playwright.dev/docs/api/class-test#test-fixme-1) are expected to be
-   *   `'skipped'`.
-   * - Tests marked as [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1) are expected to be
-   *   `'failed'`.
+   * - Tests marked as
+   *   [test.skip([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip)
+   *   or
+   *   [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   *   are expected to be `'skipped'`.
+   * - Tests marked as
+   *   [test.fail([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
+   *   are expected to be `'failed'`.
    * - Other tests are expected to be `'passed'`.
    *
    * See also [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) for the actual
@@ -128,7 +130,7 @@ export interface TestCase {
 
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test
+   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups the test
    * belongs to and file-level annotations for the test file.
    *
    * Annotations are available during test execution through
@@ -187,14 +189,13 @@ export interface TestCase {
    * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout),
    * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout),
    * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout),
-   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) and
+   * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow) and
    * [testInfo.setTimeout(timeout)](https://playwright.dev/docs/api/class-testinfo#test-info-set-timeout).
    */
   timeout: number;
 
   /**
-   * Test title as passed to the
-   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call.
+   * Test title as passed to the [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call) call.
    */
   title: string;
 }
