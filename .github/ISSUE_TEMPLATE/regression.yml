@@ -1,6 +1,5 @@
----
 name: Report regression
-about: Functionality that used to work and does not any more
+description: Functionality that used to work and does not any more
 title: "[Regression]: "
 
 body:
