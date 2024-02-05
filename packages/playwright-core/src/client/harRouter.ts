@@ -62,6 +62,10 @@ export class HarRouter {
     }
 
     if (response.action === 'fulfill') {
+      // If the response status is -1, the request was canceled or stalled, so we just stall it here.
+      // See https://github.com/microsoft/playwright/issues/29311.
+      if (response.status === -1)
+        return;
       await route.fulfill({
         status: response.status,
         headers: Object.fromEntries(response.headers!.map(h => [h.name, h.value])),

@@ -486,3 +486,35 @@ it('context.unrouteAll should stop context.routeFromHAR', async ({ contextFactor
   const response = await page1.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBeTruthy();
 });
+
+it('should ignore aborted requests', async ({ contextFactory, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29311' });
+  const path = it.info().outputPath('test.har');
+  {
+    server.setRoute('/x', (req, res) => { req.destroy(); });
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(path, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    const reqPromise = server.waitForRequest('/x');
+    const evalPromise = page1.evaluate(url => fetch(url).catch(e => 'cancelled'), server.PREFIX + '/x');
+    await reqPromise;
+    const req = await evalPromise;
+    expect(req).toBe('cancelled');
+    await context1.close();
+  }
+  server.reset();
+  {
+    server.setRoute('/x', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('test');
+    });
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(path);
+    const page2 = await context2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+    const evalPromise = page2.evaluate(url => fetch(url).catch(e => 'cancelled'), server.PREFIX + '/x');
+    const result = await Promise.race([evalPromise, page2.waitForTimeout(1000).then(() => 'timeout')]);
+    expect(result).toBe('timeout');
+  }
+});
