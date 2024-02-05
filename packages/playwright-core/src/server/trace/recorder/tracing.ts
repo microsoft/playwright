@@ -450,7 +450,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       args: message.args().map(a => ({ preview: a.toString(), value: a.rawValue() })),
       location: message.location(),
       time: monotonicTime(),
-      pageId: message.page().guid,
+      pageId: message.page()?.guid,
     };
     this._appendTraceEvent(event);
   }

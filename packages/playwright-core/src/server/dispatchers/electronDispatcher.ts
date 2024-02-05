@@ -21,6 +21,7 @@ import { ElectronApplication } from '../electron/electron';
 import type * as channels from '@protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
+import type { ConsoleMessage } from '../console';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
@@ -40,6 +41,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronCh
 export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel, ElectronDispatcher> implements channels.ElectronApplicationChannel {
   _type_EventTarget = true;
   _type_ElectronApplication = true;
+  private readonly _subscriptions = new Set<channels.ElectronApplicationUpdateSubscriptionParams['event']>();
 
   constructor(scope: ElectronDispatcher, electronApplication: ElectronApplication) {
     super(scope, electronApplication, 'ElectronApplication', {
@@ -48,6 +50,16 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     this.addObjectListener(ElectronApplication.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+    });
+    this.addObjectListener(ElectronApplication.Events.Console, (message: ConsoleMessage) => {
+      if (!this._subscriptions.has('console'))
+        return;
+      this._dispatchEvent('console', {
+        type: message.type(),
+        text: message.text(),
+        args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(this, a)),
+        location: message.location()
+      });
     });
   }
 
@@ -65,6 +77,13 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     const handle = await this._object._nodeElectronHandlePromise;
     const result = await handle.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
     return { handle: ElementHandleDispatcher.fromJSHandle(this, result) };
+  }
+
+  async updateSubscription(params: channels.ElectronApplicationUpdateSubscriptionParams): Promise<void> {
+    if (params.enabled)
+      this._subscriptions.add(params.event);
+    else
+      this._subscriptions.delete(params.event);
   }
 
   async close(): Promise<void> {

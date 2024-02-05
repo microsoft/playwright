@@ -765,7 +765,6 @@ scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.BrowserContextConsoleEvent = tObject({
-  page: tChannel(['Page']),
   type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
@@ -774,6 +773,7 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tNumber,
     columnNumber: tNumber,
   }),
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -2258,6 +2258,16 @@ scheme.ElectronApplicationInitializer = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.ElectronApplicationCloseEvent = tOptional(tObject({}));
+scheme.ElectronApplicationConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tNumber,
+    columnNumber: tNumber,
+  }),
+});
 scheme.ElectronApplicationBrowserWindowParams = tObject({
   page: tChannel(['Page']),
 });
@@ -2280,6 +2290,11 @@ scheme.ElectronApplicationEvaluateExpressionHandleParams = tObject({
 scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
+scheme.ElectronApplicationUpdateSubscriptionParams = tObject({
+  event: tEnum(['console']),
+  enabled: tBoolean,
+});
+scheme.ElectronApplicationUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
 scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
 scheme.AndroidInitializer = tOptional(tObject({}));

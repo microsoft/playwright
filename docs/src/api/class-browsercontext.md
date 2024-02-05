@@ -106,7 +106,7 @@ The reason to be reported to the operations interrupted by the context closure.
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
+Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
 
 The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
 

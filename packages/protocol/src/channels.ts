@@ -1453,7 +1453,6 @@ export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type BrowserContextConsoleEvent = {
-  page: PageChannel,
   type: string,
   text: string,
   args: JSHandleChannel[],
@@ -1462,6 +1461,7 @@ export type BrowserContextConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  page: PageChannel,
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextDialogEvent = {
@@ -4082,15 +4082,27 @@ export type ElectronApplicationInitializer = {
 };
 export interface ElectronApplicationEventTarget {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
+  on(event: 'console', callback: (params: ElectronApplicationConsoleEvent) => void): this;
 }
 export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
   _type_ElectronApplication: boolean;
   browserWindow(params: ElectronApplicationBrowserWindowParams, metadata?: CallMetadata): Promise<ElectronApplicationBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionResult>;
   evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, metadata?: CallMetadata): Promise<ElectronApplicationUpdateSubscriptionResult>;
   close(params?: ElectronApplicationCloseParams, metadata?: CallMetadata): Promise<ElectronApplicationCloseResult>;
 }
 export type ElectronApplicationCloseEvent = {};
+export type ElectronApplicationConsoleEvent = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
+};
 export type ElectronApplicationBrowserWindowParams = {
   page: PageChannel,
 };
@@ -4122,12 +4134,21 @@ export type ElectronApplicationEvaluateExpressionHandleOptions = {
 export type ElectronApplicationEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
+export type ElectronApplicationUpdateSubscriptionParams = {
+  event: 'console',
+  enabled: boolean,
+};
+export type ElectronApplicationUpdateSubscriptionOptions = {
+
+};
+export type ElectronApplicationUpdateSubscriptionResult = void;
 export type ElectronApplicationCloseParams = {};
 export type ElectronApplicationCloseOptions = {};
 export type ElectronApplicationCloseResult = void;
 
 export interface ElectronApplicationEvents {
   'close': ElectronApplicationCloseEvent;
+  'console': ElectronApplicationConsoleEvent;
 }
 
 // ----------- Android -----------

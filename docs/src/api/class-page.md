@@ -163,7 +163,7 @@ Emitted when the page closes.
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
+Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
 
 The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
 

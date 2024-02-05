@@ -43,12 +43,15 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
+import { ConsoleMessage } from '../console';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class ElectronApplication extends SdkObject {
   static Events = {
     Close: 'close',
+    Console: 'console',
   };
 
   private _browserContext: CRBrowserContext;
@@ -82,11 +85,36 @@ export class ElectronApplication extends SdkObject {
       });
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
+    this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
     });
+  }
+
+  async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
+    if (event.executionContextId === 0) {
+      // DevTools protocol stores the last 1000 console messages. These
+      // messages are always reported even for removed execution contexts. In
+      // this case, they are marked with executionContextId = 0 and are
+      // reported upon enabling Runtime agent.
+      //
+      // Ignore these messages since:
+      // - there's no execution context we can use to operate with message
+      //   arguments
+      // - these messages are reported before Playwright clients can subscribe
+      //   to the 'console'
+      //   page event.
+      //
+      // @see https://github.com/GoogleChrome/puppeteer/issues/3865
+      return;
+    }
+    if (!this._nodeExecutionContext)
+      return;
+    const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
+    const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    this.emit(ElectronApplication.Events.Console, message);
   }
 
   async initialize() {
