@@ -16,8 +16,8 @@
 
 import type { IncomingMessage } from 'http';
 import type { Socket } from 'net';
-import type { ProxyServer } from 'proxy';
-import { createProxy } from 'proxy';
+import type { ProxyServer } from '../third_party/proxy';
+import { createProxy } from '../third_party/proxy';
 
 export class TestProxy {
   readonly PORT: number;

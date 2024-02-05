@@ -1,4 +1,5 @@
 test/assets/modernizr.js
+/tests/third_party/
 /packages/*/lib/
 *.js
 /packages/playwright-core/src/generated/*
