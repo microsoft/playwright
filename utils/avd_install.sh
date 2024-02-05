@@ -9,8 +9,7 @@ fi
 
 export ANDROID_HOME="$PWD/.android-sdk"
 
-mkdir ${ANDROID_HOME}
-mkdir ${ANDROID_HOME}/cmdline-tools
+mkdir -p ${ANDROID_HOME}/cmdline-tools
 
 echo Downloading Android SDK...
 cd ${ANDROID_HOME}/cmdline-tools
