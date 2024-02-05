@@ -1272,12 +1272,16 @@ test('should support stylePath option', async ({ runInlineTest }) => {
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/tests/a.spec.js/snapshot.png': createImage(IMG_WIDTH, IMG_HEIGHT, 0, 255, 0),
+    '__screenshots__/tests/a.spec.js/png-1.png': createImage(IMG_WIDTH, IMG_HEIGHT, 0, 255, 0),
     'screenshot.css': 'body { background: #00FF00; }',
     'tests/a.spec.js': `
       const { test, expect } = require('@playwright/test');
       test('png', async ({ page }) => {
         await page.setContent('<style> html,body { padding: 0; margin: 0; }</style>');
         await expect(page).toHaveScreenshot('snapshot.png', {
+          stylePath: './screenshot.css',
+        });
+        await expect(page).toHaveScreenshot({
           stylePath: './screenshot.css',
         });
       });

@@ -351,7 +351,7 @@ export async function toHaveScreenshot(
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   return await zones.preserve(async () => {
     // Loading from filesystem resets zones.
-    const style = await loadScreenshotStyles(optOptions.stylePath || config?.stylePath);
+    const style = await loadScreenshotStyles(helper.allOptions.stylePath || config?.stylePath);
     return toHaveScreenshotContinuation.call(this, helper, page, locator, config, style);
   });
 }
