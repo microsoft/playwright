@@ -70,26 +70,26 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
-test('should include custom error message', async ({ runInlineTest }) => {
+test('should include custom expect message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('custom expect message', () => {
-        test.expect(1+1, 'one plus one is two!').toEqual(3);
+        test.expect(1+1, 'one plus one should be two!').toEqual(3);
       });
     `
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.output).toContain([
-    `    Error: one plus one is two!\n`,
+    `    Error: one plus one should be two!\n`,
     `    expect(received).toEqual(expected) // deep equality\n`,
     `    Expected: 3`,
     `    Received: 2`,
   ].join('\n'));
 });
 
-test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {
+test('should include custom expect message with web-first assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -989,7 +989,7 @@ test('should respect timeout from configured expect when used outside of the tes
       finally {
         await browser?.close();
       }
-    
+
     `
   };
   const baseDir = await writeFiles(files);
