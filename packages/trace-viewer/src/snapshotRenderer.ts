@@ -214,6 +214,10 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 function snapshotScript(...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
+    const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
+        ' match the center of the clicked element. This is likely due to a difference between' +
+        ' the test runner and the trace viewer operating systems.';
+
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
@@ -323,6 +327,9 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           pointElement.style.borderRadius = '10px';
           pointElement.style.margin = '-10px 0 0 -10px';
           pointElement.style.zIndex = '2147483646';
+          pointElement.style.display = 'flex';
+          pointElement.style.alignItems = 'center';
+          pointElement.style.justifyContent = 'center';
           if (hasTargetElements) {
             // Sometimes there are layout discrepancies between recording and rendering, e.g. fonts,
             // that may place the point at the wrong place. To avoid confusion, we just show the
@@ -332,9 +339,17 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             const centerY = (box.top + box.height / 2);
             pointElement.style.left = centerX + 'px';
             pointElement.style.top = centerY + 'px';
-            // "Blue dot" to indicate that action point is not 100% correct.
-            if (Math.abs(centerX - pointX) >= 2 || Math.abs(centerY - pointY) >= 2)
-              pointElement.style.backgroundColor = '#3646f4';
+            // "Warning symbol" indicates that action point is not 100% correct.
+            if (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10) {
+              const warningElement = document.createElement('x-pw-pointer-warning');
+              warningElement.textContent = '⚠';
+              warningElement.style.fontSize = '19px';
+              warningElement.style.color = 'white';
+              warningElement.style.marginTop = '-3.5px';
+              warningElement.style.userSelect = 'none';
+              pointElement.appendChild(warningElement);
+              pointElement.setAttribute('title', kPointerWarningTitle);
+            }
           } else {
             // For actions without a target element, e.g. page.mouse.move(),
             // show the point at the recorder location.
