@@ -760,6 +760,8 @@ class ResponseExtraInfoTracker {
     if (response && responseExtraInfo) {
       response.setResponseHeadersSize(responseExtraInfo.headersText?.length || 0);
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
+      // This is racy, but proper fix reuquires risky changes, so we doing best effort here.
+      response.setRawStatus(responseExtraInfo.statusCode, getStatusText(responseExtraInfo.headersText));
       info.responseReceivedExtraInfo[index] = undefined;
     }
   }
@@ -780,4 +782,12 @@ class ResponseExtraInfoTracker {
   private _stopTracking(requestId: string) {
     this._requests.delete(requestId);
   }
+}
+
+function getStatusText(headersText?: string): string {
+  if (!headersText)
+    return '';
+  const statusLine = headersText.split('\n')[0];
+  const match = statusLine.match(/\S+\s+\d+\s*(.*)/);
+  return match?.[1] ?? '';
 }
