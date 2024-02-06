@@ -136,13 +136,21 @@ Note that soft assertions only work with Playwright test runner.
 
 ## Custom expect message
 
-You can specify a custom error message as a second argument to the `expect` function, for example:
+You can specify a custom expect message as a second argument to the `expect` function, for example:
 
 ```js
 await expect(page.getByText('Name'), 'should be logged in').toBeVisible();
 ```
 
-The error would look like this:
+This message will be shown in reporters, both for passing and failing expects, providing more context about the assertion.
+
+When expect passes, you might see a successful step like this:
+
+```txt
+✅ should be logged in    @example.spec.ts:18
+```
+
+When expect fails, the error would look like this:
 
 ```bash
     Error: should be logged in
@@ -160,7 +168,7 @@ The error would look like this:
       6 |
 ```
 
-The same works with soft assertions:
+Soft assertions also support custom message:
 
 ```js
 expect.soft(value, 'my soft assertion').toBe(56);
@@ -191,8 +199,8 @@ await expect.poll(async () => {
   const response = await page.request.get('https://api.example.com');
   return response.status();
 }, {
-  // Custom error message, optional.
-  message: 'make sure API eventually succeeds', // custom error message
+  // Custom expect message for reporting, optional.
+  message: 'make sure API eventually succeeds',
   // Poll for 10 seconds; defaults to 5 seconds. Pass 0 to disable timeout.
   timeout: 10000,
 }).toBe(200);

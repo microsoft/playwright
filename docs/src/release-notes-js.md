@@ -1520,7 +1520,7 @@ This version was also tested against the following stable channels:
 
   Read more in [our documentation](./test-assertions#soft-assertions)
 
-- You can now specify a **custom error message** as a second argument to the `expect` and `expect.soft` functions, for example:
+- You can now specify a **custom expect message** as a second argument to the `expect` and `expect.soft` functions, for example:
 
   ```js
   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();

@@ -34,13 +34,13 @@ title: "Assertions"
 ## Custom Expect Message
 * langs: python
 
-You can specify a custom error message as a second argument to the `expect` function, for example:
+You can specify a custom expect message as a second argument to the `expect` function, for example:
 
 ```python
 expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 ```
 
-The error would look like this:
+When expect fails, the error would look like this:
 
 ```bash
     def test_foobar(page: Page) -> None:
