@@ -179,7 +179,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
-    const mask: { frame: Frame, selector: string }[] = (params.screenshotOptions?.mask || []).map(({ frame, selector }) => ({
+    const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
       frame: (frame as FrameDispatcher)._object,
       selector,
     }));
@@ -190,14 +190,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return await this._page.expectScreenshot(metadata, {
       ...params,
       locator,
-      comparatorOptions: {
-        ...params.comparatorOptions,
-        _comparator: params.comparatorOptions?.comparator,
-      },
-      screenshotOptions: {
-        ...params.screenshotOptions,
-        mask,
-      },
+      mask,
     });
   }
 

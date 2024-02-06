@@ -110,7 +110,7 @@ type EmulatedMedia = {
   forcedColors: types.ForcedColors;
 };
 
-type ExpectScreenshotOptions = {
+type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
   timeout?: number,
   expected?: Buffer,
   isNot?: boolean,
@@ -118,8 +118,6 @@ type ExpectScreenshotOptions = {
     frame: frames.Frame,
     selector: string,
   },
-  comparatorOptions?: ImageComparatorOptions,
-  screenshotOptions?: ScreenshotOptions,
 };
 
 export class Page extends SdkObject {
@@ -537,11 +535,11 @@ export class Page extends SdkObject {
   async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
-      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options.screenshotOptions || {});
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
     } : async (progress: Progress, timeout: number) => {
       await this.performLocatorHandlersCheckpoint(progress);
       await this.mainFrame().rafrafTimeout(timeout);
-      return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
+      return await this._screenshotter.screenshotPage(progress, options || {});
     };
 
     const comparator = getComparator('image/png');
@@ -549,7 +547,7 @@ export class Page extends SdkObject {
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     try {
-      const format = validateScreenshotOptions(options.screenshotOptions || {});
+      const format = validateScreenshotOptions(options || {});
       if (format !== 'png')
         throw new Error('Only PNG screenshots are supported');
     } catch (error) {
@@ -562,7 +560,7 @@ export class Page extends SdkObject {
       diff?: Buffer,
     } | undefined = undefined;
     const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-      const comparatorResult = actual && expected ? comparator(actual, expected, options.comparatorOptions) : undefined;
+      const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
       if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
         return true;
       if (comparatorResult)
