@@ -437,3 +437,13 @@ export function parseTestRunnerOutput(output: string) {
     didNotRun,
   };
 }
+
+export const playwrightCtConfigText = `
+import { defineConfig } from '@playwright/experimental-ct-react';
+export default defineConfig({
+  use: {
+    ctPort: ${3200 + (+process.env.TEST_PARALLEL_INDEX)}
+  },
+  projects: [{name: 'default'}],
+});
+`;

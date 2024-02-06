@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -563,10 +563,7 @@ test('should not watch unfiltered files', async ({ runWatchTest, writeFiles }) =
 
 test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'default'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
     'src/button.tsx': `
@@ -606,10 +603,7 @@ test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
 
 test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'default'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
     'src/button.css': `
@@ -652,10 +646,7 @@ test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles 
 
 test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'default'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'package.json': `{ "type": "module" }`,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
