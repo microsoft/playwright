@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { playwrightCtConfigText } from 'tests/playwright-test/playwright-test-fixtures';
 import { test } from './npmTest';
 import path from 'path';
 
@@ -23,7 +22,10 @@ test('pnpm: @playwright/experimental-ct-react should work', async ({ exec, tmpWo
   await exec('pnpm add @playwright/experimental-ct-react react react-dom');
   await exec('pnpm exec playwright install');
   await writeFiles({
-    'playwright.config.ts': playwrightCtConfigText,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({});
+    `,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
     'Button.tsx': `
