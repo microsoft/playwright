@@ -9,7 +9,7 @@
     * File suite #1
       * [TestCase] #1
       * [TestCase] #2
-      * Suite corresponding to a [`method: Test.describe#1`] group
+      * Suite corresponding to a [`method: Test.describe`] group
         * [TestCase] #1 in a group
         * [TestCase] #2 in a group
       * < more test cases ... >
@@ -54,7 +54,7 @@ Child suites. See [Suite] for the hierarchy of suites.
 * since: v1.10
 - type: <[Array]<[TestCase]>>
 
-Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases defined in nested [`method: Test.describe#1`] groups are listed
+Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases defined in nested [`method: Test.describe`] groups are listed
 in the child [`property: Suite.suites`].
 
 ## property: Suite.title
@@ -65,7 +65,7 @@ Suite title.
 * Empty for root suite.
 * Project name for project suite.
 * File path for file suite.
-* Title passed to [`method: Test.describe#1`] for a group suite.
+* Title passed to [`method: Test.describe`] for a group suite.
 
 ## method: Suite.titlePath
 * since: v1.10
