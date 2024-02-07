@@ -77,7 +77,7 @@ jobs:
         shardTotal: [4]
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - name: Install dependencies
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - name: Install dependencies
