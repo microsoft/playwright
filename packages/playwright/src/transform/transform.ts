@@ -132,7 +132,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         let candidate = value;
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
-        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
+        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate);
         const existing = resolveImportSpecifierExtension(candidate);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
