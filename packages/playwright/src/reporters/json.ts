@@ -169,7 +169,7 @@ class JSONReporter extends EmptyReporter {
     return {
       title: test.title,
       ok: test.ok(),
-      tags: (test.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
+      tags: extractTags(test),
       tests: [this._serializeTest(projectId, projectName, test)],
       id: test.id,
       ...this._relativeLocation(test.location),
@@ -254,6 +254,13 @@ function reportOutputNameFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`]);
   return undefined;
+}
+
+function extractTags(test: TestCase) {
+  return [
+    ...test.tags,
+    ...(test.title.match(/@[\S]+/g) || []),
+  ];
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {

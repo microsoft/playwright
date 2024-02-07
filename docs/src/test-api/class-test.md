@@ -19,6 +19,9 @@ test('basic test', async ({ page }) => {
 
 Declares a test.
 
+* `test(title, body)`
+* `test(title, details, body)`
+
 **Usage**
 
 ```js
@@ -30,11 +33,68 @@ test('basic test', async ({ page }) => {
 });
 ```
 
+**Tags**
+
+You can tag tests by providing additional test details. Note that each tag must start with `@` symbol.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('basic test', {
+  tag: '@smoke',
+}, async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  // ...
+});
+```
+
+Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
+
+You can also filter tests by their tags during test execution:
+* in the [command line](../test-cli.md#reference);
+* in the config with [`property: TestConfig.tagFilter`] and [`property: TestProject.tagFilter`];
+
+Learn more about [tagging](../test-annotations.md#tag-tests).
+
+**Annotations**
+
+You can annotate tests by providing additional test details.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('basic test', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/23180',
+  },
+}, async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  // ...
+});
+```
+
+Test annotations are displayed in the test report, and are available to a custom reporter via `TestCase.annotations` property.
+
+You can also add dynamic annotations by manipulating [`property: TestInfo.annotations`].
+
+Learn more about [test annotations](../test-annotations.md).
+
 ### param: Test.(call).title
 * since: v1.10
 - `title` <[string]>
 
 Test title.
+
+### param: Test.(call).details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]> Annotation type, for example `'issue'`.
+    - `description` ?<[string]> Optional annotation description, for example an issue url.
+
+Additional test details.
 
 ### param: Test.(call).body
 * since: v1.10
@@ -279,6 +339,7 @@ Declares a group of tests.
 
 * `test.describe(title, callback)`
 * `test.describe(callback)`
+* `test.describe(title, details, callback)`
 
 **Usage**
 
@@ -296,7 +357,9 @@ test.describe('two tests', () => {
 });
 ```
 
-Without a title, this method declares an **anonymous** group of tests. This is convenient to give a group of tests a common option with [`method: Test.use`].
+**Anonymous group**
+
+You can also declare a test group without a title. This is convenient to give a group of tests a common option with [`method: Test.use`].
 
 ```js
 test.describe(() => {
@@ -312,11 +375,68 @@ test.describe(() => {
 });
 ```
 
+**Tags**
+
+You can tag all tests in a group by providing additional details. Note that each tag must start with `@` symbol.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe('two tagged tests', {
+  tag: '@smoke',
+}, () => {
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+Learn more about [tagging](../test-annotations.md#tag-tests).
+
+**Annotations**
+
+You can annotate all tests in a group by providing additional details.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe('two annotated tests', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/23180',
+  },
+}, () => {
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+Learn more about [test annotations](../test-annotations.md).
+
 ### param: Test.describe.title
 * since: v1.10
 - `title` ?<[string]>
 
 Group title.
+
+### param: Test.describe.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+Additional details for all tests in the group.
 
 ### param: Test.describe.callback
 * since: v1.10
@@ -410,6 +530,7 @@ Declares a test group similarly to [`method: Test.describe`]. Tests in this grou
 
 * `test.describe.fixme(title, callback)`
 * `test.describe.fixme(callback)`
+* `test.describe.fixme(title, details, callback)`
 
 **Usage**
 
@@ -435,6 +556,16 @@ test.describe.fixme(() => {
 
 Group title.
 
+### param: Test.describe.fixme.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.fixme.callback
 * since: v1.25
 - `callback` <[function]>
@@ -450,6 +581,7 @@ Declares a focused group of tests. If there are some focused tests or suites, al
 
 * `test.describe.only(title, callback)`
 * `test.describe.only(callback)`
+* `test.describe.only(title, details, callback)`
 
 **Usage**
 
@@ -479,6 +611,16 @@ test.describe.only(() => {
 
 Group title.
 
+### param: Test.describe.only.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.only.callback
 * since: v1.10
 - `callback` <[function]>
@@ -495,6 +637,7 @@ Declares a group of tests that could be run in parallel. By default, tests in a 
 
 * `test.describe.parallel(title, callback)`
 * `test.describe.parallel(callback)`
+* `test.describe.parallel(title, details, callback)`
 
 **Usage**
 
@@ -521,6 +664,16 @@ test.describe.parallel(() => {
 
 Group title.
 
+### param: Test.describe.parallel.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.parallel.callback
 * since: v1.10
 - `callback` <[function]>
@@ -537,6 +690,7 @@ Declares a focused group of tests that could be run in parallel. This is similar
 
 * `test.describe.parallel.only(title, callback)`
 * `test.describe.parallel.only(callback)`
+* `test.describe.parallel.only(title, details, callback)`
 
 **Usage**
 
@@ -561,6 +715,16 @@ test.describe.parallel.only(() => {
 
 Group title.
 
+### param: Test.describe.parallel.only.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.parallel.only.callback
 * since: v1.10
 - `callback` <[function]>
@@ -581,6 +745,7 @@ Using serial is not recommended. It is usually better to make your tests isolate
 
 * `test.describe.serial(title, callback)`
 * `test.describe.serial(title)`
+* `test.describe.serial(title, details, callback)`
 
 **Usage**
 
@@ -605,6 +770,16 @@ test.describe.serial(() => {
 
 Group title.
 
+### param: Test.describe.serial.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.serial.callback
 * since: v1.10
 - `callback` <[function]>
@@ -625,6 +800,7 @@ Using serial is not recommended. It is usually better to make your tests isolate
 
 * `test.describe.serial.only(title, callback)`
 * `test.describe.serial.only(title)`
+* `test.describe.serial.only(title, details, callback)`
 
 **Usage**
 
@@ -651,6 +827,16 @@ test.describe.serial.only(() => {
 
 Group title.
 
+### param: Test.describe.serial.only.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
 ### param: Test.describe.serial.only.callback
 * since: v1.10
 - `callback` <[function]>
@@ -667,6 +853,7 @@ Declares a skipped test group, similarly to [`method: Test.describe`]. Tests in 
 
 * `test.describe.skip(title, callback)`
 * `test.describe.skip(title)`
+* `test.describe.skip(title, details, callback)`
 
 **Usage**
 
@@ -691,6 +878,16 @@ test.describe.skip(() => {
 - `title` <[string]>
 
 Group title.
+
+### param: Test.describe.skip.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
 
 ### param: Test.describe.skip.callback
 * since: v1.10
@@ -837,6 +1034,7 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
 
 * `test.fail(title, body)`
+* `test.fail(title, details, body)`
 * `test.fail()`
 * `test.fail(condition, description)`
 * `test.fail(callback, description)`
@@ -896,6 +1094,16 @@ test('less readable', async ({ page }) => {
 
 Test title.
 
+### param: Test.fail.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.(call)`] for test details description.
+
 ### param: Test.fail.body
 * since: v1.42
 - `body` ?<[function]\([Fixtures], [TestInfo]\)>
@@ -928,6 +1136,7 @@ Optional description that will be reflected in a test report.
 Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()` call.
 
 * `test.fixme(title, body)`
+* `test.fixme(title, details, body)`
 * `test.fixme()`
 * `test.fixme(condition, description)`
 * `test.fixme(callback, description)`
@@ -987,6 +1196,16 @@ test('less readable', async ({ page }) => {
 
 Test title.
 
+### param: Test.fixme.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.(call)`] for test details description.
+
 ### param: Test.fixme.body
 * since: v1.10
 - `body` ?<[function]\([Fixtures], [TestInfo]\)>
@@ -1037,6 +1256,9 @@ test('example test', async ({ page }) => {
 
 Declares a focused test. If there are some focused tests or suites, all of them will be run but nothing else.
 
+* `test.only(title, body)`
+* `test.only(title, details, body)`
+
 **Usage**
 
 ```js
@@ -1050,6 +1272,16 @@ test.only('focus this test', async ({ page }) => {
 - `title` <[string]>
 
 Test title.
+
+### param: Test.only.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.(call)`] for test details description.
 
 ### param: Test.only.body
 * since: v1.10
@@ -1123,6 +1355,7 @@ Skip a test. Playwright will not run the test past the `test.skip()` call.
 Skipped tests are not supposed to be ever run. If you intent to fix the test, use [`method: Test.fixme`] instead.
 
 * `test.skip(title, body)`
+* `test.skip(title, details, body)`
 * `test.skip()`
 * `test.skip(condition, description)`
 * `test.skip(callback, description)`
@@ -1181,6 +1414,16 @@ test('less readable', async ({ page }) => {
 - `title` ?<[string]>
 
 Test title.
+
+### param: Test.skip.details
+* since: v1.42
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.(call)`] for test details description.
 
 ### param: Test.skip.body
 * since: v1.10

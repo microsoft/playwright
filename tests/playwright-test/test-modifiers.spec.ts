@@ -189,7 +189,7 @@ test.describe('test modifier annotations', () => {
     expect(result.passed).toBe(0);
     expect(result.skipped).toBe(6);
     expectTest('no marker', 'skipped', 'skipped', ['fixme']);
-    expectTest('skip wrap', 'skipped', 'skipped', ['skip', 'fixme']);
+    expectTest('skip wrap', 'skipped', 'skipped', ['fixme', 'skip']);
     expectTest('skip inner', 'skipped', 'skipped', ['fixme']);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme']);
@@ -220,7 +220,7 @@ test.describe('test modifier annotations', () => {
     expectTest('no marker', 'skipped', 'skipped', ['skip']);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip', 'skip']);
     expectTest('skip inner', 'skipped', 'skipped', ['skip']);
-    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'skip']);
+    expectTest('fixme wrap', 'skipped', 'skipped', ['skip', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['skip']);
     expectTest('example', 'passed', 'expected', []);
   });
@@ -251,7 +251,7 @@ test.describe('test modifier annotations', () => {
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(0);
     expect(result.skipped).toBe(2);
-    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'fixme', 'skip', 'skip', 'fixme']);
+    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'skip', 'skip', 'fixme', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme', 'skip', 'skip', 'fixme']);
   });
 

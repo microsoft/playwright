@@ -71,6 +71,7 @@ export function serializeError(error: Error | any): TestInfoError {
 }
 
 export type Matcher = (value: string) => boolean;
+export type TagMatcher = (tags: string[]) => boolean;
 
 export type TestFileFilter = {
   re?: RegExp;
@@ -142,6 +143,55 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
     }
     return false;
   };
+}
+
+export function createTagMatcher(tagFilter: string): TagMatcher {
+  const tokens: (string | null)[] = tagFilter.split(/([()]|\s+)/).filter(s => !!s.trim());
+  tokens.push(null); // eof
+  let pos = 0;
+
+  function parseSingle(): TagMatcher {
+    if (tokens[pos] === '(') {
+      pos++;
+      const result = parseOr();
+      if (tokens[pos] !== ')')
+        throw new Error(`Expected matching ")" when parsing tag expression: ${tagFilter}`);
+      pos++;
+      return result;
+    }
+    if (tokens[pos] === 'not') {
+      pos++;
+      const inner = parseSingle();
+      return (tags: string[]) => !inner(tags);
+    }
+    const tag = tokens[pos++];
+    if (tag === null)
+      throw new Error(`Unexpected end of tag expression: ${tagFilter}`);
+    return (tags: string[]) => tags.includes(tag);
+  }
+
+  function parseAnd(): TagMatcher {
+    const singles = [parseSingle()];
+    while (tokens[pos] === 'and') {
+      pos++;
+      singles.push(parseSingle());
+    }
+    return (tags: string[]) => singles.every(s => s(tags));
+  }
+
+  function parseOr(): TagMatcher {
+    const ands = [parseAnd()];
+    while (tokens[pos] === 'or') {
+      pos++;
+      ands.push(parseAnd());
+    }
+    return (tags: string[]) => ands.some(a => a(tags));
+  }
+
+  const result = parseOr();
+  if (tokens[pos] !== null)
+    throw new Error(`Unexpected extra tokens in the tag expression: ${tagFilter}`);
+  return result;
 }
 
 export function mergeObjects<A extends object, B extends object, C extends object>(a: A | undefined | void, b: B | undefined | void, c: B | undefined | void): A & B & C {

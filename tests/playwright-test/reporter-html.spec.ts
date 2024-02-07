@@ -1126,7 +1126,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           `,
           'c.test.js': `
             const { expect, test } = require('@playwright/test');
-            test('@regression @failed failed', async ({}) => {
+            test('@regression @failed failed', { tag: '@foo' }, async ({}) => {
               expect(1).toBe(2);
             });
             test('@regression @flaky flaky', async ({}, testInfo) => {
@@ -1135,7 +1135,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
               else
                 expect(1).toBe(2);
             });
-            test.skip('@regression skipped', async ({}) => {
+            test.skip('@regression skipped', { tag: ['@foo', '@bar'] }, async ({}) => {
               expect(1).toBe(2);
             });
           `,
@@ -1147,15 +1147,17 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await showReport();
 
-        await expect(page.locator('.test-file-test .label')).toHaveCount(42);
         await expect(page.locator('.test-file-test', { has: page.getByText('@regression @failed failed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
+          'foo',
           'failed',
           'regression',
           'firefox',
+          'foo',
           'failed',
           'regression',
           'webkit',
+          'foo',
           'failed',
           'regression'
         ]);
@@ -1172,10 +1174,16 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@regression skipped', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
+          'foo',
+          'bar',
           'regression',
           'firefox',
+          'foo',
+          'bar',
           'regression',
           'webkit',
+          'foo',
+          'bar',
           'regression',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([

@@ -55,6 +55,7 @@ const testCase: TestCase = {
     { type: 'annotation', description: 'Annotation text' },
     { type: 'annotation', description: 'Another annotation text' },
   ],
+  tags: [],
   outcome: 'expected',
   duration: 10,
   ok: true,

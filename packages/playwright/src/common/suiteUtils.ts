@@ -62,7 +62,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     let inheritedRetries: number | undefined;
     let inheritedTimeout: number | undefined;
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
-      test._staticAnnotations.push(...parentSuite._staticAnnotations);
+      if (parentSuite._staticAnnotations.length)
+        test._staticAnnotations = [...parentSuite._staticAnnotations, ...test._staticAnnotations];
+      if (parentSuite._tags.length)
+        test.tags = [...parentSuite._tags, ...test.tags];
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
         inheritedRetries = parentSuite._retries;
       if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)

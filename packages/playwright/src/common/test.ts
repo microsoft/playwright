@@ -49,6 +49,7 @@ export class Suite extends Base implements SuitePrivate {
   _timeout: number | undefined;
   _retries: number | undefined;
   _staticAnnotations: Annotation[] = [];
+  _tags: string[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
@@ -187,6 +188,7 @@ export class Suite extends Base implements SuitePrivate {
       timeout: this._timeout,
       retries: this._retries,
       staticAnnotations: this._staticAnnotations.slice(),
+      tags: this._tags.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
       hooks: this._hooks.map(h => ({ type: h.type, location: h.location, title: h.title })),
@@ -202,6 +204,7 @@ export class Suite extends Base implements SuitePrivate {
     suite._timeout = data.timeout;
     suite._retries = data.retries;
     suite._staticAnnotations = data.staticAnnotations;
+    suite._tags = data.tags;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
     suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, title: h.title, fn: () => { } }));
@@ -234,6 +237,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   annotations: Annotation[] = [];
   retries = 0;
   repeatEachIndex = 0;
+  tags: string[] = [];
 
   _testType: TestTypeImpl;
   id = '';
@@ -295,6 +299,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       workerHash: this._workerHash,
       staticAnnotations: this._staticAnnotations.slice(),
       annotations: this.annotations.slice(),
+      tags: this.tags.slice(),
       projectId: this._projectId,
     };
   }
@@ -311,6 +316,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._workerHash = data.workerHash;
     test._staticAnnotations = data.staticAnnotations;
     test.annotations = data.annotations;
+    test.tags = data.tags;
     test._projectId = data.projectId;
     return test;
   }

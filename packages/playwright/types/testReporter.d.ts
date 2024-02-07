@@ -26,7 +26,8 @@ export type { FullConfig, TestStatus } from './test';
  *       - {@link TestCase} #1
  *       - {@link TestCase} #2
  *       - Suite corresponding to a
- *         [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) group
+ *         [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe)
+ *         group
  *         - {@link TestCase} #1 in a group
  *         - {@link TestCase} #2 in a group
  *       - < more test cases ... >
@@ -71,8 +72,9 @@ export interface Suite {
 
   /**
    * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
-   * defined in nested [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe)
-   * groups are listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
+   * defined in nested
+   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups are
+   * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
    */
   tests: Array<TestCase>;
 
@@ -81,28 +83,30 @@ export interface Suite {
    * - Empty for root suite.
    * - Project name for project suite.
    * - File path for file suite.
-   * - Title passed to [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe)
-   *   for a group suite.
+   * - Title passed to
+   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for a
+   *   group suite.
    */
   title: string;
 }
 
 /**
- * `TestCase` corresponds to every [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call)
- * call in a test file. When a single [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call)
- * is running in multiple projects or repeated multiple times, it will have multiple `TestCase` objects in
- * corresponding projects' suites.
+ * `TestCase` corresponds to every
+ * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) call in a test file.
+ * When a single [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) is
+ * running in multiple projects or repeated multiple times, it will have multiple `TestCase` objects in corresponding
+ * projects' suites.
  */
 export interface TestCase {
   /**
    * Expected test status.
    * - Tests marked as
-   *   [test.skip([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip)
+   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip)
    *   or
-   *   [test.fixme([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    *   are expected to be `'skipped'`.
    * - Tests marked as
-   *   [test.fail([title, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail)
    *   are expected to be `'failed'`.
    * - Other tests are expected to be `'passed'`.
    *
@@ -129,9 +133,18 @@ export interface TestCase {
   titlePath(): Array<string>;
 
   /**
-   * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe([title, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups the test
-   * belongs to and file-level annotations for the test file.
+   * The list of annotations applicable to the current test. Includes:
+   * - annotations defined on the test or suite via
+   *   [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) and
+   *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe);
+   * - annotations implicitly added by methods
+   *   [test.skip([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-skip),
+   *   [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
+   *   and
+   *   [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail);
+   * - annotations appended to
+   *   [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations) during the test
+   *   execution.
    *
    * Annotations are available during test execution through
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
@@ -185,6 +198,15 @@ export interface TestCase {
   retries: number;
 
   /**
+   * The list of tags defined on the test or suite via
+   * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) or
+   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe).
+   *
+   * Learn more about [test tags](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  tags: Array<string>;
+
+  /**
    * The timeout given to the test. Affected by
    * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout),
    * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout),
@@ -195,7 +217,8 @@ export interface TestCase {
   timeout: number;
 
   /**
-   * Test title as passed to the [test.(call)(title, body)](https://playwright.dev/docs/api/class-test#test-call) call.
+   * Test title as passed to the
+   * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) call.
    */
   title: string;
 }

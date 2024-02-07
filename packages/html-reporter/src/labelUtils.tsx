@@ -16,20 +16,19 @@
 
 import type { TestCaseSummary } from './types';
 
-export function escapeRegExp(string: string) {
-  const reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-  const reHasRegExpChar = RegExp(reRegExpChar.source);
+const labelsSymbol = Symbol('labels');
 
-  return (string && reHasRegExpChar.test(string))
-    ? string.replace(reRegExpChar, '\\$&')
-    : (string || '');
-}
-
+// Note: all labels start with "@"
 export function testCaseLabels(test: TestCaseSummary): string[] {
-  const tags = matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b));
-  if (test.botName)
-    tags.unshift(test.botName);
-  return tags;
+  if (!(test as any)[labelsSymbol]) {
+    const labels: string[] = [];
+    if (test.botName)
+      labels.push('@' + test.botName);
+    labels.push(...test.tags);
+    labels.push(...matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b)));
+    (test as any)[labelsSymbol] = labels;
+  }
+  return (test as any)[labelsSymbol];
 }
 
 // match all tags in test title
