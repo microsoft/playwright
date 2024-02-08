@@ -59,6 +59,7 @@ async function removeFolder(folder: string) {
   try {
     if (!fs.existsSync(folder))
       return;
+    // eslint-disable-next-line no-console
     console.log(`Removing ${await fs.promises.realpath(folder)}`);
     await fs.promises.rm(folder, { recursive: true, force: true });
   } catch {
