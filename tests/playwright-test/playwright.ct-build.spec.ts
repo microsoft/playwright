@@ -126,38 +126,38 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
 
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
   metainfo.components.sort((a, b) => {
-    return (a.importPath + '/' + a.importedName).localeCompare(b.importPath + '/' + b.importedName);
+    return (a.importSource + '/' + a.importedName).localeCompare(b.importSource + '/' + b.importedName);
   });
 
   expect(metainfo.components).toEqual([{
-    id: expect.stringContaining('playwright_test_src_button_tsx_Button'),
+    id: expect.stringContaining('button_Button'),
     remoteName: 'Button',
-    importPath: expect.stringContaining('button.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('./button'),
+    filename: expect.stringContaining('one-import.spec.tsx'),
   }, {
-    id: expect.stringContaining('playwright_test_src_clashingNames1_tsx_ClashingName'),
+    id: expect.stringContaining('clashingNames1_ClashingName'),
     remoteName: 'ClashingName',
-    importPath: expect.stringContaining('clashingNames1.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('./clashingNames1'),
+    filename: expect.stringContaining('clashing-imports.spec.tsx'),
   }, {
-    id: expect.stringContaining('playwright_test_src_clashingNames2_tsx_ClashingName'),
+    id: expect.stringContaining('clashingNames2_ClashingName'),
     remoteName: 'ClashingName',
-    importPath: expect.stringContaining('clashingNames2.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('./clashingNames2'),
+    filename: expect.stringContaining('clashing-imports.spec.tsx'),
   }, {
-    id: expect.stringContaining('playwright_test_src_components_tsx_Component1'),
+    id: expect.stringContaining('components_Component1'),
     remoteName: 'Component1',
-    importPath: expect.stringContaining('components.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('./components'),
+    filename: expect.stringContaining('named-imports.spec.tsx'),
   }, {
-    id: expect.stringContaining('playwright_test_src_components_tsx_Component2'),
+    id: expect.stringContaining('components_Component2'),
     remoteName: 'Component2',
-    importPath: expect.stringContaining('components.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('./components'),
+    filename: expect.stringContaining('named-imports.spec.tsx'),
   }, {
-    id: expect.stringContaining('playwright_test_src_defaultExport_tsx'),
-    importPath: expect.stringContaining('defaultExport.tsx'),
-    isModuleOrAlias: false,
+    id: expect.stringContaining('defaultExport'),
+    importSource: expect.stringContaining('./defaultExport'),
+    filename: expect.stringContaining('default-import.spec.tsx'),
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))
@@ -451,10 +451,10 @@ test('should retain deps when test changes', async ({ runInlineTest }, testInfo)
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
 
   expect(metainfo.components).toEqual([{
-    id: expect.stringContaining('playwright_test_src_button_tsx_Button'),
+    id: expect.stringContaining('button_tsx_Button'),
     remoteName: 'Button',
-    importPath: expect.stringContaining('button.tsx'),
-    isModuleOrAlias: false,
+    importSource: expect.stringContaining('button.tsx'),
+    filename: expect.stringContaining('button.test.tsx'),
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))

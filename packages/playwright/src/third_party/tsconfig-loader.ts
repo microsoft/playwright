@@ -137,7 +137,7 @@ function loadTsConfig(
       const extendsDir = path.dirname(extendedConfig);
       base.baseUrl = path.join(extendsDir, base.baseUrl);
     }
-    result = { ...result, ...base };
+    result = { ...result, ...base, tsConfigPath: configFilePath };
   }
 
   const loadedConfig = Object.fromEntries(Object.entries({

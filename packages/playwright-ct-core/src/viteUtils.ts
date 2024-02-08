@@ -21,6 +21,7 @@ import { getUserData } from 'playwright/lib/transform/compilationCache';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from 'playwright/test';
 import type { InlineConfig, Plugin, TransformResult, UserConfig } from 'vite';
 import type { ImportInfo } from './tsxTransform';
+import { resolveHook } from 'playwright/lib/transform/transform';
 
 const log = debug('pw:vite');
 
@@ -143,14 +144,15 @@ export async function populateComponentsFromTests(componentRegistry: ComponentRe
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
-      componentsByImportingFile.set(file, importList.filter(i => !i.isModuleOrAlias).map(i => i.importPath));
+      componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
   }
 }
 
 export function hasJSComponents(components: ImportInfo[]): boolean {
   for (const component of components) {
-    const extname = path.extname(component.importPath);
-    if (extname === '.js' || !extname && fs.existsSync(component.importPath + '.js'))
+    const importPath = resolveHook(component.filename, component.importSource);
+    const extname = importPath ? path.extname(importPath) : '';
+    if (extname === '.js' || (importPath && !extname && fs.existsSync(importPath + '.js')))
       return true;
   }
   return false;
@@ -174,13 +176,12 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx))
     return null;
 
-  const folder = path.dirname(id);
   const lines = [content, ''];
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
-    const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
-    lines.push(`const ${value.id} = () => import('${importPath}').then((mod) => mod.${value.remoteName || 'default'});`);
+    const importPath = resolveHook(value.filename, value.importSource);
+    lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
   lines.push(`__pwRegistry.initialize({ ${[...importInfos.keys()].join(',\n  ')} });`);

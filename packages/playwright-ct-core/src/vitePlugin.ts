@@ -31,6 +31,7 @@ import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
 import { createConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
+import { resolveHook } from 'playwright/lib/transform/transform';
 
 const log = debug('pw:vite');
 
@@ -239,12 +240,15 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
+        const importPath = resolveHook(importInfo.filename, importInfo.importSource);
+        if (!importPath)
+          continue;
         const deps = new Set<string>();
-        const id = await moduleResolver(importInfo.importPath);
+        const id = await moduleResolver(importPath);
         if (!id)
           continue;
         collectViteModuleDependencies(this, id, deps);
-        depsCollector.set(importInfo.importPath, [...deps]);
+        depsCollector.set(importPath, [...deps]);
       }
     },
   };
