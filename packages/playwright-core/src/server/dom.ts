@@ -306,7 +306,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
-      if (!options.skipLocatorHandlersCheckpoint)
+      if (!options.skipLocatorHandlersCheckpoint && !options.force)
         await this._frame._page.performLocatorHandlersCheckpoint(progress);
       const result = await action(retry);
       ++retry;

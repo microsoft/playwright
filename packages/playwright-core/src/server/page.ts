@@ -44,6 +44,7 @@ import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import { TargetClosedError } from './errors';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -458,9 +459,11 @@ export class Page extends SdkObject {
       }
       if (handler.resolved) {
         ++this._locatorHandlerRunningCounter;
+        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
         await this.openScope.race(handler.resolved).finally(() => --this._locatorHandlerRunningCounter);
         // Avoid side-effects after long-running operation.
         progress.throwIfAborted();
+        progress.log(`  interception handler has finished, continuing`);
       }
     }
   }

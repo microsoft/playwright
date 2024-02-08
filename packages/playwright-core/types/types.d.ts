@@ -2928,12 +2928,30 @@ export interface Page {
    * blocking element so that an action may proceed. This is useful for nondeterministic interstitial pages or dialogs,
    * like a cookie consent dialog.
    *
-   * The handler will be executed before [actionability checks](https://playwright.dev/docs/actionability) for each action, and also before
-   * each attempt of the [web assertions](https://playwright.dev/docs/test-assertions). When no actions or assertions are executed, the
-   * handler will not be run at all, even if the interstitial element appears on the page.
+   * The handler will be executed before the [actionability checks](https://playwright.dev/docs/actionability) for each action, as well as
+   * before each probe of the [web assertions](https://playwright.dev/docs/test-assertions). When no actions are executed and no assertions
+   * are probed, the handler does not run at all, even if the given locator appears on the page. Actions that pass the
+   * `force` option do not trigger the handler.
    *
    * Note that execution time of the handler counts towards the timeout of the action/assertion that executed the
    * handler.
+   *
+   * You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a
+   * handler must not require another handler to run.
+   *
+   * **NOTE** Running the interceptor will alter your page state mid-test. For example it will change the currently
+   * focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained
+   * and do not rely on the focus and mouse state. <br /> <br /> For example, consider a test that calls
+   * [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) followed by
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press). If your handler
+   * clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen
+   * on the unexpected element. Use
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead to avoid this
+   * problem. <br /> <br /> Another example is a series of mouse actions, where
+   * [mouse.move(x, y[, options])](https://playwright.dev/docs/api/class-mouse#mouse-move) is followed by
+   * [mouse.down([options])](https://playwright.dev/docs/api/class-mouse#mouse-down). Again, when the handler runs
+   * between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like
+   * [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) that are self-contained.
    *
    * **Usage**
    *

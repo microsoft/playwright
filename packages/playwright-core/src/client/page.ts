@@ -374,7 +374,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const handler = this._locatorHandlers.get(uid);
       await handler?.();
     } finally {
-      this._channel.resolveLocatorHandlerNoReply({ uid }).catch(() => {});
+      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid }), true).catch(() => {});
     }
   }
 
