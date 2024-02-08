@@ -26,11 +26,11 @@ import { source as injectedSource } from './generated/indexSource';
 import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
 import type { ComponentRegistry } from './viteUtils';
 
-export async function runDevServer(configFile: string, registerSourceFile: string, frameworkPluginFactory: () => Promise<any>) {
+export async function loadConfig(configFile: string): Promise<FullConfigInternal | null> {
   const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
-    return;
+    return null;
 
   const configLoader = new ConfigLoader();
   let config: FullConfigInternal;
@@ -38,6 +38,13 @@ export async function runDevServer(configFile: string, registerSourceFile: strin
     config = await configLoader.loadConfigFile(resolvedConfigFile);
   else
     config = await configLoader.loadEmptyConfig(configFileOrDirectory);
+  return config;
+}
+
+export async function runDevServer(configFile: string, registerSourceFile: string, frameworkPluginFactory: () => Promise<any>) {
+  const config = await loadConfig(configFile);
+  if (!config)
+    return;
 
   const runner = new Runner(config);
   await runner.loadAllTests(true);
