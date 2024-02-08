@@ -131,7 +131,7 @@ class InspectTool implements RecorderTool {
     let model: HighlightModel | null = null;
     let selectors: string[] = [];
     if (this._hoveredElement) {
-      const generated = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: true });
+      const generated = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: false });
       selectors = generated.selectors;
       model = {
         selector: generated.selector,
