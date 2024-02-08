@@ -3136,9 +3136,21 @@ return value resolves to `[]`.
 
 Registers a handler for an element that might block certain actions like click. The handler should get rid of the blocking element so that an action may proceed. This is useful for nondeterministic interstitial pages or dialogs, like a cookie consent dialog.
 
-The handler will be executed before [actionability checks](../actionability.md) for each action, and also before each attempt of the [web assertions](../test-assertions.md). When no actions or assertions are executed, the handler will not be run at all, even if the interstitial element appears on the page.
+The handler will be executed before the [actionability checks](../actionability.md) for each action, as well as before each probe of the [web assertions](../test-assertions.md). When no actions are executed and no assertions are probed, the handler does not run at all, even if the given locator appears on the page. Actions that pass the `force` option do not trigger the handler.
 
 Note that execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
+
+You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a handler must not require another handler to run.
+
+:::warning
+Running the interceptor will alter your page state mid-test. For example it will change the currently focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained and do not rely on the focus and mouse state.
+<br />
+<br />
+For example, consider a test that calls [`method: Locator.focus`] followed by [`method: Keyboard.press`]. If your handler clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen on the unexpected element. Use [`method: Locator.press`] instead to avoid this problem.
+<br />
+<br />
+Another example is a series of mouse actions, where [`method: Mouse.move`] is followed by [`method: Mouse.down`]. Again, when the handler runs between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like [`method: Locator.click`] that are self-contained.
+:::
 
 **Usage**
 

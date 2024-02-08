@@ -85,6 +85,38 @@ test('should work with a custom check', async ({ page, server }) => {
   }
 });
 
+test('should work with locator.hover()', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+    await page.locator('#close').click();
+  });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).setupAnnoyingInterstitial('pointerover', 1, 'capture');
+  });
+  await page.locator('#target').hover();
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+  expect(await page.$eval('#target', e => window.getComputedStyle(e).backgroundColor)).toBe('rgb(255, 255, 0)');
+});
+
+test('should not work with force:true', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+    await page.locator('#close').click();
+  });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).setupAnnoyingInterstitial('none', 1);
+  });
+  await page.locator('#target').click({ force: true, timeout: 2000 });
+  expect(await page.locator('#interstitial').isVisible()).toBe(true);
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
+});
+
 test('should throw when page closes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
