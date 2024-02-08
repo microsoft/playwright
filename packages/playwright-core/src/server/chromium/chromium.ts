@@ -82,7 +82,7 @@ export class Chromium extends BrowserType {
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
-    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL);
+    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
     progress.throwIfAborted();
 
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
@@ -351,13 +351,14 @@ export class Chromium extends BrowserType {
   }
 }
 
-async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
+async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers: { [key: string]: string; }) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
   const json = await fetchData({
     url: httpURL,
+    headers,
   }, async (_, resp) => new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
     `This does not look like a DevTools server, try connecting via ws://.`)
   );

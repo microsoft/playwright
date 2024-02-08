@@ -256,9 +256,9 @@ test('should send extra headers with connect request', async ({ browserType, ser
   }
   {
     const [request] = await Promise.all([
-      server.waitForWebSocketConnectionRequest(),
+      server.waitForRequest('/json/version/'),
       browserType.connectOverCDP({
-        endpointURL: `ws://localhost:${server.PORT}/ws`,
+        endpointURL: `http://localhost:${server.PORT}`,
         headers: {
           'User-Agent': 'Playwright',
           'foo': 'bar',
