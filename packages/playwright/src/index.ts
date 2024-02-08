@@ -26,7 +26,6 @@ import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
-export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 addInternalStackPrefix(path.dirname(require.resolve('../package.json')));
