@@ -16,42 +16,30 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfigInternal } from 'playwright/lib/common/config';
-import { ConfigLoader, resolveConfigFile } from 'playwright/lib/common/configLoader';
 import { Watcher } from 'playwright/lib/fsWatcher';
-import { restartWithExperimentalTsEsm } from 'playwright/lib/program';
+import { loadConfigFromFile } from 'playwright/lib/common/configLoader';
 import { Runner } from 'playwright/lib/runner/runner';
 import type { PluginContext } from 'rollup';
 import { source as injectedSource } from './generated/indexSource';
 import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
 import type { ComponentRegistry } from './viteUtils';
 
-export async function loadConfig(configFile: string): Promise<FullConfigInternal | null> {
-  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
-    return null;
-
-  const configLoader = new ConfigLoader();
-  let config: FullConfigInternal;
-  if (resolvedConfigFile)
-    config = await configLoader.loadConfigFile(resolvedConfigFile);
-  else
-    config = await configLoader.loadEmptyConfig(configFileOrDirectory);
-  return config;
-}
-
 export async function runDevServer(configFile: string, registerSourceFile: string, frameworkPluginFactory: () => Promise<any>) {
-  const config = await loadConfig(configFile);
+  const config = await loadConfigFromFile(configFile);
   if (!config)
     return;
 
   const runner = new Runner(config);
-  await runner.loadAllTests(true);
+  await runner.loadAllTests();
   const componentRegistry: ComponentRegistry = new Map();
   await populateComponentsFromTests(componentRegistry);
 
   const dirs = await resolveDirs(config.configDir, config.config);
+  if (!dirs) {
+    // eslint-disable-next-line no-console
+    console.log(`Template file playwright/index.html is missing.`);
+    return;
+  }
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
   const viteConfig = await createConfig(dirs, config.config, frameworkPluginFactory, false);
   viteConfig.plugins.push({

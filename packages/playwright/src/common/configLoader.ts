@@ -16,15 +16,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { isRegExp } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, isRegExp } from 'playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
 import { requireOrImport } from '../transform/transform';
 import type { Config, Project } from '../../types/test';
-import { errorWithFile } from '../util';
+import { errorWithFile, fileIsModule } from '../util';
 import { setCurrentConfig } from './globals';
 import { FullConfigInternal } from './config';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { initializeEsmLoader } from './esmLoaderHost';
+import { initializeEsmLoader, registerESMLoader } from './esmLoaderHost';
+import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (...configs: any[]) => {
@@ -338,4 +339,56 @@ export function resolveConfigFile(configFileOrDirectory: string): string | null 
     const configFile = resolveConfig(configFileOrDirectory);
     return configFile!;
   }
+}
+
+export async function loadConfigFromFile(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
+  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return null;
+  const configLoader = new ConfigLoader(overrides);
+  let config: FullConfigInternal;
+  if (resolvedConfigFile)
+    config = await configLoader.loadConfigFile(resolvedConfigFile, ignoreDeps);
+  else
+    config = await configLoader.loadEmptyConfig(configFileOrDirectory);
+  return config;
+}
+
+export function restartWithExperimentalTsEsm(configFile: string | null): boolean {
+  const nodeVersion = +process.versions.node.split('.')[0];
+  // New experimental loader is only supported on Node 16+.
+  if (nodeVersion < 16)
+    return false;
+  if (!configFile)
+    return false;
+  if (process.env.PW_DISABLE_TS_ESM)
+    return false;
+  // Node.js < 20
+  if ((globalThis as any).__esmLoaderPortPreV20) {
+    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
+    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
+    return false;
+  }
+  if (!fileIsModule(configFile))
+    return false;
+    // Node.js < 20
+  if (!require('node:module').register) {
+    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
+      env: {
+        ...process.env,
+        PW_TS_ESM_LEGACY_LOADER_ON: '1',
+      },
+      execArgv: execArgvWithExperimentalLoaderOptions(),
+    });
+
+    innerProcess.on('close', (code: number | null) => {
+      if (code !== 0 && code !== null)
+        gracefullyProcessExitDoNotHang(code);
+    });
+    return true;
+  }
+  // Nodejs >= 21
+  registerESMLoader();
+  return false;
 }

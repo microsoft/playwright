@@ -200,7 +200,8 @@ export function fileDependenciesForTest() {
 }
 
 export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
-  testFileCollector.add(dependency);
+  if (fileDependencies.has(dependency))
+    testFileCollector.add(dependency);
   for (const [testFile, deps] of fileDependencies) {
     if (deps.has(dependency))
       testFileCollector.add(testFile);
@@ -209,6 +210,13 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
     if (deps.has(dependency))
       testFileCollector.add(testFile);
   }
+}
+
+export function affectedTestFiles(changes: string[]): string[] {
+  const result = new Set<string>();
+  for (const change of changes)
+    collectAffectedTestFiles(change, result);
+  return [...result];
 }
 
 export function internalDependenciesForTestFile(filename: string): Set<string> | undefined{
