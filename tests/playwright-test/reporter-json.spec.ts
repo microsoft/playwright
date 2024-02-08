@@ -160,29 +160,15 @@ test('should display tags separately from title', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
-      test('math works! @USR-MATH-001 @USR-MATH-002', async ({}) => {
-        expect(1 + 1).toBe(2);
-        await test.step('math works in a step', async () => {
-          expect(2 + 2).toBe(4);
-          await test.step('nested step', async () => {
-            expect(2 + 2).toBe(4);
-            await test.step('deeply nested step', async () => {
-              expect(2 + 2).toBe(4);
-            });
-          })
-        })
+      test('math works! @USR-MATH-001 @USR-MATH-002', { tag: '@foo' }, async ({}) => {
+        test.info().annotations.push({ type: 'issue', description: 'issue-link' });
+        test.info().annotations.push({ type: 'novalue' });
       });
     `
   });
 
   expect(result.exitCode).toBe(0);
-  expect(result.report.suites.length).toBe(1);
-  expect(result.report.suites[0].specs.length).toBe(1);
-  // Ensure the length is as expected
-  expect(result.report.suites[0].specs[0].tags.length).toBe(2);
-  // Ensure that the '@' value is stripped
-  expect(result.report.suites[0].specs[0].tags[0]).toBe('USR-MATH-001');
-  expect(result.report.suites[0].specs[0].tags[1]).toBe('USR-MATH-002');
+  expect(result.report.suites[0].specs[0].tags).toEqual(['@foo', '@USR-MATH-001', '@USR-MATH-002']);
 });
 
 test('should have relative always-posix paths', async ({ runInlineTest }) => {

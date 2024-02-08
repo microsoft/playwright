@@ -202,6 +202,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       title: test.title,
       location: this._relativeLocation(test.location),
       retries: test.retries,
+      tags: test.tags,
     };
   }
 

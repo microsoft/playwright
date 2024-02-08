@@ -363,6 +363,7 @@ class HtmlBuilder {
         duration,
         // Annotations can be pushed directly, with a wrong type.
         annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        tags: test.tags,
         outcome: test.outcome(),
         path,
         results,
@@ -377,6 +378,7 @@ class HtmlBuilder {
         duration,
         // Annotations can be pushed directly, with a wrong type.
         annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        tags: test.tags,
         outcome: test.outcome(),
         path,
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',

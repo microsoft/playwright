@@ -69,6 +69,7 @@ export type TestCaseSummary = {
   botName?: string;
   location: Location;
   annotations: TestCaseAnnotation[];
+  tags: string[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
   ok: boolean;

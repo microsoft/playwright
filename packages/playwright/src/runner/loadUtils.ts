@@ -21,8 +21,8 @@ import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullProjectInternal } from '../common/config';
 import type { FullConfigInternal } from '../common/config';
-import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
-import type { Matcher, TestFileFilter } from '../util';
+import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp, createTagMatcher } from '../util';
+import type { Matcher, TagMatcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import type { TestRun } from './tasks';
 import { requireOrImport } from '../transform/transform';
@@ -135,12 +135,13 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+    const cliTagMatcher = config.cliTagFilter ? createTagMatcher(config.cliTagFilter) : undefined;
 
     // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, cliTagMatcher, testIdMatcher: config.testIdMatcher });
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -217,21 +218,21 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
-
-  const titleMatcher = (test: TestCase) => {
+  const tagMatcher = project.tagFilter ? createTagMatcher(project.tagFilter) : undefined;
+  filterTestsRemoveEmptySuites(projectSuite, (test: TestCase) => {
+    if (tagMatcher && !tagMatcher(test.tags))
+      return false;
     const grepTitle = test.titlePath().join(' ');
     if (grepInvertMatcher?.(grepTitle))
       return false;
     return grepMatcher(grepTitle);
-  };
-
-  filterTestsRemoveEmptySuites(projectSuite, titleMatcher);
+  });
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Suite {
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, cliTagMatcher?: TagMatcher, testIdMatcher?: Matcher }): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher)
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.cliTagMatcher)
     return projectSuite;
 
   const result = projectSuite._deepClone();
@@ -239,10 +240,13 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
     filterByFocusedLine(result, options.cliFileFilters);
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
-  const titleMatcher = (test: TestCase) => {
-    return !options.cliTitleMatcher || options.cliTitleMatcher(test.titlePath().join(' '));
-  };
-  filterTestsRemoveEmptySuites(result, titleMatcher);
+  filterTestsRemoveEmptySuites(result, (test: TestCase) => {
+    if (options.cliTagMatcher && !options.cliTagMatcher(test.tags))
+      return false;
+    if (options.cliTitleMatcher && !options.cliTitleMatcher(test.titlePath().join(' ')))
+      return false;
+    return true;
+  });
   return result;
 }
 

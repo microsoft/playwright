@@ -199,6 +199,35 @@ Use [`method: Test.describe.configure`] to change the number of retries for a sp
 
 Use [`property: TestConfig.retries`] to change this option for all projects.
 
+
+## property: TestProject.tagFilter
+* since: v1.42
+- type: ?<[string]>
+
+Filter to only run tests with or without particular tag(s). This property must be a logical expression containing tags, parenthesis `(` and `)`, and operators `and`, `or` and `not`.
+
+Learn more about [tagging](../test-annotations.md#tag-tests).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'tests',
+      tagFilter: '@smoke',
+    },
+  ],
+});
+```
+
+Tag expression examples:
+* `tagFilter: '@smoke'` - run only "smoke" tests;
+* `tagFilter: '@smoke and not @production'` - run only "smoke" tests that are not tagged as "production";
+* `tagFilter: '(@smoke or @fast) and @v2'` - run "v2" tests that are tagged as "smoke", "fast" or both.
+
 ## property: TestProject.teardown
 * since: v1.34
 - type: ?<[string]>

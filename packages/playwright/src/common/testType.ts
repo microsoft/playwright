@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestType } from '../../types/test';
+import type { Fixtures, TestType, TestDetails } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 
@@ -87,13 +87,27 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite('test()');
     if (!suite)
       return;
-    const test = new TestCase(title, fn, this, location);
+
+    let details: TestDetails;
+    let body: Function;
+    if (typeof fnOrDetails === 'function') {
+      body = fnOrDetails;
+      details = {};
+    } else {
+      body = fn!;
+      details = fnOrDetails;
+    }
+
+    const validatedDetails = validateTestDetails(details);
+    const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
+    test._staticAnnotations.push(...validatedDetails.annotations);
+    test.tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
     if (type === 'only')
@@ -102,20 +116,36 @@ export class TestTypeImpl {
       test._staticAnnotations.push({ type });
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite('test.describe()');
     if (!suite)
       return;
 
-    if (typeof title === 'function') {
-      fn = title;
+    let title: string;
+    let body: Function;
+    let details: TestDetails;
+
+    if (typeof titleOrFn === 'function') {
       title = '';
+      details = {};
+      body = titleOrFn;
+    } else if (typeof fnOrDetails === 'function') {
+      title = titleOrFn;
+      details = {};
+      body = fnOrDetails;
+    } else {
+      title = titleOrFn;
+      details = fnOrDetails!;
+      body = fn!;
     }
 
+    const validatedDetails = validateTestDetails(details);
     const child = new Suite(title, 'describe', this);
     child._requireFile = suite._requireFile;
     child.location = location;
+    child._staticAnnotations.push(...validatedDetails.annotations);
+    child._tags.push(...validatedDetails.tags);
     suite._addSuite(child);
 
     if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
@@ -135,7 +165,7 @@ export class TestTypeImpl {
     }
 
     setCurrentlyLoadingFileSuite(child);
-    fn!();
+    body();
     setCurrentlyLoadingFileSuite(suite);
   }
 
@@ -176,12 +206,17 @@ export class TestTypeImpl {
     }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: any[]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail')) {
-        // Support for test.{skip,fixme}('title', () => {})
+        // Support for test.{skip,fixme,fail}(title, body)
         this._createTest(type, location, modifierArgs[0], modifierArgs[1]);
+        return;
+      }
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'object' && typeof modifierArgs[2] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail')) {
+        // Support for test.{skip,fixme,fail}(title, details, body)
+        this._createTest(type, location, modifierArgs[0], modifierArgs[1], modifierArgs[2]);
         return;
       }
 
@@ -251,6 +286,16 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
+}
+
+function validateTestDetails(details: TestDetails) {
+  const annotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
+  const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
+  for (const tag of tags) {
+    if (tag[0] !== '@')
+      throw new Error(`Tag must start with "@" symbol, got "${tag}" instead.`);
+  }
+  return { annotations, tags };
 }
 
 export const rootTestType = new TestTypeImpl([]);

@@ -10,7 +10,10 @@
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
 
-The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
+The list of annotations applicable to the current test. Includes:
+* annotations defined on the test or suite via [`method: Test.(call)`] and [`method: Test.describe`];
+* annotations implicitly added by methods [`method: Test.skip`], [`method: Test.fixme`] and [`method: Test.fail`];
+* annotations appended to [`property: TestInfo.annotations`] during the test execution.
 
 Annotations are available during test execution through [`property: TestInfo.annotations`].
 
@@ -78,6 +81,14 @@ Results for each run of this test.
 The maximum number of retries given to this test in the configuration.
 
 Learn more about [test retries](../test-retries.md#retries).
+
+## property: TestCase.tags
+* since: v1.42
+- type: <[Array]<[string]>>
+
+The list of tags defined on the test or suite via [`method: Test.(call)`] or [`method: Test.describe`].
+
+Learn more about [test tags](../test-annotations.md#tag-tests).
 
 ## property: TestCase.timeout
 * since: v1.10

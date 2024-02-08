@@ -824,3 +824,96 @@ test('should report a stable test.id', async ({ runInlineTest }) => {
     'testbegin-20289bcdad95a5e18c38-8b63c3695b9c8bd62d98',
   ]);
 });
+
+test('should report annotations from test declaration', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || []) {
+              const annotations = test.annotations.map(a => {
+                return a.description ? a.type + '=' + a.description : a.type;
+              });
+              console.log('\\n%%title=' + test.title + ', annotations=' + annotations.join(','));
+            }
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'stdio.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('none', () => {
+        expect(test.info().annotations).toEqual([]);
+      });
+      test('foo', { annotation: { type: 'foo' } }, () => {
+        expect(test.info().annotations).toEqual([{ type: 'foo' }]);
+      });
+      test('foo-bar', {
+        annotation: [
+          { type: 'foo', description: 'desc' },
+          { type: 'bar' },
+        ],
+      }, () => {
+        expect(test.info().annotations).toEqual([
+          { type: 'foo', description: 'desc' },
+          { type: 'bar' },
+        ]);
+      });
+      test.skip('skip-foo', { annotation: { type: 'foo' } }, () => {
+      });
+      test.fixme('fixme-bar', { annotation: { type: 'bar' } }, () => {
+      });
+      test.fail('fail-foo-bar', {
+        annotation: [
+          { type: 'foo' },
+          { type: 'bar', description: 'desc' },
+        ],
+      }, () => {
+        expect(1).toBe(2);
+      });
+      test.describe('suite', { annotation: { type: 'foo' } }, () => {
+        test('foo-suite', () => {
+          expect(test.info().annotations).toEqual([{ type: 'foo' }]);
+        });
+        test.describe('inner', { annotation: { type: 'bar' } }, () => {
+          test('foo-bar-suite', () => {
+            expect(test.info().annotations).toEqual([{ type: 'foo' }, { type: 'bar' }]);
+          });
+        });
+      });
+      test.describe.skip('skip-foo-suite', { annotation: { type: 'foo' } }, () => {
+        test('skip-foo-suite', () => {
+        });
+      });
+      test.describe.fixme('fixme-bar-suite', { annotation: { type: 'bar' } }, () => {
+        test('fixme-bar-suite', () => {
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `title=none, annotations=`,
+    `title=foo, annotations=foo`,
+    `title=foo-bar, annotations=foo=desc,bar`,
+    `title=skip-foo, annotations=foo,skip`,
+    `title=fixme-bar, annotations=bar,fixme`,
+    `title=fail-foo-bar, annotations=foo,bar=desc,fail`,
+    `title=foo-suite, annotations=foo`,
+    `title=foo-bar-suite, annotations=foo,bar`,
+    `title=skip-foo-suite, annotations=foo,skip`,
+    `title=fixme-bar-suite, annotations=bar,fixme`,
+  ]);
+});
