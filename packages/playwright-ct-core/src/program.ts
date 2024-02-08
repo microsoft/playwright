@@ -16,8 +16,11 @@
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 
+import fs from 'fs';
 import { program } from 'playwright/lib/program';
-import { runDevServer } from './devServer';
+import { loadConfig, runDevServer } from './devServer';
+import { resolveDirs } from './viteUtils';
+import { cacheDir } from 'playwright/lib/transform/compilationCache';
 export { program } from 'playwright/lib/program';
 
 let registerSourceFile: string;
@@ -31,10 +34,37 @@ export function initializePlugin(registerSource: string, factory: () => Promise<
 function addDevServerCommand(program: Command) {
   const command = program.command('dev-server');
   command.description('start dev server');
-  command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
+  command.option('-c, --config <file>', `Configuration file.`);
   command.action(options => {
     runDevServer(options.config, registerSourceFile, frameworkPluginFactory);
   });
 }
 
+function addClearCacheCommand(program: Command) {
+  const command = program.command('clear-caches');
+  command.description('clears build and test caches');
+  command.option('-c, --config <file>', `Configuration file.`);
+  command.action(async options => {
+    const configFile = options.config;
+    const config = await loadConfig(configFile);
+    if (!config)
+      return;
+    const { outDir } = await resolveDirs(config.configDir, config.config);
+    await removeFolder(outDir);
+    await removeFolder(cacheDir);
+  });
+}
+
+async function removeFolder(folder: string) {
+  try {
+    if (!fs.existsSync(folder))
+      return;
+    // eslint-disable-next-line no-console
+    console.log(`Removing ${await fs.promises.realpath(folder)}`);
+    await fs.promises.rm(folder, { recursive: true, force: true });
+  } catch {
+  }
+}
+
 addDevServerCommand(program);
+addClearCacheCommand(program);
