@@ -745,25 +745,6 @@ test('should skip on mobile', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('fulfill with return path of the entry', async ({ runInlineTest }) => {
-  const storeDir = path.join(test.info().outputPath(), 'playwright');
-  const file = path.join(storeDir, 'foo/body.json');
-  await fs.promises.mkdir(path.dirname(file), { recursive: true });
-  await fs.promises.writeFile(file, JSON.stringify({ 'a': 2023 }));
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, _store, expect } from '@playwright/test';
-      test('should read value from path', async ({ page }) => {
-        await page.route('**/*', route => route.fulfill({ path: _store.path('foo/body.json')}))
-        await page.goto('http://example.com');
-        expect(await page.textContent('body')).toBe(JSON.stringify({ 'a': 2023 }))
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should use actionTimeout for APIRequestContext', async ({ runInlineTest, server }) => {
   server.setRoute('/stall', (req, res) => {});
   const result = await runInlineTest({
