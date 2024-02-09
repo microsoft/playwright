@@ -109,9 +109,7 @@ test('should not collect snapshots by default', async ({ context, page, server }
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
-test('should not include buffers in the trace', async ({ context, page, server, mode }, testInfo) => {
-  test.skip(mode !== 'default', 'no buffers with remote connections');
-
+test('should not include buffers in the trace', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();
@@ -120,7 +118,9 @@ test('should not include buffers in the trace', async ({ context, page, server, 
   const screenshotEvent = actionObjects.find(a => a.apiName === 'page.screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
-  expect(screenshotEvent.result).toEqual({});
+  expect(screenshotEvent.result).toEqual({
+    'binary': '<Buffer>',
+  });
 });
 
 test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
