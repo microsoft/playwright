@@ -26,14 +26,8 @@ else
   exit 1
 fi
 
-if [[ -z "${GITHUB_SHA}" ]]; then
-  echo "ERROR: GITHUB_SHA env variable must be specified"
-  exit 1
-fi
-
 FOCAL_TAGS=(
   "next"
-  "sha-${GITHUB_SHA}"
   "next-focal"
   "v${PW_VERSION}-focal"
 )
