@@ -155,11 +155,11 @@ export default defineConfig({
 
 ## property: TestOptions.connectOptions
 * since: v1.10
-- type: <[void]|[Object]>
+- type: <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
   - `headers` ?<[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
   - `timeout` ?<[int]> Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
-  - `exposeNetwork` ?<[string]> Option to expose network available on the connecting client to the browser being connected to. See [`method: BrowserType.connect`] for more details.
+  - `exposeNetwork` ?<[string]> Option to expose network available on the connecting client to the browser being connected to. See the [remote connection](../remote.md#exposing-local-network-to-the-remote-browser) guide for details.
 
 
 **Usage**
@@ -176,7 +176,11 @@ export default defineConfig({
 });
 ```
 
-When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally, and any launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored.
+When connect options are specified, any launched browsers, including the default [`property: Fixtures.browser`], will be instead connecting to a remote browser.
+
+This property takes precedence over the `remote` property in [`property: TestOptions.launchOptions`].
+
+See the [remote connection](../remote.md) guide for details.
 
 ## property: TestOptions.contextOptions
 * since: v1.10

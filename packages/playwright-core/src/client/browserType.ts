@@ -23,9 +23,9 @@ import { Connection } from './connection';
 import { Events } from './events';
 import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import { assert, headersObjectToArray, isUnderTest, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
-import { raceAgainstDeadline } from '../utils/timeoutRunner';
+import { raceAgainstDeadline, jsonStringifyForceASCII } from '../utils';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
@@ -65,12 +65,31 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return this._initializer.name;
   }
 
-  async launch(options: LaunchOptions = {}): Promise<Browser> {
+  async launch(options: LaunchOptions = {}): Promise<api.Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
 
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     options = { ...this._defaultLaunchOptions, ...options };
+
+    const remote = options.remote;
+    if (remote) {
+      return await this._wrapApiCall(async () => {
+        return await this.connect({
+          wsEndpoint: remote.wsEndpoint,
+          headers: {
+            // HTTP headers are ASCII only (not UTF-8).
+            'x-playwright-launch-options': jsonStringifyForceASCII(filterRemoteLaunchOptions(options)),
+            ...remote.headers,
+          },
+          exposeNetwork: remote.exposeNetwork,
+          logger: options.logger,
+          slowMo: options.slowMo,
+          timeout: options.timeout,
+        });
+      });
+    }
+
     const launchOptions: channels.BrowserTypeLaunchParams = {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
@@ -242,4 +261,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     this._contexts.delete(context);
     await this._instrumentation.onWillCloseBrowserContext(context);
   }
+}
+
+export function filterRemoteLaunchOptions<T extends object>(options: T): T {
+  const disallowedOptions = new Set(['handleSIGINT', 'handleSIGTERM', 'handleSIGHUP', 'env', 'devtools', 'downloadsPath', 'tracesDir', 'remote']);
+  if (isUnderTest())
+    disallowedOptions.add('executablePath');
+  return Object.fromEntries(Object.entries(options).filter(entry => !disallowedOptions.has(entry[0]))) as T;
 }

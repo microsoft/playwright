@@ -20284,6 +20284,29 @@ export interface LaunchOptions {
   };
 
   /**
+   * When `remote` is present, the browser is not launched locally. Instead, a websocket connection is established to a
+   * remote Playwright server that launches the browser upon request. See the [remote connection](https://playwright.dev/docs/remote) guide
+   * for details.
+   */
+  remote?: {
+    /**
+     * A websocket endpoint to connect to.
+     */
+    wsEndpoint: string;
+
+    /**
+     * Additional HTTP headers to be sent with in the remote connection request.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * This option exposes network available on the connecting client to the browser being connected to. See the
+     * [remote connection](https://playwright.dev/docs/remote#exposing-local-network-to-the-remote-browser) guide for details.
+     */
+    exposeNetwork?: string;
+  };
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on.
    */
@@ -20332,19 +20355,8 @@ export interface ConnectOverCDPOptions {
 
 export interface ConnectOptions {
   /**
-   * This option exposes network available on the connecting client to the browser being connected to. Consists of a
-   * list of rules separated by comma.
-   *
-   * Available rules:
-   * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
-   * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
-   * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
-   *
-   * Some common examples:
-   * 1. `"*"` to expose all network.
-   * 1. `"<loopback>"` to expose localhost network.
-   * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and
-   *    localhost.
+   * This option exposes network available on the connecting client to the browser being connected to. See the
+   * [remote connection](https://playwright.dev/docs/remote#exposing-local-network-to-the-remote-browser) guide for details.
    */
   exposeNetwork?: string;
 

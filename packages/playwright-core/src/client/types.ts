@@ -79,7 +79,8 @@ type LaunchOverrides = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean };
 };
 
-export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+type LaunchRemote = Pick<ConnectOptions, 'wsEndpoint' | 'headers' | 'exposeNetwork'>;
+export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides & { remote?: LaunchRemote };
 export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {

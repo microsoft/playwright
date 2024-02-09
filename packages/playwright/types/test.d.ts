@@ -5502,13 +5502,14 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * When connect options are specified, default
-   * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
-   * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
-   * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) use the remote browser instead of
-   * launching a browser locally, and any launch options like
-   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) or
-   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) are ignored.
+   * When connect options are specified, any launched browsers, including the default
+   * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser), will be instead connecting to
+   * a remote browser.
+   *
+   * This property takes precedence over the `remote` property in
+   * [testOptions.launchOptions](https://playwright.dev/docs/api/class-testoptions#test-options-launch-options).
+   *
+   * See the [remote connection](https://playwright.dev/docs/remote) guide for details.
    */
   connectOptions: ConnectOptions | undefined;
   /**

@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -70,16 +70,28 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
-    const options: LaunchOptions = {
-      handleSIGINT: false,
-      ...launchOptions,
-    };
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions }, use) => {
+    const options: LaunchOptions = { ...launchOptions };
     if (headless !== undefined)
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
-    options.tracesDir = tracing().tracesDir();
+
+    if (connectOptions) {
+      options.remote = connectOptions;
+      options.timeout = connectOptions.timeout;
+    }
+    if (options.remote && process.env.PW_TEST_REUSE_CONTEXT) {
+      options.remote.headers = {
+        'x-playwright-reuse-context': '1',
+        ...options.remote.headers,
+      };
+    }
+
+    if (!options.remote) {
+      options.tracesDir = tracing().tracesDir();
+      options.handleSIGINT = false;
+    }
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
       (browserType as any)._defaultLaunchOptions = options;
@@ -88,28 +100,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use, testInfo) => {
+  browser: [async ({ playwright, browserName }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-
-    if (connectOptions) {
-      const browser = await playwright[browserName].connect({
-        ...connectOptions,
-        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
-        headers: {
-          ...(process.env.PW_TEST_REUSE_CONTEXT ? { 'x-playwright-reuse-context': '1' } : {}),
-          // HTTP headers are ASCII only (not UTF-8).
-          'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
-          ...connectOptions.headers,
-        },
-      });
-      await use(browser);
-      await (browser as any)._wrapApiCall(async () => {
-        await browser.close({ reason: 'Test ended.' });
-      }, true);
-      return;
-    }
-
     const browser = await playwright[browserName].launch();
     await use(browser);
     await (browser as any)._wrapApiCall(async () => {

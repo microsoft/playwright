@@ -46,7 +46,7 @@ export class RunServer implements PlaywrightServer {
       const prefix = 'Listening on ';
       const line = data.toString();
       if (line.startsWith(prefix))
-        wsEndpointCallback(line.substr(prefix.length));
+        wsEndpointCallback(line.substr(prefix.length).trim());
     };
 
     this._wsEndpoint = await wsEndpointPromise;
