@@ -130,7 +130,7 @@ export class Page extends SdkObject {
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
-    LocatorHandlerTriggered: 'locatorhandlertriggered',
+    OverlayHandlerTriggered: 'overlayhandlertriggered',
     ScreencastFrame: 'screencastframe',
     Video: 'video',
     WebSocket: 'websocket',
@@ -168,9 +168,9 @@ export class Page extends SdkObject {
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _isServerSideOnly = false;
-  private _locatorHandlers = new Map<number, { selector: string, resolved?: ManualPromise<void> }>();
-  private _lastLocatorHandlerUid = 0;
-  private _locatorHandlerRunningCounter = 0;
+  private _overlayHandlers = new Map<number, { selector: string, resolved?: ManualPromise<void> }>();
+  private _lastOverlayHandlerUid = 0;
+  private _overlayHandlerRunningCounter = 0;
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -252,7 +252,7 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
-    this._locatorHandlers.clear();
+    this._overlayHandlers.clear();
 
     await this._removeExposedBindings();
     await this._removeInitScripts();
@@ -432,38 +432,38 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  registerLocatorHandler(selector: string) {
-    const uid = ++this._lastLocatorHandlerUid;
-    this._locatorHandlers.set(uid, { selector });
+  registerOverlayHandler(selector: string) {
+    const uid = ++this._lastOverlayHandlerUid;
+    this._overlayHandlers.set(uid, { selector });
     return uid;
   }
 
-  resolveLocatorHandler(uid: number) {
-    const handler = this._locatorHandlers.get(uid);
+  resolveOverlayHandler(uid: number) {
+    const handler = this._overlayHandlers.get(uid);
     if (handler) {
       handler.resolved?.resolve();
       handler.resolved = undefined;
     }
   }
 
-  async performLocatorHandlersCheckpoint(progress: Progress) {
+  async performOverlayHandlersCheckpoint(progress: Progress) {
     // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
-    if (this._locatorHandlerRunningCounter)
+    if (this._overlayHandlerRunningCounter)
       return;
-    for (const [uid, handler] of this._locatorHandlers) {
+    for (const [uid, handler] of this._overlayHandlers) {
       if (!handler.resolved) {
         if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
           handler.resolved = new ManualPromise();
-          this.emit(Page.Events.LocatorHandlerTriggered, uid);
+          this.emit(Page.Events.OverlayHandlerTriggered, uid);
         }
       }
       if (handler.resolved) {
-        ++this._locatorHandlerRunningCounter;
-        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
-        await this.openScope.race(handler.resolved).finally(() => --this._locatorHandlerRunningCounter);
+        ++this._overlayHandlerRunningCounter;
+        progress.log(`  found overlay ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
+        await this.openScope.race(handler.resolved).finally(() => --this._overlayHandlerRunningCounter);
         // Avoid side-effects after long-running operation.
         progress.throwIfAborted();
-        progress.log(`  interception handler has finished, continuing`);
+        progress.log(`  overlay handler has finished, continuing the action`);
       }
     }
   }
@@ -540,7 +540,7 @@ export class Page extends SdkObject {
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
     } : async (progress: Progress, timeout: number) => {
-      await this.performLocatorHandlersCheckpoint(progress);
+      await this.performOverlayHandlersCheckpoint(progress);
       await this.mainFrame().rafrafTimeout(timeout);
       return await this._screenshotter.screenshotPage(progress, options || {});
     };

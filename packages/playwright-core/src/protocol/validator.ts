@@ -976,7 +976,7 @@ scheme.PageFrameAttachedEvent = tObject({
 scheme.PageFrameDetachedEvent = tObject({
   frame: tChannel(['Frame']),
 });
-scheme.PageLocatorHandlerTriggeredEvent = tObject({
+scheme.PageOverlayHandlerTriggeredEvent = tObject({
   uid: tNumber,
 });
 scheme.PageRouteEvent = tObject({
@@ -1034,16 +1034,16 @@ scheme.PageGoForwardParams = tObject({
 scheme.PageGoForwardResult = tObject({
   response: tOptional(tChannel(['Response'])),
 });
-scheme.PageRegisterLocatorHandlerParams = tObject({
+scheme.PageRegisterOverlayHandlerParams = tObject({
   selector: tString,
 });
-scheme.PageRegisterLocatorHandlerResult = tObject({
+scheme.PageRegisterOverlayHandlerResult = tObject({
   uid: tNumber,
 });
-scheme.PageResolveLocatorHandlerNoReplyParams = tObject({
+scheme.PageResolveOverlayHandlerNoReplyParams = tObject({
   uid: tNumber,
 });
-scheme.PageResolveLocatorHandlerNoReplyResult = tOptional(tObject({}));
+scheme.PageResolveOverlayHandlerNoReplyResult = tOptional(tObject({}));
 scheme.PageReloadParams = tObject({
   timeout: tOptional(tNumber),
   waitUntil: tOptional(tType('LifecycleEvent')),

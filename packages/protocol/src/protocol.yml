@@ -1337,13 +1337,13 @@ Page:
         slowMo: true
         snapshot: true
 
-    registerLocatorHandler:
+    registerOverlayHandler:
       parameters:
         selector: string
       returns:
         uid: number
 
-    resolveLocatorHandlerNoReply:
+    resolveOverlayHandlerNoReply:
       parameters:
         uid: number
 
@@ -1660,7 +1660,7 @@ Page:
       parameters:
         frame: Frame
 
-    locatorHandlerTriggered:
+    overlayHandlerTriggered:
       parameters:
         uid: number
 
@@ -3220,7 +3220,7 @@ ElectronApplication:
   events:
     close:
     console:
-      parameters: 
+      parameters:
         $mixin: ConsoleMessage
 
 Android:

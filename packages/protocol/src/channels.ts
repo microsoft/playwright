@@ -1752,7 +1752,7 @@ export interface PageEventTarget {
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
-  on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
+  on(event: 'overlayHandlerTriggered', callback: (params: PageOverlayHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
@@ -1768,8 +1768,8 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   exposeBinding(params: PageExposeBindingParams, metadata?: CallMetadata): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, metadata?: CallMetadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
-  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
-  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  registerOverlayHandler(params: PageRegisterOverlayHandlerParams, metadata?: CallMetadata): Promise<PageRegisterOverlayHandlerResult>;
+  resolveOverlayHandlerNoReply(params: PageResolveOverlayHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveOverlayHandlerNoReplyResult>;
   reload(params: PageReloadParams, metadata?: CallMetadata): Promise<PageReloadResult>;
   expectScreenshot(params: PageExpectScreenshotParams, metadata?: CallMetadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
@@ -1816,7 +1816,7 @@ export type PageFrameAttachedEvent = {
 export type PageFrameDetachedEvent = {
   frame: FrameChannel,
 };
-export type PageLocatorHandlerTriggeredEvent = {
+export type PageOverlayHandlerTriggeredEvent = {
   uid: number,
 };
 export type PageRouteEvent = {
@@ -1904,22 +1904,22 @@ export type PageGoForwardOptions = {
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
-export type PageRegisterLocatorHandlerParams = {
+export type PageRegisterOverlayHandlerParams = {
   selector: string,
 };
-export type PageRegisterLocatorHandlerOptions = {
+export type PageRegisterOverlayHandlerOptions = {
 
 };
-export type PageRegisterLocatorHandlerResult = {
+export type PageRegisterOverlayHandlerResult = {
   uid: number,
 };
-export type PageResolveLocatorHandlerNoReplyParams = {
+export type PageResolveOverlayHandlerNoReplyParams = {
   uid: number,
 };
-export type PageResolveLocatorHandlerNoReplyOptions = {
+export type PageResolveOverlayHandlerNoReplyOptions = {
 
 };
-export type PageResolveLocatorHandlerNoReplyResult = void;
+export type PageResolveOverlayHandlerNoReplyResult = void;
 export type PageReloadParams = {
   timeout?: number,
   waitUntil?: LifecycleEvent,
@@ -2263,7 +2263,7 @@ export interface PageEvents {
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
   'frameDetached': PageFrameDetachedEvent;
-  'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
+  'overlayHandlerTriggered': PageOverlayHandlerTriggeredEvent;
   'route': PageRouteEvent;
   'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;
