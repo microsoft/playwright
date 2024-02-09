@@ -22,7 +22,7 @@ test('should work', async ({ page, server }) => {
 
   let beforeCount = 0;
   let afterCount = 0;
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     ++beforeCount;
     await page.locator('#close').click();
     ++afterCount;
@@ -61,7 +61,7 @@ test('should work', async ({ page, server }) => {
 test('should work with a custom check', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
-  await page.handleLocator(page.locator('body'), async () => {
+  await page.addLocatorHandler(page.locator('body'), async () => {
     if (await page.getByText('This interstitial covers the button').isVisible())
       await page.locator('#close').click();
   });
@@ -88,7 +88,7 @@ test('should work with a custom check', async ({ page, server }) => {
 test('should work with locator.hover()', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     await page.locator('#close').click();
   });
 
@@ -104,7 +104,7 @@ test('should work with locator.hover()', async ({ page, server }) => {
 test('should not work with force:true', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     await page.locator('#close').click();
   });
 
@@ -120,7 +120,7 @@ test('should not work with force:true', async ({ page, server }) => {
 test('should throw when page closes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     await page.close();
   });
 
@@ -137,7 +137,7 @@ test('should throw when handler times out', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     ++called;
     // Deliberately timeout.
     await new Promise(() => {});
@@ -162,7 +162,7 @@ test('should work with toBeVisible', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
-  await page.handleLocator(page.getByText('This interstitial covers the button'), async () => {
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     ++called;
     await page.locator('#close').click();
   });
@@ -196,7 +196,7 @@ test('should work with toHaveScreenshot', async ({ page, server }) => {
     closeButton.addEventListener('click', () => overlay.remove());
   });
 
-  await page.handleLocator(page.getByRole('button', { name: 'close' }), async () => {
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async () => {
     await page.getByRole('button', { name: 'close' }).click();
   });
 

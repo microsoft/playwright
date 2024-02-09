@@ -1781,6 +1781,86 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
+   * Sometimes, the web page can show an overlay that obstructs elements behind it and prevents certain actions, like
+   * click, from completing. When such an overlay is shown predictably, we recommend dismissing it as a part of your
+   * test flow. However, sometimes such an overlay may appear non-deterministically, for example certain cookies consent
+   * dialogs behave this way. In this case,
+   * [page.addLocatorHandler(locator, handler)](https://playwright.dev/docs/api/class-page#page-add-locator-handler)
+   * allows handling an overlay during an action that it would block.
+   *
+   * This method registers a handler for an overlay that is executed once the locator is visible on the page. The
+   * handler should get rid of the overlay so that actions blocked by it can proceed. This is useful for
+   * nondeterministic interstitial pages or dialogs, like a cookie consent dialog.
+   *
+   * Note that execution time of the handler counts towards the timeout of the action/assertion that executed the
+   * handler.
+   *
+   * You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a
+   * handler must not require another handler to run.
+   *
+   * **NOTE** Running the interceptor will alter your page state mid-test. For example it will change the currently
+   * focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained
+   * and do not rely on the focus and mouse state. <br /> <br /> For example, consider a test that calls
+   * [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) followed by
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press). If your handler
+   * clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen
+   * on the unexpected element. Use
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead to avoid this
+   * problem. <br /> <br /> Another example is a series of mouse actions, where
+   * [mouse.move(x, y[, options])](https://playwright.dev/docs/api/class-mouse#mouse-move) is followed by
+   * [mouse.down([options])](https://playwright.dev/docs/api/class-mouse#mouse-down). Again, when the handler runs
+   * between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like
+   * [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) that are self-contained.
+   *
+   * **Usage**
+   *
+   * An example that closes a cookie dialog when it appears:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
+   *   await page.getByRole('button', { name: 'Reject all cookies' }).click();
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * An example that skips the "Confirm your security details" page when it is shown:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.addLocatorHandler(page.getByText('Confirm your security details'), async () => {
+   *   await page.getByRole('button', 'Remind me later').click();
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
+   * so the handler is called before every actionability check:
+   *
+   * ```js
+   * // Setup the handler.
+   * await page.addLocatorHandler(page.locator('body'), async () => {
+   *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
+   * });
+   *
+   * // Write the test as usual.
+   * await page.goto('https://example.com');
+   * await page.getByRole('button', { name: 'Start here' }).click();
+   * ```
+   *
+   * @param locator Locator that triggers the handler.
+   * @param handler Function that should be run once `locator` appears. This function should get rid of the element that blocks actions
+   * like click.
+   */
+  addLocatorHandler(locator: Locator, handler: Function): Promise<void>;
+
+  /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
    * @param options
@@ -2922,84 +3002,6 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
-
-  /**
-   * Registers a handler for an element that might block certain actions like click. The handler should get rid of the
-   * blocking element so that an action may proceed. This is useful for nondeterministic interstitial pages or dialogs,
-   * like a cookie consent dialog.
-   *
-   * The handler will be executed before the [actionability checks](https://playwright.dev/docs/actionability) for each action, as well as
-   * before each probe of the [web assertions](https://playwright.dev/docs/test-assertions). When no actions are executed and no assertions
-   * are probed, the handler does not run at all, even if the given locator appears on the page. Actions that pass the
-   * `force` option do not trigger the handler.
-   *
-   * Note that execution time of the handler counts towards the timeout of the action/assertion that executed the
-   * handler.
-   *
-   * You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a
-   * handler must not require another handler to run.
-   *
-   * **NOTE** Running the interceptor will alter your page state mid-test. For example it will change the currently
-   * focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained
-   * and do not rely on the focus and mouse state. <br /> <br /> For example, consider a test that calls
-   * [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) followed by
-   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press). If your handler
-   * clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen
-   * on the unexpected element. Use
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead to avoid this
-   * problem. <br /> <br /> Another example is a series of mouse actions, where
-   * [mouse.move(x, y[, options])](https://playwright.dev/docs/api/class-mouse#mouse-move) is followed by
-   * [mouse.down([options])](https://playwright.dev/docs/api/class-mouse#mouse-down). Again, when the handler runs
-   * between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like
-   * [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) that are self-contained.
-   *
-   * **Usage**
-   *
-   * An example that closes a cookie dialog when it appears:
-   *
-   * ```js
-   * // Setup the handler.
-   * await page.handleLocator(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
-   *   await page.getByRole('button', { name: 'Reject all cookies' }).click();
-   * });
-   *
-   * // Write the test as usual.
-   * await page.goto('https://example.com');
-   * await page.getByRole('button', { name: 'Start here' }).click();
-   * ```
-   *
-   * An example that skips the "Confirm your security details" page when it is shown:
-   *
-   * ```js
-   * // Setup the handler.
-   * await page.handleLocator(page.getByText('Confirm your security details'), async () => {
-   *   await page.getByRole('button', 'Remind me later').click();
-   * });
-   *
-   * // Write the test as usual.
-   * await page.goto('https://example.com');
-   * await page.getByRole('button', { name: 'Start here' }).click();
-   * ```
-   *
-   * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
-   * so the handler is called before every actionability check:
-   *
-   * ```js
-   * // Setup the handler.
-   * await page.handleLocator(page.locator('body'), async () => {
-   *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-   * });
-   *
-   * // Write the test as usual.
-   * await page.goto('https://example.com');
-   * await page.getByRole('button', { name: 'Start here' }).click();
-   * ```
-   *
-   * @param locator Locator that triggers the handler.
-   * @param handler Function that should be run once `locator` appears. This function should get rid of the element that blocks actions
-   * like click.
-   */
-  handleLocator(locator: Locator, handler: Function): Promise<void>;
 
   /**
    * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
