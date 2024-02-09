@@ -61,10 +61,13 @@ export class ElectronApplication extends SdkObject {
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
+  private _gracefullyClose: () => Promise<void>;
+  private _startedClosing: boolean = false;
 
-  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
+  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess, gracefullyClose: () => Promise<void>) {
     super(parent, 'electron-app');
     this._process = process;
+    this._gracefullyClose = gracefullyClose;
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.
@@ -132,11 +135,12 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    const progressController = new ProgressController(serverSideCallMetadata(), this);
-    const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise);
+    if (this._startedClosing)
+      return;
+    this._startedClosing = true;
     await this._browserContext.close({ reason: 'Application exited' });
     this._nodeConnection.close();
-    await closed;
+    await this._gracefullyClose();
   }
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
@@ -271,7 +275,7 @@ export class Electron extends SdkObject {
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
-      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
+      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess, gracefullyClose);
       await app.initialize();
       return app;
     }, TimeoutSettings.launchTimeout(options));
