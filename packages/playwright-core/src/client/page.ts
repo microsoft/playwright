@@ -362,7 +362,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return Response.fromNullable((await this._channel.reload({ ...options, waitUntil })).response);
   }
 
-  async handleLocator(locator: Locator, handler: Function): Promise<void> {
+  async addLocatorHandler(locator: Locator, handler: Function): Promise<void> {
     if (locator._frame !== this._mainFrame)
       throw new Error(`Locator must belong to the main frame of this page`);
     const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector });
