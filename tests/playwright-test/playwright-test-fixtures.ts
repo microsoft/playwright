@@ -105,7 +105,7 @@ function findPackageJSONDir(files: Files, dir: string) {
   return dir;
 }
 
-function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
+function toParamList(params: any): string[] {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
@@ -113,6 +113,11 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
       paramList.push(params[key] === true ? `${k}` : `${k}=${value}`);
     }
   }
+  return paramList;
+}
+
+function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
+  const paramList = toParamList(params);
   const args = ['test'];
   args.push(
       '--workers=2',

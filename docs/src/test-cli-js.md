@@ -92,7 +92,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--no-deps` | Ignore the dependencies between projects and behave as if they were not specified. |
 | `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
 | `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
-| `--project <name>` | Only run tests from the projects matching this regular expression. Defaults to running all projects defined in the configuration file.|
+| `--project <name>` | Only run tests from the specified [projects](./test-projects.md). Defaults to running all projects defined in the configuration file.|
+| `--project-grep <name>` | Only run tests from the projects matching this regular expression. Defaults to running all projects defined in the configuration file.|
 | `--quiet` | Whether to suppress stdout and stderr from the tests. |
 | `--repeat-each <N>` | Run each test `N` times, defaults to one. |
 | `--reporter <reporter>` | Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information. |
