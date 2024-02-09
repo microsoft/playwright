@@ -17,7 +17,7 @@ env:
 jobs:
   publish-docker-release:
     name: "publish to DockerHub"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
         username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Set up Docker QEMU for arm64 docker builds
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
       with:
         platforms: arm64
     - run: npm ci
