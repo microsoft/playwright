@@ -29,7 +29,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
-import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
+import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 
 const readDirAsync = promisify(fs.readdir);
@@ -168,10 +168,8 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
       if (process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
         return;
       const outputDirs = new Set<string>();
-      for (const p of config.projects) {
-        if (!config.cliProjectFilter || config.cliProjectFilter.includes(p.project.name))
-          outputDirs.add(p.project.outputDir);
-      }
+      const projects = filterProjects(config.projects, config.cliProjectFilter, config.cliProjectGrep);
+      projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
         if (!error)

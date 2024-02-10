@@ -245,34 +245,12 @@ test('should filter by project, case-insensitive', async ({ runInlineTest }) => 
   ]));
 });
 
-test('should filter by project and parse as RegExp', async ({ runInlineTest }) => {
+test('should filter by project-grep', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
         projects: [
-         { name: 'project-name' }
-        ]
-      };
-    `,
-    'a.test.js': `
-      const { test } = require('@playwright/test');
-      test('one', async ({}) => {
-        console.log('%%' + test.info().project.name);
-      });    `
-  }, { project: '.*oj.*t-Na.?e' });
-  expect(result.exitCode).toBe(0);
-  expect(result.output).toContain('Running 1 test using 1 worker');
-  expect(new Set(result.outputLines)).toEqual(new Set([
-    'project-name',
-  ]));
-});
-
-test('should filter by project and only match if its full-match', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        projects: [
-         { name: 'prefix-foobar-suffix' },
+         { name: 'project-name' },
          { name: 'foobar' }
         ]
       };
@@ -282,10 +260,50 @@ test('should filter by project and only match if its full-match', async ({ runIn
       test('one', async ({}) => {
         console.log('%%' + test.info().project.name);
       });    `
-  }, { project: 'foobar' });
+  }, { '--project-grep': '.*oj.*t-Na.?e' });
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Running 1 test using 1 worker');
-  expect(new Set(result.outputLines)).toEqual(new Set(['foobar']));
+  expect(new Set(result.outputLines)).toEqual(new Set([
+    'project-name',
+  ]));
+});
+
+test('should print nice error when the project grep does not match anything', async ({ runInlineTest }) => {
+  const { output, exitCode } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'suite1' },
+        { name: 'suite2' },
+      ] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log(testInfo.project.name);
+      });
+    `
+  }, { '--project-grep': ['aaa'] });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Error: Projects matching \"aaa\" not found. Available projects: \"suite1\", \"suite2\"');
+});
+
+test('should fail if both --project and --project-grep are passed', async ({ runInlineTest }) => {
+  const { output, exitCode } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'suite1' },
+        { name: 'suite2' },
+      ] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log(testInfo.project.name);
+      });
+    `
+  }, { '--project-grep': 'foo', '--project': 'bar' });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Only one of --project and --project-grep can be specified');
 });
 
 test('should filter by project and allow passing RegExp start/end flags', async ({ runInlineTest }) => {
@@ -304,7 +322,7 @@ test('should filter by project and allow passing RegExp start/end flags', async 
       test('one', async ({}) => {
         console.log('%%' + test.info().project.name);
       });    `
-  }, { project: '/fooBar$/' });
+  }, { '--project-grep': '/fooBar$/' });
   expect(result.exitCode).toBe(0);
   expect(new Set(result.outputLines)).toEqual(new Set(['prefix-fooBar', 'fooBar']));
 });
@@ -323,7 +341,7 @@ test('should print nice error when project is unknown', async ({ runInlineTest }
     `
   }, { project: 'suite3' });
   expect(exitCode).toBe(1);
-  expect(output).toContain('Project(s) "suite3" not found. Available named projects: "suite1", "suite2"');
+  expect(output).toContain('Project(s) "suite3" not found. Available projects: "suite1", "suite2"');
 });
 
 test('should filter by project list, case-insensitive', async ({ runInlineTest }) => {
@@ -388,7 +406,7 @@ test('should print nice error when some of the projects are unknown', async ({ r
     `
   }, { project: ['suitE1', 'suIte3', 'SUite4'] });
   expect(exitCode).toBe(1);
-  expect(output).toContain('Project(s) "suIte3", "SUite4" not found. Available named projects: "suite1", "suite2"');
+  expect(output).toContain('Project(s) "suIte3", "SUite4" not found. Available projects: "suite1", "suite2"');
 });
 
 test('should work without config file', async ({ runInlineTest }) => {

@@ -19,39 +19,48 @@ import path from 'path';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
-import { createFileMatcher } from '../util';
+import { createFileMatcher, forceRegExp } from '../util';
 
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
-// The difference to forceRegExp is that we want to match the whole string.
-function forceBoundedRegExp(pattern: string): RegExp {
-  const match = pattern.match(/^\/(.*)\/([gi]*)$/);
-  if (match)
-    return new RegExp(match[1], match[2]);
-  return new RegExp(`^${pattern}$`, 'gi');
-}
-
-export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
-  if (!projectNames)
+export function filterProjects(projects: FullProjectInternal[], projectNames?: string[], projectGrep?: string): FullProjectInternal[] {
+  if (!projectNames && !projectGrep)
     return [...projects];
-  const unmatchedProjectFilters = new Set<string>(projectNames);
+
+  if (projectGrep) {
+    const regex = forceRegExp(projectGrep);
+    const result = projects.filter(project => {
+      regex.lastIndex = 0;
+      return regex.test(project.project.name);
+    });
+    if (!result.length)
+      throw new Error(`Projects matching "${projectGrep}" not found. Available projects: ${projects.map(p => `"${p.project.name}"`).join(', ')}`);
+    return result;
+  }
+
+  const projectNamesToFind = new Set<string>();
+  const unmatchedProjectNames = new Map<string, string>();
+  for (const name of projectNames!) {
+    const lowerCaseName = name.toLocaleLowerCase();
+    projectNamesToFind.add(lowerCaseName);
+    unmatchedProjectNames.set(lowerCaseName, name);
+  }
+
   const result = projects.filter(project => {
-    for (const projectName of projectNames) {
-      if (forceBoundedRegExp(projectName).test(project.project.name)) {
-        unmatchedProjectFilters.delete(projectName);
-        return true;
-      }
+    const lowerCaseName = project.project.name.toLocaleLowerCase();
+    if (projectNamesToFind.has(lowerCaseName)) {
+      unmatchedProjectNames.delete(lowerCaseName);
+      return true;
     }
     return false;
   });
-  if (unmatchedProjectFilters.size) {
-    const names = projects.map(p => p.project.name).filter(name => !!name);
-    if (!names.length)
-      throw new Error(`No named projects are specified in the configuration file`);
-    const unknownProjectNames = Array.from(unmatchedProjectFilters.values()).map(n => `"${n}"`).join(', ');
-    throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
+
+  if (unmatchedProjectNames.size) {
+    const unknownProjectNames = Array.from(unmatchedProjectNames.values()).map(n => `"${n}"`).join(', ');
+    throw new Error(`Project(s) ${unknownProjectNames} not found. Available projects: ${projects.map(p => `"${p.project.name}"`).join(', ')}`);
   }
+
   return result;
 }
 
