@@ -52,103 +52,18 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
-      {
-        // Detect a running dev server and use it if available.
-        const endpoint = resolveEndpoint(config);
-        const protocol = endpoint.https ? 'https:' : 'http:';
-        const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
-        if (await isURLAvailable(url, true)) {
-          // eslint-disable-next-line no-console
-          console.log(`Test Server is already running at ${url.toString()}, using it.\n`);
-          process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
-          return;
-        }
-      }
+      const result = await buildBundle({
+        config,
+        configDir,
+        suite,
+        registerSourceFile,
+        frameworkPluginFactory: frameworkPluginFactory,
+      });
+      if (!result)
+        return;
 
-      const dirs = await resolveDirs(configDir, config);
-      const buildInfoFile = path.join(dirs.outDir, 'metainfo.json');
-
-      let buildExists = false;
-      let buildInfo: BuildInfo;
-
-      const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-      const registerSourceHash = calculateSha1(registerSource);
-
-      const { version: viteVersion, build, preview, mergeConfig } = await import('vite');
-
-      try {
-        buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
-        assert(buildInfo.version === playwrightVersion);
-        assert(buildInfo.viteVersion === viteVersion);
-        assert(buildInfo.registerSourceHash === registerSourceHash);
-        buildExists = true;
-      } catch (e) {
-        buildInfo = {
-          version: playwrightVersion,
-          viteVersion,
-          registerSourceHash,
-          components: [],
-          sources: {},
-          deps: {},
-        };
-      }
-      log('build exists:', buildExists);
-
-      const componentRegistry: ComponentRegistry = new Map();
-      const componentsByImportingFile = new Map<string, string[]>();
-      // 1. Populate component registry based on tests' component imports.
-      await populateComponentsFromTests(componentRegistry, componentsByImportingFile);
-
-      // 2. Check if the set of required components has changed.
-      const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
-      log('has new components:', hasNewComponents);
-
-      // 3. Check component sources.
-      const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
-      log('sourcesDirty:', sourcesDirty);
-
-      // 4. Update component info.
-      buildInfo.components = [...componentRegistry.values()];
-
-      const jsxInJS = hasJSComponents(buildInfo.components);
-      const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, jsxInJS);
-
-      if (sourcesDirty) {
-        // Only add out own plugin when we actually build / transform.
-        log('build');
-        const depsCollector = new Map<string, string[]>();
-        const buildConfig = mergeConfig(viteConfig, {
-          plugins: [vitePlugin(registerSource, dirs.templateDir, buildInfo, componentRegistry, depsCollector)]
-        });
-        await build(buildConfig);
-        buildInfo.deps = Object.fromEntries(depsCollector.entries());
-
-        // Update dependencies based on the vite build.
-        for (const projectSuite of suite.suites) {
-          for (const fileSuite of projectSuite.suites) {
-            // For every test file...
-            const testFile = fileSuite.location!.file;
-            const deps = new Set<string>();
-            // Collect its JS dependencies (helpers).
-            for (const file of [testFile, ...(internalDependenciesForTestFile(testFile) || [])]) {
-              // For each helper, get all the imported components.
-              for (const componentFile of componentsByImportingFile.get(file) || []) {
-                // For each component, get all the dependencies.
-                for (const d of depsCollector.get(componentFile) || [])
-                  deps.add(d);
-              }
-            }
-            // Now we have test file => all components along with dependencies.
-            setExternalDependencies(testFile, [...deps]);
-          }
-        }
-      }
-
-      if (hasNewComponents || sourcesDirty) {
-        log('write manifest');
-        await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
-      }
-
+      const { viteConfig } = result;
+      const { preview } = await import('vite');
       const previewServer = await preview(viteConfig);
       stoppableServer = stoppable(previewServer.httpServer as http.Server, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
@@ -180,6 +95,120 @@ type BuildInfo = {
     [key: string]: string[];
   }
 };
+
+export async function buildBundle(options: {
+  config: FullConfig,
+  configDir: string,
+  suite: Suite,
+  registerSourceFile: string,
+  frameworkPluginFactory?: () => Promise<Plugin>
+}): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+  {
+    // Detect a running dev server and use it if available.
+    const endpoint = resolveEndpoint(options.config);
+    const protocol = endpoint.https ? 'https:' : 'http:';
+    const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
+    if (await isURLAvailable(url, true)) {
+      // eslint-disable-next-line no-console
+      console.log(`Test Server is already running at ${url.toString()}, using it.\n`);
+      process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
+      return null;
+    }
+  }
+
+  const dirs = await resolveDirs(options.configDir, options.config);
+  if (!dirs) {
+    // eslint-disable-next-line no-console
+    console.log(`Template file playwright/index.html is missing.`);
+    return null;
+  }
+
+  const buildInfoFile = path.join(dirs.outDir, 'metainfo.json');
+
+  let buildExists = false;
+  let buildInfo: BuildInfo;
+
+  const registerSource = injectedSource + '\n' + await fs.promises.readFile(options.registerSourceFile, 'utf-8');
+  const registerSourceHash = calculateSha1(registerSource);
+
+  const { version: viteVersion, build, mergeConfig } = await import('vite');
+
+  try {
+    buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
+    assert(buildInfo.version === playwrightVersion);
+    assert(buildInfo.viteVersion === viteVersion);
+    assert(buildInfo.registerSourceHash === registerSourceHash);
+    buildExists = true;
+  } catch (e) {
+    buildInfo = {
+      version: playwrightVersion,
+      viteVersion,
+      registerSourceHash,
+      components: [],
+      sources: {},
+      deps: {},
+    };
+  }
+  log('build exists:', buildExists);
+
+  const componentRegistry: ComponentRegistry = new Map();
+  const componentsByImportingFile = new Map<string, string[]>();
+  // 1. Populate component registry based on tests' component imports.
+  await populateComponentsFromTests(componentRegistry, componentsByImportingFile);
+
+  // 2. Check if the set of required components has changed.
+  const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
+  log('has new components:', hasNewComponents);
+
+  // 3. Check component sources.
+  const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
+  log('sourcesDirty:', sourcesDirty);
+
+  // 4. Update component info.
+  buildInfo.components = [...componentRegistry.values()];
+
+  const jsxInJS = hasJSComponents(buildInfo.components);
+  const viteConfig = await createConfig(dirs, options.config, options.frameworkPluginFactory, jsxInJS);
+
+  if (sourcesDirty) {
+    // Only add out own plugin when we actually build / transform.
+    log('build');
+    const depsCollector = new Map<string, string[]>();
+    const buildConfig = mergeConfig(viteConfig, {
+      plugins: [vitePlugin(registerSource, dirs.templateDir, buildInfo, componentRegistry, depsCollector)]
+    });
+    await build(buildConfig);
+    buildInfo.deps = Object.fromEntries(depsCollector.entries());
+  }
+
+  {
+    // Update dependencies based on the vite build.
+    for (const projectSuite of options.suite.suites) {
+      for (const fileSuite of projectSuite.suites) {
+        // For every test file...
+        const testFile = fileSuite.location!.file;
+        const deps = new Set<string>();
+        // Collect its JS dependencies (helpers).
+        for (const file of [testFile, ...(internalDependenciesForTestFile(testFile) || [])]) {
+          // For each helper, get all the imported components.
+          for (const componentFile of componentsByImportingFile.get(file) || []) {
+            // For each component, get all the dependencies.
+            for (const d of buildInfo.deps[componentFile] || [])
+              deps.add(d);
+          }
+        }
+        // Now we have test file => all components along with dependencies.
+        setExternalDependencies(testFile, [...deps]);
+      }
+    }
+  }
+
+  if (hasNewComponents || sourcesDirty) {
+    log('write manifest');
+    await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
+  }
+  return { buildInfo, viteConfig };
+}
 
 async function checkSources(buildInfo: BuildInfo): Promise<boolean> {
   for (const [source, sourceInfo] of Object.entries(buildInfo.sources)) {

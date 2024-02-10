@@ -21,21 +21,20 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { fileIsModule, serializeError } from './util';
+import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { ConfigLoader, resolveConfigFile } from './common/configLoader';
+import { ConfigLoader, loadConfigFromFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult, TestError } from '../types/testReporter';
-import type { TraceMode } from '../types/test';
+import type { FullConfig, TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
-import { registerESMLoader } from './common/esmLoaderHost';
-import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from './transform/esmUtils';
+import { affectedTestFiles, cacheDir } from './transform/compilationCache';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -73,6 +72,54 @@ function addListFilesCommand(program: Command) {
       console.error(e);
       gracefullyProcessExitDoNotHang(1);
     }
+  });
+}
+
+let clearCacheCommandOverride: (opts: any) => Promise<void>;
+export function setClearCacheCommandOverride(body: (opts: any) => Promise<void>) {
+  clearCacheCommandOverride = body;
+}
+
+function addClearCacheCommand(program: Command) {
+  const command = program.command('clear-cache');
+  command.description('clears build and test caches');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.action(async opts => {
+    if (clearCacheCommandOverride)
+      return clearCacheCommandOverride(opts);
+    await removeFolder(cacheDir);
+  });
+}
+
+export async function removeFolder(folder: string) {
+  try {
+    if (!fs.existsSync(folder))
+      return;
+    console.log(`Removing ${await fs.promises.realpath(folder)}`);
+    await fs.promises.rm(folder, { recursive: true, force: true });
+  } catch {
+  }
+}
+
+let findRelatedTestsCommandOverride: (files: string[], opts: any) => Promise<void>;
+export function setFindRelatedTestsCommandOverride(body: (files: string[], opts: any) => Promise<void>) {
+  findRelatedTestsCommandOverride = body;
+}
+
+function addFindRelatedTestsCommand(program: Command) {
+  const command = program.command('find-related-tests [source-files...]');
+  command.description('Returns the list of related tests to the given files');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.action(async (files, options) => {
+    if (findRelatedTestsCommandOverride)
+      return findRelatedTestsCommandOverride(files, options);
+    await withRunnerAndMutedWrite(options.config, async runner => {
+      const result = await runner.loadAllTests();
+      if (result.status !== 'passed' || !result.suite)
+        return { errors: result.errors };
+      const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
+      return { relatedTests: affectedTestFiles(resolvedFiles) };
+    });
   });
 }
 
@@ -115,20 +162,9 @@ Examples:
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
-
-  // When no --config option is passed, let's look for the config file in the current directory.
-  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+  const config = await loadConfigFromFile(opts.config, overridesFromOptions(opts), opts.deps === false);
+  if (!config)
     return;
-
-  const overrides = overridesFromOptions(opts);
-  const configLoader = new ConfigLoader(overrides);
-  let config: FullConfigInternal;
-  if (resolvedConfigFile)
-    config = await configLoader.loadConfigFile(resolvedConfigFile, opts.deps === false);
-  else
-    config = await configLoader.loadEmptyConfig(configFileOrDirectory);
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
@@ -151,47 +187,44 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   gracefullyProcessExitDoNotHang(exitCode);
 }
 
-async function listTestFiles(opts: { [key: string]: any }) {
+export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner, config: FullConfig, configDir: string) => Promise<any>) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
   const stdoutWrite = process.stdout.write.bind(process.stdout);
-  process.stdout.write = (() => {}) as any;
-  process.stderr.write = (() => {}) as any;
-  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
-    return;
-
+  process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
-    const configLoader = new ConfigLoader();
-    const config = await configLoader.loadConfigFile(resolvedConfigFile);
+    const config = await loadConfigFromFile(configFile);
+    if (!config)
+      return;
     const runner = new Runner(config);
-    const report = await runner.listTestFiles(opts.project);
-    stdoutWrite(JSON.stringify(report), () => {
+    const result = await callback(runner, config.config, config.configDir);
+    stdoutWrite(JSON.stringify(result, undefined, 2), () => {
       gracefullyProcessExitDoNotHang(0);
     });
   } catch (e) {
     const error: TestError = serializeError(e);
     error.location = prepareErrorStack(e.stack).location;
-    stdoutWrite(JSON.stringify({ error }), () => {
+    stdoutWrite(JSON.stringify({ error }, undefined, 2), () => {
       gracefullyProcessExitDoNotHang(0);
     });
   }
 }
 
+async function listTestFiles(opts: { [key: string]: any }) {
+  await withRunnerAndMutedWrite(opts.config, async runner => runner.listTestFiles(opts.project));
+}
+
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
-  let configFile = opts.config;
+  const configFile = opts.config;
+  let config: FullConfigInternal | null;
   if (configFile) {
-    configFile = path.resolve(process.cwd(), configFile);
-    if (!fs.existsSync(configFile))
-      throw new Error(`${configFile} does not exist`);
-    if (!fs.statSync(configFile).isFile())
-      throw new Error(`${configFile} is not a file`);
+    config = await loadConfigFromFile(configFile);
+  } else {
+    const configLoader = new ConfigLoader();
+    config = await configLoader.loadEmptyConfig(process.cwd());
   }
-  if (restartWithExperimentalTsEsm(configFile))
+  if (!config)
     return;
 
-  const configLoader = new ConfigLoader();
-  const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
   const dir = path.resolve(process.cwd(), reportDir || '');
   const dirStat = await fs.promises.stat(dir).catch(e => null);
   if (!dirStat)
@@ -272,44 +305,6 @@ function resolveReporter(id: string) {
   return require.resolve(id, { paths: [process.cwd()] });
 }
 
-export function restartWithExperimentalTsEsm(configFile: string | null): boolean {
-  const nodeVersion = +process.versions.node.split('.')[0];
-  // New experimental loader is only supported on Node 16+.
-  if (nodeVersion < 16)
-    return false;
-  if (!configFile)
-    return false;
-  if (process.env.PW_DISABLE_TS_ESM)
-    return false;
-  // Node.js < 20
-  if ((globalThis as any).__esmLoaderPortPreV20) {
-    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
-    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
-    return false;
-  }
-  if (!fileIsModule(configFile))
-    return false;
-    // Node.js < 20
-  if (!require('node:module').register) {
-    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../cli'), process.argv.slice(2), {
-      env: {
-        ...process.env,
-        PW_TS_ESM_LEGACY_LOADER_ON: '1',
-      },
-      execArgv: execArgvWithExperimentalLoaderOptions(),
-    });
-
-    innerProcess.on('close', (code: number | null) => {
-      if (code !== 0 && code !== null)
-        gracefullyProcessExitDoNotHang(code);
-    });
-    return true;
-  }
-  // Nodejs >= 21
-  registerESMLoader();
-  return false;
-}
-
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure'];
 
 const testOptions: [string, string][] = [
@@ -349,3 +344,5 @@ addTestCommand(program);
 addShowReportCommand(program);
 addListFilesCommand(program);
 addMergeReportsCommand(program);
+addClearCacheCommand(program);
+addFindRelatedTestsCommand(program);

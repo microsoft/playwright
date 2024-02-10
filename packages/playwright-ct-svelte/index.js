@@ -17,13 +17,14 @@
 const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
 const path = require('path');
 
+const registerSource = path.join(__dirname, 'registerSource.mjs');
+const frameworkPluginFactory = () => import('@sveltejs/vite-plugin-svelte').then(plugin => plugin.svelte());
+
 const plugin = () => {
   // Only fetch upon request to avoid resolution in workers.
   const { createPlugin } = require('@playwright/experimental-ct-core/plugin');
-  return createPlugin(
-    path.join(__dirname, 'registerSource.mjs'),
-    () => import('@sveltejs/vite-plugin-svelte').then(plugin => plugin.svelte()));
+  return createPlugin(registerSource, frameworkPluginFactory);
 };
 const defineConfig = (config, ...configs) => originalDefineConfig({ ...config, _plugins: [plugin] }, ...configs);
 
-module.exports = { test, expect, devices, defineConfig };
+module.exports = { test, expect, devices, defineConfig, _framework: { registerSource, frameworkPluginFactory } };

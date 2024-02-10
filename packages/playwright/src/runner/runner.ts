@@ -16,7 +16,7 @@
  */
 
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult } from '../../types/testReporter';
+import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
@@ -27,6 +27,8 @@ import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
+import type { Suite } from '../common/test';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -104,10 +106,15 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(outOfProcess?: boolean): Promise<FullResult['status']> {
+  async loadAllTests(): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
     const config = this._config;
-    const reporter = new InternalReporter(new Multiplexer([]));
-    const taskRunner = createTaskRunnerForList(config, reporter, outOfProcess ? 'out-of-process' : 'in-process', { failOnLoadErrors: true });
+    const errors: TestError[] = [];
+    const reporter = new InternalReporter(new Multiplexer([wrapReporterAsV2({
+      onError(error: TestError) {
+        errors.push(error);
+      }
+    })]));
+    const taskRunner = createTaskRunnerForList(config, reporter, 'in-process', { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
 
@@ -119,7 +126,7 @@ export class Runner {
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
     await reporter.onExit();
-    return status;
+    return { status, suite: testRun.rootSuite, errors };
   }
 
   async watchAllTests(): Promise<FullResult['status']> {

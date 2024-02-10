@@ -16,16 +16,16 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should list files', async ({ runListFiles }) => {
-  const result = await runListFiles({
+test('should list files', async ({ runCLICommand }) => {
+  const result = await runCLICommand({
     'playwright.config.ts': `
       module.exports = { projects: [{ name: 'foo' }, { name: 'bar' }] };
     `,
     'a.test.js': ``
-  });
+  }, 'list-files');
   expect(result.exitCode).toBe(0);
 
-  const data = JSON.parse(result.output);
+  const data = JSON.parse(result.stdout);
   expect(data).toEqual({
     projects: [
       {
@@ -48,18 +48,18 @@ test('should list files', async ({ runListFiles }) => {
   });
 });
 
-test('should include testIdAttribute', async ({ runListFiles }) => {
-  const result = await runListFiles({
+test('should include testIdAttribute', async ({ runCLICommand }) => {
+  const result = await runCLICommand({
     'playwright.config.ts': `
       module.exports = {
         use: { testIdAttribute: 'myid' }
       };
     `,
     'a.test.js': ``
-  });
+  }, 'list-files');
   expect(result.exitCode).toBe(0);
 
-  const data = JSON.parse(result.output);
+  const data = JSON.parse(result.stdout);
   expect(data).toEqual({
     projects: [
       {
@@ -76,17 +76,17 @@ test('should include testIdAttribute', async ({ runListFiles }) => {
   });
 });
 
-test('should report error', async ({ runListFiles }) => {
-  const result = await runListFiles({
+test('should report error', async ({ runCLICommand }) => {
+  const result = await runCLICommand({
     'playwright.config.ts': `
       const a = 1;
       a = 2;
     `,
     'a.test.js': ``
-  });
+  }, 'list-files');
   expect(result.exitCode).toBe(0);
 
-  const data = JSON.parse(result.output);
+  const data = JSON.parse(result.stdout);
   expect(data).toEqual({
     error: {
       location: {
