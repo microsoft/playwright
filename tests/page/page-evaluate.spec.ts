@@ -718,6 +718,21 @@ it('should work with busted Array.prototype.map/push', async ({ page, server }) 
   expect(await ((await page.evaluateHandle('1+2')).jsonValue())).toBe(3);
 });
 
+it('should work with busted globalThis.eval', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29440' });
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+    });
+    res.end(`<script>
+      globalThis.eval = null;
+    </script>`);
+  });
+  await page.goto(server.PREFIX + '/test');
+  expect(await page.evaluate('1+2')).toBe(3);
+  expect(await ((await page.evaluateHandle('1+2')).jsonValue())).toBe(3);
+});
+
 it('should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
   const testCases = [
     // @ts-ignore

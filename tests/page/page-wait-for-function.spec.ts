@@ -275,3 +275,12 @@ it('should throw when frame is detached', async ({ page, server }) => {
   expect(error).toBeTruthy();
   expect(error.message).toMatch(/frame.waitForFunction: (Frame was detached|Execution context was destroyed)/);
 });
+
+it('should work without globalThis.eval', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29440' });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => globalThis.eval = undefined);
+  const watchdog = page.waitForFunction('window.__FOO === 1');
+  await page.evaluate(() => window['__FOO'] = 1);
+  await watchdog;
+});

@@ -1471,10 +1471,7 @@ export class Frame extends SdkObject {
         const injectedScript = await context.injectedScript();
         const handle = await injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
           const predicate = (): R => {
-            // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
-            // in firefox.
-            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
-            let result = globalThis.eval(expression);
+            let result = new Function(`return ${expression}`)();
             if (isFunction === true) {
               result = result(arg);
             } else if (isFunction === false) {
