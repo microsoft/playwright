@@ -55,7 +55,6 @@ declare global {
     __pw_hooks_after_mount?: (<HooksConfig extends JsonObject = JsonObject>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<void>)[];
-    __pwRegistry: ImportRegistry;
     // Can't start with __pw due to core reuse bindings logic for __pw*.
     __ctDispatchFunction: (ordinal: number, args: any[]) => void;
     __pwUnwrapObject: (value: any) => Promise<any>;

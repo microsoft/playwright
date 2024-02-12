@@ -47,3 +47,9 @@ export class ImportRegistry {
     return importedObject;
   }
 }
+
+declare global {
+  interface Window {
+    __pwRegistry: ImportRegistry;
+  }
+}
