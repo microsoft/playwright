@@ -92,12 +92,24 @@ export function installSourceMapSupportIfNeeded() {
   });
 }
 
-function _innerAddToCompilationCache(filename: string, entry: MemoryCache) {
+function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {
   sourceMaps.set(entry.moduleUrl || filename, entry.sourceMapPath);
   memoryCache.set(filename, entry);
+  return {
+    sourceMaps: [[entry.moduleUrl || filename, entry.sourceMapPath]],
+    memoryCache: [[filename, entry]],
+    fileDependencies: [],
+    externalDependencies: [],
+  };
 }
 
-export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => void } {
+type CompilationCacheLookupResult = {
+  serializedCache?: any;
+  cachedCode?: string;
+  addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => { serializedCache?: any };
+};
+
+export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): CompilationCacheLookupResult {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -116,22 +128,23 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   const dataPath = cachePath + '.data';
   try {
     const cachedCode = fs.readFileSync(codePath, 'utf8');
-    _innerAddToCompilationCache(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
-    return { cachedCode };
+    const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+    return { cachedCode, serializedCache };
   } catch {
   }
 
   return {
     addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
-        return;
+        return {};
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
       if (data.size)
         fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
       fs.writeFileSync(codePath, code, 'utf8');
-      _innerAddToCompilationCache(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+      const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+      return { serializedCache };
     }
   };
 }

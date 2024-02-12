@@ -157,6 +157,32 @@ test('should use source maps', async ({ runInlineTest }) => {
   expect(output).toContain('[foo] › a.test.ts:4:7 › check project name');
 });
 
+test('should use source maps when importing a file throws an error', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29418' });
+
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      throw new Error('Oh my!');
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: Oh my!
+
+   at a.test.ts:4
+
+  2 |       import { test, expect } from '@playwright/test';
+  3 |
+> 4 |       throw new Error('Oh my!');
+    |             ^
+  `);
+});
+
 test('should show the codeframe in errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,

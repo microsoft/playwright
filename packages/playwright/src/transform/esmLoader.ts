@@ -30,6 +30,8 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
       specifier = url.pathToFileURL(resolved).toString();
   }
   const result = await defaultResolve(specifier, context, defaultResolve);
+  // Note: we collect dependencies here that will be sent to the main thread
+  // (and optionally runner process) after the loading finishes.
   if (result?.url && result.url.startsWith('file://'))
     currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
 
@@ -54,14 +56,15 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
     return defaultLoad(moduleUrl, context, defaultLoad);
 
   const code = fs.readFileSync(filename, 'utf-8');
-  const source = transformHook(code, filename, moduleUrl);
+  const transformed = transformHook(code, filename, moduleUrl);
 
-  // Flush the source maps to the main thread.
-  await transport?.send('pushToCompilationCache', { cache: serializeCompilationCache() });
+  // Flush the source maps to the main thread, so that errors during import() are source-mapped.
+  if (transformed.serializedCache)
+    await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
 
   // Output format is always the same as input format, if it was unknown, we always report modules.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
-  return { format: context.format || 'module', source, shortCircuit: true };
+  return { format: context.format || 'module', source: transformed.code, shortCircuit: true };
 }
 
 let transport: PortTransport | undefined;

@@ -1706,6 +1706,5 @@ test('TestSuite.project() should return owning project', async ({ runInlineTest,
 
   const { exitCode, output } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
   expect(exitCode).toBe(0);
-  console.log(output);
   expect(output).toContain(`test project: my-project`);
 });
