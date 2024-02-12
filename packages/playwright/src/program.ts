@@ -66,19 +66,7 @@ function addListFilesCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: list all projects)`);
   command.option('--project-grep <pattern>', `Only run tests from the projects matching this regular expression (default: list all projects)`);
-  command.action(async (args, opts) => {
-    try {
-      await listTestFiles(opts);
-    } catch (e) {
-      console.error(e);
-      gracefullyProcessExitDoNotHang(1);
-    }
-  });
-}
-
-let clearCacheCommandOverride: (opts: any) => Promise<void>;
-export function setClearCacheCommandOverride(body: (opts: any) => Promise<void>) {
-  clearCacheCommandOverride = body;
+  command.action(async (args, opts) => listTestFiles(opts));
 }
 
 function addClearCacheCommand(program: Command) {
@@ -86,8 +74,15 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    if (clearCacheCommandOverride)
-      return clearCacheCommandOverride(opts);
+    const configInternal = await loadConfigFromFile(opts.config);
+    if (!configInternal)
+      return;
+    const { config, configDir } = configInternal;
+    const override = (config as any)['@playwright/test']?.['cli']?.['clear-cache'];
+    if (override) {
+      await override(config, configDir);
+      return;
+    }
     await removeFolder(cacheDir);
   });
 }
@@ -102,23 +97,20 @@ export async function removeFolder(folder: string) {
   }
 }
 
-let findRelatedTestsCommandOverride: (files: string[], opts: any) => Promise<void>;
-export function setFindRelatedTestsCommandOverride(body: (files: string[], opts: any) => Promise<void>) {
-  findRelatedTestsCommandOverride = body;
-}
-
 function addFindRelatedTestsCommand(program: Command) {
   const command = program.command('find-related-tests [source-files...]');
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
-    if (findRelatedTestsCommandOverride)
-      return findRelatedTestsCommandOverride(files, options);
-    await withRunnerAndMutedWrite(options.config, async runner => {
+    await withRunnerAndMutedWrite(options.config, async (runner, config, configDir) => {
       const result = await runner.loadAllTests();
       if (result.status !== 'passed' || !result.suite)
         return { errors: result.errors };
+
       const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
+      const override = (config as any)['@playwright/test']?.['cli']?.['find-related-tests'];
+      if (override)
+        return await override(resolvedFiles, config, configDir, result.suite);
       return { relatedTests: affectedTestFiles(resolvedFiles) };
     });
   });
@@ -217,7 +209,10 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
 async function listTestFiles(opts: { [key: string]: any }) {
   if (opts.project && opts.projectGrep)
     throw new Error('Only one of --project and --project-grep can be specified.');
-  await withRunnerAndMutedWrite(opts.config, async runner => runner.listTestFiles(opts.project, opts.projectGrep));
+  await withRunnerAndMutedWrite(opts.config, async (runner, config) => {
+    const frameworkPackage = (config as any)['@playwright/test']?.['packageJSON'];
+    return await runner.listTestFiles(frameworkPackage, opts.project, opts.projectGrep);
+  });
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {

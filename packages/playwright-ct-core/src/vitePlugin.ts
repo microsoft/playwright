@@ -30,7 +30,7 @@ import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
-import { createConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
+import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
 
 const log = debug('pw:vite');
@@ -38,9 +38,7 @@ const log = debug('pw:vite');
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
 
-export function createPlugin(
-  registerSourceFile: string,
-  frameworkPluginFactory?: () => Promise<Plugin>): TestRunnerPlugin {
+export function createPlugin(): TestRunnerPlugin {
   let configDir: string;
   let config: FullConfig;
   return {
@@ -52,13 +50,7 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
-      const result = await buildBundle({
-        config,
-        configDir,
-        suite,
-        registerSourceFile,
-        frameworkPluginFactory: frameworkPluginFactory,
-      });
+      const result = await buildBundle(config, configDir, suite);
       if (!result)
         return;
 
@@ -96,16 +88,11 @@ type BuildInfo = {
   }
 };
 
-export async function buildBundle(options: {
-  config: FullConfig,
-  configDir: string,
-  suite: Suite,
-  registerSourceFile: string,
-  frameworkPluginFactory?: () => Promise<Plugin>
-}): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+export async function buildBundle(config: FullConfig, configDir: string, suite: Suite): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+  const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
   {
     // Detect a running dev server and use it if available.
-    const endpoint = resolveEndpoint(options.config);
+    const endpoint = resolveEndpoint(config);
     const protocol = endpoint.https ? 'https:' : 'http:';
     const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
     if (await isURLAvailable(url, true)) {
@@ -116,7 +103,7 @@ export async function buildBundle(options: {
     }
   }
 
-  const dirs = await resolveDirs(options.configDir, options.config);
+  const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
     console.log(`Template file playwright/index.html is missing.`);
@@ -128,7 +115,7 @@ export async function buildBundle(options: {
   let buildExists = false;
   let buildInfo: BuildInfo;
 
-  const registerSource = injectedSource + '\n' + await fs.promises.readFile(options.registerSourceFile, 'utf-8');
+  const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
   const registerSourceHash = calculateSha1(registerSource);
 
   const { version: viteVersion, build, mergeConfig } = await import('vite');
@@ -168,7 +155,7 @@ export async function buildBundle(options: {
   buildInfo.components = [...componentRegistry.values()];
 
   const jsxInJS = hasJSComponents(buildInfo.components);
-  const viteConfig = await createConfig(dirs, options.config, options.frameworkPluginFactory, jsxInJS);
+  const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, jsxInJS);
 
   if (sourcesDirty) {
     // Only add out own plugin when we actually build / transform.
@@ -183,7 +170,7 @@ export async function buildBundle(options: {
 
   {
     // Update dependencies based on the vite build.
-    for (const projectSuite of options.suite.suites) {
+    for (const projectSuite of suite.suites) {
       for (const fileSuite of projectSuite.suites) {
         // For every test file...
         const testFile = fileSuite.location!.file;

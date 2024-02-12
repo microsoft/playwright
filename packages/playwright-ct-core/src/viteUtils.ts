@@ -192,3 +192,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
     map: { mappings: '' }
   };
 }
+
+export function frameworkConfig(config: FullConfig): { registerSourceFile: string, frameworkPluginFactory?: () => Promise<Plugin> } {
+  return (config as any)['@playwright/experimental-ct-core'];
+}

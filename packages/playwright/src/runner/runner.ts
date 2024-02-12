@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
@@ -39,6 +40,8 @@ type ProjectConfigWithFiles = {
 
 type ConfigListFilesReport = {
   projects: ProjectConfigWithFiles[];
+  cliEntryPoint?: string;
+  error?: TestError;
 };
 
 export class Runner {
@@ -48,10 +51,11 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(projectNames: string[] | undefined, projectGrep: string | undefined): Promise<any> {
+  async listTestFiles(frameworkPackage: string | undefined, projectNames: string[] | undefined, projectGrep: string | undefined): Promise<ConfigListFilesReport> {
     const projects = filterProjects(this._config.projects, projectNames, projectGrep);
     const report: ConfigListFilesReport = {
-      projects: []
+      projects: [],
+      cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
     };
     for (const project of projects) {
       report.projects.push({

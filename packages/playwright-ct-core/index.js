@@ -16,16 +16,26 @@
 
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
+const { clearCacheCommand, findRelatedTestsCommand } = require('./lib/cliOverrides');
+const { createPlugin } = require('./lib/vitePlugin');
 
-const defineConfig = (config, ...configs) => originalDefineConfig({
-  ...config,
-  build: {
-    ...config.build,
-    babelPlugins: [
-      [require.resolve('./lib/tsxTransform')]
-    ],
-  }
-}, ...configs);
+const defineConfig = (...configs) => {
+  const original = originalDefineConfig(...configs);
+  return {
+    ...original,
+    '@playwright/test': {
+      ...original['@playwright/test'],
+      plugins: [() => createPlugin()],
+      babelPlugins: [
+        [require.resolve('./lib/tsxTransform')]
+      ],
+      cli: {
+        'clear-cache': clearCacheCommand,
+        'find-related-tests': findRelatedTestsCommand,
+      },
+    }
+  };
+};
 
 const test = baseTest.extend(fixtures);
 
