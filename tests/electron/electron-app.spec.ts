@@ -26,6 +26,7 @@ test('should fire close event', async ({ launchElectronApp }) => {
   electronApp.on('close', () => events.push('application'));
   electronApp.context().on('close', () => events.push('context'));
   await electronApp.close();
+  await electronApp.close();
   expect(events.join('|')).toBe('context|application');
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));

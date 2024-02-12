@@ -30,7 +30,8 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import { ManualPromise, wrapInASCIIBox } from '../../utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
-import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
+import type { BrowserContext } from '../browserContext';
+import { validateBrowserContextOptions } from '../browserContext';
 import type { BrowserWindow } from 'electron';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
@@ -69,10 +70,6 @@ export class ElectronApplication extends SdkObject {
     this._process = process;
     this._gracefullyClose = gracefullyClose;
     this._browserContext = browser._defaultContext as CRBrowserContext;
-    this._browserContext.on(BrowserContext.Events.Close, () => {
-      // Emit application closed after context closed.
-      Promise.resolve().then(() => this.emit(ElectronApplication.Events.Close));
-    });
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
     this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
@@ -135,11 +132,12 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    if (this._startedClosing)
-      return;
-    this._startedClosing = true;
-    await this._browserContext.close({ reason: 'Application exited' });
-    this._nodeConnection.close();
+    if (!this._startedClosing) {
+      this._startedClosing = true;
+      // This will call BrowserContext.setCustomCloseHandler.
+      await this._browserContext.close({ reason: 'Application exited' });
+      this._nodeConnection.close();
+    }
     await this._gracefullyClose();
   }
 
@@ -222,7 +220,7 @@ export class Electron extends SdkObject {
         handleSIGINT: true,
         handleSIGTERM: true,
         handleSIGHUP: true,
-        onExit: () => {},
+        onExit: () => app?.emit(ElectronApplication.Events.Close),
       });
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
