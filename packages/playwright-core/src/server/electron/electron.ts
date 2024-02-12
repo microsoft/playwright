@@ -62,8 +62,6 @@ export class ElectronApplication extends SdkObject {
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
-  private _startedClosing: boolean = false;
-  private _appClosePromise: Promise<unknown>;
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
     super(parent, 'electron-app');
@@ -71,7 +69,6 @@ export class ElectronApplication extends SdkObject {
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
-    this._appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
       if (!event.context.auxData || !event.context.auxData.isDefault)
         return;
@@ -86,11 +83,13 @@ export class ElectronApplication extends SdkObject {
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
+    const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
       this._nodeConnection.close();
+      await appClosePromise;
     });
   }
 
@@ -133,12 +132,8 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    if (!this._startedClosing) {
-      this._startedClosing = true;
-      // This will call BrowserContext.setCustomCloseHandler.
-      await this._browserContext.close({ reason: 'Application exited' });
-    }
-    await this._appClosePromise;
+    // This will call BrowserContext.setCustomCloseHandler.
+    await this._browserContext.close({ reason: 'Application exited' });
   }
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
