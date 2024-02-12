@@ -348,3 +348,20 @@ it('should work when there is a title ', async ({ page }) => {
   expect(snapshot.name).toBe('This is the title');
   expect(snapshot.children[0].name).toBe('This is the content');
 });
+
+it('should work with aria-invalid accessibility tree', async ({ page, browserName, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="/hi" aria-invalid="true">WHO WE ARE</a>`);
+  expect(await page.accessibility.snapshot()).toEqual({
+    'role': browserName === 'firefox' ? 'document' : 'WebArea',
+    'name': '',
+    'children': [
+      {
+        'role': 'link',
+        'name': 'WHO WE ARE',
+        'invalid': 'true',
+        'value': browserName === 'firefox' ?  `${server.PREFIX}/hi` : undefined
+      }
+    ]
+  });
+});

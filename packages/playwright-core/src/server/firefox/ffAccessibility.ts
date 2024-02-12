@@ -245,7 +245,6 @@ class FFAXNode implements accessibility.AXNode {
     const tokenProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'autocomplete',
       'haspopup',
-      'invalid',
       'orientation',
     ];
     for (const tokenProperty of tokenProperties) {
@@ -261,6 +260,8 @@ class FFAXNode implements accessibility.AXNode {
       axNode.checked = this._payload.checked === true ? 'checked' : this._payload.checked === 'mixed' ? 'mixed' : 'unchecked';
     if ('pressed' in this._payload)
       axNode.pressed = this._payload.pressed === true ? 'pressed' : 'released';
+    if ('invalid' in this._payload)
+      axNode.invalid = this._payload.invalid === true ? 'true' : 'false';
     return axNode;
   }
 }
