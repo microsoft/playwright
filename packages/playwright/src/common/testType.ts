@@ -107,7 +107,7 @@ export class TestTypeImpl {
     const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
     test._staticAnnotations.push(...validatedDetails.annotations);
-    test.tags.push(...validatedDetails.tags);
+    test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
     if (type === 'only')

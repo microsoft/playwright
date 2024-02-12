@@ -46,7 +46,6 @@ export class FullConfigInternal {
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
-  cliTagFilter: string | undefined;
   cliProjectFilter?: string[];
   cliProjectGrep?: string;
   cliListOnly = false;
@@ -166,7 +165,6 @@ export class FullProjectInternal {
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
-  tagFilter: string | undefined;
 
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
     this.fullConfig = fullConfig;
@@ -195,7 +193,6 @@ export class FullProjectInternal {
     };
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
     this.expect = takeFirst(projectConfig.expect, config.expect, {});
-    this.tagFilter = takeFirst(projectConfig.tagFilter, config.tagFilter, undefined);
     if (this.expect.toHaveScreenshot?.stylePath) {
       const stylePaths = Array.isArray(this.expect.toHaveScreenshot.stylePath) ? this.expect.toHaveScreenshot.stylePath : [this.expect.toHaveScreenshot.stylePath];
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));

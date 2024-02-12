@@ -165,7 +165,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
-  config.cliTagFilter = opts.tag;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
   config.cliProjectGrep = opts.projectGrep || undefined;
@@ -332,7 +331,6 @@ const testOptions: [string, string][] = [
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
-  ['--tag <tag expression>', `Only run tests with a tag(s) matching the specified expression (default: no filtering)`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],

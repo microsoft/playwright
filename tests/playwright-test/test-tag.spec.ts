@@ -44,8 +44,8 @@ test('should have correct tags', async ({ runInlineTest }) => {
       test('no-tags', () => {
         expect(test.info()._test.tags).toEqual([]);
       });
-      test('foo-tag', { tag: '@foo' }, () => {
-        expect(test.info()._test.tags).toEqual(['@foo']);
+      test('foo-tag @inline', { tag: '@foo' }, () => {
+        expect(test.info()._test.tags).toEqual(['@inline', '@foo']);
       });
       test('foo-bar-tags', { tag: ['@foo', '@bar'] }, () => {
         expect(test.info()._test.tags).toEqual(['@foo', '@bar']);
@@ -57,13 +57,13 @@ test('should have correct tags', async ({ runInlineTest }) => {
       test.fail('fail-foo-bar-tags', { tag: ['@foo', '@bar'] }, () => {
         expect(1).toBe(2);
       });
-      test.describe('suite', { tag: '@foo' }, () => {
+      test.describe('suite @inline', { tag: '@foo' }, () => {
         test('foo-suite', () => {
-          expect(test.info()._test.tags).toEqual(['@foo']);
+          expect(test.info()._test.tags).toEqual(['@inline', '@foo']);
         });
         test.describe('inner', { tag: '@bar' }, () => {
           test('foo-bar-suite', () => {
-            expect(test.info()._test.tags).toEqual(['@foo', '@bar']);
+            expect(test.info()._test.tags).toEqual(['@inline', '@foo', '@bar']);
           });
         });
       });
@@ -80,22 +80,22 @@ test('should have correct tags', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `title=no-tags, tags=`,
-    `title=foo-tag, tags=@foo`,
+    `title=foo-tag @inline, tags=@inline,@foo`,
     `title=foo-bar-tags, tags=@foo,@bar`,
     `title=skip-foo-tag, tags=@foo`,
     `title=fixme-bar-tag, tags=@bar`,
     `title=fail-foo-bar-tags, tags=@foo,@bar`,
-    `title=foo-suite, tags=@foo`,
-    `title=foo-bar-suite, tags=@foo,@bar`,
+    `title=foo-suite, tags=@inline,@foo`,
+    `title=foo-bar-suite, tags=@inline,@foo,@bar`,
     `title=skip-foo-suite, tags=@foo`,
     `title=fixme-bar-suite, tags=@bar`,
   ]);
 });
 
-test('config.tagFilter should work', async ({ runInlineTest }) => {
+test('config.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { tagFilter: '@tag1' };
+      module.exports = { grep: /@tag1/ };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -108,12 +108,12 @@ test('config.tagFilter should work', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['test1']);
 });
 
-test('config.project.tag should work', async ({ runInlineTest }) => {
+test('config.project.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'p1' },
-        { name: 'p2', tagFilter: '@tag1' }
+        { name: 'p2', grep: /@tag1/ }
       ] };
     `,
     'a.test.ts': `
@@ -127,61 +127,17 @@ test('config.project.tag should work', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['test1-p1', 'test2-p1', 'test1-p2']);
 });
 
-test('--tag should work', async ({ runInlineTest }) => {
+test('--grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test1', { tag: '@tag1' }, async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
     `,
-  }, { tag: '@tag1' });
+  }, { grep: '@tag1' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.outputLines).toEqual(['test1']);
-});
-
-test('should parse tag expressions', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        projects: [
-          { name: 'p1', tagFilter: '@foo' },
-          { name: 'p2', tagFilter: 'not @foo' },
-          { name: 'p3', tagFilter: '    @foo and @bar' },
-          { name: 'p4', tagFilter: '@bar or not @foo' },
-          { name: 'p5', tagFilter: '@bar and (@foo or not @foo)' },
-          { name: 'p6', tagFilter: '@qux or @foo and @bar' },
-          { name: 'p7', tagFilter: '@qux and (@foo or @bar)' },
-          { name: 'p8', tagFilter: 'not not not @foo' },
-        ]
-      };
-    `,
-    'stdio.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('test1', { tag: '@foo' }, () => {
-        console.log('\\n%% foo-' + test.info().project.name);
-      });
-      test('test2', { tag: '@bar' }, () => {
-        console.log('\\n%% bar-' + test.info().project.name);
-      });
-      test('test3', { tag: ['@foo', '@bar'] }, () => {
-        console.log('\\n%% foobar-' + test.info().project.name);
-      });
-    `
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual([
-    `foo-p1`,
-    `foobar-p1`,
-    `bar-p2`,
-    `foobar-p3`,
-    `bar-p4`,
-    `foobar-p4`,
-    `bar-p5`,
-    `foobar-p5`,
-    `foobar-p6`,
-    `bar-p8`,
-  ]);
 });
 
 test('should enforce @ symbol', async ({ runInlineTest }) => {
@@ -194,52 +150,4 @@ test('should enforce @ symbol', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: Tag must start with "@" symbol, got "foo" instead.`);
-});
-
-test('should report tag expression error 1', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'stdio.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('test1', { tag: '@foo' }, () => {
-      });
-    `
-  }, { tag: '(@foo' });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Expected matching ")" when parsing tag expression: (@foo`);
-});
-
-test('should report tag expression error 2', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'stdio.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('test1', { tag: '@foo' }, () => {
-      });
-    `
-  }, { tag: '(@foo)@bar' });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Unexpected extra tokens in the tag expression: (@foo)@bar`);
-});
-
-test('should report tag expression error 3', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'stdio.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('test1', { tag: '@foo' }, () => {
-      });
-    `
-  }, { tag: '@foo and' });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Unexpected end of tag expression: @foo and`);
-});
-
-test('should report tag expression error 4', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'stdio.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('test1', { tag: '@foo' }, () => {
-      });
-    `
-  }, { tag: '@foo @bar' });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Unexpected extra tokens in the tag expression: @foo @bar`);
 });

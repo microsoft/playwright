@@ -296,7 +296,7 @@ export class WorkerMain extends ProcessRunner {
     const nextSuites = new Set(getSuites(nextTest));
 
     testInfo._timeoutManager.setTimeout(test.timeout);
-    for (const annotation of test._staticAnnotations)
+    for (const annotation of test.annotations)
       processAnnotation(annotation);
 
     // Process existing annotations dynamically set for parent suites.

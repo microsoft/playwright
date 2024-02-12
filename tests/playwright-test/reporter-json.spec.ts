@@ -168,7 +168,7 @@ test('should display tags separately from title', async ({ runInlineTest }) => {
   });
 
   expect(result.exitCode).toBe(0);
-  expect(result.report.suites[0].specs[0].tags).toEqual(['@foo', '@USR-MATH-001', '@USR-MATH-002']);
+  expect(result.report.suites[0].specs[0].tags).toEqual(['USR-MATH-001', 'USR-MATH-002', 'foo']);
 });
 
 test('should have relative always-posix paths', async ({ runInlineTest }) => {

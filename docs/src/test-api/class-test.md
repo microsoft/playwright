@@ -35,7 +35,7 @@ test('basic test', async ({ page }) => {
 
 **Tags**
 
-You can tag tests by providing additional test details. Note that each tag must start with `@` symbol.
+You can tag tests by providing additional test details. Alternatively, you can include tags in the test title. Note that each tag must start with `@` symbol.
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -46,13 +46,18 @@ test('basic test', {
   await page.goto('https://playwright.dev/');
   // ...
 });
+
+test('another test @smoke', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  // ...
+});
 ```
 
 Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
 
 You can also filter tests by their tags during test execution:
 * in the [command line](../test-cli.md#reference);
-* in the config with [`property: TestConfig.tagFilter`] and [`property: TestProject.tagFilter`];
+* in the config with [`property: TestConfig.grep`] and [`property: TestProject.grep`];
 
 Learn more about [tagging](../test-annotations.md#tag-tests).
 
@@ -76,7 +81,7 @@ test('basic test', {
 
 Test annotations are displayed in the test report, and are available to a custom reporter via `TestCase.annotations` property.
 
-You can also add dynamic annotations by manipulating [`property: TestInfo.annotations`].
+You can also add annotations during runtime by manipulating [`property: TestInfo.annotations`].
 
 Learn more about [test annotations](../test-annotations.md).
 
@@ -1033,11 +1038,14 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 
 Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
 
+To declare a "failing" test:
 * `test.fail(title, body)`
 * `test.fail(title, details, body)`
-* `test.fail()`
+
+To annotate test as "failing" at runtime:
 * `test.fail(condition, description)`
 * `test.fail(callback, description)`
+* `test.fail()`
 
 **Usage**
 
@@ -1135,11 +1143,14 @@ Optional description that will be reflected in a test report.
 
 Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()` call.
 
+To declare a "fixme" test:
 * `test.fixme(title, body)`
 * `test.fixme(title, details, body)`
-* `test.fixme()`
+
+To annotate test as "fixme" at runtime:
 * `test.fixme(condition, description)`
 * `test.fixme(callback, description)`
+* `test.fixme()`
 
 **Usage**
 
@@ -1354,11 +1365,14 @@ Skip a test. Playwright will not run the test past the `test.skip()` call.
 
 Skipped tests are not supposed to be ever run. If you intent to fix the test, use [`method: Test.fixme`] instead.
 
+To declare a skipped test:
 * `test.skip(title, body)`
 * `test.skip(title, details, body)`
-* `test.skip()`
+
+To skip a test at runtime:
 * `test.skip(condition, description)`
 * `test.skip(callback, description)`
+* `test.skip()`
 
 **Usage**
 

@@ -13,7 +13,7 @@ You can add your own tags and annotations at any moment, but Playwright comes wi
 - [`method: Test.fixme`] marks the test as failing. Playwright will not run this test, as opposed to the `fail` annotation. Use `fixme` when running the test is slow or crashes.
 - [`method: Test.slow`] marks the test as slow and triples the test timeout.
 
-Annotations can be used on a single test or a group of tests.
+Annotations can be added to a single test or a group of tests.
 
 Built-in annotations can be conditional, in which case they apply when the condition is truthy, and may depend on test fixtures. There could be multiple annotations on the same test, possibly in different configurations.
 
@@ -67,7 +67,9 @@ test.describe('two tests', () => {
 
 ## Tag tests
 
-Sometimes you want to tag your tests as `@fast` or `@slow`, and then filter by tag in the test report. Or you might want to only run tests that have a certain tag. To do this, provide additional details when declaring a test.
+Sometimes you want to tag your tests as `@fast` or `@slow`, and then filter by tag in the test report. Or you might want to only run tests that have a certain tag.
+
+To tag a test, either provide an additional details object when declaring a test, or add `@`-token to the test title. Note that tags must start with `@` symbol.
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -78,9 +80,7 @@ test('test login page', {
   // ...
 });
 
-test('test full report', {
-  tag: '@slow',
-}, async ({ page }) => {
+test('test full report @slow', async ({ page }) => {
   // ...
 });
 ```
@@ -105,49 +105,56 @@ test.describe('group', {
 });
 ```
 
-You can now run tests that have a particular tag.
+You can now run tests that have a particular tag with [`--grep`](./test-cli.md#reference) command line option.
 
 ```bash tab=bash-bash
-npx playwright test --tag @fast
+npx playwright test --grep @fast
 ```
 
 ```powershell tab=bash-powershell
-npx playwright test --tag "@fast"
+npx playwright test --grep "@fast"
 ```
 
 ```batch tab=bash-batch
-npx playwright test --tag @fast
+npx playwright test --grep @fast
 ```
 
 Or if you want the opposite, you can skip the tests with a certain tag:
 
 ```bash tab=bash-bash
-npx playwright test --tag "not @fast"
+npx playwright test --grep-invert @fast
 ```
 
 ```powershell tab=bash-powershell
-npx playwright test --tag "not @fast"
+npx playwright test --grep-invert "@fast"
 ```
 
 ```batch tab=bash-batch
-npx playwright test --tag "not @fast"
+npx playwright test --grep-invert @fast
 ```
 
-The `--tag` option supports logical tag expressions. You can use `and`, `or` and `not` operators, as well as group with parenthesis. For example, to run `@smoke` tests that are either `@slow` or `@very-slow`:
+To run tests containing either tag (logical `OR` operator):
 
 ```bash tab=bash-bash
-npx playwright test --tag "@smoke and (@slow or @very-slow)"
+npx playwright test --grep "@fast|@slow"
 ```
 
 ```powershell tab=bash-powershell
-npx playwright test --tag "@smoke and (@slow or @very-slow)"
+npx playwright test --grep --% "@fast^|@slow"
 ```
 
 ```batch tab=bash-batch
-npx playwright test --tag "@smoke and (@slow or @very-slow)"
+npx playwright test --grep "@fast^|@slow"
 ```
 
-You can also filter tests in the configuration file via [`property: TestConfig.tagFilter`] and [`property: TestProject.tagFilter`].
+Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
+
+```bash
+npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+```
+
+You can also filter tests in the configuration file via [`property: TestConfig.grep`] and [`property: TestProject.grep`].
+
 
 
 ## Annotate tests
@@ -233,9 +240,9 @@ test('user profile', async ({ page }) => {
 });
 ```
 
-## Dynamic annotations
+## Runtime annotations
 
-While the test is running, you can add dynamic annotations to [`test.info().annotations`](./api/class-testinfo#test-info-annotations).
+While the test is already running, you can add annotations to [`test.info().annotations`](./api/class-testinfo#test-info-annotations).
 
 
 ```js title="example.spec.ts"
@@ -245,6 +252,7 @@ test('example test', async ({ page, browser }) => {
     type: 'browser version',
     description: browser.version(),
   });
+
   // ...
 });
 ```

@@ -1245,30 +1245,6 @@ interface TestConfig {
   snapshotPathTemplate?: string;
 
   /**
-   * Filter to only run tests with or without particular tag(s). This property must be a logical expression containing
-   * tags, parenthesis `(` and `)`, and operators `and`, `or` and `not`.
-   *
-   * Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   tagFilter: '@smoke',
-   * });
-   * ```
-   *
-   * Tag expression examples:
-   * - `tagFilter: '@smoke'` - run only "smoke" tests;
-   * - `tagFilter: '@smoke and not @production'` - run only "smoke" tests that are not tagged as "production";
-   * - `tagFilter: '(@smoke or @fast) and @v2'` - run "v2" tests that are tagged as "smoke", "fast" or both.
-   */
-  tagFilter?: string;
-
-  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * **Usage**
@@ -2696,7 +2672,8 @@ interface TestFunction<TestArgs> {
    *
    * **Tags**
    *
-   * You can tag tests by providing additional test details. Note that each tag must start with `@` symbol.
+   * You can tag tests by providing additional test details. Alternatively, you can include tags in the test title. Note
+   * that each tag must start with `@` symbol.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2707,15 +2684,19 @@ interface TestFunction<TestArgs> {
    *   await page.goto('https://playwright.dev/');
    *   // ...
    * });
+   *
+   * test('another test @smoke', async ({ page }) => {
+   *   await page.goto('https://playwright.dev/');
+   *   // ...
+   * });
    * ```
    *
    * Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
    *
    * You can also filter tests by their tags during test execution:
    * - in the [command line](https://playwright.dev/docs/test-cli#reference);
-   * - in the config with
-   *   [testConfig.tagFilter](https://playwright.dev/docs/api/class-testconfig#test-config-tag-filter) and
-   *   [testProject.tagFilter](https://playwright.dev/docs/api/class-testproject#test-project-tag-filter);
+   * - in the config with [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep) and
+   *   [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep);
    *
    * Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -2740,7 +2721,7 @@ interface TestFunction<TestArgs> {
    * Test annotations are displayed in the test report, and are available to a custom reporter via
    * `TestCase.annotations` property.
    *
-   * You can also add dynamic annotations by manipulating
+   * You can also add annotations during runtime by manipulating
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
@@ -2767,7 +2748,8 @@ interface TestFunction<TestArgs> {
    *
    * **Tags**
    *
-   * You can tag tests by providing additional test details. Note that each tag must start with `@` symbol.
+   * You can tag tests by providing additional test details. Alternatively, you can include tags in the test title. Note
+   * that each tag must start with `@` symbol.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2778,15 +2760,19 @@ interface TestFunction<TestArgs> {
    *   await page.goto('https://playwright.dev/');
    *   // ...
    * });
+   *
+   * test('another test @smoke', async ({ page }) => {
+   *   await page.goto('https://playwright.dev/');
+   *   // ...
+   * });
    * ```
    *
    * Test tags are displayed in the test report, and are available to a custom reporter via `TestCase.tags` property.
    *
    * You can also filter tests by their tags during test execution:
    * - in the [command line](https://playwright.dev/docs/test-cli#reference);
-   * - in the config with
-   *   [testConfig.tagFilter](https://playwright.dev/docs/api/class-testconfig#test-config-tag-filter) and
-   *   [testProject.tagFilter](https://playwright.dev/docs/api/class-testproject#test-project-tag-filter);
+   * - in the config with [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep) and
+   *   [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep);
    *
    * Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -2811,7 +2797,7 @@ interface TestFunction<TestArgs> {
    * Test annotations are displayed in the test report, and are available to a custom reporter via
    * `TestCase.annotations` property.
    *
-   * You can also add dynamic annotations by manipulating
+   * You can also add annotations during runtime by manipulating
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
@@ -3277,11 +3263,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
+   *
+   * To declare a skipped test:
    * - `test.skip(title, body)`
    * - `test.skip(title, details, body)`
-   * - `test.skip()`
+   *
+   * To skip a test at runtime:
    * - `test.skip(condition, description)`
    * - `test.skip(callback, description)`
+   * - `test.skip()`
    *
    * **Usage**
    *
@@ -3353,11 +3343,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
+   *
+   * To declare a skipped test:
    * - `test.skip(title, body)`
    * - `test.skip(title, details, body)`
-   * - `test.skip()`
+   *
+   * To skip a test at runtime:
    * - `test.skip(condition, description)`
    * - `test.skip(callback, description)`
+   * - `test.skip()`
    *
    * **Usage**
    *
@@ -3429,11 +3423,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
+   *
+   * To declare a skipped test:
    * - `test.skip(title, body)`
    * - `test.skip(title, details, body)`
-   * - `test.skip()`
+   *
+   * To skip a test at runtime:
    * - `test.skip(condition, description)`
    * - `test.skip(callback, description)`
+   * - `test.skip()`
    *
    * **Usage**
    *
@@ -3505,11 +3503,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
+   *
+   * To declare a skipped test:
    * - `test.skip(title, body)`
    * - `test.skip(title, details, body)`
-   * - `test.skip()`
+   *
+   * To skip a test at runtime:
    * - `test.skip(condition, description)`
    * - `test.skip(callback, description)`
+   * - `test.skip()`
    *
    * **Usage**
    *
@@ -3581,11 +3583,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Skipped tests are not supposed to be ever run. If you intent to fix the test, use
    * [test.fixme([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fixme)
    * instead.
+   *
+   * To declare a skipped test:
    * - `test.skip(title, body)`
    * - `test.skip(title, details, body)`
-   * - `test.skip()`
+   *
+   * To skip a test at runtime:
    * - `test.skip(condition, description)`
    * - `test.skip(callback, description)`
+   * - `test.skip()`
    *
    * **Usage**
    *
@@ -3654,11 +3660,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
    * call.
+   *
+   * To declare a "fixme" test:
    * - `test.fixme(title, body)`
    * - `test.fixme(title, details, body)`
-   * - `test.fixme()`
+   *
+   * To annotate test as "fixme" at runtime:
    * - `test.fixme(condition, description)`
    * - `test.fixme(callback, description)`
+   * - `test.fixme()`
    *
    * **Usage**
    *
@@ -3727,11 +3737,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
    * call.
+   *
+   * To declare a "fixme" test:
    * - `test.fixme(title, body)`
    * - `test.fixme(title, details, body)`
-   * - `test.fixme()`
+   *
+   * To annotate test as "fixme" at runtime:
    * - `test.fixme(condition, description)`
    * - `test.fixme(callback, description)`
+   * - `test.fixme()`
    *
    * **Usage**
    *
@@ -3800,11 +3814,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
    * call.
+   *
+   * To declare a "fixme" test:
    * - `test.fixme(title, body)`
    * - `test.fixme(title, details, body)`
-   * - `test.fixme()`
+   *
+   * To annotate test as "fixme" at runtime:
    * - `test.fixme(condition, description)`
    * - `test.fixme(callback, description)`
+   * - `test.fixme()`
    *
    * **Usage**
    *
@@ -3873,11 +3891,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
    * call.
+   *
+   * To declare a "fixme" test:
    * - `test.fixme(title, body)`
    * - `test.fixme(title, details, body)`
-   * - `test.fixme()`
+   *
+   * To annotate test as "fixme" at runtime:
    * - `test.fixme(condition, description)`
    * - `test.fixme(callback, description)`
+   * - `test.fixme()`
    *
    * **Usage**
    *
@@ -3946,11 +3968,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Playwright will not run the test past the `test.fixme()`
    * call.
+   *
+   * To declare a "fixme" test:
    * - `test.fixme(title, body)`
    * - `test.fixme(title, details, body)`
-   * - `test.fixme()`
+   *
+   * To annotate test as "fixme" at runtime:
    * - `test.fixme(condition, description)`
    * - `test.fixme(callback, description)`
+   * - `test.fixme()`
    *
    * **Usage**
    *
@@ -4019,11 +4045,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
    * - `test.fail(title, body)`
    * - `test.fail(title, details, body)`
-   * - `test.fail()`
+   *
+   * To annotate test as "failing" at runtime:
    * - `test.fail(condition, description)`
    * - `test.fail(callback, description)`
+   * - `test.fail()`
    *
    * **Usage**
    *
@@ -4091,11 +4121,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
    * - `test.fail(title, body)`
    * - `test.fail(title, details, body)`
-   * - `test.fail()`
+   *
+   * To annotate test as "failing" at runtime:
    * - `test.fail(condition, description)`
    * - `test.fail(callback, description)`
+   * - `test.fail()`
    *
    * **Usage**
    *
@@ -4163,11 +4197,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
    * - `test.fail(title, body)`
    * - `test.fail(title, details, body)`
-   * - `test.fail()`
+   *
+   * To annotate test as "failing" at runtime:
    * - `test.fail(condition, description)`
    * - `test.fail(callback, description)`
+   * - `test.fail()`
    *
    * **Usage**
    *
@@ -4235,11 +4273,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
    * - `test.fail(title, body)`
    * - `test.fail(title, details, body)`
-   * - `test.fail()`
+   *
+   * To annotate test as "failing" at runtime:
    * - `test.fail(condition, description)`
    * - `test.fail(callback, description)`
+   * - `test.fail()`
    *
    * **Usage**
    *
@@ -4307,11 +4349,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
    * - `test.fail(title, body)`
    * - `test.fail(title, details, body)`
-   * - `test.fail()`
+   *
+   * To annotate test as "failing" at runtime:
    * - `test.fail(condition, description)`
    * - `test.fail(callback, description)`
+   * - `test.fail()`
    *
    * **Usage**
    *
@@ -8724,35 +8770,6 @@ interface TestProject {
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
   snapshotPathTemplate?: string;
-
-  /**
-   * Filter to only run tests with or without particular tag(s). This property must be a logical expression containing
-   * tags, parenthesis `(` and `)`, and operators `and`, `or` and `not`.
-   *
-   * Learn more about [tagging](https://playwright.dev/docs/test-annotations#tag-tests).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'tests',
-   *       tagFilter: '@smoke',
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   * Tag expression examples:
-   * - `tagFilter: '@smoke'` - run only "smoke" tests;
-   * - `tagFilter: '@smoke and not @production'` - run only "smoke" tests that are not tagged as "production";
-   * - `tagFilter: '(@smoke or @fast) and @v2'` - run "v2" tests that are tagged as "smoke", "fast" or both.
-   */
-  tagFilter?: string;
 
   /**
    * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
