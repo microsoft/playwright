@@ -65,7 +65,7 @@ export class ElectronApplication extends SdkObject {
   private _startedClosing: boolean = false;
   private _appClosePromise: Promise<unknown>;
 
-  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess, gracefullyClose: () => Promise<void>) {
+  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
     super(parent, 'electron-app');
     this._process = process;
     this._browserContext = browser._defaultContext as CRBrowserContext;
@@ -91,7 +91,6 @@ export class ElectronApplication extends SdkObject {
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
       this._nodeConnection.close();
-      await gracefullyClose();
     });
   }
 
@@ -274,7 +273,7 @@ export class Electron extends SdkObject {
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
-      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess, gracefullyClose);
+      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
       return app;
     }, TimeoutSettings.launchTimeout(options));
