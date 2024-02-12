@@ -351,7 +351,7 @@ export class DispatcherConnection {
       const result = await dispatcher._handleCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
-      callMetadata.result = response.result;
+      callMetadata.result = result;
     } catch (e) {
       if (isTargetClosedError(e) && sdkObject) {
         const reason = closeReason(sdkObject);

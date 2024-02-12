@@ -42,6 +42,7 @@ import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
+import { Dispatcher } from '../../dispatchers/dispatcher';
 
 const version: trace.VERSION = 6;
 
@@ -496,8 +497,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 function visitTraceEvent(object: any, sha1s: Set<string>): any {
   if (Array.isArray(object))
     return object.map(o => visitTraceEvent(o, sha1s));
+  if (object instanceof Dispatcher)
+    return `<${(object as Dispatcher<any, any, any>)._type}>`;
   if (object instanceof Buffer)
-    return undefined;
+    return `<Buffer>`;
   if (object instanceof Date)
     return object;
   if (typeof object === 'object') {
