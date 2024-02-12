@@ -62,16 +62,16 @@ export class ElectronApplication extends SdkObject {
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
   readonly _timeoutSettings = new TimeoutSettings();
   private _process: childProcess.ChildProcess;
-  private _gracefullyClose: () => Promise<void>;
   private _startedClosing: boolean = false;
+  private _appClosePromise: Promise<unknown>;
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess, gracefullyClose: () => Promise<void>) {
     super(parent, 'electron-app');
     this._process = process;
-    this._gracefullyClose = gracefullyClose;
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
+    this._appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
       if (!event.context.auxData || !event.context.auxData.isDefault)
         return;
@@ -90,6 +90,8 @@ export class ElectronApplication extends SdkObject {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
+      this._nodeConnection.close();
+      await gracefullyClose();
     });
   }
 
@@ -136,9 +138,8 @@ export class ElectronApplication extends SdkObject {
       this._startedClosing = true;
       // This will call BrowserContext.setCustomCloseHandler.
       await this._browserContext.close({ reason: 'Application exited' });
-      this._nodeConnection.close();
     }
-    await this._gracefullyClose();
+    await this._appClosePromise;
   }
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
