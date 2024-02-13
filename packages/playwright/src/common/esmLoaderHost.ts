@@ -60,6 +60,9 @@ export async function stopCollectingFileDeps(file: string) {
 export async function incorporateCompilationCache() {
   if (!loaderChannel)
     return;
+  // This is needed to gather dependency information from the esm loader
+  // that is populated from the resovle hook. We do not need to push
+  // this information proactively during load, but gather it at the end.
   const result = await loaderChannel.send('getCompilationCache', {});
   addToCompilationCache(result.cache);
 }

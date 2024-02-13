@@ -163,7 +163,7 @@ export function setTransformData(pluginName: string, value: any) {
   transformData.set(pluginName, value);
 }
 
-export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
+export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
@@ -172,9 +172,9 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
+  const { cachedCode, addToCache, serializedCache } = getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
-    return cachedCode;
+    return { code: cachedCode, serializedCache };
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
@@ -183,9 +183,10 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
   const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  if (code)
-    addToCache!(code, map, transformData);
-  return code || '';
+  if (!code)
+    return { code: '', serializedCache };
+  const added = addToCache!(code, map, transformData);
+  return { code, serializedCache: added.serializedCache };
 }
 
 function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
@@ -239,7 +240,7 @@ function installTransform(): () => void {
   const revertPirates = pirates.addHook((code: string, filename: string) => {
     if (!shouldTransform(filename))
       return code;
-    return transformHook(code, filename);
+    return transformHook(code, filename).code;
   }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });
 
   return () => {
