@@ -30,7 +30,8 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import { ManualPromise, wrapInASCIIBox } from '../../utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
-import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
+import type { BrowserContext } from '../browserContext';
+import { validateBrowserContextOptions } from '../browserContext';
 import type { BrowserWindow } from 'electron';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
@@ -66,10 +67,6 @@ export class ElectronApplication extends SdkObject {
     super(parent, 'electron-app');
     this._process = process;
     this._browserContext = browser._defaultContext as CRBrowserContext;
-    this._browserContext.on(BrowserContext.Events.Close, () => {
-      // Emit application closed after context closed.
-      Promise.resolve().then(() => this.emit(ElectronApplication.Events.Close));
-    });
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
     this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
@@ -86,10 +83,13 @@ export class ElectronApplication extends SdkObject {
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
+    const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
+      this._nodeConnection.close();
+      await appClosePromise;
     });
   }
 
@@ -132,11 +132,8 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    const progressController = new ProgressController(serverSideCallMetadata(), this);
-    const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise);
+    // This will call BrowserContext.setCustomCloseHandler.
     await this._browserContext.close({ reason: 'Application exited' });
-    this._nodeConnection.close();
-    await closed;
   }
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
@@ -218,7 +215,7 @@ export class Electron extends SdkObject {
         handleSIGINT: true,
         handleSIGTERM: true,
         handleSIGHUP: true,
-        onExit: () => {},
+        onExit: () => app?.emit(ElectronApplication.Events.Close),
       });
 
       const waitForXserverError = new Promise(async (resolve, reject) => {

@@ -13939,7 +13939,7 @@ export interface ElectronApplication {
    */
   evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
   /**
-   * This event is issued when the application closes.
+   * This event is issued when the application process has been terminated.
    */
   on(event: 'close', listener: () => void): this;
 
@@ -13986,7 +13986,7 @@ export interface ElectronApplication {
   once(event: 'window', listener: (page: Page) => void): this;
 
   /**
-   * This event is issued when the application closes.
+   * This event is issued when the application process has been terminated.
    */
   addListener(event: 'close', listener: () => void): this;
 
@@ -14048,7 +14048,7 @@ export interface ElectronApplication {
   off(event: 'window', listener: (page: Page) => void): this;
 
   /**
-   * This event is issued when the application closes.
+   * This event is issued when the application process has been terminated.
    */
   prependListener(event: 'close', listener: () => void): this;
 
@@ -14125,7 +14125,7 @@ export interface ElectronApplication {
   process(): ChildProcess;
 
   /**
-   * This event is issued when the application closes.
+   * This event is issued when the application process has been terminated.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean | Promise<boolean>, timeout?: number } | (() => boolean | Promise<boolean>)): Promise<void>;
 

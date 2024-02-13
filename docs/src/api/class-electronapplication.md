@@ -39,7 +39,7 @@ const { _electron: electron } = require('playwright');
 ## event: ElectronApplication.close
 * since: v1.9
 
-This event is issued when the application closes.
+This event is issued when the application process has been terminated.
 
 ## event: ElectronApplication.console
 * since: v1.42

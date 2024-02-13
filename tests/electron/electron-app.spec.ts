@@ -20,16 +20,51 @@ import fs from 'fs';
 import { electronTest as test, expect } from './electronTest';
 import type { ConsoleMessage } from 'playwright';
 
-test('should fire close event', async ({ launchElectronApp }) => {
+test('should fire close event via ElectronApplication.close();', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
   const events = [];
-  electronApp.on('close', () => events.push('application'));
-  electronApp.context().on('close', () => events.push('context'));
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
   await electronApp.close();
-  expect(events.join('|')).toBe('context|application');
+  // Close one more time - this should be a noop.
+  await electronApp.close();
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events.join('|')).toBe('context|application');
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+});
+
+test('should fire close event via BrowserContext.close()', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const events = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+  await electronApp.context().close();
+  // Close one more time - this should be a noop.
+  await electronApp.context().close();
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  // Give it some time to fire more events - there should not be any.
+  await new Promise(f => setTimeout(f, 1000));
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+});
+
+test('should fire close event when the app quits itself', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const events = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+  {
+    const waitForAppClose = new Promise<void>(f => electronApp.on('close', f));
+    await electronApp.evaluate(({ app }) => app.quit());
+    await waitForAppClose;
+  }
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  // Give it some time to fire more events - there should not be any.
+  await new Promise(f => setTimeout(f, 1000));
+  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
 });
 
 test('should fire console events', async ({ launchElectronApp }) => {
