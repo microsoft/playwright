@@ -47,6 +47,7 @@ const reporters = () => {
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    [require.resolve('../config/workerIndexReporter')]
   ] : [
     ['html', { open: 'on-failure' }]
   ];
