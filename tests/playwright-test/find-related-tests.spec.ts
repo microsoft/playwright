@@ -43,12 +43,12 @@ test('should list related tests', async ({ runCLICommand }) => {
       if (value) {}
       test('', () => {});
     `,
-  }, 'find-related-tests', ['helper.ts']);
+  }, 'find-related-test-files', ['helper.ts']);
   expect(result.exitCode).toBe(0);
   expect(result.stderr).toBeFalsy();
   const data = JSON.parse(result.stdout);
   expect(data).toEqual({
-    relatedTests: [
+    testFiles: [
       expect.stringContaining('a.spec.ts'),
       expect.stringContaining('b.spec.ts'),
     ]
@@ -77,11 +77,11 @@ test('should list related tests for ct', async ({ runCLICommand }) => {
         await mount(<Button />);
       });
     `,
-  }, 'find-related-tests', ['helper.tsx'], ctReactCliEntrypoint);
+  }, 'find-related-test-files', ['helper.tsx'], ctReactCliEntrypoint);
   expect(result.exitCode).toBe(0);
   const data = JSON.parse(result.stdout);
   expect(data).toEqual({
-    relatedTests: [
+    testFiles: [
       expect.stringContaining('button.spec.tsx'),
     ]
   });

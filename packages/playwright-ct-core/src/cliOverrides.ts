@@ -29,7 +29,7 @@ export async function clearCacheCommand(config: FullConfig, configDir: string) {
   await removeFolder(cacheDir);
 }
 
-export async function findRelatedTestsCommand(files: string[],  config: FullConfig, configDir: string, suite: Suite) {
+export async function findRelatedTestFilesCommand(files: string[],  config: FullConfig, configDir: string, suite: Suite) {
   await buildBundle(config, configDir, suite);
-  return { relatedTests: affectedTestFiles(files) };
+  return { testFiles: affectedTestFiles(files) };
 }
