@@ -117,7 +117,8 @@ test('should not work with force:true', async ({ page, server }) => {
   expect(await page.evaluate('window.clicked')).toBe(undefined);
 });
 
-test('should throw when page closes', async ({ page, server }) => {
+test('should throw when page closes', async ({ page, server, isAndroid }) => {
+  test.fixme(isAndroid, 'GPU process crash: https://issues.chromium.org/issues/324909825');
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
@@ -176,7 +177,8 @@ test('should work with toBeVisible', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should work with toHaveScreenshot', async ({ page, server }) => {
+test('should work with toHaveScreenshot', async ({ page, server, isAndroid }) => {
+  test.fixme(isAndroid, 'Screenshots are cut off on Android');
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
 
