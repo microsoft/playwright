@@ -21,7 +21,6 @@
     },
     "./lib/mount": "./lib/mount.js",
     "./lib/program": "./lib/program.js",
-    "./plugin": "./plugin.js",
     "./types/component": {
       "types": "./types/component.d.ts"
     }

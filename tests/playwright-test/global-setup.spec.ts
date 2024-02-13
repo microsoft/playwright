@@ -324,14 +324,14 @@ test('globalSetup auth should compile', async ({ runTSC }) => {
 test('teardown order', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      const _plugins = [];
+      const plugins = [];
       for (let i = 1; i < 4; ++i) {
-        _plugins.push(() => ({
+        plugins.push(() => ({
           setup: () => console.log('\\n%%setup ' + i),
           teardown: () => console.log('\\n%%teardown ' + i),
         }));
       }
-      export default { _plugins };
+      export default { '@playwright/test': { plugins } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -353,9 +353,9 @@ test('teardown order', async ({ runInlineTest }) => {
 test('teardown after error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      const _plugins = [];
+      const plugins = [];
       for (let i = 1; i < 4; ++i) {
-        _plugins.push(() => ({
+        plugins.push(() => ({
           setup: () => console.log('\\n%%setup ' + i),
           teardown: () => {
             console.log('\\n%%teardown ' + i);
@@ -363,7 +363,7 @@ test('teardown after error', async ({ runInlineTest }) => {
           },
         }));
       }
-      export default { _plugins };
+      export default { '@playwright/test': { plugins } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

@@ -17,14 +17,17 @@
 const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
 const path = require('path');
 
-const registerSource = path.join(__dirname, 'registerSource.mjs');
-const frameworkPluginFactory = () => import('vite-plugin-solid').then(plugin => plugin.default());
-
-const plugin = () => {
-  // Only fetch upon request to avoid resolution in workers.
-  const { createPlugin } = require('@playwright/experimental-ct-core/plugin');
-  return createPlugin(registerSource, frameworkPluginFactory);
+const defineConfig = (config, ...configs) => {
+  return originalDefineConfig({
+    ...config,
+    '@playwright/test': {
+      packageJSON: require.resolve('./package.json'),
+    },
+    '@playwright/experimental-ct-core': {
+      registerSourceFile: path.join(__dirname, 'registerSource.mjs'),
+      frameworkPluginFactory: () => import('vite-plugin-solid').then(plugin => plugin.default()),
+    },
+  }, ...configs);
 };
-const defineConfig = (config, ...configs) => originalDefineConfig({ ...config, _plugins: [plugin] }, ...configs);
 
-module.exports = { test, expect, devices, defineConfig, _framework: { registerSource, frameworkPluginFactory } };
+module.exports = { test, expect, devices, defineConfig };

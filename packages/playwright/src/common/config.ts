@@ -71,7 +71,8 @@ export class FullConfigInternal {
     this.configCLIOverrides = configCLIOverrides;
     this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, config.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
     this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots, false);
-    this.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
+    const privateConfiguration = (config as any)['@playwright/test'];
+    this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
       configFile,
@@ -96,6 +97,11 @@ export class FullConfigInternal {
       workers: 0,
       webServer: null,
     };
+    for (const key in config) {
+      if (key.startsWith('@'))
+        (this.config as any)[key] = (config as any)[key];
+    }
+
     (this.config as any)[configInternalSymbol] = this;
 
     const workers = takeFirst(configCLIOverrides.workers, config.workers, '50%');
@@ -127,7 +133,7 @@ export class FullConfigInternal {
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
     setTransformConfig({
-      babelPlugins: (config as any).build?.babelPlugins || [],
+      babelPlugins: privateConfiguration?.babelPlugins || [],
       external: config.build?.external || [],
     });
     this.config.projects = this.projects.map(p => p.project);

@@ -21,14 +21,15 @@ import { loadConfigFromFile } from 'playwright/lib/common/configLoader';
 import { Runner } from 'playwright/lib/runner/runner';
 import type { PluginContext } from 'rollup';
 import { source as injectedSource } from './generated/indexSource';
-import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
+import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile, frameworkConfig } from './viteUtils';
 import type { ComponentRegistry } from './viteUtils';
 
-export async function runDevServer(configFile: string, registerSourceFile: string, frameworkPluginFactory: () => Promise<any>) {
+export async function runDevServer(configFile: string) {
   const config = await loadConfigFromFile(configFile);
   if (!config)
     return;
 
+  const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config.config);
   const runner = new Runner(config);
   await runner.loadAllTests();
   const componentRegistry: ComponentRegistry = new Map();

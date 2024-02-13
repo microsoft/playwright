@@ -656,8 +656,12 @@ test('should merge ct configs', async ({ runInlineTest }) => {
       expect(derivedConfig).toEqual(expect.objectContaining({
         use: { foo: 1, bar: 2 },
         grep: 'hi',
-        build: { babelPlugins: [expect.anything()] },
-        _plugins: [expect.anything()],
+        '@playwright/test': expect.objectContaining({
+          babelPlugins: [[expect.stringContaining('tsxTransform.js')]]        
+        }),
+        '@playwright/experimental-ct-core': expect.objectContaining({
+          registerSourceFile: expect.stringContaining('registerSource'),
+        }),
       }));
     `,
     'a.test.ts': `

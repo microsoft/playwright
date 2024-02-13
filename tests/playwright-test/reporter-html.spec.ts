@@ -883,7 +883,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'playwright.config.ts': `
             import { gitCommitInfo } from 'playwright/lib/plugins';
             import { test, expect } from '@playwright/test';
-            export default { _plugins: [gitCommitInfo()] };
+            const plugins = [gitCommitInfo()];
+            export default { '@playwright/test': { plugins } };
           `,
           'example.spec.ts': `
             import { test, expect } from '@playwright/test';
@@ -945,7 +946,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
                 'revision.email': 'shakespeare@example.local',
               },
             });
-            export default { _plugins: [plugin] };
+            export default { '@playwright/test': { plugins: [plugin] } };
           `,
           'example.spec.ts': `
             import { gitCommitInfo } from 'playwright/lib/plugins';

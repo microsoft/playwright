@@ -450,8 +450,8 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
 
   const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
-      const _plugins = [];
-      _plugins.push(() => ({
+      const plugins = [];
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
           console.log('%%SEND-SIGINT%%');
@@ -462,7 +462,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
         }
       }));
 
-      _plugins.push(() => ({
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
         },
@@ -471,7 +471,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
         }
       }));
       module.exports = {
-        _plugins
+        '@playwright/test': { plugins }
       };
     `,
     'a.spec.js': `
@@ -500,8 +500,8 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
 
   const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
-      const _plugins = [];
-      _plugins.push(() => ({
+      const plugins = [];
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
         },
@@ -510,7 +510,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
         }
       }));
 
-      _plugins.push(() => ({
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
           console.log('%%SEND-SIGINT%%');
@@ -520,7 +520,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
           console.log('Plugin2 teardown');
         }
       }));
-      module.exports = { _plugins };
+      module.exports = { '@playwright/test': { plugins } };
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
