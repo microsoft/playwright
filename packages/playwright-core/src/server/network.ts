@@ -464,11 +464,6 @@ export class Response extends SdkObject {
     this._transferSizePromise.resolve(size);
   }
 
-  setRawStatus(status: number, statusText: string) {
-    this._status = status;
-    this._statusText = statusText;
-  }
-
   setEncodedBodySize(size: number | null) {
     this._encodedBodySizePromise.resolve(size);
   }
