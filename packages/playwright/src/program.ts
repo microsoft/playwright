@@ -97,8 +97,8 @@ export async function removeFolder(folder: string) {
   }
 }
 
-function addFindRelatedTestsCommand(program: Command) {
-  const command = program.command('find-related-tests [source-files...]');
+function addFindRelatedTestFilesCommand(program: Command) {
+  const command = program.command('find-related-test-files [source-files...]');
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
@@ -108,10 +108,10 @@ function addFindRelatedTestsCommand(program: Command) {
         return { errors: result.errors };
 
       const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-      const override = (config as any)['@playwright/test']?.['cli']?.['find-related-tests'];
+      const override = (config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
       if (override)
         return await override(resolvedFiles, config, configDir, result.suite);
-      return { relatedTests: affectedTestFiles(resolvedFiles) };
+      return { testFiles: affectedTestFiles(resolvedFiles) };
     });
   });
 }
@@ -348,4 +348,4 @@ addShowReportCommand(program);
 addListFilesCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
-addFindRelatedTestsCommand(program);
+addFindRelatedTestFilesCommand(program);
