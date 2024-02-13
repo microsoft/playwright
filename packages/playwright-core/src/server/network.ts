@@ -492,7 +492,7 @@ export class Response extends SdkObject {
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async () => {
-        if (this._status >= 300 && this._status <= 399)
+        if (this._status >= 300 && this._status <= 399 && this._status !== 304)
           throw new Error('Response body is unavailable for redirect responses');
         return this._getResponseBodyCallback();
       });

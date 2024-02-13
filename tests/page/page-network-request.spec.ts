@@ -479,4 +479,5 @@ it('page.reload return 304 status code', async ({ page, server, browserName }) =
     expect(response2.status()).toBe(304);
     expect(response2.statusText()).toBe('Not Modified');
   }
+  expect(await response2.text()).toBe('<div>Test</div>');
 });
