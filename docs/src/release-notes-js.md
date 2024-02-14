@@ -1233,16 +1233,16 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
     const headers = await route.request().allHeaders();
     delete headers['if-none-match'];
-    route.fallback({ headers });
+    await route.fallback({ headers });
   });
 });
 
 test('should work', async ({ page }) => {
-  await page.route('**/*', route => {
+  await page.route('**/*', async route => {
     if (route.request().resourceType() === 'image')
-      route.abort();
+      await route.abort();
     else
-      route.fallback();
+      await route.fallback();
   });
 });
 ```
@@ -1813,7 +1813,7 @@ test('response interception', async ({ page }) => {
     const response = await page._request.fetch(route.request());
     const image = await jimp.read(await response.body());
     await image.blur(5);
-    route.fulfill({
+    await route.fulfill({
       response,
       body: await image.getBufferAsync('image/jpeg'),
     });

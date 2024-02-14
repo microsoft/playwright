@@ -331,7 +331,7 @@ test('context request will share cookie storage with its browser context', async
       [name, value])
     )).toEqual(responseCookies);
 
-    route.fulfill({
+    await route.fulfill({
       response,
       headers: { ...responseHeaders, foo: 'bar' },
     });
@@ -375,7 +375,7 @@ test('global context request has isolated cookie storage', async ({
         new Map(contextCookies2.map(({ name, value }) => [name, value]))
     ).toEqual(responseCookies);
 
-    route.fulfill({
+    await route.fulfill({
       response,
       headers: { ...responseHeaders, foo: 'bar' },
     });

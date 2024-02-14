@@ -3665,11 +3665,11 @@ export interface Page {
    * some post data, and leaving all other requests as is:
    *
    * ```js
-   * await page.route('/api/**', route => {
+   * await page.route('/api/**', async route => {
    *   if (route.request().postData().includes('my-string'))
-   *     route.fulfill({ body: 'mocked-data' });
+   *     await route.fulfill({ body: 'mocked-data' });
    *   else
-   *     route.continue();
+   *     await route.continue();
    * });
    * ```
    *
@@ -8464,11 +8464,11 @@ export interface BrowserContext {
    * some post data, and leaving all other requests as is:
    *
    * ```js
-   * await context.route('/api/**', route => {
+   * await context.route('/api/**', async route => {
    *   if (route.request().postData().includes('my-string'))
-   *     route.fulfill({ body: 'mocked-data' });
+   *     await route.fulfill({ body: 'mocked-data' });
    *   else
-   *     route.continue();
+   *     await route.continue();
    * });
    * ```
    *
