@@ -269,7 +269,11 @@ export class TestInfoImpl implements TestInfo {
       parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
     } else {
       parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
-      if (!parentStep) {
+      if (parentStep?.category === 'hook' || parentStep?.category === 'fixture') {
+        // Prefer last non-finished predefined step over the on-stack one, because
+        // some predefined steps may be missing on the stack.
+        parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
+      } else if (!parentStep) {
         if (data.category === 'test.step') {
           // Nest test.step without a good stack in the last non-finished predefined step like a hook.
           parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');

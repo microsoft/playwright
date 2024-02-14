@@ -15,7 +15,7 @@
  */
 
 import { formatLocation, debugTest, filterStackFile } from '../util';
-import { ManualPromise, zones } from 'playwright-core/lib/utils';
+import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
@@ -78,7 +78,7 @@ class Fixture {
     // w/o scopes, and create single mutable step that will be converted into the after step.
     const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
     const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
-    let mutableStepOnStack: TestStepInternal | undefined;
+    let beforeStep: TestStepInternal | undefined;
     let afterStep: TestStepInternal | undefined;
 
     let called = false;
@@ -89,6 +89,7 @@ class Fixture {
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
+      beforeStep?.complete({});
       this._useFuncFinished = new ManualPromise<void>();
       useFuncStarted.resolve();
       await this._useFuncFinished;
@@ -100,7 +101,6 @@ class Fixture {
           category: 'fixture',
           location: isInternalFixture ? this.registration.location : undefined,
         });
-        mutableStepOnStack!.stepId = afterStep.stepId;
       }
     };
 
@@ -108,44 +108,31 @@ class Fixture {
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
     testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
 
-    const handleError = (e: any) => {
-      this.failed = true;
-      if (!useFuncStarted.isDone())
-        useFuncStarted.reject(e);
-      else
-        throw e;
-    };
-    try {
-      const result = zones.preserve(async () => {
-        if (!shouldGenerateStep)
-          return await this.registration.fn(params, useFunc, info);
-
-        await testInfo._runAsStep({
-          title: `fixture: ${this.registration.name}`,
-          category: 'fixture',
-          location: isInternalFixture ? this.registration.location : undefined,
-        }, async step => {
-          mutableStepOnStack = step;
-          return await this.registration.fn(params, useFunc, info);
-        });
-      });
-
-      if (result instanceof Promise)
-        this._selfTeardownComplete = result.catch(handleError);
-      else
-        this._selfTeardownComplete = Promise.resolve();
-    } catch (e) {
-      handleError(e);
-    }
-    await useFuncStarted;
     if (shouldGenerateStep) {
-      mutableStepOnStack?.complete({});
-      this._selfTeardownComplete?.then(() => {
-        afterStep?.complete({});
-      }).catch(e => {
-        afterStep?.complete({ error: e });
+      beforeStep = testInfo._addStep({
+        title: `fixture: ${this.registration.name}`,
+        category: 'fixture',
+        location: isInternalFixture ? this.registration.location : undefined,
+        wallTime: Date.now(),
       });
     }
+
+    this._selfTeardownComplete = (async () => {
+      try {
+        await this.registration.fn(params, useFunc, info);
+        afterStep?.complete({});
+      } catch (error) {
+        beforeStep?.complete({ error });
+        afterStep?.complete({ error });
+        this.failed = true;
+        if (!useFuncStarted.isDone())
+          useFuncStarted.reject(error);
+        else
+          throw error;
+      }
+    })();
+
+    await useFuncStarted;
     testInfo._timeoutManager.setCurrentFixture(undefined);
   }
 
