@@ -3456,11 +3456,11 @@ await page.GotoAsync("https://www.microsoft.com");
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
 
 ```js
-await page.route('/api/**', route => {
+await page.route('/api/**', async route => {
   if (route.request().postData().includes('my-string'))
-    route.fulfill({ body: 'mocked-data' });
+    await route.fulfill({ body: 'mocked-data' });
   else
-    route.continue();
+    await route.continue();
 });
 ```
 
@@ -3474,16 +3474,16 @@ page.route("/api/**", route -> {
 ```
 
 ```python async
-def handle_route(route):
+async def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
-    route.fulfill(body="mocked-data")
+    await route.fulfill(body="mocked-data")
   else:
-    route.continue_()
+    await route.continue_()
 await page.route("/api/**", handle_route)
 ```
 
 ```python sync
-def handle_route(route):
+def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
     route.fulfill(body="mocked-data")
   else:

@@ -495,10 +495,10 @@ await page.GotoAsync("https://example.com");
 
 ```js
 // Delete header
-await page.route('**/*', route => {
+await page.route('**/*', async route => {
   const headers = route.request().headers();
   delete headers['X-Secret'];
-  route.continue({ headers });
+  await route.continue({ headers });
 });
 
 // Continue requests as POST.
@@ -522,7 +522,7 @@ page.route("**/*", route -> route.resume(new Route.ResumeOptions().setMethod("PO
 async def handle_route(route):
     headers = route.request.headers
     del headers["x-secret"]
-    route.continue_(headers=headers)
+    await route.continue_(headers=headers)
 await page.route("**/*", handle_route)
 
 # Continue requests as POST.
@@ -617,7 +617,7 @@ await page.route('**/title.html', async route => {
   // Add a prefix to the title.
   let body = await response.text();
   body = body.replace('<title>', '<title>My prefix:');
-  route.fulfill({
+  await route.fulfill({
     // Pass all fields from the response.
     response,
     // Override response body.

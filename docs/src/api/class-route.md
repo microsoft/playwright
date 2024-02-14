@@ -92,11 +92,11 @@ page.route("**/*", handle)
 ```
 
 ```csharp
-await page.RouteAsync("**/*", route =>
+await page.RouteAsync("**/*", async route =>
 {
     var headers = new Dictionary<string, string>(route.Request.Headers) { { "foo", "bar" } };
     headers.Remove("origin");
-    route.ContinueAsync(headers);
+    await route.ContinueAsync(new() { Headers = headers });
 });
 ```
 
@@ -264,17 +264,17 @@ page.route("**/*", route -> {
 
 ```python async
 # Handle GET requests.
-def handle_get(route):
+async def handle_get(route):
     if route.request.method != "GET":
-        route.fallback()
+        await route.fallback()
         return
   # Handling GET only.
   # ...
 
 # Handle POST requests.
-def handle_post(route):
+async def handle_post(route):
     if route.request.method != "POST":
-        route.fallback()
+        await route.fallback()
         return
   # Handling POST only.
   # ...
@@ -378,11 +378,11 @@ page.route("**/*", handle)
 ```
 
 ```csharp
-await page.RouteAsync("**/*", route =>
+await page.RouteAsync("**/*", async route =>
 {
     var headers = new Dictionary<string, string>(route.Request.Headers) { { "foo", "foo-value" } };
     headers.Remove("bar");
-    route.FallbackAsync(headers);
+    await route.FallbackAsync(new() { Headers = headers });
 });
 ```
 

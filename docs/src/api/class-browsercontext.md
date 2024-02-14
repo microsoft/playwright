@@ -1120,11 +1120,11 @@ await browser.CloseAsync();
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
 
 ```js
-await context.route('/api/**', route => {
+await context.route('/api/**', async route => {
   if (route.request().postData().includes('my-string'))
-    route.fulfill({ body: 'mocked-data' });
+    await route.fulfill({ body: 'mocked-data' });
   else
-    route.continue();
+    await route.continue();
 });
 ```
 
@@ -1138,16 +1138,16 @@ context.route("/api/**", route -> {
 ```
 
 ```python async
-def handle_route(route):
+async def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
-    route.fulfill(body="mocked-data")
+    await route.fulfill(body="mocked-data")
   else:
-    route.continue_()
+    await route.continue_()
 await context.route("/api/**", handle_route)
 ```
 
 ```python sync
-def handle_route(route):
+def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
     route.fulfill(body="mocked-data")
   else:
