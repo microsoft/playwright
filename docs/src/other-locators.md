@@ -884,11 +884,6 @@ await page.Locator("data-test-id=submit").ClickAsync();
 Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css] selector, e.g. `css=[data-test="login"]:enabled`.
 :::
 
-:::note
-Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.locator('data-test-id:light=submit').click()`
-:::
-
-
 ## Chaining selectors
 
 :::warning
