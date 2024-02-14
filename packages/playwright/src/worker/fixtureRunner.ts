@@ -99,7 +99,8 @@ class Fixture {
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
           location: isInternalFixture ? this.registration.location : undefined,
-        }, testInfo._afterHooksStep);
+          isFixed: false,
+        }, 'fixedOnly');
         mutableStepOnStack!.stepId = afterStep.stepId;
       }
     };
@@ -124,7 +125,8 @@ class Fixture {
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
           location: isInternalFixture ? this.registration.location : undefined,
-        }, async step => {
+          isFixed: false,
+        }, 'fixedOnly', async step => {
           mutableStepOnStack = step;
           return await this.registration.fn(params, useFunc, info);
         });

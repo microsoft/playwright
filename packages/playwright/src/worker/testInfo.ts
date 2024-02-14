@@ -35,10 +35,10 @@ export interface TestStepInternal {
   title: string;
   category: string;
   wallTime: number;
+  isFixed: boolean;  // Fixed steps are defined by the test runner, e.g. "Before hooks".
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
-  laxParent?: boolean;
   endWallTime?: number;
   apiName?: string;
   params?: Record<string, any>;
@@ -65,8 +65,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   readonly _steps: TestStepInternal[] = [];
-  _beforeHooksStep: TestStepInternal | undefined;
-  _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
 
   _hasNonRetriableError = false;
@@ -249,24 +247,35 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
+  private _visitSteps(cb: (step: TestStepInternal) => void, steps?: TestStepInternal[]) {
+    (steps || this._steps).forEach(step => {
+      cb(step);
+      this._visitSteps(cb, step.steps);
+    });
+  }
+
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parent: 'lax' | 'fixedOnly' | 'none' | 'strict'): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
     const rawStack = captureRawStack();
-    if (!parentStep)
-      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
+    let parentStep: TestStepInternal | undefined;
 
-    // For out-of-stack calls, locate the enclosing step.
-    let isLaxParent = false;
-    if (!parentStep && data.laxParent) {
-      const visit = (step: TestStepInternal) => {
-        // Do not nest chains of route.continue.
-        const shouldNest = step.title !== data.title;
+    if (parent === 'strict' || parent === 'lax') {
+      // Find a zone-based parent.
+      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
+    }
+    if (!parentStep && parent !== 'none') {
+      // Find the last non-finished internal/any step.
+      this._visitSteps(step => {
+        let shouldNest: boolean;
+        if (parent === 'lax') {
+          // Do not nest chains of route.continue.
+          shouldNest = step.title !== data.title;
+        } else {
+          shouldNest = step.isFixed;
+        }
         if (!step.endWallTime && shouldNest)
           parentStep = step;
-        step.steps.forEach(visit);
-      };
-      this._steps.forEach(visit);
-      isLaxParent = !!parentStep;
+      });
     }
 
     const filteredStack = filteredStackTrace(rawStack);
@@ -280,7 +289,6 @@ export class TestInfoImpl implements TestInfo {
     const step: TestStepInternal = {
       stepId,
       ...data,
-      laxParent: isLaxParent,
       steps: [],
       complete: result => {
         if (step.endWallTime)
@@ -370,22 +378,22 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _runAsStepWithRunnable<T>(
-    stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & {
+    stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps' | 'isFixed'> & {
       wallTime?: number,
       runnableType: RunnableType;
       runnableSlot?: TimeSlot;
-    }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+    }, parent: 'lax' | 'fixedOnly' | 'none' | 'strict', cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
     return await this._timeoutManager.withRunnable({
       type: stepInfo.runnableType,
       slot: stepInfo.runnableSlot,
       location: stepInfo.location,
     }, async () => {
-      return await this._runAsStep(stepInfo, cb);
+      return await this._runAsStep({ ...stepInfo, isFixed: true }, parent, cb);
     });
   }
 
-  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
-    const step = this._addStep({ wallTime: Date.now(), ...stepInfo });
+  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, parent: 'lax' | 'fixedOnly' | 'none' | 'strict', cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+    const step = this._addStep({ wallTime: Date.now(), ...stepInfo }, parent);
     return await zones.run('stepZone', step, async () => {
       try {
         const result = await cb(step);
@@ -413,8 +421,8 @@ export class TestInfoImpl implements TestInfo {
       title: `attach "${name}"`,
       category: 'attach',
       wallTime: Date.now(),
-      laxParent: true,
-    });
+      isFixed: false,
+    }, 'lax');
     this._attachmentsPush(attachment);
     this._onAttach({
       testId: this._test.id,

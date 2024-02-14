@@ -357,9 +357,7 @@ export class WorkerMain extends ProcessRunner {
       await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
-      await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
-        testInfo._beforeHooksStep = step;
-
+      await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks', isFixed: true }, 'fixedOnly', async step => {
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites) {
           didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
@@ -416,8 +414,7 @@ export class WorkerMain extends ProcessRunner {
 
     // A timed-out test gets a full additional timeout to run after hooks.
     const afterHooksSlot = testInfo._didTimeout ? { timeout: this._project.project.timeout, elapsed: 0 } : undefined;
-    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterHooks', runnableSlot: afterHooksSlot }, async step => {
-      testInfo._afterHooksStep = step;
+    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterHooks', runnableSlot: afterHooksSlot }, 'none', async step => {
       let firstAfterHooksError: Error | undefined;
       await testInfo._runWithTimeout(async () => {
         // Note: do not wrap all teardown steps together, because failure in any of them
@@ -551,7 +548,7 @@ export class WorkerMain extends ProcessRunner {
           location: hook.location,
           runnableType: hook.type,
           runnableSlot: timeSlot,
-        }, async () => {
+        }, 'fixedOnly', async () => {
           const existingAnnotations = new Set(testInfo.annotations);
           try {
             await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
@@ -593,7 +590,7 @@ export class WorkerMain extends ProcessRunner {
           title: hook.title,
           location: hook.location,
           runnableType: hook.type,
-        }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
+        }, 'fixedOnly', () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         error = error || e;
