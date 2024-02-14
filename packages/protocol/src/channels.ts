@@ -2174,6 +2174,8 @@ export type PagePdfParams = {
     left?: string,
     right?: string,
   },
+  tagged?: boolean,
+  outline?: boolean,
 };
 export type PagePdfOptions = {
   scale?: number,
@@ -2193,6 +2195,8 @@ export type PagePdfOptions = {
     left?: string,
     right?: string,
   },
+  tagged?: boolean,
+  outline?: boolean,
 };
 export type PagePdfResult = {
   pdf: Binary,

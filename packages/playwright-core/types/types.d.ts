@@ -3493,6 +3493,11 @@ export interface Page {
     };
 
     /**
+     * Whether or not to embed the document outline into the PDF. Defaults to `false`.
+     */
+    outline?: boolean;
+
+    /**
      * Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
      */
     pageRanges?: string;
@@ -3518,6 +3523,11 @@ export interface Page {
      * Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
      */
     scale?: number;
+
+    /**
+     * Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
+     */
+    tagged?: boolean;
 
     /**
      * Paper width, accepts values labeled with units.
