@@ -3340,6 +3340,7 @@ Function that should be run once [`param: locator`] appears. This function shoul
 
 ### param: Page.addLocatorHandler.handler
 * langs: java
+* since: v1.42
 - `handler` <[Runnable]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
