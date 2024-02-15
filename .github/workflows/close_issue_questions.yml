@@ -1,0 +1,29 @@
+name: Close Issue on Specific Text
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+    issues: write
+
+jobs:
+  close_issue_if_forbidden_text_found:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue with specific text
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const forbiddenText = 'Please do not submit this issue.';
+            
+            if (!issueBody.includes(forbiddenText))
+              return;
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              state: 'closed'
+            });
+          github-token: ${{ secrets.GITHUB_TOKEN }}
