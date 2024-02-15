@@ -47,8 +47,8 @@ class Reporter {
   distillError(error) {
     return {
       error: {
-        message: stripAnsi(error.message),
-        stack: stripAnsi(error.stack),
+        message: stripAnsi(error.message || ''),
+        stack: stripAnsi(error.stack || ''),
       }
     };
   }
@@ -350,6 +350,12 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
           title: 'fixture: browser',
         },
       ],
+    },
+    {
+      error: {
+        message: 'Test timeout of 2000ms exceeded.',
+        stack: ''
+      },
     },
   ]);
 });
@@ -972,6 +978,18 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         },
       ],
     },
+    {
+      error: {
+        message: 'Test timeout of 2000ms exceeded.',
+        stack: '',
+      },
+    },
+    {
+      error: {
+        message: expect.stringContaining('Error: page.click'),
+        stack: expect.stringContaining('Error: page.click'),
+      },
+    },
   ]);
 });
 
@@ -1172,7 +1190,7 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
             expect.soft(1).toBe(2);
           });
         });
-      
+
         await test.step('second outer', async () => {
           await test.step('second inner', async () => {
             expect(1).toBe(2);
@@ -1267,7 +1285,7 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
             }
           });
         });
-      
+
         await test.step('second outer', async () => {
           await test.step('second inner', async () => {
             expect(1).toBe(2);
