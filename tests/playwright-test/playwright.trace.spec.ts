@@ -921,7 +921,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
         });
       });
     `,
-  }, { workers: 1 }, { DEBUG: 'pw:test' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);

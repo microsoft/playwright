@@ -256,8 +256,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           apiName,
           params,
           wallTime,
-          isFixed: false,
-        }, 'lax');
+        });
         userData.userObject = step;
       },
       onApiCallEnd: (userData: any, error?: Error) => {

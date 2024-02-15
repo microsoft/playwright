@@ -268,10 +268,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         wallTime,
         infectParentStepsWithError: this._info.isSoft,
         isSoft: this._info.isSoft,
-        isFixed: false,
       };
 
-      const step = testInfo._addStep(stepInfo, 'lax');
+      const step = testInfo._addStep(stepInfo);
 
       const reportStepError = (jestError: ExpectError) => {
         const error = new ExpectError(jestError, customMessage, stackFrames);

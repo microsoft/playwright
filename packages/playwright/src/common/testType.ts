@@ -263,7 +263,7 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._runAsStep({ category: 'test.step', title, box: options.box, isFixed: false }, 'strict', async () => {
+    return testInfo._runAsStep({ category: 'test.step', title, box: options.box }, async () => {
       // Make sure that internal "step" is not leaked to the user callback.
       return await body();
     });
