@@ -354,7 +354,7 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
     {
       error: {
         message: 'Test timeout of 2000ms exceeded.',
-        stack: ''
+        stack: 'Test timeout of 2000ms exceeded.',
       },
     },
   ]);
@@ -981,7 +981,7 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
     {
       error: {
         message: 'Test timeout of 2000ms exceeded.',
-        stack: '',
+        stack: 'Test timeout of 2000ms exceeded.',
       },
     },
     {

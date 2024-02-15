@@ -16,7 +16,6 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils';
-import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 export type TimeSlot = {
@@ -86,7 +85,7 @@ export class TimeoutManager {
     this._timeoutRunner.updateTimeout(slot.timeout);
   }
 
-  async runWithTimeout(cb: () => Promise<any>): Promise<TestInfoError | undefined> {
+  async runWithTimeout(cb: () => Promise<any>): Promise<Error | undefined> {
     try {
       await this._timeoutRunner.run(cb);
     } catch (error) {
@@ -127,7 +126,7 @@ export class TimeoutManager {
     this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
   }
 
-  private _createTimeoutError(): TestInfoError {
+  private _createTimeoutError(): Error {
     let message = '';
     const timeout = this._currentSlot().timeout;
     switch (this._runnable.type) {
@@ -174,10 +173,10 @@ export class TimeoutManager {
       message = `Fixture "${fixtureWithSlot.title}" timeout of ${timeout}ms exceeded during ${fixtureWithSlot.phase}.`;
     message = colors.red(message);
     const location = (fixtureWithSlot || this._runnable).location;
-    return {
-      message,
-      // Include location for hooks, modifiers and fixtures to distinguish between them.
-      stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined
-    };
+    const error = new Error(message);
+    error.name = '';
+    // Include location for hooks, modifiers and fixtures to distinguish between them.
+    error.stack = message + (location ? `\n    at ${location.file}:${location.line}:${location.column}` : '');
+    return error;
   }
 }

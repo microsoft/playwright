@@ -31,13 +31,14 @@ const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
 export function filterStackTrace(e: Error): { message: string, stack: string } {
+  const name = e.name ? e.name + ': ' : '';
   if (process.env.PWDEBUGIMPL)
-    return { message: e.name + ': ' + e.message, stack: e.stack || '' };
+    return { message: name + e.message, stack: e.stack || '' };
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
-    message: e.name + ': ' + e.message,
-    stack: `${e.name}: ${e.message}\n${stackLines.join('\n')}`
+    message: name + e.message,
+    stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`
   };
 }
 
