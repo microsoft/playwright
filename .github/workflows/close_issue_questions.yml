@@ -16,9 +16,7 @@ jobs:
         with:
           script: |
             const issueBody = context.payload.issue.body;
-            const forbiddenText = 'Please do not submit this issue.';
-            
-            if (!issueBody.includes(forbiddenText))
+            if (!issueBody.includes('Please do not submit this issue.') || !issueBody.includes('This issue tracker is reserved for bug reports and feature requests.'))
               return;
             await github.rest.issues.update({
               owner: context.repo.owner,
