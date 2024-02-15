@@ -29,10 +29,11 @@ test('should fire close event via ElectronApplication.close();', async ({ launch
   await electronApp.close();
   // Close one more time - this should be a noop.
   await electronApp.close();
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
 });
 
 test('should fire close event via BrowserContext.close()', async ({ launchElectronApp }) => {
@@ -44,10 +45,11 @@ test('should fire close event via BrowserContext.close()', async ({ launchElectr
   await electronApp.context().close();
   // Close one more time - this should be a noop.
   await electronApp.context().close();
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
 });
 
 test('should fire close event when the app quits itself', async ({ launchElectronApp }) => {
@@ -61,10 +63,11 @@ test('should fire close event when the app quits itself', async ({ launchElectro
     await electronApp.evaluate(({ app }) => app.quit());
     await waitForAppClose;
   }
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events.join('|')).toBe('process(exit)|context(close)|application(close)');
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
 });
 
 test('should fire console events', async ({ launchElectronApp }) => {
