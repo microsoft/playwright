@@ -18,7 +18,7 @@ import assert from 'assert';
 import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
 
 export default async () => {
-  const result = await spawnAsync('npx', ['electron', require.resolve('./electron-print-chromium-version.js')], {
+  const result = await spawnAsync('npx', ['electron', require.resolve('./electron-print-chromium-version.js'), '--no-sandbox'], {
     shell: true,
   });
   const chromiumVersion = result.stdout.trim();
