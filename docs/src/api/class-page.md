@@ -2989,13 +2989,13 @@ Give any CSS `@page` size declared in the page priority over what is declared in
 size.
 
 ### option: Page.pdf.tagged
-* since: v1.X
+* since: v1.42
 - `tagged` <[boolean]>
 
 Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
 
 ### option: Page.pdf.outline
-* since: v1.X
+* since: v1.42
 - `outline` <[boolean]>
 
 Whether or not to embed the document outline into the PDF. Defaults to `false`.
