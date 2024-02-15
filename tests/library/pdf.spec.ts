@@ -26,3 +26,18 @@ it('should be able to save file', async ({ contextFactory, headless, browserName
   await page.pdf({ path: outputFile });
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
+
+it('should be able to generate outline', async ({ contextFactory, server, headless, browserName }, testInfo) => {
+  it.skip(!headless || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
+  // const context = await contextFactory();
+  const context = await contextFactory({
+    baseURL: server.PREFIX,
+  });
+  const page = await context.newPage();
+  await page.goto('/headings.html');
+  const outputFileNoOutline = testInfo.outputPath('outputNoOutline.pdf');
+  const outputFileOutline = testInfo.outputPath('outputOutline.pdf');
+  await page.pdf({ path: outputFileNoOutline });
+  await page.pdf({ path: outputFileOutline, tagged: true, outline: true });
+  expect(fs.readFileSync(outputFileOutline).byteLength).toBeGreaterThan(fs.readFileSync(outputFileNoOutline).byteLength);
+});

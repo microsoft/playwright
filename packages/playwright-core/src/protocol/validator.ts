@@ -1203,6 +1203,8 @@ scheme.PagePdfParams = tObject({
     left: tOptional(tString),
     right: tOptional(tString),
   })),
+  tagged: tOptional(tBoolean),
+  outline: tOptional(tBoolean),
 });
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
