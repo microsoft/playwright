@@ -170,7 +170,7 @@ export class WorkerMain extends ProcessRunner {
         await this._fixtureRunner.teardownScope('worker', timeoutManager, e => this._fatalErrors.push(serializeError(e)));
       });
       if (timeoutError)
-        this._fatalErrors.push(timeoutError);
+        this._fatalErrors.push(serializeError(timeoutError));
     });
   }
 

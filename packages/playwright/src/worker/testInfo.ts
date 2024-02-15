@@ -226,8 +226,9 @@ export class TestInfoImpl implements TestInfo {
     // consider it a timeout.
     if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
-      this.errors.push(timeoutError);
-      this._tracing.appendForError(timeoutError);
+      const serialized = serializeError(timeoutError);
+      this.errors.push(serialized);
+      this._tracing.appendForError(serialized);
       // Do not overwrite existing failure upon hook/teardown timeout.
       if (this.status === 'passed' || this.status === 'skipped')
         this.status = 'timedOut';
