@@ -86,7 +86,7 @@ Learn more about [test retries](../test-retries.md#retries).
 * since: v1.42
 - type: <[Array]<[string]>>
 
-The list of tags defined on the test or suite via [`method: Test.(call)`] or [`method: Test.describe`].
+The list of tags defined on the test or suite via [`method: Test.(call)`] or [`method: Test.describe`], as well as `@`-tokens extracted from test and suite titles.
 
 Learn more about [test tags](../test-annotations.md#tag-tests).
 

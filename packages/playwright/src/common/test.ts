@@ -48,7 +48,9 @@ export class Suite extends Base implements SuitePrivate {
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, title: string, location: Location }[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
+  // Annotations known statically before running the test, e.g. `test.describe.skip()` or `test.describe({ annotation }, body)`.
   _staticAnnotations: Annotation[] = [];
+  // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
@@ -122,6 +124,14 @@ export class Suite extends Base implements SuitePrivate {
     if (this.title || this._type !== 'describe')
       titlePath.push(this.title);
     return titlePath;
+  }
+
+  _collectGrepTitlePath(path: string[]) {
+    if (this.parent)
+      this.parent._collectGrepTitlePath(path);
+    if (this.title || this._type !== 'describe')
+      path.push(this.title);
+    path.push(...this._tags);
   }
 
   _getOnlyItems(): (TestCase | Suite)[] {
@@ -237,7 +247,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   annotations: Annotation[] = [];
   retries = 0;
   repeatEachIndex = 0;
-  tags: string[] = [];
 
   _testType: TestTypeImpl;
   id = '';
@@ -245,8 +254,10 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _poolDigest = '';
   _workerHash = '';
   _projectId = '';
-  // Annotations known statically before running the test, e.g. `test.skip()` or `test.describe.skip()`.
+  // Annotations known statically before running the test, e.g. `test.skip()` or `test(title, { annotation }, body)`.
   _staticAnnotations: Annotation[] = [];
+  // Explicitly declared tags that are not a part of the title.
+  _tags: string[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
@@ -284,6 +295,10 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
+  get tags(): string[] {
+    return this._grepTitle().match(/@[\S]+/g) || [];
+  }
+
   _serialize(): any {
     return {
       kind: 'test',
@@ -299,7 +314,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       workerHash: this._workerHash,
       staticAnnotations: this._staticAnnotations.slice(),
       annotations: this.annotations.slice(),
-      tags: this.tags.slice(),
+      tags: this._tags.slice(),
       projectId: this._projectId,
     };
   }
@@ -316,7 +331,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._workerHash = data.workerHash;
     test._staticAnnotations = data.staticAnnotations;
     test.annotations = data.annotations;
-    test.tags = data.tags;
+    test._tags = data.tags;
     test._projectId = data.projectId;
     return test;
   }
@@ -345,5 +360,13 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     };
     this.results.push(result);
     return result;
+  }
+
+  _grepTitle() {
+    const path: string[] = [];
+    this.parent._collectGrepTitlePath(path);
+    path.push(this.title);
+    path.push(...this._tags);
+    return path.join(' ');
   }
 }

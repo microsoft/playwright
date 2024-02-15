@@ -25,15 +25,9 @@ export function testCaseLabels(test: TestCaseSummary): string[] {
     if (test.botName)
       labels.push('@' + test.botName);
     labels.push(...test.tags);
-    labels.push(...matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b)));
     (test as any)[labelsSymbol] = labels;
   }
   return (test as any)[labelsSymbol];
-}
-
-// match all tags in test title
-function matchTags(title: string): string[] {
-  return title.match(/@([\S]+)/g) || [];
 }
 
 // hash string to integer in range [0, 6] for color index, to get same color for same tag

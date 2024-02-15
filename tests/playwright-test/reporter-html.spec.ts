@@ -1150,64 +1150,64 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await expect(page.locator('.test-file-test', { has: page.getByText('@regression @failed failed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
-          'foo',
-          'failed',
           'regression',
+          'failed',
+          'foo',
           'firefox',
-          'foo',
-          'failed',
           'regression',
-          'webkit',
-          'foo',
           'failed',
-          'regression'
+          'foo',
+          'webkit',
+          'regression',
+          'failed',
+          'foo',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@regression @flaky flaky', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
-          'flaky',
           'regression',
+          'flaky',
           'firefox',
-          'flaky',
           'regression',
+          'flaky',
           'webkit',
-          'flaky',
           'regression',
+          'flaky',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@regression skipped', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
+          'regression',
           'foo',
           'bar',
-          'regression',
           'firefox',
+          'regression',
           'foo',
           'bar',
-          'regression',
           'webkit',
+          'regression',
           'foo',
           'bar',
-          'regression',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
-          'passed',
           'smoke',
+          'passed',
           'firefox',
-          'passed',
           'smoke',
-          'webkit',
           'passed',
-          'smoke'
+          'webkit',
+          'smoke',
+          'passed',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @failed failed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
-          'failed',
           'smoke',
+          'failed',
           'firefox',
-          'failed',
           'smoke',
+          'failed',
           'webkit',
-          'failed',
           'smoke',
+          'failed',
         ]);
       });
 
@@ -1961,7 +1961,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page).toHaveURL(/testId/);
         await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Notifications');
         await expect(page.locator('.test-case-title')).toHaveText('Test failed -- @call @call-details @e2e @regression #VQ458');
-        await expect(page.locator('.label')).toHaveText(['chromium', 'call', 'call-details', 'e2e', 'Notifications', 'regression']);
+        await expect(page.locator('.label')).toHaveText(['chromium', 'Notifications', 'call', 'call-details', 'e2e', 'regression']);
 
         await page.goBack();
         await expect(page).not.toHaveURL(/testId/);
@@ -1973,7 +1973,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page).toHaveURL(/testId/);
         await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Monitoring');
         await expect(page.locator('.test-case-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
-        await expect(page.locator('.label')).toHaveText(['firefox', 'call', 'call-details', 'e2e', 'Monitoring', 'regression']);
+        await expect(page.locator('.label')).toHaveText(['firefox', 'Monitoring', 'call', 'call-details', 'e2e', 'regression']);
       });
     });
 

@@ -200,7 +200,8 @@ export interface TestCase {
   /**
    * The list of tags defined on the test or suite via
    * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) or
-   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe).
+   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe), as well as
+   * `@`-tokens extracted from test and suite titles.
    *
    * Learn more about [test tags](https://playwright.dev/docs/test-annotations#tag-tests).
    */

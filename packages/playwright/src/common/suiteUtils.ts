@@ -61,11 +61,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
     let inheritedTimeout: number | undefined;
+    test.annotations = [];
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
       if (parentSuite._staticAnnotations.length)
-        test._staticAnnotations = [...parentSuite._staticAnnotations, ...test._staticAnnotations];
-      if (parentSuite._tags.length)
-        test.tags = [...parentSuite._tags, ...test.tags];
+        test.annotations = [...parentSuite._staticAnnotations, ...test.annotations];
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
         inheritedRetries = parentSuite._retries;
       if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)
@@ -73,10 +72,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     }
     test.retries = inheritedRetries ?? project.project.retries;
     test.timeout = inheritedTimeout ?? project.project.timeout;
-    test.annotations = [...test._staticAnnotations];
+    test.annotations.push(...test._staticAnnotations);
 
     // Skip annotations imply skipped expectedStatus.
-    if (test._staticAnnotations.some(a => a.type === 'skip' || a.type === 'fixme'))
+    if (test.annotations.some(a => a.type === 'skip' || a.type === 'fixme'))
       test.expectedStatus = 'skipped';
 
     // We only compute / set digest in the runner.
