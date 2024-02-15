@@ -99,7 +99,7 @@ class Fixture {
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
           location: isInternalFixture ? this.registration.location : undefined,
-        }, testInfo._afterHooksStep);
+        });
         mutableStepOnStack!.stepId = afterStep.stepId;
       }
     };

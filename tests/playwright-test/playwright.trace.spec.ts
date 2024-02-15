@@ -330,8 +330,8 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '    fixture: request',
     '      apiRequest.newContext',
     '    apiRequestContext.get',
-    '  fixture: request',
-    '    apiRequestContext.dispose',
+    '    fixture: request',
+    '      apiRequestContext.dispose',
     '  fixture: browser',
   ]);
   expect(trace1.errors).toEqual([`'oh no!'`]);
@@ -835,4 +835,156 @@ test('should not throw when merging traces multiple times', async ({ runInlineTe
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-foo', 'trace.zip'))).toBe(true);
+});
+
+test('should record nested steps, even after timeout', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { trace: { mode: 'on' } },
+        timeout: 5000,
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fooPage: async ({ page }, use) => {
+          expect(1, 'fooPage setup').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await page.setContent('hello');
+          await test.step('step in fooPage setup', async () => {
+            await page.setContent('bar');
+          });
+          await use(page);
+          expect(1, 'fooPage teardown').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await page.setContent('hi');
+          await test.step('step in fooPage teardown', async () => {
+            await page.setContent('bar');
+          });
+        },
+        barPage: async ({ browser }, use) => {
+          expect(1, 'barPage setup').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          const page = await browser.newPage();
+          await test.step('step in barPage setup', async () => {
+            await page.setContent('bar');
+          });
+          await use(page);
+          expect(1, 'barPage teardown').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await test.step('step in barPage teardown', async () => {
+            await page.close();
+          });
+        },
+      });
+
+      test.beforeAll(async ({ barPage }) => {
+        expect(1, 'beforeAll start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await barPage.setContent('hello');
+        await test.step('step in beforeAll', async () => {
+          await barPage.setContent('bar');
+        });
+      });
+
+      test.beforeEach(async ({ fooPage }) => {
+        expect(1, 'beforeEach start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await fooPage.setContent('hello');
+        await test.step('step in beforeEach', async () => {
+          await fooPage.setContent('hi');
+          // Next line times out. We make sure that after hooks steps
+          // form the expected step tree even when some previous steps have not finished.
+          await new Promise(() => {});
+        });
+      });
+
+      test('example', async ({ fooPage }) => {
+      });
+
+      test.afterEach(async ({ fooPage }) => {
+        expect(1, 'afterEach start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await fooPage.setContent('hello');
+        await test.step('step in afterEach', async () => {
+          await fooPage.setContent('bar');
+        });
+      });
+
+      test.afterAll(async ({ barPage }) => {
+        expect(1, 'afterAll start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await barPage.setContent('hello');
+        await test.step('step in afterAll', async () => {
+          await barPage.setContent('bar');
+        });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-example', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  beforeAll hook',
+    '    fixture: browser',
+    '      browserType.launch',
+    '    fixture: barPage',
+    '      barPage setup',
+    '      browser.newPage',
+    '      step in barPage setup',
+    '        page.setContent',
+    '    beforeAll start',
+    '    page.setContent',
+    '    step in beforeAll',
+    '      page.setContent',
+    '    fixture: barPage',
+    '      barPage teardown',
+    '      step in barPage teardown',
+    '        page.close',
+    '  beforeEach hook',
+    '    fixture: context',
+    '      browser.newContext',
+    '    fixture: page',
+    '      browserContext.newPage',
+    '    fixture: fooPage',
+    '      fooPage setup',
+    '      page.setContent',
+    '      step in fooPage setup',
+    '        page.setContent',
+    '    beforeEach start',
+    '    page.setContent',
+    '    step in beforeEach',
+    '      page.setContent',
+    'After Hooks',
+    '  afterEach hook',
+    '    afterEach start',
+    '    page.setContent',
+    '    step in afterEach',
+    '      page.setContent',
+    '  fixture: fooPage',
+    '    fooPage teardown',
+    '    page.setContent',
+    '    step in fooPage teardown',
+    '      page.setContent',
+    '  fixture: page',
+    '  fixture: context',
+    '  afterAll hook',
+    '    fixture: barPage',
+    '      barPage setup',
+    '      browser.newPage',
+    '      step in barPage setup',
+    '        page.setContent',
+    '    afterAll start',
+    '    page.setContent',
+    '    step in afterAll',
+    '      page.setContent',
+    '    fixture: barPage',
+    '      barPage teardown',
+    '      step in barPage teardown',
+    '        page.close',
+    '  fixture: browser',
+  ]);
 });

@@ -358,8 +358,6 @@ export class WorkerMain extends ProcessRunner {
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
-        testInfo._beforeHooksStep = step;
-
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites) {
           didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
@@ -416,8 +414,7 @@ export class WorkerMain extends ProcessRunner {
 
     // A timed-out test gets a full additional timeout to run after hooks.
     const afterHooksSlot = testInfo._didTimeout ? { timeout: this._project.project.timeout, elapsed: 0 } : undefined;
-    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterHooks', runnableSlot: afterHooksSlot }, async step => {
-      testInfo._afterHooksStep = step;
+    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterHooks', runnableSlot: afterHooksSlot, forceNoParent: true }, async step => {
       let firstAfterHooksError: Error | undefined;
       await testInfo._runWithTimeout(async () => {
         // Note: do not wrap all teardown steps together, because failure in any of them

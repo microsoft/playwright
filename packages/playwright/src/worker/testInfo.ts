@@ -33,12 +33,11 @@ export interface TestStepInternal {
   complete(result: { error?: Error, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
-  category: string;
+  category: 'hook' | 'fixture' | 'test.step' | string;
   wallTime: number;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
-  laxParent?: boolean;
   endWallTime?: number;
   apiName?: string;
   params?: Record<string, any>;
@@ -46,6 +45,7 @@ export interface TestStepInternal {
   infectParentStepsWithError?: boolean;
   box?: boolean;
   isSoft?: boolean;
+  forceNoParent?: boolean;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -65,8 +65,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   readonly _steps: TestStepInternal[] = [];
-  _beforeHooksStep: TestStepInternal | undefined;
-  _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
 
   _hasNonRetriableError = false;
@@ -250,24 +248,40 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
+  private _findLastNonFinishedStep(filter: (step: TestStepInternal) => boolean) {
+    let result: TestStepInternal | undefined;
+    const visit = (step: TestStepInternal) => {
+      if (!step.endWallTime && filter(step))
+        result = step;
+      step.steps.forEach(visit);
+    };
+    this._steps.forEach(visit);
+    return result;
+  }
+
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
     const rawStack = captureRawStack();
-    if (!parentStep)
-      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
 
-    // For out-of-stack calls, locate the enclosing step.
-    let isLaxParent = false;
-    if (!parentStep && data.laxParent) {
-      const visit = (step: TestStepInternal) => {
-        // Do not nest chains of route.continue.
-        const shouldNest = step.title !== data.title;
-        if (!step.endWallTime && shouldNest)
-          parentStep = step;
-        step.steps.forEach(visit);
-      };
-      this._steps.forEach(visit);
-      isLaxParent = !!parentStep;
+    let parentStep: TestStepInternal | undefined;
+    if (data.category === 'hook' || data.category === 'fixture') {
+      // Predefined steps form a fixed hierarchy - find the last non-finished one.
+      parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
+    } else {
+      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
+      if (!parentStep) {
+        if (data.category === 'test.step') {
+          // Nest test.step without a good stack in the last non-finished predefined step like a hook.
+          parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
+        } else {
+          // Do not nest chains of route.continue.
+          parentStep = this._findLastNonFinishedStep(step => step.title !== data.title);
+        }
+      }
+    }
+    if (data.forceNoParent) {
+      // This is used to reset step hierarchy after test timeout.
+      parentStep = undefined;
     }
 
     const filteredStack = filteredStackTrace(rawStack);
@@ -281,7 +295,6 @@ export class TestInfoImpl implements TestInfo {
     const step: TestStepInternal = {
       stepId,
       ...data,
-      laxParent: isLaxParent,
       steps: [],
       complete: result => {
         if (step.endWallTime)
@@ -414,7 +427,6 @@ export class TestInfoImpl implements TestInfo {
       title: `attach "${name}"`,
       category: 'attach',
       wallTime: Date.now(),
-      laxParent: true,
     });
     this._attachmentsPush(attachment);
     this._onAttach({

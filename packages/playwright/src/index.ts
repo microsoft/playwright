@@ -256,7 +256,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           apiName,
           params,
           wallTime,
-          laxParent: true,
         });
         userData.userObject = step;
       },
