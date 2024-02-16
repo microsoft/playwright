@@ -17,7 +17,7 @@
 import { formatLocation, debugTest, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
-import type { FixtureDescription, TimeoutManager } from './timeoutManager';
+import type { FixtureDescription } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -136,21 +136,21 @@ class Fixture {
     testInfo._timeoutManager.setCurrentFixture(undefined);
   }
 
-  async teardown(timeoutManager: TimeoutManager) {
+  async teardown(testInfo: TestInfoImpl) {
     if (this._teardownWithDepsComplete) {
       // When we are waiting for the teardown for the second time,
       // most likely after the first time did timeout, annotate current fixture
       // for better error messages.
-      this._setTeardownDescription(timeoutManager);
+      this._setTeardownDescription(testInfo);
       await this._teardownWithDepsComplete;
-      timeoutManager.setCurrentFixture(undefined);
+      testInfo._timeoutManager.setCurrentFixture(undefined);
       return;
     }
-    this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
+    this._teardownWithDepsComplete = this._teardownInternal(testInfo);
     await this._teardownWithDepsComplete;
   }
 
-  private async _teardownInternal(timeoutManager: TimeoutManager) {
+  private async _teardownInternal(testInfo: TestInfoImpl) {
     if (typeof this.registration.fn !== 'function')
       return;
     try {
@@ -161,10 +161,10 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._setTeardownDescription(timeoutManager);
+        this._setTeardownDescription(testInfo);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
-        timeoutManager.setCurrentFixture(undefined);
+        testInfo._timeoutManager.setCurrentFixture(undefined);
       }
     } finally {
       for (const dep of this._deps)
@@ -173,9 +173,9 @@ class Fixture {
     }
   }
 
-  private _setTeardownDescription(timeoutManager: TimeoutManager) {
+  private _setTeardownDescription(testInfo: TestInfoImpl) {
     this._runnableDescription.phase = 'teardown';
-    timeoutManager.setCurrentFixture(this._runnableDescription);
+    testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
   }
 
   _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
@@ -206,14 +206,14 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  async teardownScope(scope: FixtureScope, timeoutManager: TimeoutManager, onFixtureError: (error: Error) => void) {
+  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, onFixtureError: (error: Error) => void) {
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
     for (const fixture of collector)
-      await fixture.teardown(timeoutManager).catch(onFixtureError);
+      await fixture.teardown(testInfo).catch(onFixtureError);
     if (scope === 'test')
       this.testScopeClean = true;
   }

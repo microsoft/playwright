@@ -24,7 +24,6 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
-import { TimeoutManager } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
@@ -53,7 +52,7 @@ export class WorkerMain extends ProcessRunner {
   // This promise resolves once the single "run test group" call finishes.
   private _runFinished = new ManualPromise<void>();
   private _currentTest: TestInfoImpl | null = null;
-  private _lastRunningTests: TestInfoImpl[] = [];
+  private _lastRunningTests: TestCase[] = [];
   private _totalRunningTests = 0;
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
@@ -129,7 +128,7 @@ export class WorkerMain extends ProcessRunner {
       '',
       '',
       colors.red(`Failed worker ran ${count}${lastMessage}:`),
-      ...this._lastRunningTests.map(testInfo => formatTestTitle(testInfo._test, testInfo.project.name)),
+      ...this._lastRunningTests.map(test => formatTestTitle(test, this._project.project.name)),
     ].join('\n');
     if (error.message) {
       if (error.stack) {
@@ -153,7 +152,7 @@ export class WorkerMain extends ProcessRunner {
 
   private async _teardownScopeAndReturnFirstError(scope: FixtureScope, testInfo: TestInfoImpl): Promise<Error | undefined> {
     let error: Error | undefined;
-    await this._fixtureRunner.teardownScope(scope, testInfo._timeoutManager, e => {
+    await this._fixtureRunner.teardownScope(scope, testInfo, e => {
       testInfo._failWithError(e, true, false);
       if (error === undefined)
         error = e;
@@ -163,15 +162,14 @@ export class WorkerMain extends ProcessRunner {
 
   private async _teardownScopes() {
     // TODO: separate timeout for teardown?
-    const timeoutManager = new TimeoutManager(this._project.project.timeout);
-    await timeoutManager.withRunnable({ type: 'teardown' }, async () => {
-      const timeoutError = await timeoutManager.runWithTimeout(async () => {
-        await this._fixtureRunner.teardownScope('test', timeoutManager, e => this._fatalErrors.push(serializeError(e)));
-        await this._fixtureRunner.teardownScope('worker', timeoutManager, e => this._fatalErrors.push(serializeError(e)));
+    const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
+    await fakeTestInfo._timeoutManager.withRunnable({ type: 'teardown' }, async () => {
+      await fakeTestInfo._runWithTimeout(async () => {
+        await this._teardownScopeAndReturnFirstError('test', fakeTestInfo);
+        await this._teardownScopeAndReturnFirstError('worker', fakeTestInfo);
       });
-      if (timeoutError)
-        this._fatalErrors.push(serializeError(timeoutError));
     });
+    this._fatalErrors.push(...fakeTestInfo.errors);
   }
 
   unhandledError(error: Error | any) {
@@ -322,7 +320,7 @@ export class WorkerMain extends ProcessRunner {
     }
 
     this._totalRunningTests++;
-    this._lastRunningTests.push(testInfo);
+    this._lastRunningTests.push(test);
     if (this._lastRunningTests.length > 10)
       this._lastRunningTests.shift();
     let didFailBeforeAllForSuite: Suite | undefined;
@@ -603,14 +601,14 @@ export class WorkerMain extends ProcessRunner {
 
 function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   return {
-    testId: testInfo._test.id,
+    testId: testInfo.testId,
     startWallTime: testInfo._startWallTime,
   };
 }
 
 function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
   return {
-    testId: testInfo._test.id,
+    testId: testInfo.testId,
     duration: testInfo.duration,
     status: testInfo.status!,
     errors: testInfo.errors,
