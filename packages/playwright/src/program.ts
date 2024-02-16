@@ -70,7 +70,7 @@ function addListFilesCommand(program: Command) {
 }
 
 function addClearCacheCommand(program: Command) {
-  const command = program.command('clear-cache');
+  const command = program.command('clear-cache', { hidden: true });
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
@@ -98,7 +98,7 @@ export async function removeFolder(folder: string) {
 }
 
 function addFindRelatedTestFilesCommand(program: Command) {
-  const command = program.command('find-related-test-files [source-files...]');
+  const command = program.command('find-related-test-files [source-files...]', { hidden: true });
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
