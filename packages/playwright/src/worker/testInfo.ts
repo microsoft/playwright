@@ -52,7 +52,6 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
-  readonly _test: TestCase;
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
@@ -62,6 +61,7 @@ export class TestInfoImpl implements TestInfo {
   _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;
+  private readonly _requireFile: string;
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   readonly _steps: TestStepInternal[] = [];
@@ -129,19 +129,19 @@ export class TestInfoImpl implements TestInfo {
     configInternal: FullConfigInternal,
     projectInternal: FullProjectInternal,
     workerParams: WorkerInitParams,
-    test: TestCase,
+    test: TestCase | undefined,
     retry: number,
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
   ) {
-    this._test = test;
-    this.testId = test.id;
+    this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
+    this._requireFile = test?._requireFile ?? '';
 
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
@@ -151,20 +151,20 @@ export class TestInfoImpl implements TestInfo {
     this.project = projectInternal.project;
     this._configInternal = configInternal;
     this.config = configInternal.config;
-    this.title = test.title;
-    this.titlePath = test.titlePath();
-    this.file = test.location.file;
-    this.line = test.location.line;
-    this.column = test.location.column;
-    this.fn = test.fn;
-    this.expectedStatus = test.expectedStatus;
+    this.title = test?.title ?? '';
+    this.titlePath = test?.titlePath() ?? [];
+    this.file = test?.location.file ?? '';
+    this.line = test?.location.line ?? 0;
+    this.column = test?.location.column ?? 0;
+    this.fn = test?.fn ?? (() => {});
+    this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
+      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
+      const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
       if (projectInternal.id)
@@ -177,7 +177,7 @@ export class TestInfoImpl implements TestInfo {
     })();
 
     this.snapshotDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
+      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
 
@@ -328,7 +328,7 @@ export class TestInfoImpl implements TestInfo {
         }
 
         const payload: StepEndPayload = {
-          testId: this._test.id,
+          testId: this.testId,
           stepId,
           wallTime: step.endWallTime,
           error: step.error,
@@ -344,7 +344,7 @@ export class TestInfoImpl implements TestInfo {
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
     const payload: StepBeginPayload = {
-      testId: this._test.id,
+      testId: this.testId,
       stepId,
       parentStepId: parentStep ? parentStep.stepId : undefined,
       title: data.title,
@@ -434,7 +434,7 @@ export class TestInfoImpl implements TestInfo {
     });
     this._attachmentsPush(attachment);
     this._onAttach({
-      testId: this._test.id,
+      testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
       path: attachment.path,
@@ -465,7 +465,7 @@ export class TestInfoImpl implements TestInfo {
   snapshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
     const parsedSubPath = path.parse(subPath);
-    const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
+    const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 

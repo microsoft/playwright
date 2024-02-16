@@ -42,13 +42,10 @@ test('should have correct tags', async ({ runInlineTest }) => {
     'stdio.spec.js': `
       import { test, expect } from '@playwright/test';
       test('no-tags', () => {
-        expect(test.info()._test.tags).toEqual([]);
       });
       test('foo-tag @inline', { tag: '@foo' }, () => {
-        expect(test.info()._test.tags).toEqual(['@inline', '@foo']);
       });
       test('foo-bar-tags', { tag: ['@foo', '@bar'] }, () => {
-        expect(test.info()._test.tags).toEqual(['@foo', '@bar']);
       });
       test.skip('skip-foo-tag', { tag: '@foo' }, () => {
       });
@@ -59,11 +56,9 @@ test('should have correct tags', async ({ runInlineTest }) => {
       });
       test.describe('suite @inline', { tag: '@foo' }, () => {
         test('foo-suite', () => {
-          expect(test.info()._test.tags).toEqual(['@inline', '@foo']);
         });
         test.describe('inner', { tag: '@bar' }, () => {
           test('foo-bar-suite', () => {
-            expect(test.info()._test.tags).toEqual(['@inline', '@foo', '@bar']);
           });
         });
       });
