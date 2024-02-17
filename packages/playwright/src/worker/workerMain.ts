@@ -30,7 +30,6 @@ import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySui
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { FixtureScope } from '../common/fixtures';
 import { inheritFixutreNames } from '../common/fixtures';
 
 export class WorkerMain extends ProcessRunner {
@@ -338,7 +337,7 @@ export class WorkerMain extends ProcessRunner {
 
       await removeFolders([testInfo.outputDir]);
 
-      let testFunctionParams: object | null = null;
+      let testFunctionParams: object | undefined;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites) {
@@ -363,15 +362,14 @@ export class WorkerMain extends ProcessRunner {
         if (testInfo.expectedStatus === 'skipped')
           return;
 
-        const fixturesError = await testInfo._runAndFailOnError(async () => {
-          // Setup fixtures required by the test.
-          testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test');
-        }, 'allowSkips');
-        if (fixturesError)
-          step.complete({ error: fixturesError });
+        // Setup fixtures required by the test.
+        const fixuresResult = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test');
+        if (fixuresResult.error)
+          step.complete({ error: fixuresResult.error });
+        testFunctionParams = fixuresResult.params;
       });
 
-      if (testFunctionParams === null) {
+      if (testFunctionParams === undefined) {
         // Fixture setup failed or was skipped, we should not run the test now.
         return;
       }
@@ -529,8 +527,15 @@ export class WorkerMain extends ProcessRunner {
         runnableSlot: timeSlot,
       }, async step => {
         const existingAnnotations = new Set(testInfo.annotations);
-        const error = await testInfo._runAndFailOnError(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), allowSkips ? 'allowSkips' : undefined);
-        firstError = firstError ?? error;
+        const fixturesResult = await this._fixtureRunner.resolveParametersForFunction(hook.fn, testInfo, 'all-hooks-only');
+        let hookError = fixturesResult.error;
+        if (fixturesResult.params) {
+          const fnError = await testInfo._runAndFailOnError(async () => {
+            const fn = hook.fn; // Extract a variable to get a better stack trace.
+            await fn(fixturesResult.params, testInfo);
+          }, allowSkips ? 'allowSkips' : undefined);
+          hookError = hookError ?? fnError;
+        }
         if (extraAnnotations) {
           // Inherit all annotations defined in the beforeAll/modifer to all tests in the suite.
           const newAnnotations = testInfo.annotations.filter(a => !existingAnnotations.has(a));
@@ -539,8 +544,10 @@ export class WorkerMain extends ProcessRunner {
         // Each beforeAll/afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
         // Note: we must teardown even after hook fails, because we'll run more hooks.
         const teardownError = await this._fixtureRunner.teardownScope('test', testInfo);
-        firstError = firstError ?? teardownError;
-        step.complete({ error: error ?? teardownError });
+        hookError = hookError ?? teardownError;
+        step.complete({ error: hookError });
+        // Always run all the hooks, and capture the first error.
+        firstError = firstError ?? hookError;
       });
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
       // Skip inside a beforeAll hook/modifier prevents others from running.
@@ -567,10 +574,18 @@ export class WorkerMain extends ProcessRunner {
         location: hook.location,
         runnableType: hook.type,
       }, async step => {
-        const e = await testInfo._runAndFailOnError(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'), type === 'beforeEach' ? 'allowSkips' : undefined);
+        const fixturesResult = await this._fixtureRunner.resolveParametersForFunction(hook.fn, testInfo, 'test');
+        let hookError = fixturesResult.error;
+        if (fixturesResult.params) {
+          const fnError = await testInfo._runAndFailOnError(async () => {
+            const fn = hook.fn; // Extract a variable to get a better stack trace.
+            await fn(fixturesResult.params, testInfo);
+          }, type === 'beforeEach' ? 'allowSkips' : undefined);
+          hookError = hookError ?? fnError;
+        }
+        step.complete({ error: hookError });
         // Always run all the hooks, and capture the first error.
-        error = error || e;
-        step.complete({ error: e });
+        error = error ?? hookError;
       });
     }
     return error;
