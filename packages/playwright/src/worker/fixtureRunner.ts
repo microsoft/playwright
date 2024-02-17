@@ -198,16 +198,20 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, onFixtureError: (error: Error) => void) {
+  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl): Promise<Error | undefined> {
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
-    for (const fixture of collector)
-      await fixture.teardown(testInfo).catch(onFixtureError);
+    let error: Error | undefined;
+    for (const fixture of collector) {
+      const e = await testInfo._runAndFailOnError(() => fixture.teardown(testInfo));
+      error = error ?? e;
+    }
     if (scope === 'test')
       this.testScopeClean = true;
+    return error;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
