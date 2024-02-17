@@ -39,10 +39,10 @@ export type WSConnection = {
 };
 
 export type WSServerDelegate = {
-  onHeaders: (headers: string[]) => void;
-  onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
+  onHeaders?: (headers: string[]) => void;
+  onUpgrade?: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
-  onClose(): Promise<void>;
+  onClose?(): Promise<void>;
 };
 
 export class WSServer {
@@ -89,7 +89,8 @@ export class WSServer {
       perMessageDeflate,
     });
 
-    this._wsServer.on('headers', headers => this._delegate.onHeaders(headers));
+    if (this._delegate.onHeaders)
+      this._wsServer.on('headers', headers => this._delegate.onHeaders!(headers));
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
@@ -98,7 +99,7 @@ export class WSServer {
         socket.destroy();
         return;
       }
-      const upgradeResult = this._delegate.onUpgrade(request, socket);
+      const upgradeResult = this._delegate.onUpgrade?.(request, socket);
       if (upgradeResult) {
         socket.write(upgradeResult.error);
         socket.destroy();
@@ -142,5 +143,7 @@ export class WSServer {
     this._wsServer = undefined;
     this.server = undefined;
     debugLogger.log('server', 'closed server');
+
+    await this._delegate.onClose?.();
   }
 }
