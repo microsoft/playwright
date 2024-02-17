@@ -16,35 +16,34 @@
 
 import fs from 'fs';
 import path from 'path';
+import { escapeRegExp } from 'playwright-core/lib/utils';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
-import { createFileMatcher, forceRegExp } from '../util';
+import { createFileMatcher } from '../util';
 
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
-export function filterProjects(projects: FullProjectInternal[], projectNames?: string[], projectGrep?: string): FullProjectInternal[] {
-  if (!projectNames && !projectGrep)
-    return [...projects];
+function wildcardPatternToRegExp(pattern: string): RegExp {
+  return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
+}
 
-  if (projectGrep) {
-    const regex = forceRegExp(projectGrep);
-    const result = projects.filter(project => {
-      regex.lastIndex = 0;
-      return regex.test(project.project.name);
-    });
-    if (!result.length)
-      throw new Error(`Projects matching "${projectGrep}" not found. Available projects: ${projects.map(p => `"${p.project.name}"`).join(', ')}`);
-    return result;
-  }
+export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
+  if (!projectNames)
+    return [...projects];
 
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();
+  const patterns = new Set<RegExp>();
   for (const name of projectNames!) {
     const lowerCaseName = name.toLocaleLowerCase();
-    projectNamesToFind.add(lowerCaseName);
-    unmatchedProjectNames.set(lowerCaseName, name);
+    if (lowerCaseName.includes('*')) {
+      patterns.add(wildcardPatternToRegExp(lowerCaseName));
+    } else {
+      projectNamesToFind.add(lowerCaseName);
+      unmatchedProjectNames.set(lowerCaseName, name);
+    }
   }
 
   const result = projects.filter(project => {
@@ -53,6 +52,11 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
       unmatchedProjectNames.delete(lowerCaseName);
       return true;
     }
+    for (const regex of patterns) {
+      regex.lastIndex = 0;
+      if (regex.test(lowerCaseName))
+        return true;
+    }
     return false;
   });
 
@@ -60,6 +64,12 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
     const unknownProjectNames = Array.from(unmatchedProjectNames.values()).map(n => `"${n}"`).join(', ');
     throw new Error(`Project(s) ${unknownProjectNames} not found. Available projects: ${projects.map(p => `"${p.project.name}"`).join(', ')}`);
   }
+
+  if (!result.length) {
+    const allProjects = projects.map(p => `"${p.project.name}"`).join(', ');
+    throw new Error(`No projects matched. Available projects: ${allProjects}`);
+  }
+
 
   return result;
 }

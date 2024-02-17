@@ -168,7 +168,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
       if (process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
         return;
       const outputDirs = new Set<string>();
-      const projects = filterProjects(config.projects, config.cliProjectFilter, config.cliProjectGrep);
+      const projects = filterProjects(config.projects, config.cliProjectFilter);
       projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {

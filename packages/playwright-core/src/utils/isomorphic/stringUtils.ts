@@ -116,3 +116,8 @@ export function trimString(input: string, cap: number, suffix: string = ''): str
 export function trimStringWithEllipsis(input: string, cap: number): string {
   return trimString(input, cap, '\u2026');
 }
+
+export function escapeRegExp(s: string) {
+  // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}

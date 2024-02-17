@@ -40,7 +40,7 @@ class FSWatcher {
 
   async update(config: FullConfigInternal) {
     const commandLineFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : () => true;
-    const projects = filterProjects(config.projects, config.cliProjectFilter, config.cliProjectGrep);
+    const projects = filterProjects(config.projects, config.cliProjectFilter);
     const projectClosure = buildProjectsClosure(projects);
     const projectFilters = new Map<FullProjectInternal, Matcher>();
     for (const [project, type] of projectClosure) {
@@ -263,7 +263,7 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
 
   // Collect all the affected projects, follow project dependencies.
   // Prepare to exclude all the projects that do not depend on this file, as if they did not exist.
-  const projects = filterProjects(config.projects, config.cliProjectFilter, config.cliProjectGrep);
+  const projects = filterProjects(config.projects, config.cliProjectFilter);
   const projectClosure = buildProjectsClosure(projects);
   const affectedProjects = affectedProjectsClosure([...projectClosure.keys()], [...filesByProject.keys()]);
   const affectsAnyDependency = [...affectedProjects].some(p => projectClosure.get(p) === 'dependency');
@@ -388,8 +388,6 @@ function printConfiguration(config: FullConfigInternal, title?: string) {
   const tokens: string[] = [];
   tokens.push(`${packageManagerCommand} playwright test`);
   tokens.push(...(config.cliProjectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
-  if (config.cliProjectGrep)
-    tokens.push(colors.blue(`--project-grep ${config.cliProjectGrep}`));
   if (config.cliGrep)
     tokens.push(colors.red(`--grep ${config.cliGrep}`));
   if (config.cliArgs)
