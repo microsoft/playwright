@@ -332,7 +332,7 @@ export class WorkerMain extends ProcessRunner {
         // test runner instead of a fixture belonging to Playwright.
         // However, for backwards compatibility, we have to read it from a fixture today.
         // We decided to not introduce the config-level option just yet.
-        const traceFixtureRegistration = test._pool!.registrations.get('trace');
+        const traceFixtureRegistration = test._pool!.resolve('trace');
         if (!traceFixtureRegistration)
           return;
         if (typeof traceFixtureRegistration.fn === 'function')
