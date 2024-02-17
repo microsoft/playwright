@@ -43,4 +43,4 @@ export * from './userAgent';
 export * from './zipFile';
 export * from './zones';
 export * from './isomorphic/locatorGenerators';
-export { escapeRegExp } from './isomorphic/stringUtils';
+export * from './isomorphic/stringUtils';
