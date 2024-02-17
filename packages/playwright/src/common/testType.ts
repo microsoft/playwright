@@ -21,7 +21,7 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestType, TestDetails } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, zones } from 'playwright-core/lib/utils';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -263,9 +263,16 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._runAsStep({ category: 'test.step', title, box: options.box }, async () => {
-      // Make sure that internal "step" is not leaked to the user callback.
-      return await body();
+    const step = testInfo._addStep({ wallTime: Date.now(), category: 'test.step', title, box: options.box });
+    return await zones.run('stepZone', step, async () => {
+      try {
+        const result = await body();
+        step.complete({});
+        return result;
+      } catch (error) {
+        step.complete({ error });
+        throw error;
+      }
     });
   }
 

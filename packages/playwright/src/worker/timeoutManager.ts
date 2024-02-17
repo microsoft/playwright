@@ -56,7 +56,9 @@ export class TimeoutManager {
     this._timeoutRunner.interrupt();
   }
 
-  async withRunnable<R>(runnable: RunnableDescription, cb: () => Promise<R>): Promise<R> {
+  async withRunnable<R>(runnable: RunnableDescription | undefined, cb: () => Promise<R>): Promise<R> {
+    if (!runnable)
+      return await cb();
     const existingRunnable = this._runnable;
     const effectiveRunnable = { ...runnable };
     if (!effectiveRunnable.slot)
