@@ -40,7 +40,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
-  const filteredProjects = filterProjects(config.projects, config.cliProjectFilter, config.cliProjectGrep);
+  const filteredProjects = filterProjects(config.projects, config.cliProjectFilter);
   for (const project of filteredProjects) {
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);

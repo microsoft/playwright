@@ -15,12 +15,11 @@
  */
 
 import fs from 'fs';
-import { mime } from 'playwright-core/lib/utilsBundle';
 import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import { formatCallLog } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
