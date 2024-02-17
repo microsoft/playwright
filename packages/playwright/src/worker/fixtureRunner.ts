@@ -59,7 +59,7 @@ class Fixture {
 
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
-      const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
+      const registration = this.runner.pool!.resolve(name, this.registration)!;
       const dep = await this.runner.setupFixtureForRegistration(registration, testInfo);
       // Fixture teardown is root => leafs, when we need to teardown a fixture,
       // it recursively tears down its usages first.
@@ -221,9 +221,7 @@ export class FixtureRunner {
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
     // Install automatic fixtures.
     const auto: FixtureRegistration[] = [];
-    for (const registration of this.pool!.registrations.values()) {
-      if (registration.auto === false)
-        continue;
+    for (const registration of this.pool!.autoFixtures()) {
       let shouldRun = true;
       if (autoFixtures === 'all-hooks-only')
         shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
@@ -243,7 +241,7 @@ export class FixtureRunner {
     const names = getRequiredFixtureNames(fn);
     const params: { [key: string]: any } = {};
     for (const name of names) {
-      const registration = this.pool!.registrations.get(name)!;
+      const registration = this.pool!.resolve(name)!;
       const fixture = await this.setupFixtureForRegistration(registration, testInfo);
       if (fixture.failed)
         return null;
@@ -278,7 +276,7 @@ export class FixtureRunner {
   dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
     const names = getRequiredFixtureNames(fn, location);
     for (const name of names) {
-      const registration = this.pool!.registrations.get(name)!;
+      const registration = this.pool!.resolve(name)!;
       if (registration.scope !== 'worker')
         return false;
     }

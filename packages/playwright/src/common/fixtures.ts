@@ -72,11 +72,11 @@ function isFixtureOption(value: any): value is FixtureTuple {
 
 export class FixturePool {
   readonly digest: string;
-  readonly registrations: Map<string, FixtureRegistration>;
+  private readonly _registrations: Map<string, FixtureRegistration>;
   private _onLoadError: LoadErrorSink;
 
   constructor(fixturesList: FixturesWithLocation[], onLoadError: LoadErrorSink, parentPool?: FixturePool, disallowWorkerFixtures?: boolean, optionOverrides?: OptionOverrides) {
-    this.registrations = new Map(parentPool ? parentPool.registrations : []);
+    this._registrations = new Map(parentPool ? parentPool._registrations : []);
     this._onLoadError = onLoadError;
 
     const allOverrides = optionOverrides?.overrides ?? {};
@@ -117,7 +117,7 @@ export class FixturePool {
       }
       let fn = value as (Function | any);
 
-      const previous = this.registrations.get(name);
+      const previous = this._registrations.get(name);
       if (previous && options) {
         if (previous.scope !== options.scope) {
           this._addLoadError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
@@ -154,7 +154,7 @@ export class FixturePool {
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
       const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, hideStep: options.hideStep, deps, super: previous, optionOverride: isOptionsOverride };
       registrationId(registration);
-      this.registrations.set(name, registration);
+      this._registrations.set(name, registration);
     }
   }
 
@@ -165,7 +165,7 @@ export class FixturePool {
       markers.set(registration, 'visiting');
       stack.push(registration);
       for (const name of registration.deps) {
-        const dep = this.resolveDependency(registration, name);
+        const dep = this.resolve(name, registration);
         if (!dep) {
           if (name === registration.name)
             this._addLoadError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
@@ -192,9 +192,9 @@ export class FixturePool {
     };
 
     const hash = crypto.createHash('sha1');
-    const names = Array.from(this.registrations.keys()).sort();
+    const names = Array.from(this._registrations.keys()).sort();
     for (const name of names) {
-      const registration = this.registrations.get(name)!;
+      const registration = this._registrations.get(name)!;
       visit(registration);
       if (registration.scope === 'worker')
         hash.update(registration.id + ';');
@@ -204,16 +204,20 @@ export class FixturePool {
 
   validateFunction(fn: Function, prefix: string, location: Location) {
     for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
-      const registration = this.registrations.get(name);
+      const registration = this._registrations.get(name);
       if (!registration)
         this._addLoadError(`${prefix} has unknown parameter "${name}".`, location);
     }
   }
 
-  resolveDependency(registration: FixtureRegistration, name: string): FixtureRegistration | undefined {
-    if (name === registration.name)
-      return registration.super;
-    return this.registrations.get(name);
+  resolve(name: string, forFixture?: FixtureRegistration): FixtureRegistration | undefined {
+    if (name === forFixture?.name)
+      return forFixture.super;
+    return this._registrations.get(name);
+  }
+
+  autoFixtures() {
+    return [...this._registrations.values()].filter(r => r.auto !== false);
   }
 
   private _addLoadError(message: string, location: Location) {
