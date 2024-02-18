@@ -158,11 +158,6 @@ export function serializeCompilationCache(): SerializedCompilationCache {
   };
 }
 
-export function clearCompilationCache() {
-  sourceMaps.clear();
-  memoryCache.clear();
-}
-
 export function addToCompilationCache(payload: any) {
   for (const entry of payload.sourceMaps)
     sourceMaps.set(entry[0], entry[1]);

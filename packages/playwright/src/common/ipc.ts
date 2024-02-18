@@ -134,12 +134,12 @@ export type TeardownErrorsPayload = {
 
 export type EnvProducedPayload = [string, string | null][];
 
-export function serializeConfig(config: FullConfigInternal): SerializedConfig {
+export function serializeConfig(config: FullConfigInternal, passCompilationCache: boolean): SerializedConfig {
   const result: SerializedConfig = {
     configFile: config.config.configFile,
     configDir: config.configDir,
     configCLIOverrides: config.configCLIOverrides,
-    compilationCache: serializeCompilationCache(),
+    compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };
   return result;
 }

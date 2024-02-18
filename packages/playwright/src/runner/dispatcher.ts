@@ -97,7 +97,7 @@ export class Dispatcher {
     // 2. Start the worker if it is down.
     let startError;
     if (!worker) {
-      worker = this._createWorker(job, index, serializeConfig(this._config));
+      worker = this._createWorker(job, index, serializeConfig(this._config, true));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
