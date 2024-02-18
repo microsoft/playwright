@@ -417,15 +417,20 @@ async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: nu
     config.config.workers = 1;
     showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
     const wsEndpoint = await showBrowserServer.listen();
-    process.env.PW_TEST_REUSE_CONTEXT = '1';
-    process.env.PW_TEST_CONNECT_WS_ENDPOINT = wsEndpoint;
+    config.configCLIOverrides.use = {
+      ...config.configCLIOverrides.use,
+      _optionContextReuseMode: 'when-possible',
+      _optionConnectOptions: { wsEndpoint },
+    };
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('on')}\n`);
   } else {
     config.config.workers = originalWorkers;
+    if (config.configCLIOverrides.use) {
+      delete config.configCLIOverrides.use._optionContextReuseMode;
+      delete config.configCLIOverrides.use._optionConnectOptions;
+    }
     await showBrowserServer?.close();
     showBrowserServer = undefined;
-    delete process.env.PW_TEST_REUSE_CONTEXT;
-    delete process.env.PW_TEST_CONNECT_WS_ENDPOINT;
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('off')}\n`);
   }
 }
