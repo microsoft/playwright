@@ -549,7 +549,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
   return page;
 }
 
-async function open(options: Options, url: string | undefined, language: string) {
+export async function open(options: Options, url: string | undefined, language: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
   await context._enableRecorder({
     language,
