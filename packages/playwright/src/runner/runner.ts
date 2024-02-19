@@ -110,7 +110,7 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
+  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process'): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
     const config = this._config;
     const errors: TestError[] = [];
     const reporter = new InternalReporter(new Multiplexer([wrapReporterAsV2({
@@ -118,7 +118,7 @@ export class Runner {
         errors.push(error);
       }
     })]));
-    const taskRunner = createTaskRunnerForList(config, reporter, 'in-process', { failOnLoadErrors: true });
+    const taskRunner = createTaskRunnerForList(config, reporter, mode, { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
 

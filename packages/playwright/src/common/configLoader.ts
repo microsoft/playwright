@@ -93,7 +93,8 @@ export class ConfigLoader {
   }
 
   static async deserialize(data: SerializedConfig): Promise<FullConfigInternal> {
-    addToCompilationCache(data.compilationCache);
+    if (data.compilationCache)
+      addToCompilationCache(data.compilationCache);
 
     const loader = new ConfigLoader(data.configCLIOverrides);
     const config = data.configFile ? await loader.loadConfigFile(data.configFile) : await loader.loadEmptyConfig(data.configDir);

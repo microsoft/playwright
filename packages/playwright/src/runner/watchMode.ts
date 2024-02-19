@@ -22,7 +22,7 @@ import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
-import { clearCompilationCache, collectAffectedTestFiles } from '../transform/compilationCache';
+import { collectAffectedTestFiles } from '../transform/compilationCache';
 import type { FullResult } from '../../types/testReporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
@@ -283,7 +283,6 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
   const reporter = new InternalReporter(new ListReporter());
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
   const testRun = new TestRun(config, reporter);
-  clearCompilationCache();
   reporter.onConfigure(config.config);
   const taskStatus = await taskRunner.run(testRun, 0);
   let status: FullResult['status'] = 'passed';

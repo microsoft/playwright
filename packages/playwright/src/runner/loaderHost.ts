@@ -59,7 +59,7 @@ export class OutOfProcessLoaderHost {
   }
 
   async start(errors: TestError[]) {
-    const startError = await this._processHost.startRunner(serializeConfig(this._config));
+    const startError = await this._processHost.startRunner(serializeConfig(this._config, false));
     if (startError) {
       errors.push({
         message: `Test loader process failed to start with code "${startError.code}" and signal "${startError.signal}"`,
