@@ -43,7 +43,6 @@ import type { UITestStatus } from './testUtils';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
-  hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
@@ -51,7 +50,7 @@ export const Workbench: React.FunctionComponent<{
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
-}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -158,7 +157,6 @@ export const Workbench: React.FunctionComponent<{
     render: () => <SourceTab
       stack={revealedStack}
       sources={sources}
-      hideStackFrames={hideStackFrames}
       rootDir={rootDir}
       fallbackLocation={fallbackLocation} />
   };
