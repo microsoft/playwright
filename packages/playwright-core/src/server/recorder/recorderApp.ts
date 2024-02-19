@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
 import type { Page } from '../page';
 import { ProgressController } from '../progress';
@@ -27,6 +26,7 @@ import { syncLocalStorageWithSettings } from '../launchApp';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
+import { sea } from '../../utils/sea';
 
 declare global {
   interface Window {
@@ -87,18 +87,16 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         return false;
 
       const uri = route.request().url().substring('https://playwright/'.length);
-      const file = require.resolve('../../vite/recorder/' + uri);
-      fs.promises.readFile(file).then(buffer => {
-        route.fulfill({
-          requestUrl: route.request().url(),
-          status: 200,
-          headers: [
-            { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
-          ],
-          body: buffer.toString('base64'),
-          isBase64: true
-        }).catch(() => {});
-      });
+      const buffer = sea.readFile(path.join('lib/vite/recorder', uri));
+      route.fulfill({
+        requestUrl: route.request().url(),
+        status: 200,
+        headers: [
+          { name: 'Content-Type', value: mime.getType(path.extname(uri)) || 'application/octet-stream' }
+        ],
+        body: buffer.toString('base64'),
+        isBase64: true
+      }).catch(() => {});
       return true;
     });
 

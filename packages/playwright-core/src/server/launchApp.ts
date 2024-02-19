@@ -24,6 +24,7 @@ import type * as types from './types';
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
 import { registryDirectory } from './registry';
+import { sea } from '../utils/sea';
 
 export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,
@@ -68,7 +69,7 @@ export async function launchApp(browserType: BrowserType, options: {
 }
 
 async function installAppIcon(page: Page) {
-  const icon = await fs.promises.readFile(require.resolve('./chromium/appIcon.png'));
+  const icon = sea.readFile('lib/server/chromium/appIcon.png');
   const crPage = page._delegate as CRPage;
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')

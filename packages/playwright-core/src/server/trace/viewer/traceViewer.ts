@@ -22,10 +22,11 @@ import { syncLocalStorageWithSettings } from '../../launchApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
-import { open, wsServer } from '../../../utilsBundle';
+import { open, wsServer, mime } from '../../../utilsBundle';
 import type { Page } from '../../page';
 import type { BrowserType } from '../../browserType';
 import { launchApp } from '../../launchApp';
+import { sea } from '../../../utils/sea';
 
 export type Transport = {
   sendEvent?: (method: string, params: any) => void;
@@ -84,8 +85,17 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
       response.end();
       return true;
     }
-    const absolutePath = path.join(__dirname, '..', '..', '..', 'vite', 'traceViewer', ...relativePath.split('/'));
-    return server.serveFile(request, response, absolutePath);
+    try {
+      const content = sea.readFile(path.join('lib/vite/traceViewer', ...relativePath.split('/')));
+      response.statusCode = 200;
+      const contentType = mime.getType(path.extname(relativePath)) || 'application/octet-stream';
+      response.setHeader('Content-Type', contentType);
+      response.setHeader('Content-Length', content.byteLength);
+      response.end(content);
+      return true;
+    } catch (error) {
+      return false;
+    }
   });
 
   const params = traceUrls.map(t => `trace=${encodeURIComponent(t)}`);
