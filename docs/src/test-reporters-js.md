@@ -342,6 +342,13 @@ export default defineConfig({
   reporter: './my-awesome-reporter.ts',
 });
 ```
+
+Or just pass the reporter file path as `--reporter` command line option:
+
+```bash
+npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
+```
+
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
