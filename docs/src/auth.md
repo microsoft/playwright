@@ -575,7 +575,7 @@ Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US
 ```js
 // Get session storage and store as env variable
 const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage));
-fs.writeFileSync('playwright/.auth/session.json', JSON.stringify(sessionStorage), 'utf-8');
+fs.writeFileSync('playwright/.auth/session.json', sessionStorage, 'utf-8');
 
 // Set session storage in a new context
 const sessionStorage = JSON.parse(fs.readFileSync('playwright/.auth/session.json', 'utf-8'));
