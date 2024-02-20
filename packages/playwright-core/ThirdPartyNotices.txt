@@ -23,7 +23,7 @@ This project incorporates components from the projects listed below. The origina
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
 -	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
--	ip@2.0.0 (https://github.com/indutny/node-ip)
+-	ip@2.0.1 (https://github.com/indutny/node-ip)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
 -	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
@@ -740,7 +740,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF https-proxy-agent@5.0.0 AND INFORMATION
 
-%% ip@2.0.0 NOTICES AND INFORMATION BEGIN HERE
+%% ip@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 # IP  
 [![](https://badge.fury.io/js/ip.svg)](https://www.npmjs.com/package/ip)  
@@ -833,7 +833,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF ip@2.0.0 AND INFORMATION
+END OF ip@2.0.1 AND INFORMATION
 
 %% is-docker@2.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
