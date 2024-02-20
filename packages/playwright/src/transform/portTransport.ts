@@ -21,7 +21,7 @@ export class PortTransport {
 
   constructor(port: MessagePort, handler: (method: string, params: any) => Promise<any>) {
     this._port = port;
-    port.onmessage = async event => {
+    port.addEventListener('message', async event => {
       const message = event.data;
       const { id, ackId, method, params, result } = message;
       if (id) {
@@ -36,7 +36,7 @@ export class PortTransport {
         callback?.(result);
         return;
       }
-    };
+    });
   }
 
   async send(method: string, params: any) {
