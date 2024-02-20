@@ -16,7 +16,7 @@
 
 import { formatLocation, debugTest, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
-import type { TestInfoImpl, TestStepInternal } from './testInfo';
+import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
@@ -28,10 +28,13 @@ class Fixture {
   value: any;
   failed = false;
 
-  _useFuncFinished: ManualPromise<void> | undefined;
-  _selfTeardownComplete: Promise<void> | undefined;
-  _teardownWithDepsComplete: Promise<void> | undefined;
-  _runnableDescription: FixtureDescription;
+  private _useFuncFinished: ManualPromise<void> | undefined;
+  private _selfTeardownComplete: Promise<void> | undefined;
+  private _teardownWithDepsComplete: Promise<void> | undefined;
+  private _setupDescription: FixtureDescription;
+  private _teardownDescription: FixtureDescription;
+  private _shouldGenerateStep = false;
+  private _isInternalFixture = false;
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -40,7 +43,7 @@ class Fixture {
     this.registration = registration;
     this.value = null;
     const title = this.registration.customTitle || this.registration.name;
-    this._runnableDescription = {
+    this._setupDescription = {
       title,
       phase: 'setup',
       location: registration.location,
@@ -49,6 +52,9 @@ class Fixture {
         elapsed: 0,
       }
     };
+    this._teardownDescription = { ...this._setupDescription, phase: 'teardown' };
+    this._shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
+    this._isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
   }
 
   async setup(testInfo: TestInfoImpl) {
@@ -74,13 +80,25 @@ class Fixture {
       }
     }
 
-    // Break the registration function into before/after steps. Create these before/after stacks
-    // w/o scopes, and create single mutable step that will be converted into the after step.
-    const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
-    const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
-    let beforeStep: TestStepInternal | undefined;
-    let afterStep: TestStepInternal | undefined;
+    testInfo._timeoutManager.setCurrentFixture(this._setupDescription);
+    const beforeStep = this._shouldGenerateStep ? testInfo._addStep({
+      title: `fixture: ${this.registration.name}`,
+      category: 'fixture',
+      location: this._isInternalFixture ? this.registration.location : undefined,
+      wallTime: Date.now(),
+    }) : undefined;
+    try {
+      await this._setupInternal(testInfo, params);
+      beforeStep?.complete({});
+    } catch (error) {
+      beforeStep?.complete({ error });
+      throw error;
+    } finally {
+      testInfo._timeoutManager.setCurrentFixture(undefined);
+    }
+  }
 
+  private async _setupInternal(testInfo: TestInfoImpl, params: object) {
     let called = false;
     const useFuncStarted = new ManualPromise<void>();
     debugTest(`setup ${this.registration.name}`);
@@ -89,41 +107,17 @@ class Fixture {
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
-      beforeStep?.complete({});
       this._useFuncFinished = new ManualPromise<void>();
       useFuncStarted.resolve();
       await this._useFuncFinished;
-
-      if (shouldGenerateStep)  {
-        afterStep = testInfo._addStep({
-          wallTime: Date.now(),
-          title: `fixture: ${this.registration.name}`,
-          category: 'fixture',
-          location: isInternalFixture ? this.registration.location : undefined,
-        });
-      }
     };
 
     const workerInfo: WorkerInfo = { config: testInfo.config, parallelIndex: testInfo.parallelIndex, workerIndex: testInfo.workerIndex, project: testInfo.project };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
-    testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
-
-    if (shouldGenerateStep) {
-      beforeStep = testInfo._addStep({
-        title: `fixture: ${this.registration.name}`,
-        category: 'fixture',
-        location: isInternalFixture ? this.registration.location : undefined,
-        wallTime: Date.now(),
-      });
-    }
-
     this._selfTeardownComplete = (async () => {
       try {
         await this.registration.fn(params, useFunc, info);
-        afterStep?.complete({});
       } catch (error) {
-        beforeStep?.complete({ error });
-        afterStep?.complete({ error });
         this.failed = true;
         if (!useFuncStarted.isDone())
           useFuncStarted.reject(error);
@@ -131,51 +125,49 @@ class Fixture {
           throw error;
       }
     })();
-
     await useFuncStarted;
-    testInfo._timeoutManager.setCurrentFixture(undefined);
   }
 
   async teardown(testInfo: TestInfoImpl) {
-    if (this._teardownWithDepsComplete) {
-      // When we are waiting for the teardown for the second time,
-      // most likely after the first time did timeout, annotate current fixture
-      // for better error messages.
-      this._setTeardownDescription(testInfo);
+    const afterStep = this._shouldGenerateStep ? testInfo?._addStep({
+      wallTime: Date.now(),
+      title: `fixture: ${this.registration.name}`,
+      category: 'fixture',
+      location: this._isInternalFixture ? this.registration.location : undefined,
+    }) : undefined;
+    testInfo._timeoutManager.setCurrentFixture(this._teardownDescription);
+    try {
+      if (!this._teardownWithDepsComplete)
+        this._teardownWithDepsComplete = this._teardownInternal();
       await this._teardownWithDepsComplete;
+      afterStep?.complete({});
+    } catch (error) {
+      afterStep?.complete({ error });
+      throw error;
+    } finally {
       testInfo._timeoutManager.setCurrentFixture(undefined);
-      return;
     }
-    this._teardownWithDepsComplete = this._teardownInternal(testInfo);
-    await this._teardownWithDepsComplete;
   }
 
-  private async _teardownInternal(testInfo: TestInfoImpl) {
+  private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
     try {
       if (this._usages.size !== 0) {
         // TODO: replace with assert.
-        console.error('Internal error: fixture integrity at', this._runnableDescription.title);  // eslint-disable-line no-console
+        console.error('Internal error: fixture integrity at', this._teardownDescription.title);  // eslint-disable-line no-console
         this._usages.clear();
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._setTeardownDescription(testInfo);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
-        testInfo._timeoutManager.setCurrentFixture(undefined);
       }
     } finally {
       for (const dep of this._deps)
         dep._usages.delete(this);
       this.runner.instanceForId.delete(this.registration.id);
     }
-  }
-
-  private _setTeardownDescription(testInfo: TestInfoImpl) {
-    this._runnableDescription.phase = 'teardown';
-    testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
   }
 
   _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {

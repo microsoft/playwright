@@ -129,6 +129,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: context',
     '  fixture: request',
     '    apiRequestContext.dispose',
+    '  fixture: browser',
   ]);
 });
 
@@ -986,5 +987,50 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      step in barPage teardown',
     '        page.close',
     '  fixture: browser',
+  ]);
+});
+
+test('should attribute worker fixture teardown to the right test', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { trace: { mode: 'on' } },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          expect(1, 'step in foo setup').toBe(1);
+          await use('foo');
+          expect(1, 'step in foo teardown').toBe(1);
+        }, { scope: 'worker' }],
+      });
+
+      test('one', async ({ foo }) => {
+      });
+
+      test('two', async ({ foo }) => {
+        throw new Error('failure');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-one', 'trace.zip'));
+  expect(trace1.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: foo',
+    '    step in foo setup',
+    'After Hooks',
+  ]);
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-two', 'trace.zip'));
+  expect(trace2.actionTree).toEqual([
+    'Before Hooks',
+    'After Hooks',
+    '  fixture: foo',
+    '    step in foo teardown',
   ]);
 });
