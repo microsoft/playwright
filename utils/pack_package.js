@@ -19,6 +19,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
+const SCRIPT_NAME = path.basename(__filename);
 // 1. Parse CLI arguments
 const args = process.argv.slice(2);
 if (args.some(arg => arg === '--help')) {
