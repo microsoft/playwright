@@ -64,9 +64,14 @@ it('should support playwright.locator.values', async ({ page }) => {
 });
 
 it('should support playwright.locator({ has })', async ({ page }) => {
-  await page.setContent('<div>Hi</div><div><span>Hello</span></div>');
+  await page.setContent(`
+    <div>Hi</div>
+    <div><span>Hello</span></div>
+    <div><span>dont match</span></div>
+  `);
   expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('span') }).element.innerHTML`)).toContain('Hello');
   expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('text=Hello') }).element.innerHTML`)).toContain('span');
+  expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('span', { hasText: 'Hello' }) }).elements.length`)).toBe(1);
 });
 
 it('should support playwright.locator({ hasNot })', async ({ page }) => {
