@@ -33,12 +33,12 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } };
 type BaseTestFixtures = {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>,
-  _contextReuseMode: ContextReuseMode
+  _optionContextReuseMode: ContextReuseMode
 };
 
 export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> = {
 
-  _contextReuseMode: 'when-possible',
+  _optionContextReuseMode: 'when-possible',
 
   serviceWorkers: 'block',
 

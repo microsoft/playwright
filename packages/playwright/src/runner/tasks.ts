@@ -88,7 +88,8 @@ function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfig
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   if (config.config.globalSetup || config.config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
-  taskRunner.addTask('clear output', createRemoveOutputDirsTask());
+  if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
+    taskRunner.addTask('clear output', createRemoveOutputDirsTask());
 }
 
 function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
@@ -165,8 +166,6 @@ function createGlobalSetupTask(): Task<TestRun> {
 function createRemoveOutputDirsTask(): Task<TestRun> {
   return {
     setup: async ({ config }) => {
-      if (process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
-        return;
       const outputDirs = new Set<string>();
       const projects = filterProjects(config.projects, config.cliProjectFilter);
       projects.forEach(p => outputDirs.add(p.project.outputDir));

@@ -40,6 +40,7 @@ export class FullConfigInternal {
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
+  readonly preserveOutputDir: boolean;
   readonly webServers: Exclude<FullConfig['webServer'], null>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
@@ -68,6 +69,7 @@ export class FullConfigInternal {
     this.configDir = configDir;
     this.configCLIOverrides = configCLIOverrides;
     this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, config.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
+    this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
     this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots, false);
     const privateConfiguration = (config as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));

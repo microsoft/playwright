@@ -35,6 +35,7 @@ export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import { affectedTestFiles, cacheDir } from './transform/compilationCache';
+import { runTestServer } from './runner/testServer';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -112,6 +113,15 @@ function addFindRelatedTestFilesCommand(program: Command) {
         return await override(resolvedFiles, config, configDir, result.suite);
       return { testFiles: affectedTestFiles(resolvedFiles) };
     });
+  });
+}
+
+function addTestServerCommand(program: Command) {
+  const command = program.command('test-server', { hidden: true });
+  command.description('start test server');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.action(options => {
+    void runTestServer(options.config);
   });
 }
 
@@ -339,3 +349,4 @@ addListFilesCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addFindRelatedTestFilesCommand(program);
+addTestServerCommand(program);
