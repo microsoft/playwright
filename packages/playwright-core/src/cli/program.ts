@@ -20,17 +20,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { Command } from '../utilsBundle';
-import { program } from '../utilsBundle';
+import { program, ProgramHelp } from '../utilsBundle';
 export { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import type { OpenTraceViewerOptions } from '../server/trace/viewer/traceViewer';
 import { openTraceInBrowser, openTraceViewerApp } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
-import type { BrowserContext } from '../client/browserContext';
-import type { Browser } from '../client/browser';
-import type { Page } from '../client/page';
-import type { BrowserType } from '../client/browserType';
-import type { BrowserContextOptions, LaunchOptions } from '../client/types';
+import type { BrowserContext as BrowserContextImpl } from '../client/browserContext';
+import type { BrowserContextOptions, LaunchOptions, Page, Browser, BrowserType, BrowserContext } from '../../types/types';
 import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import type { Executable } from '../server';
@@ -260,12 +257,19 @@ program
     });
 
 program
-    .command('run-server', { hidden: true })
+    .command('run-server')
+    .description('starts Playwright server for remote connection')
     .option('--port <port>', 'Server port')
     .option('--host <host>', 'Server host')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
+    .configureHelp({
+      visibleOptions(cmd) {
+        const options = new ProgramHelp().visibleOptions(cmd);
+        return options.filter(o => o.long !== '--mode' && o.long !== '--max-clients');
+      },
+    })
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,
@@ -551,7 +555,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined, language: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
+  await (context as BrowserContextImpl)._enableRecorder({
     language,
     launchOptions,
     contextOptions,
@@ -564,7 +568,7 @@ async function open(options: Options, url: string | undefined, language: string)
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
+  await (context as BrowserContextImpl)._enableRecorder({
     language,
     launchOptions,
     contextOptions,

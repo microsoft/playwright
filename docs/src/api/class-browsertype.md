@@ -128,17 +128,7 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 * since: v1.37
 - `exposeNetwork` <[string]>
 
-This option exposes network available on the connecting client to the browser being connected to. Consists of a list of rules separated by comma.
-
-Available rules:
-1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
-1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
-1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
-
-Some common examples:
-1. `"*"` to expose all network.
-1. `"<loopback>"` to expose localhost network.
-1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and localhost.
+This option exposes network available on the connecting client to the browser being connected to. See the [remote connection](../remote.md#exposing-local-network-to-the-remote-browser) guide for details.
 
 ## async method: BrowserType.connectOverCDP
 * since: v1.9
@@ -302,6 +292,38 @@ describes some differences for Linux users.
 
 ### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
 * since: v1.9
+
+### option: BrowserType.launch.remote
+* since: v1.42
+* langs: js
+- `remote` ?<[Object]>
+  - `wsEndpoint` <[string]> A websocket endpoint to connect to.
+  - `headers` ?<[Object]<[string], [string]>> Additional HTTP headers to be sent with in the remote connection request.
+  - `exposeNetwork` ?<[string]> This option exposes network available on the connecting client to the browser being connected to. See the [remote connection](../remote.md#exposing-local-network-to-the-remote-browser) guide for details.
+
+When [`option: remote`] is present, the browser is not launched locally. Instead, a websocket connection is established to a remote Playwright server that launches the browser upon request. See the [remote connection](../remote.md) guide for details.
+
+### option: BrowserType.launch.remoteEndpoint
+* since: v1.42
+* langs: csharp, java, python
+- `remoteEndpoint` ?<[string]>
+
+When [`option: remoteEndpoint`] is present, the browser is not launched locally. Instead, a websocket connection is established to a remote Playwright server that launches the browser upon request. See the [remote connection](../remote.md) guide for details.
+
+### option: BrowserType.launch.remoteHeaders
+* since: v1.42
+* langs: csharp, java, python
+- `remoteHeaders` ?<[Object]<[string], [string]>>
+
+Additional HTTP headers to be sent with in the remote connection request. Ignored unless [`option: remoteEndpoint`] is set.
+
+### option: BrowserType.launch.remoteExposeNetwork
+* since: v1.42
+* langs: csharp, java, python
+- `remoteExposeNetwork` ?<[string]>
+
+This option exposes network available on the connecting client to the browser being connected to. Ignored unless [`option: remoteEndpoint`] is set.
+
 
 ## async method: BrowserType.launchPersistentContext
 * since: v1.8

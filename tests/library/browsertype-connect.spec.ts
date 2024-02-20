@@ -149,6 +149,22 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
+    test('should connect through launch(remote) and filter options', async ({ browserType, startRemoteServer, server }) => {
+      const tracesDir = test.info().outputPath('traces');
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await browserType.launch({
+        remote: { wsEndpoint: remoteServer.wsEndpoint() },
+        tracesDir,
+      });
+      const browserContext = await browser.newContext();
+      expect(browserContext.pages().length).toBe(0);
+      const page = await browserContext.newPage();
+      expect(await page.evaluate('11 * 11')).toBe(121);
+      await page.goto(server.EMPTY_PAGE);
+      await browser.close();
+      expect(fs.existsSync(tracesDir)).toBe(false);
+    });
+
     test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerPort }) => {
       test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       const remoteServer = await startRemoteServer(kind);
@@ -590,19 +606,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const entry = log.entries[0];
       expect(entry.pageref).toBe(log.pages[0].id);
       expect(entry.request.url).toBe(server.EMPTY_PAGE);
-    });
-
-    test('should filter launch options', async ({ connect, startRemoteServer, server, browserType }, testInfo) => {
-      const tracesDir = testInfo.outputPath('traces');
-      const oldTracesDir = (browserType as any)._defaultLaunchOptions.tracesDir;
-      (browserType as any)._defaultLaunchOptions.tracesDir = tracesDir;
-      const remoteServer = await startRemoteServer(kind);
-      const browser = await connect(remoteServer.wsEndpoint());
-      const page = await browser.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      await browser.close();
-      (browserType as any)._defaultLaunchOptions.tracesDir = oldTracesDir;
-      expect(fs.existsSync(tracesDir)).toBe(false);
     });
 
     test('should record trace with sources', async ({ connect, startRemoteServer, server, trace }, testInfo) => {

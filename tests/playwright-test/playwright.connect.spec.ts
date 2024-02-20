@@ -15,6 +15,8 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import { RunServer } from '../config/remoteServer';
+import fs from 'fs';
 
 test('should work with connectOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -79,6 +81,39 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should work with launchOptions.remote and tracing', async ({ runInlineTest, childProcess }) => {
+  const server = new RunServer();
+  await server.start(childProcess);
+
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: {
+          trace: 'on',
+          launchOptions: {
+            remote: {
+              wsEndpoint: "${server.wsEndpoint()}",
+            },
+          },
+        },
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await expect(page.locator('div')).toHaveText('PASS');
+      });
+    `,
+  });
+
+  await server.close();
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(test.info().outputPath('test-results', 'a-pass', 'trace.zip'))).toBe(true);
+});
+
 test('should throw with bad connectOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
@@ -100,7 +135,7 @@ test('should throw with bad connectOptions', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('browserType.connect:');
+  expect(result.output).toContain('browserType.launch:');
   expect(result.output).toContain('does-not-exist-bad-domain');
 });
 
@@ -124,7 +159,7 @@ test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('browserType.connect: Timeout 1ms exceeded.');
+  expect(result.output).toContain('browserType.launch: Timeout 1ms exceeded.');
 });
 
 test('should print debug log when failed to connect', async ({ runInlineTest }) => {
