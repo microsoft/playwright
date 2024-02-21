@@ -48,6 +48,8 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
+  if (config.configCLIOverrides.additionalReporters)
+    descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...arg, configDir: config.configDir };
