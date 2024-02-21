@@ -16,8 +16,13 @@
 
 import crypto from 'crypto';
 
+/**
+ * Creates a random identifier, biased by the current timestamp.
+ *
+ * @returns A string representing cryptographically strong pseudorandom data
+ */
 export function createGuid(): string {
-  return crypto.randomBytes(16).toString('hex');
+  return crypto.randomBytes(16).toString('hex') + Date.now().toString();
 }
 
 export function calculateSha1(buffer: Buffer | string): string {
