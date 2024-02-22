@@ -287,11 +287,8 @@ export class CRNetworkManager {
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
-        let headers = undefined;
-        const previousHeaderOverrides = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
         // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
-        if (previousHeaderOverrides)
-          headers = network.mergeHeaders([headersObjectToArray(requestPausedEvent.request.headers, '\n'), previousHeaderOverrides]);
+        const headers = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
         this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
       } else {
         route = new RouteImpl(this._session, requestPausedEvent.requestId);
