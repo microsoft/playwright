@@ -15,16 +15,18 @@
  */
 
 import type http from 'http';
+import path from 'path';
 import { ManualPromise, createGuid } from 'playwright-core/lib/utils';
 import { WSServer } from 'playwright-core/lib/utils';
 import type { WebSocket } from 'playwright-core/lib/utilsBundle';
 import type { FullResult } from 'playwright/types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import { loadConfigFromFile } from '../common/configLoader';
+import { ConfigLoader, resolveConfigFile, restartWithExperimentalTsEsm } from '../common/configLoader';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer } from './tasks';
+import type { ConfigCLIOverrides } from '../common/ipc';
 
 type PlaywrightTestOptions = {
   headed?: boolean,
@@ -36,17 +38,26 @@ type PlaywrightTestOptions = {
   connectWsEndpoint?: string;
 };
 
-export async function runTestServer(configFile: string) {
-  process.env.PW_TEST_HTML_REPORT_OPEN = 'never';
-  process.env.FORCE_COLOR = '1';
+type ConfigPaths = {
+  configFile: string | null;
+  configDir: string;
+};
 
-  const config = await loadConfigFromFile(configFile);
-  if (!config)
-    return;
+export async function runTestServer(configFile: string | undefined) {
+  process.env.PW_TEST_HTML_REPORT_OPEN = 'never';
+
+  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return null;
+  const configPaths: ConfigPaths = {
+    configFile: resolvedConfigFile,
+    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory
+  };
 
   const wss = new WSServer({
     onConnection(request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) {
-      const dispatcher = new Dispatcher(config, ws);
+      const dispatcher = new Dispatcher(configPaths, ws);
       ws.on('message', async message => {
         const { id, method, params } = JSON.parse(message.toString());
         try {
@@ -68,12 +79,12 @@ export async function runTestServer(configFile: string) {
 }
 
 class Dispatcher {
-  private _config: FullConfigInternal;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _ws: WebSocket;
+  private _configPaths: ConfigPaths;
 
-  constructor(config: FullConfigInternal, ws: WebSocket) {
-    this._config = config;
+  constructor(configPaths: ConfigPaths, ws: WebSocket) {
+    this._configPaths = configPaths;
     this._ws = ws;
 
     process.stdout.write = ((chunk: string | Buffer, cb?: Buffer | Function, cb2?: Function) => {
@@ -111,11 +122,12 @@ class Dispatcher {
   }
 
   private async _listTests(reporterPath: string, locations: string[] | undefined) {
-    this._config.cliArgs = [...(locations || []), '--reporter=null'];
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(this._config, 'list', [[reporterPath]])));
-    const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: true });
-    const testRun = new TestRun(this._config, reporter);
-    reporter.onConfigure(this._config.config);
+    const config = await this._loadConfig({});
+    config.cliArgs = [...(locations || []), '--reporter=null'];
+    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'list', [[reporterPath]])));
+    const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
+    const testRun = new TestRun(config, reporter);
+    reporter.onConfigure(config.config);
 
     const taskStatus = await taskRunner.run(testRun, 0);
     let status: FullResult['status'] = testRun.failureTracker.result();
@@ -129,28 +141,30 @@ class Dispatcher {
 
   private async _runTests(reporterPath: string, locations: string[] | undefined, options: PlaywrightTestOptions) {
     await this._stopTests();
-    this._config.cliListOnly = false;
-    this._config.cliArgs = locations || [];
-    this._config.cliGrep = options.grep;
-    this._config.cliProjectFilter = options.projects?.length ? options.projects : undefined;
-    this._config.configCLIOverrides.reporter = [[reporterPath]];
-    this._config.configCLIOverrides.repeatEach = 1;
-    this._config.configCLIOverrides.retries = 0;
-    this._config.configCLIOverrides.preserveOutputDir = true;
-    this._config.configCLIOverrides.use =  {
-      trace: options.trace,
-      headless: options.headed ? false : undefined,
-      _optionContextReuseMode: options.reuseContext ? 'when-possible' : undefined,
-      _optionConnectOptions: options.connectWsEndpoint ? { wsEndpoint: options.connectWsEndpoint } : undefined,
+    const overrides: ConfigCLIOverrides = {
+      additionalReporters: [[reporterPath]],
+      repeatEach: 1,
+      retries: 0,
+      preserveOutputDir: true,
+      use: {
+        trace: options.trace,
+        headless: options.headed ? false : undefined,
+        _optionContextReuseMode: options.reuseContext ? 'when-possible' : undefined,
+        _optionConnectOptions: options.connectWsEndpoint ? { wsEndpoint: options.connectWsEndpoint } : undefined,
+      },
+      workers: options.oneWorker ? 1 : undefined,
     };
-    // Too late to adjust via overrides for this one.
-    if (options.oneWorker)
-      this._config.config.workers = 1;
 
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(this._config, 'run')));
-    const taskRunner = createTaskRunnerForTestServer(this._config, reporter);
-    const testRun = new TestRun(this._config, reporter);
-    reporter.onConfigure(this._config.config);
+    const config = await this._loadConfig(overrides);
+    config.cliListOnly = false;
+    config.cliArgs = locations || [];
+    config.cliGrep = options.grep;
+    config.cliProjectFilter = options.projects?.length ? options.projects : undefined;
+
+    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'run')));
+    const taskRunner = createTaskRunnerForTestServer(config, reporter);
+    const testRun = new TestRun(config, reporter);
+    reporter.onConfigure(config.config);
     const stop = new ManualPromise();
     const run = taskRunner.run(testRun, 0, stop).then(async status => {
       await reporter.onEnd({ status });
@@ -165,6 +179,16 @@ class Dispatcher {
   private async _stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
+  }
+
+  private async _loadConfig(overrides: ConfigCLIOverrides) {
+    const configLoader = new ConfigLoader(overrides);
+    let config: FullConfigInternal;
+    if (this._configPaths.configFile)
+      config = await configLoader.loadConfigFile(this._configPaths.configFile, false);
+    else
+      config = await configLoader.loadEmptyConfig(this._configPaths.configDir);
+    return config;
   }
 
   private _dispatchEvent(method: string, params: any) {

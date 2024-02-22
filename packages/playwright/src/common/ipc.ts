@@ -30,6 +30,7 @@ export type ConfigCLIOverrides = {
   repeatEach?: number;
   retries?: number;
   reporter?: ReporterDescription[];
+  additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   timeout?: number;
   ignoreSnapshots?: boolean;

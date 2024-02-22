@@ -350,8 +350,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   }, { scope: 'test',  _title: 'context' } as any],
 
-  _optionContextReuseMode: ['none', { scope: 'worker' }],
-  _optionConnectOptions: [undefined, { scope: 'worker' }],
+  _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
+  _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
