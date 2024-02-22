@@ -29,6 +29,9 @@ import type { ConfigCLIOverrides } from '../common/ipc';
 import { Runner } from './runner';
 import type { FindRelatedTestFilesReport } from './runner';
 import type { FullConfigInternal } from '../common/config';
+import type { TestServerInterface } from './testServerInterface';
+import { serializeError } from '../util';
+import { prepareErrorStack } from '../reporters/base';
 
 export async function runTestServer() {
   if (restartWithExperimentalTsEsm(undefined, true))
@@ -60,44 +63,6 @@ export async function runTestServer() {
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
 }
 
-export interface TestServerInterface {
-  list(params: {
-    configFile: string;
-    locations: string[];
-    reporter: string;
-    env: NodeJS.ProcessEnv;
-  }): Promise<void>;
-
-  test(params: {
-    configFile: string;
-    locations: string[];
-    reporter: string;
-    env: NodeJS.ProcessEnv;
-    headed?: boolean;
-    oneWorker?: boolean;
-    trace?: 'on' | 'off';
-    projects?: string[];
-    grep?: string;
-    reuseContext?: boolean;
-    connectWsEndpoint?: string;
-  }): Promise<void>;
-
-  findRelatedTestFiles(params: {
-    configFile: string;
-    files: string[];
-  }): Promise<{ testFiles: string[]; errors?: TestError[]; }>;
-
-  stop(params: {
-    configFile: string;
-  }): Promise<void>;
-
-  closeGracefully(): Promise<void>;
-}
-
-export interface TestServerEvents {
-  on(event: 'stdio', listener: (params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }) => void): void;
-}
-
 class Dispatcher implements TestServerInterface {
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _ws: WebSocket;
@@ -123,7 +88,30 @@ class Dispatcher implements TestServerInterface {
     }) as any;
   }
 
-  async list(params: {
+  async listFiles(params: {
+    configFile: string;
+  }): Promise<{
+    projects: {
+      name: string;
+      testDir: string;
+      use: { testIdAttribute?: string };
+      files: string[];
+    }[];
+    cliEntryPoint?: string;
+    error?: TestError;
+  }> {
+    try {
+      const config = await this._loadConfig(params.configFile);
+      const runner = new Runner(config);
+      return runner.listTestFiles();
+    } catch (e) {
+      const error: TestError = serializeError(e);
+      error.location = prepareErrorStack(e.stack).location;
+      return { projects: [], error };
+    }
+  }
+
+  async listTests(params: {
     configFile: string;
     locations: string[];
     reporter: string;

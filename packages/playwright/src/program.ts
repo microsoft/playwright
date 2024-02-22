@@ -27,7 +27,7 @@ import { createMergedReport } from './reporters/merge';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult, TestError } from '../types/testReporter';
-import type { FullConfig, TraceMode } from '../types/test';
+import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
@@ -176,7 +176,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   gracefullyProcessExitDoNotHang(exitCode);
 }
 
-export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner, config: FullConfig, configDir: string) => Promise<any>) {
+export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner) => Promise<any>) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
   const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
@@ -185,7 +185,7 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
     if (!config)
       return;
     const runner = new Runner(config);
-    const result = await callback(runner, config.config, config.configDir);
+    const result = await callback(runner);
     stdoutWrite(JSON.stringify(result, undefined, 2), () => {
       gracefullyProcessExitDoNotHang(0);
     });
@@ -199,9 +199,8 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
 }
 
 async function listTestFiles(opts: { [key: string]: any }) {
-  await withRunnerAndMutedWrite(opts.config, async (runner, config) => {
-    const frameworkPackage = (config as any)['@playwright/test']?.['packageJSON'];
-    return await runner.listTestFiles(frameworkPackage, opts.project);
+  await withRunnerAndMutedWrite(opts.config, async runner => {
+    return await runner.listTestFiles();
   });
 }
 
