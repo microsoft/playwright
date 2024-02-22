@@ -461,16 +461,8 @@ class PageAgent {
   }
 
   async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
-    if (code === 'OSLeft')
-      code = 'MetaLeft';
-    else if (code === 'OSRight')
-      code = 'MetaRight';
     const frame = this._frameTree.mainFrame();
     const tip = frame.textInputProcessor();
-    if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')
-      key = 'OS';
-    else if (key === 'OS' && Services.appinfo.OS === 'Darwin')
-      key = 'Meta';
     let keyEvent = new (frame.domWindow().KeyboardEvent)("", {
       key,
       code,
