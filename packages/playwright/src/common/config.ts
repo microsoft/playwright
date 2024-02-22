@@ -26,6 +26,11 @@ import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/test';
 import { setTransformConfig } from '../transform/transform';
 
+export type ConfigLocation = {
+  resolvedConfigFile?: string;
+  configDir: string;
+};
+
 export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
@@ -58,53 +63,54 @@ export class FullConfigInternal {
     return (config as any)[configInternalSymbol];
   }
 
-  constructor(configDir: string, configFile: string | undefined, config: Config, configCLIOverrides: ConfigCLIOverrides) {
-    if (configCLIOverrides.projects && config.projects)
+  constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
+    if (configCLIOverrides.projects && userConfig.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
+    const { resolvedConfigFile, configDir } = location;
     const packageJsonPath = getPackageJsonPath(configDir);
     const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
     const throwawayArtifactsPath = packageJsonDir || process.cwd();
 
     this.configDir = configDir;
     this.configCLIOverrides = configCLIOverrides;
-    this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, config.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
+    this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, userConfig.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
     this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
-    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots, false);
-    const privateConfiguration = (config as any)['@playwright/test'];
+    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, userConfig.ignoreSnapshots, false);
+    const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
-      configFile,
-      rootDir: pathResolve(configDir, config.testDir) || configDir,
-      forbidOnly: takeFirst(configCLIOverrides.forbidOnly, config.forbidOnly, false),
-      fullyParallel: takeFirst(configCLIOverrides.fullyParallel, config.fullyParallel, false),
-      globalSetup: takeFirst(resolveScript(config.globalSetup, configDir), null),
-      globalTeardown: takeFirst(resolveScript(config.globalTeardown, configDir), null),
-      globalTimeout: takeFirst(configCLIOverrides.globalTimeout, config.globalTimeout, 0),
-      grep: takeFirst(config.grep, defaultGrep),
-      grepInvert: takeFirst(config.grepInvert, null),
-      maxFailures: takeFirst(configCLIOverrides.maxFailures, config.maxFailures, 0),
-      metadata: takeFirst(config.metadata, {}),
-      preserveOutput: takeFirst(config.preserveOutput, 'always'),
-      reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
-      reportSlowTests: takeFirst(config.reportSlowTests, { max: 5, threshold: 15000 }),
-      quiet: takeFirst(configCLIOverrides.quiet, config.quiet, false),
+      configFile: resolvedConfigFile,
+      rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
+      forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
+      fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
+      globalSetup: takeFirst(resolveScript(userConfig.globalSetup, configDir), null),
+      globalTeardown: takeFirst(resolveScript(userConfig.globalTeardown, configDir), null),
+      globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
+      grep: takeFirst(userConfig.grep, defaultGrep),
+      grepInvert: takeFirst(userConfig.grepInvert, null),
+      maxFailures: takeFirst(configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
+      metadata: takeFirst(userConfig.metadata, {}),
+      preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
+      reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
+      reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 15000 }),
+      quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
-      shard: takeFirst(configCLIOverrides.shard, config.shard, null),
-      updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, config.updateSnapshots, 'missing'),
+      shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
+      updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       version: require('../../package.json').version,
       workers: 0,
       webServer: null,
     };
-    for (const key in config) {
+    for (const key in userConfig) {
       if (key.startsWith('@'))
-        (this.config as any)[key] = (config as any)[key];
+        (this.config as any)[key] = (userConfig as any)[key];
     }
 
     (this.config as any)[configInternalSymbol] = this;
 
-    const workers = takeFirst(configCLIOverrides.workers, config.workers, '50%');
+    const workers = takeFirst(configCLIOverrides.workers, userConfig.workers, '50%');
     if (typeof workers === 'string') {
       if (workers.endsWith('%')) {
         const cpus = os.cpus().length;
@@ -116,7 +122,7 @@ export class FullConfigInternal {
       this.config.workers = workers;
     }
 
-    const webServers = takeFirst(config.webServer, null);
+    const webServers = takeFirst(userConfig.webServer, null);
     if (Array.isArray(webServers)) { // multiple web server mode
       // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
       this.config.webServer = null;
@@ -128,13 +134,13 @@ export class FullConfigInternal {
       this.webServers = [];
     }
 
-    const projectConfigs = configCLIOverrides.projects || config.projects || [config];
-    this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, config, this, p, this.configCLIOverrides, throwawayArtifactsPath));
+    const projectConfigs = configCLIOverrides.projects || userConfig.projects || [userConfig];
+    this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, throwawayArtifactsPath));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
     setTransformConfig({
       babelPlugins: privateConfiguration?.babelPlugins || [],
-      external: config.build?.external || [],
+      external: userConfig.build?.external || [],
     });
     this.config.projects = this.projects.map(p => p.project);
   }

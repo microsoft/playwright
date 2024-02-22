@@ -24,12 +24,11 @@ import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'p
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { ConfigLoader, loadConfigFromFile } from './common/configLoader';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult, TestError } from '../types/testReporter';
 import type { FullConfig, TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import type { FullConfigInternal } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
@@ -74,7 +73,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const configInternal = await loadConfigFromFile(opts.config);
+    const configInternal = await loadConfigFromFileRestartIfNeeded(opts.config);
     if (!configInternal)
       return;
     const { config, configDir } = configInternal;
@@ -154,7 +153,7 @@ Examples:
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
-  const config = await loadConfigFromFile(opts.config, overridesFromOptions(opts), opts.deps === false);
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts), opts.deps === false);
   if (!config)
     return;
 
@@ -183,7 +182,7 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
   const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
-    const config = await loadConfigFromFile(configFile);
+    const config = await loadConfigFromFileRestartIfNeeded(configFile);
     if (!config)
       return;
     const runner = new Runner(config);
@@ -209,13 +208,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  let config: FullConfigInternal | null;
-  if (configFile) {
-    config = await loadConfigFromFile(configFile);
-  } else {
-    const configLoader = new ConfigLoader();
-    config = await configLoader.loadEmptyConfig(process.cwd());
-  }
+  const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile) : await loadEmptyConfigForMergeReports();
   if (!config)
     return;
 

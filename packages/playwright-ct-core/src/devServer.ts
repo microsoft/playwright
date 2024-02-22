@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Watcher } from 'playwright/lib/fsWatcher';
-import { loadConfigFromFile } from 'playwright/lib/common/configLoader';
+import { loadConfigFromFileRestartIfNeeded } from 'playwright/lib/common/configLoader';
 import { Runner } from 'playwright/lib/runner/runner';
 import type { PluginContext } from 'rollup';
 import { source as injectedSource } from './generated/indexSource';
@@ -25,7 +25,7 @@ import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexF
 import type { ComponentRegistry } from './viteUtils';
 
 export async function runDevServer(configFile: string) {
-  const config = await loadConfigFromFile(configFile);
+  const config = await loadConfigFromFileRestartIfNeeded(configFile);
   if (!config)
     return;
 
