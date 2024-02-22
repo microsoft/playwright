@@ -12,7 +12,7 @@ This introduction describes the Playwright Pytest plugin, which is the recommend
 
 **You will learn**
 
-- [How to install Playwright Pytest](/intro.md#installing-playwright)
+- [How to install Playwright Pytest](/intro.md#installing-playwright-pytest)
 - [How to run the example test](/intro.md#running-the-example-test)
 
 ## Installing Playwright Pytest
