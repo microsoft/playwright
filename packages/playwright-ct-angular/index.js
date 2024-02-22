@@ -27,8 +27,7 @@ const defineConfig = (config, ...configs) => {
       packageJSON: require.resolve('./package.json'),
     },
     '@playwright/experimental-ct-core': {
-      registerSourceFile: path.join(__dirname, 'registerSource.mjs'),
-      frameworkPluginFactory: () => {},
+      registerSourceFile: path.join(__dirname, 'registerSource.mjs')
     },
   }, ...configs);
 };

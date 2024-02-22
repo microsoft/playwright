@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { beforeMount, afterMount } from '@playwright/experimental-ct-angular/hooks';
 import { provideRouter } from '@angular/router';
 import { ButtonComponent } from '@/components/button.component';

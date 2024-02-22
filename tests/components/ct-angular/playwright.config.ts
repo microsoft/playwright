@@ -26,9 +26,9 @@ export default defineConfig({
   use: {
     trace: 'on-first-retry',
     ctViteConfig: {
-      plugins: [
-        ...analogVitePlugin()
-      ],
+      // plugins: [
+      //   ...analogVitePlugin()
+      // ],
       resolve: {
         alias: {
           '@': resolve('./src'),
