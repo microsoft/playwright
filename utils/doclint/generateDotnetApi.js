@@ -709,6 +709,9 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   if (type.expression === '[null]|[Error]')
     return 'void';
 
+  if (type.name == 'Promise' && type.templates?.[0].name === 'any')
+    return 'Task';
+
   if (type.union) {
     if (type.union[0].name === 'null' && type.union.length === 2)
       return translateType(type.union[1], parent, generateNameCallback, true, isReturnType);
@@ -799,6 +802,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       if (returnType === null)
         throw new Error('Unexpected null as return type.');
 
+      if (!argsList)
+        return `Func<${returnType}>`;
       return `Func<${argsList}, ${returnType}>`;
     }
   }
