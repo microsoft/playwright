@@ -16,12 +16,11 @@
 
 import type http from 'http';
 import path from 'path';
-import { ManualPromise, createGuid } from 'playwright-core/lib/utils';
+import { ManualPromise, createGuid, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { WSServer } from 'playwright-core/lib/utils';
 import type { WebSocket } from 'playwright-core/lib/utilsBundle';
 import type { FullResult } from 'playwright/types/testReporter';
-import type { FullConfigInternal } from '../common/config';
-import { ConfigLoader, resolveConfigFile, restartWithExperimentalTsEsm } from '../common/configLoader';
+import { loadConfig, resolveConfigFile, restartWithExperimentalTsEsm } from '../common/configLoader';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createReporters } from './reporters';
@@ -29,6 +28,7 @@ import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer } from 
 import type { ConfigCLIOverrides } from '../common/ipc';
 import { Runner } from './runner';
 import type { FindRelatedTestFilesReport } from './runner';
+import type { ConfigLocation } from '../common/config';
 
 type PlaywrightTestOptions = {
   headed?: boolean,
@@ -40,11 +40,6 @@ type PlaywrightTestOptions = {
   connectWsEndpoint?: string;
 };
 
-type ConfigPaths = {
-  configFile: string | null;
-  configDir: string;
-};
-
 export async function runTestServer(configFile: string | undefined) {
   process.env.PW_TEST_HTML_REPORT_OPEN = 'never';
 
@@ -52,8 +47,8 @@ export async function runTestServer(configFile: string | undefined) {
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return null;
-  const configPaths: ConfigPaths = {
-    configFile: resolvedConfigFile,
+  const configPaths: ConfigLocation = {
+    resolvedConfigFile,
     configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory
   };
 
@@ -77,16 +72,19 @@ export async function runTestServer(configFile: string | undefined) {
   });
   const url = await wss.listen(0, 'localhost', '/' + createGuid());
   // eslint-disable-next-line no-console
+  process.on('exit', () => wss.close().catch(console.error));
+  // eslint-disable-next-line no-console
   console.log(`Listening on ${url}`);
+  process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
 }
 
 class Dispatcher {
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _ws: WebSocket;
-  private _configPaths: ConfigPaths;
+  private _configLocation: ConfigLocation;
 
-  constructor(configPaths: ConfigPaths, ws: WebSocket) {
-    this._configPaths = configPaths;
+  constructor(configLocation: ConfigLocation, ws: WebSocket) {
+    this._configLocation = configLocation;
     this._ws = ws;
 
     process.stdout.write = ((chunk: string | Buffer, cb?: Buffer | Function, cb2?: Function) => {
@@ -190,13 +188,7 @@ class Dispatcher {
   }
 
   private async _loadConfig(overrides: ConfigCLIOverrides) {
-    const configLoader = new ConfigLoader(overrides);
-    let config: FullConfigInternal;
-    if (this._configPaths.configFile)
-      config = await configLoader.loadConfigFile(this._configPaths.configFile, false);
-    else
-      config = await configLoader.loadEmptyConfig(this._configPaths.configDir);
-    return config;
+    return await loadConfig(this._configLocation, overrides);
   }
 
   private _dispatchEvent(method: string, params: any) {
