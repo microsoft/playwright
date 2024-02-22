@@ -34,7 +34,7 @@ import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
-import { affectedTestFiles, cacheDir } from './transform/compilationCache';
+import { cacheDir } from './transform/compilationCache';
 import { runTestServer } from './runner/testServer';
 
 function addTestCommand(program: Command) {
@@ -102,17 +102,7 @@ function addFindRelatedTestFilesCommand(program: Command) {
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
-    await withRunnerAndMutedWrite(options.config, async (runner, config, configDir) => {
-      const result = await runner.loadAllTests();
-      if (result.status !== 'passed' || !result.suite)
-        return { errors: result.errors };
-
-      const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-      const override = (config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-      if (override)
-        return await override(resolvedFiles, config, configDir, result.suite);
-      return { testFiles: affectedTestFiles(resolvedFiles) };
-    });
+    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles('in-process', files));
   });
 }
 

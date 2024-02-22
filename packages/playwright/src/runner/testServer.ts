@@ -27,6 +27,8 @@ import { Multiplexer } from '../reporters/multiplexer';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer } from './tasks';
 import type { ConfigCLIOverrides } from '../common/ipc';
+import { Runner } from './runner';
+import type { FindRelatedTestFilesReport } from './runner';
 
 type PlaywrightTestOptions = {
   headed?: boolean,
@@ -115,6 +117,12 @@ class Dispatcher {
     for (const name in params.env)
       process.env[name] = params.env[name];
     await this._runTests(params.reporter, params.locations, params.options);
+  }
+
+  async findRelatedTestFiles(params:  { files: string[] }): Promise<FindRelatedTestFilesReport> {
+    const config = await this._loadConfig({});
+    const runner = new Runner(config);
+    return runner.findRelatedTestFiles('out-of-process', params.files);
   }
 
   async stop() {
