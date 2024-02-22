@@ -458,6 +458,11 @@ class PageTarget {
     this.updateColorSchemeOverride(browsingContext);
     this.updateReducedMotionOverride(browsingContext);
     this.updateForcedColorsOverride(browsingContext);
+    this.updateForceOffline(browsingContext);
+  }
+
+  updateForceOffline(browsingContext = undefined) {
+    (browsingContext || this._linkedBrowser.browsingContext).forceOffline = this._browserContext.forceOffline;
   }
 
   updateTouchOverride(browsingContext = undefined) {
@@ -829,6 +834,7 @@ class BrowserContext {
     this.defaultUserAgent = null;
     this.defaultPlatform = null;
     this.touchOverride = false;
+    this.forceOffline = false;
     this.colorScheme = 'none';
     this.forcedColors = 'no-override';
     this.reducedMotion = 'none';
@@ -922,6 +928,12 @@ class BrowserContext {
     this.touchOverride = touchOverride;
     for (const page of this.pages)
       page.updateTouchOverride();
+  }
+
+  setForceOffline(forceOffline) {
+    this.forceOffline = forceOffline;
+    for (const page of this.pages)
+      page.updateForceOffline();
   }
 
   async setDefaultViewport(viewport) {

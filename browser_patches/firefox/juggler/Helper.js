@@ -23,6 +23,16 @@ class Helper {
     return allBrowsingContexts;
   }
 
+  awaitTopic(topic) {
+    return new Promise(resolve => {
+      const listener = () => {
+        Services.obs.removeObserver(listener, topic);
+        resolve();
+      }
+      Services.obs.addObserver(listener, topic);
+    });
+  }
+
   toProtocolNavigationId(loadIdentifier) {
     return `nav-${loadIdentifier}`;
   }
