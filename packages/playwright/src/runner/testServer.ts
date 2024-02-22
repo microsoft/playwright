@@ -19,8 +19,8 @@ import path from 'path';
 import { ManualPromise, createGuid, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { WSServer } from 'playwright-core/lib/utils';
 import type { WebSocket } from 'playwright-core/lib/utilsBundle';
-import type { FullResult } from 'playwright/types/testReporter';
-import { loadConfig, resolveConfigFile, restartWithExperimentalTsEsm } from '../common/configLoader';
+import type { FullResult, TestError } from 'playwright/types/testReporter';
+import { loadConfig, restartWithExperimentalTsEsm } from '../common/configLoader';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createReporters } from './reporters';
@@ -28,33 +28,15 @@ import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer } from 
 import type { ConfigCLIOverrides } from '../common/ipc';
 import { Runner } from './runner';
 import type { FindRelatedTestFilesReport } from './runner';
-import type { ConfigLocation } from '../common/config';
+import type { FullConfigInternal } from '../common/config';
 
-type PlaywrightTestOptions = {
-  headed?: boolean,
-  oneWorker?: boolean,
-  trace?: 'on' | 'off',
-  projects?: string[];
-  grep?: string;
-  reuseContext?: boolean,
-  connectWsEndpoint?: string;
-};
-
-export async function runTestServer(configFile: string | undefined) {
-  process.env.PW_TEST_HTML_REPORT_OPEN = 'never';
-
-  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+export async function runTestServer() {
+  if (restartWithExperimentalTsEsm(undefined, true))
     return null;
-  const configPaths: ConfigLocation = {
-    resolvedConfigFile,
-    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory
-  };
-
+  process.env.PW_TEST_HTML_REPORT_OPEN = 'never';
   const wss = new WSServer({
     onConnection(request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) {
-      const dispatcher = new Dispatcher(configPaths, ws);
+      const dispatcher = new Dispatcher(ws);
       ws.on('message', async message => {
         const { id, method, params } = JSON.parse(message.toString());
         try {
@@ -78,13 +60,49 @@ export async function runTestServer(configFile: string | undefined) {
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
 }
 
-class Dispatcher {
+export interface TestServerInterface {
+  list(params: {
+    configFile: string;
+    locations: string[];
+    reporter: string;
+    env: NodeJS.ProcessEnv;
+  }): Promise<void>;
+
+  test(params: {
+    configFile: string;
+    locations: string[];
+    reporter: string;
+    env: NodeJS.ProcessEnv;
+    headed?: boolean;
+    oneWorker?: boolean;
+    trace?: 'on' | 'off';
+    projects?: string[];
+    grep?: string;
+    reuseContext?: boolean;
+    connectWsEndpoint?: string;
+  }): Promise<void>;
+
+  findRelatedTestFiles(params: {
+    configFile: string;
+    files: string[];
+  }): Promise<{ testFiles: string[]; errors?: TestError[]; }>;
+
+  stop(params: {
+    configFile: string;
+  }): Promise<void>;
+
+  closeGracefully(): Promise<void>;
+}
+
+export interface TestServerEvents {
+  on(event: 'stdio', listener: (params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }) => void): void;
+}
+
+class Dispatcher implements TestServerInterface {
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _ws: WebSocket;
-  private _configLocation: ConfigLocation;
 
-  constructor(configLocation: ConfigLocation, ws: WebSocket) {
-    this._configLocation = configLocation;
+  constructor(ws: WebSocket) {
     this._ws = ws;
 
     process.stdout.write = ((chunk: string | Buffer, cb?: Buffer | Function, cb2?: Function) => {
@@ -105,32 +123,16 @@ class Dispatcher {
     }) as any;
   }
 
-  async list(params: { locations: string[], reporter: string, env: NodeJS.ProcessEnv }) {
-    for (const name in params.env)
-      process.env[name] = params.env[name];
-    await this._listTests(params.reporter, params.locations);
-  }
-
-  async test(params: { locations: string[], options: PlaywrightTestOptions, reporter: string, env: NodeJS.ProcessEnv }) {
-    for (const name in params.env)
-      process.env[name] = params.env[name];
-    await this._runTests(params.reporter, params.locations, params.options);
-  }
-
-  async findRelatedTestFiles(params:  { files: string[] }): Promise<FindRelatedTestFilesReport> {
-    const config = await this._loadConfig({});
-    const runner = new Runner(config);
-    return runner.findRelatedTestFiles('out-of-process', params.files);
-  }
-
-  async stop() {
-    await this._stopTests();
-  }
-
-  private async _listTests(reporterPath: string, locations: string[] | undefined) {
-    const config = await this._loadConfig({});
-    config.cliArgs = [...(locations || []), '--reporter=null'];
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'list', [[reporterPath]])));
+  async list(params: {
+    configFile: string;
+    locations: string[];
+    reporter: string;
+    env: NodeJS.ProcessEnv;
+  }) {
+    this._syncEnv(params.env);
+    const config = await this._loadConfig(params.configFile);
+    config.cliArgs = params.locations || [];
+    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'list', [[params.reporter]])));
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -145,27 +147,41 @@ class Dispatcher {
     await reporter.onExit();
   }
 
-  private async _runTests(reporterPath: string, locations: string[] | undefined, options: PlaywrightTestOptions) {
+  async test(params: {
+    configFile: string;
+    locations: string[];
+    reporter: string;
+    env: NodeJS.ProcessEnv;
+    headed?: boolean;
+    oneWorker?: boolean;
+    trace?: 'on' | 'off';
+    projects?: string[];
+    grep?: string;
+    reuseContext?: boolean;
+    connectWsEndpoint?: string;
+  }) {
+    this._syncEnv(params.env);
     await this._stopTests();
+
     const overrides: ConfigCLIOverrides = {
-      additionalReporters: [[reporterPath]],
+      additionalReporters: [[params.reporter]],
       repeatEach: 1,
       retries: 0,
       preserveOutputDir: true,
       use: {
-        trace: options.trace,
-        headless: options.headed ? false : undefined,
-        _optionContextReuseMode: options.reuseContext ? 'when-possible' : undefined,
-        _optionConnectOptions: options.connectWsEndpoint ? { wsEndpoint: options.connectWsEndpoint } : undefined,
+        trace: params.trace,
+        headless: params.headed ? false : undefined,
+        _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
+        _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
-      workers: options.oneWorker ? 1 : undefined,
+      workers: params.oneWorker ? 1 : undefined,
     };
 
-    const config = await this._loadConfig(overrides);
+    const config = await this._loadConfig(params.configFile, overrides);
     config.cliListOnly = false;
-    config.cliArgs = locations || [];
-    config.cliGrep = options.grep;
-    config.cliProjectFilter = options.projects?.length ? options.projects : undefined;
+    config.cliArgs = params.locations || [];
+    config.cliGrep = params.grep;
+    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
 
     const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'run')));
     const taskRunner = createTaskRunnerForTestServer(config, reporter);
@@ -182,17 +198,41 @@ class Dispatcher {
     await run;
   }
 
+  async findRelatedTestFiles(params:  {
+    configFile: string;
+    files: string[];
+  }): Promise<FindRelatedTestFilesReport> {
+    const config = await this._loadConfig(params.configFile);
+    const runner = new Runner(config);
+    return runner.findRelatedTestFiles('out-of-process', params.files);
+  }
+
+  async stop(params: {
+    configFile: string;
+  }) {
+    await this._stopTests();
+  }
+
+  async closeGracefully() {
+    gracefullyProcessExitDoNotHang(0);
+  }
+
   private async _stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
   }
 
-  private async _loadConfig(overrides: ConfigCLIOverrides) {
-    return await loadConfig(this._configLocation, overrides);
-  }
-
   private _dispatchEvent(method: string, params: any) {
     this._ws.send(JSON.stringify({ method, params }));
+  }
+
+  private async _loadConfig(configFile: string, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal> {
+    return loadConfig({ resolvedConfigFile: configFile, configDir: path.dirname(configFile) }, overrides);
+  }
+
+  private _syncEnv(env: NodeJS.ProcessEnv) {
+    for (const name in env)
+      process.env[name] = env[name];
   }
 }
 

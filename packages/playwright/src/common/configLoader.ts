@@ -93,7 +93,7 @@ export async function deserializeConfig(data: SerializedConfig): Promise<FullCon
   return config;
 }
 
-export async function loadUserConfig(location: ConfigLocation): Promise<Config> {
+async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   let object = location.resolvedConfigFile ? await requireOrImport(location.resolvedConfigFile) : {};
   if (object && typeof object === 'object' && ('default' in object))
     object = object['default'];
@@ -333,12 +333,12 @@ export async function loadEmptyConfigForMergeReports() {
   return await loadConfig({ configDir: process.cwd() });
 }
 
-export function restartWithExperimentalTsEsm(configFile: string | undefined): boolean {
+export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
   const nodeVersion = +process.versions.node.split('.')[0];
   // New experimental loader is only supported on Node 16+.
   if (nodeVersion < 16)
     return false;
-  if (!configFile)
+  if (!configFile && !force)
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
@@ -348,9 +348,10 @@ export function restartWithExperimentalTsEsm(configFile: string | undefined): bo
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
   }
-  if (!fileIsModule(configFile))
+  if (!force && !fileIsModule(configFile!))
     return false;
-    // Node.js < 20
+
+  // Node.js < 20
   if (!require('node:module').register) {
     const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
       env: {

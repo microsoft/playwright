@@ -108,9 +108,8 @@ function addFindRelatedTestFilesCommand(program: Command) {
 function addTestServerCommand(program: Command) {
   const command = program.command('test-server', { hidden: true });
   command.description('start test server');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(options => {
-    void runTestServer(options.config);
+  command.action(() => {
+    void runTestServer();
   });
 }
 
