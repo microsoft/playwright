@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
 const path = require('path');
+
+const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
 
 process.env['NODE_ENV'] = 'test';
 
-function plugin() {
-  // Only fetch upon request to avoid resolution in workers.
-  const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
-  return createPlugin(
-      path.join(__dirname, 'registerSource.mjs'),
-      () => import('@analogjs/vite-plugin-angular').then(plugin => {
-        // TODO: remove the typeof plugin.default check
-        if (typeof plugin.default === 'function')
-          return plugin.default({ jit: false });
-        return plugin.default.default({ jit: false });
-      })
-  );
-}
-
-const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
+const defineConfig = (config, ...configs) => {
+  return originalDefineConfig({
+    ...config,
+    '@playwright/test': {
+      packageJSON: require.resolve('./package.json'),
+    },
+    '@playwright/experimental-ct-core': {
+      registerSourceFile: path.join(__dirname, 'registerSource.mjs'),
+      frameworkPluginFactory: () => {},
+    },
+  }, ...configs);
+};
 
 module.exports = { test, expect, devices, defineConfig };

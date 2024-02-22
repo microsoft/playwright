@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import analogVitePlugin from '@analogjs/vite-plugin-angular';
 import { defineConfig, devices } from '@playwright/experimental-ct-angular';
 import { resolve } from 'path';
 
@@ -25,6 +26,9 @@ export default defineConfig({
   use: {
     trace: 'on-first-retry',
     ctViteConfig: {
+      plugins: [
+        ...analogVitePlugin()
+      ],
       resolve: {
         alias: {
           '@': resolve('./src'),
