@@ -5,13 +5,17 @@ title: "Annotations"
 
 ## Introduction
 
-Playwright Test supports test annotations to deal with failures, flakiness, skip, focus and tag tests:
-- [`method: Test.skip#1`] marks the test as irrelevant. Playwright Test does not run such a test. Use this annotation when the test is not applicable in some configuration.
-- [`method: Test.fail#1`] marks the test as failing. Playwright Test will run this test and ensure it does indeed fail. If the test does not fail, Playwright Test will complain.
-- [`method: Test.fixme#1`] marks the test as failing. Playwright Test will not run this test, as opposed to the `fail` annotation. Use `fixme` when running the test is slow or crashes.
-- [`method: Test.slow#1`] marks the test as slow and triples the test timeout.
+Playwright supports tags and annotations that are displayed in the test report.
 
-Annotations can be used on a single test or a group of tests. Annotations can be conditional, in which case they apply when the condition is truthy. Annotations may depend on test fixtures. There could be multiple annotations on the same test, possibly in different configurations.
+You can add your own tags and annotations at any moment, but Playwright comes with a few built-in ones:
+- [`method: Test.skip`] marks the test as irrelevant. Playwright does not run such a test. Use this annotation when the test is not applicable in some configuration.
+- [`method: Test.fail`] marks the test as failing. Playwright will run this test and ensure it does indeed fail. If the test does not fail, Playwright will complain.
+- [`method: Test.fixme`] marks the test as failing. Playwright will not run this test, as opposed to the `fail` annotation. Use `fixme` when running the test is slow or crashes.
+- [`method: Test.slow`] marks the test as slow and triples the test timeout.
+
+Annotations can be added to a single test or a group of tests.
+
+Built-in annotations can be conditional, in which case they apply when the condition is truthy, and may depend on test fixtures. There could be multiple annotations on the same test, possibly in different configurations.
 
 ## Focus a test
 
@@ -63,56 +67,136 @@ test.describe('two tests', () => {
 
 ## Tag tests
 
-Sometimes you want to tag your tests as `@fast` or `@slow` and only run the tests that have the certain tag. We recommend that you use the `--grep` and `--grep-invert` command line flags for that:
+Sometimes you want to tag your tests as `@fast` or `@slow`, and then filter by tag in the test report. Or you might want to only run tests that have a certain tag.
+
+To tag a test, either provide an additional details object when declaring a test, or add `@`-token to the test title. Note that tags must start with `@` symbol.
 
 ```js
 import { test, expect } from '@playwright/test';
 
-test('Test login page @fast', async ({ page }) => {
+test('test login page', {
+  tag: '@fast',
+}, async ({ page }) => {
   // ...
 });
 
-test('Test full report @slow', async ({ page }) => {
+test('test full report @slow', async ({ page }) => {
   // ...
 });
 ```
 
-You will then be able to run only that test:
+You can also tag all tests in a group or provide multiple tags:
 
-```bash
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe('group', {
+  tag: '@report',
+}, () => {
+  test('test report header', async ({ page }) => {
+    // ...
+  });
+
+  test('test full report', {
+    tag: ['@slow', '@vrt'],
+  }, async ({ page }) => {
+    // ...
+  });
+});
+```
+
+You can now run tests that have a particular tag with [`--grep`](./test-cli.md#reference) command line option.
+
+```bash tab=bash-bash
+npx playwright test --grep @fast
+```
+
+```powershell tab=bash-powershell
+npx playwright test --grep "@fast"
+```
+
+```batch tab=bash-batch
 npx playwright test --grep @fast
 ```
 
 Or if you want the opposite, you can skip the tests with a certain tag:
 
-```bash
-npx playwright test --grep-invert @slow
+```bash tab=bash-bash
+npx playwright test --grep-invert @fast
+```
+
+```powershell tab=bash-powershell
+npx playwright test --grep-invert "@fast"
+```
+
+```batch tab=bash-batch
+npx playwright test --grep-invert @fast
 ```
 
 To run tests containing either tag (logical `OR` operator):
 
-```bash
+```bash tab=bash-bash
 npx playwright test --grep "@fast|@slow"
 ```
 
-On Windows shells:
+```powershell tab=bash-powershell
+npx playwright test --grep --% "@fast^|@slow"
+```
 
-- PowerShell
-
-  ```bash
-  npx playwright test --grep --% "@fast^|@slow"
-  ```
-
-- Command Prompt(cmd.exe) / Git Bash:
-
-  ```bash
-  npx playwright test --grep "@fast^|@slow"
-  ```
+```batch tab=bash-batch
+npx playwright test --grep "@fast^|@slow"
+```
 
 Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
 
 ```bash
 npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+```
+
+You can also filter tests in the configuration file via [`property: TestConfig.grep`] and [`property: TestProject.grep`].
+
+
+
+## Annotate tests
+
+If you would like to annotate your tests with something more substantial than a tag, you can do that when declaring a test. Annotations have a `type` and a `description` for more context, and will be visible in the test report.
+
+For example, to annotate a test with an issue url:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('test login page', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/23180',
+  },
+}, async ({ page }) => {
+  // ...
+});
+```
+
+You can also annotate all tests in a group or provide multiple annotations:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe('report tests', {
+  annotation: { type: 'category', description: 'report' },
+}, () => {
+  test('test report header', async ({ page }) => {
+    // ...
+  });
+
+  test('test full report', {
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23180' },
+      { type: 'performance', description: 'very slow test!' },
+    ],
+  }, async ({ page }) => {
+    // ...
+  });
+});
 ```
 
 ## Conditionally skip a group of tests
@@ -156,18 +240,19 @@ test('user profile', async ({ page }) => {
 });
 ```
 
-## Custom annotations
+## Runtime annotations
 
-It's also possible to add custom metadata in the form of annotations to your tests. Annotations are key/value pairs accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations). Many reporters show annotations, for example `'html'`.
+While the test is already running, you can add annotations to [`test.info().annotations`](./api/class-testinfo#test-info-annotations).
 
 
 ```js title="example.spec.ts"
 
-test('user profile', async ({ page }) => {
+test('example test', async ({ page, browser }) => {
   test.info().annotations.push({
-    type: 'issue',
-    description: 'https://github.com/microsoft/playwright/issues/<some-issue>',
+    type: 'browser version',
+    description: browser.version(),
   });
+
   // ...
 });
 ```

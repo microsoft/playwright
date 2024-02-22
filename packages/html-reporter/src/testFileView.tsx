@@ -98,8 +98,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
 
     // If metaKey or ctrlKey is pressed, add tag to search query without replacing existing tags.
     // If metaKey or ctrlKey is pressed and tag is already in search query, remove tag from search query.
-    // Always toggle non-@-tag labels.
-    if (e.metaKey || e.ctrlKey || !label.startsWith('@')) {
+    if (e.metaKey || e.ctrlKey) {
       if (!q.includes(label))
         q = `${q} ${label}`.trim();
       else
@@ -118,7 +117,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
     <>
       {labels.map(label => (
         <span key={label} style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(label))} onClick={e => onClickHandle(e, label)}>
-          {label.startsWith('@') ? label.slice(1) : label}
+          {label.slice(1)}
         </span>
       ))}
     </>

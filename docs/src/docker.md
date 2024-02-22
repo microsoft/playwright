@@ -5,7 +5,7 @@ title: "Docker"
 
 ## Introduction
 
-[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. These image includes all the dependencies needed to run browsers in a Docker container, and also include the browsers themselves.
+[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. These image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
 
 ## Usage
 
@@ -107,15 +107,12 @@ See our [Continuous Integration guides](./ci.md) for sample configs.
 
 See [all available image tags].
 
-Docker images are published automatically by GitHub Actions. We currently publish images with the
-following tags (`v1.33.0` in this case is an example:):
+We currently publish images with the following tags:
 - `:next` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
 - `:next-jammy` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0` - Playwright v1.33.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0-jammy` - Playwright v1.33.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0-focal` - Playwright v1.33.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
-- `:sha-XXXXXXX` - docker image for every commit that changed
-  docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
+- `:v%%VERSION%%` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
+- `:v%%VERSION%%-jammy` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
+- `:v%%VERSION%%-focal` - Playwright v%%VERSION%% release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
 
 :::note
 It is recommended to always pin your Docker image to a specific version if possible. If the Playwright version in your Docker image does not match the version in your project/tests, Playwright will be unable to locate browser executables.
@@ -131,20 +128,34 @@ We currently publish images based on the following [Ubuntu](https://hub.docker.c
 
 Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikipedia.org/wiki/Glibc) library. Alpine Linux and other distributions that are based on the [musl](https://en.wikipedia.org/wiki/Musl) standard library are not supported.
 
-## Development
+## Using a different .NET version
+* langs: csharp
+
+You can use the [.NET install script](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script) in order to install different SDK versions:
+
+```bash
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir /usr/share/dotnet --channel 6.0
+```
+
+## Build your own image
 * langs: js
 
-### Build the image
+To run Playwright inside Docker, you need to have Node.js, [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
 
-Use [`//utils/docker/build.sh`](https://github.com/microsoft/playwright/blob/main/utils/docker/build.sh) to build the image.
+```Dockerfile
+FROM node:20-bookworm
 
-```txt
-./utils/docker/build.sh jammy playwright:localbuild-jammy
+RUN npx -y playwright@%%VERSION%% install --with-deps
 ```
 
-The image will be tagged as `playwright:localbuild-jammy` and could be run as:
+## Build your own image
+* langs: python
 
-```txt
-docker run --rm -it playwright:localbuild /bin/bash
+To run Playwright inside Docker, you need to have Python, [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies) installed. See the following Dockerfile:
+
+```Dockerfile
+FROM python:3.12-bookworm
+
+RUN pip install playwright==@%%VERSION%% && \
+    playwright install --with-deps
 ```
-

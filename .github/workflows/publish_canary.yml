@@ -13,15 +13,15 @@ env:
 
 jobs:
   publish-canary:
-    name: "publish canary NPM & Publish canary Docker"
+    name: "publish canary NPM"
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     permissions:
       contents: read
       id-token: write
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
         registry-url: 'https://registry.npmjs.org'
@@ -57,25 +57,14 @@ jobs:
       run: |
         utils/build/build-playwright-driver.sh
         utils/build/upload-playwright-driver.sh
-    - uses: azure/docker-login@v1
-      with:
-        login-server: playwright.azurecr.io
-        username: playwright
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    - name: Set up Docker QEMU for arm64 docker builds
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: arm64
-    - name: publish docker canary
-      run: ./utils/docker/publish_docker.sh canary
 
   publish-trace-viewer:
     name: "publish Trace Viewer to trace.playwright.dev"
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - name: Deploy Canary

@@ -55,7 +55,11 @@ export function readDockerVersionSync(): null | { driverVersion: string, dockerI
   }
 }
 
-const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
+const checkExecutable = (filePath: string) => {
+  if (process.platform === 'win32')
+    return filePath.endsWith('.exe');
+  return fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(() => false);
+};
 
 function isSupportedWindowsVersion(): boolean {
   if (os.platform() !== 'win32' || os.arch() !== 'x64')
@@ -213,7 +217,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     }
   }
 
-  const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
+  const maybeSudo = process.getuid?.() && os.platform() !== 'win32' ? 'sudo ' : '';
   const dockerInfo = readDockerVersionSync();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
@@ -226,17 +230,17 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     const pwVersion = getPlaywrightVersion();
     const requiredDockerImage = dockerInfo.dockerImageName.replace(dockerInfo.driverVersion, pwVersion);
     errorLines.push(...[
-      `This is most likely due to docker image version not matching Playwright version:`,
-      `- Playwright: ${pwVersion}`,
-      `-     Docker: ${dockerInfo.driverVersion}`,
+      `This is most likely due to Docker image version not matching Playwright version:`,
+      `- Playwright  : ${pwVersion}`,
+      `- Docker image: ${dockerInfo.driverVersion}`,
       ``,
       `Either:`,
-      `- (recommended) use docker image "${requiredDockerImage}"`,
-      `- (alternative 1) run the following command inside docker to install missing dependencies:`,
+      `- (recommended) use Docker image "${requiredDockerImage}"`,
+      `- (alternative 1) run the following command inside Docker to install missing dependencies:`,
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `- (alternative 2) use apt inside docker:`,
+      `- (alternative 2) use apt inside Docker:`,
       ``,
       `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
       ``,
@@ -362,7 +366,7 @@ function quoteProcessArgs(args: string[]): string[] {
 }
 
 export async function transformCommandsForRoot(commands: string[]): Promise<{ command: string, args: string[], elevatedPermissions: boolean}> {
-  const isRoot = process.getuid() === 0;
+  const isRoot = process.getuid?.() === 0;
   if (isRoot)
     return { command: 'sh', args: ['-c', `${commands.join('&& ')}`], elevatedPermissions: false };
   const sudoExists = await spawnAsync('which', ['sudo']);

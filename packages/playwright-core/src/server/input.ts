@@ -18,6 +18,7 @@ import { assert } from '../utils';
 import * as keyboardLayout from './usKeyboardLayout';
 import type * as types from './types';
 import type { Page } from './page';
+import type { CallMetadata } from './instrumentation';
 
 export const keypadLocation = keyboardLayout.keypadLocation;
 
@@ -169,7 +170,9 @@ export class Mouse {
     this._keyboard = this._page.keyboard;
   }
 
-  async move(x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
+  async move(x: number, y: number, options: { steps?: number, forClick?: boolean } = {}, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x, y };
     const { steps = 1 } = options;
     const fromX = this._x;
     const fromY = this._y;
@@ -182,21 +185,27 @@ export class Mouse {
     }
   }
 
-  async down(options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async down(options: { button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x: this._x, y: this._y };
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
     this._buttons.add(button);
     await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async up(options: { button?: types.MouseButton, clickCount?: number } = {}) {
+  async up(options: { button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x: this._x, y: this._y };
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
+  async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x: this._x, y: this._y };
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
       this.move(x, y, { forClick: true });
@@ -300,7 +309,9 @@ export class Touchscreen {
     this._page = page;
   }
 
-  async tap(x: number, y: number) {
+  async tap(x: number, y: number, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x, y };
     if (!this._page._browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());

@@ -241,9 +241,11 @@ test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/style.csstext\/css/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript/]);
+  await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/style.cssGET200text\/css/]);
+  await expect(traceViewer.networkRequests).toContainText([/404GET404text\/plain/]);
+  await expect(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript/]);
+  await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
@@ -253,8 +255,8 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/GET\/frames\/style.cssx-unknown.*aborted/]);
+  await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/style.cssGETx-unknown.*aborted/]);
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
 });
 
@@ -265,8 +267,8 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frames\/frame.htmltext\/html.*/]);
-  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frames\/script.jsapplication\/javascript.*continued/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html.*/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript.*continued/]);
 });
 
 test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
@@ -438,12 +440,13 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
   expect(await frame.locator('div').evaluate(div => div.scrollTop)).toBe(136);
 });
 
-test('should restore control values', async ({ page, runAndTrace }) => {
+test('should restore control values', async ({ page, runAndTrace, asset }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <input type=text value=old>
       <input type=checkbox checked>
       <input type=radio>
+      <input type=file>
       <textarea>old</textarea>
       <select multiple>
         <option value=opt1>Hi</option>
@@ -460,6 +463,7 @@ test('should restore control values', async ({ page, runAndTrace }) => {
         document.querySelector('[value=opt3]').selected = true;
       </script>
     `);
+    await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
     await page.click('input');
   });
 
@@ -486,6 +490,8 @@ test('should restore control values', async ({ page, runAndTrace }) => {
   expect(await frame.locator('option >> nth=1').evaluate(o => o.hasAttribute('selected'))).toBe(true);
   expect(await frame.locator('option >> nth=2').evaluate(o => o.hasAttribute('selected'))).toBe(false);
   await expect(frame.locator('select')).toHaveValues(['opt1', 'opt3']);
+
+  await expect(frame.locator('input[type=file]')).toHaveValue('');
 });
 
 test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
@@ -622,6 +628,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await page.locator('text=t5').innerText();
     await expect(page.locator('text=t6')).toHaveText(/t6/i);
     await expect(page.locator('text=multi')).toHaveText(['a', 'b'], { timeout: 1000 }).catch(() => {});
+    await page.mouse.move(123, 234);
   });
 
   async function highlightedDivs(frameLocator: FrameLocator) {
@@ -633,6 +640,14 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const framePageClick = await traceViewer.snapshotFrame('page.click');
   await expect.poll(() => highlightedDivs(framePageClick)).toEqual(['t1']);
+  const box1 = await framePageClick.getByText('t1').boundingBox();
+  const box2 = await framePageClick.locator('x-pw-pointer').boundingBox();
+  const x1 = box1!.x + box1!.width / 2;
+  const y1 = box1!.y + box1!.height / 2;
+  const x2 = box2!.x + box2!.width / 2;
+  const y2 = box2!.y + box2!.height / 2;
+  expect(Math.abs(x1 - x2) < 2).toBeTruthy();
+  expect(Math.abs(y1 - y2) < 2).toBeTruthy();
 
   const framePageInnerText = await traceViewer.snapshotFrame('page.innerText');
   await expect.poll(() => highlightedDivs(framePageInnerText)).toEqual(['t2']);
@@ -651,6 +666,10 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameExpect2 = await traceViewer.snapshotFrame('expect.toHaveText', 1);
   await expect.poll(() => highlightedDivs(frameExpect2)).toEqual(['multi', 'multi']);
+  await expect(frameExpect2.locator('x-pw-pointer')).not.toBeVisible();
+
+  const frameMouseMove = await traceViewer.snapshotFrame('mouse.move');
+  await expect(frameMouseMove.locator('x-pw-pointer')).toBeVisible();
 });
 
 test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
@@ -665,6 +684,21 @@ test('should highlight target element in shadow dom', async ({ page, server, run
 
   const frameExpect = await traceViewer.snapshotFrame('expect.toHaveText');
   await expect(frameExpect.locator('h1')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
+});
+
+test('should highlight expect failure', async ({ page, server, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-python/issues/2258' });
+  const traceViewer = await runAndTrace(async () => {
+    try {
+      await page.goto(server.EMPTY_PAGE);
+      await expect(page).toHaveTitle('foo', { timeout: 100 });
+    } catch (e) {
+    }
+  });
+
+  await expect(traceViewer.actionTitles.getByText('expect.toHaveTitle')).toHaveCSS('color', 'rgb(176, 16, 17)');
+  await traceViewer.showErrorsTab();
+  await expect(traceViewer.errorMessages.nth(0)).toHaveText('Expect failed');
 });
 
 test('should show action source', async ({ showTraceViewer }) => {
@@ -920,7 +954,10 @@ test('should open trace-1.37', async ({ showTraceViewer }) => {
   await expect(traceViewer.consoleLineMessages).toHaveText(['hello {foo: bar}']);
 
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/index.htmltext\/html/, /200GET\/style.cssx-unknown/]);
+  await expect(traceViewer.networkRequests).toContainText([
+    /index.htmlGET200text\/html/,
+    /style.cssGET200x-unknown/
+  ]);
 });
 
 test('should prefer later resource request with the same method', async ({ page, server, runAndTrace }) => {
@@ -1100,4 +1137,22 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
     expect(Math.abs(elementBox.x - highlightBox.x)).toBeLessThan(5);
     expect(Math.abs(elementBox.y - highlightBox.y)).toBeLessThan(5);
   }
+});
+
+test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ javaScriptEnabled: false });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <body>
+      <noscript>javascript is disabled!</noscript>
+    </body>
+  `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.getByText('javascript is disabled!')).toBeVisible();
 });

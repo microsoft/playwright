@@ -63,8 +63,8 @@ test.describe('signals', () => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     const pid = await remoteServer.out('pid');
     process.kill(-pid, 'SIGKILL');
-    if (isMac && browserName === 'webkit' && parseInt(os.release(), 10) === 22 && os.arch() === 'arm64') {
-      // WebKit on mac13 exits differently.
+    if (isMac && browserName === 'webkit' && parseInt(os.release(), 10) > 22 && os.arch() === 'arm64') {
+      // WebKit on newer macOS exits differently.
       expect(await remoteServer.out('exitCode')).toBe('137');
       expect(await remoteServer.out('signal')).toBe('null');
     } else {
@@ -132,5 +132,13 @@ test.describe('signals', () => {
     expect(await remoteServer.out('exitCode')).toBe('null');
     expect(await remoteServer.out('signal')).toBe('SIGKILL');
     expect(await remoteServer.childExitCode()).toBe(130);
+  });
+
+  test('should not prevent default SIGTERM handling after browser close', async ({ startRemoteServer, server, platform }, testInfo) => {
+    const remoteServer = await startRemoteServer('launchServer', { startStopAndRunHttp: true });
+    expect(await remoteServer.out('closed')).toBe('success');
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    expect(await remoteServer.childExitCode()).toBe(null);
+    expect(await remoteServer.childSignal()).toBe('SIGTERM');
   });
 });

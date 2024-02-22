@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interstitial test</title>
+  </head>
+  <body>
+    <style>
+      body {
+        position: relative;
+      }
+      #target.removed {
+        display: none;
+      }
+      #target.hidden {
+        visibility: hidden;
+      }
+      #target:hover {
+        background: yellow;
+      }
+      #interstitial {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 300px;
+        height: 300px;
+        border: 1px solid black;
+        background: rgba(255, 180, 180);
+        display: none;
+      }
+      #interstitial.visible {
+        display: block;
+      }
+      #close {
+        margin: 50px;
+      }
+    </style>
+    <div><button id="target">Click me</button></div>
+    <div id="aside">A place on the side to hover</div>
+    <div id="interstitial">
+      <div>This interstitial covers the button</div>
+      <button id="close">Close the interstitial</button>
+    </div>
+    <script>
+      const target = document.querySelector('#target');
+      const interstitial = document.querySelector('#interstitial');
+      const close = document.querySelector('#close');
+
+      target.addEventListener('click', () => {
+        window.clicked = (window.clicked ?? 0) + 1;
+      }, false);
+
+      close.addEventListener('click', () => {
+        interstitial.classList.remove('visible');
+        target.classList.remove('hidden');
+        target.classList.remove('removed');
+      });
+
+      let timesToShow = 0;
+      function setupAnnoyingInterstitial(event, times, capture) {
+        timesToShow = times;
+        const listener = () => {
+          timesToShow--;
+          interstitial.classList.add('visible');
+          interstitial.getBoundingClientRect();
+          if (!timesToShow && event !== 'none')
+            target.removeEventListener(event, listener, capture === 'capture');
+        };
+        if (event === 'hide') {
+          target.classList.add('hidden');
+          listener();
+        } else if (event === 'remove') {
+          target.classList.add('removed');
+          listener();
+        } else if (event === 'none') {
+          listener();
+        } else {
+          target.addEventListener(event, listener, capture === 'capture');
+        }
+      }
+    </script>
+  </body>
+</html>

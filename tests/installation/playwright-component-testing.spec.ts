@@ -16,6 +16,8 @@
 import { test } from './npmTest';
 import path from 'path';
 
+test.slow();
+
 test('pnpm: @playwright/experimental-ct-react should work', async ({ exec, tmpWorkspace, writeFiles }) => {
   await exec('pnpm add @playwright/experimental-ct-react react react-dom');
   await exec('pnpm exec playwright install');

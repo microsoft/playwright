@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+export const fileUploadSizeLimit = 50 * 1024 * 1024;
+
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 export async function mkdirIfNeeded(filePath: string) {
@@ -26,8 +28,8 @@ export async function mkdirIfNeeded(filePath: string) {
 
 export async function removeFolders(dirs: string[]): Promise<Error[]> {
   return await Promise.all(dirs.map((dir: string) =>
-    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 })
-  )).catch(e => e);
+    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
+  ));
 }
 
 export function canAccessFile(file: string) {
@@ -49,4 +51,8 @@ export async function copyFileAndMakeWritable(from: string, to: string) {
 
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+}
+
+export function toPosixPath(aPath: string): string {
+  return aPath.split(path.sep).join(path.posix.sep);
 }

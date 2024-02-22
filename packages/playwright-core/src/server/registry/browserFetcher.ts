@@ -20,7 +20,7 @@ import os from 'os';
 import path from 'path';
 import childProcess from 'child_process';
 import { existsAsync } from '../../utils/fileUtils';
-import { debugLogger } from '../../common/debugLogger';
+import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { colors, progress as ProgressBar } from '../../utilsBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
@@ -170,5 +170,5 @@ function getBasicDownloadProgress(): OnProgressCallback {
 
 function toMegabytes(bytes: number) {
   const mb = bytes / 1024 / 1024;
-  return `${Math.round(mb * 10) / 10} Mb`;
+  return `${Math.round(mb * 10) / 10} MiB`;
 }

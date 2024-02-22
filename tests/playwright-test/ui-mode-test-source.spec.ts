@@ -97,7 +97,7 @@ test('should show top-level errors in file', async ({ runUITest }) => {
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
     '            ',
-    'Assignment to constant variable.'
+    'TypeError: Assignment to constant variable.'
   ]);
 });
 

@@ -26,6 +26,7 @@ import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
+import { ConsoleMessage } from './consoleMessage';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
 import { TargetClosedError } from './errors';
@@ -81,6 +82,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this._isClosed = true;
       this.emit(Events.ElectronApplication.Close);
     });
+    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(event)));
+    this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
+      [Events.ElectronApplication.Console, 'console'],
+    ]));
   }
 
   process(): childProcess.ChildProcess {
@@ -101,7 +106,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   async firstWindow(options?: { timeout?: number }): Promise<Page> {
     if (this._windows.size)
       return this._windows.values().next().value;
-    return this.waitForEvent('window', options);
+    return await this.waitForEvent('window', options);
   }
 
   context(): BrowserContext {
@@ -119,7 +124,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);

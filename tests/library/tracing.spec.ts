@@ -25,7 +25,7 @@ import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/fo
 
 test.skip(({ trace }) => trace === 'on');
 
-test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
+test('should collect trace with resources, but no js', async ({ context, page, server, asset }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
   await page.setContent('<button>Click</button>');
@@ -33,6 +33,8 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.mouse.move(20, 20);
   await page.mouse.dblclick(30, 30);
   await page.keyboard.insertText('abc');
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
@@ -46,6 +48,8 @@ test('should collect trace with resources, but no js', async ({ context, page, s
     'mouse.move',
     'mouse.dblclick',
     'keyboard.insertText',
+    'page.goto',
+    'locator.setInputFiles',
     'page.waitForTimeout',
     'page.close',
   ]);
@@ -105,9 +109,7 @@ test('should not collect snapshots by default', async ({ context, page, server }
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
-test('should not include buffers in the trace', async ({ context, page, server, mode }, testInfo) => {
-  test.skip(mode !== 'default', 'no buffers with remote connections');
-
+test('should not include buffers in the trace', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();
@@ -116,7 +118,9 @@ test('should not include buffers in the trace', async ({ context, page, server, 
   const screenshotEvent = actionObjects.find(a => a.apiName === 'page.screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
-  expect(screenshotEvent.result).toEqual({});
+  expect(screenshotEvent.result).toEqual({
+    'binary': '<Buffer>',
+  });
 });
 
 test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {

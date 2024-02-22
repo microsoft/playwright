@@ -1,0 +1,30 @@
+name: Feature Request 🚀
+description: Submit a proposal for a new feature
+title: '[Feature]: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Thank you for taking the time to suggest a new feature!
+  - type: textarea
+    id: description
+    attributes:
+      label: '🚀 Feature Request'
+      description: A clear and concise description of what the feature is.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: Describe how this feature would be used.
+    validations:
+      required: false
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: |
+        Outline your motivation for the proposal. How will it make Playwright better?
+    validations:
+      required: true

@@ -53,6 +53,12 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   </button>;
 };
 
+export const ToolbarSeparator: React.FC<{ style?: React.CSSProperties }> = ({
+  style,
+}) => {
+  return <div className='toolbar-separator' style={style}></div>;
+};
+
 const preventDefault = (e: any) => {
   e.stopPropagation();
   e.preventDefault();

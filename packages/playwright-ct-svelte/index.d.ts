@@ -14,27 +14,10 @@
  * limitations under the License.
  */
 
-import type {
-  TestType,
-  PlaywrightTestArgs,
-  PlaywrightTestConfig as BasePlaywrightTestConfig,
-  PlaywrightTestOptions,
-  PlaywrightWorkerArgs,
-  PlaywrightWorkerOptions,
-  Locator,
-} from 'playwright/test';
+import type { Locator } from 'playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
-import type { InlineConfig } from 'vite';
 import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
-
-export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
-  use?: BasePlaywrightTestConfig<T, W>['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
-  };
-};
+import type { TestType } from '@playwright/experimental-ct-core';
 
 type ComponentSlot = string | string[];
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
@@ -47,7 +30,7 @@ export interface MountOptions<HooksConfig extends JsonObject, Component extends 
   hooksConfig?: HooksConfig;
 }
 
-interface MountResult<Component extends SvelteComponent> extends Locator {
+export interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
   update(options: {
     props?: Partial<ComponentProps<Component>>;
@@ -55,20 +38,12 @@ interface MountResult<Component extends SvelteComponent> extends Locator {
   }): Promise<void>;
 }
 
-interface ComponentFixtures {
+export const test: TestType<{
   mount<HooksConfig extends JsonObject, Component extends SvelteComponent = SvelteComponent>(
     component: new (...args: any[]) => Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
-}
+}>;
 
-export const test: TestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions
->;
-
-export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
-export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
-export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
-
+export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
 export { expect, devices } from 'playwright/test';

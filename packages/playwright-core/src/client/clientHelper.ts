@@ -43,8 +43,12 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   if (fun.path !== undefined) {
     let source = await fs.promises.readFile(fun.path, 'utf8');
     if (addSourceUrl)
-      source += '\n//# sourceURL=' + fun.path.replace(/\n/g, '');
+      source = addSourceUrlToScript(source, fun.path);
     return source;
   }
   throw new Error('Either path or content property must be present');
+}
+
+export function addSourceUrlToScript(source: string, path: string): string {
+  return `${source}\n//# sourceURL=${path.replace(/\n/g, '')}`;
 }

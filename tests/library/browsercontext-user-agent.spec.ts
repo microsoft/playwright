@@ -106,3 +106,39 @@ it('custom user agent for download', async ({ server, contextFactory, browserVer
   const req = await serverRequest;
   expect(req.headers['user-agent']).toBe('MyCustomUA');
 });
+
+it('should work for navigator.userAgentData and sec-ch-ua headers', async ({ playwright, browserName, browser, server }) => {
+  it.skip(browserName !== 'chromium', 'This API is Chromium-only');
+
+  {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.EMPTY_PAGE),
+    ]);
+    expect.soft(request.headers['sec-ch-ua']).toContain(`"Chromium"`);
+    expect.soft(request.headers['sec-ch-ua-mobile']).toBe(`?0`);
+    expect.soft(request.headers['sec-ch-ua-platform']).toBeTruthy();
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ mobile: false })
+    );
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext(playwright.devices['Pixel 7']);
+    const page = await context.newPage();
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.EMPTY_PAGE),
+    ]);
+    expect.soft(request.headers['sec-ch-ua']).toContain(`"Chromium"`);
+    expect.soft(request.headers['sec-ch-ua-mobile']).toBe(`?1`);
+    expect.soft(request.headers['sec-ch-ua-platform']).toBe(`"Android"`);
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ mobile: true, platform: 'Android' })
+    );
+    await context.close();
+  }
+});

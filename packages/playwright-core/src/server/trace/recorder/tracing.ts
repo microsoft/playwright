@@ -42,6 +42,7 @@ import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
+import { Dispatcher } from '../../dispatchers/dispatcher';
 
 const version: trace.VERSION = 6;
 
@@ -373,6 +374,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
+    if (metadata.isServerSide || metadata.internal)
+      return;
     if (logName !== 'api')
       return;
     const event = createActionLogTraceEvent(metadata, message);
@@ -448,7 +451,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       args: message.args().map(a => ({ preview: a.toString(), value: a.rawValue() })),
       location: message.location(),
       time: monotonicTime(),
-      pageId: message.page().guid,
+      pageId: message.page()?.guid,
     };
     this._appendTraceEvent(event);
   }
@@ -494,8 +497,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 function visitTraceEvent(object: any, sha1s: Set<string>): any {
   if (Array.isArray(object))
     return object.map(o => visitTraceEvent(o, sha1s));
+  if (object instanceof Dispatcher)
+    return `<${(object as Dispatcher<any, any, any>)._type}>`;
   if (object instanceof Buffer)
-    return undefined;
+    return `<Buffer>`;
   if (object instanceof Date)
     return object;
   if (typeof object === 'object') {
@@ -563,6 +568,7 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     endTime: metadata.endTime,
     error: metadata.error?.error,
     result: metadata.result,
+    point: metadata.point,
   };
 }
 

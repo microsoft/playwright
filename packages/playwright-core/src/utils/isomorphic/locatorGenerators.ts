@@ -35,20 +35,16 @@ export interface LocatorFactory {
   chainLocators(locators: string[]): string;
 }
 
-export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false): string {
-  return asLocators(lang, selector, isFrameLocator, playSafe)[0];
+export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
+  return asLocators(lang, selector, isFrameLocator)[0];
 }
 
-export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
-  if (playSafe) {
-    try {
-      return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
-    } catch (e) {
-      // Tolerate invalid input.
-      return [selector];
-    }
-  } else {
+export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
+  try {
     return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
+  } catch (e) {
+    // Tolerate invalid input.
+    return [selector];
   }
 }
 

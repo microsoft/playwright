@@ -18,7 +18,7 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export * from 'playwright-core';
 
 export type ReporterDescription =
-  ['blob'] | ['blob', { outputDir?: string }] |
+  ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
   ['line'] |
   ['list'] | ['list', { printSteps?: boolean }] |
@@ -111,13 +111,25 @@ export interface TestInfo {
   project: FullProject;
 }
 
+type TestDetailsAnnotation = {
+  type: string;
+  description?: string;
+};
+
+export type TestDetails = {
+  tag?: string | string[];
+  annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
+}
+
 interface SuiteFunction {
   (title: string, callback: () => void): void;
   (callback: () => void): void;
+  (title: string, details: TestDetails, callback: () => void): void;
 }
 
 interface TestFunction<TestArgs> {
-  (title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  (title: string, body: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  (title: string, details: TestDetails, body: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
 }
 
 export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue> extends TestFunction<TestArgs & WorkerArgs> {
@@ -134,17 +146,21 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     };
     configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
-  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
   skip(condition: boolean, description?: string): void;
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  fixme(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  fixme(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   fixme(): void;
   fixme(condition: boolean, description?: string): void;
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  fail(): void;
+  fail(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  fail(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   fail(condition: boolean, description?: string): void;
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  fail(): void;
   slow(): void;
   slow(condition: boolean, description?: string): void;
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
@@ -370,7 +386,7 @@ export interface ExpectMatcherUtils {
   stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
 }
 
-type State = {
+export type ExpectMatcherState = {
   isNot: boolean;
   promise: 'rejects' | 'resolves' | '';
   utils: ExpectMatcherUtils;
@@ -402,7 +418,7 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
-export type Expect<ExtendedMatchers> = {
+export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
@@ -411,18 +427,13 @@ export type Expect<ExtendedMatchers> = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-  extend<MoreMatchers extends Record<string, (this: State, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
+  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
     timeout?: number,
     soft?: boolean,
   }) => Expect<ExtendedMatchers>;
-  getState(): {
-    expand?: boolean;
-    isNot?: boolean;
-    promise?: string;
-    utils: any;
-  };
+  getState(): ExpectMatcherState;
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
 

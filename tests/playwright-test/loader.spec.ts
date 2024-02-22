@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import path from 'path';
 
 test('should return the location of a syntax error', async ({ runInlineTest }) => {
@@ -523,11 +523,13 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
       const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
         expect(component).toEqual({
+          __pw_type: 'jsx',
           type: 'div',
           props: {
             children: [
               'Hello ',
               {
+                __pw_type: 'jsx',
                 type: 'span',
                 props: {
                   children: 'world'
@@ -754,10 +756,7 @@ test('should resolve .js import to .tsx file in non-ESM mode', async ({ runInlin
 
 test('should resolve .js import to .tsx file in non-ESM mode for components', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'foo'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 

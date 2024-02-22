@@ -14,129 +14,23 @@
   limitations under the License.
 */
 
-.network-request-status .status-failure {
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBarItem-errorBackground);
-}
-
-.network-request-status .status-route {
+.network-request-status-route {
   color: var(--vscode-statusBar-foreground);
   background-color: var(--vscode-statusBar-background);
 }
 
-.network-request-status .status-route.api {
+.network-request-status-route.api {
   color: var(--vscode-statusBar-foreground);
   background-color: var(--vscode-statusBarItem-remoteBackground);
 }
 
-.network-request-start {
-  flex: 0 0 65px;
-  justify-content: right;
-  padding-right: 10px;
+.network-grid-view .grid-view-column-method,
+.network-grid-view .grid-view-column-status {
+  text-align: center;  
 }
 
-.network-request-status {
-  flex: 0 0 65px;
-}
-
-.network-request-method {
-  flex: 0 0 65px;
-}
-
-.network-request-file {
-  display: flex;
-  flex: 1;
-}
-
-.network-request-file-url {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.network-request-content-type,
-.network-request-duration,
-.network-request-route,
-.network-request-size {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 0.5;
-}
-
-.network-request-route {
-  flex: 0.25;
-}
-
-.network-request-header {
-  margin-top: 3px;
-  height: 30px;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  flex: none;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.network-request-header .codicon-triangle-up {
-  display: none;
-}
-.network-request-header .codicon-triangle-down {
-  display: none;
-}
-
-.network-request-header > div {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-  overflow: hidden;
-}
-
-.network-request-header.filter-start.positive .network-request-start .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-start.negative .network-request-start .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-status.positive .network-request-status .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-status.negative .network-request-status .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-method.positive .network-request-method .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-method.negative .network-request-method .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-file.positive .network-request-file .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-file.negative .network-request-file .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-content-type.positive .network-request-content-type .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-content-type.negative .network-request-content-type .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-duration.positive .network-request-duration .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-duration.negative .network-request-duration .codicon-triangle-up {
-  display: initial !important;
-}
-
-.network-request-header.filter-size.positive .network-request-size .codicon-triangle-down {
-  display: initial !important;
-}
-.network-request-header.filter-size.negative .network-request-size .codicon-triangle-up {
-  display: initial !important;
+.network-grid-view .grid-view-column-duration,
+.network-grid-view .grid-view-column-size,
+.network-grid-view .grid-view-column-start {
+  text-align: end;
 }

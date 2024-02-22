@@ -22,7 +22,7 @@ import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
-import { clearCompilationCache, collectAffectedTestFiles } from '../transform/compilationCache';
+import { collectAffectedTestFiles } from '../transform/compilationCache';
 import type { FullResult } from '../../types/testReporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
@@ -283,7 +283,6 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
   const reporter = new InternalReporter(new ListReporter());
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
   const testRun = new TestRun(config, reporter);
-  clearCompilationCache();
   reporter.onConfigure(config.config);
   const taskStatus = await taskRunner.run(testRun, 0);
   let status: FullResult['status'] = 'passed';
@@ -418,15 +417,20 @@ async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: nu
     config.config.workers = 1;
     showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
     const wsEndpoint = await showBrowserServer.listen();
-    process.env.PW_TEST_REUSE_CONTEXT = '1';
-    process.env.PW_TEST_CONNECT_WS_ENDPOINT = wsEndpoint;
+    config.configCLIOverrides.use = {
+      ...config.configCLIOverrides.use,
+      _optionContextReuseMode: 'when-possible',
+      _optionConnectOptions: { wsEndpoint },
+    };
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('on')}\n`);
   } else {
     config.config.workers = originalWorkers;
+    if (config.configCLIOverrides.use) {
+      delete config.configCLIOverrides.use._optionContextReuseMode;
+      delete config.configCLIOverrides.use._optionConnectOptions;
+    }
     await showBrowserServer?.close();
     showBrowserServer = undefined;
-    delete process.env.PW_TEST_REUSE_CONTEXT;
-    delete process.env.PW_TEST_CONNECT_WS_ENDPOINT;
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('off')}\n`);
   }
 }

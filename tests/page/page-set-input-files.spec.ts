@@ -37,9 +37,10 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload large file', async ({ page, server, browserName, isMac, isAndroid, mode }, testInfo) => {
+it('should upload large file', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
+  it.skip(isWebView2);
   it.skip(mode.startsWith('service'));
   it.slow();
 
@@ -87,9 +88,10 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
-it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid, mode }, testInfo) => {
+it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
+  it.skip(isWebView2);
   it.skip(mode.startsWith('service'));
   it.slow();
 
@@ -127,9 +129,10 @@ it('should upload multiple large files', async ({ page, server, browserName, isM
   await Promise.all(uploadFiles.map(path => fs.promises.unlink(path)));
 });
 
-it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid, mode }, testInfo) => {
+it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
+  it.skip(isWebView2);
   it.skip(mode.startsWith('service'));
   it.slow();
 
@@ -528,6 +531,41 @@ it('should emit input and change events', async ({ page, asset }) => {
   expect(events.length).toBe(2);
   expect(events[0].type).toBe('input');
   expect(events[1].type).toBe('change');
+});
+
+it('input event.composed should be true and cross shadow dom boundary', async ({ page, server, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<body><script>
+  const div = document.createElement('div');
+  const shadowRoot = div.attachShadow({mode: 'open'});
+  shadowRoot.innerHTML = '<input type=file></input>';
+  document.body.appendChild(div);
+</script></body>`);
+  await page.locator('body').evaluate(select => {
+    (window as any).firedBodyEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedBodyEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+
+  await page.locator('input').evaluate(select => {
+    (window as any).firedEvents = [];
+    for (const event of ['input', 'change']) {
+      select.addEventListener(event, e => {
+        (window as any).firedEvents.push(e.type + ':' + e.composed);
+      }, false);
+    }
+  });
+  await page.locator('input').setInputFiles({
+    name: 'test.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('this is a test')
+  });
+  expect(await page.evaluate(() => window['firedEvents'])).toEqual(['input:true', 'change:false']);
+  expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
 });
 
 it('should work for single file pick', async ({ page, server }) => {

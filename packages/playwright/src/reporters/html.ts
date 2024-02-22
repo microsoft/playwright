@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import { colors, open } from 'playwright-core/lib/utilsBundle';
+import { open } from 'playwright-core/lib/utilsBundle';
 import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
-import { toPosixPath } from './json';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic, TestError } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import { formatError, formatResultFailure, stripAnsiEscapes } from './base';
+import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
+import { colors, formatError, formatResultFailure, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -134,10 +133,12 @@ class HtmlReporter extends EmptyReporter {
     } else if (!FullConfigInternal.from(this.config)?.cliListOnly) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
+      const hostArg = this._options.host ? ` --host ${this._options.host}` : '';
+      const portArg = this._options.port ? ` --port ${this._options.port}` : '';
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  ${packageManagerCommand} playwright show-report${relativeReportPath}
+  ${packageManagerCommand} playwright show-report${relativeReportPath}${hostArg}${portArg}
 `));
     }
   }
@@ -180,6 +181,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)
     url += `#?testId=${testId}`;
+  url = url.replace('0.0.0.0', 'localhost');
   await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
 }
@@ -338,13 +340,13 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, botName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, reportName, newPath)));
+    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, botName, newPath, outTests));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, botName, newPath)));
   }
 
-  private _createTestEntry(test: TestCasePublic, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
+  private _createTestEntry(test: TestCasePublic, projectName: string, botName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1);
@@ -356,10 +358,12 @@ class HtmlBuilder {
         testId: test.id,
         title: test.title,
         projectName,
-        reportName,
+        botName,
         location,
         duration,
-        annotations: test.annotations,
+        // Annotations can be pushed directly, with a wrong type.
+        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        tags: test.tags,
         outcome: test.outcome(),
         path,
         results,
@@ -369,10 +373,12 @@ class HtmlBuilder {
         testId: test.id,
         title: test.title,
         projectName,
-        reportName,
+        botName,
         location,
         duration,
-        annotations: test.annotations,
+        // Annotations can be pushed directly, with a wrong type.
+        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        tags: test.tags,
         outcome: test.outcome(),
         path,
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',

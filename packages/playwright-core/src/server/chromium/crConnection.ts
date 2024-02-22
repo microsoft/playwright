@@ -19,8 +19,8 @@ import { type RegisteredListener, assert, eventsHelper } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
-import type { RecentLogsCollector } from '../../common/debugLogger';
-import { debugLogger } from '../../common/debugLogger';
+import type { RecentLogsCollector } from '../../utils/debugLogger';
+import { debugLogger } from '../../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
@@ -190,6 +190,7 @@ export class CRSession extends EventEmitter {
     this._closed = true;
     this._connection._sessions.delete(this._sessionId);
     for (const callback of this._callbacks.values()) {
+      callback.error.setMessage(`Internal server error, session closed.`);
       callback.error.type = this._crashed ? 'crashed' : 'closed';
       callback.error.logs = this._connection._browserDisconnectedLogs;
       callback.reject(callback.error);

@@ -163,7 +163,7 @@ Emitted when the page closes.
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
+Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
 
 The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
 
@@ -954,13 +954,16 @@ default.
 
 Since [`param: eventInit`] is event-specific, please refer to the events documentation for the lists of initial
 properties:
+* [DeviceMotionEvent](https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent/DeviceMotionEvent)
+* [DeviceOrientationEvent](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/DeviceOrientationEvent)
 * [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+* [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
 * [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
 * [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
 * [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
 * [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
 * [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
-* [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+* [WheelEvent](https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/WheelEvent)
 
 You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
 
@@ -2985,6 +2988,18 @@ Give any CSS `@page` size declared in the page priority over what is declared in
 [`option: height`] or [`option: format`] options. Defaults to `false`, which will scale the content to fit the paper
 size.
 
+### option: Page.pdf.tagged
+* since: v1.42
+- `tagged` <[boolean]>
+
+Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
+
+### option: Page.pdf.outline
+* since: v1.42
+- `outline` <[boolean]>
+
+Whether or not to embed the document outline into the PDF. Defaults to `false`.
+
 ## async method: Page.press
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
@@ -3006,7 +3021,7 @@ Holding down `Shift` will type the text that corresponds to the [`param: key`] i
 If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
-Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
+Shortcuts such as `key: "Control+o"`, `key: "Control++` or `key: "Control+Shift+T"` are supported as well. When specified with the
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 **Usage**
@@ -3127,6 +3142,221 @@ return value resolves to `[]`.
 ### param: Page.querySelectorAll.selector = %%-query-selector-%%
 * since: v1.9
 
+
+## async method: Page.addLocatorHandler
+* since: v1.42
+
+Sometimes, the web page can show an overlay that obstructs elements behind it and prevents certain actions, like click, from completing. When such an overlay is shown predictably, we recommend dismissing it as a part of your test flow. However, sometimes such an overlay may appear non-deterministically, for example certain cookies consent dialogs behave this way. In this case, [`method: Page.addLocatorHandler`] allows handling an overlay during an action that it would block.
+
+This method registers a handler for an overlay that is executed once the locator is visible on the page. The handler should get rid of the overlay so that actions blocked by it can proceed. This is useful for nondeterministic interstitial pages or dialogs, like a cookie consent dialog.
+
+Note that execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
+
+You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a handler must not require another handler to run.
+
+:::warning
+Running the interceptor will alter your page state mid-test. For example it will change the currently focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained and do not rely on the focus and mouse state.
+<br />
+<br />
+For example, consider a test that calls [`method: Locator.focus`] followed by [`method: Keyboard.press`]. If your handler clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen on the unexpected element. Use [`method: Locator.press`] instead to avoid this problem.
+<br />
+<br />
+Another example is a series of mouse actions, where [`method: Mouse.move`] is followed by [`method: Mouse.down`]. Again, when the handler runs between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like [`method: Locator.click`] that are self-contained.
+:::
+
+**Usage**
+
+An example that closes a cookie dialog when it appears:
+
+```js
+// Setup the handler.
+await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
+  await page.getByRole('button', { name: 'Reject all cookies' }).click();
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.addLocatorHandler(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept all cookies")), () => {
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reject all cookies")).click();
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.get_by_role("button", name="Reject all cookies").click()
+page.add_locator_handler(page.get_by_role("button", name="Accept all cookies"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.get_by_role("button", name="Reject all cookies").click()
+await page.add_locator_handler(page.get_by_role("button", name="Accept all cookies"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.AddLocatorHandlerAsync(page.GetByRole(AriaRole.Button, new() { Name = "Accept all cookies" }), async () => {
+  await page.GetByRole(AriaRole.Button, new() { Name = "Reject all cookies" }).ClickAsync();
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+An example that skips the "Confirm your security details" page when it is shown:
+
+```js
+// Setup the handler.
+await page.addLocatorHandler(page.getByText('Confirm your security details'), async () => {
+  await page.getByRole('button', 'Remind me later').click();
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.addLocatorHandler(page.getByText("Confirm your security details")), () => {
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Remind me later")).click();
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.get_by_role("button", name="Remind me later").click()
+page.add_locator_handler(page.get_by_text("Confirm your security details"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.get_by_role("button", name="Remind me later").click()
+await page.add_locator_handler(page.get_by_text("Confirm your security details"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.AddLocatorHandlerAsync(page.GetByText("Confirm your security details"), async () => {
+  await page.GetByRole(AriaRole.Button, new() { Name = "Remind me later" }).ClickAsync();
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check:
+
+```js
+// Setup the handler.
+await page.addLocatorHandler(page.locator('body'), async () => {
+  await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+```java
+// Setup the handler.
+page.addLocatorHandler(page.locator("body")), () => {
+  page.evaluate("window.removeObstructionsForTestIfNeeded()");
+});
+
+// Write the test as usual.
+page.goto("https://example.com");
+page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
+```
+
+```python sync
+# Setup the handler.
+def handler():
+  page.evaluate("window.removeObstructionsForTestIfNeeded()")
+page.add_locator_handler(page.locator("body"), handler)
+
+# Write the test as usual.
+page.goto("https://example.com")
+page.get_by_role("button", name="Start here").click()
+```
+
+```python async
+# Setup the handler.
+def handler():
+  await page.evaluate("window.removeObstructionsForTestIfNeeded()")
+await page.add_locator_handler(page.locator("body"), handler)
+
+# Write the test as usual.
+await page.goto("https://example.com")
+await page.get_by_role("button", name="Start here").click()
+```
+
+```csharp
+// Setup the handler.
+await page.AddLocatorHandlerAsync(page.Locator("body"), async () => {
+  await page.EvaluateAsync("window.removeObstructionsForTestIfNeeded()");
+});
+
+// Write the test as usual.
+await page.GotoAsync("https://example.com");
+await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+### param: Page.addLocatorHandler.locator
+* since: v1.42
+- `locator` <[Locator]>
+
+Locator that triggers the handler.
+
+### param: Page.addLocatorHandler.handler
+* langs: js, python, csharp
+* since: v1.42
+- `handler` <[function]>
+
+Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+### param: Page.addLocatorHandler.handler
+* langs: java
+* since: v1.42
+- `handler` <[Runnable]>
+
+Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
 ## async method: Page.reload
 * since: v1.8
 - returns: <[null]|[Response]>
@@ -3245,11 +3475,11 @@ await page.GotoAsync("https://www.microsoft.com");
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
 
 ```js
-await page.route('/api/**', route => {
+await page.route('/api/**', async route => {
   if (route.request().postData().includes('my-string'))
-    route.fulfill({ body: 'mocked-data' });
+    await route.fulfill({ body: 'mocked-data' });
   else
-    route.continue();
+    await route.continue();
 });
 ```
 
@@ -3263,16 +3493,16 @@ page.route("/api/**", route -> {
 ```
 
 ```python async
-def handle_route(route):
+async def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
-    route.fulfill(body="mocked-data")
+    await route.fulfill(body="mocked-data")
   else:
-    route.continue_()
+    await route.continue_()
 await page.route("/api/**", handle_route)
 ```
 
 ```python sync
-def handle_route(route):
+def handle_route(route: Route):
   if ("my-string" in route.request.post_data):
     route.fulfill(body="mocked-data")
   else:
@@ -3395,6 +3625,9 @@ Returns the buffer with the captured screenshot.
 
 ### option: Page.screenshot.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.34
+
+### option: Page.screenshot.style = %%-screenshot-option-style-%%
+* since: v1.41
 
 ## async method: Page.selectOption
 * since: v1.8
@@ -3856,6 +4089,14 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Page.uncheck.trial = %%-input-trial-%%
 * since: v1.11
+
+## async method: Page.unrouteAll
+* since: v1.41
+
+Removes all routes created with [`method: Page.route`] and [`method: Page.routeFromHAR`].
+
+### option: Page.unrouteAll.behavior = %%-unroute-all-options-behavior-%%
+* since: v1.41
 
 ## async method: Page.unroute
 * since: v1.8

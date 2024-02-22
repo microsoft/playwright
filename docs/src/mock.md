@@ -41,7 +41,7 @@ async def test_mock_the_fruit_api(page: Page):
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Strawberry fruit is visible
-    await page.get_by_text("Strawberry").to_be_visible()
+    await expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```python sync
@@ -58,7 +58,7 @@ def test_mock_the_fruit_api(page: Page):
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Strawberry fruit is visible
-    page.get_by_text("Strawberry").to_be_visible()
+    expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```csharp
@@ -118,7 +118,7 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
   await page.route('*/**/api/v1/fruits', async route => {
     const response = await route.fetch();
     const json = await response.json();
-    json.push({ name: 'Playwright', id: 100 });
+    json.push({ name: 'Loquat', id: 100 });
     // Fulfill using the original response, while patching the response body
     // with the given JSON object.
     await route.fulfill({ response, json });
@@ -128,67 +128,67 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
   await page.goto('https://demo.playwright.dev/api-mocking');
 
   // Assert that the new fruit is visible
-  await expect(page.getByText('Playwright', { exact: true })).toBeVisible();
+  await expect(page.getByText('Loquat', { exact: true })).toBeVisible();
 });
 ```
 
 ```python async
 async def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
     async def handle(route: Route):
-        response = await route.fulfill()
+        response = await route.fetch()
         json = await response.json()
-        json.append({ "name": "Playwright", "id": 100})
+        json.append({ "name": "Loquat", "id": 100})
         # Fulfill using the original response, while patching the response body
         # with the given JSON object.
         await route.fulfill(response=response, json=json)
 
-    await page.route("https://dog.ceo/api/breeds/list/all", handle)
+    await page.route("https://demo.playwright.dev/api-mocking/api/v1/fruits", handle)
 
     # Go to the page
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the new fruit is visible
-    await page.get_by_text("Playwright", exact=True).to_be_visible()
+    await expect(page.get_by_text("Loquat", exact=True)).to_be_visible()
 ```
 
 ```python sync
 def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
     def handle(route: Route):
-        response = route.fulfill()
+        response = route.fetch()
         json = response.json()
-        json.append({ "name": "Playwright", "id": 100})
+        json.append({ "name": "Loquat", "id": 100})
         # Fulfill using the original response, while patching the response body
         # with the given JSON object.
         route.fulfill(response=response, json=json)
 
-    page.route("https://dog.ceo/api/breeds/list/all", handle)
+    page.route("https://demo.playwright.dev/api-mocking/api/v1/fruits", handle)
 
     # Go to the page
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the new fruit is visible
-    page.get_by_text("Playwright", exact=True).to_be_visible()
+    expect(page.get_by_text("Loquat", exact=True)).to_be_visible()
 ```
 
 ```csharp
 await page.RouteAsync("*/**/api/v1/fruits", async (route) => {
     var response = await route.FetchAsync();
     var fruits = await response.JsonAsync<Fruit[]>();
-    fruits.Add(new Fruit() { Name = "Playwright", Id = 100 });
+    fruits.Add(new Fruit() { Name = "Loquat", Id = 100 });
     // Fulfill using the original response, while patching the response body
     // with the given JSON object.
     await route.FulfillAsync(new ()
     {
       Response = response,
-      Json = json
+      Json = fruits
     });
   }
 );
 // Go to the page
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
-// Assert that the Strawberry fruit is visible
-await Expect(page.GetByTextAsync("Playwright", new () { Exact = true })).ToBeVisibleAsync();
+// Assert that the Loquat fruit is visible
+await Expect(page.GetByTextAsync("Loquat", new () { Exact = true })).ToBeVisibleAsync();
 ```
 
 ```java
@@ -196,7 +196,7 @@ page.route("*/**/api/v1/fruits", route -> {
   Response response = route.fetch();
   byte[] json = response.body();
   parsed = new Gson().fromJson(json, JsonObject.class)
-  parsed.add(new JsonObject().add("name", "Playwright").add("id", 100));
+  parsed.add(new JsonObject().add("name", "Loquat").add("id", 100));
   // Fulfill using the original response, while patching the response body
   // with the given JSON object.
   route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(json.toString()));
@@ -205,8 +205,8 @@ page.route("*/**/api/v1/fruits", route -> {
 // Go to the page
 page.goto("https://demo.playwright.dev/api-mocking");
 
-// Assert that the Strawberry fruit is visible
-assertThat(page.getByText("Playwright", new Page.GetByTextOptions().setExact(true))).isVisible();
+// Assert that the Loquat fruit is visible
+assertThat(page.getByText("Loquat", new Page.GetByTextOptions().setExact(true))).isVisible();
 ```
 
 In the trace of our test we can see that the API was called and the response was modified.
@@ -249,7 +249,7 @@ test('records or updates the HAR file', async ({ page }) => {
 ```
 
 ```python async
-async def records_or_updates_the_har_file(page: Page):
+async def test_records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -261,7 +261,7 @@ async def records_or_updates_the_har_file(page: Page):
 ```
 
 ```python sync
-def records_or_updates_the_har_file(page: Page):
+def test_records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -347,7 +347,7 @@ async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(pa
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Playwright fruit is visible
-    await page.get_by_text("Playwright", exact=True).to_be_visible()
+    await expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 ```
 
 ```python sync
@@ -361,7 +361,7 @@ def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page: Pa
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the Playwright fruit is visible
-    page.get_by_text("Playwright", exact=True).to_be_visible()
+    expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 ```
 
 ```csharp
@@ -425,7 +425,7 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="op
 
 ```bash python
 # Save API requests from example.com as "example.har" archive.
-playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.coms
+playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.com
 ```
 
 ```bash csharp

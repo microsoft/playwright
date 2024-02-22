@@ -74,8 +74,14 @@
 
 .list-view-entry.error {
   color: var(--vscode-list-errorForeground);
+  background-color: var(--vscode-inputValidation-errorBackground);
 }
 
 .list-view-entry.warning {
   color: var(--vscode-list-warningForeground);
+  background-color: var(--vscode-inputValidation-warningBackground);
+}
+
+.list-view-entry.info {
+  background-color: var(--vscode-inputValidation-infoBackground);
 }

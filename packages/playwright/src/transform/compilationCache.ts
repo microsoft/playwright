@@ -23,7 +23,15 @@ import { isWorkerProcess } from '../common/globals';
 export type MemoryCache = {
   codePath: string;
   sourceMapPath: string;
+  dataPath: string;
   moduleUrl?: string;
+};
+
+type SerializedCompilationCache = {
+  sourceMaps: [string, string][],
+  memoryCache: [string, MemoryCache][],
+  fileDependencies: [string, string[]][],
+  externalDependencies: [string, string[]][],
 };
 
 // Assumptions for the compilation cache:
@@ -39,14 +47,14 @@ export type MemoryCache = {
 // - For workers-only dynamic imports or some cache problems, we will re-transpile files in
 //   each worker anew.
 
-const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
+export const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
   if (process.platform === 'win32')
     return path.join(os.tmpdir(), `playwright-transform-cache`);
   // Use `geteuid()` instead of more natural `os.userInfo().username`
   // since `os.userInfo()` is not always available.
   // Note: `process.geteuid()` is not available on windows.
   // See https://github.com/microsoft/playwright/issues/22721
-  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
+  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid?.());
 })();
 
 const sourceMaps: Map<string, string> = new Map();
@@ -84,12 +92,24 @@ export function installSourceMapSupportIfNeeded() {
   });
 }
 
-function _innerAddToCompilationCache(filename: string, options: { codePath: string, sourceMapPath: string, moduleUrl?: string }) {
-  sourceMaps.set(options.moduleUrl || filename, options.sourceMapPath);
-  memoryCache.set(filename, options);
+function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {
+  sourceMaps.set(entry.moduleUrl || filename, entry.sourceMapPath);
+  memoryCache.set(filename, entry);
+  return {
+    sourceMaps: [[entry.moduleUrl || filename, entry.sourceMapPath]],
+    memoryCache: [[filename, entry]],
+    fileDependencies: [],
+    externalDependencies: [],
+  };
 }
 
-export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
+type CompilationCacheLookupResult = {
+  serializedCache?: any;
+  cachedCode?: string;
+  addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => { serializedCache?: any };
+};
+
+export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): CompilationCacheLookupResult {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -105,38 +125,37 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
+  const dataPath = cachePath + '.data';
   try {
     const cachedCode = fs.readFileSync(codePath, 'utf8');
-    _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
-    return { cachedCode };
+    const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+    return { cachedCode, serializedCache };
   } catch {
   }
 
   return {
-    addToCache: (code: string, map: any) => {
+    addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
-        return;
+        return {};
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
+      if (data.size)
+        fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
       fs.writeFileSync(codePath, code, 'utf8');
-      _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
+      const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+      return { serializedCache };
     }
   };
 }
 
-export function serializeCompilationCache(): any {
+export function serializeCompilationCache(): SerializedCompilationCache {
   return {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
     fileDependencies: [...fileDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
     externalDependencies: [...externalDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
   };
-}
-
-export function clearCompilationCache() {
-  sourceMaps.clear();
-  memoryCache.clear();
 }
 
 export function addToCompilationCache(payload: any) {
@@ -189,7 +208,8 @@ export function fileDependenciesForTest() {
 }
 
 export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
-  testFileCollector.add(dependency);
+  if (fileDependencies.has(dependency))
+    testFileCollector.add(dependency);
   for (const [testFile, deps] of fileDependencies) {
     if (deps.has(dependency))
       testFileCollector.add(testFile);
@@ -198,6 +218,17 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
     if (deps.has(dependency))
       testFileCollector.add(testFile);
   }
+}
+
+export function affectedTestFiles(changes: string[]): string[] {
+  const result = new Set<string>();
+  for (const change of changes)
+    collectAffectedTestFiles(change, result);
+  return [...result];
+}
+
+export function internalDependenciesForTestFile(filename: string): Set<string> | undefined{
+  return fileDependencies.get(filename);
 }
 
 export function dependenciesForTestFile(filename: string): Set<string> {
@@ -223,4 +254,18 @@ export function belongsToNodeModules(file: string) {
   if (file.startsWith(kPlaywrightCoveragePrefix) && file.endsWith('.js'))
     return true;
   return false;
+}
+
+export async function getUserData(pluginName: string): Promise<Map<string, any>> {
+  const result = new Map<string, any>();
+  for (const [fileName, cache] of memoryCache) {
+    if (!cache.dataPath)
+      continue;
+    if (!fs.existsSync(cache.dataPath))
+      continue;
+    const data = JSON.parse(await fs.promises.readFile(cache.dataPath, 'utf8'));
+    if (data[pluginName])
+      result.set(fileName, data[pluginName]);
+  }
+  return result;
 }

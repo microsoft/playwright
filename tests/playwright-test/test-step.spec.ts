@@ -44,6 +44,15 @@ class Reporter {
     };
   }
 
+  distillError(error) {
+    return {
+      error: {
+        message: stripAnsi(error.message || ''),
+        stack: stripAnsi(error.stack || ''),
+      }
+    };
+  }
+
   onStdOut(data) {
     process.stdout.write(data.toString());
   }
@@ -60,6 +69,9 @@ class Reporter {
         for (const result of test.results) {
           for (const step of result.steps) {
             console.log('%% ' + JSON.stringify(this.distillStep(step)));
+          }
+          for (const error of result.errors) {
+            console.log('%% ' + JSON.stringify(this.distillError(error)));
           }
         }
       }
@@ -249,6 +261,9 @@ test('should report before hooks step error', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
     },
+    {
+      error: expect.any(Object)
+    }
   ]);
 });
 
@@ -335,6 +350,12 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
           title: 'fixture: browser',
         },
       ],
+    },
+    {
+      error: {
+        message: 'Test timeout of 2000ms exceeded.',
+        stack: 'Test timeout of 2000ms exceeded.',
+      },
     },
   ]);
 });
@@ -556,6 +577,9 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
     },
+    {
+      error: expect.any(Object)
+    }
   ]);
 });
 
@@ -633,7 +657,8 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
       category: 'test.step',
       location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
     },
-    { title: 'After Hooks', category: 'hook' }
+    { title: 'After Hooks', category: 'hook' },
+    { error: expect.any(Object) }
   ]);
 });
 
@@ -953,6 +978,18 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         },
       ],
     },
+    {
+      error: {
+        message: 'Test timeout of 2000ms exceeded.',
+        stack: 'Test timeout of 2000ms exceeded.',
+      },
+    },
+    {
+      error: {
+        message: expect.stringContaining('Error: page.click'),
+        stack: expect.stringContaining('Error: page.click'),
+      },
+    },
   ]);
 });
 
@@ -1131,6 +1168,13 @@ test('should show final toPass error', async ({ runInlineTest }) => {
       title: 'After Hooks',
       category: 'hook',
     },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.stringContaining('a.test.ts:6'),
+      }
+    }
+
   ]);
 });
 
@@ -1146,7 +1190,7 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
             expect.soft(1).toBe(2);
           });
         });
-      
+
         await test.step('second outer', async () => {
           await test.step('second inner', async () => {
             expect(1).toBe(2);
@@ -1211,6 +1255,18 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
     },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.stringContaining('a.test.ts:6'),
+      }
+    },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.stringContaining('a.test.ts:12'),
+      }
+    }
   ]);
 });
 
@@ -1229,7 +1285,7 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
             }
           });
         });
-      
+
         await test.step('second outer', async () => {
           await test.step('second inner', async () => {
             expect(1).toBe(2);
@@ -1292,6 +1348,12 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
     },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.stringContaining('a.test.ts:13'),
+      }
+    }
   ]);
 });
 
@@ -1342,6 +1404,12 @@ test('should step w/o box', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
     },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.stringContaining('a.test.ts:3'),
+      }
+    }
   ]);
 });
 
@@ -1354,8 +1422,8 @@ test('should step w/ box', async ({ runInlineTest }) => {
       /*2*/ test('fail', async () => {
       /*3*/   const helper = async () => {
       /*4*/     await test.step('boxed step', async () => {
-      /*5*/       await expect(page.locator('body')).toHaveText('Good page', { timeout: 1 });
-      /*6*/     }, { box: 'self' });
+      /*5*/       expect(1).toBe(2);
+      /*6*/     }, { box: true });
       /*7*/   };
       /*8*/   await helper();
       /*9*/ });
@@ -1370,18 +1438,167 @@ test('should step w/ box', async ({ runInlineTest }) => {
       title: 'Before Hooks',
     },
     {
+      title: 'boxed step',
       category: 'test.step',
       error: expect.not.stringMatching(/a.test.ts:[^8]/),
-      location: {
-        column: 21,
-        file: 'a.test.ts',
-        line: 8,
-      },
-      title: 'boxed step',
+      location: { file: 'a.test.ts', line: 8, column: 21 },
+      steps: [{
+        title: 'expect.toBe',
+        category: 'expect',
+        error: expect.stringContaining('expect(received).toBe(expected)'),
+        location: { file: 'a.test.ts', column: 29, line: 5 }
+      }],
     },
     {
       category: 'hook',
       title: 'After Hooks',
+    },
+    {
+      error: {
+        message: expect.stringContaining('expect(received).toBe(expected)'),
+        stack: expect.not.stringMatching(/a.test.ts:[^8]/),
+      }
+    }
+  ]);
+});
+
+test('should soft step w/ box', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts':
+    ` /*1*/ import { test, expect } from '@playwright/test';
+      /*2*/ test('fail', async () => {
+      /*3*/   const helper = async () => {
+      /*4*/     await test.step('boxed step', async () => {
+      /*5*/       expect.soft(1).toBe(2);
+      /*6*/     }, { box: true });
+      /*7*/   };
+      /*8*/   await helper();
+      /*9*/ });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      title: 'boxed step',
+      category: 'test.step',
+      error: expect.not.stringMatching(/a.test.ts:[^8]/),
+      location: { file: 'a.test.ts', line: 8, column: 21 },
+      steps: [{
+        title: 'expect.soft.toBe',
+        category: 'expect',
+        error: expect.stringContaining('expect(received).toBe(expected)'),
+        location: { file: 'a.test.ts', column: 34, line: 5, }
+      }],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+    {
+      error: {
+        message: expect.stringContaining('Error: expect(received).toBe(expected)'),
+        stack: expect.not.stringMatching(/a.test.ts:[^8]/),
+      }
+    }
+  ]);
+});
+
+test('should not generate dupes for named expects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('timeout', async ({ page }) => {
+        await page.setContent('<div style="background:rgb(1,2,3)">hi</div>');
+        await expect(page.locator('div'), 'Checking color')
+            .toHaveCSS('background-color', 'rgb(1, 2, 3)');
+      });
+    `
+  }, { reporter: '', workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: browser',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserType.launch',
+            },
+          ]
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
+        },
+      ],
+    },
+    {
+      category: 'pw:api',
+      title: 'page.setContent',
+      location: {
+        column: expect.any(Number),
+        file: 'a.test.ts',
+        line: expect.any(Number),
+      },
+    },
+    {
+      category: 'expect',
+      title: 'Checking color',
+      location: {
+        column: expect.any(Number),
+        file: 'a.test.ts',
+        line: expect.any(Number),
+      },
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
+      ],
     },
   ]);
 });

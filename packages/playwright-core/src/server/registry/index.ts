@@ -20,7 +20,6 @@ import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { lockfile } from '../../utilsBundle';
-import { getLinuxDistributionInfo } from '../../utils/linuxUtils';
 import { fetchData } from '../../utils/network';
 import { getEmbedderName } from '../../utils/userAgent';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox, getPackageManagerExecCommand } from '../../utils';
@@ -32,6 +31,7 @@ import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from '
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
+import { debugLogger } from '../../utils/debugLogger';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
@@ -77,10 +77,10 @@ type DownloadPaths = Record<HostPlatform, string | undefined>;
 const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   'chromium': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/chromium/%s/chromium-linux.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/chromium/%s/chromium-linux.zip',
     'ubuntu22.04-x64': 'builds/chromium/%s/chromium-linux.zip',
-    'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
+    'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'debian11-x64': 'builds/chromium/%s/chromium-linux.zip',
@@ -100,10 +100,10 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
     'ubuntu22.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
-    'ubuntu18.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
+    'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'debian11-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
@@ -123,10 +123,10 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'chromium-with-symbols': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu22.04-x64': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
-    'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
+    'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'debian11-x64': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
@@ -146,7 +146,7 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'firefox': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/firefox/%s/firefox-ubuntu-18.04.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
     'ubuntu22.04-x64': 'builds/firefox/%s/firefox-ubuntu-22.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -169,7 +169,7 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'firefox-beta': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
     'ubuntu22.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -215,7 +215,7 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'webkit': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/deprecated-webkit-ubuntu-18.04/%s/deprecated-webkit-ubuntu-18.04.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'ubuntu22.04-x64': 'builds/webkit/%s/webkit-ubuntu-22.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -238,10 +238,10 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'ffmpeg': {
     '<unknown>': undefined,
-    'ubuntu18.04-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu22.04-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
-    'ubuntu18.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
+    'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'debian11-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
@@ -261,10 +261,10 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   },
   'android': {
     '<unknown>': 'builds/android/%s/android.zip',
-    'ubuntu18.04-x64': 'builds/android/%s/android.zip',
+    'ubuntu18.04-x64': undefined,
     'ubuntu20.04-x64': 'builds/android/%s/android.zip',
     'ubuntu22.04-x64': 'builds/android/%s/android.zip',
-    'ubuntu18.04-arm64': 'builds/android/%s/android.zip',
+    'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/android/%s/android.zip',
     'ubuntu22.04-arm64': 'builds/android/%s/android.zip',
     'debian11-x64': 'builds/android/%s/android.zip',
@@ -382,7 +382,7 @@ export interface Executable {
   browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
-  validateHostRequirements(sdkLanguage: string): Promise<void>;
+  _validateHostRequirements(sdkLanguage: string): Promise<void>;
 }
 
 interface ExecutableImpl extends Executable {
@@ -445,7 +445,7 @@ export class Registry {
       executablePath: () => chromiumExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromium),
       browserVersion: chromium.browserVersion,
       _install: () => this._downloadExecutable(chromium, chromiumExecutable),
@@ -463,7 +463,7 @@ export class Registry {
       executablePath: () => chromiumWithSymbolsExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-with-symbols', chromiumWithSymbolsExecutable, chromiumWithSymbols.installByDefault, sdkLanguage),
       installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumWithSymbols),
       browserVersion: chromiumWithSymbols.browserVersion,
       _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable),
@@ -481,7 +481,7 @@ export class Registry {
       executablePath: () => chromiumTipOfTreeExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumTipOfTree),
       browserVersion: chromiumTipOfTree.browserVersion,
       _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable),
@@ -567,7 +567,7 @@ export class Registry {
       executablePath: () => firefoxExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, sdkLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefox),
       browserVersion: firefox.browserVersion,
       _install: () => this._downloadExecutable(firefox, firefoxExecutable),
@@ -585,7 +585,7 @@ export class Registry {
       executablePath: () => firefoxAsanExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-asan', firefoxAsanExecutable, firefoxAsan.installByDefault, sdkLanguage),
       installType: firefoxAsan.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxAsan.dir, ['firefox'], [], ['firefox']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxAsan.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefoxAsan),
       browserVersion: firefoxAsan.browserVersion,
       _install: () => this._downloadExecutable(firefoxAsan, firefoxAsanExecutable),
@@ -603,7 +603,7 @@ export class Registry {
       executablePath: () => firefoxBetaExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefoxBeta),
       browserVersion: firefoxBeta.browserVersion,
       _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable),
@@ -631,7 +631,7 @@ export class Registry {
       executablePath: () => webkitExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       downloadURLs: this._downloadURLs(webkit),
       browserVersion: webkit.browserVersion,
       _install: () => this._downloadExecutable(webkit, webkitExecutable),
@@ -649,7 +649,7 @@ export class Registry {
       executablePath: () => ffmpegExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault, sdkLanguage),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
-      validateHostRequirements: () => Promise.resolve(),
+      _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(ffmpeg),
       _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable),
       _dependencyGroup: 'tools',
@@ -664,7 +664,7 @@ export class Registry {
       executablePath: () => undefined,
       executablePathOrDie: () => '',
       installType: 'download-on-demand',
-      validateHostRequirements: () => Promise.resolve(),
+      _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(android),
       _install: () => this._downloadExecutable(android),
       _dependencyGroup: 'tools',
@@ -704,7 +704,7 @@ export class Registry {
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: install ? 'install-script' : 'none',
-      validateHostRequirements: () => Promise.resolve(),
+      _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: false,
       _install: install,
     };
@@ -735,14 +735,6 @@ export class Registry {
   }
 
   private async _validateHostRequirements(sdkLanguage: string, browserName: BrowserName, browserDirectory: string, linuxLddDirectories: string[], dlOpenLibraries: string[], windowsExeAndDllDirectories: string[]) {
-    if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
-      process.stderr.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
-      return;
-    }
-    const distributionInfo = await getLinuxDistributionInfo();
-    if (browserName === 'firefox' && distributionInfo?.id === 'ubuntu' && distributionInfo?.version === '16.04')
-      throw new Error(`Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 20.04`);
-
     if (os.platform() === 'linux')
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
     if (os.platform() === 'win32' && os.arch() === 'x64')
@@ -857,6 +849,37 @@ export class Registry {
     return {
       numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
     };
+  }
+
+  async validateHostRequirementsForExecutablesIfNeeded(executables: Executable[], sdkLanguage: string) {
+    if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
+      process.stderr.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
+      return;
+    }
+    for (const executable of executables)
+      await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage);
+  }
+
+  private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string) {
+    const kMaximumReValidationPeriod = 30 * 24 * 60 * 60 * 1000; // 30 days
+    // Executable does not require validation.
+    if (!executable.directory)
+      return;
+    const markerFile = path.join(executable.directory, 'DEPENDENCIES_VALIDATED');
+    // Executable is already validated.
+    if (await fs.promises.stat(markerFile).then(stat => (Date.now() - stat.mtime.getTime()) < kMaximumReValidationPeriod).catch(() => false))
+      return;
+
+    debugLogger.log('install', `validating host requirements for "${executable.name}"`);
+    try {
+      await executable._validateHostRequirements(sdkLanguage);
+      debugLogger.log('install', `validation passed for ${executable.name}`);
+    } catch (error) {
+      debugLogger.log('install', `validation failed for ${executable.name}`);
+      throw error;
+    }
+
+    await fs.promises.writeFile(markerFile, '').catch(() => {});
   }
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {

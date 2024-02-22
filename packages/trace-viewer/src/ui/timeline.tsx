@@ -15,7 +15,7 @@
  */
 
 import { msToString, useMeasure } from '@web/uiUtils';
-import { GlassPane } from '@web/components/glassPane';
+import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
@@ -205,12 +205,11 @@ export const Timeline: React.FunctionComponent<{
   }, [setSelectedTime]);
 
   return <div style={{ flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-    <GlassPane
-      enabled={!!dragWindow}
+    {!!dragWindow && <GlassPane
       cursor={dragWindow?.type === 'resize' ? 'ew-resize' : 'grab'}
       onPaneMouseUp={onGlassPaneMouseUp}
       onPaneMouseMove={onGlassPaneMouseMove}
-      onPaneDoubleClick={onPaneDoubleClick} />
+      onPaneDoubleClick={onPaneDoubleClick} />}
     <div ref={ref}
       className='timeline-view'
       onMouseDown={onMouseDown}

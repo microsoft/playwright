@@ -26,6 +26,7 @@ export type ListViewProps<T> = {
   indent?: (item: T, index: number) => number | undefined,
   isError?: (item: T, index: number) => boolean,
   isWarning?: (item: T, index: number) => boolean,
+  isInfo?: (item: T, index: number) => boolean,
   selectedItem?: T,
   onAccepted?: (item: T, index: number) => void,
   onSelected?: (item: T, index: number) => void,
@@ -48,6 +49,7 @@ export function ListView<T>({
   icon,
   isError,
   isWarning,
+  isInfo,
   indent,
   selectedItem,
   onAccepted,
@@ -136,12 +138,13 @@ export function ListView<T>({
         const highlightedSuffix = !noHighlightOnHover && highlightedItem === item ? ' highlighted' : '';
         const errorSuffix = isError?.(item, index) ? ' error' : '';
         const warningSuffix = isWarning?.(item, index) ? ' warning' : '';
+        const infoSuffix = isInfo?.(item, index) ? ' info' : '';
         const indentation = indent?.(item, index) || 0;
         const rendered = render(item, index);
         return <div
           key={id?.(item, index) || index}
           role='listitem'
-          className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix + warningSuffix}
+          className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix + warningSuffix + infoSuffix}
           onClick={() => onSelected?.(item, index)}
           onMouseEnter={() => setHighlightedItem(item)}
           onMouseLeave={() => setHighlightedItem(undefined)}

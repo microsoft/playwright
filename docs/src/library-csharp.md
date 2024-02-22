@@ -20,7 +20,7 @@ cd PlaywrightDemo
 dotnet add package Microsoft.Playwright
 # Build the project
 dotnet build
-# Install required browsers - replace netX with actual output folder name, e.g. net6.0.
+# Install required browsers - replace netX with actual output folder name, e.g. net8.0.
 pwsh bin/Debug/netX/playwright.ps1 install
 
 # If the pwsh command does not work (throws TypeNotFound), make sure to use an up-to-date version of PowerShell.
@@ -65,6 +65,9 @@ You can do the following to leverage Playwright's web-first assertions when you 
 ```csharp
 using Microsoft.Playwright;
 using static Microsoft.Playwright.Assertions;
+
+// Change the default 5 seconds timeout if you'd like.
+SetDefaultExpectTimeout(10_000);
 
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync();

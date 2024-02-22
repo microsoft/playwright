@@ -90,6 +90,7 @@ export type AfterActionTraceEvent = {
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
   result?: any;
+  point?: Point;
 };
 
 export type LogTraceEvent = {
@@ -145,6 +146,12 @@ export type StdioTraceEvent = {
   base64?: string;
 };
 
+export type ErrorTraceEvent = {
+  type: 'error';
+  message: string;
+  stack?: StackFrame[];
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
@@ -157,4 +164,5 @@ export type TraceEvent =
     ConsoleMessageTraceEvent |
     ResourceSnapshotTraceEvent |
     FrameSnapshotTraceEvent |
-    StdioTraceEvent;
+    StdioTraceEvent |
+    ErrorTraceEvent;

@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestType } from '../../types/test';
+import type { Fixtures, TestType, TestDetails } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 
@@ -38,7 +38,7 @@ export class TestTypeImpl {
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
-    test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
+    test.describe.configure = this._configure.bind(this);
     test.describe.fixme = wrapFunctionWithLocation(this._describe.bind(this, 'fixme'));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
@@ -53,7 +53,7 @@ export class TestTypeImpl {
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
-    test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
+    test.setTimeout = this._setTimeout.bind(this);
     test.step = this._step.bind(this);
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
@@ -66,7 +66,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _currentSuite(location: Location, title: string): Suite | undefined {
+  private _currentSuite(title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
       throw new Error([
@@ -78,38 +78,74 @@ export class TestTypeImpl {
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
       ].join('\n'));
     }
+    if (suite._testTypeImpl && suite._testTypeImpl !== this) {
+      throw new Error([
+        `Can't call ${title} inside a describe() suite of a different test type.`,
+        `Make sure to use the same "test" function (created by the test.extend() call) for all declarations inside a suite.`,
+      ].join('\n'));
+    }
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, 'test()');
+    const suite = this._currentSuite('test()');
     if (!suite)
       return;
-    const test = new TestCase(title, fn, this, location);
+
+    let details: TestDetails;
+    let body: Function;
+    if (typeof fnOrDetails === 'function') {
+      body = fnOrDetails;
+      details = {};
+    } else {
+      body = fn!;
+      details = fnOrDetails;
+    }
+
+    const validatedDetails = validateTestDetails(details);
+    const test = new TestCase(title, body, this, location);
     test._requireFile = suite._requireFile;
+    test._staticAnnotations.push(...validatedDetails.annotations);
+    test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip' || type === 'fixme')
+    if (type === 'skip' || type === 'fixme' || type === 'fail')
       test._staticAnnotations.push({ type });
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, 'test.describe()');
+    const suite = this._currentSuite('test.describe()');
     if (!suite)
       return;
 
-    if (typeof title === 'function') {
-      fn = title;
+    let title: string;
+    let body: Function;
+    let details: TestDetails;
+
+    if (typeof titleOrFn === 'function') {
       title = '';
+      details = {};
+      body = titleOrFn;
+    } else if (typeof fnOrDetails === 'function') {
+      title = titleOrFn;
+      details = {};
+      body = fnOrDetails;
+    } else {
+      title = titleOrFn;
+      details = fnOrDetails!;
+      body = fn!;
     }
 
-    const child = new Suite(title, 'describe');
+    const validatedDetails = validateTestDetails(details);
+    const child = new Suite(title, 'describe', this);
     child._requireFile = suite._requireFile;
     child.location = location;
+    child._staticAnnotations.push(...validatedDetails.annotations);
+    child._tags.push(...validatedDetails.tags);
     suite._addSuite(child);
 
     if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
@@ -129,12 +165,12 @@ export class TestTypeImpl {
     }
 
     setCurrentlyLoadingFileSuite(child);
-    fn!();
+    body();
     setCurrentlyLoadingFileSuite(suite);
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, title: string | Function, fn?: Function) {
-    const suite = this._currentSuite(location, `test.${name}()`);
+    const suite = this._currentSuite(`test.${name}()`);
     if (!suite)
       return;
     if (typeof title === 'function') {
@@ -145,9 +181,9 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, `test.describe.configure()`);
+    const suite = this._currentSuite(`test.describe.configure()`);
     if (!suite)
       return;
 
@@ -170,12 +206,17 @@ export class TestTypeImpl {
     }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: any[]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme')) {
-        // Support for test.{skip,fixme}('title', () => {})
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail')) {
+        // Support for test.{skip,fixme,fail}(title, body)
         this._createTest(type, location, modifierArgs[0], modifierArgs[1]);
+        return;
+      }
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'object' && typeof modifierArgs[2] === 'function' && (type === 'skip' || type === 'fixme' || type === 'fail')) {
+        // Support for test.{skip,fixme,fail}(title, details, body)
+        this._createTest(type, location, modifierArgs[0], modifierArgs[1], modifierArgs[2]);
         return;
       }
 
@@ -198,7 +239,7 @@ export class TestTypeImpl {
     testInfo[type](...modifierArgs as [any, any]);
   }
 
-  private _setTimeout(location: Location, timeout: number) {
+  private _setTimeout(timeout: number) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       suite._timeout = timeout;
@@ -212,7 +253,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._currentSuite(location, `test.use()`);
+    const suite = this._currentSuite(`test.use()`);
     if (!suite)
       return;
     suite._use.push({ fixtures, location });
@@ -245,6 +286,16 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
+}
+
+function validateTestDetails(details: TestDetails) {
+  const annotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
+  const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
+  for (const tag of tags) {
+    if (tag[0] !== '@')
+      throw new Error(`Tag must start with "@" symbol, got "${tag}" instead.`);
+  }
+  return { annotations, tags };
 }
 
 export const rootTestType = new TestTypeImpl([]);

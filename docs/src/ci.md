@@ -167,11 +167,11 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: sdk
-    version: '6.0.x'
+    version: '8.0.x'
   displayName: 'Use .NET SDK'
 - script: dotnet build --configuration Release
   displayName: 'Build'
-- script: pwsh bin/Release/net6.0/playwright.ps1 install --with-deps
+- script: pwsh bin/Release/net8.0/playwright.ps1 install --with-deps
   displayName: 'Install Playwright browsers'
 - script: dotnet test --configuration Release
   displayName: 'Run tests'
@@ -227,7 +227,7 @@ Note: The JUnit reporter needs to be configured accordingly via
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: ['junit', { outputFile: 'test-results/e2e-junit-results.xml' }],
+  reporter: [['junit', { outputFile: 'test-results/e2e-junit-results.xml' }]],
 });
 ```
 in `playwright.config.ts`.
@@ -367,7 +367,7 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: sdk
-    version: '6.0.x'
+    version: '8.0.x'
   displayName: 'Use .NET SDK'
 
 - script: dotnet build --configuration Release
@@ -587,6 +587,19 @@ tests:
     - npm ci
     - npx playwright test --project=$PROJECT --shard=$SHARD
 ```
+### Google Cloud Build
+* langs: js
+
+To run Playwright tests on Google Cloud Build, use our public Docker image ([see Dockerfile](./docker.md)).
+
+```yml
+steps:
+- name: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+  script: 
+  ...
+  env:
+  - 'CI=true'
+```
 
 ## Caching browsers
 
@@ -667,7 +680,7 @@ await playwright.Chromium.LaunchAsync(new()
 });
 ```
 
-On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.
+On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the actual command.
 
 ```bash js
 xvfb-run node index.js

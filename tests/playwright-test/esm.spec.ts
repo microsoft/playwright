@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -155,6 +155,32 @@ test('should use source maps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(output).toContain('[foo] › a.test.ts:4:7 › check project name');
+});
+
+test('should use source maps when importing a file throws an error', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29418' });
+
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      throw new Error('Oh my!');
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: Oh my!
+
+   at a.test.ts:4
+
+  2 |       import { test, expect } from '@playwright/test';
+  3 |
+> 4 |       throw new Error('Oh my!');
+    |             ^
+  `);
 });
 
 test('should show the codeframe in errors', async ({ runInlineTest }) => {
@@ -481,10 +507,7 @@ test('should resolve no-extension import to .jsx file in ESM mode', async ({ run
 test('should resolve .js import to .tsx file in ESM mode for components', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ projects: [{name: 'foo'}] });
-    `,
+    'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 
@@ -671,4 +694,21 @@ test('should be able to use mergeTests/mergeExpect', async ({ runInlineTest }) =
   expect(result.passed).toBe(1);
   expect(result.outputLines).toContain('myFixture1: 1');
   expect(result.outputLines).toContain('myFixture2: 2');
+});
+
+test('should exit after merge-reports', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28699' });
+  const result = await runInlineTest({
+    'merge.config.ts': `
+      export default { reporter: 'line' };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'nested/folder/a.esm.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', ({}, testInfo) => {});
+    `
+  }, undefined, undefined, { additionalArgs: ['--reporter', 'blob'] });
+  expect(result.exitCode).toBe(0);
+  const { exitCode } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['-c', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
 });

@@ -769,3 +769,11 @@ it('should expose utilityScript', async ({ page }) => {
     utils: true,
   });
 });
+
+it('should work with Array.from/map', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28520' });
+  expect(await page.evaluate(() => {
+    const r = (str, amount) => Array.from(Array(amount)).map(() => str).join('');
+    return r('([a-f0-9]{2})', 3);
+  })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
+});

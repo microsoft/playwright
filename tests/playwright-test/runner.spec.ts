@@ -111,7 +111,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.didNotRun).toBe(1);
+  expect(result.skipped).toBe(1);
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
@@ -236,7 +236,7 @@ test('should use the first occurring error when an unhandled exception was throw
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('first error');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('Error: first error');
 });
 
 test('worker interrupt should report errors', async ({ interactWithTestRunner }) => {
@@ -450,8 +450,8 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
 
   const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
-      const _plugins = [];
-      _plugins.push(() => ({
+      const plugins = [];
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
           console.log('%%SEND-SIGINT%%');
@@ -462,7 +462,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
         }
       }));
 
-      _plugins.push(() => ({
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
         },
@@ -471,7 +471,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
         }
       }));
       module.exports = {
-        _plugins
+        '@playwright/test': { plugins }
       };
     `,
     'a.spec.js': `
@@ -500,8 +500,8 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
 
   const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
-      const _plugins = [];
-      _plugins.push(() => ({
+      const plugins = [];
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
         },
@@ -510,7 +510,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
         }
       }));
 
-      _plugins.push(() => ({
+      plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
           console.log('%%SEND-SIGINT%%');
@@ -520,7 +520,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
           console.log('Plugin2 teardown');
         }
       }));
-      module.exports = { _plugins };
+      module.exports = { '@playwright/test': { plugins } };
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
@@ -634,9 +634,9 @@ test('should not hang on worker error in test file', async ({ runInlineTest }) =
     `,
   }, { 'timeout': 3000 });
   expect(result.exitCode).toBe(1);
-  expect(result.results).toHaveLength(1);
   expect(result.results[0].status).toBe('failed');
   expect(result.results[0].error.message).toContain('Error: worker process exited unexpectedly');
+  expect(result.results[1].status).toBe('skipped');
 });
 
 test('fast double SIGINT should be ignored', async ({ interactWithTestRunner }) => {

@@ -17,14 +17,15 @@
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { expectTypes, callLogText, filteredStackTrace } from '../util';
+import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { captureRawStack, constructURLBasedOnBaseURL, isRegExp, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, isRegExp, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
-import { TestInfoImpl, type TestStepInternal } from '../worker/testInfo';
+import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
+import { takeFirst } from '../common/config';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -367,44 +368,28 @@ export async function toPass(
   } = {},
 ) {
   const testInfo = currentTestInfo();
-  const timeout = options.timeout !== undefined ? options.timeout : 0;
+  const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
 
-  const rawStack = captureRawStack();
-  const stackFrames = filteredStackTrace(rawStack);
-
-  const runWithOrWithoutStep = async (callback: (step: TestStepInternal | undefined) => Promise<{ pass: boolean; message: () => string; }>) => {
-    if (!testInfo)
-      return await callback(undefined);
-    return await testInfo._runAsStep({
-      title: 'expect.toPass',
-      category: 'expect',
-      location: stackFrames[0],
-    }, callback);
-  };
-
-  return await runWithOrWithoutStep(async (step: TestStepInternal | undefined) => {
-    const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
-    const result = await pollAgainstDeadline<Error|undefined>(async () => {
-      if (testInfo && currentTestInfo() !== testInfo)
-        return { continuePolling: false, result: undefined };
-      try {
-        await callback();
-        return { continuePolling: !!this.isNot, result: undefined };
-      } catch (e) {
-        return { continuePolling: !this.isNot, result: e };
-      }
-    }, deadline, options.intervals || [100, 250, 500, 1000]);
-
-    if (result.timedOut) {
-      const message = result.result ? [
-        result.result.message,
-        '',
-        `Call Log:`,
-        `- ${timeoutMessage}`,
-      ].join('\n') : timeoutMessage;
-      step?.complete({ error: { message } });
-      return { message: () => message, pass: !!this.isNot };
+  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const result = await pollAgainstDeadline<Error|undefined>(async () => {
+    if (testInfo && currentTestInfo() !== testInfo)
+      return { continuePolling: false, result: undefined };
+    try {
+      await callback();
+      return { continuePolling: !!this.isNot, result: undefined };
+    } catch (e) {
+      return { continuePolling: !this.isNot, result: e };
     }
-    return { pass: !this.isNot, message: () => '' };
-  });
+  }, deadline, options.intervals || [100, 250, 500, 1000]);
+
+  if (result.timedOut) {
+    const message = result.result ? [
+      result.result.message,
+      '',
+      `Call Log:`,
+      `- ${timeoutMessage}`,
+    ].join('\n') : timeoutMessage;
+    return { message: () => message, pass: !!this.isNot };
+  }
+  return { pass: !this.isNot, message: () => '' };
 }

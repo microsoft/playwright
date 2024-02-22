@@ -121,6 +121,13 @@ function addProcessHandlerIfNeeded(name: 'exit' | 'SIGINT' | 'SIGTERM' | 'SIGHUP
     process.on(name, processHandlers[name]);
   }
 }
+function removeProcessHandlersIfNeeded() {
+  if (killSet.size)
+    return;
+  for (const handler of installedHandlers)
+    process.off(handler, processHandlers[handler]);
+  installedHandlers.clear();
+}
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
@@ -178,6 +185,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     processClosed = true;
     gracefullyCloseSet.delete(gracefullyClose);
     killSet.delete(killProcessAndCleanup);
+    removeProcessHandlersIfNeeded();
     options.onExit(exitCode, signal);
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
@@ -216,6 +224,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   function killProcess() {
     gracefullyCloseSet.delete(gracefullyClose);
     killSet.delete(killProcessAndCleanup);
+    removeProcessHandlersIfNeeded();
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);

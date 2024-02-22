@@ -38,6 +38,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
   ] : 'line',
   projects: [],
+  globalSetup: './globalSetup.ts'
 };
 
 const metadata = {

@@ -65,15 +65,18 @@ export class SnapshotRenderer {
           }
         } else if (typeof n[0] === 'string') {
           // Element node.
-          const builder: string[] = [];
-          builder.push('<', n[0]);
+          // Note that <noscript> will not be rendered by default in the trace viewer, because
+          // JS is enabled. So rename it to <x-noscript>.
+          const nodeName = n[0] === 'NOSCRIPT' ? 'X-NOSCRIPT' : n[0];
           const attrs = Object.entries(n[1] || {});
+          const builder: string[] = [];
+          builder.push('<', nodeName);
           const kCurrentSrcAttribute = '__playwright_current_src__';
-          const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
-          const isAnchor = n[0] === 'A';
-          const isImg = n[0] === 'IMG';
+          const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
+          const isAnchor = nodeName === 'A';
+          const isImg = nodeName === 'IMG';
           const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
-          const isSourceInsidePictureWithCurrentSrc = n[0] === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+          const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
           for (const [attr, value] of attrs) {
             let attrName = attr;
             if (isFrame && attr.toLowerCase() === 'src') {
@@ -99,9 +102,9 @@ export class SnapshotRenderer {
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex, n[0], attrs));
-          if (!autoClosing.has(n[0]))
-            builder.push('</', n[0], '>');
+            builder.push(visit(n[i], snapshotIndex, nodeName, attrs));
+          if (!autoClosing.has(nodeName))
+            builder.push('</', nodeName, '>');
           (n as any)._string = builder.join('');
         } else {
           // Why are we here? Let's not throw, just in case.
@@ -211,6 +214,10 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 function snapshotScript(...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
+    const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
+        ' match the center of the clicked element. This is likely due to a difference between' +
+        ' the test runner and the trace viewer operating systems.';
+
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
@@ -223,7 +230,9 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         scrollLefts.push(e);
 
       for (const element of root.querySelectorAll(`[__playwright_value_]`)) {
-        (element as HTMLInputElement | HTMLTextAreaElement).value = element.getAttribute('__playwright_value_')!;
+        const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
+        if (inputElement.type !== 'file')
+          inputElement.value = inputElement.getAttribute('__playwright_value_')!;
         element.removeAttribute('__playwright_value_');
       }
       for (const element of root.querySelectorAll(`[__playwright_checked_]`)) {
@@ -249,7 +258,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
-          // Retain query parameters to inherit name=, time=, showPoint= and other values from parent.
+          // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
           const url = new URL(unwrapPopoutUrl(window.location.href));
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
@@ -303,8 +312,13 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
-      if (search.get('showPoint')) {
-        for (const target of targetElements) {
+
+      if (search.get('pointX') && search.get('pointY')) {
+        const pointX = +search.get('pointX')!;
+        const pointY = +search.get('pointY')!;
+        const hasTargetElements = targetElements.length > 0;
+        const roots = document.documentElement ? [document.documentElement] : [];
+        for (const target of (hasTargetElements ? targetElements : roots)) {
           const pointElement = document.createElement('x-pw-pointer');
           pointElement.style.position = 'fixed';
           pointElement.style.backgroundColor = '#f44336';
@@ -313,9 +327,35 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           pointElement.style.borderRadius = '10px';
           pointElement.style.margin = '-10px 0 0 -10px';
           pointElement.style.zIndex = '2147483646';
-          const box = target.getBoundingClientRect();
-          pointElement.style.left = (box.left + box.width / 2) + 'px';
-          pointElement.style.top = (box.top + box.height / 2) + 'px';
+          pointElement.style.display = 'flex';
+          pointElement.style.alignItems = 'center';
+          pointElement.style.justifyContent = 'center';
+          if (hasTargetElements) {
+            // Sometimes there are layout discrepancies between recording and rendering, e.g. fonts,
+            // that may place the point at the wrong place. To avoid confusion, we just show the
+            // point in the middle of the target element.
+            const box = target.getBoundingClientRect();
+            const centerX = (box.left + box.width / 2);
+            const centerY = (box.top + box.height / 2);
+            pointElement.style.left = centerX + 'px';
+            pointElement.style.top = centerY + 'px';
+            // "Warning symbol" indicates that action point is not 100% correct.
+            if (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10) {
+              const warningElement = document.createElement('x-pw-pointer-warning');
+              warningElement.textContent = '⚠';
+              warningElement.style.fontSize = '19px';
+              warningElement.style.color = 'white';
+              warningElement.style.marginTop = '-3.5px';
+              warningElement.style.userSelect = 'none';
+              pointElement.appendChild(warningElement);
+              pointElement.setAttribute('title', kPointerWarningTitle);
+            }
+          } else {
+            // For actions without a target element, e.g. page.mouse.move(),
+            // show the point at the recorder location.
+            pointElement.style.left = pointX + 'px';
+            pointElement.style.top = pointY + 'px';
+          }
           document.documentElement.appendChild(pointElement);
         }
       }

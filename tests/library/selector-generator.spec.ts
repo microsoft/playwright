@@ -21,6 +21,10 @@ async function generate(pageOrFrame: Page | Frame, target: string): Promise<stri
   return pageOrFrame.$eval(target, e => (window as any).playwright.selector(e));
 }
 
+async function generateMultiple(pageOrFrame: Page | Frame, target: string): Promise<string> {
+  return pageOrFrame.$eval(target, e => (window as any).__injectedScript.generateSelector(e, { multiple: true, testIdAttributeName: 'data-testid' }).selectors);
+}
+
 it.describe('selector generator', () => {
   it.skip(({ mode }) => mode !== 'default');
 
@@ -54,8 +58,36 @@ it.describe('selector generator', () => {
   });
 
   it('should trim text', async ({ page }) => {
-    await page.setContent(`<div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>`);
+    await page.setContent(`
+      <div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>
+      <div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789!Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>
+    `);
     expect(await generate(page, 'div')).toBe('internal:text="Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text012345"i');
+  });
+
+  it('should try to improve role name', async ({ page }) => {
+    await page.setContent(`<div role=button>Issues 23</div>`);
+    expect(await generate(page, 'div')).toBe('internal:role=button[name="Issues"i]');
+  });
+
+  it('should try to improve text', async ({ page }) => {
+    await page.setContent(`<div>23 Issues</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="Issues"i');
+  });
+
+  it('should try to improve text by shortening', async ({ page }) => {
+    await page.setContent(`<div>Longest verbose description of the item</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="Longest verbose description"i');
+  });
+
+  it('should try to improve label text by shortening', async ({ page }) => {
+    await page.setContent(`<label>Longest verbose description of the item<input></label>`);
+    expect(await generate(page, 'input')).toBe('internal:label="Longest verbose description"i');
+  });
+
+  it('should not improve guid text', async ({ page }) => {
+    await page.setContent(`<div>91b1b23</div>`);
+    expect(await generate(page, 'div')).toBe('internal:text="91b1b23"i');
   });
 
   it('should not escape text with >>', async ({ page }) => {
@@ -206,9 +238,10 @@ it.describe('selector generator', () => {
       </div>
       <div id="id">
       <div>Text that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on</div>
+      <div>Text that goes on and on and on and on and on and on and on and on and X on and on and on and on and on and on and on</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and on"i`);
+    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and"i`);
   });
 
   it('should use nested ordinals', async ({ page }) => {
@@ -490,13 +523,53 @@ it.describe('selector generator', () => {
     const selectors = await page.evaluate(() => {
       const target = document.querySelector('section > span');
       const root = document.querySelector('section');
-      const relative = (window as any).__injectedScript.generateSelector(target, { root });
-      const absolute = (window as any).__injectedScript.generateSelector(target);
+      const relative = (window as any).__injectedScript.generateSelectorSimple(target, { root });
+      const absolute = (window as any).__injectedScript.generateSelectorSimple(target);
       return { relative, absolute };
     });
     expect(selectors).toEqual({
       relative: `internal:text="Hello"i`,
       absolute: `section >> internal:text="Hello"i`,
     });
+  });
+
+  it('should generate multiple: noText in role', async ({ page }) => {
+    await page.setContent(`
+      <button>Click me</button>
+    `);
+    expect(await generateMultiple(page, 'button')).toEqual([`internal:role=button[name="Click me"i]`, `internal:role=button`]);
+  });
+
+  it('should generate multiple: noText in text', async ({ page }) => {
+    await page.setContent(`
+      <div>Some div</div>
+    `);
+    expect(await generateMultiple(page, 'div')).toEqual([`internal:text="Some div"i`, `div`]);
+  });
+
+  it('should generate multiple: noId', async ({ page }) => {
+    await page.setContent(`
+      <div id=first><button>Click me</button></div>
+      <div id=second><button>Click me</button></div>
+    `);
+    expect(await generateMultiple(page, '#second button')).toEqual([
+      `#second >> internal:role=button[name="Click me"i]`,
+      `#second >> internal:role=button`,
+      `internal:role=button[name="Click me"i] >> nth=1`,
+      `internal:role=button >> nth=1`,
+    ]);
+  });
+
+  it('should generate multiple: noId noText', async ({ page }) => {
+    await page.setContent(`
+      <div id=first><span>Some span</span></div>
+      <div id=second><span>Some span</span></div>
+    `);
+    expect(await generateMultiple(page, '#second span')).toEqual([
+      `#second >> internal:text="Some span"i`,
+      `#second span`,
+      `internal:text="Some span"i >> nth=1`,
+      `span >> nth=1`,
+    ]);
   });
 });

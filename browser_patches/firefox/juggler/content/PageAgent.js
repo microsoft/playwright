@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const Ci = Components.interfaces;
 const Cr = Components.results;
@@ -462,6 +461,10 @@ class PageAgent {
   }
 
   async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
+    if (code === 'OSLeft')
+      code = 'MetaLeft';
+    else if (code === 'OSRight')
+      code = 'MetaRight';
     const frame = this._frameTree.mainFrame();
     const tip = frame.textInputProcessor();
     if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')

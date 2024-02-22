@@ -18,17 +18,98 @@ import type { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { electronTest as test, expect } from './electronTest';
+import type { ConsoleMessage } from 'playwright';
 
-test('should fire close event', async ({ launchElectronApp }) => {
+test('should fire close event via ElectronApplication.close();', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
   const events = [];
-  electronApp.on('close', () => events.push('application'));
-  electronApp.context().on('close', () => events.push('context'));
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
   await electronApp.close();
-  expect(events.join('|')).toBe('context|application');
+  // Close one more time - this should be a noop.
+  await electronApp.close();
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events.join('|')).toBe('context|application');
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+});
+
+test('should fire close event via BrowserContext.close()', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const events = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+  await electronApp.context().close();
+  // Close one more time - this should be a noop.
+  await electronApp.context().close();
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+  // Give it some time to fire more events - there should not be any.
+  await new Promise(f => setTimeout(f, 1000));
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+});
+
+test('should fire close event when the app quits itself', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const events = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.context().on('close', () => events.push('context(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+  {
+    const waitForAppClose = new Promise<void>(f => electronApp.on('close', f));
+    await electronApp.evaluate(({ app }) => app.quit());
+    await waitForAppClose;
+  }
+  events.sort(); // we don't care about the order
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+  // Give it some time to fire more events - there should not be any.
+  await new Promise(f => setTimeout(f, 1000));
+  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+});
+
+test('should fire console events', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const messages = [];
+  electronApp.on('console', message => messages.push({ type: message.type(), text: message.text() }));
+  await electronApp.evaluate(() => {
+    console.log('its type log');
+    console.debug('its type debug');
+    console.info('its type info');
+    console.error('its type error');
+    console.warn('its type warn');
+  });
+  await electronApp.close();
+  expect(messages).toEqual([
+    { type: 'log', text: 'its type log' },
+    { type: 'debug', text: 'its type debug' },
+    { type: 'info', text: 'its type info' },
+    { type: 'error', text: 'its type error' },
+    { type: 'warning', text: 'its type warn' },
+  ]);
+});
+
+test('should fire console events with handles and complex objects', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const messages: ConsoleMessage[] = [];
+  electronApp.on('console', message => messages.push(message));
+  await electronApp.evaluate(() => {
+    globalThis.complexObject = [{ a: 1, b: 2, c: 3 }, { a: 4, b: 5, c: 6 }, { a: 7, b: 8, c: 9 }];
+    console.log(globalThis.complexObject[0], globalThis.complexObject[1], globalThis.complexObject[2]);
+  });
+  expect(messages.length).toBe(1);
+  const message = messages[0];
+  expect(message.text()).toBe('{a: 1, b: 2, c: 3} {a: 4, b: 5, c: 6} {a: 7, b: 8, c: 9}');
+  expect(message.args().length).toBe(3);
+  expect(await message.args()[0].jsonValue()).toEqual({ a: 1, b: 2, c: 3 });
+  expect(await message.args()[0].evaluate(part => part === globalThis.complexObject[0])).toBeTruthy();
+  expect(await message.args()[1].jsonValue()).toEqual({ a: 4, b: 5, c: 6 });
+  expect(await message.args()[1].evaluate(part => part === globalThis.complexObject[1])).toBeTruthy();
+  expect(await message.args()[2].jsonValue()).toEqual({ a: 7, b: 8, c: 9 });
+  expect(await message.args()[2].evaluate(part => part === globalThis.complexObject[2])).toBeTruthy();
+  await electronApp.close();
 });
 
 test('should dispatch ready event', async ({ launchElectronApp }) => {

@@ -96,6 +96,8 @@ export class TestChildProcess {
   params: TestChildParams;
   process: ChildProcess;
   output = '';
+  stdout = '';
+  stderr = '';
   fullOutput = '';
   onOutput?: (chunk: string | Buffer) => void;
   exited: Promise<{ exitCode: number | null, signal: string | null }>;
@@ -121,8 +123,12 @@ export class TestChildProcess {
       process.stdout.write(`\n\nLaunching ${params.command.join(' ')}\n`);
     this.onOutput = params.onOutput;
 
-    const appendChunk = (chunk: string | Buffer) => {
+    const appendChunk = (type: 'stdout' | 'stderr', chunk: string | Buffer) => {
       this.output += String(chunk);
+      if (type === 'stderr')
+        this.stderr += String(chunk);
+      else
+        this.stdout += String(chunk);
       if (process.env.PWTEST_DEBUG)
         process.stdout.write(String(chunk));
       else
@@ -133,8 +139,8 @@ export class TestChildProcess {
       this._outputCallbacks.clear();
     };
 
-    this.process.stderr!.on('data', appendChunk);
-    this.process.stdout!.on('data', appendChunk);
+    this.process.stderr!.on('data', appendChunk.bind(null, 'stderr'));
+    this.process.stdout!.on('data', appendChunk.bind(null, 'stdout'));
 
     const killProcessGroup = this._killProcessTree.bind(this, 'SIGKILL');
     process.on('exit', killProcessGroup);

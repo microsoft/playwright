@@ -35,7 +35,7 @@ import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../common/types';
-import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
@@ -55,6 +55,7 @@ export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
+  private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
@@ -97,6 +98,11 @@ export class Recorder implements InstrumentationListener {
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
     this._currentLanguage = this._contextRecorder.languageName();
+
+    if (isUnderTest()) {
+      // Most of our tests put elements at the top left, so get out of the way.
+      this._overlayState.offsetX = 200;
+    }
   }
 
   private static async defaultRecorderAppFactory(recorder: Recorder) {
@@ -180,6 +186,7 @@ export class Recorder implements InstrumentationListener {
         actionSelector,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
+        overlay: this._overlayState,
       };
       return uiState;
     });
@@ -200,6 +207,12 @@ export class Recorder implements InstrumentationListener {
       if (frame.parentFrame())
         return;
       this.setMode(mode);
+    });
+
+    await this._context.exposeBinding('__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
+      if (frame.parentFrame())
+        return;
+      this._overlayState = state;
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -233,15 +246,19 @@ export class Recorder implements InstrumentationListener {
     this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText');
-    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText');
-    if (this._mode !== 'none' && this._context.pages().length === 1)
+    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
+    this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
+    if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
     this._refreshOverlay();
   }
 
   resume() {
     this._debugger.resume(false);
+  }
+
+  mode() {
+    return this._mode;
   }
 
   setHighlightedSelector(language: Language, selector: string) {
@@ -264,7 +281,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
@@ -278,7 +295,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._omitCallTracking || this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
@@ -328,7 +345,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
-    if (this._mode === 'recording' || this._mode === 'assertingText')
+    if (this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue')
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
@@ -416,7 +433,8 @@ class ContextRecorder extends EventEmitter {
 
   setOutput(codegenId: string, outputFile?: string) {
     const languages = new Set([
-      new JavaLanguageGenerator(),
+      new JavaLanguageGenerator('junit'),
+      new JavaLanguageGenerator('library'),
       new JavaScriptLanguageGenerator(/* isPlaywrightTest */false),
       new JavaScriptLanguageGenerator(/* isPlaywrightTest */true),
       new PythonLanguageGenerator(/* isAsync */false, /* isPytest */true),
@@ -722,7 +740,7 @@ async function findFrameSelector(frame: Frame): Promise<string | undefined> {
     const utility = await parent._utilityContext();
     const injected = await utility.injectedScript();
     const selector = await injected.evaluate((injected, element) => {
-      return injected.generateSelector(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
+      return injected.generateSelectorSimple(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
     }, frameElement);
     return selector;
   } catch (e) {

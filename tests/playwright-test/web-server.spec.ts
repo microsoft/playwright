@@ -661,7 +661,7 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Process started');
-  expect(result.output).toContain(`HTTP GET: http://localhost:${port}/`);
+  expect(result.output).toContain(`HTTP HEAD: http://localhost:${port}/`);
   expect(result.output).toContain('WebServer available');
 });
 

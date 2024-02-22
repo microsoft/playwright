@@ -38,7 +38,15 @@ export function runDriver() {
   });
   const transport = new PipeTransport(process.stdout, process.stdin);
   transport.onmessage = (message: string) => dispatcherConnection.dispatch(JSON.parse(message));
-  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
+  // Certain Language Binding JSON parsers (e.g. .NET) do not like strings with lone surrogates.
+  const isJavaScriptLanguageBinding = !process.env.PW_LANG_NAME || process.env.PW_LANG_NAME === 'javascript';
+  const replacer = !isJavaScriptLanguageBinding && (String.prototype as any).toWellFormed ? (key: string, value: any): any => {
+    if (typeof value === 'string')
+      // @ts-expect-error
+      return value.toWellFormed();
+    return value;
+  } : undefined;
+  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message, replacer));
   transport.onclose = () => {
     // Drop any messages during shutdown on the floor.
     dispatcherConnection.onmessage = () => {};
@@ -53,6 +61,7 @@ export function runDriver() {
 
 export type RunServerOptions = {
   port?: number,
+  host?: string,
   path?: string,
   extension?: boolean,
   maxConnections?: number,
@@ -63,12 +72,13 @@ export type RunServerOptions = {
 export async function runServer(options: RunServerOptions) {
   const {
     port,
+    host,
     path = '/',
     maxConnections = Infinity,
     extension,
   } = options;
   const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections });
-  const wsEndpoint = await server.listen(port);
+  const wsEndpoint = await server.listen(port, host);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));

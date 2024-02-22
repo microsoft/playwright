@@ -115,6 +115,8 @@ To update Playwright to the latest version run the following command:
 
 ```bash
 npm install -D @playwright/test@latest
+# Also download new browser binaries and their dependencies:
+npx playwright install --with-deps
 ```
 You can always check which version of Playwright you have by running the following command:
 
@@ -124,9 +126,9 @@ npx playwright --version
 
 ## System requirements
 
-- Node.js 16+
+- Node.js 18+
 - Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
-- MacOS 12 Monterey or MacOS 13 Ventura.
+- MacOS 12 Monterey, MacOS 13 Ventura, or MacOS 14 Sonoma.
 - Debian 11, Debian 12, Ubuntu 20.04 or Ubuntu 22.04, with x86-64 or arm64 architecture.
 
 ## What's next

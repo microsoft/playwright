@@ -217,15 +217,12 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
-
-  const titleMatcher = (test: TestCase) => {
-    const grepTitle = test.titlePath().join(' ');
+  filterTestsRemoveEmptySuites(projectSuite, (test: TestCase) => {
+    const grepTitle = test._grepTitle();
     if (grepInvertMatcher?.(grepTitle))
       return false;
     return grepMatcher(grepTitle);
-  };
-
-  filterTestsRemoveEmptySuites(projectSuite, titleMatcher);
+  });
   return projectSuite;
 }
 
@@ -239,10 +236,11 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
     filterByFocusedLine(result, options.cliFileFilters);
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
-  const titleMatcher = (test: TestCase) => {
-    return !options.cliTitleMatcher || options.cliTitleMatcher(test.titlePath().join(' '));
-  };
-  filterTestsRemoveEmptySuites(result, titleMatcher);
+  filterTestsRemoveEmptySuites(result, (test: TestCase) => {
+    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitle()))
+      return false;
+    return true;
+  });
   return result;
 }
 

@@ -16,6 +16,7 @@
 
 import path from 'path';
 import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
+const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -69,26 +70,26 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
-test('should include custom error message', async ({ runInlineTest }) => {
+test('should include custom expect message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('custom expect message', () => {
-        test.expect(1+1, 'one plus one is two!').toEqual(3);
+        test.expect(1+1, 'one plus one should be two!').toEqual(3);
       });
     `
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.output).toContain([
-    `    Error: one plus one is two!\n`,
+    `    Error: one plus one should be two!\n`,
     `    expect(received).toEqual(expected) // deep equality\n`,
     `    Expected: 3`,
     `    Received: 2`,
   ].join('\n'));
 });
 
-test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {
+test('should include custom expect message with web-first assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -219,6 +220,20 @@ test('should compile generic matchers', async ({ runTSC }) => {
       // @ts-expect-error
       expect({}).toBeInstanceOf({});
     `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should work when passing a ReadonlyArray', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example', async ({ page }) => {
+        const readonlyArray: ReadonlyArray<string> = ['1', '2', '3'];
+        expect(page.locator('.foo')).toHaveText(readonlyArray);
+        await page.locator('.foo').setInputFiles(readonlyArray);
+      });
+    `
   });
   expect(result.exitCode).toBe(0);
 });
@@ -713,7 +728,7 @@ test('should chain expect matchers and expose matcher utils (TSC)', async ({ run
   const result = await runTSC({
     'a.spec.ts': `
     import { test, expect as baseExpect } from '@playwright/test';
-    import type { Page, Locator } from '@playwright/test';
+    import type { Page, Locator, ExpectMatcherState, Expect } from '@playwright/test';
 
     function callLogText(log: string[] | undefined): string {
       if (!log)
@@ -721,8 +736,15 @@ test('should chain expect matchers and expose matcher utils (TSC)', async ({ run
       return log.join('\\n');
     }
 
+    const dummy: Expect = baseExpect;
+    const dummy2: Expect<{}> = baseExpect;
+
     const expect = baseExpect.extend({
       async toHaveAmount(locator: Locator, expected: string, options?: { timeout?: number }) {
+        // Make sure "this" is inferred as ExpectMatcherState.
+        const self: ExpectMatcherState = this;
+        const self2: ReturnType<Expect['getState']> = self;
+
         const baseAmount = locator.locator('.base-amount');
 
         let pass: boolean;
@@ -942,4 +964,39 @@ test('should support mergeExpects', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should respect timeout from configured expect when used outside of the test runner', async ({ runInlineTest, writeFiles, runTSC }) => {
+
+  const files = {
+    'script.mjs': `
+      import { test, expect as baseExpect, chromium } from '@playwright/test';
+
+      const configuredExpect = baseExpect.configure({
+        timeout: 10,
+      });
+
+      let browser;
+      try {
+        browser = await chromium.launch();
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await configuredExpect(page.getByTestId("does-not-exist")).toBeAttached();
+      } catch(e) {
+        console.error(e);
+        process.exit(1);
+      }
+      finally {
+        await browser?.close();
+      }
+
+    `
+  };
+  const baseDir = await writeFiles(files);
+  const { code, stdout, stderr } = await spawnAsync('node', ['script.mjs'], { stdio: 'pipe', cwd: baseDir });
+
+
+  expect(code).toBe(1);
+  expect(stdout).toBe('');
+  expect(stripAnsi(stderr)).toContain('Timed out 10ms waiting for expect(locator).toBeAttached()');
 });

@@ -22,8 +22,8 @@ test('soft expects should compile', async ({ runTSC }) => {
       import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
-        test.expect.soft(1+1, 'custom error message').toBe(3);
-        test.expect.soft(1+1, { message: 'custom error message' }).toBe(3);
+        test.expect.soft(1+1, 'custom expect message').toBe(3);
+        test.expect.soft(1+1, { message: 'custom expect message' }).toBe(3);
       });
     `
   });

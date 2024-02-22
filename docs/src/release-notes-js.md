@@ -6,6 +6,80 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.41
+
+### New APIs
+
+- New method [`method: Page.unrouteAll`] removes all routes registered by [`method: Page.route`] and [`method: Page.routeFromHAR`]. Optionally allows to wait for ongoing routes to finish, or ignore any errors from them.
+- New method [`method: BrowserContext.unrouteAll`] removes all routes registered by [`method: BrowserContext.route`] and [`method: BrowserContext.routeFromHAR`]. Optionally allows to wait for ongoing routes to finish, or ignore any errors from them.
+- New option [`option: style`] in [`method: Page.screenshot`] and [`method: Locator.screenshot`] to add custom CSS to the page before taking a screenshot.
+- New option `stylePath` for methods [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] to apply a custom stylesheet while making the screenshot.
+- New `fileName` option for [Blob reporter](./test-reporters#blob-reporter), to specify the name of the report to be created.
+
+### Browser Versions
+
+* Chromium 121.0.6167.57
+* Mozilla Firefox 121.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 120
+* Microsoft Edge 120
+
+## Version 1.40
+
+<LiteYouTube
+  id="mn892dV81_8"
+  title="Playwright 1.40"
+/>
+
+### Test Generator Update
+
+![Playwright Test Generator](https://github.com/microsoft/playwright/assets/9881434/e8d67e2e-f36d-4301-8631-023948d3e190)
+
+New tools to generate assertions:
+- "Assert visibility" tool generates [`method: LocatorAssertions.toBeVisible`].
+- "Assert value" tool generates [`method: LocatorAssertions.toHaveValue`].
+- "Assert text" tool generates [`method: LocatorAssertions.toContainText`].
+
+Here is an example of a generated test with assertions:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  await page.getByRole('link', { name: 'Get started' }).click();
+  await expect(page.getByLabel('Breadcrumbs').getByRole('list')).toContainText('Installation');
+  await expect(page.getByLabel('Search')).toBeVisible();
+  await page.getByLabel('Search').click();
+  await page.getByPlaceholder('Search docs').fill('locator');
+  await expect(page.getByPlaceholder('Search docs')).toHaveValue('locator');
+});
+```
+
+### New APIs
+
+- Option [`option: reason`] in [`method: Page.close`], [`method: BrowserContext.close`] and [`method: Browser.close`]. Close reason is reported for all operations interrupted by the closure.
+- Option [`option: firefoxUserPrefs`] in [`method: BrowserType.launchPersistentContext`].
+
+### Other Changes
+
+- Methods [`method: Download.path`] and [`method: Download.createReadStream`] throw an error for failed and cancelled downloads.
+- Playwright [docker image](./docker.md) now comes with Node.js v20.
+
+### Browser Versions
+
+* Chromium 120.0.6099.28
+* Mozilla Firefox 119.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 119
+* Microsoft Edge 119
+
 ## Version 1.39
 
 <LiteYouTube
@@ -30,7 +104,7 @@ test('pass', async ({ page }) => {
 });
 ```
 
-See the documentation [for a full example](./test-configuration.md#add-custom-matchers-using-expectextend).
+See the documentation [for a full example](./test-assertions.md#add-custom-matchers-using-expectextend).
 
 ### Merge test fixtures
 
@@ -1036,7 +1110,7 @@ Linux support looks like this:
 
 ### 🕵️ Anonymous Describe
 
-It is now possible to call [`method: Test.describe#2`] to create suites without a title. This is useful for giving a group of tests a common option with [`method: Test.use`].
+It is now possible to call [`method: Test.describe`] to create suites without a title. This is useful for giving a group of tests a common option with [`method: Test.use`].
 
 ```ts
 test.describe(() => {
@@ -1159,16 +1233,16 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
     const headers = await route.request().allHeaders();
     delete headers['if-none-match'];
-    route.fallback({ headers });
+    await route.fallback({ headers });
   });
 });
 
 test('should work', async ({ page }) => {
-  await page.route('**/*', route => {
+  await page.route('**/*', async route => {
     if (route.request().resourceType() === 'image')
-      route.abort();
+      await route.abort();
     else
-      route.fallback();
+      await route.fallback();
   });
 });
 ```
@@ -1446,7 +1520,7 @@ This version was also tested against the following stable channels:
 
   Read more in [our documentation](./test-assertions#soft-assertions)
 
-- You can now specify a **custom error message** as a second argument to the `expect` and `expect.soft` functions, for example:
+- You can now specify a **custom expect message** as a second argument to the `expect` and `expect.soft` functions, for example:
 
   ```js
   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
@@ -1739,7 +1813,7 @@ test('response interception', async ({ page }) => {
     const response = await page._request.fetch(route.request());
     const image = await jimp.read(await response.body());
     await image.blur(5);
-    route.fulfill({
+    await route.fulfill({
       response,
       body: await image.getBufferAsync('image/jpeg'),
     });

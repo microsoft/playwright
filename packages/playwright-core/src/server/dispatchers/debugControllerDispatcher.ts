@@ -40,7 +40,10 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
       }),
       eventsHelper.addEventListener(this._object, DebugController.Events.Paused, ({ paused }) => {
         this._dispatchEvent('paused', ({ paused }));
-      })
+      }),
+      eventsHelper.addEventListener(this._object, DebugController.Events.SetModeRequested, ({ mode }) => {
+        this._dispatchEvent('setModeRequested', ({ mode }));
+      }),
     ];
   }
 

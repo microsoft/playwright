@@ -20,8 +20,9 @@ test('render delayed data', async ({ mount }) => {
   await expect(component).toHaveText('complete');
 });
 
-test('get textContent of the empty fragment', async ({ mount }) => {
+test('render an empty component', async ({ mount, page }) => {
   const component = await mount(<EmptyFragment />);
+  expect(await page.evaluate(() => 'props' in window && window.props)).toEqual({});
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');

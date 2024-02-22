@@ -20,19 +20,24 @@ import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
+import type { StackFrame } from '@protocol/channels';
+
+type ErrorDescription = {
+  action?: modelUtil.ActionTraceEventInContext;
+  stack?: StackFrame[];
+};
 
 type ErrorsTabModel = {
-  errors: Map<string, modelUtil.ActionTraceEventInContext>;
+  errors: Map<string, ErrorDescription>;
 };
 
 export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
-    const errors = new Map<string, modelUtil.ActionTraceEventInContext>();
-    for (const action of model?.actions || []) {
-      // Overwrite errors with the last one.
-      if (action.error?.message)
-        errors.set(action.error.message, action);
-    }
+    if (!model)
+      return { errors: new Map() };
+    const errors = new Map<string, ErrorDescription>();
+    for (const error of model.errorDescriptors)
+      errors.set(error.message, error);
     return { errors };
   }, [model]);
 }
@@ -40,19 +45,20 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   sdkLanguage: Language,
-  revealInSource: (action: modelUtil.ActionTraceEventInContext) => void,
+  revealInSource: (error: ErrorDescription) => void,
 }> = ({ errorsModel, sdkLanguage, revealInSource }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {[...errorsModel.errors.entries()].map(([message, action]) => {
+    {[...errorsModel.errors.entries()].map(([message, error]) => {
       let location: string | undefined;
       let longLocation: string | undefined;
-      if (action.stack?.[0]) {
-        const file = action.stack[0].file.replace(/.*\/(.*)/, '$1');
-        location = file + ':' + action.stack[0].line;
-        longLocation = action.stack[0].file + ':' + action.stack[0].line;
+      const stackFrame = error.stack?.[0];
+      if (stackFrame) {
+        const file = stackFrame.file.replace(/.*[/\\](.*)/, '$1');
+        location = file + ':' + stackFrame.line;
+        longLocation = stackFrame.file + ':' + stackFrame.line;
       }
       return <div key={message}>
         <div className='hbox' style={{
@@ -62,9 +68,9 @@ export const ErrorsTab: React.FunctionComponent<{
           fontWeight: 'bold',
           color: 'var(--vscode-errorForeground)',
         }}>
-          {renderAction(action, { sdkLanguage })}
+          {error.action && renderAction(error.action, { sdkLanguage })}
           {location && <div className='action-location'>
-            @ <span title={longLocation} onClick={() => revealInSource(action)}>{location}</span>
+            @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
         </div>
         <ErrorMessage error={message} />

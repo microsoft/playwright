@@ -14,4 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('@playwright/experimental-ct-core/cli');
+
+const { program, initializePlugin } = require('@playwright/experimental-ct-core/lib/program');
+const { _framework } = require('./index');
+
+initializePlugin(_framework);
+program.parse(process.argv);

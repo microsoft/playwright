@@ -14,13 +14,15 @@
   limitations under the License.
 */
 
-import codemirror from 'codemirror';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/css/css';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/mode/python/python';
-import 'codemirror/mode/clike/clike';
+// @ts-ignore
+import codemirror from 'codemirror-shadow-1';
+import type codemirrorType from 'codemirror';
+import 'codemirror-shadow-1/lib/codemirror.css';
+import 'codemirror-shadow-1/mode/css/css';
+import 'codemirror-shadow-1/mode/htmlmixed/htmlmixed';
+import 'codemirror-shadow-1/mode/javascript/javascript';
+import 'codemirror-shadow-1/mode/python/python';
+import 'codemirror-shadow-1/mode/clike/clike';
 
-export type CodeMirror = typeof codemirror;
+export type CodeMirror = typeof codemirrorType;
 export default codemirror;

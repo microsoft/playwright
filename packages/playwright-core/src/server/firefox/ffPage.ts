@@ -32,7 +32,7 @@ import { FFNetworkManager } from './ffNetworkManager';
 import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { debugLogger } from '../../common/debugLogger';
+import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
@@ -593,6 +593,10 @@ export class FFPage implements PageDelegate {
     if (!result.remoteObject)
       throw new Error('Frame has been detached.');
     return context.createHandle(result.remoteObject) as dom.ElementHandle;
+  }
+
+  shouldToggleStyleSheetToSyncAnimations(): boolean {
+    return false;
   }
 }
 

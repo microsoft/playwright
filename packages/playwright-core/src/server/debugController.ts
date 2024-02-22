@@ -30,11 +30,11 @@ const internalMetadata = serverSideCallMetadata();
 
 export class DebugController extends SdkObject {
   static Events = {
-    BrowsersChanged: 'browsersChanged',
     StateChanged: 'stateChanged',
     InspectRequested: 'inspectRequested',
     SourceChanged: 'sourceChanged',
     Paused: 'paused',
+    SetModeRequested: 'setModeRequested',
   };
 
   private _autoCloseTimer: NodeJS.Timeout | undefined;
@@ -193,8 +193,6 @@ export class DebugController extends SdkObject {
         pageCount += context.pages().length;
       }
     }
-    // TODO: browsers is deprecated, remove it.
-    this.emit(DebugController.Events.BrowsersChanged, browsers);
     this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 
@@ -239,5 +237,9 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setPaused(paused: boolean) {
     this._debugController.emit(DebugController.Events.Paused, { paused });
+  }
+
+  override async setMode(mode: Mode) {
+    this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
   }
 }

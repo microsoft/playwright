@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { escapeRegExp } from 'playwright-core/lib/utils';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
@@ -24,28 +25,52 @@ import { createFileMatcher } from '../util';
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
+function wildcardPatternToRegExp(pattern: string): RegExp {
+  return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
+}
+
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
     return [...projects];
-  const projectsToFind = new Set<string>();
-  const unknownProjects = new Map<string, string>();
-  projectNames.forEach(n => {
-    const name = n.toLocaleLowerCase();
-    projectsToFind.add(name);
-    unknownProjects.set(name, n);
-  });
-  const result = projects.filter(project => {
-    const name = project.project.name.toLocaleLowerCase();
-    unknownProjects.delete(name);
-    return projectsToFind.has(name);
-  });
-  if (unknownProjects.size) {
-    const names = projects.map(p => p.project.name).filter(name => !!name);
-    if (!names.length)
-      throw new Error(`No named projects are specified in the configuration file`);
-    const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
-    throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
+
+  const projectNamesToFind = new Set<string>();
+  const unmatchedProjectNames = new Map<string, string>();
+  const patterns = new Set<RegExp>();
+  for (const name of projectNames!) {
+    const lowerCaseName = name.toLocaleLowerCase();
+    if (lowerCaseName.includes('*')) {
+      patterns.add(wildcardPatternToRegExp(lowerCaseName));
+    } else {
+      projectNamesToFind.add(lowerCaseName);
+      unmatchedProjectNames.set(lowerCaseName, name);
+    }
   }
+
+  const result = projects.filter(project => {
+    const lowerCaseName = project.project.name.toLocaleLowerCase();
+    if (projectNamesToFind.has(lowerCaseName)) {
+      unmatchedProjectNames.delete(lowerCaseName);
+      return true;
+    }
+    for (const regex of patterns) {
+      regex.lastIndex = 0;
+      if (regex.test(lowerCaseName))
+        return true;
+    }
+    return false;
+  });
+
+  if (unmatchedProjectNames.size) {
+    const unknownProjectNames = Array.from(unmatchedProjectNames.values()).map(n => `"${n}"`).join(', ');
+    throw new Error(`Project(s) ${unknownProjectNames} not found. Available projects: ${projects.map(p => `"${p.project.name}"`).join(', ')}`);
+  }
+
+  if (!result.length) {
+    const allProjects = projects.map(p => `"${p.project.name}"`).join(', ');
+    throw new Error(`No projects matched. Available projects: ${allProjects}`);
+  }
+
+
   return result;
 }
 

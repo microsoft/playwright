@@ -34,11 +34,8 @@ if (process.argv[2] === '--alpha') {
 
 let newVersion;
 if (process.argv[3] === '--today-date') {
-  const date = new Date();
-  const month = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
-  newVersion = `${baseVersion}-${prefix}-${month}-${day}-${year}`;
+  const isoDate = new Date().toISOString().split('T')[0];
+  newVersion = `${baseVersion}-${prefix}-${isoDate}`;
 } else if (process.argv[3] === '--commit-timestamp') {
   const timestamp = execSync('git show -s --format=%ct HEAD', {
     stdio: ['ignore', 'pipe', 'ignore']

@@ -35,7 +35,7 @@ import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
-import { RecentLogsCollector } from '../common/debugLogger';
+import { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
@@ -180,7 +180,7 @@ export abstract class BrowserType extends SdkObject {
       if (!registryExecutable || registryExecutable.browserName !== this._name)
         throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
       executable = registryExecutable.executablePathOrDie(this.attribution.playwright.options.sdkLanguage);
-      await registryExecutable.validateHostRequirements(this.attribution.playwright.options.sdkLanguage);
+      await registry.validateHostRequirementsForExecutablesIfNeeded([registryExecutable], this.attribution.playwright.options.sdkLanguage);
     }
 
     const waitForWSEndpoint = (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'))) ? new ManualPromise<string>() : undefined;
@@ -225,7 +225,7 @@ export abstract class BrowserType extends SdkObject {
       },
     });
     async function closeOrKill(timeout: number): Promise<void> {
-      let timer: NodeJS.Timer;
+      let timer: NodeJS.Timeout;
       try {
         await Promise.race([
           gracefullyClose(),

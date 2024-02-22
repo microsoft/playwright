@@ -29,7 +29,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
-import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
+import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 
 const readDirAsync = promisify(fs.readdir);
@@ -83,12 +83,21 @@ export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: R
   return taskRunner;
 }
 
+export function createTaskRunnerForTestServer(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
+  const taskRunner = new TaskRunner<TestRun>(reporter, 0);
+  addGlobalSetupTasks(taskRunner, config);
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunTestsOutsideProjectFilter: true }));
+  addRunTasks(taskRunner, config);
+  return taskRunner;
+}
+
 function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
+  if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
+    taskRunner.addTask('clear output', createRemoveOutputDirsTask());
   for (const plugin of config.plugins)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   if (config.config.globalSetup || config.config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
-  taskRunner.addTask('clear output', createRemoveOutputDirsTask());
 }
 
 function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
@@ -165,13 +174,9 @@ function createGlobalSetupTask(): Task<TestRun> {
 function createRemoveOutputDirsTask(): Task<TestRun> {
   return {
     setup: async ({ config }) => {
-      if (process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
-        return;
       const outputDirs = new Set<string>();
-      for (const p of config.projects) {
-        if (!config.cliProjectFilter || config.cliProjectFilter.includes(p.project.name))
-          outputDirs.add(p.project.outputDir);
-      }
+      const projects = filterProjects(config.projects, config.cliProjectFilter);
+      projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
         if (!error)
@@ -198,8 +203,16 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
-      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
+      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard) {
+        if (testRun.config.cliArgs.length) {
+          throw new Error([
+            `No tests found.`,
+            `Make sure that arguments are regular expressions matching test files.`,
+            `You may need to escape symbols like "$" or "*" and quote the arguments.`,
+          ].join('\n'));
+        }
         throw new Error(`No tests found`);
+      }
     },
   };
 }

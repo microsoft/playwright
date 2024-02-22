@@ -15,17 +15,85 @@
  */
 import { test, expect } from './npmTest';
 
-test('validate dependencies', async ({ exec }) => {
-  await exec('npm i playwright');
-  await exec('npx playwright install chromium');
+test.use({ isolateBrowsers: true });
 
-  await test.step('default (on)', async () => {
-    const result1 = await exec('node validate-dependencies.js');
-    expect(result1).toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
+test('should validate dependencies correctly if skipped during install', async ({ exec, writeFiles }) => {
+  await exec('npm i playwright');
+
+  await writeFiles({
+    'test.js': `const { chromium } = require('playwright');
+    (async () => {
+      const browser = await chromium.launch();
+      const page = await browser.newPage();
+      await page.close();
+      await browser.close();
+    })();`,
   });
 
-  await test.step('disabled (off)', async () => {
+  const result = await exec('npx playwright install chromium', {
+    env: {
+      PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: '1',
+      DEBUG: 'pw:install',
+    }
+  });
+  expect(result).toContain(`Skipping host requirements validation logic because`);
+
+  await test.step('should skip dependency validation for a custom executablePath', async () => {
     const result2 = await exec('node validate-dependencies-skip-executable-path.js');
     expect(result2).not.toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
+  });
+
+  await test.step('should skip dependency validation on launch if env var is passed', async () => {
+    const result = await exec('node test.js', {
+      env: {
+        PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: '1',
+      }
+    });
+    expect(result).toContain(`Skipping host requirements validation logic because`);
+  });
+
+  await test.step('should validate dependencies (skipped during install)', async () => {
+    const result = await exec('node test.js', {
+      env: {
+        DEBUG: 'pw:install',
+      },
+    });
+    expect(result).toContain(`validating host requirements for "chromium"`);
+    expect(result).not.toContain(`validating host requirements for "firefox"`);
+    expect(result).not.toContain(`validating host requirements for "webkit"`);
+  });
+});
+
+test('should not validate dependencies on launch if validated during install', async ({ exec, writeFiles }) => {
+  await exec('npm i playwright');
+
+  await writeFiles({
+    'test.js': `const { chromium } = require('playwright');
+    (async () => {
+      const browser = await chromium.launch();
+      const page = await browser.newPage();
+      await page.close();
+      await browser.close();
+    })();`,
+  });
+
+  const result = await exec('npx playwright install chromium', {
+    env: {
+      DEBUG: 'pw:install',
+    }
+  });
+  expect(result).toContain(`validating host requirements for "chromium"`);
+  expect(result).not.toContain(`validating host requirements for "firefox"`);
+  expect(result).not.toContain(`validating host requirements for "webkit"`);
+
+  await test.step('should not validate dependencies on launch if already validated', async () => {
+    const result = await exec('node test.js', {
+      env: {
+        DEBUG: 'pw:install',
+      },
+    });
+    expect(result).not.toContain(`validating host requirements for "chromium"`);
+    expect(result).not.toContain(`validating host requirements for "firefox"`);
+    expect(result).not.toContain(`validating host requirements for "webkit"`);
   });
 });

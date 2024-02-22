@@ -367,6 +367,9 @@ scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
   locator: tString,
 });
+scheme.DebugControllerSetModeRequestedEvent = tObject({
+  mode: tString,
+});
 scheme.DebugControllerStateChangedEvent = tObject({
   pageCount: tNumber,
 });
@@ -378,13 +381,6 @@ scheme.DebugControllerSourceChangedEvent = tObject({
 });
 scheme.DebugControllerPausedEvent = tObject({
   paused: tBoolean,
-});
-scheme.DebugControllerBrowsersChangedEvent = tObject({
-  browsers: tArray(tObject({
-    contexts: tArray(tObject({
-      pages: tArray(tString),
-    })),
-  })),
 });
 scheme.DebugControllerInitializeParams = tObject({
   codegenId: tString,
@@ -762,7 +758,6 @@ scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEven
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
   isChromium: tBoolean,
-  isLocalBrowserOnServer: tBoolean,
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
 });
@@ -770,7 +765,6 @@ scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.BrowserContextConsoleEvent = tObject({
-  page: tChannel(['Page']),
   type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
@@ -779,6 +773,7 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tNumber,
     columnNumber: tNumber,
   }),
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -981,6 +976,9 @@ scheme.PageFrameAttachedEvent = tObject({
 scheme.PageFrameDetachedEvent = tObject({
   frame: tChannel(['Frame']),
 });
+scheme.PageLocatorHandlerTriggeredEvent = tObject({
+  uid: tNumber,
+});
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
 });
@@ -1036,6 +1034,16 @@ scheme.PageGoForwardParams = tObject({
 scheme.PageGoForwardResult = tObject({
   response: tOptional(tChannel(['Response'])),
 });
+scheme.PageRegisterLocatorHandlerParams = tObject({
+  selector: tString,
+});
+scheme.PageRegisterLocatorHandlerResult = tObject({
+  uid: tNumber,
+});
+scheme.PageResolveLocatorHandlerNoReplyParams = tObject({
+  uid: tNumber,
+});
+scheme.PageResolveLocatorHandlerNoReplyResult = tOptional(tObject({}));
 scheme.PageReloadParams = tObject({
   timeout: tOptional(tNumber),
   waitUntil: tOptional(tType('LifecycleEvent')),
@@ -1051,25 +1059,22 @@ scheme.PageExpectScreenshotParams = tObject({
     frame: tChannel(['Frame']),
     selector: tString,
   })),
-  comparatorOptions: tOptional(tObject({
-    comparator: tOptional(tString),
-    maxDiffPixels: tOptional(tNumber),
-    maxDiffPixelRatio: tOptional(tNumber),
-    threshold: tOptional(tNumber),
-  })),
-  screenshotOptions: tOptional(tObject({
-    fullPage: tOptional(tBoolean),
-    clip: tOptional(tType('Rect')),
-    omitBackground: tOptional(tBoolean),
-    caret: tOptional(tEnum(['hide', 'initial'])),
-    animations: tOptional(tEnum(['disabled', 'allow'])),
-    scale: tOptional(tEnum(['css', 'device'])),
-    mask: tOptional(tArray(tObject({
-      frame: tChannel(['Frame']),
-      selector: tString,
-    }))),
-    maskColor: tOptional(tString),
-  })),
+  comparator: tOptional(tString),
+  maxDiffPixels: tOptional(tNumber),
+  maxDiffPixelRatio: tOptional(tNumber),
+  threshold: tOptional(tNumber),
+  fullPage: tOptional(tBoolean),
+  clip: tOptional(tType('Rect')),
+  omitBackground: tOptional(tBoolean),
+  caret: tOptional(tEnum(['hide', 'initial'])),
+  animations: tOptional(tEnum(['disabled', 'allow'])),
+  scale: tOptional(tEnum(['css', 'device'])),
+  mask: tOptional(tArray(tObject({
+    frame: tChannel(['Frame']),
+    selector: tString,
+  }))),
+  maskColor: tOptional(tString),
+  style: tOptional(tString),
 });
 scheme.PageExpectScreenshotResult = tObject({
   diff: tOptional(tBinary),
@@ -1093,6 +1098,7 @@ scheme.PageScreenshotParams = tObject({
     selector: tString,
   }))),
   maskColor: tOptional(tString),
+  style: tOptional(tString),
 });
 scheme.PageScreenshotResult = tObject({
   binary: tBinary,
@@ -1197,6 +1203,8 @@ scheme.PagePdfParams = tObject({
     left: tOptional(tString),
     right: tOptional(tString),
   })),
+  tagged: tOptional(tBoolean),
+  outline: tOptional(tBoolean),
 });
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
@@ -1557,25 +1565,17 @@ scheme.FrameSetContentResult = tOptional(tObject({}));
 scheme.FrameSetInputFilesParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
-  files: tArray(tObject({
+  payloads: tOptional(tArray(tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
-    lastModifiedMs: tOptional(tNumber),
-  })),
-  timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
-});
-scheme.FrameSetInputFilesResult = tOptional(tObject({}));
-scheme.FrameSetInputFilePathsParams = tObject({
-  selector: tString,
-  strict: tOptional(tBoolean),
+  }))),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
 });
-scheme.FrameSetInputFilePathsResult = tOptional(tObject({}));
+scheme.FrameSetInputFilesResult = tOptional(tObject({}));
 scheme.FrameTapParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -1902,6 +1902,7 @@ scheme.ElementHandleScreenshotParams = tObject({
     selector: tString,
   }))),
   maskColor: tOptional(tString),
+  style: tOptional(tString),
 });
 scheme.ElementHandleScreenshotResult = tObject({
   binary: tBinary,
@@ -1931,23 +1932,17 @@ scheme.ElementHandleSelectTextParams = tObject({
 });
 scheme.ElementHandleSelectTextResult = tOptional(tObject({}));
 scheme.ElementHandleSetInputFilesParams = tObject({
-  files: tArray(tObject({
+  payloads: tOptional(tArray(tObject({
     name: tString,
     mimeType: tOptional(tString),
     buffer: tBinary,
-    lastModifiedMs: tOptional(tNumber),
-  })),
-  timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
-});
-scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
-scheme.ElementHandleSetInputFilePathsParams = tObject({
+  }))),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
 });
-scheme.ElementHandleSetInputFilePathsResult = tOptional(tObject({}));
+scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
 scheme.ElementHandleTapParams = tObject({
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
@@ -2261,6 +2256,16 @@ scheme.ElectronApplicationInitializer = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.ElectronApplicationCloseEvent = tOptional(tObject({}));
+scheme.ElectronApplicationConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tNumber,
+    columnNumber: tNumber,
+  }),
+});
 scheme.ElectronApplicationBrowserWindowParams = tObject({
   page: tChannel(['Page']),
 });
@@ -2283,6 +2288,11 @@ scheme.ElectronApplicationEvaluateExpressionHandleParams = tObject({
 scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
+scheme.ElectronApplicationUpdateSubscriptionParams = tObject({
+  event: tEnum(['console']),
+  enabled: tBoolean,
+});
+scheme.ElectronApplicationUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
 scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
 scheme.AndroidInitializer = tOptional(tObject({}));

@@ -37,7 +37,7 @@ export default defineConfig({
 
 To learn more about available options to record a trace check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
-Traces are normally run in a Continuous Integration(CI) environment, because locally you can use [UI Mode](/test-ui-mode.md) for developing and debugging tests. However should you want to run traces locally without using [UI Mode](/test-ui-mode.md), you can force tracing to be on with `--trace on`.
+Traces are normally run in a Continuous Integration(CI) environment, because locally you can use [UI Mode](/test-ui-mode.md) for developing and debugging tests. However, if you want to run traces locally without using [UI Mode](/test-ui-mode.md), you can force tracing to be on with `--trace on`.
 
 ```bash
 npx playwright test --trace on

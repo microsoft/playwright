@@ -36,25 +36,33 @@ pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will look at the rendered page and figure out the recommended locator, prioritizing role, text and test id locators. If the generator identifies multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, therefore eliminating and reducing test(s) failing and flaking due to locators.
 
+With the test generator you can record:
+* Actions like click or fill by simply interacting with the page
+* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can choose:
+  * `'assert visibility'` to assert that an element is visible
+  * `'assert text'` to assert that an element contains specific text
+  * `'assert value'` to assert that an element has a specific value
+
 ######
 * langs: js
 
-![Recording a test](https://github.com/microsoft/playwright/assets/13063165/9effe72a-3bfd-42e1-87f3-2e6b0a2b71f9)
+![Recording a test](https://github.com/microsoft/playwright/assets/13063165/34a79ea1-639e-4cb3-8115-bfdc78e3d34d)
 
 ######
 * langs: java
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/26183fc4-a8a1-4d1c-9cdc-aca404a6eb9c)
+![recording a test](https://github.com/microsoft/playwright/assets/13063165/ec9c4071-4af8-4ae7-8b36-aebcc29bdbbb)
 
 ######
 * langs: python
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/57ed3f29-6436-4f2b-98ad-05de92d30075)
+![recording a test](https://github.com/microsoft/playwright/assets/13063165/9751b609-6e4c-486b-a961-f86f177b1d58)
 
 ######
 * langs: csharp
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/06bd474b-cdd1-4384-9de2-c745f296c78c)
+![recording a test](https://github.com/microsoft/playwright/assets/13063165/53bdfb6f-d462-4ce0-ab95-0619faaebf1e)
+
 ######
 * langs: js, java, python, csharp
 
@@ -77,22 +85,22 @@ You can generate [locators](/locators.md) with the test generator.
 ######
 * langs: js
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/4e46e1dd-dac2-4372-b643-00f896bb7e5f)
+![picking a locator](https://github.com/microsoft/playwright/assets/13063165/2c8a12e2-4e98-4fdd-af92-1d73ae696d86)
 
 ######
 * langs: java
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/6200e6d1-e420-422c-9b62-831ec3fd43ea)
+![picking a locator](https://github.com/microsoft/playwright/assets/13063165/733b48fd-5edf-4150-93f0-018adc52b6ff)
 
 ######
 * langs: python
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/49ad6214-dfec-4aae-b86c-0fdf05278293)
+![picking a locator](https://github.com/microsoft/playwright/assets/13063165/95d11f48-96a4-46b9-9c2a-63c3aa4fdce7)
 
 ######
 * langs: csharp
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/d8d47fbc-38d6-4a6b-a9ab-4c40380f480b)
+![picking a locator](https://github.com/microsoft/playwright/assets/13063165/1478f56f-422f-4276-9696-0674041f11dc)
 
 ### Emulation
 

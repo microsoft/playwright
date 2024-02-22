@@ -16,10 +16,10 @@
 
 import crypto from 'crypto';
 import path from 'path';
-import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
+import { sourceMapSupport, pirates } from '../utilsBundle';
 import type { Location } from '../../types/testReporter';
-import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
+import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
@@ -34,7 +34,7 @@ type ParsedTsConfigData = {
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
 };
-const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
+const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 
 export type TransformConfig = {
   babelPlugins: [string, any?][];
@@ -57,9 +57,7 @@ export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
 
-function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
-  if (!tsconfig.tsConfigPath)
-    return;
+function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   // When no explicit baseUrl is set, resolve paths relative to the tsconfig file.
   // See https://www.typescriptlang.org/tsconfig#paths
@@ -67,21 +65,19 @@ function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | 
   // Only add the catch-all mapping when baseUrl is specified
   const pathsFallback = tsconfig.baseUrl ? [{ key: '*', values: ['*'] }] : [];
   return {
-    allowJs: tsconfig.allowJs,
+    allowJs: !!tsconfig.allowJs,
     absoluteBaseUrl,
     paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
-function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | undefined {
+function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
   const cwd = path.dirname(file);
   if (!cachedTSConfigs.has(cwd)) {
-    const loaded = tsConfigLoader({
-      cwd
-    });
-    cachedTSConfigs.set(cwd, validateTsConfig(loaded));
+    const loaded = tsConfigLoader({ cwd });
+    cachedTSConfigs.set(cwd, loaded.map(validateTsConfig));
   }
-  return cachedTSConfigs.get(cwd);
+  return cachedTSConfigs.get(cwd)!;
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
@@ -97,8 +93,10 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (tsconfig && (isTypeScript || tsconfig.allowJs)) {
+  const tsconfigs = loadAndValidateTsconfigsForFile(filename);
+  for (const tsconfig of tsconfigs) {
+    if (!isTypeScript && !tsconfig.allowJs)
+      continue;
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -134,7 +132,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         let candidate = value;
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
-        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
+        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate);
         const existing = resolveImportSpecifierExtension(candidate);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
@@ -159,7 +157,13 @@ export function shouldTransform(filename: string): boolean {
   return !belongsToNodeModules(filename);
 }
 
-export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
+let transformData: Map<string, any>;
+
+export function setTransformData(pluginName: string, value: any) {
+  transformData.set(pluginName, value);
+}
+
+export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
@@ -168,19 +172,21 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
+  const { cachedCode, addToCache, serializedCache } = getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
-    return cachedCode;
+    return { code: cachedCode, serializedCache };
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  transformData = new Map<string, any>();
   const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  if (code)
-    addToCache!(code, map);
-  return code || '';
+  if (!code)
+    return { code: '', serializedCache };
+  const added = addToCache!(code, map, transformData);
+  return { code, serializedCache: added.serializedCache };
 }
 
 function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
@@ -234,7 +240,7 @@ function installTransform(): () => void {
   const revertPirates = pirates.addHook((code: string, filename: string) => {
     if (!shouldTransform(filename))
       return code;
-    return transformHook(code, filename);
+    return transformHook(code, filename).code;
   }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });
 
   return () => {

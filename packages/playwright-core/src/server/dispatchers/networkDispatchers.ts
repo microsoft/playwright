@@ -199,7 +199,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async dispose(_: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     await this._object.dispose();
     this._dispose();
   }

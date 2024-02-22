@@ -19,7 +19,7 @@ We strongly recommend that you open an issue before beginning any code modificat
 
 ### Getting Code
 
-Make sure you're running Node.js 16+ and NPM 8+, to verify and upgrade NPM do:
+Make sure you're running Node.js 20 to verify and upgrade NPM do:
 
 ```bash
 node --version

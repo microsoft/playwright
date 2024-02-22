@@ -15,6 +15,7 @@
  */
 import { test, expect } from './npmTest';
 import http from 'http';
+import net from 'net';
 import type { AddressInfo } from 'net';
 
 const CDNS = [
@@ -65,6 +66,65 @@ test(`playwright cdn should race with a timeout`, async ({ exec }) => {
     });
     expect(result).toContain(`timed out after 1000ms`);
   } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test(`npx playwright install should not hang when CDN closes the connection`, async ({ exec }) => {
+  let retryCount = 0;
+  const server = http.createServer((req, res) => {
+    ++retryCount;
+    res.writeHead(200, {
+      'Content-Length': 100 * 1024 * 1024,
+      'Content-Type': 'application/zip',
+    });
+    res.end('a');
+  });
+  await new Promise<void>(resolve => server.listen(0, resolve));
+  try {
+    await exec('npm i playwright');
+    const result = await exec('npx playwright install', {
+      env: {
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        DEBUG: 'pw:install',
+      },
+      expectToExitWithError: true
+    });
+    expect(retryCount).toBe(3);
+    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(3);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test(`npx playwright install should not hang when CDN TCP connection stalls`, async ({ exec }) => {
+  let retryCount = 0;
+  const socketsToDestroy = [];
+  const server = net.createServer(socket => {
+    socketsToDestroy.push(socket);
+    ++retryCount;
+    socket.write('HTTP/1.1 200 OK\r\n');
+    socket.write('Content-Length: 100000000\r\n');
+    socket.write('Content-Type: application/zip\r\n');
+    socket.write('\r\n');
+    socket.write('a');
+  });
+  await new Promise<void>(resolve => server.listen(0, resolve));
+  try {
+    await exec('npm i playwright');
+    const result = await exec('npx playwright install', {
+      env: {
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        DEBUG: 'pw:install',
+        PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '1000',
+      },
+      expectToExitWithError: true
+    });
+    expect(retryCount).toBe(3);
+    expect([...result.matchAll(/timed out after/g)]).toHaveLength(3);
+  } finally {
+    for (const socket of socketsToDestroy)
+      socket.destroy();
     await new Promise(resolve => server.close(resolve));
   }
 });

@@ -289,7 +289,7 @@ export class Route extends SdkObject {
     await this._delegate.fulfill({
       status: overrides.status || 200,
       headers,
-      body,
+      body: body!,
       isBase64,
     });
     this._endHandling();

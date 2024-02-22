@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -26,18 +26,19 @@ import { Multiplexer } from './multiplexer';
 import { ZipFile, calculateSha1 } from 'playwright-core/lib/utils';
 import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
+import type { TestError } from '../../types/testReporter';
 
 type StatusCallback = (message: string) => void;
 
 type ReportData = {
-  idsPatcher: IdsPatcher;
+  eventPatchers: JsonEventPatchers;
   reportFile: string;
+  metadata: BlobReportMetadata;
 };
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
-  const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
   const stringPool = new StringInternPool();
 
   let printStatus: StatusCallback = () => {};
@@ -50,6 +51,9 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
+  // If expicit config is provided, use platform path separator, otherwise use the one from the report (if any).
+  const pathSep = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
+  const receiver = new TeleReporterReceiver(pathSep, multiplexer, false, config.config);
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
@@ -63,28 +67,17 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
 
   await dispatchEvents(eventData.prologue);
-  for (const { reportFile, idsPatcher } of eventData.reports) {
+  for (const { reportFile, eventPatchers, metadata } of eventData.reports) {
     const reportJsonl = await fs.promises.readFile(reportFile);
     const events = parseTestEvents(reportJsonl);
     new JsonStringInternalizer(stringPool).traverse(events);
-    idsPatcher.patchEvents(events);
-    patchAttachmentPaths(events, dir);
+    eventPatchers.patchers.push(new AttachmentPathPatcher(dir));
+    if (metadata.name)
+      eventPatchers.patchers.push(new GlobalErrorPatcher(metadata.name));
+    eventPatchers.patchEvents(events);
     await dispatchEvents(events);
   }
   await dispatchEvents(eventData.epilogue);
-}
-
-function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
-  for (const event of events) {
-    if (event.method !== 'onTestEnd')
-      continue;
-    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
-      if (!attachment.path)
-        continue;
-
-      attachment.path = path.join(resourceDir, attachment.path);
-    }
-  }
 }
 
 const commonEventNames = ['onBlobReportMetadata', 'onConfigure', 'onProject', 'onBegin', 'onEnd'];
@@ -92,17 +85,35 @@ const commonEvents = new Set(commonEventNames);
 const commonEventRegex = new RegExp(`${commonEventNames.join('|')}`);
 
 function parseCommonEvents(reportJsonl: Buffer): JsonEvent[] {
-  return reportJsonl.toString().split('\n')
+  return splitBufferLines(reportJsonl)
+      .map(line => line.toString('utf8'))
       .filter(line => commonEventRegex.test(line)) // quick filter
       .map(line => JSON.parse(line) as JsonEvent)
       .filter(event => commonEvents.has(event.method));
 }
 
 function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
-  return reportJsonl.toString().split('\n')
+  return splitBufferLines(reportJsonl)
+      .map(line => line.toString('utf8'))
       .filter(line => line.length)
       .map(line => JSON.parse(line) as JsonEvent)
       .filter(event => !commonEvents.has(event.method));
+}
+
+function splitBufferLines(buffer: Buffer) {
+  const lines = [];
+  let start = 0;
+  while (start < buffer.length) {
+    // 0x0A is the byte for '\n'
+    const end = buffer.indexOf(0x0A, start);
+    if (end === -1) {
+      lines.push(buffer.slice(start));
+      break;
+    }
+    lines.push(buffer.slice(start, end));
+    start = end + 1;
+  }
+  return lines;
 }
 
 async function extractAndParseReports(dir: string, shardFiles: string[], internalizer: JsonStringInternalizer, printStatus: StatusCallback) {
@@ -186,8 +197,12 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       salt = sha1 + '-' + i;
     saltSet.add(salt);
 
-    const idsPatcher = new IdsPatcher(stringPool, metadata.name, salt);
-    idsPatcher.patchEvents(parsedEvents);
+    const eventPatchers = new JsonEventPatchers();
+    eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, salt));
+    // Only patch path separators if we are merging reports with explicit config.
+    if (rootDirOverride)
+      eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
+    eventPatchers.patchEvents(parsedEvents);
 
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
@@ -200,8 +215,9 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
     // Save information about the reports to stream their test events later.
     reports.push({
-      idsPatcher,
+      eventPatchers,
       reportFile: localPath,
+      metadata,
     });
   }
 
@@ -215,7 +231,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     epilogue: [
       mergeEndEvents(endEvents),
       { method: 'onExit', params: undefined },
-    ]
+    ],
+    pathSeparatorFromMetadata: blobs[0]?.metadata.pathSeparator,
   };
 }
 
@@ -309,7 +326,7 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.startsWith('report') && file.endsWith('.zip')).sort();
+  return files.filter(file => file.endsWith('.zip')).sort();
 }
 
 function printStatusToStdout(message: string) {
@@ -338,26 +355,27 @@ class UniqueFileNameGenerator {
 }
 
 class IdsPatcher {
-  constructor(private _stringPool: StringInternPool, private _reportName: string | undefined, private _salt: string) {
+  constructor(
+    private _stringPool: StringInternPool,
+    private _reportName: string | undefined,
+    private _salt: string) {
   }
 
-  patchEvents(events: JsonEvent[]) {
-    for (const event of events) {
-      const { method, params } = event;
-      switch (method) {
-        case 'onProject':
-          this._onProject(params.project);
-          continue;
-        case 'onTestBegin':
-        case 'onStepBegin':
-        case 'onStepEnd':
-        case 'onStdIO':
-          params.testId = this._mapTestId(params.testId);
-          continue;
-        case 'onTestEnd':
-          params.test.testId = this._mapTestId(params.test.testId);
-          continue;
-      }
+  patchEvent(event: JsonEvent) {
+    const { method, params } = event;
+    switch (method) {
+      case 'onProject':
+        this._onProject(params.project);
+        return;
+      case 'onTestBegin':
+      case 'onStepBegin':
+      case 'onStepEnd':
+      case 'onStdIO':
+        params.testId = this._mapTestId(params.testId);
+        return;
+      case 'onTestEnd':
+        params.test.testId = this._mapTestId(params.test.testId);
+        return;
     }
   }
 
@@ -375,5 +393,112 @@ class IdsPatcher {
 
   private _mapTestId(testId: string): string {
     return this._stringPool.internString(testId + this._salt);
+  }
+}
+
+class AttachmentPathPatcher {
+  constructor(private _resourceDir: string) {
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method !== 'onTestEnd')
+      return;
+    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
+      if (!attachment.path)
+        continue;
+
+      attachment.path = path.join(this._resourceDir, attachment.path);
+    }
+  }
+}
+
+class PathSeparatorPatcher {
+  private _from: string;
+  private _to: string;
+  constructor(from?: string) {
+    this._from = from ?? (path.sep === '/' ? '\\' : '/');
+    this._to = path.sep;
+  }
+
+  patchEvent(jsonEvent: JsonEvent) {
+    if (this._from === this._to)
+      return;
+    if (jsonEvent.method === 'onProject') {
+      this._updateProject(jsonEvent.params.project as JsonProject);
+      return;
+    }
+    if (jsonEvent.method === 'onTestEnd') {
+      const testResult = jsonEvent.params.result as JsonTestResultEnd;
+      testResult.errors.forEach(error => this._updateLocation(error.location));
+      testResult.attachments.forEach(attachment => {
+        if (attachment.path)
+          attachment.path = this._updatePath(attachment.path);
+      });
+      return;
+    }
+    if (jsonEvent.method === 'onStepBegin') {
+      const step = jsonEvent.params.step as JsonTestStepStart;
+      this._updateLocation(step.location);
+      return;
+    }
+  }
+
+  private _updateProject(project: JsonProject) {
+    project.outputDir = this._updatePath(project.outputDir);
+    project.testDir = this._updatePath(project.testDir);
+    project.snapshotDir = this._updatePath(project.snapshotDir);
+    project.suites.forEach(suite => this._updateSuite(suite, true));
+  }
+
+  private _updateSuite(suite: JsonSuite, isFileSuite: boolean = false) {
+    this._updateLocation(suite.location);
+    if (isFileSuite)
+      suite.title = this._updatePath(suite.title);
+    for (const child of suite.suites)
+      this._updateSuite(child);
+    for (const test of suite.tests)
+      this._updateLocation(test.location);
+  }
+
+  private _updateLocation(location?: JsonLocation) {
+    if (location)
+      location.file = this._updatePath(location.file);
+  }
+
+  private _updatePath(text: string): string {
+    return text.split(this._from).join(this._to);
+  }
+}
+
+class GlobalErrorPatcher {
+  private _prefix: string;
+
+  constructor(botName: string) {
+    this._prefix = `(${botName}) `;
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method !== 'onError')
+      return;
+    const error = event.params.error as TestError;
+    if (error.message !== undefined)
+      error.message = this._prefix + error.message;
+    if (error.stack !== undefined)
+      error.stack = this._prefix + error.stack;
+  }
+}
+
+interface JsonEventPatcher {
+  patchEvent(event: JsonEvent): void;
+}
+
+class JsonEventPatchers {
+  readonly patchers: JsonEventPatcher[] = [];
+
+  patchEvents(events: JsonEvent[]) {
+    for (const event of events) {
+      for (const patcher of this.patchers)
+        patcher.patchEvent(event);
+    }
   }
 }

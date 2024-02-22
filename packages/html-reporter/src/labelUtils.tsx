@@ -16,25 +16,18 @@
 
 import type { TestCaseSummary } from './types';
 
-export function escapeRegExp(string: string) {
-  const reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-  const reHasRegExpChar = RegExp(reRegExpChar.source);
+const labelsSymbol = Symbol('labels');
 
-  return (string && reHasRegExpChar.test(string))
-    ? string.replace(reRegExpChar, '\\$&')
-    : (string || '');
-}
-
+// Note: all labels start with "@"
 export function testCaseLabels(test: TestCaseSummary): string[] {
-  const tags = matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b));
-  if (test.reportName)
-    tags.unshift(test.reportName);
-  return tags;
-}
-
-// match all tags in test title
-function matchTags(title: string): string[] {
-  return title.match(/@([\S]+)/g) || [];
+  if (!(test as any)[labelsSymbol]) {
+    const labels: string[] = [];
+    if (test.botName)
+      labels.push('@' + test.botName);
+    labels.push(...test.tags);
+    (test as any)[labelsSymbol] = labels;
+  }
+  return (test as any)[labelsSymbol];
 }
 
 // hash string to integer in range [0, 6] for color index, to get same color for same tag

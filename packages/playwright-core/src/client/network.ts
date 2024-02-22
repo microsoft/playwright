@@ -159,16 +159,16 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
-  _actualHeaders(): Promise<RawHeaders> {
+  async _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
-      return Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
+      return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers);
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
         return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
       });
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -188,7 +188,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       return Response.fromNullable((await this._channel.response()).response);
     }, true);
   }
@@ -207,6 +207,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       ].join('\n'));
     }
     return frame;
+  }
+
+  _safePage(): Page | null {
+    return Frame.fromNullable(this._initializer.frame)?._page || null;
   }
 
   serviceWorker(): Worker | null {
@@ -275,14 +279,14 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _targetClosedScope(): LongStandingScope {
-    const frame = Frame.fromNullable(this._initializer.frame);
-    return this.serviceWorker()?._closedScope || frame?._page?._closedOrCrashedScope || new LongStandingScope();
+    return this.serviceWorker()?._closedScope || this._safePage()?._closedOrCrashedScope || new LongStandingScope();
   }
 }
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
+  _didThrow: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
@@ -296,16 +300,16 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return Request.from(this._initializer.request);
   }
 
-  private _raceWithTargetClose(promise: Promise<any>): Promise<void> {
+  private async _raceWithTargetClose(promise: Promise<any>): Promise<void> {
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return this.request()._targetClosedScope().safeRace(promise);
+    return await this.request()._targetClosedScope().safeRace(promise);
   }
 
-  _startHandling(): Promise<boolean> {
+  async _startHandling(): Promise<boolean> {
     this._handlingPromise = new ManualPromise();
-    return this._handlingPromise;
+    return await this._handlingPromise;
   }
 
   async fallback(options: FallbackOverrides = {}) {
@@ -315,29 +319,40 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   async abort(errorCode?: string) {
-    this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
-    this._reportHandled(true);
+    await this._handleRoute(async () => {
+      await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
+    });
   }
 
   async _redirectNavigationRequest(url: string) {
-    this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
-    this._reportHandled(true);
+    await this._handleRoute(async () => {
+      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }));
+    });
   }
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
-    this._checkNotHandled();
-    await this._wrapApiCall(async () => {
-      await this._innerFulfill(options);
-      this._reportHandled(true);
+    await this._handleRoute(async () => {
+      await this._wrapApiCall(async () => {
+        await this._innerFulfill(options);
+      });
     });
+  }
+
+  private async _handleRoute(callback: () => Promise<void>) {
+    this._checkNotHandled();
+    try {
+      await callback();
+      this._reportHandled(true);
+    } catch (e) {
+      this._didThrow = true;
+      throw e;
+    }
   }
 
   private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}): Promise<void> {
@@ -399,10 +414,10 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   async continue(options: FallbackOverrides = {}) {
-    this._checkNotHandled();
-    this.request()._applyFallbackOverrides(options);
-    await this._innerContinue();
-    this._reportHandled(true);
+    await this._handleRoute(async () => {
+      this.request()._applyFallbackOverrides(options);
+      await this._innerContinue();
+    });
   }
 
   _checkNotHandled() {
@@ -507,7 +522,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
         return new RawHeaders((await this._channel.rawResponseHeaders()).headers);
       })();
     }
-    return this._actualHeadersPromise;
+    return await this._actualHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
@@ -527,7 +542,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return this.request()._targetClosedScope().race(this._finishedPromise);
+    return await this.request()._targetClosedScope().race(this._finishedPromise);
   }
 
   async body(): Promise<Buffer> {
@@ -601,7 +616,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async () => {
+    return await this._wrapApiCall(async () => {
       const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
@@ -632,6 +647,8 @@ export class RouteHandler {
   private readonly _times: number;
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
+  private _ignoreException: boolean = false;
+  private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
 
   constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
@@ -661,6 +678,39 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
+    const handlerInvocation = { complete: new ManualPromise(), route } ;
+    this._activeInvocations.add(handlerInvocation);
+    try {
+      return await this._handleInternal(route);
+    } catch (e) {
+      // If the handler was stopped (without waiting for completion), we ignore all exceptions.
+      if (this._ignoreException)
+        return false;
+      throw e;
+    } finally {
+      handlerInvocation.complete.resolve();
+      this._activeInvocations.delete(handlerInvocation);
+    }
+  }
+
+  async stop(behavior: 'wait' | 'ignoreErrors') {
+    // When a handler is manually unrouted or its page/context is closed we either
+    // - wait for the current handler invocations to finish
+    // - or do not wait, if the user opted out of it, but swallow all exceptions
+    //   that happen after the unroute/close.
+    if (behavior === 'ignoreErrors') {
+      this._ignoreException = true;
+    } else {
+      const promises = [];
+      for (const activation of this._activeInvocations) {
+        if (!activation.route._didThrow)
+          promises.push(activation.complete);
+      }
+      await Promise.all(promises);
+    }
+  }
+
+  private async _handleInternal(route: Route): Promise<boolean> {
     ++this.handledCount;
     const handledPromise = route._startHandling();
     // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.

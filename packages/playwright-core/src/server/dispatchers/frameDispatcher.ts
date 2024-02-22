@@ -23,11 +23,9 @@ import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
-import type { WritableStreamDispatcher } from './writableStreamDispatcher';
-import { assert } from '../../utils';
-import path from 'path';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
+import { debugAssert } from '../../utils';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;
@@ -46,13 +44,18 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   private constructor(scope: BrowserContextDispatcher, frame: Frame) {
+    // Main frames are gc'ed separately from any other frames, so that
+    // methods on Page that redirect to the main frame remain operational.
+    // Note: we cannot check parentFrame() here because it may be null after the frame has been detached.
+    debugAssert(frame._page.mainFrame(), 'Cannot determine whether the frame is a main frame');
+    const gcBucket = frame._page.mainFrame() === frame ? 'MainFrame' : 'Frame';
     const pageDispatcher = existingDispatcher<PageDispatcher>(frame._page);
     super(pageDispatcher || scope, frame, 'Frame', {
       url: frame.url(),
       name: frame.name(),
       parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame()),
       loadStates: Array.from(frame._firedLifecycleEvents),
-    });
+    }, gcBucket);
     this._browserContextDispatcher = scope;
     this._frame = frame;
     this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
@@ -133,6 +136,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async click(params: channels.FrameClickParams, metadata: CallMetadata): Promise<void> {
+    metadata.potentiallyClosesScope = true;
     return await this._frame.click(metadata, params.selector, params);
   }
 
@@ -217,19 +221,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<channels.FrameSetInputFilesResult> {
-    return await this._frame.setInputFiles(metadata, params.selector, { files: params.files }, params);
-  }
-
-  async setInputFilePaths(params: channels.FrameSetInputFilePathsParams, metadata: CallMetadata): Promise<void> {
-    let { localPaths } = params;
-    if (!localPaths) {
-      if (!params.streams)
-        throw new Error('Neither localPaths nor streams is specified');
-      localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
-    }
-    for (const p of localPaths)
-      assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
-    return await this._frame.setInputFiles(metadata, params.selector, { localPaths }, params);
+    return await this._frame.setInputFiles(metadata, params.selector, params);
   }
 
   async type(params: channels.FrameTypeParams, metadata: CallMetadata): Promise<void> {
@@ -265,13 +257,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
-    metadata.closesScope = true;
+    metadata.potentiallyClosesScope = true;
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
     if (result.received !== undefined)
       result.received = serializeResult(result.received);
-    if (result.matches === params.isNot)
-      metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     return result;
   }
 }

@@ -3,7 +3,7 @@ common/
 ./utils.ts
 ./utilsBundle.ts
 
-[cli.ts]
+[program.ts]
 **
 
 [index.ts]

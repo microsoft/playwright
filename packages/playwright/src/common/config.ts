@@ -39,8 +39,8 @@ export class FullConfigInternal {
   readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
-  readonly storeDir: string;
   readonly ignoreSnapshots: boolean;
+  readonly preserveOutputDir: boolean;
   readonly webServers: Exclude<FullConfig['webServer'], null>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
@@ -68,10 +68,11 @@ export class FullConfigInternal {
 
     this.configDir = configDir;
     this.configCLIOverrides = configCLIOverrides;
-    this.storeDir = path.resolve(configDir, (config as any)._storeDir || 'playwright');
     this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, config.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
+    this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
     this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots, false);
-    this.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
+    const privateConfiguration = (config as any)['@playwright/test'];
+    this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
       configFile,
@@ -96,6 +97,11 @@ export class FullConfigInternal {
       workers: 0,
       webServer: null,
     };
+    for (const key in config) {
+      if (key.startsWith('@'))
+        (this.config as any)[key] = (config as any)[key];
+    }
+
     (this.config as any)[configInternalSymbol] = this;
 
     const workers = takeFirst(configCLIOverrides.workers, config.workers, '50%');
@@ -127,7 +133,7 @@ export class FullConfigInternal {
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
     setTransformConfig({
-      babelPlugins: (config as any).build?.babelPlugins || [],
+      babelPlugins: privateConfiguration?.babelPlugins || [],
       external: config.build?.external || [],
     });
     this.config.projects = this.projects.map(p => p.project);
@@ -188,6 +194,10 @@ export class FullProjectInternal {
     };
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
     this.expect = takeFirst(projectConfig.expect, config.expect, {});
+    if (this.expect.toHaveScreenshot?.stylePath) {
+      const stylePaths = Array.isArray(this.expect.toHaveScreenshot.stylePath) ? this.expect.toHaveScreenshot.stylePath : [this.expect.toHaveScreenshot.stylePath];
+      this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));
+    }
     this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
   }
 }

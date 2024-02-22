@@ -21,7 +21,7 @@ export class TimeoutRunnerError extends Error {}
 
 type TimeoutRunnerData = {
   lastElapsedSync: number,
-  timer: NodeJS.Timer | undefined,
+  timer: NodeJS.Timeout | undefined,
   timeoutPromise: ManualPromise<any>,
 };
 

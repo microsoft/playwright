@@ -32,6 +32,7 @@ test('basics should work', async ({ runTSC }) => {
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
+        test.fail('my test', async () => {});
       });
       test.describe(() => {
         test('my test', () => {});
@@ -46,6 +47,25 @@ test('basics should work', async ({ runTSC }) => {
       test.foo();
       test.describe.configure({ mode: 'parallel' });
       test.describe.configure({ retries: 3, timeout: 123 });
+      test('title', { tag: '@foo' }, () => {});
+      test('title', { tag: ['@foo', '@bar'] }, () => {});
+      test('title', { annotation: { type: 'issue' } }, () => {});
+      test('title', { annotation: [{ type: 'issue' }, { type: 'foo', description: 'bar' }] }, () => {});
+      test('title', {
+        tag: '@foo',
+        annotation: { type: 'issue' },
+      }, () => {});
+      test.skip('title', { tag: '@foo' }, () => {});
+      test.fixme('title', { tag: '@foo' }, () => {});
+      test.only('title', { tag: '@foo' }, () => {});
+      test.fail('title', { tag: '@foo' }, () => {});
+      test.describe('title', { tag: '@foo' }, () => {});
+      test.describe('title', { annotation: { type: 'issue' } }, () => {});
+      // @ts-expect-error
+      test.describe({ tag: '@foo' }, () => {});
+      test.describe.skip('title', { tag: '@foo' }, () => {});
+      test.describe.fixme('title', { tag: '@foo' }, () => {});
+      test.describe.only('title', { tag: '@foo' }, () => {});
     `
   });
   expect(result.exitCode).toBe(0);

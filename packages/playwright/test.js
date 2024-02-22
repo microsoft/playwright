@@ -21,6 +21,4 @@ const combinedExports = {
   ...pwt,
 };
 
-Object.defineProperty(combinedExports, '__esModule', { value: true });
-
-module.exports = combinedExports;
+module.exports = Object.assign(combinedExports.test, combinedExports);

@@ -34,9 +34,15 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
-let maxDispatchers = 1000;
+let maxDispatchersOverride: number | undefined;
 export function setMaxDispatchersForTest(value: number | undefined) {
-  maxDispatchers = value || 1000;
+  maxDispatchersOverride = value;
+}
+function maxDispatchersForBucket(gcBucket: string) {
+  return maxDispatchersOverride ?? {
+    'JSHandle': 100000,
+    'ElementHandle': 100000,
+  }[gcBucket] ?? 10000;
 }
 
 export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
@@ -50,10 +56,11 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
   readonly _guid: string;
   readonly _type: string;
+  readonly _gcBucket: string;
   _object: Type;
   private _openScope = new LongStandingScope();
 
-  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>) {
+  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, gcBucket?: string) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
@@ -63,6 +70,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._guid = guid;
     this._type = type;
     this._object = object;
+    this._gcBucket = gcBucket ?? type;
 
     (object as any)[dispatcherSymbol] = this;
 
@@ -74,6 +82,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     if (this._parent)
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
+    this._connection.maybeDisposeStaleDispatchers(this._gcBucket);
   }
 
   parentScope(): ParentScopeType {
@@ -99,7 +108,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     try {
       return await this._openScope.race(commandPromise);
     } catch (e) {
-      if (callMetadata.closesScope && isTargetClosedError(e))
+      if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
         return await commandPromise;
       throw e;
     }
@@ -132,7 +141,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     // Clean up from parent and connection.
     this._parent?._dispatchers.delete(this._guid);
-    const list = this._connection._dispatchersByType.get(this._type);
+    const list = this._connection._dispatchersByBucket.get(this._gcBucket);
     list?.delete(this._guid);
     this._connection._dispatchers.delete(this._guid);
 
@@ -177,8 +186,7 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, DispatcherScope>();
-  // Collect stale dispatchers by type.
-  readonly _dispatchersByType = new Map<string, Set<string>>();
+  readonly _dispatchersByBucket = new Map<string, Set<string>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
   private _isLocal: boolean;
@@ -247,22 +255,23 @@ export class DispatcherConnection {
   registerDispatcher(dispatcher: DispatcherScope) {
     assert(!this._dispatchers.has(dispatcher._guid));
     this._dispatchers.set(dispatcher._guid, dispatcher);
-    const type = dispatcher._type;
-
-    let list = this._dispatchersByType.get(type);
+    let list = this._dispatchersByBucket.get(dispatcher._gcBucket);
     if (!list) {
       list = new Set();
-      this._dispatchersByType.set(type, list);
+      this._dispatchersByBucket.set(dispatcher._gcBucket, list);
     }
     list.add(dispatcher._guid);
-    if (list.size > maxDispatchers)
-      this._disposeStaleDispatchers(type, list);
   }
 
-  private _disposeStaleDispatchers(type: string, dispatchers: Set<string>) {
-    const dispatchersArray = [...dispatchers];
-    this._dispatchersByType.set(type, new Set(dispatchersArray.slice(maxDispatchers / 10)));
-    for (let i = 0; i < maxDispatchers / 10; ++i) {
+  maybeDisposeStaleDispatchers(gcBucket: string) {
+    const maxDispatchers = maxDispatchersForBucket(gcBucket);
+    const list = this._dispatchersByBucket.get(gcBucket);
+    if (!list || list.size <= maxDispatchers)
+      return;
+    const dispatchersArray = [...list];
+    const disposeCount = (maxDispatchers / 10) | 0;
+    this._dispatchersByBucket.set(gcBucket, new Set(dispatchersArray.slice(disposeCount)));
+    for (let i = 0; i < disposeCount; ++i) {
       const d = this._dispatchers.get(dispatchersArray[i]);
       if (!d)
         continue;
@@ -337,10 +346,12 @@ export class DispatcherConnection {
     }
 
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
+    const response: any = { id };
     try {
       const result = await dispatcher._handleCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
-      callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+      response.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+      callMetadata.result = result;
     } catch (e) {
       if (isTargetClosedError(e) && sdkObject) {
         const reason = closeReason(sdkObject);
@@ -354,19 +365,16 @@ export class DispatcherConnection {
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
         }
       }
-      callMetadata.error = serializeError(e);
+      response.error = serializeError(e);
+      // The command handler could have set error in the metada, do not reset it if there was no exception.
+      callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
-    const response: any = { id };
-    if (callMetadata.result)
-      response.result = callMetadata.result;
-    if (callMetadata.error) {
-      response.error = callMetadata.error;
+    if (response.error)
       response.log = callMetadata.log;
-    }
     this.onmessage(response);
   }
 }

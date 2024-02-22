@@ -1,0 +1,73 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.grid-view {
+  display: flex;
+  position: relative;
+  flex: auto;
+}
+
+.grid-view .list-view-entry {
+  padding-left: 0;
+}
+
+.grid-view-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 5px;
+  flex: none;
+}
+
+.grid-view-header {
+  user-select: none;
+  display: flex;
+  flex: 0 0 30px;
+  align-items: center;
+  flex-direction: row;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.grid-view-header .codicon-triangle-up {
+  display: none;
+}
+.grid-view-header .codicon-triangle-down {
+  display: none;
+}
+
+.grid-view-header > .filter-positive .codicon-triangle-down {
+  display: initial !important;
+}
+
+.grid-view-header > .filter-negative .codicon-triangle-up {
+  display: initial !important;
+}
+
+.grid-view-header-cell {
+  flex: none;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 10px;
+  cursor: pointer;
+  display: flex;
+  white-space: nowrap;
+}
+
+.grid-view-header-cell-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: auto;
+}

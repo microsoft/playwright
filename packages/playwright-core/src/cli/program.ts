@@ -21,6 +21,7 @@ import os from 'os';
 import path from 'path';
 import type { Command } from '../utilsBundle';
 import { program } from '../utilsBundle';
+export { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import type { OpenTraceViewerOptions } from '../server/trace/viewer/traceViewer';
 import { openTraceInBrowser, openTraceViewerApp } from '../server/trace/viewer/traceViewer';
@@ -64,7 +65,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java`, codegenId()],
+      ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
@@ -159,6 +160,10 @@ program
         } else {
           const forceReinstall = hasNoArguments ? false : !!options.force;
           await registry.install(executables, forceReinstall);
+          await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
+            e.name = 'Playwright Host validation warning';
+            console.error(e);
+          });
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
@@ -257,12 +262,14 @@ program
 program
     .command('run-server', { hidden: true })
     .option('--port <port>', 'Server port')
+    .option('--host <host>', 'Server host')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,
+        host: options.host,
         path: options.path,
         maxConnections: options.maxClients ? +options.maxClients : Infinity,
         extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
@@ -688,5 +695,3 @@ function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): strin
     }
   }
 }
-
-export default program;

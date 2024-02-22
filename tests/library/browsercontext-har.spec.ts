@@ -120,6 +120,28 @@ it('should only page.routeFromHAR requests matching url filter', async ({ contex
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
+it('should apply overrides before routing from har', async ({ context, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
+  const path = asset('har-fulfill.har');
+  await context.routeFromHAR(path, { url: '**/*.js' });
+  const page = await context.newPage();
+  await context.route('http://no.playwright/my-script.js', async route => {
+    await route.fallback({
+      url: 'http://no.playwright/script2.js',
+    });
+  });
+  await context.route('http://test.example/', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<script src="http://no.playwright/my-script.js"></script><div>hello</div>',
+    });
+  });
+  await page.goto('http://test.example/');
+  // HAR contains script2.js that sets the value.
+  expect(await page.evaluate('window.value')).toBe('foo');
+});
+
 it('should support regex filter', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { url: /.*(\.js|.*\.css|no.playwright\/)$/ });
@@ -291,6 +313,7 @@ it('should round-trip har with postData', async ({ contextFactory, server }, tes
   expect(await page1.evaluate(fetchFunction, '3')).toBe('3');
   await context1.close();
 
+  server.reset();
   const context2 = await contextFactory();
   await context2.routeFromHAR(harPath);
   const page2 = await context2.newPage();
@@ -299,6 +322,40 @@ it('should round-trip har with postData', async ({ contextFactory, server }, tes
   expect(await page2.evaluate(fetchFunction, '2')).toBe('2');
   expect(await page2.evaluate(fetchFunction, '3')).toBe('3');
   expect(await page2.evaluate(fetchFunction, '4').catch(e => e)).toBeTruthy();
+});
+
+it('should record overridden requests to har', async ({ contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
+  server.setRoute('/echo', async (req, res) => {
+    const body = await req.postBody;
+    res.end(body.toString());
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const fetchFunction = async (arg: { path: string, body: string }) => {
+    const response = await fetch(arg.path, { method: 'POST', body: arg.body });
+    return await response.text();
+  };
+  await page1.route('**/echo_redir', async route => {
+    await route.fallback({
+      url: server.PREFIX + '/echo',
+      postData: +route.request().postData() + 10,
+    });
+  });
+  expect(await page1.evaluate(fetchFunction, { path: '/echo_redir', body: '1' })).toBe('11');
+  expect(await page1.evaluate(fetchFunction, { path: '/echo_redir', body: '2' })).toBe('12');
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath);
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(fetchFunction, { path: '/echo', body: '11' })).toBe('11');
+  expect(await page2.evaluate(fetchFunction, { path: '/echo', body: '12' })).toBe('12');
 });
 
 it('should disambiguate by header', async ({ contextFactory, server }, testInfo) => {
@@ -402,4 +459,62 @@ it('should update extracted har.zip for page', async ({ contextFactory, server }
   await page2.goto(server.PREFIX + '/one-style.html');
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('page.unrouteAll should stop page.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+  const harPath = asset('har-fulfill.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  // The har file contains requests for another domain, so the router
+  // is expected to abort all requests.
+  await page1.routeFromHAR(harPath, { notFound: 'abort' });
+  await expect(page1.goto(server.EMPTY_PAGE)).rejects.toThrow();
+  await page1.unrouteAll({ behavior: 'wait' });
+  const response = await page1.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBeTruthy();
+});
+
+it('context.unrouteAll should stop context.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+  const harPath = asset('har-fulfill.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  // The har file contains requests for another domain, so the router
+  // is expected to abort all requests.
+  await context1.routeFromHAR(harPath, { notFound: 'abort' });
+  await expect(page1.goto(server.EMPTY_PAGE)).rejects.toThrow();
+  await context1.unrouteAll({ behavior: 'wait' });
+  const response = await page1.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBeTruthy();
+});
+
+it('should ignore aborted requests', async ({ contextFactory, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29311' });
+  const path = it.info().outputPath('test.har');
+  {
+    server.setRoute('/x', (req, res) => { req.destroy(); });
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(path, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    const reqPromise = server.waitForRequest('/x');
+    const evalPromise = page1.evaluate(url => fetch(url).catch(e => 'cancelled'), server.PREFIX + '/x');
+    await reqPromise;
+    const req = await evalPromise;
+    expect(req).toBe('cancelled');
+    await context1.close();
+  }
+  server.reset();
+  {
+    server.setRoute('/x', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('test');
+    });
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(path);
+    const page2 = await context2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+    const evalPromise = page2.evaluate(url => fetch(url).catch(e => 'cancelled'), server.PREFIX + '/x');
+    const result = await Promise.race([evalPromise, page2.waitForTimeout(1000).then(() => 'timeout')]);
+    expect(result).toBe('timeout');
+  }
 });

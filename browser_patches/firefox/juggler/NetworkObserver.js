@@ -5,7 +5,6 @@
 "use strict";
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const { ChannelEventSinkFactory } = ChromeUtils.import("chrome://remote/content/cdp/observers/ChannelEventSink.jsm");
 
@@ -232,8 +231,12 @@ class NetworkRequest {
     this._expectingResumedRequest = undefined;
 
     if (headers) {
-      for (const header of requestHeaders(this.httpChannel))
+      for (const header of requestHeaders(this.httpChannel)) {
+        // We cannot remove the "host" header.
+        if (header.name.toLowerCase() === 'host')
+          continue;
         this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
+      }
       for (const header of headers)
         this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
     } else if (this._pageNetwork) {

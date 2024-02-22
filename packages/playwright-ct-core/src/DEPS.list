@@ -1,0 +1,12 @@
+[vitePlugin.ts]
+generated/indexSource.ts
+
+[viteDevPlugin.ts]
+generated/indexSource.ts
+
+[devServer.ts]
+generated/indexSource.ts
+
+[mount.ts]
+generated/serializers.ts
+injected/**

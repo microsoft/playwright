@@ -24,7 +24,7 @@ import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../
 import { visitAllSelectorParts, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText, getElementLabels } from './selectorUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
-import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, isInsideScope, parentElementOrShadowHost, setBrowserName } from './domUtils';
 import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
@@ -33,32 +33,9 @@ import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName } fr
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
-
-type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
-
-export type InjectedScriptProgress = {
-  injectedScript: InjectedScript;
-  continuePolling: symbol;
-  aborted: boolean;
-  log: (message: string) => void;
-  logRepeating: (message: string) => void;
-};
-
-export type LogEntry = {
-  message?: string;
-};
+import { normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
-
-export type InjectedScriptPoll<T> = {
-  run: () => Promise<T>,
-  // Takes more logs, waiting until at least one message is available.
-  takeNextLogs: () => Promise<LogEntry[]>,
-  // Takes all current logs without waiting.
-  takeLastLogs: () => LogEntry[],
-  cancel: () => void,
-};
 
 export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
 export type ElementState = ElementStateWithoutStable | 'stable';
@@ -66,6 +43,14 @@ export type ElementState = ElementStateWithoutStable | 'stable';
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
 };
+
+interface WebKitLegacyDeviceOrientationEvent extends DeviceOrientationEvent {
+  readonly initDeviceOrientationEvent: (type: string, bubbles: boolean, cancelable: boolean, alpha: number, beta: number, gamma: number, absolute: boolean) => void;
+}
+
+interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
+  readonly initDeviceMotionEvent: (type: string, bubbles: boolean, cancelable: boolean, acceleration: DeviceMotionEventAcceleration, accelerationIncludingGravity: DeviceMotionEventAcceleration, rotationRate: DeviceMotionEventRotationRate, interval: number) => void;
+}
 
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
@@ -81,6 +66,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
+  readonly utils = { isInsideScope, elementText, asLocator, normalizeWhiteSpace };
 
   // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
@@ -129,6 +115,7 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._browserName = browserName;
+    setBrowserName(browserName);
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
@@ -154,7 +141,11 @@ export class InjectedScript {
     return result;
   }
 
-  generateSelector(targetElement: Element, options?: GenerateSelectorOptions): string {
+  generateSelector(targetElement: Element, options: GenerateSelectorOptions) {
+    return generateSelector(this, targetElement, options);
+  }
+
+  generateSelectorSimple(targetElement: Element, options?: GenerateSelectorOptions): string {
     return generateSelector(this, targetElement, { ...options, testIdAttributeName: this._testIdAttributeNameForStrictErrorAndConsoleCodegen }).selector;
   }
 
@@ -440,92 +431,6 @@ export class InjectedScript {
     });
   }
 
-  pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this.poll(predicate, next => requestAnimationFrame(next));
-  }
-
-  private poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
-    return this._runAbortableTask(progress => {
-      let fulfill: (result: T) => void;
-      let reject: (error: Error) => void;
-      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
-
-      const next = () => {
-        if (progress.aborted)
-          return;
-        try {
-          const success = predicate(progress);
-          if (success !== progress.continuePolling)
-            fulfill(success as T);
-          else
-            scheduleNext(next);
-        } catch (e) {
-          progress.log('  ' + e.message);
-          reject(e);
-        }
-      };
-
-      next();
-      return result;
-    });
-  }
-
-  private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
-    let unsentLog: LogEntry[] = [];
-    let takeNextLogsCallback: ((logs: LogEntry[]) => void) | undefined;
-    let taskFinished = false;
-    const logReady = () => {
-      if (!takeNextLogsCallback)
-        return;
-      takeNextLogsCallback(unsentLog);
-      unsentLog = [];
-      takeNextLogsCallback = undefined;
-    };
-
-    const takeNextLogs = () => new Promise<LogEntry[]>(fulfill => {
-      takeNextLogsCallback = fulfill;
-      if (unsentLog.length || taskFinished)
-        logReady();
-    });
-
-    let lastMessage = '';
-    const progress: InjectedScriptProgress = {
-      injectedScript: this,
-      aborted: false,
-      continuePolling: Symbol('continuePolling'),
-      log: (message: string) => {
-        lastMessage = message;
-        unsentLog.push({ message });
-        logReady();
-      },
-      logRepeating: (message: string) => {
-        if (message !== lastMessage)
-          progress.log(message);
-      },
-    };
-
-    const run = () => {
-      const result = task(progress);
-
-      // After the task has finished, there should be no more logs.
-      // Release any pending `takeNextLogs` call, and do not block any future ones.
-      // This prevents non-finished protocol evaluation calls and memory leaks.
-      result.finally(() => {
-        taskFinished = true;
-        logReady();
-      });
-
-      return result;
-    };
-
-    return {
-      takeNextLogs,
-      run,
-      cancel: () => { progress.aborted = true; },
-      takeLastLogs: () => unsentLog,
-    };
-  }
-
   getElementBorderWidth(node: Node): { left: number; top: number; } {
     if (node.nodeType !== Node.ELEMENT_NODE || !node.ownerDocument || !node.ownerDocument.defaultView)
       return { left: 0, top: 0 };
@@ -572,65 +477,73 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
+  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
+    if (states.includes('stable')) {
+      const stableResult = await this._checkElementIsStable(node);
+      if (stableResult === false)
+        return { missingState: 'stable' };
+      if (stableResult === 'error:notconnected')
+        return stableResult;
+    }
+    for (const state of states) {
+      if (state !== 'stable') {
+        const result = this.elementState(node, state);
+        if (result === false)
+          return { missingState: state };
+        if (result === 'error:notconnected')
+          return result;
+      }
+    }
+  }
+
+  private async _checkElementIsStable(node: Node): Promise<'error:notconnected' | boolean> {
+    const continuePolling = Symbol('continuePolling');
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
-    let counter = 0;
-    let samePositionCounter = 0;
+    let stableRafCounter = 0;
     let lastTime = 0;
 
-    return this.pollRaf(progress => {
-      if (force) {
-        progress.log(`    forcing action`);
-        return callback(node, progress);
+    const check = () => {
+      const element = this.retarget(node, 'no-follow-label');
+      if (!element)
+        return 'error:notconnected';
+
+      // Drop frames that are shorter than 16ms - WebKit Win bug.
+      const time = performance.now();
+      if (this._stableRafCount > 1 && time - lastTime < 15)
+        return continuePolling;
+      lastTime = time;
+
+      const clientRect = element.getBoundingClientRect();
+      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+      if (lastRect) {
+        const samePosition = rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+        if (!samePosition)
+          return false;
+        if (++stableRafCounter >= this._stableRafCount)
+          return true;
       }
+      lastRect = rect;
+      return continuePolling;
+    };
 
-      for (const state of states) {
-        if (state !== 'stable') {
-          const result = this.elementState(node, state);
-          if (typeof result !== 'boolean')
-            return result;
-          if (!result) {
-            progress.logRepeating(`    element is not ${state} - waiting...`);
-            return progress.continuePolling;
-          }
-          continue;
-        }
+    let fulfill: (result: 'error:notconnected' | boolean) => void;
+    let reject: (error: Error) => void;
+    const result = new Promise<'error:notconnected' | boolean>((f, r) => { fulfill = f; reject = r; });
 
-        const element = this.retarget(node, 'no-follow-label');
-        if (!element)
-          return 'error:notconnected';
-
-        // First raf happens in the same animation frame as evaluation, so it does not produce
-        // any client rect difference compared to synchronous call. We skip the synchronous call
-        // and only force layout during actual rafs as a small optimisation.
-        if (++counter === 1)
-          return progress.continuePolling;
-
-        // Drop frames that are shorter than 16ms - WebKit Win bug.
-        const time = performance.now();
-        if (this._stableRafCount > 1 && time - lastTime < 15)
-          return progress.continuePolling;
-        lastTime = time;
-
-        const clientRect = element.getBoundingClientRect();
-        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
-        if (samePosition)
-          ++samePositionCounter;
+    const raf = () => {
+      try {
+        const success = check();
+        if (success !== continuePolling)
+          fulfill(success);
         else
-          samePositionCounter = 0;
-        const isStable = samePositionCounter >= this._stableRafCount;
-        const isStableForLogs = isStable || !lastRect;
-        lastRect = rect;
-        if (!isStableForLogs)
-          progress.logRepeating(`    element is not stable - waiting...`);
-        if (!isStable)
-          return progress.continuePolling;
+          requestAnimationFrame(raf);
+      } catch (e) {
+        reject(e);
       }
+    };
+    requestAnimationFrame(raf);
 
-      return callback(node, progress);
-    });
+    return result;
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
@@ -666,9 +579,7 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[],
-    node: Node, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
-
+  selectOptions(node: Node, optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | 'error:optionsnotfound' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -704,31 +615,26 @@ export class InjectedScript {
         break;
       }
     }
-    if (remainingOptionsToSelect.length) {
-      progress.logRepeating('    did not find some options - waiting... ');
-      return progress.continuePolling;
-    }
+    if (remainingOptionsToSelect.length)
+      return 'error:optionsnotfound';
     select.value = undefined as any;
     selectedOptions.forEach(option => option.selected = true);
-    progress.log('    selected specified option(s)');
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
+    select.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
     return selectedOptions.map(option => option.value);
   }
 
-  fill(value: string, node: Node, progress: InjectedScriptProgress): 'error:notconnected' | 'needsinput' | 'done' {
+  fill(node: Node, value: string): 'error:notconnected' | 'needsinput' | 'done' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime', 'datetime-local', 'month', 'range', 'week']);
+      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime-local', 'month', 'range', 'week']);
       const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-      if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type)) {
-        progress.log(`    input of type "${type}" cannot be filled`);
+      if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type))
         throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
-      }
       if (type === 'number') {
         value = value.trim();
         if (isNaN(Number(value)))
@@ -740,8 +646,8 @@ export class InjectedScript {
         input.value = value;
         if (input.value !== value)
           throw this.createStacklessError('Malformed value');
-        element.dispatchEvent(new Event('input', { 'bubbles': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
+        element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
         return 'done';  // We have already changed the value, no need to input it.
       }
     } else if (element.nodeName.toLowerCase() === 'textarea') {
@@ -843,8 +749,8 @@ export class InjectedScript {
     for (const file of files)
       dt.items.add(file);
     input.files = dt.files;
-    input.dispatchEvent(new Event('input', { 'bubbles': true }));
-    input.dispatchEvent(new Event('change', { 'bubbles': true }));
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
@@ -1036,6 +942,24 @@ export class InjectedScript {
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
       case 'wheel': event = new WheelEvent(type, eventInit); break;
+      case 'deviceorientation':
+        try {
+          event = new DeviceOrientationEvent(type, eventInit);
+        } catch {
+          const { bubbles, cancelable, alpha, beta, gamma, absolute } = eventInit as {bubbles: boolean, cancelable: boolean, alpha: number, beta: number, gamma: number, absolute: boolean};
+          event = this.document.createEvent('DeviceOrientationEvent') as WebKitLegacyDeviceOrientationEvent;
+          event.initDeviceOrientationEvent(type, bubbles, cancelable, alpha, beta, gamma, absolute);
+        }
+        break;
+      case 'devicemotion':
+        try {
+          event = new DeviceMotionEvent(type, eventInit);
+        } catch {
+          const { bubbles, cancelable, acceleration, accelerationIncludingGravity, rotationRate, interval } = eventInit as {bubbles: boolean, cancelable: boolean, acceleration: DeviceMotionEventAcceleration, accelerationIncludingGravity: DeviceMotionEventAcceleration, rotationRate: DeviceMotionEventRotationRate, interval: number};
+          event = this.document.createEvent('DeviceMotionEvent') as WebKitLegacyDeviceMotionEvent;
+          event.initDeviceMotionEvent(type, bubbles, cancelable, acceleration, accelerationIncludingGravity, rotationRate, interval);
+        }
+        break;
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
@@ -1059,9 +983,7 @@ export class InjectedScript {
         attrs.push(` ${name}="${value}"`);
     }
     attrs.sort((a, b) => a.length - b.length);
-    let attrText = attrs.join('');
-    if (attrText.length > 50)
-      attrText = attrText.substring(0, 49) + '\u2026';
+    const attrText = trimStringWithEllipsis(attrs.join(''), 50);
     if (autoClosingTags.has(element.nodeName))
       return oneLine(`<${element.nodeName.toLowerCase()}${attrText}/>`);
 
@@ -1072,16 +994,14 @@ export class InjectedScript {
       for (let i = 0; i < children.length; i++)
         onlyText = onlyText && children[i].nodeType === Node.TEXT_NODE;
     }
-    let text = onlyText ? (element.textContent || '') : (children.length ? '\u2026' : '');
-    if (text.length > 50)
-      text = text.substring(0, 49) + '\u2026';
-    return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
+    const text = onlyText ? (element.textContent || '') : (children.length ? '\u2026' : '');
+    return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${trimStringWithEllipsis(text, 50)}</${element.nodeName.toLowerCase()}>`);
   }
 
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: this.generateSelector(m),
+      selector: this.generateSelectorSimple(m),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
@@ -1102,7 +1022,11 @@ export class InjectedScript {
     return error;
   }
 
-  maskSelectors(selectors: ParsedSelector[], color?: string) {
+  createHighlight() {
+    return new Highlight(this);
+  }
+
+  maskSelectors(selectors: ParsedSelector[], color: string) {
     if (this._highlight)
       this.hideHighlight();
     this._highlight = new Highlight(this);
@@ -1371,7 +1295,7 @@ function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel' | 'deviceorientation' | 'devicemotion'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
@@ -1419,6 +1343,11 @@ const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | '
   ['drop', 'drag'],
 
   ['wheel', 'wheel'],
+
+  ['deviceorientation', 'deviceorientation'],
+  ['deviceorientationabsolute', 'deviceorientation'],
+
+  ['devicemotion', 'devicemotion'],
 ]);
 
 const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);
@@ -1465,7 +1394,7 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
   selector = normalizeWhiteSpace(selector);
   if (strict) {
     if (internal)
-      return { kind: 'strict', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full) === selector };
+      return { kind: 'strict', matcher: (elementText: ElementText) => elementText.normalized === selector };
 
     const strictTextNodeMatcher = (elementText: ElementText) => {
       if (!selector && !elementText.immediate.length)
@@ -1475,7 +1404,7 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
     return { matcher: strictTextNodeMatcher, kind: 'strict' };
   }
   selector = selector.toLowerCase();
-  return { kind: 'lax', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(selector) };
+  return { kind: 'lax', matcher: (elementText: ElementText) => elementText.normalized.toLowerCase().includes(selector) };
 }
 
 class ExpectedTextMatcher {

@@ -379,6 +379,7 @@ CommonScreenshotOptions:
           frame: Frame
           selector: string
     maskColor: string?
+    style: string?
 
 LaunchOptions:
   type: mixin
@@ -763,6 +764,10 @@ DebugController:
         selector: string
         locator: string
 
+    setModeRequested:
+      parameters:
+        mode: string
+
     stateChanged:
       parameters:
         pageCount: number
@@ -779,23 +784,6 @@ DebugController:
     paused:
       parameters:
         paused: boolean
-
-    # Deprecated
-    browsersChanged:
-      parameters:
-        browsers:
-          type: array
-          items:
-            type: object
-            properties:
-              contexts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    pages:
-                      type: array
-                      items: string
 
 SocksSupport:
   type: interface
@@ -982,6 +970,21 @@ Browser:
 
     close:
 
+ConsoleMessage:
+  type: mixin
+  properties:
+    type: string
+    text: string
+    args:
+      type: array
+      items: JSHandle
+    location:
+      type: object
+      properties:
+        url: string
+        lineNumber: number
+        columnNumber: number
+
 
 EventTarget:
   type: interface
@@ -1012,7 +1015,6 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
-    isLocalBrowserOnServer: boolean
     requestContext: APIRequestContext
     tracing: Tracing
 
@@ -1188,18 +1190,8 @@ BrowserContext:
 
     console:
       parameters:
+        $mixin: ConsoleMessage
         page: Page
-        type: string
-        text: string
-        args:
-          type: array
-          items: JSHandle
-        location:
-          type: object
-          properties:
-            url: string
-            lineNumber: number
-            columnNumber: number
 
     close:
 
@@ -1345,6 +1337,16 @@ Page:
         slowMo: true
         snapshot: true
 
+    registerLocatorHandler:
+      parameters:
+        selector: string
+      returns:
+        uid: number
+
+    resolveLocatorHandlerNoReply:
+      parameters:
+        uid: number
+
     reload:
       parameters:
         timeout: number?
@@ -1365,19 +1367,13 @@ Page:
           properties:
             frame: Frame
             selector: string
-        comparatorOptions:
-          type: object?
-          properties:
-            comparator: string?
-            maxDiffPixels: number?
-            maxDiffPixelRatio: number?
-            threshold: number?
-        screenshotOptions:
-          type: object?
-          properties:
-            fullPage: boolean?
-            clip: Rect?
-            $mixin: CommonScreenshotOptions
+        comparator: string?
+        maxDiffPixels: number?
+        maxDiffPixelRatio: number?
+        threshold: number?
+        fullPage: boolean?
+        clip: Rect?
+        $mixin: CommonScreenshotOptions
       returns:
         diff: binary?
         errorMessage: string?
@@ -1564,6 +1560,8 @@ Page:
             bottom: string?
             left: string?
             right: string?
+        tagged: boolean?
+        outline: boolean?
       returns:
         pdf: binary
 
@@ -1663,6 +1661,10 @@ Page:
     frameDetached:
       parameters:
         frame: Frame
+
+    locatorHandlerTriggered:
+      parameters:
+        uid: number
 
     route:
       parameters:
@@ -2111,28 +2113,15 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        files:
-          type: array
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
           items:
             type: object
             properties:
               name: string
               mimeType: string?
               buffer: binary
-              lastModifiedMs: number?
-        timeout: number?
-        noWaitAfter: boolean?
-      flags:
-        slowMo: true
-        snapshot: true
-        pausesBeforeInput: true
-
-    # This method should be used if one of the files is large (>50Mb).
-    setInputFilePaths:
-      parameters:
-        selector: string
-        strict: boolean?
-        # Only one of localPaths and streams should be present.
         localPaths:
           type: array?
           items: string
@@ -2680,26 +2669,15 @@ ElementHandle:
 
     setInputFiles:
       parameters:
-        files:
-          type: array
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
           items:
             type: object
             properties:
               name: string
               mimeType: string?
               buffer: binary
-              lastModifiedMs: number?
-        timeout: number?
-        noWaitAfter: boolean?
-      flags:
-        slowMo: true
-        snapshot: true
-        pausesBeforeInput: true
-
-    # This method should be used if one of the files is large (>50Mb).
-    setInputFilePaths:
-      parameters:
-        # Only one of localPaths and streams should be present.
         localPaths:
           type: array?
           items: string
@@ -3231,11 +3209,21 @@ ElectronApplication:
       returns:
         handle: JSHandle
 
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
+
     close:
 
   events:
     close:
-
+    console:
+      parameters: 
+        $mixin: ConsoleMessage
 
 Android:
   type: interface

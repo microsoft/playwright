@@ -570,3 +570,39 @@ test('should import packages with non-index main script through path resolver', 
   expect(result.output).not.toContain(`find module`);
   expect(result.output).toContain(`foo=42`);
 });
+
+test('should respect tsconfig project references', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29256' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}], };`,
+    'tsconfig.json': `{
+      "files": [],
+      "references": [
+        { "path": "./tsconfig.app.json" },
+        { "path": "./tsconfig.test.json" }
+      ]
+    }`,
+    'tsconfig.test.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'foo/bar/util/b.ts': `
+      export const foo: string = 'foo';
+    `,
+    'a.test.ts': `
+      import { foo } from 'util/b';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

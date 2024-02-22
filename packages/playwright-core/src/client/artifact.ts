@@ -60,7 +60,7 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
   async readIntoBuffer(): Promise<Buffer> {
     const stream = (await this.createReadStream())!;
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       stream.on('data', (chunk: Buffer) => {
         chunks.push(chunk);
@@ -73,10 +73,10 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async cancel(): Promise<void> {
-    return this._channel.cancel();
+    return await this._channel.cancel();
   }
 
   async delete(): Promise<void> {
-    return this._channel.delete();
+    return await this._channel.delete();
   }
 }

@@ -97,7 +97,7 @@ export class Dispatcher {
     // 2. Start the worker if it is down.
     let startError;
     if (!worker) {
-      worker = this._createWorker(job, index, serializeConfig(this._config));
+      worker = this._createWorker(job, index, serializeConfig(this._config, true));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
@@ -243,6 +243,7 @@ class JobDispatcher {
 
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
+  private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();
   private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
@@ -290,11 +291,21 @@ class JobDispatcher {
     test.expectedStatus = params.expectedStatus;
     test.annotations = params.annotations;
     test.timeout = params.timeout;
-    const isFailure = result.status !== test.expectedStatus;
+    const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
+    if (params.hasNonRetriableError)
+      this._addNonretriableTestAndSerialModeParents(test);
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
+  }
+
+  private _addNonretriableTestAndSerialModeParents(test: TestCase) {
+    this._failedWithNonRetriableError.add(test);
+    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial')
+        this._failedWithNonRetriableError.add(parent);
+    }
   }
 
   private _onStepBegin(params: StepBeginPayload) {
@@ -369,17 +380,22 @@ class JobDispatcher {
     }
     result.errors = [...errors];
     result.error = result.errors[0];
-    result.status = 'failed';
+    result.status = errors.length ? 'failed' : 'skipped';
     this._reportTestEnd(test, result);
     this._failedTests.add(test);
   }
 
-  private _handleFatalErrors(errors: TestError[]) {
-    const test = this._remainingByTestId.values().next().value as TestCase | undefined;
-    if (test) {
-      this._failTestWithErrors(test, errors);
+  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[]) {
+    for (const test of this._remainingByTestId.values()) {
+      if (!testIds.has(test.id))
+        continue;
+      if (!this._failureTracker.hasReachedMaxFailures()) {
+        this._failTestWithErrors(test, errors);
+        errors = []; // Only report errors for the first test.
+      }
       this._remainingByTestId.delete(test.id);
-    } else if (errors.length) {
+    }
+    if (errors.length) {
       // We had fatal errors after all tests have passed - most likely in some teardown.
       // Let's just fail the test run.
       this._failureTracker.onWorkerError();
@@ -407,34 +423,31 @@ class JobDispatcher {
     }
 
     if (params.fatalErrors.length) {
-      // In case of fatal errors, report the first remaining test as failing with these errors,
-      // and "skip" all other tests to avoid running into the same issue over and over.
-      this._handleFatalErrors(params.fatalErrors);
-      this._remainingByTestId.clear();
+      // In case of fatal errors, report first remaining test as failing with these errors,
+      // and all others as skipped.
+      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), params.fatalErrors);
     }
-
     // Handle tests that should be skipped because of the setup failure.
-    for (const testId of params.skipTestsDueToSetupFailure)
-      this._remainingByTestId.delete(testId);
+    this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
 
     if (params.unexpectedExitError) {
-      if (this._currentlyRunning) {
-        // When worker exits during a test, we blame the test itself.
-        this._failTestWithErrors(this._currentlyRunning.test, [params.unexpectedExitError]);
-        this._remainingByTestId.delete(this._currentlyRunning.test.id);
-      } else {
-        // The most common situation when worker exits while not running a test is:
-        //   worker failed to require the test file (at the start) because of an exception in one of imports.
-        // In this case, "skip" all remaining tests, to avoid running into the same exception over and over.
-        this._handleFatalErrors([params.unexpectedExitError]);
-        this._remainingByTestId.clear();
-      }
+      // When worker exits during a test, we blame the test itself.
+      //
+      // The most common situation when worker exits while not running a test is:
+      //   worker failed to require the test file (at the start) because of an exception in one of imports.
+      // In this case, "skip" all remaining tests, to avoid running into the same exception over and over.
+      if (this._currentlyRunning)
+        this._massSkipTestsFromRemaining(new Set([this._currentlyRunning.test.id]), [params.unexpectedExitError]);
+      else
+        this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
     }
 
     const retryCandidates = new Set<TestCase>();
     const serialSuitesWithFailures = new Set<Suite>();
 
     for (const failedTest of this._failedTests) {
+      if (this._failedWithNonRetriableError.has(failedTest))
+        continue;
       retryCandidates.add(failedTest);
 
       let outermostSerialSuite: Suite | undefined;
@@ -442,26 +455,30 @@ class JobDispatcher {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
-      if (outermostSerialSuite)
+      if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite))
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 
+    // If we have failed tests that belong to a serial suite,
+    // we should skip all future tests from the same serial suite.
+    const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
+      let parent: Suite | undefined = test.parent;
+      while (parent && !serialSuitesWithFailures.has(parent))
+        parent = parent.parent;
+      return !!parent;
+    });
+    this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
+
     for (const serialSuite of serialSuitesWithFailures) {
-      serialSuite.allTests().forEach(test => {
-        // Skip remaining tests from serial suites with failures.
-        this._remainingByTestId.delete(test.id);
-        // Schedule them for the retry all together.
-        retryCandidates.add(test);
-      });
+      // Add all tests from failed serial suites for possible retry.
+      // These will only be retried together, because they have the same
+      // "retries" setting and the same number of previous runs.
+      serialSuite.allTests().forEach(test => retryCandidates.add(test));
     }
 
-    for (const test of this._job.tests) {
-      if (!this._remainingByTestId.has(test.id))
-        ++test._runAttempts;
-    }
     const remaining = [...this._remainingByTestId.values()];
     for (const test of retryCandidates) {
-      if (test._runAttempts < test.retries + 1)
+      if (test.results.length < test.retries + 1)
         remaining.push(test);
     }
 

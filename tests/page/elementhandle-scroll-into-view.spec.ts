@@ -120,5 +120,6 @@ it('should timeout waiting for visible', async ({ page, server }) => {
   await page.setContent('<div style="display:none">Hello</div>');
   const div = await page.$('div');
   const error = await div.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('element is not displayed, retrying in 100ms');
+  expect(error.message).toContain('element is not visible');
+  expect(error.message).toContain('retrying scroll into view action');
 });

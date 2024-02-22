@@ -16,15 +16,13 @@
 
 import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
-import type { LogName } from '../common/debugLogger';
+import type { LogName } from '../utils/debugLogger';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { ElementHandle } from './dom';
 import { ManualPromise } from '../utils/manualPromise';
-import type { LogEntry } from './injected/injectedScript';
 
 export interface Progress {
   log(message: string): void;
-  logEntry(entry: LogEntry): void;
   timeUntilDeadline(): number;
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
@@ -74,16 +72,10 @@ export class ProgressController {
 
     const progress: Progress = {
       log: message => {
-        progress.logEntry({ message });
-      },
-      logEntry: entry => {
-        if ('message' in entry) {
-          const message = entry.message!;
-          if (this._state === 'running')
-            this.metadata.log.push(message);
-          // Note: we might be sending logs after progress has finished, for example browser logs.
-          this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
-        }
+        if (this._state === 'running')
+          this.metadata.log.push(message);
+        // Note: we might be sending logs after progress has finished, for example browser logs.
+        this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',

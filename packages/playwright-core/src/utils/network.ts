@@ -169,6 +169,38 @@ export function createHttpsServer(...args: any[]): https.Server {
   return server;
 }
 
+export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void) {
+  let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onLog, onStdErr);
+  if (statusCode === 404 && url.pathname === '/') {
+    const indexUrl = new URL(url);
+    indexUrl.pathname = '/index.html';
+    statusCode = await httpStatusCode(indexUrl, ignoreHTTPSErrors, onLog, onStdErr);
+  }
+  return statusCode >= 200 && statusCode < 404;
+}
+
+async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void): Promise<number> {
+  return new Promise(resolve => {
+    onLog?.(`HTTP HEAD: ${url}`);
+    httpRequest({
+      method: 'HEAD',
+      url: url.toString(),
+      headers: { Accept: '*/*' },
+      rejectUnauthorized: !ignoreHTTPSErrors
+    }, res => {
+      res.resume();
+      const statusCode = res.statusCode ?? 0;
+      onLog?.(`HTTP Status: ${statusCode}`);
+      resolve(statusCode);
+    }, error => {
+      if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
+        onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
+      onLog?.(`Error while checking if ${url} is available: ${error.message}`);
+      resolve(0);
+    });
+  });
+}
+
 function decorateServer(server: http.Server | http.Server) {
   const sockets = new Set<net.Socket>();
   server.on('connection', socket => {

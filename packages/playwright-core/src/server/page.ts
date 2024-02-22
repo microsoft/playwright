@@ -33,7 +33,7 @@ import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { LongStandingScope, assert, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
-import { debugLogger } from '../common/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
 import { getComparator } from '../utils/comparators';
 import type { CallMetadata } from './instrumentation';
@@ -44,6 +44,7 @@ import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import { TargetClosedError } from './errors';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -97,6 +98,8 @@ export interface PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts?: boolean;
   // Work around for mouse position in Firefox.
   resetForReuse(): Promise<void>;
+  // WebKit hack.
+  shouldToggleStyleSheetToSyncAnimations(): boolean;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };
@@ -108,7 +111,7 @@ type EmulatedMedia = {
   forcedColors: types.ForcedColors;
 };
 
-type ExpectScreenshotOptions = {
+type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
   timeout?: number,
   expected?: Buffer,
   isNot?: boolean,
@@ -116,8 +119,6 @@ type ExpectScreenshotOptions = {
     frame: frames.Frame,
     selector: string,
   },
-  comparatorOptions?: ImageComparatorOptions,
-  screenshotOptions?: ScreenshotOptions,
 };
 
 export class Page extends SdkObject {
@@ -129,6 +130,7 @@ export class Page extends SdkObject {
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
+    LocatorHandlerTriggered: 'locatorhandlertriggered',
     ScreencastFrame: 'screencastframe',
     Video: 'video',
     WebSocket: 'websocket',
@@ -166,6 +168,9 @@ export class Page extends SdkObject {
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _isServerSideOnly = false;
+  private _locatorHandlers = new Map<number, { selector: string, resolved?: ManualPromise<void> }>();
+  private _lastLocatorHandlerUid = 0;
+  private _locatorHandlerRunningCounter = 0;
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -247,6 +252,7 @@ export class Page extends SdkObject {
   async resetForReuse(metadata: CallMetadata) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
+    this._locatorHandlers.clear();
 
     await this._removeExposedBindings();
     await this._removeInitScripts();
@@ -426,6 +432,42 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
+  registerLocatorHandler(selector: string) {
+    const uid = ++this._lastLocatorHandlerUid;
+    this._locatorHandlers.set(uid, { selector });
+    return uid;
+  }
+
+  resolveLocatorHandler(uid: number) {
+    const handler = this._locatorHandlers.get(uid);
+    if (handler) {
+      handler.resolved?.resolve();
+      handler.resolved = undefined;
+    }
+  }
+
+  async performLocatorHandlersCheckpoint(progress: Progress) {
+    // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
+    if (this._locatorHandlerRunningCounter)
+      return;
+    for (const [uid, handler] of this._locatorHandlers) {
+      if (!handler.resolved) {
+        if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
+          handler.resolved = new ManualPromise();
+          this.emit(Page.Events.LocatorHandlerTriggered, uid);
+        }
+      }
+      if (handler.resolved) {
+        ++this._locatorHandlerRunningCounter;
+        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
+        await this.openScope.race(handler.resolved).finally(() => --this._locatorHandlerRunningCounter);
+        // Avoid side-effects after long-running operation.
+        progress.throwIfAborted();
+        progress.log(`  interception handler has finished, continuing`);
+      }
+    }
+  }
+
   async emulateMedia(options: Partial<EmulatedMedia>) {
     if (options.media !== undefined)
       this._emulatedMedia.media = options.media;
@@ -496,10 +538,11 @@ export class Page extends SdkObject {
   async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
-      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options.screenshotOptions || {});
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
     } : async (progress: Progress, timeout: number) => {
+      await this.performLocatorHandlersCheckpoint(progress);
       await this.mainFrame().rafrafTimeout(timeout);
-      return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
+      return await this._screenshotter.screenshotPage(progress, options || {});
     };
 
     const comparator = getComparator('image/png');
@@ -507,7 +550,7 @@ export class Page extends SdkObject {
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     try {
-      const format = validateScreenshotOptions(options.screenshotOptions || {});
+      const format = validateScreenshotOptions(options || {});
       if (format !== 'png')
         throw new Error('Only PNG screenshots are supported');
     } catch (error) {
@@ -520,7 +563,7 @@ export class Page extends SdkObject {
       diff?: Buffer,
     } | undefined = undefined;
     const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-      const comparatorResult = actual && expected ? comparator(actual, expected, options.comparatorOptions) : undefined;
+      const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
       if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
         return true;
       if (comparatorResult)

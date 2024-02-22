@@ -7,6 +7,7 @@ title: "Assertions"
 
 | Assertion | Description |
 | :- | :- |
+| [`method: LocatorAssertions.toBeAttached`] | Element is attached |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
@@ -14,6 +15,7 @@ title: "Assertions"
 | [`method: LocatorAssertions.toBeEnabled`] | Element is enabled |
 | [`method: LocatorAssertions.toBeFocused`] | Element is focused |
 | [`method: LocatorAssertions.toBeHidden`] | Element is not visible |
+| [`method: LocatorAssertions.toBeInViewport`] | Element intersects viewport |
 | [`method: LocatorAssertions.toBeVisible`] | Element is visible |
 | [`method: LocatorAssertions.toContainText`] | Element contains text |
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
@@ -32,19 +34,19 @@ title: "Assertions"
 ## Custom Expect Message
 * langs: python
 
-You can specify a custom error message as a second argument to the `expect` function, for example:
+You can specify a custom expect message as a second argument to the `expect` function, for example:
 
 ```python
 expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 ```
 
-The error would look like this:
+When expect fails, the error would look like this:
 
 ```bash
     def test_foobar(page: Page) -> None:
 >       expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 E       AssertionError: should be logged in
-E       Actual value: None 
+E       Actual value: None
 E       Call log:
 E       LocatorAssertions.to_be_visible with timeout 5000ms
 E       waiting for get_by_text("Name")
@@ -54,17 +56,76 @@ tests/test_foobar.py:22: AssertionError
 ```
 
 ## Setting a custom timeout
-* langs: python
+* langs: python, csharp
 
 You can specify a custom timeout for assertions either globally or per assertion. The default timeout is 5 seconds.
 
 ### Global timeout
+* langs: python
 
 ```python title="conftest.py"
 from playwright.sync_api import expect
 
 expect.set_options(timeout=10_000)
 ```
+
+### Global timeout
+* langs: csharp
+
+<Tabs
+  groupId="test-runners"
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class Tests : PageTest
+{
+    [OneTimeSetUp]
+    public void GlobalSetup()
+    {
+        SetDefaultExpectTimeout(10_000);
+    }
+    // ...
+}
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class UnitTest1 : PageTest
+{
+    [ClassInitialize]
+    public static void GlobalSetup(TestContext context)
+    {
+        SetDefaultExpectTimeout(10_000);
+    }
+    // ...
+}
+```
+
+</TabItem>
+</Tabs>
 
 ### Per assertion timeout
 
@@ -73,4 +134,8 @@ from playwright.sync_api import expect
 
 def test_foobar(page: Page) -> None:
     expect(page.get_by_text("Name")).to_be_visible(timeout=10_000)
+```
+
+```csharp title="UnitTest1.cs"
+await Expect(Page.GetByText("Name")).ToBeVisibleAsync(new() { Timeout = 10_000 });
 ```

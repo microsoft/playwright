@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import type { Route } from 'playwright-core';
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => route.continue());
@@ -140,6 +141,24 @@ it('should not throw when continuing after page is closed', async ({ page, serve
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   await done;
   expect(error).toBeInstanceOf(Error);
+});
+
+it('should not throw if request was cancelled by the page', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  let interceptCallback;
+  const interceptPromise = new Promise<Route>(f => interceptCallback = f);
+  await page.route('**/data.json', route => interceptCallback(route));
+  await page.goto(server.EMPTY_PAGE);
+  page.evaluate(url => {
+    globalThis.controller = new AbortController();
+    return fetch(url, { signal: globalThis.controller.signal });
+  }, server.PREFIX + '/data.json').catch(() => {});
+  const route = await interceptPromise;
+  const failurePromise = page.waitForEvent('requestfailed');
+  await page.evaluate(() => globalThis.controller.abort());
+  const cancelledRequest = await failurePromise;
+  expect(cancelledRequest.failure().errorText).toMatch(/cancelled|aborted/i);
+  await route.continue(); // Should not throw.
 });
 
 it('should override method along with url', async ({ page, server }) => {
@@ -372,6 +391,57 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(intercepted).toBe(true);
   const color = await page.evaluate(() => window.getComputedStyle(document.body).backgroundColor);
   expect(color).toBe('rgb(255, 192, 203)');
+});
+
+it('continue should propagate headers to redirects', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' });
+  it.fixme(browserName === 'firefox');
+  await server.setRedirect('/redirect', '/empty.html');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        custom: 'value'
+      }
+    });
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  expect(serverRequest.headers['custom']).toBe('value');
+});
+
+it('continue should delete headers on redirects', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.PREFIX + '/empty.html');
+  server.setRoute('/something', (request, response) => {
+    response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+    response.end('done');
+  });
+  await server.setRedirect('/redirect', '/something');
+  await page.route('**/redirect', route => {
+    void route.continue({
+      headers: {
+        ...route.request().headers(),
+        foo: undefined
+      }
+    });
+  });
+  const [text, serverRequest] = await Promise.all([
+    page.evaluate(async url => {
+      const data = await fetch(url, {
+        headers: {
+          foo: 'a',
+        }
+      });
+      return data.text();
+    }, server.PREFIX + '/redirect'),
+    server.waitForRequest('/something')
+  ]);
+  expect(text).toBe('done');
+  expect(serverRequest.headers.foo).toBeFalsy();
 });
 
 it('should intercept css variable with background url', async ({ page, server }) => {

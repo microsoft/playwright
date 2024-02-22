@@ -129,6 +129,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: context',
     '  fixture: request',
     '    apiRequestContext.dispose',
+    '  fixture: browser',
   ]);
 });
 
@@ -323,18 +324,18 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  fixture: page',
     '    browserContext.newPage',
     'page.goto',
-    'error',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
-    '  attach \"trace\"',
     '  afterAll hook',
     '    fixture: request',
     '      apiRequest.newContext',
     '    apiRequestContext.get',
-    '  fixture: request',
-    '    apiRequestContext.dispose',
+    '    fixture: request',
+    '      apiRequestContext.dispose',
+    '  fixture: browser',
   ]);
+  expect(trace1.errors).toEqual([`'oh no!'`]);
 
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
   expect(error).toBeTruthy();
@@ -407,18 +408,16 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
       'a.spec.ts': `
         import { test as base, expect } from '@playwright/test';
         import fs from 'fs';
-        const test = base.extend<{
-          locale: string | undefined,
-          _artifactsDir: () => string,
-        }>({
-          // Override locale fixture to check in teardown that no temporary trace zip was created.
-          locale: [async ({ locale, _artifactsDir }, use) => {
-            await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir);
+        let artifactsDir;
+        const test = base.extend({
+          workerAuto: [async ({}, use) => {
+            await use();
+            const entries =  fs.readdirSync(artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
-          }, { option: true }],
+          }, { scope: 'worker', auto: true }],
         });
         test('passing test', async ({ page }) => {
+          artifactsDir = test.info()._tracing.artifactsDir();
           await page.goto('about:blank');
         });
       `,
@@ -432,18 +431,16 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
       'a.spec.ts': `
         import { test as base, expect } from '@playwright/test';
         import fs from 'fs';
-        const test = base.extend<{
-          locale: string | undefined,
-          _artifactsDir: () => string,
-        }>({
-          // Override locale fixture to check in teardown that no temporary trace zip was created.
-          locale: [async ({ locale, _artifactsDir }, use) => {
-            await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir);
+        let artifactsDir;
+        const test = base.extend({
+          workerAuto: [async ({}, use) => {
+            await use();
+            const entries =  fs.readdirSync(artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
-          }, { option: true }],
+          }, { scope: 'worker', auto: true }],
         });
         test('passing test', async ({ request }) => {
+          artifactsDir = test.info()._tracing.artifactsDir();
           expect(await request.get('${server.EMPTY_PAGE}')).toBeOK();
         });
       `,
@@ -668,11 +665,52 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     '  fixture: page',
     '    browserContext.newPage',
     'expect.toBe',
-    'undefinedVariable1 is not defined',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
+    '  fixture: browser',
   ]);
+  expect(trace.errors).toEqual(['ReferenceError: undefinedVariable1 is not defined']);
+});
+
+test('should show error from beforeAll in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on' } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(async () => {
+        throw new Error('Oh my!');
+      })
+      test('fail', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  expect(trace.errors).toEqual(['Error: Oh my!']);
+});
+
+test('should throw when trace fixture is a function', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({
+        trace: async ({}, use) => {
+          await use('on');
+        },
+      });
+      test('skipped', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: "trace" option cannot be a function');
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest }, testInfo) => {
@@ -798,4 +836,201 @@ test('should not throw when merging traces multiple times', async ({ runInlineTe
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-foo', 'trace.zip'))).toBe(true);
+});
+
+test('should record nested steps, even after timeout', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { trace: { mode: 'on' } },
+        timeout: 5000,
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fooPage: async ({ page }, use) => {
+          expect(1, 'fooPage setup').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await page.setContent('hello');
+          await test.step('step in fooPage setup', async () => {
+            await page.setContent('bar');
+          });
+          await use(page);
+          expect(1, 'fooPage teardown').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await page.setContent('hi');
+          await test.step('step in fooPage teardown', async () => {
+            await page.setContent('bar');
+          });
+        },
+        barPage: async ({ browser }, use) => {
+          expect(1, 'barPage setup').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          const page = await browser.newPage();
+          await test.step('step in barPage setup', async () => {
+            await page.setContent('bar');
+          });
+          await use(page);
+          expect(1, 'barPage teardown').toBe(1);
+          await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+          await test.step('step in barPage teardown', async () => {
+            await page.close();
+          });
+        },
+      });
+
+      test.beforeAll(async ({ barPage }) => {
+        expect(1, 'beforeAll start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await barPage.setContent('hello');
+        await test.step('step in beforeAll', async () => {
+          await barPage.setContent('bar');
+        });
+      });
+
+      test.beforeEach(async ({ fooPage }) => {
+        expect(1, 'beforeEach start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await fooPage.setContent('hello');
+        await test.step('step in beforeEach', async () => {
+          await fooPage.setContent('hi');
+          // Next line times out. We make sure that after hooks steps
+          // form the expected step tree even when some previous steps have not finished.
+          await new Promise(() => {});
+        });
+      });
+
+      test('example', async ({ fooPage }) => {
+      });
+
+      test.afterEach(async ({ fooPage }) => {
+        expect(1, 'afterEach start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await fooPage.setContent('hello');
+        await test.step('step in afterEach', async () => {
+          await fooPage.setContent('bar');
+        });
+      });
+
+      test.afterAll(async ({ barPage }) => {
+        expect(1, 'afterAll start').toBe(1);
+        await new Promise(f => setTimeout(f, 1));  // To avoid same-wall-time sorting issues.
+        await barPage.setContent('hello');
+        await test.step('step in afterAll', async () => {
+          await barPage.setContent('bar');
+        });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-example', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  beforeAll hook',
+    '    fixture: browser',
+    '      browserType.launch',
+    '    fixture: barPage',
+    '      barPage setup',
+    '      browser.newPage',
+    '      step in barPage setup',
+    '        page.setContent',
+    '    beforeAll start',
+    '    page.setContent',
+    '    step in beforeAll',
+    '      page.setContent',
+    '    fixture: barPage',
+    '      barPage teardown',
+    '      step in barPage teardown',
+    '        page.close',
+    '  beforeEach hook',
+    '    fixture: context',
+    '      browser.newContext',
+    '    fixture: page',
+    '      browserContext.newPage',
+    '    fixture: fooPage',
+    '      fooPage setup',
+    '      page.setContent',
+    '      step in fooPage setup',
+    '        page.setContent',
+    '    beforeEach start',
+    '    page.setContent',
+    '    step in beforeEach',
+    '      page.setContent',
+    'After Hooks',
+    '  afterEach hook',
+    '    afterEach start',
+    '    page.setContent',
+    '    step in afterEach',
+    '      page.setContent',
+    '  fixture: fooPage',
+    '    fooPage teardown',
+    '    page.setContent',
+    '    step in fooPage teardown',
+    '      page.setContent',
+    '  fixture: page',
+    '  fixture: context',
+    '  afterAll hook',
+    '    fixture: barPage',
+    '      barPage setup',
+    '      browser.newPage',
+    '      step in barPage setup',
+    '        page.setContent',
+    '    afterAll start',
+    '    page.setContent',
+    '    step in afterAll',
+    '      page.setContent',
+    '    fixture: barPage',
+    '      barPage teardown',
+    '      step in barPage teardown',
+    '        page.close',
+    '  fixture: browser',
+  ]);
+});
+
+test('should attribute worker fixture teardown to the right test', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { trace: { mode: 'on' } },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          expect(1, 'step in foo setup').toBe(1);
+          await use('foo');
+          expect(1, 'step in foo teardown').toBe(1);
+        }, { scope: 'worker' }],
+      });
+
+      test('one', async ({ foo }) => {
+      });
+
+      test('two', async ({ foo }) => {
+        throw new Error('failure');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-one', 'trace.zip'));
+  expect(trace1.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: foo',
+    '    step in foo setup',
+    'After Hooks',
+  ]);
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-two', 'trace.zip'));
+  expect(trace2.actionTree).toEqual([
+    'Before Hooks',
+    'After Hooks',
+    '  fixture: foo',
+    '    step in foo teardown',
+  ]);
 });

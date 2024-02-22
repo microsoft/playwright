@@ -40,8 +40,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
     {log.map(callLog => {
       const expandOverride = expandOverrides.get(callLog.id);
       const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
-      const locator = callLog.params.selector ? asLocator(language, callLog.params.selector, false) : null;
-      const locatorCall = `page.${locator}`;
+      const locator = callLog.params.selector ? asLocator(language, callLog.params.selector) : null;
       let titlePrefix = callLog.title;
       let titleSuffix = '';
       if (callLog.title.startsWith('expect.to') || callLog.title.startsWith('expect.not.to')) {
@@ -63,7 +62,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
           }}></span>
           { titlePrefix }
           { callLog.params.url ? <span className='call-log-details'><span className='call-log-url' title={callLog.params.url}>{callLog.params.url}</span></span> : undefined }
-          { locator ? <span className='call-log-details'><span className='call-log-selector' title={locatorCall}>{locatorCall}</span></span> : undefined }
+          { locator ? <span className='call-log-details'><span className='call-log-selector' title={`page.${locator}`}>{`page.${locator}`}</span></span> : undefined }
           { titleSuffix }
           <span className={'codicon ' + iconClass(callLog)}></span>
           { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}

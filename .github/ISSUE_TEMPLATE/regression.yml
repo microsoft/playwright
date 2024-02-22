@@ -1,0 +1,96 @@
+name: Report regression
+description: Functionality that used to work and does not any more
+title: "[Regression]: "
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Please follow these steps first:
+  - type: markdown
+    attributes:
+      value: |
+        ## Make a minimal reproduction
+        To file the report, you will need a GitHub repository with a minimal (but complete) example and simple/clear steps on how to reproduce the regression.
+        The simpler you can make it, the more likely we are to successfully verify and fix the regression.
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Regression reports without a minimal reproduction will be rejected.
+
+        ---
+  - type: input
+    id: goodVersion
+    attributes:
+      label: Last Good Version
+      description: |
+        Last version of Playwright where the feature was working.
+      placeholder: ex. 1.40.1
+    validations:
+      required: true
+  - type: input
+    id: badVersion
+    attributes:
+      label: First Bad Version
+      description: |
+        First version of Playwright where the feature was broken.
+        Is it the [latest](https://github.com/microsoft/playwright/releases)? Test and see if the regression has already been fixed.
+      placeholder: ex. 1.41.1
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Please link to a repository with a minimal reproduction and describe accurately how we can reproduce/verify the bug.
+      placeholder: |
+        Example steps (replace with your own):
+        1. Clone my repo at https://github.com/<myuser>/example
+        2. npm install
+        3. npm run test
+        4. You should see the error come up
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A description of what you expect to happen.
+      placeholder: I expect to see X or Y
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Actual behavior
+      description: A clear and concise description of the unexpected behavior.
+      placeholder: A bug happened!
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that might be relevant
+    validations:
+      required: false
+  - type: textarea
+    id: envinfo
+    attributes:
+      label: Environment
+      description: |
+        Please paste the output of running `npx envinfo --preset playwright`.
+        This will be automatically formatted as a code block, so no need for backticks.
+      placeholder: |
+        System:
+          OS: Linux 6.2 Ubuntu 22.04.3 LTS 22.04.3 LTS (Jammy Jellyfish)
+          CPU: (8) arm64
+        Binaries:
+          Node: 18.19.0 - ~/.nvm/versions/node/v18.19.0/bin/node
+          npm: 10.2.3 - ~/.nvm/versions/node/v18.19.0/bin/npm
+        npmPackages:
+          @playwright/test: 1.41.1 => 1.41.1
+      render: shell
+    validations:
+      required: true

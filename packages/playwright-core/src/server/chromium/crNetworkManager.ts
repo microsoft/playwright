@@ -28,6 +28,7 @@ import type * as types from '../types';
 import type { CRPage } from './crPage';
 import { assert, headersObjectToArray } from '../../utils';
 import type { CRServiceWorker } from './crServiceWorker';
+import { isProtocolError } from '../protocolError';
 
 type SessionInfo = {
   session: CRSession;
@@ -285,10 +286,16 @@ export class CRNetworkManager {
     let route = null;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
-      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled))
-        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
-      else
+      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
+        let headers = undefined;
+        const previousHeaderOverrides = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
+        // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
+        if (previousHeaderOverrides)
+          headers = network.mergeHeaders([headersObjectToArray(requestPausedEvent.request.headers, '\n'), previousHeaderOverrides]);
+        this._session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
+      } else {
         route = new RouteImpl(this._session, requestPausedEvent.requestId);
+      }
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
@@ -305,7 +312,7 @@ export class CRNetworkManager {
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
 
-    if (requestPausedEvent && !requestPausedEvent.responseStatusCode && !requestPausedEvent.responseErrorReason) {
+    if (requestPausedEvent) {
       // We will not receive extra info when intercepting the request.
       // Use the headers from the Fetch.requestPausedPayload and release the allHeaders()
       // right away, so that client can call it from the route handler.
@@ -384,8 +391,6 @@ export class CRNetworkManager {
 
   _deleteRequest(request: InterceptableRequest) {
     this._requestIdToRequest.delete(request._requestId);
-    if (request._route)
-      request._route._alreadyContinuedParams = undefined;
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
   }
@@ -508,7 +513,9 @@ class InterceptableRequest {
   readonly _timestamp: number;
   readonly _wallTime: number;
   readonly _route: RouteImpl | null;
-  private _redirectedFrom: InterceptableRequest | null;
+  // Only first request in the chain can be intercepted, so this will
+  // store the first and only Route in the chain (if any).
+  readonly _originalRequestRoute: RouteImpl | undefined;
   session: CRSession;
 
   constructor(options: {
@@ -530,7 +537,7 @@ class InterceptableRequest {
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
     this._route = route;
-    this._redirectedFrom = redirectedFrom;
+    this._originalRequestRoute = route ?? redirectedFrom?._originalRequestRoute;
 
     const {
       headers,
@@ -565,37 +572,49 @@ class RouteImpl implements network.RouteDelegate {
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
     };
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.continueRequest', this._alreadyContinuedParams);
+    await catchDisallowedErrors(async () => {
+      await this._session.send('Fetch.continueRequest', this._alreadyContinuedParams);
+    });
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     const responseHeaders = splitSetCookieHeader(response.headers);
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.fulfillRequest', {
-      requestId: this._interceptionId!,
-      responseCode: response.status,
-      responsePhrase: network.STATUS_TEXTS[String(response.status)],
-      responseHeaders,
-      body,
+    await catchDisallowedErrors(async () => {
+      await this._session.send('Fetch.fulfillRequest', {
+        requestId: this._interceptionId!,
+        responseCode: response.status,
+        responsePhrase: network.STATUS_TEXTS[String(response.status)],
+        responseHeaders,
+        body,
+      });
     });
   }
 
   async abort(errorCode: string = 'failed') {
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.failRequest', {
-      requestId: this._interceptionId!,
-      errorReason
+    await catchDisallowedErrors(async () => {
+      await this._session.send('Fetch.failRequest', {
+        requestId: this._interceptionId!,
+        errorReason
+      });
     });
   }
 }
+
+// In certain cases, protocol will return error if the request was already canceled
+// or the page was closed. We should tolerate these errors but propagate other.
+async function catchDisallowedErrors(callback: () => Promise<void>) {
+  try {
+    return await callback();
+  } catch (e) {
+    if (isProtocolError(e) && e.message.includes('Invalid http status code or phrase'))
+      throw e;
+  }
+}
+
 
 function splitSetCookieHeader(headers: types.HeadersArray): types.HeadersArray {
   const index = headers.findIndex(({ name }) => name.toLowerCase() === 'set-cookie');

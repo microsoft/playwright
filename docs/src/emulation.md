@@ -101,7 +101,8 @@ Playwright can emulate various devices by specifying `setDeviceScaleFactor`, `se
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
 ```js tab=js-test title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
+
 export default defineConfig({
   projects: [
     {
@@ -245,7 +246,7 @@ await using var context = await browser.NewContextAsync(new()
 Whether the meta viewport tag is taken into account and touch events are enabled.
 
 ```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   projects: [
@@ -780,16 +781,16 @@ BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 
 ```python async
 context = await browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
 ```python sync
 context = browser.new_context(
-  javaScript_enabled=False
+  java_script_enabled=False
 )
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new() { JavaScriptEnabled = true });
+var context = await browser.NewContextAsync(new() { JavaScriptEnabled = false });
 ```

@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-core",
-  "version": "1.40.0-next",
+  "version": "1.42.0-next",
   "description": "Playwright Component Testing Helpers",
   "repository": {
     "type": "git",
@@ -19,17 +19,16 @@
       "types": "./index.d.ts",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./lib/mount": "./lib/mount.js",
-    "./lib/vitePlugin": "./lib/vitePlugin.js",
+    "./lib/program": "./lib/program.js",
     "./types/component": {
       "types": "./types/component.d.ts"
     }
   },
   "dependencies": {
-    "playwright-core": "1.40.0-next",
-    "vite": "^4.4.10",
-    "playwright": "1.40.0-next"
+    "playwright-core": "1.42.0-next",
+    "vite": "^5.0.12",
+    "playwright": "1.42.0-next"
   },
   "bin": {
     "playwright": "cli.js"

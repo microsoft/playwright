@@ -36,6 +36,7 @@ export type ContextEntry = {
   actions: ActionEntry[];
   events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   stdio: trace.StdioTraceEvent[];
+  errors: trace.ErrorTraceEvent[];
   hasSource: boolean;
 };
 
@@ -68,6 +69,7 @@ export function createEmptyContext(): ContextEntry {
     resources: [],
     actions: [],
     events: [],
+    errors: [],
     stdio: [],
     hasSource: false
   };

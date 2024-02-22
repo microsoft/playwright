@@ -143,9 +143,8 @@ it('should not report text nodes inside controls', async function({ page, browse
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', async function({ page, browserName, browserVersion, channel, isWebView2 }) {
+it('rich text editable fields should have children', async function({ page, browserName, browserVersion, isWebView2 }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
-  it.skip(channel && channel.startsWith('msedge'), 'Edge is missing a Chromium fix');
   it.skip(isWebView2, 'WebView2 is missing a Chromium fix');
 
   await page.setContent(`
@@ -178,9 +177,8 @@ it('rich text editable fields should have children', async function({ page, brow
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion, browserVersion, channel, isWebView2 }) {
+it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion, browserVersion, isWebView2 }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
-  it.skip(channel && channel.startsWith('msedge'), 'Edge is missing a Chromium fix');
   it.skip(isWebView2, 'WebView2 is missing a Chromium fix');
 
   await page.setContent(`
@@ -349,4 +347,21 @@ it('should work when there is a title ', async ({ page }) => {
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.name).toBe('This is the title');
   expect(snapshot.children[0].name).toBe('This is the content');
+});
+
+it('should work with aria-invalid accessibility tree', async ({ page, browserName, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="/hi" aria-invalid="true">WHO WE ARE</a>`);
+  expect(await page.accessibility.snapshot()).toEqual({
+    'role': browserName === 'firefox' ? 'document' : 'WebArea',
+    'name': '',
+    'children': [
+      {
+        'role': 'link',
+        'name': 'WHO WE ARE',
+        'invalid': 'true',
+        'value': browserName === 'firefox' ?  `${server.PREFIX}/hi` : undefined
+      }
+    ]
+  });
 });

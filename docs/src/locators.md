@@ -68,7 +68,7 @@ await page.GetByLabel("Password").FillAsync("secret-password");
 
 await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 
-await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
+await Expect(Page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
 
 ## Locating elements
@@ -245,7 +245,7 @@ page.getByRole(AriaRole.BUTTON,
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByRole(AriaRole.Heading, new() { Name = "Sign up" }))
     .ToBeVisibleAsync();
 
@@ -373,7 +373,7 @@ expect(page.get_by_text("Welcome, John")).to_be_visible()
 ```
 
 ```csharp
-await Expect(page.GetByText("Welcome, John")).ToBeVisibleAsync();
+await Expect(Page.GetByText("Welcome, John")).ToBeVisibleAsync();
 ```
 
 Set an exact match:
@@ -396,7 +396,7 @@ expect(page.get_by_text("Welcome, John", exact=True)).to_be_visible()
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByText("Welcome, John", new() { Exact = true }))
     .ToBeVisibleAsync();
 ```
@@ -424,7 +424,7 @@ expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visib
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByText(new Regex("welcome, john", RegexOptions.IgnoreCase)))
     .ToBeVisibleAsync();
 ```
@@ -504,7 +504,7 @@ expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```csharp
-await Expect(page.GetByTitle("Issues count")).toHaveText("25 issues");
+await Expect(Page.GetByTitle("Issues count")).toHaveText("25 issues");
 ```
 
 :::note When to use title locators
@@ -784,7 +784,7 @@ await expect(page.locator("x-details")).to_contain_text("Details")
 expect(page.locator("x-details")).to_contain_text("Details")
 ```
 ```csharp
-await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
+await Expect(Page.Locator("x-details")).ToContainTextAsync("Details");
 ```
 ## Filtering Locators
 
@@ -910,7 +910,7 @@ expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have
 
 ```csharp
 // 5 in-stock items
-await Expect(page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
+await Expect(Page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
     .ToHaveCountAsync(5);
 ```
 
@@ -973,19 +973,21 @@ await page
     .ClickAsync();
 ```
 
-We can also assert the product card to make sure there is only one
+We can also assert the product card to make sure there is only one:
 
 ```js
 await expect(page
     .getByRole('listitem')
-    .filter({ has: page.getByText('Product 2') }))
+    .filter({ has: page.getByRole('heading', { name: 'Product 2' }) }))
     .toHaveCount(1);
 ```
 
 ```java
 assertThat(page
     .getByRole(AriaRole.LISTITEM)
-    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")))
+    .filter(new Locator.FilterOptions()
+        .setHas(page.GetByRole(AriaRole.HEADING,
+                               new Page.GetByRoleOptions().setName("Product 2"))))
     .hasCount(1);
 ```
 
@@ -1006,10 +1008,59 @@ expect(
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+    }))
+    .ToHaveCountAsync(1);
+```
+
+The filtering locator **must be relative** to the original locator and is queried starting with the original locator match, not the document root. Therefore, the following will not work, because the filtering locator starts matching from the `<ul>` list element that is outside of the `<li>` list item matched by the original locator:
+
+```js
+// ✖ WRONG
+await expect(page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('list').getByText('Product 2') }))
+    .toHaveCount(1);
+```
+
+```java
+// ✖ WRONG
+assertThat(page
+    .getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions()
+        .setHas(page.GetByRole(AriaRole.LIST)
+                    .GetByRole(AriaRole.HEADING,
+                               new Page.GetByRoleOptions().setName("Product 2"))))
+    .hasCount(1);
+```
+
+```python async
+# ✖ WRONG
+await expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("list").get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```python sync
+# ✖ WRONG
+expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("list").get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```csharp
+// ✖ WRONG
+await Expect(Page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        Has = page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1049,7 +1100,7 @@ expect(
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
@@ -1309,7 +1360,7 @@ assertThat(page.getByRole(AriaRole.LISTITEM).hasCount(3);
 ```
 
 ```csharp
-await Expect(page.GetByRole(AriaRole.Listitem)).ToHaveCountAsync(3);
+await Expect(Page.GetByRole(AriaRole.Listitem)).ToHaveCountAsync(3);
 ```
 
 ### Assert all text in a list
@@ -1349,7 +1400,7 @@ assertThat(page
 ```
 
 ```csharp
-await Expect(page
+await Expect(Page
     .GetByRole(AriaRole.Listitem))
     .ToHaveTextAsync(new string[] {"apple", "banana", "orange"});
 ```

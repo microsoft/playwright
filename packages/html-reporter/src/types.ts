@@ -66,9 +66,10 @@ export type TestCaseSummary = {
   title: string;
   path: string[];
   projectName: string;
-  reportName?: string;
+  botName?: string;
   location: Location;
   annotations: TestCaseAnnotation[];
+  tags: string[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
   ok: boolean;

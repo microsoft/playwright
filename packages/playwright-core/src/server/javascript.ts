@@ -272,7 +272,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
       if (!handle._objectId)
         return { fallThrough: handle._value };
       if (handle._disposed)
-        throw new Error('JSHandle is disposed!');
+        throw new JavaScriptErrorInEvaluate('JSHandle is disposed!');
       const adopted = context.adoptIfNeeded(handle);
       if (adopted === null)
         return { h: pushHandle(Promise.resolve(handle)) };
@@ -285,7 +285,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   const utilityScriptObjectIds: ObjectId[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
-      throw new Error('JSHandles can be evaluated only in the context they were created!');
+      throw new JavaScriptErrorInEvaluate('JSHandles can be evaluated only in the context they were created!');
     utilityScriptObjectIds.push(handle._objectId!);
   }
 

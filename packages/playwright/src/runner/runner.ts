@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult } from '../../types/testReporter';
+import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
@@ -27,6 +28,8 @@ import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
+import type { Suite } from '../common/test';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -37,6 +40,8 @@ type ProjectConfigWithFiles = {
 
 type ConfigListFilesReport = {
   projects: ProjectConfigWithFiles[];
+  cliEntryPoint?: string;
+  error?: TestError;
 };
 
 export class Runner {
@@ -46,10 +51,11 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(projectNames: string[] | undefined): Promise<any> {
+  async listTestFiles(frameworkPackage: string | undefined, projectNames: string[] | undefined): Promise<ConfigListFilesReport> {
     const projects = filterProjects(this._config.projects, projectNames);
     const report: ConfigListFilesReport = {
-      projects: []
+      projects: [],
+      cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
     };
     for (const project of projects) {
       report.projects.push({
@@ -102,6 +108,29 @@ export class Runner {
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
     return status;
+  }
+
+  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process'): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
+    const config = this._config;
+    const errors: TestError[] = [];
+    const reporter = new InternalReporter(new Multiplexer([wrapReporterAsV2({
+      onError(error: TestError) {
+        errors.push(error);
+      }
+    })]));
+    const taskRunner = createTaskRunnerForList(config, reporter, mode, { failOnLoadErrors: true });
+    const testRun = new TestRun(config, reporter);
+    reporter.onConfigure(config.config);
+
+    const taskStatus = await taskRunner.run(testRun, 0);
+    let status: FullResult['status'] = testRun.failureTracker.result();
+    if (status === 'passed' && taskStatus !== 'passed')
+      status = taskStatus;
+    const modifiedResult = await reporter.onEnd({ status });
+    if (modifiedResult && modifiedResult.status)
+      status = modifiedResult.status;
+    await reporter.onExit();
+    return { status, suite: testRun.rootSuite, errors };
   }
 
   async watchAllTests(): Promise<FullResult['status']> {

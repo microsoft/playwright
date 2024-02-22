@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.40.0-next",
+  "version": "1.42.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
@@ -27,7 +27,6 @@
     "./lib/image_tools/compare": "./lib/image_tools/compare.js",
     "./lib/image_tools/imageChannel": "./lib/image_tools/imageChannel.js",
     "./lib/image_tools/colorUtils": "./lib/image_tools/colorUtils.js",
-    "./lib/cli/cli": "./lib/cli/cli.js",
     "./lib/cli/program": "./lib/cli/program.js",
     "./lib/server/registry/index": "./lib/server/registry/index.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",

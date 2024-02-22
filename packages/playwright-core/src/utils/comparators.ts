@@ -21,7 +21,7 @@ import { compare } from '../image_tools/compare';
 const { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = require('../third_party/diff_match_patch');
 import { PNG } from '../utilsBundle';
 
-export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, _comparator?: string };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
@@ -65,18 +65,18 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   }
   const diff = new PNG({ width: size.width, height: size.height });
   let count;
-  if (options._comparator === 'ssim-cie94') {
+  if (options.comparator === 'ssim-cie94') {
     count = compare(expected.data, actual.data, diff.data, size.width, size.height, {
       // All ΔE* formulae are originally designed to have the difference of 1.0 stand for a "just noticeable difference" (JND).
       // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
       maxColorDeltaE94: 1.0,
     });
-  } else if ((options._comparator ?? 'pixelmatch') === 'pixelmatch') {
+  } else if ((options.comparator ?? 'pixelmatch') === 'pixelmatch') {
     count = pixelmatch(expected.data, actual.data, diff.data, size.width, size.height, {
       threshold: options.threshold ?? 0.2,
     });
   } else {
-    throw new Error(`Configuration specifies unknown comparator "${options._comparator}"`);
+    throw new Error(`Configuration specifies unknown comparator "${options.comparator}"`);
   }
 
   const maxDiffPixels1 = options.maxDiffPixels;

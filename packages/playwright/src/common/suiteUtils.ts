@@ -15,7 +15,7 @@
 */
 
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils';
+import { calculateSha1, toPosixPath } from 'playwright-core/lib/utils';
 import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './config';
 import type { Matcher, TestFileFilter } from '../util';
@@ -39,9 +39,10 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCa
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
   return !!suite._entries.length;
 }
+
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
-  const relativeFile = path.relative(project.project.testDir, suite.location!.file).split(path.sep).join('/');
-  const fileId = calculateSha1(relativeFile).slice(0, 20);
+  const relativeFile = path.relative(project.project.testDir, suite.location!.file);
+  const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
 
   // Clone suite.
   const result = suite._deepClone();
@@ -51,7 +52,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
   result.forEachTest((test, suite) => {
     suite._fileId = fileId;
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-    const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')}`;
+    const [file, ...titles] = test.titlePath();
+    const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test._projectId = project.id;
@@ -59,8 +61,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
     let inheritedTimeout: number | undefined;
+    test.annotations = [];
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
-      test._staticAnnotations.push(...parentSuite._staticAnnotations);
+      if (parentSuite._staticAnnotations.length)
+        test.annotations = [...parentSuite._staticAnnotations, ...test.annotations];
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
         inheritedRetries = parentSuite._retries;
       if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)
@@ -68,10 +72,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     }
     test.retries = inheritedRetries ?? project.project.retries;
     test.timeout = inheritedTimeout ?? project.project.timeout;
-    test.annotations = [...test._staticAnnotations];
+    test.annotations.push(...test._staticAnnotations);
 
     // Skip annotations imply skipped expectedStatus.
-    if (test._staticAnnotations.some(a => a.type === 'skip' || a.type === 'fixme'))
+    if (test.annotations.some(a => a.type === 'skip' || a.type === 'fixme'))
       test.expectedStatus = 'skipped';
 
     // We only compute / set digest in the runner.

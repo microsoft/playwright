@@ -85,7 +85,7 @@ assertThat(page).not().hasURL("error");
 ```
 
 ```csharp
-await Expect(page).Not.ToHaveURL("error");
+await Expect(Page).Not.ToHaveURL("error");
 ```
 
 ## async method: PageAssertions.NotToHaveTitle
@@ -161,6 +161,9 @@ Snapshot name.
 ### option: PageAssertions.toHaveScreenshot#1.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
 
+### option: PageAssertions.toHaveScreenshot#1.stylePath = %%-screenshot-option-style-path-%%
+* since: v1.41
+
 ### option: PageAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23
 
@@ -212,6 +215,9 @@ Note that screenshot assertions only work with Playwright test runner.
 ### option: PageAssertions.toHaveScreenshot#2.maskColor = %%-screenshot-option-mask-color-%%
 * since: v1.35
 
+### option: PageAssertions.toHaveScreenshot#2.stylePath = %%-screenshot-option-style-path-%%
+* since: v1.41
+
 ### option: PageAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
 * since: v1.23
 
@@ -261,7 +267,7 @@ expect(page).to_have_title(re.compile(r".*checkout"))
 ```
 
 ```csharp
-await Expect(page).ToHaveTitle("Playwright");
+await Expect(Page).ToHaveTitle("Playwright");
 ```
 
 ### param: PageAssertions.toHaveTitle.titleOrRegExp
@@ -310,7 +316,7 @@ expect(page).to_have_url(re.compile(".*checkout"))
 ```
 
 ```csharp
-await Expect(page).ToHaveURL(new Regex(".*checkout"));
+await Expect(Page).ToHaveURL(new Regex(".*checkout"));
 ```
 
 ### param: PageAssertions.toHaveURL.urlOrRegExp

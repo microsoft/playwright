@@ -103,3 +103,33 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
+
+test('should print the correct imports in junit', async ({ runCLI, channel, browserName }) => {
+  const cli = runCLI(['--target=java-junit', emptyHTML]);
+  const expectedImportResult = `import com.microsoft.playwright.junit.UsePlaywright;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.*;
+
+import org.junit.jupiter.api.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.*;`;
+  await cli.waitFor(expectedImportResult);
+});
+
+test('should print a valid basic program in junit', async ({ runCLI, channel, browserName }) => {
+  const cli = runCLI(['--target=java-junit', emptyHTML]);
+  const expectedResult = `import com.microsoft.playwright.junit.UsePlaywright;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.*;
+
+import org.junit.jupiter.api.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.*;
+
+@UsePlaywright
+public class TestExample {
+  @Test
+  void test(Page page) {
+    page.navigate("${emptyHTML}");
+  }
+}`;
+  await cli.waitFor(expectedResult);
+});

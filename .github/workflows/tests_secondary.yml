@@ -29,9 +29,11 @@ jobs:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -41,8 +43,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -52,18 +52,21 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13]
+        os: [macos-12, macos-13, macos-14]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -73,8 +76,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -83,6 +84,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test_win:
     name: "Windows"
@@ -91,9 +93,11 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-windows-latest"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -105,13 +109,9 @@ jobs:
     - run: npm run test -- --project=${{ matrix.browser }} --workers=1
       if: matrix.browser == 'firefox'
       shell: bash
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-windows-latest"
     - run: npm run test -- --project=${{ matrix.browser }}
       if: matrix.browser != 'firefox'
       shell: bash
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-windows-latest"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -120,6 +120,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -134,8 +135,8 @@ jobs:
           node_version: 20
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node_version }}
     - run: npm ci
@@ -161,9 +162,11 @@ jobs:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-20.04, ubuntu-22.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -174,12 +177,8 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && !startsWith(matrix.os, 'ubuntu-')
-      env:
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -188,6 +187,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   transport_linux:
     name: "Transport"
@@ -196,9 +196,11 @@ jobs:
       matrix:
         mode: [driver, service]
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.mode }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -210,7 +212,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
-        PWTEST_BLOB_REPORT_NAME: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -219,6 +220,7 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -232,9 +234,11 @@ jobs:
           - browser: chromium
             channel: chromium-tip-of-tree
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "tracing-${{ matrix.channel || matrix.browser }}"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -247,7 +251,6 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_REPORT_NAME: "tracing-${{ matrix.channel || matrix.browser }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -256,13 +259,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "chrome-stable-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -273,7 +279,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_REPORT_NAME: "chrome-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -282,13 +287,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "chrome-stable-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -300,7 +308,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_REPORT_NAME: "chrome-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -309,13 +316,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "chrome-stable-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -326,7 +336,6 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_REPORT_NAME: "chrome-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -335,17 +344,21 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
     runs-on: ${{ matrix.os  }}
+    env:
+      PWTEST_CHANNEL: chromium-tip-of-tree
+      PWTEST_BOT_NAME: "tip-of-tree-${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, macos-12, windows-latest]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -355,14 +368,8 @@ jobs:
     - run: npx playwright install --with-deps chromium-tip-of-tree
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       if: matrix.os == 'ubuntu-20.04'
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-${{ matrix.os }}"
     - run: npm run ctest
       if: matrix.os != 'ubuntu-20.04'
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -371,17 +378,21 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
     runs-on: ${{ matrix.os  }}
+    env:
+      PWTEST_CHANNEL: chromium-tip-of-tree
+      PWTEST_BOT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -391,14 +402,8 @@ jobs:
     - run: npx playwright install --with-deps chromium-tip-of-tree
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- --headed
       if: matrix.os == 'ubuntu-latest'
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     - run: npm run ctest -- --headed
       if: matrix.os != 'ubuntu-latest'
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -407,13 +412,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "firefox-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -424,7 +432,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_REPORT_NAME: "firefox-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -433,13 +440,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "firefox-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -451,7 +461,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_REPORT_NAME: "firefox-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -460,13 +469,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "firefox-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -477,7 +489,6 @@ jobs:
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_REPORT_NAME: "firefox-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -486,13 +497,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "edge-stable-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -503,7 +517,6 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_REPORT_NAME: "edge-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -512,13 +525,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_win:
     name: "Edge Stable (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "edge-stable-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -530,7 +546,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_REPORT_NAME: "edge-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -539,13 +554,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "edge-stable-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -556,7 +574,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_REPORT_NAME: "edge-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -565,13 +582,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "edge-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -582,7 +602,6 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_REPORT_NAME: "edge-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -591,13 +610,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_win:
     name: "Edge Beta (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "edge-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -609,7 +631,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_REPORT_NAME: "edge-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -618,13 +639,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "edge-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -635,7 +659,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_REPORT_NAME: "edge-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -644,13 +667,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "edge-dev-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -661,7 +687,6 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_REPORT_NAME: "edge-dev-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -670,13 +695,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_win:
     name: "Edge Dev (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "edge-dev-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -688,7 +716,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_REPORT_NAME: "edge-dev-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -697,13 +724,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "edge-dev-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -714,7 +744,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_REPORT_NAME: "edge-dev-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -723,13 +752,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
     runs-on: ubuntu-20.04
+    env:
+      PWTEST_BOT_NAME: "chrome-beta-linux"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -740,7 +772,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_REPORT_NAME: "chrome-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -749,13 +780,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
     runs-on: windows-latest
+    env:
+      PWTEST_BOT_NAME: "chrome-beta-windows"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -767,7 +801,6 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_REPORT_NAME: "chrome-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -776,13 +809,16 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
     runs-on: macos-latest
+    env:
+      PWTEST_BOT_NAME: "chrome-beta-mac"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -793,7 +829,6 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_REPORT_NAME: "chrome-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -802,13 +837,14 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   build-playwright-driver:
     name: "build-playwright-driver"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -819,9 +855,11 @@ jobs:
   test_linux_chromium_headless_new:
     name: Linux Chromium Headless New
     runs-on: ubuntu-latest
+    env:
+      PWTEST_BOT_NAME: "headless-new"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18
     - run: npm ci
@@ -833,7 +871,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
       env:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
-        PWTEST_BLOB_REPORT_NAME: "headless-new"
     - run: node tests/config/checkCoverage.js chromium
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -843,3 +880,4 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+        job_name: ${{ env.PWTEST_BOT_NAME }}
