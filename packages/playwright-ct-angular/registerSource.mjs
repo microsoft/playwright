@@ -104,7 +104,7 @@ async function __pwRenderComponent(component) {
 
   await TestBed.compileComponents();
 
-  __pwUpdateSlots(WrapperComponent, component.options?.slots, componentMetadata.selector);
+  __pwUpdateSlots(WrapperComponent, component.slots, componentMetadata.selector);
 
   // TODO: only inject when router is provided
   TestBed.inject(Router).initialNavigation();
