@@ -42,8 +42,8 @@ function __pwCreateSlots(slots) {
 
   for (const slotName in slots) {
     const template = document
-      .createRange()
-      .createContextualFragment(slots[slotName]);
+        .createRange()
+        .createContextualFragment(slots[slotName]);
     svelteSlots[slotName] = [createSlotFn(template)];
   }
 

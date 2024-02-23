@@ -35,11 +35,5 @@
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-    "packages/playwright-ct-react",
-    "packages/playwright-ct-react17",
-    "packages/playwright-ct-solid",
-    "packages/playwright-ct-svelte",
-    "packages/playwright-ct-vue",
-    "packages/playwright-ct-vue2"
   ],
 }

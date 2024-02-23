@@ -4,6 +4,7 @@ module.exports = {
     parserOptions: {
       ecmaVersion: 9,
       sourceType: "module",
+      project: "./tsconfig.json",
     },
     extends: [
       "plugin:react-hooks/recommended"
