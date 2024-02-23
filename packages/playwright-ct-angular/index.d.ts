@@ -42,7 +42,7 @@ type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot 
 type ComponentEvents = Record<string, Function>;
 
 export interface MountOptions<HooksConfig extends JsonObject, Component> {
-  props?: Partial<Component>, // TODO: filter props
+  props?: Partial<Component> | Record<string, unknown>, // TODO: filter props and handle signals
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;

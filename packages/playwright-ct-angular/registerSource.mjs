@@ -1,18 +1,18 @@
-// /**
-//  * Copyright (c) Microsoft Corporation.
-//  *
-//  * Licensed under the Apache License, Version 2.0 (the "License");
-//  * you may not use this file except in compliance with the License.
-//  * You may obtain a copy of the License at
-//  *
-//  *     http://www.apache.org/licenses/LICENSE-2.0
-//  *
-//  * Unless required by applicable law or agreed to in writing, software
-//  * distributed under the License is distributed on an "AS IS" BASIS,
-//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  * See the License for the specific language governing permissions and
-//  * limitations under the License.
-//  */
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
@@ -75,7 +75,7 @@ window.playwrightUpdate = async (rootElement, component) => {
   if (!fixture)
     throw new Error('Component was not mounted');
 
-  __pwUpdateProps(fixture, component.props);
+  __pwUpdateProps(fixture, component);
   __pwUpdateEvents(fixture, component.on);
 
   fixture.detectChanges();
@@ -91,40 +91,35 @@ const __pwFixtureRegistry = new Map();
  * @param {ComponentInfo} component
  */
 async function __pwRenderComponent(component) {
-  let componentClass = component.type;
+  /** @type {import('@angular/core').Type<unknown>} */
+  let componentClass;
 
-  if (typeof componentClass === 'string') {
+  if (__pwIsTemplate(component)) {
     const templateInfo = /** @type {TemplateInfo} */(component);
     componentClass = defineComponent({
       imports: templateInfo.imports,
       selector: 'pw-template-component',
       standalone: true,
-      template: componentClass
+      template: templateInfo.type,
     })(class {});
+  } else {
+    componentClass = /** @type {import('@angular/core').Type<unknown>} */(component.type);
   }
 
   const componentMetadata = reflectComponentType(componentClass);
   if (!componentMetadata?.isStandalone)
     throw new Error('Only standalone components are supported');
 
-  const WrapperComponent = defineComponent({
-    selector: 'pw-wrapper-component',
-    template: ``,
-  })(class {});
-
   TestBed.configureTestingModule({
     imports: [componentClass],
-    declarations: [WrapperComponent]
   });
 
   await TestBed.compileComponents();
 
-  __pwUpdateSlots(WrapperComponent, component.slots, componentMetadata.selector);
-
-  const fixture = TestBed.createComponent(WrapperComponent);
+  const fixture = TestBed.createComponent(componentClass);
   fixture.nativeElement.id = 'root';
 
-  __pwUpdateProps(fixture, component.props);
+  __pwUpdateProps(fixture, component);
   __pwUpdateEvents(fixture, component.on);
 
   fixture.autoDetectChanges();
@@ -134,10 +129,18 @@ async function __pwRenderComponent(component) {
 
 /**
  * @param {import('@angular/core/testing').ComponentFixture} fixture
+ * @param {ComponentInfo} componentInfo
  */
-function __pwUpdateProps(fixture, props = {}) {
-  for (const [name, value] of Object.entries(props))
-    fixture.debugElement.children[0].context[name] = value;
+function __pwUpdateProps(fixture, componentInfo) {
+  if (!componentInfo.props) return;
+
+  if (__pwIsTemplate(componentInfo)) {
+    Object.assign(fixture.componentInstance, componentInfo.props);
+  } else {
+    for (const [name, value] of Object.entries(componentInfo.props))
+      fixture.componentRef.setInput(name, value);
+  }
+
 }
 
 /**
@@ -150,7 +153,7 @@ function __pwUpdateEvents(fixture, events = {}) {
     /* Unsubscribe previous listener. */
     outputSubscriptionRecord[name]?.unsubscribe();
 
-    const subscription = fixture.debugElement.children[0].componentInstance[
+    const subscription = fixture.componentInstance[
         name
     ].subscribe((/** @type {unknown} */ event) => listener(event));
 
@@ -162,51 +165,10 @@ function __pwUpdateEvents(fixture, events = {}) {
   __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
 }
 
+
 /**
- * @param {any} value
- * @return {?HTMLElement}
+ * @param {ComponentInfo} component
  */
-function __pwCreateSlot(value) {
-  return /** @type {?HTMLElement} */ (
-    document
-        .createRange()
-        .createContextualFragment(value)
-        .firstChild
-  );
-}
-
-function __pwUpdateSlots(Component, slots = {}, tagName) {
-  const wrapper = document.createElement(tagName);
-  for (const [key, value] of Object.entries(slots)) {
-    let slotElements;
-    if (typeof value !== 'object')
-      slotElements = [__pwCreateSlot(value)];
-
-    if (Array.isArray(value))
-      slotElements = value.map(__pwCreateSlot);
-
-    if (!slotElements)
-      throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
-
-    for (const slotElement of slotElements) {
-      if (!slotElement)
-        throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
-
-      if (key === 'default') {
-        wrapper.appendChild(slotElement);
-        continue;
-      }
-
-      if (slotElement.nodeName === '#text') {
-        throw new Error(
-            `Invalid slot with name: \`${key}\` supplied to \`mount()\`, expected \`HTMLElement\` but received \`TextNode\`.`
-        );
-      }
-
-      slotElement.setAttribute(key, '');
-      wrapper.appendChild(slotElement);
-    }
-  }
-
-  TestBed.overrideTemplate(Component, wrapper.outerHTML);
+function __pwIsTemplate(component) {
+  return typeof component.type === 'string';
 }
