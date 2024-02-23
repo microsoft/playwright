@@ -55,6 +55,15 @@ npx playwright test --update-snapshots
 > Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
+If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
+
+```bash
+docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v%%VERSION%%-jammy /bin/bash
+npm install
+npx playwright test --update-snapshots
+```
+
+
 ## Options
 
 ### maxDiffPixels
