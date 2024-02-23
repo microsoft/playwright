@@ -87,12 +87,12 @@ const __pwFixtureRegistry = new Map();
  * @param {Component} component
  */
 async function __pwRenderComponent(component) {
-  const Component = await __pwResolveComponent(component);
-  if (!Component)
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+  const componentClass = component.type;
+  if (!componentClass)
+    throw new Error(`Unregistered component: ${componentClass}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
 
-  const componentMetadata = reflectComponentType(Component);
+  const componentMetadata = reflectComponentType(componentClass);
   if (!componentMetadata?.isStandalone)
     throw new Error('Only standalone components are supported');
 
@@ -102,7 +102,7 @@ async function __pwRenderComponent(component) {
   })(class {});
 
   TestBed.configureTestingModule({
-    imports: [Component],
+    imports: [componentClass],
     declarations: [WrapperComponent]
   });
 
@@ -124,9 +124,10 @@ async function __pwRenderComponent(component) {
   return fixture;
 }
 
-async function __pwResolveComponent(component) {
-  return await window.__pwRegistry.resolveImportRef(component.type);
-}
+// async function __pwResolveComponent(component) {
+//   // const component = await window.__pwRegistry.resolveImportRef(component.type);
+//   return await 
+// }
 
 /**
  * @param {import('@angular/core/testing').ComponentFixture} fixture
