@@ -26,6 +26,9 @@ export default defineConfig({
   use: {
     trace: 'on-first-retry',
     ctViteConfig: {
+      plugins: [angular({
+        tsconfig: resolve('./tsconfig.spec.json'),
+      })],
       resolve: {
         alias: {
           '@': resolve('./src'),
