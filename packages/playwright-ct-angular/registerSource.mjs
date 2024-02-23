@@ -28,7 +28,6 @@ import {
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting,
 } from '@angular/platform-browser-dynamic/testing';
-import { Router } from '@angular/router';
 
 getTestBed().initTestEnvironment(
     BrowserDynamicTestingModule,
@@ -105,9 +104,6 @@ async function __pwRenderComponent(component) {
   await TestBed.compileComponents();
 
   __pwUpdateSlots(WrapperComponent, component.slots, componentMetadata.selector);
-
-  // TODO: only inject when router is provided
-  TestBed.inject(Router).initialNavigation();
 
   const fixture = TestBed.createComponent(WrapperComponent);
   fixture.nativeElement.id = 'root';
