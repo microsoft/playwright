@@ -57,8 +57,9 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(frameworkPackage: string | undefined, projectNames: string[] | undefined): Promise<ConfigListFilesReport> {
-    const projects = filterProjects(this._config.projects, projectNames);
+  async listTestFiles(): Promise<ConfigListFilesReport> {
+    const frameworkPackage = (this._config.config as any)['@playwright/test']?.['packageJSON'];
+    const projects = filterProjects(this._config.projects);
     const report: ConfigListFilesReport = {
       projects: [],
       cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
