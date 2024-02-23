@@ -61,19 +61,15 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  await resolveComponent(component);
-  if (component.kind === 'jsx')
-    throw new Error('JSX mount notation is not supported');
-
-  if (component.options?.slots)
+  if (component.slots)
     throw new Error('Update slots is not supported yet');
 
   const fixture = __pwFixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
 
-  __pwUpdateProps(fixture, component.options?.props);
-  __pwUpdateEvents(fixture, component.options?.on);
+  __pwUpdateProps(fixture, component.props);
+  __pwUpdateEvents(fixture, component.on);
 
   fixture.detectChanges();
 };
@@ -123,11 +119,6 @@ async function __pwRenderComponent(component) {
 
   return fixture;
 }
-
-// async function __pwResolveComponent(component) {
-//   // const component = await window.__pwRegistry.resolveImportRef(component.type);
-//   return await 
-// }
 
 /**
  * @param {import('@angular/core/testing').ComponentFixture} fixture
