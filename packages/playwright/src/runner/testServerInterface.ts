@@ -34,14 +34,12 @@ export interface TestServerInterface {
     configFile: string;
     locations: string[];
     reporter: string;
-    env: NodeJS.ProcessEnv;
   }): Promise<void>;
 
   test(params: {
     configFile: string;
     locations: string[];
     reporter: string;
-    env: NodeJS.ProcessEnv;
     headed?: boolean;
     oneWorker?: boolean;
     trace?: 'on' | 'off';
@@ -64,5 +62,6 @@ export interface TestServerInterface {
 }
 
 export interface TestServerEvents {
+  on(event: 'report', listener: (params: any) => void): void;
   on(event: 'stdio', listener: (params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }) => void): void;
 }
