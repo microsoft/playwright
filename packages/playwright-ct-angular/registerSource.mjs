@@ -116,8 +116,8 @@ async function __pwRenderComponent(component) {
   const fixture = TestBed.createComponent(WrapperComponent);
   fixture.nativeElement.id = 'root';
 
-  __pwUpdateProps(fixture, component.options?.props);
-  __pwUpdateEvents(fixture, component.options?.on);
+  __pwUpdateProps(fixture, component.props);
+  __pwUpdateEvents(fixture, component.on);
 
   fixture.autoDetectChanges();
 
