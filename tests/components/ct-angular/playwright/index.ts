@@ -12,10 +12,6 @@ export type HooksConfig = {
 };
 
 beforeMount<HooksConfig>(async ({ hooksConfig, TestBed }) => {
-  TestBed.configureTestingModule({
-    imports: [ButtonComponent],
-  });
-
   if (hooksConfig?.routing)
     TestBed.configureTestingModule({
       providers: [
