@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, debugTest, filterStackFile } from '../util';
+import { formatLocation, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription } from './timeoutManager';
@@ -66,8 +66,10 @@ class Fixture {
     }
 
     await testInfo._runAsStage({
+      title: `fixture: ${this.registration.name}`,
+      canTimeout: true,
       location: this._isInternalFixture ? this.registration.location : undefined,
-      stepInfo: this._shouldGenerateStep ? { title: `fixture: ${this.registration.name}`, category: 'fixture' } : undefined,
+      stepCategory: this._shouldGenerateStep ? 'fixture' : undefined,
     }, async () => {
       testInfo._timeoutManager.setCurrentFixture(this._setupDescription);
       await this._setupInternal(testInfo);
@@ -99,7 +101,6 @@ class Fixture {
 
     let called = false;
     const useFuncStarted = new ManualPromise<void>();
-    debugTest(`setup ${this.registration.name}`);
     const useFunc = async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
@@ -128,8 +129,10 @@ class Fixture {
 
   async teardown(testInfo: TestInfoImpl) {
     await testInfo._runAsStage({
+      title: `fixture: ${this.registration.name}`,
+      canTimeout: true,
       location: this._isInternalFixture ? this.registration.location : undefined,
-      stepInfo: this._shouldGenerateStep ? { title: `fixture: ${this.registration.name}`, category: 'fixture' } : undefined,
+      stepCategory: this._shouldGenerateStep ? 'fixture' : undefined,
     }, async () => {
       testInfo._timeoutManager.setCurrentFixture(this._teardownDescription);
       if (!this._teardownWithDepsComplete)
@@ -149,7 +152,6 @@ class Fixture {
         this._usages.clear();
       }
       if (this._useFuncFinished) {
-        debugTest(`teardown ${this.registration.name}`);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
       }
@@ -204,12 +206,12 @@ export class FixtureRunner {
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
-    await testInfo._runAsStage({}, async () => {
+    await testInfo._runAsStage({ title: `teardown ${scope} scope` }, async () => {
       for (const fixture of collector)
         await fixture.teardown(testInfo);
-      if (scope === 'test')
-        this.testScopeClean = true;
     });
+    if (scope === 'test')
+      this.testScopeClean = true;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
@@ -236,7 +238,7 @@ export class FixtureRunner {
       this._collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
 
     // Setup fixtures.
-    await testInfo._runAsStage({ stopOnChildError: true }, async () => {
+    await testInfo._runAsStage({ title: 'setup fixtures', stopOnChildError: true }, async () => {
       for (const registration of collector)
         await this._setupFixtureForRegistration(registration, testInfo);
     });
@@ -259,7 +261,7 @@ export class FixtureRunner {
       // Do not run the function when fixture setup has already failed.
       return null;
     }
-    await testInfo._runAsStage({}, async () => {
+    await testInfo._runAsStage({ title: 'run function', canTimeout: true }, async () => {
       await fn(params, testInfo);
     });
   }

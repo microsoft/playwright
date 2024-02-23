@@ -21,10 +21,10 @@ import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } fro
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
-import type { RunnableType, TimeSlot } from './timeoutManager';
+import type { RunnableDescription, RunnableType, TimeSlot } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
+import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
@@ -49,19 +49,20 @@ export interface TestStepInternal {
 }
 
 export type TestStage = {
+  title: string;
+  location?: Location;
+  stepCategory?: 'hook' | 'fixture';
   runnableType?: RunnableType;
   runnableSlot?: TimeSlot;
-  stepInfo?: {
-    title: string;
-    category: 'hook' | 'fixture';
-  };
-  location?: Location;
-  allowAndStopOnSkips?: boolean;
+  canTimeout?: boolean;
+  allowSkip?: boolean;
   stopOnChildError?: boolean;
+  continueOnChildTimeout?: boolean;
 
   step?: TestStepInternal;
   error?: Error;
   triggeredSkip?: boolean;
+  triggeredTimeout?: boolean;
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -234,22 +235,6 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
-    const timeoutError = await this._timeoutManager.runWithTimeout(cb);
-    // When interrupting, we arrive here with a timeoutError, but we should not
-    // consider it a timeout.
-    if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
-      this._didTimeout = true;
-      const serialized = serializeError(timeoutError);
-      this.errors.push(serialized);
-      this._tracing.appendForError(serialized);
-      // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed' || this.status === 'skipped')
-        this.status = 'timedOut';
-    }
-    this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
-  }
-
   private _findLastNonFinishedStep(filter: (step: TestStepInternal) => boolean) {
     let result: TestStepInternal | undefined;
     const visit = (step: TestStepInternal) => {
@@ -367,6 +352,13 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
+  _unhandledError(error: Error) {
+    this._failWithError(error, true /* isHardError */, true /* retriable */);
+    const stage = this._stages[this._stages.length - 1];
+    if (stage)
+      stage.error = stage.error ?? error;
+  }
+
   _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
     if (!retriable)
       this._hasNonRetriableError = true;
@@ -378,12 +370,6 @@ export class TestInfoImpl implements TestInfo {
       return;
     if (isHardError)
       this._hasHardError = true;
-    const stage = this._stages[this._stages.length - 1];
-    if (stage) {
-      // Save the error to the stage here, so that unhandled rejections
-      // are attributed to the current stage. Among many errors, prefer the first one.
-      stage.error = stage.error ?? error;
-    }
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     const serialized = serializeError(error);
@@ -397,54 +383,88 @@ export class TestInfoImpl implements TestInfo {
   async _runAsStage(stage: TestStage, cb: () => Promise<any>) {
     // Inherit some properties from parent.
     const parent = this._stages[this._stages.length - 1];
-    stage.allowAndStopOnSkips = stage.allowAndStopOnSkips ?? parent?.allowAndStopOnSkips ?? false;
+    stage.allowSkip = stage.allowSkip ?? parent?.allowSkip ?? false;
 
-    if (parent?.allowAndStopOnSkips && parent?.triggeredSkip) {
+    if (parent?.allowSkip && parent?.triggeredSkip) {
       // Do not run more child steps after "skip" has been triggered.
+      debugTest(`ignored stage "${stage.title}" after previous skip`);
       return;
     }
     if (parent?.stopOnChildError && parent?.error) {
       // Do not run more child steps after a previous one failed.
+      debugTest(`ignored stage "${stage.title}" after previous error`);
+      return;
+    }
+    if (parent?.triggeredTimeout && !parent?.continueOnChildTimeout) {
+      // Do not run more child steps after a previous one timed out.
+      debugTest(`ignored stage "${stage.title}" after previous timeout`);
       return;
     }
 
-    const runnable = stage.runnableType ? {
-      type: stage.runnableType,
-      slot: stage.runnableSlot,
-      location: stage.location,
-    } : undefined;
+    if (debugTest.enabled) {
+      const location = stage.location ? ` at "${formatLocation(stage.location)}"` : ``;
+      debugTest(`started stage "${stage.title}"${location}`);
+    }
+    stage.step = stage.stepCategory ? this._addStep({ title: stage.title, category: stage.stepCategory, location: stage.location, wallTime: Date.now(), isStage: true }) : undefined;
+    this._stages.push(stage);
 
-    return await this._timeoutManager.withRunnable(runnable, async () => {
-      stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, location: stage.location, wallTime: Date.now(), isStage: true }) : undefined;
-      this._stages.push(stage);
+    let runnable: RunnableDescription | undefined;
+    if (stage.canTimeout) {
+      // Choose the deepest runnable configuration.
+      runnable = { type: 'test' };
+      for (const s of this._stages) {
+        if (s.runnableType) {
+          runnable.type = s.runnableType;
+          runnable.location = s.location;
+        }
+        if (s.runnableSlot)
+          runnable.slot = s.runnableSlot;
+      }
+    }
 
+    const timeoutError = await this._timeoutManager.withRunnable(runnable, async () => {
       try {
         await cb();
       } catch (e) {
-        if (stage.allowAndStopOnSkips && (e instanceof SkipError)) {
+        if (stage.allowSkip && (e instanceof SkipError)) {
           stage.triggeredSkip = true;
           if (this.status === 'passed')
             this.status = 'skipped';
         } else {
+          // Prefer the first error.
+          stage.error = stage.error ?? e;
           this._failWithError(e, true /* isHardError */, true /* retriable */);
         }
       }
-
-      if (parent) {
-        // Notify parent about child error and skip.
-        parent.error = parent.error ?? stage.error;
-        parent.triggeredSkip = parent.triggeredSkip || stage.triggeredSkip;
-      }
-
-      const index = this._stages.indexOf(stage);
-      if (index !== -1)
-        this._stages.splice(index, 1);
-      stage.step?.complete({ error: stage.error });
     });
-  }
+    if (timeoutError)
+      stage.triggeredTimeout = true;
 
-  _resetStages() {
-    this._stages.splice(0, this._stages.length);
+    // When interrupting, we arrive here with a timeoutError, but we should not
+    // consider it a timeout.
+    if (!this._wasInterrupted && !this._didTimeout && timeoutError) {
+      stage.error = stage.error ?? timeoutError;
+      this._didTimeout = true;
+      const serialized = serializeError(timeoutError);
+      this.errors.push(serialized);
+      this._tracing.appendForError(serialized);
+      // Do not overwrite existing failure upon hook/teardown timeout.
+      if (this.status === 'passed' || this.status === 'skipped')
+        this.status = 'timedOut';
+    }
+
+    if (parent) {
+      // Notify parent about child error, skip and timeout.
+      parent.error = parent.error ?? stage.error;
+      parent.triggeredSkip = parent.triggeredSkip || stage.triggeredSkip;
+      parent.triggeredTimeout = parent.triggeredTimeout || stage.triggeredTimeout;
+    }
+
+    if (this._stages[this._stages.length - 1] !== stage)
+      throw new Error(`Internal error: inconsistent stages!`);
+    this._stages.pop();
+    stage.step?.complete({ error: stage.error });
+    debugTest(`finished stage "${stage.title}"`);
   }
 
   _isFailure() {

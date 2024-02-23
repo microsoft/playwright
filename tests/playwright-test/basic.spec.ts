@@ -559,7 +559,7 @@ test('should not allow mixing test types', async ({ runInlineTest }) => {
       export const test2 = test.extend({
         value: 42,
       });
-    
+
       test.describe("test1 suite", () => {
         test2("test 2", async () => {});
       });

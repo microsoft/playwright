@@ -455,3 +455,27 @@ test('should respect test.describe.configure', async ({ runInlineTest }) => {
   expect(result.output).toContain('test1-1000');
   expect(result.output).toContain('test2-2000');
 });
+
+test('beforeEach timeout should prevent others from running', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async () => {
+        console.log('\\n%%beforeEach1');
+        await new Promise(f => setTimeout(f, 2500));
+      });
+      test.beforeEach(async () => {
+        console.log('\\n%%beforeEach2');
+      });
+      test('test', async ({}) => {
+      });
+      test.afterEach(async () => {
+        console.log('\\n%%afterEach');
+        await new Promise(f => setTimeout(f, 1500));
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.outputLines).toEqual(['beforeEach1', 'afterEach']);
+});
