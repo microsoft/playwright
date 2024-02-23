@@ -97,9 +97,9 @@ async function __pwRenderComponent(component) {
   if (__pwIsTemplate(component)) {
     const templateInfo = /** @type {TemplateInfo} */(component);
     componentClass = defineComponent({
-      imports: templateInfo.imports,
-      selector: 'pw-template-component',
       standalone: true,
+      selector: 'pw-template-component',
+      imports: templateInfo.imports,
       template: templateInfo.type,
     })(class {});
   } else {
@@ -112,6 +112,7 @@ async function __pwRenderComponent(component) {
 
   TestBed.configureTestingModule({
     imports: [componentClass],
+    providers: component.providers,
   });
 
   await TestBed.compileComponents();

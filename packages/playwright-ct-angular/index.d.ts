@@ -25,7 +25,7 @@ import type {
 } from '@playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
-import type { Type } from '@angular/core';
+import type { Provider, Type } from '@angular/core';
 
 export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
   use?: BasePlaywrightTestConfig<T, W>['use'] & {
@@ -43,6 +43,7 @@ type ComponentEvents = Record<string, Function>;
 
 export interface MountOptions<HooksConfig extends JsonObject, Component> {
   props?: Partial<Component> | Record<string, unknown>, // TODO: filter props and handle signals
+  providers?: Provider[],
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
