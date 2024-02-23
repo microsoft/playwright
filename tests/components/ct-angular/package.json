@@ -29,6 +29,6 @@
     "@angular/cli": "~17.0.0",
     "@angular/compiler-cli": "^17.0.0",
     "typescript": "~5.2.0",
-    "vite": "^5.0.0"
+    "vite": "~5.0.0"
   }
 }
