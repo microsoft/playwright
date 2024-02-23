@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-angular",
-  "version": "1.40.0-next",
+  "version": "1.42.0-next",
   "description": "Playwright Component Testing for Angular",
   "repository": {
     "type": "git",
