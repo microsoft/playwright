@@ -14,7 +14,7 @@ test('render a default slot', async ({ mount }) => {
 test('render a component as slot', async ({ mount }) => {
   const component = await mount(DefaultSlotComponent, {
     slots: {
-      default: '<button-component title="Submit" />', // component is registered globally in /playwright/index.ts
+      default: '<app-button title="Submit" />', // component is registered globally in /playwright/index.ts
     },
   });
   await expect(component).toContainText('Submit');

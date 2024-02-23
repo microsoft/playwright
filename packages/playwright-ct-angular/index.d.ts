@@ -48,6 +48,13 @@ export interface MountOptions<HooksConfig extends JsonObject, Component> {
   hooksConfig?: HooksConfig;
 }
 
+export interface MountTemplateOptions<HooksConfig extends JsonObject, Component> extends MountOptions<HooksConfig, Component> {
+  /**
+  * @deprecated 🚧 Work in progress.
+  */
+  imports?: Type<unknown>[];
+}
+
 interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
   update(options: {
@@ -57,6 +64,13 @@ interface MountResult<Component> extends Locator {
 }
 
 export interface ComponentFixtures {
+  /**
+  * @deprecated 🚧 Work in progress.
+  */
+  mount<HooksConfig extends JsonObject, Component = unknown>(
+    template: string,
+    options?: MountTemplateOptions<HooksConfig, Component>
+  ): Promise<MountResult<Component>>;
   mount<HooksConfig extends JsonObject, Component = unknown>(
     component: Type<Component>,
     options?: MountOptions<HooksConfig, Component>
