@@ -17,11 +17,12 @@
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
 
+import type { ReporterOptions } from '@microsoft/mpt-reporter/dist/Common/Types';
 import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, type ReporterDescription } from '@playwright/test';
 import * as path from 'path';
-import type { TestModeWorkerOptions } from '../config/testModeFixtures';
-import type { TestModeName } from '../config/testMode';
 import type { CoverageWorkerOptions } from '../config/coverageFixtures';
+import type { TestModeName } from '../config/testMode';
+import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
@@ -39,6 +40,10 @@ const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
 const trace = !!process.env.PWTEST_TRACE;
+const reporterOptions: ReporterOptions = {
+  accessToken: process.env.PLAYWRIGHT_SERVICE_ACCESS_TOKEN,
+  name: 'mpt-reporter-sample-run',
+};
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
@@ -48,7 +53,8 @@ const reporters = () => {
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
-    ['html', { open: 'on-failure' }]
+    // ['html', { open: 'on-failure' }]
+    ['@microsoft/mpt-reporter', reporterOptions]
   ];
   return result;
 };
