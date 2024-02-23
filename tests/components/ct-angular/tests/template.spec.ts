@@ -7,15 +7,15 @@ test('render a template', async ({ mount }) => {
   await expect(component.getByRole('heading')).toContainText('2');
 })
 
-test.skip('render a template with child components', async ({ mount }) => {
+test('render a template with child components', async ({ mount }) => {
   const component = await mount('<app-button title="Click"/>', {
     imports: [ButtonComponent]
   });
 
-  await expect(component.getByRole('button')).toContainText('Title');
+  await expect(component.getByRole('button')).toContainText('Click');
 })
 
-test.skip('render a template with inputs', async ({ mount }) => {
+test('render a template with inputs', async ({ mount }) => {
   const component = await mount('<app-button [title]="title"/>', {
     imports: [ButtonComponent],
     props: {
@@ -23,12 +23,12 @@ test.skip('render a template with inputs', async ({ mount }) => {
     }
   });
 
-  await expect(component.getByRole('button')).toContainText('Title');
+  await expect(component.getByRole('button')).toContainText('Click');
 })
 
-test.skip('render a template with outputs', async ({ mount }) => {
+test('render a template with outputs', async ({ mount }) => {
   let _message: string;
-  const component = await mount('<app-button (submit)="onSubmit()"/>', {
+  const component = await mount('<app-button (submit)="onSubmit($event)"/>', {
     imports: [ButtonComponent],
     props: {
       title: 'Click',
@@ -37,6 +37,8 @@ test.skip('render a template with outputs', async ({ mount }) => {
       }
     }
   });
+
+  component.getByRole('button').click();
 
   await expect(async () => {expect(_message).toBe('hello')}).toPass();
 })

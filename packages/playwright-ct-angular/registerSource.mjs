@@ -17,6 +17,11 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
+/**
+ * @typedef {{type: string} & import('./index').MountTemplateOptions} TemplateInfo
+ * @typedef {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | TemplateInfo} ComponentInfo
+ */
+
 import '@angular/compiler';
 import 'zone.js';
 import {
@@ -81,14 +86,17 @@ const __pwOutputSubscriptionRegistry = new WeakMap();
 
 /** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
 const __pwFixtureRegistry = new Map();
+
 /**
- * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions } component
+ * @param {ComponentInfo} component
  */
 async function __pwRenderComponent(component) {
   let componentClass = component.type;
 
   if (typeof componentClass === 'string') {
+    const templateInfo = /** @type {TemplateInfo} */(component);
     componentClass = defineComponent({
+      imports: templateInfo.imports,
       selector: 'pw-template-component',
       standalone: true,
       template: componentClass
