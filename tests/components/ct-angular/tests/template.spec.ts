@@ -1,10 +1,10 @@
 import { ButtonComponent } from "@/components/button.component";
 import { expect, test } from "@playwright/experimental-ct-angular"
 
-test.skip('render a template', async ({ mount }) => {
-  const component = await mount('<h1>Hello</h1>');
+test('render a template', async ({ mount }) => {
+  const component = await mount('<h1>{{ 1 + 1 }}</h1>');
 
-  await expect(component.getByRole('heading')).toContainText('Hello');
+  await expect(component.getByRole('heading')).toContainText('2');
 })
 
 test.skip('render a template with child components', async ({ mount }) => {

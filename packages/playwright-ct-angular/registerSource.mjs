@@ -59,6 +59,9 @@ window.playwrightUnmount = async rootElement => {
   fixture.nativeElement.replaceChildren();
 };
 
+/**
+ * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions} component
+ */
 window.playwrightUpdate = async (rootElement, component) => {
   if (component.slots)
     throw new Error('Update slots is not supported yet');
@@ -79,13 +82,18 @@ const __pwOutputSubscriptionRegistry = new WeakMap();
 /** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
 const __pwFixtureRegistry = new Map();
 /**
- * @param {Component} component
+ * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions } component
  */
 async function __pwRenderComponent(component) {
-  const componentClass = component.type;
-  if (!componentClass)
-    throw new Error(`Unregistered component: ${componentClass}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+  let componentClass = component.type;
 
+  if (typeof componentClass === 'string') {
+    componentClass = defineComponent({
+      selector: 'pw-template-component',
+      standalone: true,
+      template: componentClass
+    })(class {});
+  }
 
   const componentMetadata = reflectComponentType(componentClass);
   if (!componentMetadata?.isStandalone)
@@ -135,8 +143,8 @@ function __pwUpdateEvents(fixture, events = {}) {
     outputSubscriptionRecord[name]?.unsubscribe();
 
     const subscription = fixture.debugElement.children[0].componentInstance[
-      name
-    ].subscribe((event) => listener(event));
+        name
+    ].subscribe((/** @type {unknown} */ event) => listener(event));
 
     /* Store new subscription. */
     outputSubscriptionRecord[name] = subscription;
