@@ -68,9 +68,6 @@ window.playwrightUnmount = async rootElement => {
  * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions} component
  */
 window.playwrightUpdate = async (rootElement, component) => {
-  if (component.slots)
-    throw new Error('Update slots is not supported yet');
-
   const fixture = __pwFixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
