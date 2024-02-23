@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, APIResponse, Browser, BrowserContext, BrowserContextOptions, Geolocation, HTTPCredentials, LaunchOptions, Locator, Page, PageScreenshotOptions, ViewportSize } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription =
@@ -5636,7 +5636,7 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
-export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries';
+export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 /**
@@ -7099,7 +7099,7 @@ type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
 export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
-export {};
+export { };
 
 
 /**
