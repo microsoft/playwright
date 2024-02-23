@@ -91,14 +91,14 @@ it.describe('should proxy local network requests', () => {
         }
       ]) {
         it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer }) => {
-          it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target), 'Mac webkit does not proxy localhost.');
+          it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target) && additionalBypass, 'Mac webkit does not proxy localhost when bypass rules are set.');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
           server.setRoute(path, async (req, res) => {
             res.end('<html><title>Served by the proxy</title></html>');
           });
 
-          const url = `http://${params.target}:${server.PORT}${path}`;
+          const url = `http://${params.target}:55555${path}`;
           proxyServer.forwardTo(server.PORT);
           const browser = await browserType.launch({
             proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
