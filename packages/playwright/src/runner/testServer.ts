@@ -32,6 +32,8 @@ import type { FullConfigInternal } from '../common/config';
 import type { TestServerInterface } from './testServerInterface';
 import { serializeError } from '../util';
 import { prepareErrorStack } from '../reporters/base';
+import { loadReporter } from './loadUtils';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 export async function runTestServer() {
   if (restartWithExperimentalTsEsm(undefined, true))
@@ -117,10 +119,10 @@ class Dispatcher implements TestServerInterface {
     reporter: string;
     env: NodeJS.ProcessEnv;
   }) {
-    this._syncEnv(params.env);
     const config = await this._loadConfig(params.configFile);
     config.cliArgs = params.locations || [];
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'list', [[params.reporter]])));
+    const wireReporter = await this._createReporter(params.reporter);
+    const reporter = new InternalReporter(new Multiplexer([wireReporter]));
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -148,11 +150,9 @@ class Dispatcher implements TestServerInterface {
     reuseContext?: boolean;
     connectWsEndpoint?: string;
   }) {
-    this._syncEnv(params.env);
     await this._stopTests();
 
     const overrides: ConfigCLIOverrides = {
-      additionalReporters: [[params.reporter]],
       repeatEach: 1,
       retries: 0,
       preserveOutputDir: true,
@@ -171,7 +171,9 @@ class Dispatcher implements TestServerInterface {
     config.cliGrep = params.grep;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
 
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, 'run')));
+    const wireReporter = await this._createReporter(params.reporter);
+    const configReporters = await createReporters(config, 'run');
+    const reporter = new InternalReporter(new Multiplexer([...configReporters, wireReporter]));
     const taskRunner = createTaskRunnerForTestServer(config, reporter);
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -218,9 +220,10 @@ class Dispatcher implements TestServerInterface {
     return loadConfig({ resolvedConfigFile: configFile, configDir: path.dirname(configFile) }, overrides);
   }
 
-  private _syncEnv(env: NodeJS.ProcessEnv) {
-    for (const name in env)
-      process.env[name] = env[name];
+  private async _createReporter(file: string) {
+    const reporterConstructor = await loadReporter(undefined, file);
+    const instance = new reporterConstructor((message: any) => this._dispatchEvent('report', message));
+    return wrapReporterAsV2(instance);
   }
 }
 
