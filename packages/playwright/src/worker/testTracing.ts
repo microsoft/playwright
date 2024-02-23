@@ -19,11 +19,10 @@ import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, monotonicTime, createGuid } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import type { TestInfo, TestInfoError } from '../../types/test';
+import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
 import { filteredStackTrace } from '../util';
-import type { TraceMode, PlaywrightWorkerOptions } from '../../types/test';
 import type { TestInfoImpl } from './testInfo';
 
 export type Attachment = TestInfo['attachments'][0];
@@ -48,8 +47,20 @@ export class TestTracing {
     this._tracesDir = path.join(this._artifactsDir, 'traces');
   }
 
+  private shouldCaptureTrace() {
+    let capture = false;
+
+    if (this._options?.mode === 'on') capture = true;
+    if (this._options?.mode === 'retain-on-failure') capture = true;
+    if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1) capture = true;
+    if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0) capture = true;
+
+    return capture && !process.env.PW_TEST_DISABLE_TRACING;
+  }
+
   async startIfNeeded(value: TraceFixtureValue) {
     const defaultTraceOptions: TraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, _live: false, mode: 'off' };
+
     if (!value) {
       this._options = defaultTraceOptions;
     } else if (typeof value === 'string') {
@@ -59,9 +70,7 @@ export class TestTracing {
       this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
 
-    let shouldCaptureTrace = this._options.mode === 'on' || this._options.mode === 'retain-on-failure' || (this._options.mode === 'on-first-retry' && this._testInfo.retry === 1) || (this._options.mode === 'on-all-retries' && this._testInfo.retry > 0);
-    shouldCaptureTrace = shouldCaptureTrace && !process.env.PW_TEST_DISABLE_TRACING;
-    if (!shouldCaptureTrace) {
+    if (this.shouldCaptureTrace() === false) {
       this._options = undefined;
       return;
     }
