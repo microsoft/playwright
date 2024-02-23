@@ -29,31 +29,21 @@
     }
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "^17.0.0",
     "@playwright/experimental-ct-core": "1.42.0-next"
   },
   "devDependencies": {
-    "@angular/animations": "^17.0.0",
-    "@angular/common": "^17.0.0",
     "@angular/compiler": "^17.0.0",
-    "@angular/compiler-cli": "^17.0.0",
     "@angular/core": "^17.0.0",
-    "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
-    "@angular/router": "^17.0.0",
-    "@playwright/test": "1.38.1",
     "rxjs": "~7.8.1",
-    "tslib": "^2.5.0",
-    "typescript": "^5.0.4",
-    "zone.js": "~0.13.1"
+    "typescript": "~5.2.0",
+    "zone.js": "~0.14.0"
   },
   "peerDependencies": {
-    "@playwright/test": ">=1.38.1",
     "typescript": ">=5.2.0",
-    "@angular/common": "^17.0.0",
-    "@angular/platform-browser": "^17.0.0",
-    "@angular/router": "^17.0.0",
-    "@angular/core": "^17.0.0"
+    "@angular/compiler": "^17.0.0",
+    "@angular/core": "^17.0.0",
+    "@angular/platform-browser-dynamic": "^17.0.0"
   },
   "bin": {
     "playwright": "./cli.js"
