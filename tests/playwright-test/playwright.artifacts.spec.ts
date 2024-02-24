@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
+import { expect, test } from './playwright-test-fixtures';
 
 function listFiles(dir: string): string[] {
   const result: string[] = [];
@@ -334,6 +334,31 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
     'artifacts-two-contexts-failing-retry1',
     '  trace.zip',
     'artifacts-two-contexts-failing-retry2',
+    '  trace.zip',
+  ]);
+});
+
+test('should work with trace: on-first-failure', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on-first-failure' } };
+    `,
+  }, { workers: 1, retries: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(5);
+  expect(result.failed).toBe(5);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    'artifacts-failing',
+    '  trace.zip',
+    'artifacts-own-context-failing',
+    '  trace.zip',
+    'artifacts-persistent-failing',
+    '  trace.zip',
+    'artifacts-shared-shared-failing',
+    '  trace.zip',
+    'artifacts-two-contexts-failing',
     '  trace.zip',
   ]);
 });
