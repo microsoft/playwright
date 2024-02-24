@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-solid';
 import Button from '@/components/Button';
 import DefaultChildren from '@/components/DefaultChildren';
 import MultipleChildren from '@/components/MultipleChildren';
+import CheckChildrenProp from '@/components/CheckChildrenProp'
 
 test('render a default child', async ({ mount }) => {
   const component = await mount(
@@ -57,4 +58,9 @@ test('render array as child', async ({ mount }) => {
 test('render number as child', async ({ mount }) => {
   const component = await mount(<DefaultChildren>{1337}</DefaultChildren>);
   await expect(component).toContainText('1337');
+});
+
+test('absence of children when children prop is not provided', async ({ mount }) => {
+  const component = await mount(<CheckChildrenProp />);
+  await expect(component).toContainText('No Children');
 });
