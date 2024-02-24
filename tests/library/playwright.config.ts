@@ -54,6 +54,7 @@ const reporters = () => {
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
     // ['html', { open: 'on-failure' }]
+    ['list'],
     ['@microsoft/mpt-reporter', reporterOptions]
   ];
   return result;

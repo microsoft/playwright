@@ -1,0 +1,80 @@
+name: "MPT Reporter Tests"
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  # For pull requests, cancel all currently-running jobs for this workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
+
+jobs:
+  test_linux:
+    name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        os: [ubuntu-22.04]
+        node-version: [18]
+        include:
+          - os: ubuntu-22.04
+            node-version: 16
+            browser: chromium
+          - os: ubuntu-22.04
+            node-version: 20
+            browser: chromium
+    runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test-v2 -- --project=${{ matrix.browser }}
+
+  test_linux_chromium_tot:
+    name: ${{ matrix.os }} (chromium tip-of-tree)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    env:
+      PWTEST_BOT_NAME: "${{ matrix.os }}-chromium-tip-of-tree"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test-v2 -- --project=chromium
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+        PWTEST_BOT_NAME: "${{ matrix.os }}-chromium-tip-of-tree"
