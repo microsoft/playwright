@@ -133,7 +133,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   ]);
 });
 
-
 test('should not throw with trace: on-first-retry and two retries in the same worker', async ({ runInlineTest }, testInfo) => {
   const files = {};
   for (let i = 0; i < 6; i++) {
@@ -1048,7 +1047,7 @@ test('trace:on-first-failure should create trace if context is closed before fai
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
@@ -1070,7 +1069,7 @@ test('trace:on-first-failure should create trace if context is closed before fai
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
@@ -1090,7 +1089,7 @@ test('trace:on-first-failure should create trace if request context is disposed 
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('apiRequestContext.get');
