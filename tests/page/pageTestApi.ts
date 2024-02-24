@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Page, ViewportSize } from 'playwright-core';
 import type { PageScreenshotOptions, ScreenshotMode, VideoMode } from '@playwright/test';
+import type { Page, ViewportSize } from 'playwright-core';
 export { expect } from '@playwright/test';
 
 // Page test does not guarantee an isolated context, just a new page (because Android).
@@ -27,7 +27,7 @@ export type PageWorkerFixtures = {
   headless: boolean;
   channel: string;
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
-  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | /** deprecated */ 'retry-with-trace';
+  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-first-failure' | 'on-all-retries' | /** deprecated */ 'retry-with-trace';
   video: VideoMode | { mode: VideoMode, size: ViewportSize };
   browserName: 'chromium' | 'firefox' | 'webkit';
   browserVersion: string;
