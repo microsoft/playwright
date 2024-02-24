@@ -246,6 +246,7 @@ window.playwrightUnmount = async rootElement => {
   if (!app)
     throw new Error('Component was not mounted');
   app.unmount();
+  delete rootElement[__pwAppKey];
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
