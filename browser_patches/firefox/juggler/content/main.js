@@ -47,15 +47,6 @@ function initialize(browsingContext, docShell, actor) {
       }
     },
 
-    onlineOverride: (onlineOverride) => {
-      if (!onlineOverride) {
-        docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
-        return;
-      }
-      docShell.onlineOverride = onlineOverride === 'online' ?
-          Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
-    },
-
     bypassCSP: (bypassCSP) => {
       docShell.bypassCSPEnabled = bypassCSP;
     },

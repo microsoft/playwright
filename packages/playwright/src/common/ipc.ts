@@ -16,7 +16,7 @@
 
 import util from 'util';
 import { serializeCompilationCache } from '../transform/compilationCache';
-import type { FullConfigInternal } from './config';
+import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
@@ -41,8 +41,7 @@ export type ConfigCLIOverrides = {
 };
 
 export type SerializedConfig = {
-  configFile: string | undefined;
-  configDir: string;
+  location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
   compilationCache: any;
 };
@@ -138,8 +137,7 @@ export type EnvProducedPayload = [string, string | null][];
 
 export function serializeConfig(config: FullConfigInternal, passCompilationCache: boolean): SerializedConfig {
   const result: SerializedConfig = {
-    configFile: config.config.configFile,
-    configDir: config.configDir,
+    location: { configDir: config.configDir, resolvedConfigFile: config.config.configFile },
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };

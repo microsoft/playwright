@@ -30,6 +30,7 @@ import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
+import { affectedTestFiles } from '../transform/compilationCache';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -44,6 +45,11 @@ type ConfigListFilesReport = {
   error?: TestError;
 };
 
+export type FindRelatedTestFilesReport = {
+  testFiles: string[];
+  errors?: TestError[];
+};
+
 export class Runner {
   private _config: FullConfigInternal;
 
@@ -51,8 +57,9 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(frameworkPackage: string | undefined, projectNames: string[] | undefined): Promise<ConfigListFilesReport> {
-    const projects = filterProjects(this._config.projects, projectNames);
+  async listTestFiles(): Promise<ConfigListFilesReport> {
+    const frameworkPackage = (this._config.config as any)['@playwright/test']?.['packageJSON'];
+    const projects = filterProjects(this._config.projects);
     const report: ConfigListFilesReport = {
       projects: [],
       cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
@@ -143,5 +150,17 @@ export class Runner {
     const config = this._config;
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
     return await runUIMode(config, options);
+  }
+
+  async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
+    const result = await this.loadAllTests(mode);
+    if (result.status !== 'passed' || !result.suite)
+      return { errors: result.errors, testFiles: [] };
+
+    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
+    const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
+    if (override)
+      return await override(resolvedFiles, this._config.config, this._config.configDir, result.suite);
+    return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }

@@ -48,30 +48,6 @@ test('should list files', async ({ runCLICommand }) => {
   });
 });
 
-test('should support wildcard list files', async ({ runCLICommand }) => {
-  const result = await runCLICommand({
-    'playwright.config.ts': `
-      module.exports = { projects: [{ name: 'foo' }, { name: 'bar' }] };
-    `,
-    'a.test.js': ``
-  }, 'list-files', ['--project', 'f*o']);
-  expect(result.exitCode).toBe(0);
-
-  const data = JSON.parse(result.stdout);
-  expect(data).toEqual({
-    projects: [
-      {
-        name: 'foo',
-        testDir: expect.stringContaining('list-files-should-support-wildcard-list-files-playwright-test'),
-        use: {},
-        files: [
-          expect.stringContaining('a.test.js')
-        ]
-      }
-    ]
-  });
-});
-
 test('should include testIdAttribute', async ({ runCLICommand }) => {
   const result = await runCLICommand({
     'playwright.config.ts': `

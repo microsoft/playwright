@@ -366,13 +366,6 @@ class NetworkRequest {
       return;
     }
 
-    const browserContext = pageNetwork._target.browserContext();
-    if (browserContext.crossProcessCookie.settings.onlineOverride === 'offline') {
-      // Implement offline.
-      this.abort(Cr.NS_ERROR_OFFLINE);
-      return;
-    }
-
     // Ok, so now we have intercepted the request, let's issue onRequest.
     // If interception has been disabled while we were intercepting, resume and forget.
     const interceptionEnabled = this._shouldIntercept();
@@ -461,8 +454,6 @@ class NetworkRequest {
       return true;
     const browserContext = pageNetwork._target.browserContext();
     if (browserContext.requestInterceptionEnabled)
-      return true;
-    if (browserContext.crossProcessCookie.settings.onlineOverride === 'offline')
       return true;
     return false;
   }

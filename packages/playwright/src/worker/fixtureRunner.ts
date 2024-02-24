@@ -58,15 +58,40 @@ class Fixture {
   }
 
   async setup(testInfo: TestInfoImpl) {
+    this.runner.instanceForId.set(this.registration.id, this);
+
     if (typeof this.registration.fn !== 'function') {
       this.value = this.registration.fn;
       return;
     }
 
+    testInfo._timeoutManager.setCurrentFixture(this._setupDescription);
+    const beforeStep = this._shouldGenerateStep ? testInfo._addStep({
+      title: `fixture: ${this.registration.name}`,
+      category: 'fixture',
+      location: this._isInternalFixture ? this.registration.location : undefined,
+      wallTime: Date.now(),
+    }) : undefined;
+    try {
+      await this._setupInternal(testInfo);
+      beforeStep?.complete({});
+    } catch (error) {
+      beforeStep?.complete({ error });
+      throw error;
+    } finally {
+      testInfo._timeoutManager.setCurrentFixture(undefined);
+    }
+  }
+
+  private async _setupInternal(testInfo: TestInfoImpl) {
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
       const registration = this.runner.pool!.resolve(name, this.registration)!;
-      const dep = await this.runner.setupFixtureForRegistration(registration, testInfo);
+      const dep = this.runner.instanceForId.get(registration.id);
+      if (!dep) {
+        this.failed = true;
+        return;
+      }
       // Fixture teardown is root => leafs, when we need to teardown a fixture,
       // it recursively tears down its usages first.
       dep._usages.add(this);
@@ -80,25 +105,6 @@ class Fixture {
       }
     }
 
-    testInfo._timeoutManager.setCurrentFixture(this._setupDescription);
-    const beforeStep = this._shouldGenerateStep ? testInfo._addStep({
-      title: `fixture: ${this.registration.name}`,
-      category: 'fixture',
-      location: this._isInternalFixture ? this.registration.location : undefined,
-      wallTime: Date.now(),
-    }) : undefined;
-    try {
-      await this._setupInternal(testInfo, params);
-      beforeStep?.complete({});
-    } catch (error) {
-      beforeStep?.complete({ error });
-      throw error;
-    } finally {
-      testInfo._timeoutManager.setCurrentFixture(undefined);
-    }
-  }
-
-  private async _setupInternal(testInfo: TestInfoImpl, params: object) {
     let called = false;
     const useFuncStarted = new ManualPromise<void>();
     debugTest(`setup ${this.registration.name}`);
@@ -198,6 +204,16 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
+  private _collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
+    if (collector.has(registration))
+      return;
+    for (const name of registration.deps) {
+      const dep = this.pool!.resolve(name, registration)!;
+      this._collectFixturesInSetupOrder(dep, collector);
+    }
+    collector.add(registration);
+  }
+
   async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, onFixtureError: (error: Error) => void) {
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
@@ -211,7 +227,9 @@ export class FixtureRunner {
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
-    // Install automatic fixtures.
+    const collector = new Set<FixtureRegistration>();
+
+    // Collect automatic fixtures.
     const auto: FixtureRegistration[] = [];
     for (const registration of this.pool!.autoFixtures()) {
       let shouldRun = true;
@@ -223,19 +241,27 @@ export class FixtureRunner {
         auto.push(registration);
     }
     auto.sort((r1, r2) => (r1.scope === 'worker' ? 0 : 1) - (r2.scope === 'worker' ? 0 : 1));
-    for (const registration of auto) {
-      const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+    for (const registration of auto)
+      this._collectFixturesInSetupOrder(registration, collector);
+
+    // Collect used fixtures.
+    const names = getRequiredFixtureNames(fn);
+    for (const name of names)
+      this._collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
+
+    // Setup fixtures.
+    for (const registration of collector) {
+      const fixture = await this._setupFixtureForRegistration(registration, testInfo);
       if (fixture.failed)
         return null;
     }
 
-    // Install used fixtures.
-    const names = getRequiredFixtureNames(fn);
+    // Create params object.
     const params: { [key: string]: any } = {};
     for (const name of names) {
       const registration = this.pool!.resolve(name)!;
-      const fixture = await this.setupFixtureForRegistration(registration, testInfo);
-      if (fixture.failed)
+      const fixture = this.instanceForId.get(registration.id)!;
+      if (!fixture || fixture.failed)
         return null;
       params[name] = fixture.value;
     }
@@ -251,7 +277,7 @@ export class FixtureRunner {
     return fn(params, testInfo);
   }
 
-  async setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl): Promise<Fixture> {
+  private async _setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl): Promise<Fixture> {
     if (registration.scope === 'test')
       this.testScopeClean = false;
 
@@ -260,7 +286,6 @@ export class FixtureRunner {
       return fixture;
 
     fixture = new Fixture(this, registration);
-    this.instanceForId.set(registration.id, fixture);
     await fixture.setup(testInfo);
     return fixture;
   }

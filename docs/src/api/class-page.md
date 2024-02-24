@@ -3344,9 +3344,16 @@ await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 Locator that triggers the handler.
 
 ### param: Page.addLocatorHandler.handler
-* langs: js, python, csharp
+* langs: js, python
 * since: v1.42
 - `handler` <[function]>
+
+Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+### param: Page.addLocatorHandler.handler
+* langs: csharp
+* since: v1.42
+- `handler` <[function](): [Promise<any>]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
