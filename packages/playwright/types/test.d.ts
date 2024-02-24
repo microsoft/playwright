@@ -5586,7 +5586,7 @@ export interface PlaywrightWorkerOptions {
    * - `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
    * - `'on-first-retry'`: Record trace only when retrying a test for the first time.
    * - `'on-all-retries'`: Record traces only when retrying for all retries.
-   * - `'on-first-failure'`: Record trace only when the test fails for the first time.
+   * - `'on-first-failure'`: Record traces only when the test fails for the first time.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
    *
@@ -7101,6 +7101,7 @@ export function mergeExpects<List extends any[]>(...expects: List): MergedExpect
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export { };
+
 
 
 /**
