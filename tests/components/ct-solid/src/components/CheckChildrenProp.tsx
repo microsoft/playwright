@@ -1,6 +1,6 @@
-import type { PropsWithChildren } from 'react';
+import { type ParentProps } from 'solid-js';
 
-type DefaultChildrenProps = PropsWithChildren<{}>;
+type DefaultChildrenProps = ParentProps<{}>;
 
 export default function CheckChildrenProp(props: DefaultChildrenProps) {
   return <>{'children' in props ? props.children : 'No Children'}</>
