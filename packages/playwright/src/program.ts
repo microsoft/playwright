@@ -24,17 +24,16 @@ import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'p
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { ConfigLoader, loadConfigFromFile } from './common/configLoader';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult, TestError } from '../types/testReporter';
-import type { FullConfig, TraceMode } from '../types/test';
+import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import type { FullConfigInternal } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
-import { affectedTestFiles, cacheDir } from './transform/compilationCache';
+import { cacheDir } from './transform/compilationCache';
 import { runTestServer } from './runner/testServer';
 
 function addTestCommand(program: Command) {
@@ -74,7 +73,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const configInternal = await loadConfigFromFile(opts.config);
+    const configInternal = await loadConfigFromFileRestartIfNeeded(opts.config);
     if (!configInternal)
       return;
     const { config, configDir } = configInternal;
@@ -102,26 +101,15 @@ function addFindRelatedTestFilesCommand(program: Command) {
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
-    await withRunnerAndMutedWrite(options.config, async (runner, config, configDir) => {
-      const result = await runner.loadAllTests();
-      if (result.status !== 'passed' || !result.suite)
-        return { errors: result.errors };
-
-      const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-      const override = (config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-      if (override)
-        return await override(resolvedFiles, config, configDir, result.suite);
-      return { testFiles: affectedTestFiles(resolvedFiles) };
-    });
+    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles('in-process', files));
   });
 }
 
 function addTestServerCommand(program: Command) {
   const command = program.command('test-server', { hidden: true });
   command.description('start test server');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(options => {
-    void runTestServer(options.config);
+  command.action(() => {
+    void runTestServer();
   });
 }
 
@@ -164,7 +152,7 @@ Examples:
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
-  const config = await loadConfigFromFile(opts.config, overridesFromOptions(opts), opts.deps === false);
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts), opts.deps === false);
   if (!config)
     return;
 
@@ -188,16 +176,16 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   gracefullyProcessExitDoNotHang(exitCode);
 }
 
-export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner, config: FullConfig, configDir: string) => Promise<any>) {
+export async function withRunnerAndMutedWrite(configFile: string | undefined, callback: (runner: Runner) => Promise<any>) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
   const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
-    const config = await loadConfigFromFile(configFile);
+    const config = await loadConfigFromFileRestartIfNeeded(configFile);
     if (!config)
       return;
     const runner = new Runner(config);
-    const result = await callback(runner, config.config, config.configDir);
+    const result = await callback(runner);
     stdoutWrite(JSON.stringify(result, undefined, 2), () => {
       gracefullyProcessExitDoNotHang(0);
     });
@@ -211,21 +199,14 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
 }
 
 async function listTestFiles(opts: { [key: string]: any }) {
-  await withRunnerAndMutedWrite(opts.config, async (runner, config) => {
-    const frameworkPackage = (config as any)['@playwright/test']?.['packageJSON'];
-    return await runner.listTestFiles(frameworkPackage, opts.project);
+  await withRunnerAndMutedWrite(opts.config, async runner => {
+    return await runner.listTestFiles();
   });
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  let config: FullConfigInternal | null;
-  if (configFile) {
-    config = await loadConfigFromFile(configFile);
-  } else {
-    const configLoader = new ConfigLoader();
-    config = await configLoader.loadEmptyConfig(process.cwd());
-  }
+  const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile) : await loadEmptyConfigForMergeReports();
   if (!config)
     return;
 

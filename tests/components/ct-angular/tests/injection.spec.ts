@@ -7,3 +7,4 @@ test('inject a token', async ({ mount }) => {
   });
   await expect(component).toHaveText('has been overwritten');
 });
+

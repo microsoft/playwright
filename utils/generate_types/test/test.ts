@@ -154,6 +154,12 @@ playwright.chromium.launch().then(async browser => {
     return 'something random for no reason';
   });
 
+  await page.addLocatorHandler(page.locator(''), () => {});
+  await page.addLocatorHandler(page.locator(''), () => 42);
+  await page.addLocatorHandler(page.locator(''), async () => { });
+  await page.addLocatorHandler(page.locator(''), async () => 42);
+  await page.addLocatorHandler(page.locator(''), () => Promise.resolve(42));
+
   await page.keyboard.type('Hello'); // Types instantly
   await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
 

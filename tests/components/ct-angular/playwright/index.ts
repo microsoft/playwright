@@ -1,10 +1,9 @@
-import { beforeMount, afterMount } from '@playwright/experimental-ct-angular/hooks';
-import { Router, provideRouter } from '@angular/router';
-import { ButtonComponent } from '@/components/button.component';
+import '@/assets/styles.css';
 import { TOKEN } from '@/components/inject.component';
 import { routes } from '@/router';
-import '@/assets/styles.css';
 import { APP_INITIALIZER, inject } from '@angular/core';
+import { Router, provideRouter } from '@angular/router';
+import { afterMount, beforeMount } from '@playwright/experimental-ct-angular/hooks';
 
 export type HooksConfig = {
   routing?: boolean;
