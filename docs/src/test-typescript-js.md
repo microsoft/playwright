@@ -5,7 +5,26 @@ title: "TypeScript"
 
 ## Introduction
 
-Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run.
+Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run. Note that Playwright does not check the types and will run tests even if there are non-critical TypeScript compilation errors.
+
+We recommend you run TypeScript compiler alongside Playwright. For example on GitHub actions:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    ...
+    - name: Run type checks
+      run: npx tsc -p tsconfig.json --noEmit
+    - name: Run Playwright tests
+      run: npx playwright test
+```
+
+For local development, you can run `tsc` in [watch](https://www.typescriptlang.org/docs/handbook/configuring-watch.html) mode like this:
+```sh
+npx tsc -p tsconfig.json --noEmit -w
+```
 
 ## tsconfig.json
 
