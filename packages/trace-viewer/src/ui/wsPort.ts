@@ -20,7 +20,9 @@ const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: E
 
 export async function connect(options: { onEvent: (method: string, params?: any) => void, onClose: () => void }): Promise<(method: string, params?: any) => Promise<any>> {
   const guid = new URLSearchParams(window.location.search).get('ws');
-  const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
+  const wsURL = new URL(`../${guid}`, window.location.toString());
+  wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+  const ws = new WebSocket(wsURL);
   await new Promise(f => ws.addEventListener('open', f));
   ws.addEventListener('close', options.onClose);
   ws.addEventListener('message', event => {
