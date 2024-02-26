@@ -723,7 +723,7 @@ it.describe('page screenshot animations', () => {
       el.addEventListener('transitionend', () => {
         const time = Date.now();
         // Block main thread for 200ms, emulating heavy layout.
-        while (Date.now() - time < 200) ;
+        while (Date.now() - time < 200) {}
         const h1 = document.createElement('h1');
         h1.textContent = 'woof-woof';
         document.body.append(h1);

@@ -86,12 +86,18 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/util.ts#L29
   function getInstanceName(instance: VueVNode): string {
     const name = getComponentTypeName(instance.type || {});
-    if (name) return name;
-    if (instance.root === instance) return 'Root';
-    for (const key in instance.parent?.type?.components)
-      if (instance.parent?.type.components[key] === instance.type) return saveComponentName(instance, key);
-    for (const key in instance.appContext?.components)
-      if (instance.appContext.components[key] === instance.type) return saveComponentName(instance, key);
+    if (name)
+      return name;
+    if (instance.root === instance)
+      return 'Root';
+    for (const key in instance.parent?.type?.components) {
+      if (instance.parent?.type.components[key] === instance.type)
+        return saveComponentName(instance, key);
+    }
+    for (const key in instance.appContext?.components) {
+      if (instance.appContext.components[key] === instance.type)
+        return saveComponentName(instance, key);
+    }
     return 'Anonymous Component';
   }
 
@@ -132,7 +138,8 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
 
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/el.ts#L15
   function getFragmentRootElements(vnode: any): Element[] {
-    if (!vnode.children) return [];
+    if (!vnode.children)
+      return [];
 
     const list = [];
 
