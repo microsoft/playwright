@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
 import MultiRoot from '@/components/MultiRoot.vue';
+import Button from '@/components/Button.vue';
 
 test('unmount a multi root component', async ({ mount, page }) => {
   const component = await mount(<MultiRoot />);
@@ -8,4 +9,10 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await component.unmount();
   await expect(page.locator('#root')).not.toContainText('root 1');
   await expect(page.locator('#root')).not.toContainText('root 2');
+});
+
+test('unmount twice throws an error', async ({ mount }) => {
+  const component = await mount(<Button title="Submit" />);
+  await component.unmount();
+  await expect(component.unmount()).rejects.toThrowError('Component was not mounted');
 });

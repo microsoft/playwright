@@ -108,6 +108,7 @@ window.playwrightUnmount = async rootElement => {
   if (!svelteComponent)
     throw new Error('Component was not mounted');
   svelteComponent.$destroy();
+  delete rootElement[__pwSvelteComponentKey];
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
