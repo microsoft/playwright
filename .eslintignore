@@ -20,3 +20,4 @@ tests/installation/fixture-scripts/
 examples/
 DEPS
 .cache/
+utils/

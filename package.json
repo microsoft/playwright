@@ -29,7 +29,7 @@
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
     "ct": "playwright test tests/components/test-all.spec.js --reporter=list",
     "test": "playwright test --config=tests/library/playwright.config.ts",
-    "eslint": "eslint --cache --report-unused-disable-directives --ext ts,tsx .",
+    "eslint": "eslint --cache --report-unused-disable-directives --ext ts,tsx,js,jsx,mjs .",
     "tsc": "tsc -p .",
     "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",
