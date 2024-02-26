@@ -7,6 +7,10 @@ title: "TypeScript"
 
 Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run.
 
+## Catching TypeScript complilation errors
+
+Note that Playwright will run tests even if there are non-critical TypeScript compilation errors. If you want to catch such errors before running the tests, we recommend you call TypeScript compiler manually before the tests. It usually happens as part of the build step on CI and not a problem there. For local development, you can place the call e.g. in [global setup](./test-global-setup-teardown) or into [webServer](./test-webserver) config option.
+
 ## tsconfig.json
 
 Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `paths` and `baseUrl`.
