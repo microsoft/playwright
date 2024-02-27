@@ -70,7 +70,7 @@ export class TestTracing {
       this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
 
-    if (this._shouldCaptureTrace() === false) {
+    if (!this._shouldCaptureTrace()) {
       this._options = undefined;
       return;
     }
