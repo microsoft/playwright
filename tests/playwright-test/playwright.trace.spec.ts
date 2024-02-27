@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
+import { test, expect } from './playwright-test-fixtures';
 import { parseTrace, parseTraceRaw } from '../config/utils';
-import { expect, test } from './playwright-test-fixtures';
+import fs from 'fs';
 
 test.describe.configure({ mode: 'parallel' });
 

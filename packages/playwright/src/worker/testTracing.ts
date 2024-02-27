@@ -19,10 +19,11 @@ import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, monotonicTime, createGuid } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
+import type { TestInfo, TestInfoError } from '../../types/test';
 import { filteredStackTrace } from '../util';
+import type { TraceMode, PlaywrightWorkerOptions } from '../../types/test';
 import type { TestInfoImpl } from './testInfo';
 
 export type Attachment = TestInfo['attachments'][0];

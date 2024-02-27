@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
-import { expect, test } from './playwright-test-fixtures';
 
 function listFiles(dir: string): string[] {
   const result: string[] = [];

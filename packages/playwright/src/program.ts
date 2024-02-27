@@ -16,24 +16,25 @@
 
 /* eslint-disable no-console */
 
+import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { program } from 'playwright-core/lib/cli/program';
-import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
-import type { Command } from 'playwright-core/lib/utilsBundle';
-import type { ReporterDescription, TraceMode } from '../types/test';
-import type { FullResult, TestError } from '../types/testReporter';
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
-import type { ConfigCLIOverrides } from './common/ipc';
-import { prepareErrorStack } from './reporters/base';
+import { Runner } from './runner/runner';
+import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { Runner } from './runner/runner';
-import { runTestServer } from './runner/testServer';
-import { cacheDir } from './transform/compilationCache';
-import { serializeError } from './util';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
+import type { ConfigCLIOverrides } from './common/ipc';
+import type { FullResult, TestError } from '../types/testReporter';
+import type { TraceMode } from '../types/test';
+import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
+import type { ReporterDescription } from '../types/test';
+import { prepareErrorStack } from './reporters/base';
+import { cacheDir } from './transform/compilationCache';
+import { runTestServer } from './runner/testServer';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
