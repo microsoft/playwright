@@ -6,6 +6,82 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.42
+
+### New APIs
+
+- New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears:
+```js
+// Setup the handler.
+await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
+  await page.getByRole('button', { name: 'Reject all cookies' }).click();
+});
+
+// Write the test as usual.
+await page.goto('https://example.com');
+await page.getByRole('button', { name: 'Start here' }).click();
+```
+
+- `expect(callback).toPass()` timeout can now be configured by `expect.toPass.timeout` option [globally](./api/class-testconfig#test-config-expect) or in [project config](./api/class-testproject#test-project-expect)
+
+- [`event: ElectronApplication.console`] event is emitted when Electron main process calls console API methods.
+```js
+electronApp.on('console', async msg => {
+  const values = [];
+  for (const arg of msg.args())
+    values.push(await arg.jsonValue());
+  console.log(...values);
+});
+await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+```
+
+- [New syntax](./test-annotations#tag-tests) for adding tags to the tests (@-tokens in the test title are still supported):
+```js
+test('test customer login', {
+  tag: ['@fast', '@login'],
+}, async ({ page }) => {
+  // ...
+});
+```
+ Use `--grep` command line option to run only tests with certain tags.
+```sh
+npx playwright test --grep @fast
+```
+
+- `--project` command line [flag](./test-cli#reference) now supports '*' wildcard:
+```sh
+npx playwright test --project='*mobile*'
+```
+
+- [New syntax](./test-annotations#annotate-tests) for test annotations:
+```js
+test('test full report', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23180' },
+    { type: 'docs', description: 'https://playwright.dev/docs/test-annotations#tag-tests' },
+  ],
+}, async ({ page }) => {
+  // ...
+});
+```
+
+- [`method: Page.pdf`] accepts two new options [`tagged`](./api/class-page#page-pdf-option-tagged) and [`outline`](./api/class-page#page-pdf-option-outline).
+
+### Announcements
+
+* ⚠️ Ubuntu 18 is not supported anymore.
+
+### Browser Versions
+
+* Chromium 123.0.6312.4
+* Mozilla Firefox 123.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 122
+* Microsoft Edge 123
+
 ## Version 1.41
 
 ### New APIs
