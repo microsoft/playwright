@@ -1032,6 +1032,12 @@ BrowserContext:
 
     clearCookies:
 
+    removeCookies:
+      parameters:
+        cookieNames:
+          type: array
+          items: string
+
     clearPermissions:
 
     close:
@@ -3222,7 +3228,7 @@ ElectronApplication:
   events:
     close:
     console:
-      parameters: 
+      parameters:
         $mixin: ConsoleMessage
 
 Android:

@@ -269,6 +269,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.clearCookies();
   }
 
+  async removeCookies(cookieNames: string | string[]): Promise<void> {
+    if (typeof cookieNames === 'string')
+      cookieNames = [cookieNames];
+
+    await this._channel.removeCookies({ cookieNames: cookieNames as string[] });
+  }
+
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {
     await this._channel.grantPermissions({ permissions, ...options });
   }

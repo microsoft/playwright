@@ -828,6 +828,10 @@ scheme.BrowserContextAddInitScriptParams = tObject({
 scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
+scheme.BrowserContextRemoveCookiesParams = tObject({
+  cookieNames: tArray(tString),
+});
+scheme.BrowserContextRemoveCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
 scheme.BrowserContextCloseParams = tObject({

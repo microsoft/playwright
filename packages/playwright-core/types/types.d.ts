@@ -8439,6 +8439,19 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
+   * Removes cookies from context.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await browserContext.removeCookies([cookieName1, cookieName2]);
+   * ```
+   *
+   * @param cookieNames
+   */
+  removeCookies(cookieNames: string|ReadonlyArray<string>): Promise<void>;
+
+  /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
    * route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
