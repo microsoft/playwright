@@ -566,7 +566,7 @@ class Type {
       return type;
     }
 
-    if (parsedType.args) {
+    if (parsedType.args || parsedType.retType) {
       const type = new Type('function');
       type.args = [];
       // @ts-ignore
