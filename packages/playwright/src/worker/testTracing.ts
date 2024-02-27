@@ -54,7 +54,6 @@ export class TestTracing {
     if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1) return true;
     if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0) return true;
     if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0) return true;
-
     return false;
   }
 
