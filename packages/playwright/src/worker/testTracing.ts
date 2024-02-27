@@ -47,7 +47,7 @@ export class TestTracing {
     this._tracesDir = path.join(this._artifactsDir, 'traces');
   }
 
-  private shouldCaptureTrace() {
+  private _shouldCaptureTrace() {
     let capture = false;
 
     if (this._options?.mode === 'on') capture = true;
@@ -71,7 +71,7 @@ export class TestTracing {
       this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
 
-    if (this.shouldCaptureTrace() === false) {
+    if (this._shouldCaptureTrace() === false) {
       this._options = undefined;
       return;
     }
