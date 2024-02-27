@@ -12,6 +12,9 @@ on:
         description: Comma-separated list of commit hashes to cherry-pick
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   roll:
     runs-on: ubuntu-22.04
