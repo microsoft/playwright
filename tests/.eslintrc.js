@@ -11,5 +11,6 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/no-floating-promises': 'error',
+    "@typescript-eslint/no-unnecessary-boolean-literal-compare": 2,
   },
 };

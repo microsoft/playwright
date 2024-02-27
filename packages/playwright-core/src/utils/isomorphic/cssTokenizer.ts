@@ -48,8 +48,10 @@ function preprocess(str: string): number[] {
     if (code === 0xd && str.charCodeAt(i + 1) === 0xa) {
       code = 0xa; i++;
     }
-    if (code === 0xd || code === 0xc) code = 0xa;
-    if (code === 0x0) code = 0xfffd;
+    if (code === 0xd || code === 0xc)
+      code = 0xa;
+    if (code === 0x0)
+      code = 0xfffd;
     if (between(code, 0xd800, 0xdbff) && between(str.charCodeAt(i + 1), 0xdc00, 0xdfff)) {
       // Decode a surrogate pair into an astral codepoint.
       const lead = code - 0xd800;
@@ -63,7 +65,8 @@ function preprocess(str: string): number[] {
 }
 
 function stringFromCode(code: number) {
-  if (code <= 0xffff) return String.fromCharCode(code);
+  if (code <= 0xffff)
+    return String.fromCharCode(code);
   // Otherwise, encode astral char as surrogate pair.
   code -= Math.pow(2, 16);
   const lead = Math.floor(code / Math.pow(2, 10)) + 0xd800;
@@ -107,8 +110,10 @@ export function tokenize(str1: string): CSSTokenInterface[] {
       num = 1;
     i += num;
     code = codepoint(i);
-    if (newline(code)) incrLineno();
-    else column += num;
+    if (newline(code))
+      incrLineno();
+    else
+      column += num;
     // console.log('Consume '+i+' '+String.fromCharCode(code) + ' 0x' + code.toString(16));
     return true;
   };
@@ -125,7 +130,8 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     return true;
   };
   const eof = function(codepoint?: number): boolean {
-    if (codepoint === undefined) codepoint = code;
+    if (codepoint === undefined)
+      codepoint = code;
     return codepoint === -1;
   };
   const donothing = function() { };
@@ -138,12 +144,14 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     consumeComments();
     consume();
     if (whitespace(code)) {
-      while (whitespace(next())) consume();
+      while (whitespace(next()))
+        consume();
       return new WhitespaceToken();
     } else if (code === 0x22) {return consumeAStringToken();} else if (code === 0x23) {
       if (namechar(next()) || areAValidEscape(next(1), next(2))) {
         const token = new HashToken('');
-        if (wouldStartAnIdentifier(next(1), next(2), next(3))) token.type = 'id';
+        if (wouldStartAnIdentifier(next(1), next(2), next(3)))
+          token.type = 'id';
         token.value = consumeAName();
         return token;
       } else {
@@ -288,7 +296,8 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     const str = consumeAName();
     if (str.toLowerCase() === 'url' && next() === 0x28) {
       consume();
-      while (whitespace(next(1)) && whitespace(next(2))) consume();
+      while (whitespace(next(1)) && whitespace(next(2)))
+        consume();
       if (next() === 0x22 || next() === 0x27)
         return new FunctionToken(str);
       else if (whitespace(next()) && (next(2) === 0x22 || next(2) === 0x27))
@@ -305,7 +314,8 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const consumeAStringToken = function(endingCodePoint?: number): CSSParserToken {
-    if (endingCodePoint === undefined) endingCodePoint = code;
+    if (endingCodePoint === undefined)
+      endingCodePoint = code;
     let string = '';
     while (consume()) {
       if (code === endingCodePoint || eof()) {
@@ -331,13 +341,16 @@ export function tokenize(str1: string): CSSTokenInterface[] {
 
   const consumeAURLToken = function(): CSSTokenInterface {
     const token = new URLToken('');
-    while (whitespace(next())) consume();
-    if (eof(next())) return token;
+    while (whitespace(next()))
+      consume();
+    if (eof(next()))
+      return token;
     while (consume()) {
       if (code === 0x29 || eof()) {
         return token;
       } else if (whitespace(code)) {
-        while (whitespace(next())) consume();
+        while (whitespace(next()))
+          consume();
         if (next() === 0x29 || eof(next())) {
           consume();
           return token;
@@ -379,9 +392,11 @@ export function tokenize(str1: string): CSSTokenInterface[] {
           break;
         }
       }
-      if (whitespace(next())) consume();
+      if (whitespace(next()))
+        consume();
       let value = parseInt(digits.map(function(x) { return String.fromCharCode(x); }).join(''), 16);
-      if (value > maximumallowedcodepoint) value = 0xfffd;
+      if (value > maximumallowedcodepoint)
+        value = 0xfffd;
       return value;
     } else if (eof()) {
       return 0xfffd;
@@ -391,8 +406,10 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const areAValidEscape = function(c1: number, c2: number) {
-    if (c1 !== 0x5c) return false;
-    if (newline(c2)) return false;
+    if (c1 !== 0x5c)
+      return false;
+    if (newline(c2))
+      return false;
     return true;
   };
   const startsWithAValidEscape = function() {
@@ -416,11 +433,14 @@ export function tokenize(str1: string): CSSTokenInterface[] {
 
   const wouldStartANumber = function(c1: number, c2: number, c3: number) {
     if (c1 === 0x2b || c1 === 0x2d) {
-      if (digit(c2)) return true;
-      if (c2 === 0x2e && digit(c3)) return true;
+      if (digit(c2))
+        return true;
+      if (c2 === 0x2e && digit(c3))
+        return true;
       return false;
     } else if (c1 === 0x2e) {
-      if (digit(c2)) return true;
+      if (digit(c2))
+        return true;
       return false;
     } else if (digit(c1)) {
       return true;
@@ -519,7 +539,8 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   while (!eof(next())) {
     tokens.push(consumeAToken());
     iterationCount++;
-    if (iterationCount > str.length * 2) throw new Error("I'm infinite-looping!");
+    if (iterationCount > str.length * 2)
+      throw new Error("I'm infinite-looping!");
   }
   return tokens;
 }
