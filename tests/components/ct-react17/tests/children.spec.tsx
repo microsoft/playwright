@@ -60,7 +60,7 @@ test('render number as child', async ({ mount }) => {
   await expect(component).toContainText('1337');
 });
 
-test('render without children', async ({ mount }) => {
+test('absence of children when children prop is not provided', async ({ mount }) => {
   const component = await mount(<CheckChildrenProp />);
   await expect(component).toContainText('No Children');
 });

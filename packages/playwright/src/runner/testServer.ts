@@ -43,7 +43,7 @@ export async function runTestServer() {
     onConnection(request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) {
       const dispatcher = new Dispatcher(ws);
       ws.on('message', async message => {
-        const { id, method, params } = JSON.parse(message.toString());
+        const { id, method, params } = JSON.parse(String(message));
         try {
           const result = await (dispatcher as any)[method](params);
           ws.send(JSON.stringify({ id, result }));

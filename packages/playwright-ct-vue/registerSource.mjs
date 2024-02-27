@@ -88,6 +88,9 @@ function __pwCreateSlot(html) {
   };
 }
 
+/**
+ * @param {string | string[]} slot
+ */
 function __pwSlotToFunction(slot) {
   if (typeof slot === 'string')
     return __pwCreateSlot(slot)();
@@ -175,7 +178,11 @@ function __pwCreateComponent(component) {
   return { Component: component.type, props, slots: lastArg, listeners };
 }
 
+/**
+ * @param {any} slots
+ */
 function __pwWrapFunctions(slots) {
+  /** @type {import('vue').ComponentInternalInstance['slots']} */
   const slotsWithRenderFunctions = {};
   if (!Array.isArray(slots)) {
     for (const [key, value] of Object.entries(slots || {}))
@@ -198,25 +205,27 @@ function __pwCreateWrapper(component) {
   return wrapper;
 }
 
-/**
- * @returns {any}
- */
-function __pwCreateDevTools() {
-  return {
+function __pwSetDevTools() {
+  __pwSetDevtoolsHook({
     emit(eventType, ...payload) {
-      if (eventType === 'component:emit') {
-        const [, componentVM, event, eventArgs] = payload;
-        for (const [wrapper, listeners] of __pwAllListeners) {
-          if (wrapper.component !== componentVM)
-            continue;
-          const listener = listeners[event];
-          if (!listener)
-            return;
-          listener(...eventArgs);
-        }
+      if (eventType !== 'component:emit')
+        return;
+
+      const [, componentVM, event, eventArgs] = payload;
+      for (const [wrapper, listeners] of __pwAllListeners) {
+        if (wrapper.component !== componentVM)
+          continue;
+        const listener = listeners[event];
+        if (!listener)
+          return;
+        listener(...eventArgs);
       }
-    }
-  };
+    },
+    on() {},
+    off() {},
+    once() {},
+    appRecords: []
+  }, {});
 }
 
 const __pwAppKey = Symbol('appKey');
@@ -230,7 +239,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
       return wrapper;
     }
   });
-  __pwSetDevtoolsHook(__pwCreateDevTools(), {});
+  __pwSetDevTools();
 
   for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
@@ -242,13 +251,16 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 };
 
 window.playwrightUnmount = async rootElement => {
-  const app = /** @type {import('vue').App} */ (rootElement[__pwAppKey]);
+  /** @type {import('vue').App<Element> | undefined} */
+  const app = rootElement[__pwAppKey];
   if (!app)
     throw new Error('Component was not mounted');
   app.unmount();
+  delete rootElement[__pwAppKey];
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  /** @type {import('vue').VNode | undefined} */
   const wrapper = rootElement[__pwWrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');

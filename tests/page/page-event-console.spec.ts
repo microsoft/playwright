@@ -38,7 +38,10 @@ it('should work @smoke', async ({ page, browserName }) => {
 it('should emit same log twice', async ({ page }) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
-  await page.evaluate(() => { for (let i = 0; i < 2; ++i) console.log('hello'); });
+  await page.evaluate(() => {
+    for (let i = 0; i < 2; ++i)
+      console.log('hello');
+  });
   expect(messages).toEqual(['hello', 'hello']);
 });
 

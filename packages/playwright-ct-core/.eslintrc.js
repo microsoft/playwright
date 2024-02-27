@@ -1,3 +1,3 @@
 module.exports = {
-  extends: "../.eslintrc-with-ts-config.js",
+  extends: "../../.eslintrc-with-ts-config.js",
 };

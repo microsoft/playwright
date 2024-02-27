@@ -182,6 +182,7 @@ window.playwrightUnmount = async rootElement => {
     throw new Error('Component was not mounted');
   component.$destroy();
   component.$el.remove();
+  delete rootElement[instanceKey];
 };
 
 window.playwrightUpdate = async (element, options) => {
