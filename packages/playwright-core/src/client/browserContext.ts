@@ -526,7 +526,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   if (acceptDownloads === undefined)
     return undefined;
-  if (acceptDownloads === true)
+  if (acceptDownloads)
     return 'accept';
   return 'deny';
 }

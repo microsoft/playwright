@@ -1,5 +1,5 @@
 module.exports = {
-  extends: '../.eslintrc.js',
+  extends: '../../.eslintrc-with-ts-config.js',
   rules: {
     '@typescript-eslint/no-floating-promises': 'error',
   },

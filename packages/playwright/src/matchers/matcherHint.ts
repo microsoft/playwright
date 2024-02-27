@@ -25,7 +25,7 @@ export function matcherHint(state: ExpectMatcherContext, locator: Locator | unde
   if (timeout)
     header = colors.red(`Timed out ${timeout}ms waiting for `) + header;
   if (locator)
-    header += `Locator: ${locator}\n`;
+    header += `Locator: ${String(locator)}\n`;
   return header;
 }
 
