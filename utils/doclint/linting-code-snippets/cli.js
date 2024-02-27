@@ -180,7 +180,10 @@ class JSLintingService extends LintingService {
    * @returns {Promise<LintResult[]>}
    */
   async lint(snippets) {
-    return Promise.all(snippets.map(async snippet => this._lintSnippet(snippet)));
+    const result = [];
+    for (let i = 0; i < snippets.length; ++i)
+      result.push(await this._lintSnippet(snippets[i]));
+    return result;
   }
 }
 

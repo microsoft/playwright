@@ -55,7 +55,8 @@ function __pwCreateSlots(slots) {
           __pwInsert(target, element, anchor);
         },
         d: function destroy(detaching) {
-          if (detaching) __pwDetach(element);
+          if (detaching)
+            __pwDetach(element);
         },
         l: __pwNoop,
       };
