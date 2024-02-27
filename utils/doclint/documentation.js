@@ -566,7 +566,7 @@ class Type {
       return type;
     }
 
-    if (parsedType.args) {
+    if (parsedType.args || parsedType.retType) {
       const type = new Type('function');
       type.args = [];
       // @ts-ignore
@@ -737,7 +737,8 @@ function parseTypeExpression(type) {
     if (type[i] === '(') {
       name = type.substring(0, i);
       const matching = matchingBracket(type.substring(i), '(', ')');
-      args = parseTypeExpression(type.substring(i + 1, i + matching - 1));
+      const argsString = type.substring(i + 1, i + matching - 1);
+      args = argsString ? parseTypeExpression(argsString) : null;
       i = i + matching;
       if (type[i] === ':') {
         retType = parseTypeExpression(type.substring(i + 1));
