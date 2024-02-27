@@ -35,7 +35,7 @@ electronApp.on('console', async msg => {
 await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
 ```
 
-- [New syntax](./test-annotations#tag-tests) for adding tags to the tests (@-tokens in the test title are still supported).
+- [New syntax](./test-annotations#tag-tests) for adding tags to the tests (@-tokens in the test title are still supported):
 ```js
 test('test customer login', {
   tag: ['@fast', '@login'],
@@ -53,7 +53,23 @@ npx playwright test --grep @fast
 npx playwright test --project='*mobile*'
 ```
 
+- [New syntax](./test-annotations#annotate-tests) for test annotations:
+```js
+test('test full report', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23180' },
+    { type: 'docs', description: 'https://playwright.dev/docs/test-annotations#tag-tests' },
+  ],
+}, async ({ page }) => {
+  // ...
+});
+```
+
 - [`method: Page.pdf`] accepts two new options [`tagged`](./api/class-page#page-pdf-option-tagged) and [`outline`](./api/class-page#page-pdf-option-outline).
+
+### Announcements
+
+* ⚠️ Ubuntu 18 is not supported anymore.
 
 ### Browser Versions
 
