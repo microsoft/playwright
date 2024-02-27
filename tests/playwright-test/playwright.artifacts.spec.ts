@@ -338,11 +338,11 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   ]);
 });
 
-test('should work with trace: on-first-failure', async ({ runInlineTest }, testInfo) => {
+test('should work with trace: retain-on-first-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-failure' } };
+      module.exports = { use: { trace: 'retain-on-first-failure' } };
     `,
   }, { workers: 1, retries: 2 });
 

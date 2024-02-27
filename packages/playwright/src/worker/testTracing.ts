@@ -54,7 +54,7 @@ export class TestTracing {
     if (this._options?.mode === 'retain-on-failure') capture = true;
     if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1) capture = true;
     if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0) capture = true;
-    if (this._options?.mode === 'on-first-failure' && this._testInfo.retry === 0) capture = true;
+    if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0) capture = true;
 
     return capture && !process.env.PW_TEST_DISABLE_TRACING;
   }
@@ -120,7 +120,7 @@ export class TestTracing {
       return;
 
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
-    const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'on-first-failure');
+    const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
 
     if (shouldAbandonTrace) {
       for (const file of this._temporaryTraceFiles)

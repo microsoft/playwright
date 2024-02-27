@@ -401,7 +401,7 @@ test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInf
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBe(false);
 });
 
-for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'on-first-failure']) {
+for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure']) {
   test(`trace:${mode} should not create trace zip artifact if page test passed`, async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
@@ -1034,7 +1034,7 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
   ]);
 });
 
-test('trace:on-first-failure should create trace but only on first failure', async ({ runInlineTest }) => {
+test('trace:retain-on-first-failure should create trace but only on first failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -1043,7 +1043,7 @@ test('trace:on-first-failure should create trace but only on first failure', asy
         expect(true).toBe(false);
       });
     `,
-  }, { trace: 'on-first-failure', retries: 1 });
+  }, { trace: 'retain-on-first-failure', retries: 1 });
 
   const retryTracePath = test.info().outputPath('test-results', 'a-fail-retry1', 'trace.zip');
   const retryTraceExists = fs.existsSync(retryTracePath);
@@ -1055,7 +1055,7 @@ test('trace:on-first-failure should create trace but only on first failure', asy
   expect(result.failed).toBe(1);
 });
 
-test('trace:on-first-failure should create trace if context is closed before failure in the test', async ({ runInlineTest }) => {
+test('trace:retain-on-first-failure should create trace if context is closed before failure in the test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -1065,14 +1065,14 @@ test('trace:on-first-failure should create trace if context is closed before fai
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
-test('trace:on-first-failure should create trace if context is closed before failure in afterEach', async ({ runInlineTest }) => {
+test('trace:retain-on-first-failure should create trace if context is closed before failure in afterEach', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -1084,14 +1084,14 @@ test('trace:on-first-failure should create trace if context is closed before fai
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
-test('trace:on-first-failure should create trace if request context is disposed before failure', async ({ runInlineTest, server }) => {
+test('trace:retain-on-first-failure should create trace if request context is disposed before failure', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -1101,7 +1101,7 @@ test('trace:on-first-failure should create trace if request context is disposed 
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on-first-failure' });
+  }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('apiRequestContext.get');
