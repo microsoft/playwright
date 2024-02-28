@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type { ImportRegistry } from '../src/injected/importRegistry';
-
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
