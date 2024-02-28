@@ -562,7 +562,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async clearCache(): Promise<void> {
     for (const page of this._crPages())
-      await page._mainFrameSession._networkManager.clearCache();
+      await page._networkManager.clearCache();
   }
 
   async cancelDownload(guid: string) {
