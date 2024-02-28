@@ -89,3 +89,9 @@ test('subsequent installs works', async ({ exec }) => {
   // of UnhandledPromiseRejection.
   await exec('node --unhandled-rejections=strict', path.join('node_modules', '@playwright', 'browser-chromium', 'install.js'));
 });
+
+test('install playwright-chromium should work', async ({ exec, installedSoftwareOnDisk }) => {
+  await exec('npm i playwright-chromium');
+  await exec('npx playwright install chromium');
+  await exec('node sanity.js playwright-chromium chromium');
+});
