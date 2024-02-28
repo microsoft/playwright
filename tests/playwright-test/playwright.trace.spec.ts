@@ -133,7 +133,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   ]);
 });
 
-
 test('should not throw with trace: on-first-retry and two retries in the same worker', async ({ runInlineTest }, testInfo) => {
   const files = {};
   for (let i = 0; i < 6; i++) {
@@ -402,7 +401,7 @@ test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInf
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBe(false);
 });
 
-for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries']) {
+for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure']) {
   test(`trace:${mode} should not create trace zip artifact if page test passed`, async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
@@ -1033,4 +1032,78 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
     '  fixture: foo',
     '    step in foo teardown',
   ]);
+});
+
+test('trace:retain-on-first-failure should create trace but only on first failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.goto('about:blank');
+        expect(true).toBe(false);
+      });
+    `,
+  }, { trace: 'retain-on-first-failure', retries: 1 });
+
+  const retryTracePath = test.info().outputPath('test-results', 'a-fail-retry1', 'trace.zip');
+  const retryTraceExists = fs.existsSync(retryTracePath);
+  expect(retryTraceExists).toBe(false);
+
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.apiNames).toContain('page.goto');
+  expect(result.failed).toBe(1);
+});
+
+test('trace:retain-on-first-failure should create trace if context is closed before failure in the test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page, context }) => {
+        await page.goto('about:blank');
+        await context.close();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-first-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.apiNames).toContain('page.goto');
+  expect(result.failed).toBe(1);
+});
+
+test('trace:retain-on-first-failure should create trace if context is closed before failure in afterEach', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page, context }) => {
+      });
+      test.afterEach(async ({ page, context }) => {
+        await page.goto('about:blank');
+        await context.close();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-first-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.apiNames).toContain('page.goto');
+  expect(result.failed).toBe(1);
+});
+
+test('trace:retain-on-first-failure should create trace if request context is disposed before failure', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ request }) => {
+        expect(await request.get('${server.EMPTY_PAGE}')).toBeOK();
+        await request.dispose();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-first-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.apiNames).toContain('apiRequestContext.get');
+  expect(result.failed).toBe(1);
 });

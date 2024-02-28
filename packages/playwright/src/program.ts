@@ -290,7 +290,7 @@ function resolveReporter(id: string) {
   return require.resolve(id, { paths: [process.cwd()] });
 }
 
-const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure'];
+const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];
 
 const testOptions: [string, string][] = [
   ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
