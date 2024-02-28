@@ -20,7 +20,7 @@ import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, headersArrayToObject } from '../../utils';
+import { assert, createGuid } from '../../utils';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
@@ -61,6 +61,7 @@ export class CRPage implements PageDelegate {
   readonly rawTouchscreen: RawTouchscreenImpl;
   readonly _targetId: string;
   readonly _opener: CRPage | null;
+  readonly _networkManager: CRNetworkManager;
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
@@ -92,6 +93,13 @@ export class CRPage implements PageDelegate {
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
+    this._networkManager = new CRNetworkManager(this._page, null);
+    // Sync any browser context state to the network manager. This does not talk over CDP because
+    // we have not connected any sessions to the network manager yet.
+    this.updateOffline();
+    this.updateExtraHTTPHeaders();
+    this.updateHttpCredentials();
+    this.updateRequestInterception();
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     if (opener && !browserContext._options.noDefaultViewport) {
@@ -184,7 +192,11 @@ export class CRPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders(false));
+    const headers = network.mergeHeaders([
+      this._browserContext._options.extraHTTPHeaders,
+      this._page.extraHTTPHeaders()
+    ]);
+    await this._networkManager.setExtraHTTPHeaders(headers);
   }
 
   async updateGeolocation(): Promise<void> {
@@ -192,11 +204,11 @@ export class CRPage implements PageDelegate {
   }
 
   async updateOffline(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateOffline(false));
+    await this._networkManager.setOffline(!!this._browserContext._options.offline);
   }
 
   async updateHttpCredentials(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateHttpCredentials(false));
+    await this._networkManager.authenticate(this._browserContext._options.httpCredentials || null);
   }
 
   async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
@@ -216,7 +228,7 @@ export class CRPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
   async updateFileChooserInterception() {
@@ -392,7 +404,6 @@ class FrameSession {
   readonly _client: CRSession;
   readonly _crPage: CRPage;
   readonly _page: Page;
-  readonly _networkManager: CRNetworkManager;
   private readonly _parentSession: FrameSession | null;
   private readonly _childSessions = new Set<FrameSession>();
   private readonly _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
@@ -418,7 +429,6 @@ class FrameSession {
     this._crPage = crPage;
     this._page = crPage._page;
     this._targetId = targetId;
-    this._networkManager = new CRNetworkManager(client, this._page, null, parentSession ? parentSession._networkManager : null);
     this._parentSession = parentSession;
     if (parentSession)
       parentSession._childSessions.add(this);
@@ -533,7 +543,7 @@ class FrameSession {
         source: '',
         worldName: UTILITY_WORLD_NAME,
       }),
-      this._networkManager.initialize(),
+      this._crPage._networkManager.addSession(this._client, undefined, this._isMainFrame()),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
     if (!isSettingStorageState) {
@@ -559,10 +569,6 @@ class FrameSession {
       if (!this._crPage._browserContext._browser.options.headful)
         promises.push(this._setDefaultFontFamilies(this._client));
       promises.push(this._updateGeolocation(true));
-      promises.push(this._updateExtraHTTPHeaders(true));
-      promises.push(this._updateRequestInterception());
-      promises.push(this._updateOffline(true));
-      promises.push(this._updateHttpCredentials(true));
       promises.push(this._updateEmulateMedia());
       promises.push(this._updateFileChooserInterception(true));
       for (const binding of this._crPage._page.allBindings())
@@ -586,7 +592,7 @@ class FrameSession {
     if (this._parentSession)
       this._parentSession._childSessions.delete(this);
     eventsHelper.removeEventListeners(this._eventListeners);
-    this._networkManager.dispose();
+    this._crPage._networkManager.removeSession(this._client);
     this._crPage._sessions.delete(this._targetId);
     this._client.dispose();
   }
@@ -752,7 +758,8 @@ class FrameSession {
     });
     // This might fail if the target is closed before we initialize.
     session._sendMayFail('Runtime.enable');
-    session._sendMayFail('Network.enable');
+    // TODO: attribute workers to the right frame.
+    this._crPage._networkManager.addSession(session, this._page._frameManager.frame(this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
@@ -762,8 +769,6 @@ class FrameSession {
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
-    // TODO: attribute workers to the right frame.
-    this._networkManager.instrumentNetworkEvents({ session, workerFrame: this._page._frameManager.frame(this._targetId) ?? undefined });
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
@@ -981,31 +986,10 @@ class FrameSession {
       await this._client._sendMayFail('Page.stopScreencast');
   }
 
-  async _updateExtraHTTPHeaders(initial: boolean): Promise<void> {
-    const headers = network.mergeHeaders([
-      this._crPage._browserContext._options.extraHTTPHeaders,
-      this._page.extraHTTPHeaders()
-    ]);
-    if (!initial || headers.length)
-      await this._client.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
-  }
-
   async _updateGeolocation(initial: boolean): Promise<void> {
     const geolocation = this._crPage._browserContext._options.geolocation;
     if (!initial || geolocation)
       await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
-  }
-
-  async _updateOffline(initial: boolean): Promise<void> {
-    const offline = !!this._crPage._browserContext._options.offline;
-    if (!initial || offline)
-      await this._networkManager.setOffline(offline);
-  }
-
-  async _updateHttpCredentials(initial: boolean): Promise<void> {
-    const credentials = this._crPage._browserContext._options.httpCredentials || null;
-    if (!initial || credentials)
-      await this._networkManager.authenticate(credentials);
   }
 
   async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
@@ -1104,10 +1088,6 @@ class FrameSession {
   private async _setDefaultFontFamilies(session: CRSession) {
     const fontFamilies = platformToFontFamilies[this._crPage._browserContext._browser._platform()];
     await session.send('Page.setFontFamilies', fontFamilies);
-  }
-
-  async _updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
   async _updateFileChooserInterception(initial: boolean) {

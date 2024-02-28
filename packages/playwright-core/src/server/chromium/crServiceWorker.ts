@@ -34,13 +34,13 @@ export class CRServiceWorker extends Worker {
     this._session = session;
     this._browserContext = browserContext;
     if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS)
-      this._networkManager = new CRNetworkManager(session, null, this, null);
+      this._networkManager = new CRNetworkManager(null, this);
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
-      this._networkManager.initialize().catch(() => {});
+      this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
       this.updateRequestInterception();
       this.updateExtraHTTPHeaders(true);
       this.updateHttpCredentials(true);
@@ -56,6 +56,7 @@ export class CRServiceWorker extends Worker {
   }
 
   override didClose() {
+    this._networkManager?.removeSession(this._session);
     this._session.dispose();
     super.didClose();
   }

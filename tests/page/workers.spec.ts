@@ -224,3 +224,32 @@ it('should report and intercept network from nested worker', async function({ pa
 
   await expect.poll(() => messages).toEqual(['{"foo":"not bar"}', '{"foo":"not bar"}']);
 });
+
+it('should support extra http headers', async ({ page, server }) => {
+  await page.setExtraHTTPHeaders({ foo: 'bar' });
+  const [worker, request1] = await Promise.all([
+    page.waitForEvent('worker'),
+    server.waitForRequest('/worker/worker.js'),
+    page.goto(server.PREFIX + '/worker/worker.html'),
+  ]);
+  const [request2] = await Promise.all([
+    server.waitForRequest('/one-style.css'),
+    worker.evaluate(url => fetch(url), server.PREFIX + '/one-style.css'),
+  ]);
+  expect(request1.headers['foo']).toBe('bar');
+  expect(request2.headers['foo']).toBe('bar');
+});
+
+it('should support offline', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox');
+
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    page.goto(server.PREFIX + '/worker/worker.html'),
+  ]);
+  await page.context().setOffline(true);
+  expect(await worker.evaluate(() => navigator.onLine)).toBe(false);
+  expect(await worker.evaluate(() => fetch('/one-style.css').catch(e => 'error'))).toBe('error');
+  await page.context().setOffline(false);
+  expect(await worker.evaluate(() => navigator.onLine)).toBe(true);
+});
