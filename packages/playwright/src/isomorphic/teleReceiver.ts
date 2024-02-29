@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullResult, Location, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import type { Annotation } from '../common/config';
 import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
@@ -22,17 +21,17 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import { StringInternPool } from './stringInternPool';
 
-export type JsonLocation = Location;
+export type JsonLocation = reporterTypes.Location;
 export type JsonError = string;
 export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonStdIOType = 'stdout' | 'stderr';
 
-export type JsonConfig = Pick<FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & {
+export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & {
   listOnly: boolean;
 };
 
-export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' | 'reporter' >;
+export type MergeReporterConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' | 'reporter' >;
 
 export type JsonPattern = {
   s?: string;
@@ -78,7 +77,7 @@ export type JsonTestCase = {
 
 export type JsonTestEnd = {
   testId: string;
-  expectedStatus: TestStatus;
+  expectedStatus: reporterTypes.TestStatus;
   timeout: number;
   annotations: { type: string, description?: string }[];
 };
@@ -91,13 +90,13 @@ export type JsonTestResultStart = {
   startTime: number;
 };
 
-export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { base64?: string };
+export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string };
 
 export type JsonTestResultEnd = {
   id: string;
   duration: number;
-  status: TestStatus;
-  errors: TestError[];
+  status: reporterTypes.TestStatus;
+  errors: reporterTypes.TestError[];
   attachments: JsonAttachment[];
 };
 
@@ -107,17 +106,17 @@ export type JsonTestStepStart = {
   title: string;
   category: string,
   startTime: number;
-  location?: Location;
+  location?: reporterTypes.Location;
 };
 
 export type JsonTestStepEnd = {
   id: string;
   duration: number;
-  error?: TestError;
+  error?: reporterTypes.TestError;
 };
 
 export type JsonFullResult = {
-  status: FullResult['status'];
+  status: reporterTypes.FullResult['status'];
   startTime: number;
   duration: number;
 };
@@ -137,7 +136,7 @@ export class TeleReporterReceiver {
   private _clearPreviousResultsWhenTestBegins: boolean = false;
   private _reuseTestCases: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
-  private _config!: FullConfig;
+  private _config!: reporterTypes.FullConfig;
   private _stringPool = new StringInternPool();
 
   constructor(pathSeparator: string, reporter: Partial<ReporterV2>, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
@@ -290,7 +289,7 @@ export class TeleReporterReceiver {
     this._reporter.onStepEnd?.(test, result, step);
   }
 
-  private _onError(error: TestError) {
+  private _onError(error: reporterTypes.TestError) {
     this._reporter.onError?.(error);
   }
 
@@ -321,7 +320,7 @@ export class TeleReporterReceiver {
     return this._reporter.onExit?.();
   }
 
-  private _parseConfig(config: JsonConfig): FullConfig {
+  private _parseConfig(config: JsonConfig): reporterTypes.FullConfig {
     const result = { ...baseFullConfig, ...config };
     if (this._reportConfig) {
       result.configFile = this._reportConfig.configFile;
@@ -353,7 +352,7 @@ export class TeleReporterReceiver {
     };
   }
 
-  private _parseAttachments(attachments: JsonAttachment[]): TestResult['attachments'] {
+  private _parseAttachments(attachments: JsonAttachment[]): reporterTypes.TestResult['attachments'] {
     return attachments.map(a => {
       return {
         ...a,
@@ -399,9 +398,9 @@ export class TeleReporterReceiver {
     return test;
   }
 
-  private _absoluteLocation(location: Location): Location;
-  private _absoluteLocation(location?: Location): Location | undefined;
-  private _absoluteLocation(location: Location | undefined): Location | undefined {
+  private _absoluteLocation(location: reporterTypes.Location): reporterTypes.Location;
+  private _absoluteLocation(location?: reporterTypes.Location): reporterTypes.Location | undefined;
+  private _absoluteLocation(location: reporterTypes.Location | undefined): reporterTypes.Location | undefined {
     if (!location)
       return location;
     return {
@@ -422,7 +421,7 @@ export class TeleReporterReceiver {
 
 export class TeleSuite implements SuitePrivate {
   title: string;
-  location?: Location;
+  location?: reporterTypes.Location;
   parent?: TeleSuite;
   _requireFile: string = '';
   suites: TeleSuite[] = [];
@@ -470,7 +469,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   title: string;
   fn = () => {};
   results: TeleTestResult[] = [];
-  location: Location;
+  location: reporterTypes.Location;
   parent!: TeleSuite;
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
@@ -483,7 +482,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   resultsMap = new Map<string, TeleTestResult>();
 
-  constructor(id: string, title: string, location: Location) {
+  constructor(id: string, title: string, location: reporterTypes.Location) {
     this.id = id;
     this.title = title;
     this.location = location;
@@ -531,17 +530,17 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 }
 
-class TeleTestStep implements TestStep {
+class TeleTestStep implements reporterTypes.TestStep {
   title: string;
   category: string;
-  location: Location | undefined;
-  parent: TestStep | undefined;
+  location: reporterTypes.Location | undefined;
+  parent: reporterTypes.TestStep | undefined;
   duration: number = -1;
-  steps: TestStep[] = [];
+  steps: reporterTypes.TestStep[] = [];
 
   private _startTime: number = 0;
 
-  constructor(payload: JsonTestStepStart, parentStep: TestStep | undefined, location:  Location | undefined) {
+  constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, location: reporterTypes.Location | undefined) {
     this.title = payload.title;
     this.category = payload.category;
     this.location = location;
@@ -571,7 +570,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];
   attachments: reporterTypes.TestResult['attachments'] = [];
-  status: TestStatus = 'skipped';
+  status: reporterTypes.TestStatus = 'skipped';
   steps: TeleTestStep[] = [];
   errors: reporterTypes.TestResult['errors'] = [];
   error: reporterTypes.TestResult['error'];
@@ -600,7 +599,7 @@ class TeleTestResult implements reporterTypes.TestResult {
 
 export type TeleFullProject = FullProject & { __projectId: string };
 
-export const baseFullConfig: FullConfig = {
+export const baseFullConfig: reporterTypes.FullConfig = {
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,
