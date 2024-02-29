@@ -158,6 +158,7 @@ export const Workbench: React.FunctionComponent<{
       stack={revealedStack}
       sources={sources}
       rootDir={rootDir}
+      stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
       fallbackLocation={fallbackLocation} />
   };
   const consoleTab: TabbedPaneTabModel = {

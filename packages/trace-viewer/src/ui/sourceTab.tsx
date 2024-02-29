@@ -26,10 +26,11 @@ import type { StackFrame } from '@protocol/channels';
 
 export const SourceTab: React.FunctionComponent<{
   stack: StackFrame[] | undefined,
+  stackFrameLocation: 'bottom' | 'right',
   sources: Map<string, SourceModel>,
   rootDir?: string,
   fallbackLocation?: SourceLocation,
-}> = ({ stack, sources, rootDir, fallbackLocation }) => {
+}> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation }) => {
   const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
@@ -77,7 +78,9 @@ export const SourceTab: React.FunctionComponent<{
     return { source, highlight, targetLine, fileName };
   }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
-  return <SplitView sidebarSize={200} orientation='horizontal'>
+  const showStackFrames = (stack?.length ?? 0) > 1;
+
+  return <SplitView sidebarSize={200} orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'} sidebarHidden={!showStackFrames}>
     <div className='vbox' data-testid='source-code'>
       {fileName && <div className='source-tab-file-name'>{fileName}</div>}
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
