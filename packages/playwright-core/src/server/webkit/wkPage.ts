@@ -966,7 +966,7 @@ export class WKPage implements PageDelegate {
     await this._session.send('DOM.setInputFiles', { objectId, files: protocolFiles });
   }
 
-  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const pageProxyId = this._pageProxySession.sessionId;
     const objectId = handle._objectId;
     await Promise.all([
