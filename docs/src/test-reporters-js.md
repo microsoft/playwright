@@ -354,6 +354,7 @@ npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 * [Allure](https://www.npmjs.com/package/allure-playwright)
 * [Argos Visual Testing](https://argos-ci.com/docs/playwright)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
+* [GitHub Actions Reporter](https://www.npmjs.com/package/@estruyf/github-actions-reporter)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
