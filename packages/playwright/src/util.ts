@@ -185,6 +185,8 @@ export function expectTypes(receiver: any, types: string[], matcherName: string)
   }
 }
 
+export const windowsFilesystemFriendlyLength = 60;
+
 export function trimLongString(s: string, length = 100) {
   if (s.length <= length)
     return s;

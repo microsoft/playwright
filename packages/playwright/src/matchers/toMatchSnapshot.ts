@@ -23,7 +23,8 @@ import {
   addSuffixToFilePath,
   trimLongString, callLogText,
   expectTypes,
-  sanitizeFilePathBeforeExtension } from '../util';
+  sanitizeFilePathBeforeExtension,
+  windowsFilesystemFriendlyLength } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -74,7 +75,7 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
 
 class SnapshotHelper {
   readonly testInfo: TestInfoImpl;
-  readonly snapshotName: string;
+  readonly outputBaseName: string;
   readonly legacyExpectedPath: string;
   readonly previousPath: string;
   readonly snapshotPath: string;
@@ -128,9 +129,9 @@ class SnapshotHelper {
         ...testInfo.titlePath.slice(1),
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
-      name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
-      inputPathSegments = [name];
-      this.snapshotName = name;
+      inputPathSegments = [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension];
+      // Trim the output file paths more aggresively to avoid hitting Windows filesystem limits.
+      this.outputBaseName = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength)) + '.' + anonymousSnapshotExtension;
     } else {
       // We intentionally do not sanitize user-provided array of segments, but for backwards
       // compatibility we do sanitize the name if it is a single string.
@@ -140,13 +141,13 @@ class SnapshotHelper {
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
       if (index > 1)
-        this.snapshotName = addSuffixToFilePath(joinedName, `-${index - 1}`);
+        this.outputBaseName = addSuffixToFilePath(joinedName, `-${index - 1}`);
       else
-        this.snapshotName = joinedName;
+        this.outputBaseName = joinedName;
     }
     this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
-    this.legacyExpectedPath = addSuffixToFilePath(testInfo._getOutputPath(...inputPathSegments), '-expected');
-    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.snapshotName));
+    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.outputBaseName));
+    this.legacyExpectedPath = addSuffixToFilePath(outputFile, '-expected');
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
     this.diffPath = addSuffixToFilePath(outputFile, '-diff');
@@ -222,7 +223,7 @@ class SnapshotHelper {
     if (isWriteMissingMode) {
       writeFileSync(this.snapshotPath, actual);
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     }
     const message = `A snapshot doesn't exist at ${this.snapshotPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (this.updateSnapshots === 'all') {
@@ -256,22 +257,22 @@ class SnapshotHelper {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
       output.push(`\nExpected: ${colors.yellow(this.snapshotPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
 
