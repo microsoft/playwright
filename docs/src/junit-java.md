@@ -53,7 +53,7 @@ public class TestExample {
 
 ## Fixtures
 
-You should add JUnit annotation `@UsePlaywright` to your test classes to use fixtures. Test fixtures are used to establish environment for each test, giving the test everything it needs and nothing else.
+Simply add JUnit annotation `@UsePlaywright` to your test classes to enable Playwright fixtures. Test fixtures are used to establish environment for each test, giving the test everything it needs and nothing else.
 
 ```java
 @UsePlaywright
