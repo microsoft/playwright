@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-const { program, initializePlugin } = require('@playwright/experimental-ct-core/lib/program');
-const { _framework } = require('./index');
+const { program } = require('@playwright/experimental-ct-core/lib/program');
 
-initializePlugin(_framework);
 program.parse(process.argv);
