@@ -239,4 +239,4 @@ public class HomepageTests extends AxeTestFixtures {
 }
 ```
 
-See experimental [JUnit integration](./junit.md) to automatically initialize [Playwright] objects and more.
+See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.

@@ -87,7 +87,7 @@ public class TestExample {
 }
 ```
 
-See experimental [JUnit integration](./junit.md) to automatically initialize [Playwright] objects and more, thanks to fixtures.
+See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.
 
 ### Running Tests in Parallel
 

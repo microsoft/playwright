@@ -77,7 +77,7 @@ Here is a list of the pre-defined fixtures:
 |page          |[Page]             |Isolated page for this test run.|
 |browserContext|[BrowserContext]   |Isolated context for this test run. The `page` fixture belongs to this context as well.|
 |browser       |[Browser]          |Browsers are shared across tests to optimize resources.|
-|playwright    |[Playwright]       |Playwright instance is shared between tests.|
+|playwright    |[Playwright]       |Playwright instance is shared between tests running on the same thread.|
 |request       |[APIRequestContext]|Isolated APIRequestContext for this test run. Learn how to do [API testing](./api-testing).|
 
 ## Customizing options
