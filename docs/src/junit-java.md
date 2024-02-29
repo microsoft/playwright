@@ -124,11 +124,6 @@ to speed up execution (see [this page](https://junit.org/junit5/docs/snapshot/us
 Since it is not safe to use same Playwright objects from multiple threads without extra synchronization we recommend you create Playwright
 instance per thread and use it on that thread exclusively. Here is an example how to run multiple test classes in parallel.
 
-Use [`@TestInstance(TestInstance.Lifecycle.PER_CLASS)`](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
-annotation to make JUnit create one instance of a class for all test methods within that class (by default JUnit will create a new instance of the class
-for each test method). Store [Playwright] and [Browser] objects in instance fields. They will be shared between tests. Each instance of the class will use its
-own copy of Playwright. This is done automatically if you use the `@UsePlaywright` JUnit annotation.
-
 ```java
 @UsePlaywright
 class Test1 {
