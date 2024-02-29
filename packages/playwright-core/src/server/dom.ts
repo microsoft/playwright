@@ -643,7 +643,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (localPaths)
-        await this._page._delegate.setInputFilePaths(progress, retargeted, localPaths);
+        await this._page._delegate.setInputFilePaths(retargeted, localPaths);
       else
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
     });

@@ -62,6 +62,9 @@ it('should be able to click across browser contexts', async function({ browser }
   ]);
   expect(await getClicks(page1)).toBe(CLICK_COUNT);
   expect(await getClicks(page2)).toBe(CLICK_COUNT);
+
+  await page1.close();
+  await page2.close();
 });
 
 it('window.open should use parent tab context', async function({ browser, server }) {

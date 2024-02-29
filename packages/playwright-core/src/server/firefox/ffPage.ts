@@ -543,14 +543,12 @@ export class FFPage implements PageDelegate {
       injected.setInputFiles(node, files), files);
   }
 
-  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
+  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
     await this._session.send('Page.setFileInputFiles', {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
       files
     });
-    await handle.dispatchEvent(progress.metadata, 'input');
-    await handle.dispatchEvent(progress.metadata, 'change');
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
