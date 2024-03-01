@@ -36,7 +36,6 @@ export type JsonPattern = {
 };
 
 export type JsonProject = {
-  id: string;
   grep: JsonPattern[];
   grepInvert: JsonPattern[];
   metadata: Metadata;
@@ -201,7 +200,7 @@ export class TeleReporterReceiver {
   }
 
   private _onProject(project: JsonProject) {
-    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.__projectId === project.id);
+    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.name === project.name);
     if (!projectSuite) {
       projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite.suites.push(projectSuite);
@@ -331,7 +330,6 @@ export class TeleReporterReceiver {
 
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
-      __projectId: project.id,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -593,7 +591,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   }
 }
 
-export type TeleFullProject = FullProject & { __projectId: string };
+export type TeleFullProject = FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
   forbidOnly: false,

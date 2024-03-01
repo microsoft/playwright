@@ -180,9 +180,9 @@ export class Dispatcher {
   }
 
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
-    const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
+    const projectConfig = this._config.projects.find(p => p.project.name === testGroup.projectName)!;
     const outputDir = projectConfig.project.outputDir;
-    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectName) || {}, outputDir);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -212,8 +212,8 @@ export class Dispatcher {
         this._reporter.onError(error);
     });
     worker.on('exit', () => {
-      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
-      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
+      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectName) || {};
+      this._producedEnvByProjectId.set(testGroup.projectName, { ...producedEnv, ...worker.producedEnv() });
     });
     return worker;
   }

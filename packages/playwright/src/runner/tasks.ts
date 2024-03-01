@@ -284,10 +284,10 @@ function createRunTestsTask(): Task<TestRun> {
           // Inherit extra environment variables from dependencies.
           let extraEnv: Record<string, string | undefined> = {};
           for (const dep of project.deps)
-            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
+            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.project.name) };
           for (const setup of teardownToSetups.get(project) || [])
-            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setup.id) };
-          extraEnvByProjectId.set(project.id, extraEnv);
+            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setup.project.name) };
+          extraEnvByProjectId.set(project.project.name, extraEnv);
 
           const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
           if (!hasFailedDeps)

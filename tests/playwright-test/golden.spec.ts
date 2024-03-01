@@ -388,7 +388,7 @@ test('should match snapshots from multiple projects', async ({ runInlineTest }) 
         expect('Snapshot2').toMatchSnapshot('snapshot.txt');
       });
     `,
-    'p2/a.spec.js-snapshots/snapshot.txt': `Snapshot2`,
+    'p2/a.spec.js-snapshots/snapshot-project-1.txt': `Snapshot2`,
   });
   expect(result.exitCode).toBe(0);
 });

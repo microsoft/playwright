@@ -47,7 +47,7 @@ export class WorkerHost extends ProcessHost {
       workerIndex: this.workerIndex,
       parallelIndex,
       repeatEachIndex: testGroup.repeatEachIndex,
-      projectId: testGroup.projectId,
+      projectName: testGroup.projectName,
       config,
       artifactsDir: path.join(outputDir, artifactsFolderName(workerIndex))
     };

@@ -132,7 +132,7 @@ export class FullConfigInternal {
     const projectConfigs = configCLIOverrides.projects || userConfig.projects || [userConfig];
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, throwawayArtifactsPath));
     resolveProjectDependencies(this.projects);
-    this._assignUniqueProjectIds(this.projects);
+    this._assignMissingProjectNames(this.projects);
     setTransformConfig({
       babelPlugins: privateConfiguration?.babelPlugins || [],
       external: userConfig.build?.external || [],
@@ -140,19 +140,21 @@ export class FullConfigInternal {
     this.config.projects = this.projects.map(p => p.project);
   }
 
-  private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
+  private _assignMissingProjectNames(projects: FullProjectInternal[]) {
+    const userProvidedNames = new Set(projects.map(p => p.project.name));
     const usedNames = new Set();
+    let counter = 0;
     for (const p of projects) {
-      const name = p.project.name || '';
-      for (let i = 0; i < projects.length; ++i) {
-        const candidate = name + (i ? i : '');
-        if (usedNames.has(candidate))
-          continue;
-        p.id = candidate;
-        (p.project as any).__projectId = p.id;
-        usedNames.add(candidate);
-        break;
+      if (p.project.name && usedNames.has(p.project.name))
+        throw new Error(`Duplicate project name "${p.project.name}" in ${this.config.configFile}`);
+
+      if (!p.project.name && usedNames.has('')) {
+        let candidate = 'project_' + String(++counter);
+        while (userProvidedNames.has(candidate))
+          candidate = 'project_' + String(++counter);
+        p.project.name = candidate;
       }
+      usedNames.add(p.project.name);
     }
   }
 }
@@ -164,7 +166,6 @@ export class FullProjectInternal {
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string;
-  id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
 
@@ -285,7 +286,3 @@ export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
-
-export function getProjectId(project: FullProject): string {
-  return (project as any).__projectId!;
-}

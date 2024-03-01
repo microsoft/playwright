@@ -350,29 +350,6 @@ test('should filter by project list, case-insensitive', async ({ runInlineTest }
   expect(new Set(outputLines)).toEqual(new Set(['suite3', 'suite2']));
 });
 
-test('should filter when duplicate project names exist', async ({ runInlineTest }) => {
-  const { passed, failed, outputLines, skipped } = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { projects: [
-        { name: 'suite1' },
-        { name: 'suite2' },
-        { name: 'suite1' },
-        { name: 'suite4' },
-      ] };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({}, testInfo) => {
-        console.log('%%' + test.info().project.name);
-      });
-    `
-  }, { project: ['suite1',  'sUIte4'] });
-  expect(passed).toBe(3);
-  expect(failed).toBe(0);
-  expect(skipped).toBe(0);
-  expect(new Set(outputLines)).toEqual(new Set(['suite1', 'suite1', 'suite4']));
-});
-
 test('should print nice error when some of the projects are unknown', async ({ runInlineTest }) => {
   const { output, exitCode } = await runInlineTest({
     'playwright.config.ts': `

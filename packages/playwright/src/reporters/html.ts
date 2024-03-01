@@ -241,7 +241,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.metadata?.reportName, [], testEntries);
+        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -341,13 +341,13 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, botName: string | undefined, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, botName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, botName, newPath)));
+    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, newPath)));
   }
 
-  private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, botName: string | undefined, path: string[]): TestEntry {
+  private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1);
@@ -363,7 +363,6 @@ class HtmlBuilder {
         testId,
         title: test.title,
         projectName,
-        botName,
         location,
         duration,
         // Annotations can be pushed directly, with a wrong type.
@@ -378,7 +377,6 @@ class HtmlBuilder {
         testId,
         title: test.title,
         projectName,
-        botName,
         location,
         duration,
         // Annotations can be pushed directly, with a wrong type.

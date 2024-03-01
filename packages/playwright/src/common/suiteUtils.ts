@@ -53,10 +53,9 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     suite._fileId = fileId;
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
     const [file, ...titles] = test.titlePath();
-    const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
+    const testIdExpression = `[project=${project.project.name}]${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
-    test._projectId = project.id;
 
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
@@ -80,7 +79,7 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
 
     // We only compute / set digest in the runner.
     if (test._poolDigest)
-      test._workerHash = `${project.id}-${test._poolDigest}-0`;
+      test._workerHash = `${project.project.name}-${test._poolDigest}-0`;
   });
 
   return result;
@@ -91,13 +90,13 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
   fileSuite.forEachTest((test, suite) => {
     if (repeatEachIndex) {
       const [file, ...titles] = test.titlePath();
-      const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
+      const testIdExpression = `[project=${project.project.name}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
       const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
 
       if (test._poolDigest)
-        test._workerHash = `${project.id}-${test._poolDigest}-${repeatEachIndex}`;
+        test._workerHash = `${project.project.name}-${test._poolDigest}-${repeatEachIndex}`;
     }
   });
 }

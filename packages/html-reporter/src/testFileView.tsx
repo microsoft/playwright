@@ -23,7 +23,7 @@ import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
-import { hashStringToInt, testCaseLabels } from './labelUtils';
+import { hashStringToInt } from './labelUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -52,7 +52,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               </Link>
               {report.projectNames.length > 1 && !!test.projectName &&
               <ProjectLink projectNames={report.projectNames} projectName={test.projectName} />}
-              <LabelsClickView labels={testCaseLabels(test)} />
+              <LabelsClickView labels={test.tags} />
             </span>
           </div>
           <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>

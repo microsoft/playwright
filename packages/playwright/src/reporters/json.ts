@@ -19,7 +19,6 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
 import { formatError, prepareErrorStack } from './base';
 import { MultiMap, assert, toPosixPath } from 'playwright-core/lib/utils';
-import { getProjectId } from '../common/config';
 import EmptyReporter from './empty';
 
 class JSONReporter extends EmptyReporter {
@@ -64,7 +63,7 @@ class JSONReporter extends EmptyReporter {
             repeatEach: project.repeatEach,
             retries: project.retries,
             metadata: project.metadata,
-            id: getProjectId(project),
+            id: project.name,
             name: project.name,
             testDir: toPosixPath(project.testDir),
             testIgnore: serializePatterns(project.testIgnore),
@@ -92,11 +91,10 @@ class JSONReporter extends EmptyReporter {
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
     const fileSuites = new MultiMap<string, JSONReportSuite>();
     for (const projectSuite of suites) {
-      const projectId = getProjectId(projectSuite.project()!);
       const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
         const file = fileSuite.location!.file;
-        const serialized = this._serializeSuite(projectId, projectName, fileSuite);
+        const serialized = this._serializeSuite(projectName, fileSuite);
         if (serialized)
           fileSuites.set(file, serialized);
       }
@@ -153,35 +151,35 @@ class JSONReporter extends EmptyReporter {
     }
   }
 
-  private _serializeSuite(projectId: string, projectName: string, suite: Suite): null | JSONReportSuite {
+  private _serializeSuite(projectName: string, suite: Suite): null | JSONReportSuite {
     if (!suite.allTests().length)
       return null;
-    const suites = suite.suites.map(suite => this._serializeSuite(projectId, projectName, suite)).filter(s => s) as JSONReportSuite[];
+    const suites = suite.suites.map(suite => this._serializeSuite(projectName, suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
       ...this._relativeLocation(suite.location),
-      specs: suite.tests.map(test => this._serializeTestSpec(projectId, projectName, test)),
+      specs: suite.tests.map(test => this._serializeTestSpec(projectName, test)),
       suites: suites.length ? suites : undefined,
     };
   }
 
-  private _serializeTestSpec(projectId: string, projectName: string, test: TestCase): JSONReportSpec {
+  private _serializeTestSpec(projectName: string, test: TestCase): JSONReportSpec {
     return {
       title: test.title,
       ok: test.ok(),
       tags: test.tags.map(tag => tag.substring(1)),  // Strip '@'.
-      tests: [this._serializeTest(projectId, projectName, test)],
+      tests: [this._serializeTest(projectName, test)],
       id: test.id,
       ...this._relativeLocation(test.location),
     };
   }
 
-  private _serializeTest(projectId: string, projectName: string, test: TestCase): JSONReportTest {
+  private _serializeTest(projectName: string, test: TestCase): JSONReportTest {
     return {
       timeout: test.timeout,
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
-      projectId,
+      projectId: projectName,
       projectName,
       results: test.results.map(r => this._serializeTestResult(r, test)),
       status: test.outcome(),

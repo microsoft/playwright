@@ -252,7 +252,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _pool: FixturePool | undefined;
   _poolDigest = '';
   _workerHash = '';
-  _projectId = '';
   // Annotations known statically before running the test, e.g. `test.skip()` or `test(title, { annotation }, body)`.
   _staticAnnotations: Annotation[] = [];
   // Explicitly declared tags that are not a part of the title.
@@ -314,7 +313,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       staticAnnotations: this._staticAnnotations.slice(),
       annotations: this.annotations.slice(),
       tags: this._tags.slice(),
-      projectId: this._projectId,
     };
   }
 
@@ -331,7 +329,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._staticAnnotations = data.staticAnnotations;
     test.annotations = data.annotations;
     test._tags = data.tags;
-    test._projectId = data.projectId;
     return test;
   }
 

@@ -20,7 +20,7 @@ export type TestGroup = {
   workerHash: string;
   requireFile: string;
   repeatEachIndex: number;
-  projectId: string;
+  projectName: string;
   tests: TestCase[];
 };
 
@@ -56,7 +56,7 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
       workerHash: test._workerHash,
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
-      projectId: test._projectId,
+      projectName: projectSuite.project()!.name,
       tests: [],
     };
   };

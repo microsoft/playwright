@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { testCaseLabels } from './labelUtils';
 import type { TestCaseSummary } from './types';
 
 export class Filter {
@@ -108,13 +107,13 @@ export class Filter {
       if (test.outcome === 'skipped')
         status = 'skipped';
       const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + (test.botName || '') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
+        text: (status + ' ' + test.projectName + ' ' + test.tags.join(' ') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
         status: status as any,
         file: test.location.file,
         line: String(test.location.line),
         column: String(test.location.column),
-        labels: testCaseLabels(test).map(label => label.toLowerCase()),
+        labels: test.tags.map(tag => tag.toLowerCase()),
       };
       (test as any).searchValues = searchValues;
     }

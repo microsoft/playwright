@@ -66,7 +66,6 @@ export type TestCaseSummary = {
   title: string;
   path: string[];
   projectName: string;
-  botName?: string;
   location: Location;
   annotations: TestCaseAnnotation[];
   tags: string[];

@@ -1207,7 +1207,7 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
         onBegin(config, suite) {
           const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
           console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('reportNames: ' + projects.map(p => p.metadata.reportName));
+          suite.allTests().forEach(t => console.log('tags: ' + t.tags.join(' ')));
         }
       }
       module.exports = EchoReporter;
@@ -1232,8 +1232,9 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
-  expect(output).toContain(`projectNames: foo,foo`);
-  expect(output).toContain(`reportNames: first,second`);
+  expect(output).toContain(`projectNames: foo`);
+  expect(output).toContain(`tags: @first @smoke`);
+  expect(output).toContain(`tags: @second @smoke`);
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {

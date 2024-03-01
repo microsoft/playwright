@@ -237,6 +237,19 @@ test('should focus test from one project', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
+test('should throw on dupe project name', async ({ runInlineTest }) => {
+  const { exitCode, output } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'a' },
+        { name: 'a' },
+      ] };
+    `,
+  }, { reporter: 'list,json' });
+  expect(output).toContain('Duplicate project name');
+  expect(exitCode).toBe(1);
+});
+
 test('should work with default export', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'file.spec.ts': `

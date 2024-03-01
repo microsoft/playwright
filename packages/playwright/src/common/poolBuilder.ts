@@ -75,7 +75,7 @@ export class PoolBuilder {
     if (!this._testTypePools.has(testType)) {
       const optionOverrides = {
         overrides: this._project?.project?.use ?? {},
-        location: { file: `project#${this._project?.id}`, line: 1, column: 1 }
+        location: { file: `project#${this._project?.project.name}`, line: 1, column: 1 }
       };
       const pool = new FixturePool(testType.fixtures, e => this._handleLoadError(e, testErrors), undefined, undefined, optionOverrides);
       this._testTypePools.set(testType, pool);

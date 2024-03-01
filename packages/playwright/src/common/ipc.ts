@@ -62,7 +62,7 @@ export type WorkerInitParams = {
   workerIndex: number;
   parallelIndex: number;
   repeatEachIndex: number;
-  projectId: string;
+  projectName: string;
   config: SerializedConfig;
   artifactsDir: string;
 };
