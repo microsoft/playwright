@@ -58,11 +58,6 @@ export class FullConfigInternal {
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
-  // TODO: when merging reports, there could be no internal config. This is very unfortunate.
-  static from(config: FullConfig): FullConfigInternal | undefined {
-    return (config as any)[configInternalSymbol];
-  }
-
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);

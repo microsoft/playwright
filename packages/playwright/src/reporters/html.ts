@@ -30,7 +30,6 @@ import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import { FullConfigInternal } from '../common/config';
 import EmptyReporter from './empty';
 
 type TestEntry = {
@@ -52,6 +51,7 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
+  _mode?: string;
 };
 
 class HtmlReporter extends EmptyReporter {
@@ -124,12 +124,11 @@ class HtmlReporter extends EmptyReporter {
   override async onExit() {
     if (process.env.CI || !this._buildResult)
       return;
-
     const { ok, singleTestId } = this._buildResult;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
-    } else if (!FullConfigInternal.from(this.config)?.cliListOnly) {
+    } else if (this._options._mode === 'run') {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._options.host ? ` --host ${this._options.host}` : '';

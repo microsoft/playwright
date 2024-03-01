@@ -737,10 +737,15 @@ const dispatchEvent = (method: string, params?: any) => {
     return;
   }
 
-  // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
-  // before we use it.
-  lastRunReceiver?.dispatch({ method, params })?.catch(() => {});
-  receiver?.dispatch({ method, params })?.catch(() => {});
+  if (method === 'listReport')
+    receiver?.dispatch('list', params)?.catch(() => {});
+
+  if (method === 'testReport') {
+    // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
+    // before we use it.
+    lastRunReceiver?.dispatch('test', params)?.catch(() => {});
+    receiver?.dispatch('test', params)?.catch(() => {});
+  }
 };
 
 const outputDirForTestCase = (testCase: TestCase): string | undefined => {

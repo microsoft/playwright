@@ -60,7 +60,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     for (const event of events) {
       if (event.method === 'onEnd')
         printStatus(`building final report`);
-      await receiver.dispatch(event);
+      await receiver.dispatch('test', event);
       if (event.method === 'onEnd')
         printStatus(`finished building report`);
     }
@@ -248,7 +248,6 @@ function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: str
     rootDir: '',
     version: '',
     workers: 0,
-    listOnly: false
   };
   for (const event of configureEvents)
     config = mergeConfigs(config, event.params.config);

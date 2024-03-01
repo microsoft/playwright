@@ -26,9 +26,7 @@ export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonStdIOType = 'stdout' | 'stderr';
 
-export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & {
-  listOnly: boolean;
-};
+export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'>;
 
 export type MergeReporterConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' | 'reporter' >;
 
@@ -147,10 +145,11 @@ export class TeleReporterReceiver {
     this._reportConfig = reportConfig;
   }
 
-  dispatch(message: JsonEvent): Promise<void> | void {
+  dispatch(mode: 'list' | 'test', message: JsonEvent): Promise<void> | void {
     const { method, params } = message;
     if (method === 'onConfigure') {
       this._onConfigure(params.config);
+      this._listOnly = mode === 'list';
       return;
     }
     if (method === 'onProject') {
@@ -197,7 +196,6 @@ export class TeleReporterReceiver {
 
   private _onConfigure(config: JsonConfig) {
     this._rootDir = config.rootDir;
-    this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
     this._reporter.onConfigure?.(this._config);
   }
