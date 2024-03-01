@@ -22,7 +22,7 @@ import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/u
 import {
   addSuffixToFilePath,
   trimLongString, callLogText,
-  expectTypes  } from '../util';
+  expectTypes } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -91,7 +91,6 @@ class SnapshotHelper {
     testInfo: TestInfoImpl,
     matcherName: string,
     locator: Locator | undefined,
-    snapshotPathResolver: (...pathSegments: string[]) => string,
     anonymousSnapshotExtension: string,
     configOptions: ToHaveScreenshotConfigOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions,
@@ -165,7 +164,7 @@ class SnapshotHelper {
     // sanitizes path if string
     const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
     const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
-    this.snapshotPath = snapshotPathResolver(...inputPathSegments);
+    this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
     const inputFile = testInfo._getOutputPath(...inputPathSegments);
     const outputFile = testInfo._getOutputPath(...outputPathSegments);
     this.legacyExpectedPath = addSuffixToFilePath(inputFile, '-expected');
@@ -304,10 +303,10 @@ export function toMatchSnapshot(
   if (testInfo._configInternal.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
 
+  const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
   const helper = new SnapshotHelper(
-      testInfo, 'toMatchSnapshot', undefined, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
-      testInfo._projectInternal.expect?.toMatchSnapshot || {},
-      nameOrOptions, optOptions);
+      testInfo, 'toMatchSnapshot', undefined, determineFileExtension(received),
+      configOptions, nameOrOptions, optOptions);
 
   if (this.isNot) {
     if (!fs.existsSync(helper.snapshotPath))
@@ -362,10 +361,7 @@ export async function toHaveScreenshot(
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
-  const snapshotPathResolver = testInfo.snapshotPath.bind(testInfo);
-  const helper = new SnapshotHelper(
-      testInfo, 'toHaveScreenshot', locator, snapshotPathResolver, 'png',
-      configOptions, nameOrOptions, optOptions);
+  const helper = new SnapshotHelper(testInfo, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
