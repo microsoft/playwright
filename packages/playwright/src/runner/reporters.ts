@@ -50,9 +50,10 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   descriptions ??= config.config.reporter;
   if (config.configCLIOverrides.additionalReporters)
     descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
+  const runOptions = { configDir: config.configDir, _mode: mode };
   for (const r of descriptions) {
     const [name, arg] = r;
-    const options = { ...arg, configDir: config.configDir };
+    const options = { ...runOptions, ...arg };
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
     } else {
@@ -62,7 +63,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   }
   if (process.env.PW_TEST_REPORTER) {
     const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(wrapReporterAsV2(new reporterConstructor()));
+    reporters.push(wrapReporterAsV2(new reporterConstructor(runOptions)));
   }
 
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());

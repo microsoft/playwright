@@ -212,7 +212,7 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 
@@ -377,7 +377,7 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 
@@ -1152,7 +1152,7 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'], cwd: mergeCwd });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 

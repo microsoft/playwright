@@ -17,7 +17,7 @@
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-import { FullConfigInternal, getProjectId } from '../common/config';
+import { getProjectId } from '../common/config';
 import type { JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
@@ -152,7 +152,6 @@ export class TeleReporterEmitter implements ReporterV2 {
       rootDir: config.rootDir,
       version: config.version,
       workers: config.workers,
-      listOnly: !!FullConfigInternal.from(config)?.cliListOnly,
     };
   }
 
