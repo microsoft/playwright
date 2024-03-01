@@ -1011,19 +1011,25 @@ Creates a new page in the browser context.
 Returns all open pages in the context.
 
 ## async method: BrowserContext.removeCookies
-* since: v1.42
+* since: v1.43
 
 Removes cookies from context.
 
 **Usage**
 
 ```js
-await browserContext.removeCookies([cookieName1, cookieName2]);
+await browserContext.removeCookies({ name: 'session-id' });
+await browserContext.removeCookies({ domain: 'my-origin.com' });
+await browserContext.removeCookies({ path: '/api/v1' });
+await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
 ```
 
-### param: BrowserContext.removeCookies.cookieNames
-* since: v1.42
-- `cookieNames` <[string]|[Array]<[string]>> - list of cookie names to remove from context
+### param: BrowserContext.removeCookies.cookies
+* since: v1.43
+- `cookies` <[Object]>
+  - `name` ?<[string]>
+  - `domain` ?<[string]>
+  - `path` ?<[string]>
 
 ## property: BrowserContext.request
 * since: v1.16

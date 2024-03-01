@@ -1525,7 +1525,11 @@ export type BrowserContextClearCookiesParams = {};
 export type BrowserContextClearCookiesOptions = {};
 export type BrowserContextClearCookiesResult = void;
 export type BrowserContextRemoveCookiesParams = {
-  cookieNames: string[],
+  cookies: {
+    name?: string,
+    domain?: string,
+    path?: string,
+  },
 };
 export type BrowserContextRemoveCookiesOptions = {
 

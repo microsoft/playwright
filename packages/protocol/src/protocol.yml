@@ -1034,9 +1034,12 @@ BrowserContext:
 
     removeCookies:
       parameters:
-        cookieNames:
-          type: array
-          items: string
+        cookies:
+          type: object
+          properties:
+            name: string?
+            domain: string?
+            path: string?
 
     clearPermissions:
 

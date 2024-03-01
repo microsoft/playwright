@@ -8444,12 +8444,21 @@ export interface BrowserContext {
    * **Usage**
    *
    * ```js
-   * await browserContext.removeCookies([cookieName1, cookieName2]);
+   * await browserContext.removeCookies({ name: 'session-id' });
+   * await browserContext.removeCookies({ domain: 'my-origin.com' });
+   * await browserContext.removeCookies({ path: '/api/v1' });
+   * await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
    * ```
    *
-   * @param cookieNames
+   * @param cookies
    */
-  removeCookies(cookieNames: string|ReadonlyArray<string>): Promise<void>;
+  removeCookies(cookies: {
+    name?: string;
+
+    domain?: string;
+
+    path?: string;
+  }): Promise<void>;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
