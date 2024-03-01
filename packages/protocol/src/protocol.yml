@@ -1034,7 +1034,7 @@ BrowserContext:
 
     removeCookies:
       parameters:
-        cookies:
+        criteria:
           type: object
           properties:
             name: string?

@@ -1024,9 +1024,9 @@ await browserContext.removeCookies({ path: '/api/v1' });
 await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
 ```
 
-### param: BrowserContext.removeCookies.cookies
+### param: BrowserContext.removeCookies.criteria
 * since: v1.43
-- `cookies` <[Object]>
+- `criteria` <[Object]>
   - `name` ?<[string]>
   - `domain` ?<[string]>
   - `path` ?<[string]>

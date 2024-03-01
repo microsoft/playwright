@@ -8450,9 +8450,9 @@ export interface BrowserContext {
    * await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
    * ```
    *
-   * @param cookies
+   * @param criteria
    */
-  removeCookies(cookies: {
+  removeCookies(criteria: {
     name?: string;
 
     domain?: string;

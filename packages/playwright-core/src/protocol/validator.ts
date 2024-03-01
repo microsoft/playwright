@@ -829,7 +829,7 @@ scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextRemoveCookiesParams = tObject({
-  cookies: tObject({
+  criteria: tObject({
     name: tOptional(tString),
     domain: tOptional(tString),
     path: tOptional(tString),

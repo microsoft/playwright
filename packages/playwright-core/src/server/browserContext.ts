@@ -276,20 +276,20 @@ export abstract class BrowserContext extends SdkObject {
     return await this.doGetCookies(urls as string[]);
   }
 
-  async removeCookies(cookies: {name?: string, domain?: string, path?: string}): Promise<void> {
-    const setCookies = await this.cookies();
-
-    if (!cookies.name && !cookies.domain && !cookies.path)
+  async removeCookies(criteria: {name?: string, domain?: string, path?: string}): Promise<void> {
+    if (!criteria.name && !criteria.domain && !criteria.path)
       return;
 
-    const filteredCookies = setCookies.filter(cookie => {
-      return !((!cookies.name || cookies.name === cookie.name) &&
-        (!cookies.domain || cookies.domain === cookie.domain) &&
-        (!cookies.path || cookies.path === cookie.path));
+    const currentCookies = await this.cookies();
+
+    const cookiesToKeep = currentCookies.filter(cookie => {
+      return !((!criteria.name || criteria.name === cookie.name) &&
+        (!criteria.domain || criteria.domain === cookie.domain) &&
+        (!criteria.path || criteria.path === cookie.path));
     });
 
     await this.clearCookies();
-    await this.addCookies(filteredCookies);
+    await this.addCookies(cookiesToKeep);
   }
 
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {

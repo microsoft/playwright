@@ -225,7 +225,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async removeCookies(params: channels.BrowserContextRemoveCookiesParams): Promise<void> {
-    await this._context.removeCookies(params.cookies);
+    await this._context.removeCookies(params.criteria);
   }
 
   async grantPermissions(params: channels.BrowserContextGrantPermissionsParams): Promise<void> {
