@@ -101,7 +101,8 @@ function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string)
     referencedConfigFile += '.json';
   const currentDir = path.dirname(baseConfigFile);
   let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
-  if (referencedConfigFile.indexOf('/') !== -1 && referencedConfigFile.indexOf('.') !== -1 && !fs.existsSync(referencedConfigFile))
+  // TODO: I don't see how this makes sense, delete in the next minor release.
+  if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
     resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
   return resolvedConfigFile;
 }
@@ -117,6 +118,7 @@ function loadTsConfig(
   let result: LoadedTsConfig = {
     tsConfigPath: configFilePath,
   };
+  // Retain result instance below, so that caching works.
   visited.set(configFilePath, result);
 
   if (!fs.existsSync(configFilePath))
@@ -137,7 +139,8 @@ function loadTsConfig(
       const extendsDir = path.dirname(extendedConfig);
       base.baseUrl = path.join(extendsDir, base.baseUrl);
     }
-    result = { ...result, ...base, tsConfigPath: configFilePath };
+    // Retain result instance, so that caching works.
+    Object.assign(result, base, { tsConfigPath: configFilePath });
   }
 
   const loadedConfig = Object.fromEntries(Object.entries({
@@ -146,7 +149,8 @@ function loadTsConfig(
     allowJs: parsedConfig?.compilerOptions?.allowJs,
   }).filter(([, value]) => value !== undefined));
 
-  result = { ...result, ...loadedConfig };
+  // Retain result instance, so that caching works.
+  Object.assign(result, loadedConfig);
 
   for (const ref of parsedConfig.references || [])
     references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
