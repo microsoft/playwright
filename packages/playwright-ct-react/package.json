@@ -33,7 +33,6 @@
     "@vitejs/plugin-react": "^4.2.1"
   },
   "bin": {
-    "playwright": "cli.js",
-    "pw-react": "cli.js"
+    "playwright": "cli.js"
   }
 }

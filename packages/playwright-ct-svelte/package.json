@@ -36,7 +36,6 @@
     "svelte": "^4.2.8"
   },
   "bin": {
-    "playwright": "cli.js",
-    "pw-svelte": "cli.js"
+    "playwright": "cli.js"
   }
 }
