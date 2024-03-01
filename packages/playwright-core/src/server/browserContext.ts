@@ -276,16 +276,16 @@ export abstract class BrowserContext extends SdkObject {
     return await this.doGetCookies(urls as string[]);
   }
 
-  async removeCookies(criteria: {name?: string, domain?: string, path?: string}): Promise<void> {
-    if (!criteria.name && !criteria.domain && !criteria.path)
-      return;
+  async removeCookies(filter: {name?: string, domain?: string, path?: string}): Promise<void> {
+    if (!filter.name && !filter.domain && !filter.path)
+      throw new Error(`Either name, domain or path are required`);
 
     const currentCookies = await this.cookies();
 
     const cookiesToKeep = currentCookies.filter(cookie => {
-      return !((!criteria.name || criteria.name === cookie.name) &&
-        (!criteria.domain || criteria.domain === cookie.domain) &&
-        (!criteria.path || criteria.path === cookie.path));
+      return !((!filter.name || filter.name === cookie.name) &&
+        (!filter.domain || filter.domain === cookie.domain) &&
+        (!filter.path || filter.path === cookie.path));
     });
 
     await this.clearCookies();

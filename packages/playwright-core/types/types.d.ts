@@ -8439,7 +8439,7 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
-   * Removes cookies from context.
+   * Removes cookies from context. The method will throw an error if either name, domain or path has not been passed.
    *
    * **Usage**
    *
@@ -8450,9 +8450,9 @@ export interface BrowserContext {
    * await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
    * ```
    *
-   * @param criteria
+   * @param filter
    */
-  removeCookies(criteria: {
+  removeCookies(filter: {
     name?: string;
 
     domain?: string;

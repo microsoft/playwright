@@ -1014,6 +1014,7 @@ Returns all open pages in the context.
 * since: v1.43
 
 Removes cookies from context.
+The method will throw an error if either name, domain or path has not been passed.
 
 **Usage**
 
@@ -1024,9 +1025,9 @@ await browserContext.removeCookies({ path: '/api/v1' });
 await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
 ```
 
-### param: BrowserContext.removeCookies.criteria
+### param: BrowserContext.removeCookies.filter
 * since: v1.43
-- `criteria` <[Object]>
+- `filter` <[Object]>
   - `name` ?<[string]>
   - `domain` ?<[string]>
   - `path` ?<[string]>

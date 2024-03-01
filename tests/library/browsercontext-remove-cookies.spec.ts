@@ -209,7 +209,7 @@ it('should remove cookies by name, domain and path', async ({ context, page, ser
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
 });
 
-it('should not remove cookies when empty object passed', async ({ context, page, server }) => {
+it('should throw if empty object is passed', async ({ context, page, server }) => {
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
@@ -225,6 +225,7 @@ it('should not remove cookies when empty object passed', async ({ context, page,
   ]);
   await page.goto('https://www.example.com/');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
-  await context.removeCookies({ });
+  const error = await context.removeCookies({ }).catch(e => e);
+  expect(error.message).toContain(`Either name, domain or path are required`);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
 });
