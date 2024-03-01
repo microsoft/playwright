@@ -17,7 +17,6 @@
 import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
-import type { SuitePrivate } from '../../types/reporterPrivate';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -72,7 +71,7 @@ export class BaseReporter implements ReporterV2 {
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
-  private fileDurations = new Map<string, number>();
+  private fileDurations = new Map<string, { duration: number, workers: Set<number> }>();
   private _omitFailures: boolean;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
@@ -115,16 +114,13 @@ export class BaseReporter implements ReporterV2 {
   onTestEnd(test: TestCase, result: TestResult) {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
-    // Ignore any tests that are run in parallel.
-    for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
-      if ((suite as SuitePrivate)._parallelMode === 'parallel')
-        return;
-    }
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
-    const duration = this.fileDurations.get(fileAndProject) || 0;
-    this.fileDurations.set(fileAndProject, duration + result.duration);
+    const entry = this.fileDurations.get(fileAndProject) || { duration: 0, workers: new Set() };
+    entry.duration += result.duration;
+    entry.workers.add(result.workerIndex);
+    this.fileDurations.set(fileAndProject, entry);
   }
 
   onError(error: TestError) {
@@ -167,7 +163,8 @@ export class BaseReporter implements ReporterV2 {
   protected getSlowTests(): [string, number][] {
     if (!this.config.reportSlowTests)
       return [];
-    const fileDurations = [...this.fileDurations.entries()];
+    // Only pick durations that were served by single worker.
+    const fileDurations = [...this.fileDurations.entries()].filter(([key, value]) => value.workers.size === 1).map(([key, value]) => [key, value.duration]) as [string, number][];
     fileDurations.sort((a, b) => b[1] - a[1]);
     const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
     const threshold =  this.config.reportSlowTests.threshold;

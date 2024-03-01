@@ -17,7 +17,6 @@
 import type { Annotation } from '../common/config';
 import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
-import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import { StringInternPool } from './stringInternPool';
 
@@ -45,12 +44,15 @@ export type JsonProject = {
   metadata: Metadata;
   name: string;
   dependencies: string[];
+  // This is relative to root dir.
   snapshotDir: string;
+  // This is relative to root dir.
   outputDir: string;
   repeatEach: number;
   retries: number;
   suites: JsonSuite[];
   teardown?: string;
+  // This is relative to root dir.
   testDir: string;
   testIgnore: JsonPattern[];
   testMatch: JsonPattern[];
@@ -58,13 +60,10 @@ export type JsonProject = {
 };
 
 export type JsonSuite = {
-  type: 'root' | 'project' | 'file' | 'describe';
   title: string;
   location?: JsonLocation;
   suites: JsonSuite[];
   tests: JsonTestCase[];
-  fileId: string | undefined;
-  parallelMode: 'none' | 'default' | 'serial' | 'parallel';
 };
 
 export type JsonTestCase = {
@@ -73,6 +72,7 @@ export type JsonTestCase = {
   location: JsonLocation;
   retries: number;
   tags?: string[];
+  repeatEachIndex: number;
 };
 
 export type JsonTestEnd = {
@@ -365,13 +365,11 @@ export class TeleReporterReceiver {
     for (const jsonSuite of jsonSuites) {
       let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
       if (!targetSuite) {
-        targetSuite = new TeleSuite(jsonSuite.title, jsonSuite.type);
+        targetSuite = new TeleSuite(jsonSuite.title, parent._type === 'project' ? 'file' : 'describe');
         targetSuite.parent = parent;
         parent.suites.push(targetSuite);
       }
       targetSuite.location = this._absoluteLocation(jsonSuite.location);
-      targetSuite._fileId = jsonSuite.fileId;
-      targetSuite._parallelMode = jsonSuite.parallelMode;
       this._mergeSuitesInto(jsonSuite.suites, targetSuite);
       this._mergeTestsInto(jsonSuite.tests, targetSuite);
     }
@@ -379,9 +377,9 @@ export class TeleReporterReceiver {
 
   private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
     for (const jsonTest of jsonTests) {
-      let targetTest = this._reuseTestCases ? parent.tests.find(s => s.title === jsonTest.title) : undefined;
+      let targetTest = this._reuseTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
       if (!targetTest) {
-        targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location));
+        targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location), jsonTest.repeatEachIndex);
         targetTest.parent = parent;
         parent.tests.push(targetTest);
         this._tests.set(targetTest.id, targetTest);
@@ -412,14 +410,14 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath: string): string;
   private _absolutePath(relativePath?: string): string | undefined;
   private _absolutePath(relativePath?: string): string | undefined {
-    if (!relativePath)
-      return relativePath;
+    if (relativePath === undefined)
+      return;
     return this._stringPool.internString(this._rootDir + this._pathSeparator + relativePath);
   }
 
 }
 
-export class TeleSuite implements SuitePrivate {
+export class TeleSuite {
   title: string;
   location?: reporterTypes.Location;
   parent?: TeleSuite;
@@ -428,7 +426,6 @@ export class TeleSuite implements SuitePrivate {
   tests: TeleTestCase[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
-  _fileId: string | undefined;
   _project: TeleFullProject | undefined;
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   readonly _type: 'root' | 'project' | 'file' | 'describe';
@@ -482,10 +479,11 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   resultsMap = new Map<string, TeleTestResult>();
 
-  constructor(id: string, title: string, location: reporterTypes.Location) {
+  constructor(id: string, title: string, location: reporterTypes.Location, repeatEachIndex: number) {
     this.id = id;
     this.title = title;
     this.location = location;
+    this.repeatEachIndex = repeatEachIndex;
   }
 
   titlePath(): string[] {

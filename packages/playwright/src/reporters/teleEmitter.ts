@@ -16,10 +16,8 @@
 
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
-import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfig, FullResult, Location, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, getProjectId } from '../common/config';
-import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
@@ -185,10 +183,7 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   private _serializeSuite(suite: Suite): JsonSuite {
     const result = {
-      type: suite._type,
       title: suite.title,
-      fileId: (suite as SuitePrivate)._fileId,
-      parallelMode: (suite as SuitePrivate)._parallelMode,
       location: this._relativeLocation(suite.location),
       suites: suite.suites.map(s => this._serializeSuite(s)),
       tests: suite.tests.map(t => this._serializeTest(t)),
@@ -203,6 +198,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       location: this._relativeLocation(test.location),
       retries: test.retries,
       tags: test.tags,
+      repeatEachIndex: test.repeatEachIndex,
     };
   }
 

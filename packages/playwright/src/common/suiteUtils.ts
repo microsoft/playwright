@@ -90,7 +90,8 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
   // Assign test properties with project-specific values.
   fileSuite.forEachTest((test, suite) => {
     if (repeatEachIndex) {
-      const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')} (repeat:${repeatEachIndex})`;
+      const [file, ...titles] = test.titlePath();
+      const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
       const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
