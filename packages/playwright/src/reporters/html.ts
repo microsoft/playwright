@@ -22,7 +22,6 @@ import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic, TestError } from '../../types/testReporter';
-import type { SuitePrivate } from '../../types/reporterPrivate';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
 import { colors, formatError, formatResultFailure, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
@@ -227,9 +226,12 @@ class HtmlBuilder {
   async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
+      const testDir = projectSuite.project()!.testDir;
       for (const fileSuite of projectSuite.suites) {
         const fileName = this._relativeLocation(fileSuite.location)!.file;
-        const fileId = (fileSuite as SuitePrivate)._fileId!;
+        // Preserve file ids computed off the testDir.
+        const relativeFile = path.relative(testDir, fileSuite.location!.file);
+        const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
@@ -343,19 +345,23 @@ class HtmlBuilder {
   private _processJsonSuite(suite: Suite, fileId: string, projectName: string, botName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
     suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, botName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, botName, newPath)));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, botName, newPath)));
   }
 
-  private _createTestEntry(test: TestCasePublic, projectName: string, botName: string | undefined, path: string[]): TestEntry {
+  private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, botName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1);
+
+    const [file, ...titles] = test.titlePath();
+    const testIdExpression = `[project=${projectName}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${test.repeatEachIndex})`;
+    const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
 
     const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
       testCase: {
-        testId: test.id,
+        testId,
         title: test.title,
         projectName,
         botName,
@@ -370,7 +376,7 @@ class HtmlBuilder {
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
       },
       testCaseSummary: {
-        testId: test.id,
+        testId,
         title: test.title,
         projectName,
         botName,
