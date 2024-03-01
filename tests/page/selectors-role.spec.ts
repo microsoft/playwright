@@ -484,3 +484,20 @@ test('should support output accessible name', async ({ page }) => {
   await page.setContent(`<label>Output1<output>output</output></label>`);
   await expect(page.getByRole('status', { name: 'Output1' })).toBeVisible();
 });
+
+test('should not match scope by default', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li aria-label="Parent list">
+        Parent list
+        <ul>
+          <li>child 1</li>
+          <li>child 2</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+  const children = page.getByRole('listitem', { name: 'Parent list' }).getByRole('listitem');
+  await expect(children).toHaveCount(2);
+  await expect(children).toHaveText(['child 1', 'child 2']);
+});
