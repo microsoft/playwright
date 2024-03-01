@@ -279,7 +279,8 @@ export abstract class BrowserContext extends SdkObject {
   async removeCookies(cookies: {name?: string, domain?: string, path?: string}): Promise<void> {
     const setCookies = await this.cookies();
 
-    if (!cookies.name && !cookies.domain && !cookies.path) return;
+    if (!cookies.name && !cookies.domain && !cookies.path)
+      return;
 
     const filteredCookies = setCookies.filter(cookie => {
       return !((!cookies.name || cookies.name === cookie.name) &&
