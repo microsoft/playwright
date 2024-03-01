@@ -511,3 +511,37 @@ test('should allow props children', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should allow import from shared file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.tsx': `
+      export const Component = (props: { content: string }) => {
+        return <div>{props.content}</div>
+      };
+    `,
+    'src/component.shared.tsx': `
+      export const componentMock = { content: 'This is a content.' };
+    `,
+    'src/component.render.tsx': `
+      import {Component} from './component';
+      import {componentMock} from './component.shared';
+      export const ComponentTest = () => {
+        return <Component content={componentMock.content} />;
+      };
+    `,
+    'src/component.spec.tsx': `
+      import { expect, test } from '@playwright/experimental-ct-react';
+      import { ComponentTest } from './component.render';
+      import { componentMock } from './component.shared';
+      test('component renders', async ({ mount }) => {
+        const component = await mount(<ComponentTest />);
+        await expect(component).toContainText(componentMock.content)
+      })`
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
