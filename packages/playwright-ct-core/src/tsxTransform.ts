@@ -75,7 +75,7 @@ export default declare((api: BabelAPI) => {
         const ext = path.extname(importNode.source.value);
 
         // Convert all non-JS imports into refs.
-        if (!allJsExtensions.has(ext)) {
+        if (artifactExtensions.has(ext)) {
           for (const specifier of importNode.specifiers) {
             if (t.isImportNamespaceSpecifier(specifier))
               continue;
@@ -171,4 +171,29 @@ export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportS
   return { localName: specifier.local.name, info: result };
 }
 
-const allJsExtensions = new Set(['.js', '.jsx', '.cjs', '.mjs', '.ts', '.tsx', '.cts', '.mts', '']);
+const artifactExtensions = new Set([
+  // Frameworks
+  '.vue',
+  '.svelte',
+
+  // Images
+  '.jpg', '.jpeg',
+  '.png',
+  '.gif',
+  '.svg',
+  '.bmp',
+  '.webp',
+  '.ico',
+
+  // CSS
+  '.css',
+
+  // Fonts
+  '.woff', '.woff2',
+  '.ttf',
+  '.otf',
+  '.eot',
+
+  // Other assets
+  '.json',
+]);
