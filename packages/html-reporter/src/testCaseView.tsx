@@ -23,7 +23,7 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { hashStringToInt, testCaseLabels } from './labelUtils';
+import { hashStringToInt } from './labelUtils';
 import { msToString } from './uiUtils';
 
 export const TestCaseView: React.FC<{
@@ -37,7 +37,7 @@ export const TestCaseView: React.FC<{
   const labels = React.useMemo(() => {
     if (!test)
       return undefined;
-    return testCaseLabels(test);
+    return test.tags;
   }, [test]);
 
   return <div className='test-case-column vbox'>

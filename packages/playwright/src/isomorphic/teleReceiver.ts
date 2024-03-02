@@ -36,7 +36,6 @@ export type JsonPattern = {
 };
 
 export type JsonProject = {
-  id: string;
   grep: JsonPattern[];
   grepInvert: JsonPattern[];
   metadata: Metadata;
@@ -132,16 +131,18 @@ export class TeleReporterReceiver {
   private _rootDir!: string;
   private _listOnly = false;
   private _clearPreviousResultsWhenTestBegins: boolean = false;
-  private _reuseTestCases: boolean;
+  private _mergeTestCases: boolean;
+  private _mergeProjects: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
   private _config!: reporterTypes.FullConfig;
   private _stringPool = new StringInternPool();
 
-  constructor(pathSeparator: string, reporter: Partial<ReporterV2>, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
+  constructor(pathSeparator: string, reporter: Partial<ReporterV2>, mergeProjects: boolean, mergeTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
     this._pathSeparator = pathSeparator;
     this._reporter = reporter;
-    this._reuseTestCases = reuseTestCases;
+    this._mergeProjects = mergeProjects;
+    this._mergeTestCases = mergeTestCases;
     this._reportConfig = reportConfig;
   }
 
@@ -201,7 +202,7 @@ export class TeleReporterReceiver {
   }
 
   private _onProject(project: JsonProject) {
-    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.__projectId === project.id);
+    let projectSuite = this._mergeProjects ? this._rootSuite.suites.find(suite => suite.project()!.name === project.name) : undefined;
     if (!projectSuite) {
       projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite.suites.push(projectSuite);
@@ -331,7 +332,6 @@ export class TeleReporterReceiver {
 
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
-      __projectId: project.id,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -375,7 +375,7 @@ export class TeleReporterReceiver {
 
   private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
     for (const jsonTest of jsonTests) {
-      let targetTest = this._reuseTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
+      let targetTest = this._mergeTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
       if (!targetTest) {
         targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location), jsonTest.repeatEachIndex);
         targetTest.parent = parent;
@@ -593,7 +593,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   }
 }
 
-export type TeleFullProject = FullProject & { __projectId: string };
+export type TeleFullProject = FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
   forbidOnly: false,

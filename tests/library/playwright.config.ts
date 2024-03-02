@@ -109,10 +109,10 @@ for (const browserName of browserNames) {
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   for (const folder of ['library', 'page']) {
     config.projects.push({
-      name: browserName,
+      name: `${browserName}-${folder}`,
       testDir: path.join(testDir, folder),
       testIgnore,
-      snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
+      snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${browserName}{ext}`,
       use: {
         mode,
         browserName,

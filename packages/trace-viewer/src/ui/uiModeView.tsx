@@ -654,7 +654,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
           lastRunTestCount = suite.allTests().length;
           lastRunReceiver = undefined;
         }
-      }, false);
+      }, true, false);
     },
 
     onBegin: (suite: Suite) => {
@@ -700,7 +700,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     onExit: () => {},
     onStepBegin: () => {},
     onStepEnd: () => {},
-  }, true);
+  }, true, true);
   receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});
 };

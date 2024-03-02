@@ -23,7 +23,7 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
-import { ZipFile, calculateSha1 } from 'playwright-core/lib/utils';
+import { ZipFile } from 'playwright-core/lib/utils';
 import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
 import type { TestError } from '../../types/testReporter';
@@ -53,7 +53,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
   // If expicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSep = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
-  const receiver = new TeleReporterReceiver(pathSep, multiplexer, false, config.config);
+  const receiver = new TeleReporterReceiver(pathSep, multiplexer, false, false, config.config);
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
@@ -183,22 +183,15 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     return a.file.localeCompare(b.file);
   });
 
-  const saltSet = new Set<string>();
-
   printStatus(`merging events`);
 
   const reports: ReportData[] = [];
 
-  for (const { file, parsedEvents, metadata, localPath } of blobs) {
+  for (let i = 0; i < blobs.length; ++i) {
     // Generate unique salt for each blob.
-    const sha1 = calculateSha1(metadata.name || path.basename(file)).substring(0, 16);
-    let salt = sha1;
-    for (let i = 0; saltSet.has(salt); i++)
-      salt = sha1 + '-' + i;
-    saltSet.add(salt);
-
+    const { parsedEvents, metadata, localPath } = blobs[i];
     const eventPatchers = new JsonEventPatchers();
-    eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, salt));
+    eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, String(i)));
     // Only patch path separators if we are merging reports with explicit config.
     if (rootDirOverride)
       eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
@@ -354,10 +347,14 @@ class UniqueFileNameGenerator {
 }
 
 class IdsPatcher {
-  constructor(
-    private _stringPool: StringInternPool,
-    private _reportName: string | undefined,
-    private _salt: string) {
+  private _stringPool: StringInternPool;
+  private _botName: string | undefined;
+  private _salt: string;
+
+  constructor(stringPool: StringInternPool, botName: string | undefined, salt: string) {
+    this._stringPool = stringPool;
+    this._botName = botName;
+    this._salt = salt;
   }
 
   patchEvent(event: JsonEvent) {
@@ -380,13 +377,18 @@ class IdsPatcher {
 
   private _onProject(project: JsonProject) {
     project.metadata = project.metadata ?? {};
-    project.metadata.reportName = this._reportName;
-    project.id = this._stringPool.internString(project.id + this._salt);
+    project.metadata.botName = this._botName;
     project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.tests.forEach(test => test.testId = this._mapTestId(test.testId));
+    suite.tests.forEach(test => {
+      test.testId = this._mapTestId(test.testId);
+      if (this._botName) {
+        test.tags = test.tags || [];
+        test.tags.unshift('@' + this._botName);
+      }
+    });
     suite.suites.forEach(suite => this._updateTestIds(suite));
   }
 

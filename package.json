@@ -16,9 +16,9 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium",
-    "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox",
-    "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit",
+    "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium-*",
+    "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox-*",
+    "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit-*",
     "atest": "playwright test --config=tests/android/playwright.config.ts",
     "etest": "playwright test --config=tests/electron/playwright.config.ts",
     "webview2test": "playwright test --config=tests/webview2/playwright.config.ts",

@@ -50,23 +50,23 @@ const metadata = {
 };
 
 config.projects!.push({
-  name: 'android',
+  name: 'android-native',
   use: {
     loopback: '10.0.2.2',
     browserName: 'chromium',
   },
-  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-android{ext}',
   testDir: path.join(testDir, 'android'),
   metadata,
 });
 
 config.projects!.push({
-  name: 'android',
+  name: 'android-page',
   use: {
     loopback: '10.0.2.2',
     browserName: 'chromium',
   },
-  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-android{ext}',
   testDir: path.join(testDir, 'page'),
   metadata,
 });
