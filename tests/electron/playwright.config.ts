@@ -51,7 +51,7 @@ const metadata = {
 };
 
 config.projects.push({
-  name: 'electron',
+  name: 'electron-api',
   use: {
     browserName: 'chromium',
     coverageName: 'electron',
@@ -61,7 +61,7 @@ config.projects.push({
 });
 
 config.projects.push({
-  name: 'electron',
+  name: 'electron-page',
   // Share screenshots with chromium.
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {

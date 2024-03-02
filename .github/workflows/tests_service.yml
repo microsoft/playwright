@@ -23,7 +23,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --workers=10 --retries=0
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-* --workers=10 --retries=0
       env:
         PWTEST_MODE: service2
         PWTEST_TRACE: 1

@@ -63,7 +63,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   }
   if (process.env.PW_TEST_REPORTER) {
     const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(wrapReporterAsV2(new reporterConstructor(runOptions)));
+    reporters.push(wrapReporterAsV2(new reporterConstructor()));
   }
 
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
