@@ -1013,8 +1013,7 @@ Returns all open pages in the context.
 ## async method: BrowserContext.removeCookies
 * since: v1.43
 
-Removes cookies from context.
-The method will throw an error if either name, domain or path has not been passed.
+Removes cookies from context. At least one of the removal criteria should be provided.
 
 **Usage**
 
