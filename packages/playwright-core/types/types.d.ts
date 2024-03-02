@@ -8442,6 +8442,28 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
+   * Removes cookies from context. The method will throw an error if either name, domain or path has not been passed.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await browserContext.removeCookies({ name: 'session-id' });
+   * await browserContext.removeCookies({ domain: 'my-origin.com' });
+   * await browserContext.removeCookies({ path: '/api/v1' });
+   * await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
+   * ```
+   *
+   * @param filter
+   */
+  removeCookies(filter: {
+    name?: string;
+
+    domain?: string;
+
+    path?: string;
+  }): Promise<void>;
+
+  /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
    * route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
