@@ -51,9 +51,15 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
-  // If expicit config is provided, use platform path separator, otherwise use the one from the report (if any).
-  const pathSep = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
-  const receiver = new TeleReporterReceiver(pathSep, multiplexer, false, false, config.config);
+  // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
+  const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
+  const receiver = new TeleReporterReceiver(multiplexer, {
+    pathSeparator,
+    mergeProjects: false,
+    mergeTestCases: false,
+    internString: s => stringPool.internString(s),
+    configOverrides: config.config,
+  });
   printStatus(`processing test events`);
 
   const dispatchEvents = async (events: JsonEvent[]) => {
