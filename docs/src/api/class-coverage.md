@@ -4,11 +4,11 @@
 
 Coverage gathers information about parts of JavaScript and CSS that were used by the page.
 
-An example of using JavaScript coverage to produce Istanbul report for page load:
-
 :::note
 Coverage APIs are only supported on Chromium-based browsers.
 :::
+
+An example of using JavaScript coverage to produce Istanbul report for page load:
 
 ```js
 const { chromium } = require('playwright');
@@ -26,6 +26,45 @@ const v8toIstanbul = require('v8-to-istanbul');
     converter.applyCoverage(entry.functions);
     console.log(JSON.stringify(converter.toIstanbul()));
   }
+  await browser.close();
+})();
+```
+
+Another example is generating native V8 coverage reports with [monocart-coverage-reports](https://github.com/cenfun/monocart-coverage-reports)
+
+```js
+const { chromium } = require('playwright');
+const MCR = require('monocart-coverage-reports');
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  await Promise.all([
+    page.coverage.startJSCoverage({
+      resetOnNavigation: false
+    }),
+    page.coverage.startCSSCoverage({
+      resetOnNavigation: false
+    })
+  ]);
+
+  await page.goto('https://playwright.dev/');
+
+  const [jsCoverage, cssCoverage] = await Promise.all([
+    page.coverage.stopJSCoverage(),
+    page.coverage.stopCSSCoverage()
+  ]);
+  const coverageData = [... jsCoverage, ... cssCoverage];
+
+  const coverageReport = MCR({
+    name: 'My Coverage Report',
+    outputDir: './coverage-reports',
+    reports: ['v8', 'console-details']
+  });
+  await coverageReport.add(coverageData);
+  await coverageReport.generate();
+
   await browser.close();
 })();
 ```
