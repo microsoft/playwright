@@ -1040,7 +1040,8 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
       return `pwsh bin/Debug/netX/playwright.ps1 ${parameters}`;
     default: {
       const packageManagerCommand = getPackageManagerExecCommand();
-      return `${packageManagerCommand} playwright ${parameters}`;
+      const binEntry = process.argv[1].endsWith(path.sep + 'playwright-core') ? 'playwright-core' : 'playwright';
+      return `${packageManagerCommand} ${binEntry} ${parameters}`;
     }
   }
 }
