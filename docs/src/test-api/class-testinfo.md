@@ -214,7 +214,9 @@ Test function as passed to `test(title, testFunction)`.
 * since: v1.43
 - type: <[Array]<[string]>>
 
-Tags that apply to the tests.
+Tags that apply to the test. Learn more about [tags](../test-annotations.md#tag-tests).
+
+Note that any changes made to this list while the test is running will not be visible to test reporters.
 
 ## property: TestInfo.testId
 * since: v1.32
