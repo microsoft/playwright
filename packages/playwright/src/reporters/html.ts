@@ -128,7 +128,7 @@ class HtmlReporter extends EmptyReporter {
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
-    } else if (this._options._mode === 'run') {
+    } else if (this._options._mode === 'test') {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._options.host ? ` --host ${this._options.host}` : '';

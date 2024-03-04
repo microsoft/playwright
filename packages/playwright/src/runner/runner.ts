@@ -83,7 +83,7 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, listOnly ? 'list' : 'run')));
+    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, listOnly ? 'list' : 'test')));
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process', { failOnLoadErrors: true })
       : createTaskRunner(config, reporter);
 

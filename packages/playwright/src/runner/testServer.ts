@@ -23,7 +23,7 @@ import type { FullResult, TestError } from 'playwright/types/testReporter';
 import { loadConfig, restartWithExperimentalTsEsm } from '../common/configLoader';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
-import { createReporters } from './reporters';
+import { createReporterForTestServer, createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer } from './tasks';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import { Runner } from './runner';
@@ -32,8 +32,6 @@ import type { FullConfigInternal } from '../common/config';
 import type { TestServerInterface } from './testServerInterface';
 import { serializeError } from '../util';
 import { prepareErrorStack } from '../reporters/base';
-import { loadReporter } from './loadUtils';
-import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 export async function runTestServer() {
   if (restartWithExperimentalTsEsm(undefined, true))
@@ -116,13 +114,13 @@ class Dispatcher implements TestServerInterface {
   async listTests(params: {
     configFile: string;
     locations: string[];
-    reporter: string;
+    reporters: { file: string, event: string }[];
     env: NodeJS.ProcessEnv;
   }) {
     const config = await this._loadConfig(params.configFile);
     config.cliArgs = params.locations || [];
-    const wireReporter = await this._createReporter(params.reporter);
-    const reporter = new InternalReporter(new Multiplexer([wireReporter]));
+    const wireReporters = await this._wireReporters(config, 'list', params.reporters);
+    const reporter = new InternalReporter(new Multiplexer(wireReporters));
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -140,7 +138,7 @@ class Dispatcher implements TestServerInterface {
   async test(params: {
     configFile: string;
     locations: string[];
-    reporter: string;
+    reporters: { file: string, event: string }[];
     env: NodeJS.ProcessEnv;
     headed?: boolean;
     oneWorker?: boolean;
@@ -171,9 +169,9 @@ class Dispatcher implements TestServerInterface {
     config.cliGrep = params.grep;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
 
-    const wireReporter = await this._createReporter(params.reporter);
-    const configReporters = await createReporters(config, 'run');
-    const reporter = new InternalReporter(new Multiplexer([...configReporters, wireReporter]));
+    const wireReporters = await this._wireReporters(config, 'test', params.reporters);
+    const configReporters = await createReporters(config, 'test');
+    const reporter = new InternalReporter(new Multiplexer([...configReporters, ...wireReporters]));
     const taskRunner = createTaskRunnerForTestServer(config, reporter);
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -186,6 +184,14 @@ class Dispatcher implements TestServerInterface {
     });
     this._testRun = { run, stop };
     await run;
+  }
+
+  private async _wireReporters(config: FullConfigInternal, mode: 'test' | 'list', reporters: { file: string, event: string }[]) {
+    return await Promise.all(reporters.map(r => {
+      return createReporterForTestServer(config, r.file, mode, message => {
+        this._dispatchEvent(r.event, message);
+      });
+    }));
   }
 
   async findRelatedTestFiles(params:  {
@@ -218,12 +224,6 @@ class Dispatcher implements TestServerInterface {
 
   private async _loadConfig(configFile: string, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal> {
     return loadConfig({ resolvedConfigFile: configFile, configDir: path.dirname(configFile) }, overrides);
-  }
-
-  private async _createReporter(file: string) {
-    const reporterConstructor = await loadReporter(undefined, file);
-    const instance = new reporterConstructor((message: any) => this._dispatchEvent('report', message));
-    return wrapReporterAsV2(instance);
   }
 }
 

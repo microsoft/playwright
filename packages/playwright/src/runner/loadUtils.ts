@@ -316,7 +316,7 @@ export function loadGlobalHook(config: FullConfigInternal, file: string): Promis
   return requireOrImportDefaultFunction(path.resolve(config.config.rootDir, file), false);
 }
 
-export function loadReporter(config: FullConfigInternal | undefined, file: string): Promise<new (arg?: any) => Reporter> {
+export function loadReporter(config: FullConfigInternal, file: string): Promise<new (arg?: any) => Reporter> {
   return requireOrImportDefaultFunction(config ? path.resolve(config.config.rootDir, file) : file, true);
 }
 

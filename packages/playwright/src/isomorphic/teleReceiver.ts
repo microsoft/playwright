@@ -313,7 +313,6 @@ export class TeleReporterReceiver {
   }
 
   private _onExit(): Promise<void> | void {
-    // Free up the memory from the string pool.
     return this._reporter.onExit?.();
   }
 
@@ -416,7 +415,7 @@ export class TeleReporterReceiver {
   }
 }
 
-export class TeleSuite {
+export class TeleSuite implements reporterTypes.Suite {
   title: string;
   location?: reporterTypes.Location;
   parent?: TeleSuite;

@@ -33,13 +33,13 @@ export interface TestServerInterface {
   listTests(params: {
     configFile: string;
     locations: string[];
-    reporter: string;
+    reporters: { file: string, event: string }[];
   }): Promise<void>;
 
   test(params: {
     configFile: string;
     locations: string[];
-    reporter: string;
+    reporters: { file: string, event: string }[];
     headed?: boolean;
     oneWorker?: boolean;
     trace?: 'on' | 'off';
