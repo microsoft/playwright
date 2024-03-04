@@ -817,4 +817,28 @@ await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
+
+  test('should record omnibox navigations after performAction', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`<button>Submit</button>`);
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      page.locator('button').click(),
+    ]);
+    await page.waitForTimeout(500);
+    await page.goto(server.PREFIX + `/empty.html`);
+    await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/empty.html');`);
+  });
+
+  test('should record omnibox navigations after recordAction', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`<textarea></textarea>`);
+    await Promise.all([
+      recorder.waitForOutput('JavaScript', 'fill'),
+      page.locator('textarea').fill('Hello world'),
+    ]);
+    await page.waitForTimeout(500);
+    await page.goto(server.PREFIX + `/empty.html`);
+    await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/empty.html');`);
+  });
 });
