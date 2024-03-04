@@ -81,7 +81,7 @@ export class TestInfoImpl implements TestInfo {
   readonly titlePath: string[];
   readonly file: string;
   readonly line: number;
-  readonly tags: string[]|undefined;
+  readonly tags: string[];
   readonly column: number;
   readonly fn: Function;
   expectedStatus: TestStatus;

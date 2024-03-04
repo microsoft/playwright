@@ -2313,6 +2313,11 @@ export interface TestInfo {
   status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
+   * Tags that apply to the tests.
+   */
+  tags: string[];
+
+  /**
    * Test id matching the test case id in the reporter API.
    */
   testId: string;
