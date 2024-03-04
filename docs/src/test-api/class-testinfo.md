@@ -210,6 +210,12 @@ Optional description that will be reflected in a test report.
 
 Test function as passed to `test(title, testFunction)`.
 
+## property: TestInfo.tags
+* since: v1.43
+- type: <[string]>
+
+Tags that apply to the tests.
+
 ## property: TestInfo.testId
 * since: v1.32
 - type: <[string]>
