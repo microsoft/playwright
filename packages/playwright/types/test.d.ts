@@ -2315,7 +2315,7 @@ export interface TestInfo {
   /**
    * Tags that apply to the tests.
    */
-  tags: string[];
+  tags: Array<string>;
 
   /**
    * Test id matching the test case id in the reporter API.

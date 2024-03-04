@@ -212,7 +212,7 @@ Test function as passed to `test(title, testFunction)`.
 
 ## property: TestInfo.tags
 * since: v1.43
-- type: <[string]>
+- type: <[Array]<[string]>>
 
 Tags that apply to the tests.
 
