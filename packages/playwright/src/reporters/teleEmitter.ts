@@ -21,14 +21,19 @@ import type * as teleReceiver from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
 
+export type TeleReporterEmitterOptions = {
+  omitOutput?: boolean;
+  omitBuffers?: boolean;
+};
+
 export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
-  private _skipBuffers: boolean;
+  private _emitterOptions: TeleReporterEmitterOptions;
 
-  constructor(messageSink: (message: teleReceiver.JsonEvent) => void, skipBuffers: boolean) {
+  constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
-    this._skipBuffers = skipBuffers;
+    this._emitterOptions = options;
   }
 
   version(): 'v2' {
@@ -113,6 +118,8 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   private _onStdIO(type: teleReceiver.JsonStdIOType, chunk: string | Buffer, test: void | reporterTypes.TestCase, result: void | reporterTypes.TestResult): void {
+    if (this._emitterOptions.omitOutput)
+      return;
     const isBase64 = typeof chunk !== 'string';
     const data = isBase64 ? chunk.toString('base64') : chunk;
     this._messageSink({
@@ -224,7 +231,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       return {
         ...a,
         // There is no Buffer in the browser, so there is no point in sending the data there.
-        base64: (a.body && !this._skipBuffers) ? a.body.toString('base64') : undefined,
+        base64: (a.body && !this._emitterOptions.omitBuffers) ? a.body.toString('base64') : undefined,
       };
     });
   }
