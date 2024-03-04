@@ -2313,7 +2313,9 @@ export interface TestInfo {
   status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
-   * Tags that apply to the tests.
+   * Tags that apply to the test. Learn more about [tags](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * Note that any changes made to this list while the test is running will not be visible to test reporters.
    */
   tags: Array<string>;
 
