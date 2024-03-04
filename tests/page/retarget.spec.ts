@@ -250,7 +250,7 @@ it('input value retargeting', async ({ page, browserName }) => {
   }
 });
 
-it.fixme('selection retargeting', async ({ page, browserName }) => {
+it('selection retargeting', async ({ page, browserName }) => {
   const cases = [
     { dom: domStandalone(`<div contenteditable id=target>content</div>`), locator: 'div' },
     { dom: domInButton(`<div contenteditable id=target>content</div>`), locator: 'div' },
