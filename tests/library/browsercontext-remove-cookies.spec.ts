@@ -21,17 +21,17 @@ it('should remove cookies by name', async ({ context, page, server }) => {
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   }
   ]);
-  await page.goto('https://www.example.com');
+  await page.goto(server.PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
   await context.removeCookies({ name: 'cookie1' });
   expect(await page.evaluate('document.cookie')).toBe('cookie2=2');
@@ -41,23 +41,23 @@ it('should remove cookies by domain', async ({ context, page, server }) => {
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.org',
+    domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
     path: '/',
   }
   ]);
-  await page.goto('https://www.example.com');
+  await page.goto(server.PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
-  await page.goto('https://www.example.org');
+  await page.goto(server.CROSS_PROCESS_PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie2=2');
-  await context.removeCookies({ domain: 'www.example.org' });
+  await context.removeCookies({ domain: new URL(server.CROSS_PROCESS_PREFIX).hostname });
   expect(await page.evaluate('document.cookie')).toBe('');
-  await page.goto('https://www.example.com');
+  await page.goto(server.PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
 });
 
@@ -65,29 +65,29 @@ it('should remove cookies by path', async ({ context, page, server }) => {
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v1',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v2',
   },
   {
     name: 'cookie3',
     value: '3',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   }
   ]);
-  await page.goto('https://www.example.com/api/v1');
+  await page.goto(server.PREFIX + '/api/v1');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie3=3');
   await context.removeCookies({ path: '/api/v1' });
   expect(await page.evaluate('document.cookie')).toBe('cookie3=3');
-  await page.goto('https://www.example.com/api/v2');
+  await page.goto(server.PREFIX + '/api/v2');
   expect(await page.evaluate('document.cookie')).toBe('cookie2=2; cookie3=3');
-  await page.goto('https://www.example.com/');
+  await page.goto(server.PREFIX + '/');
   expect(await page.evaluate('document.cookie')).toBe('cookie3=3');
 });
 
@@ -95,21 +95,21 @@ it('should remove cookies by name and domain', async ({ context, page, server })
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   },
   {
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.org',
+    domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
     path: '/',
   }
   ]);
-  await page.goto('https://www.example.com');
+  await page.goto(server.PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
-  await context.removeCookies({ name: 'cookie1', domain: 'www.example.com' });
+  await context.removeCookies({ name: 'cookie1', domain: new URL(server.PREFIX).hostname });
   expect(await page.evaluate('document.cookie')).toBe('');
-  await page.goto('https://www.example.org');
+  await page.goto(server.CROSS_PROCESS_PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
 });
 
@@ -117,29 +117,29 @@ it('should remove cookies by name and path', async ({ context, page, server }) =
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v1',
   },
   {
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v2',
   },
   {
     name: 'cookie3',
     value: '3',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   }
   ]);
-  await page.goto('https://www.example.com/api/v1');
+  await page.goto(server.PREFIX + '/api/v1');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie3=3');
   await context.removeCookies({ name: 'cookie1', path: '/api/v1' });
   expect(await page.evaluate('document.cookie')).toBe('cookie3=3');
-  await page.goto('https://www.example.com/api/v2');
+  await page.goto(server.PREFIX + '/api/v2');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie3=3');
-  await page.goto('https://www.example.com/');
+  await page.goto(server.PREFIX + '/');
   expect(await page.evaluate('document.cookie')).toBe('cookie3=3');
 });
 
@@ -147,35 +147,35 @@ it('should remove cookies by domain and path', async ({ context, page, server })
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v1',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v2',
   },
   {
     name: 'cookie3',
     value: '3',
-    domain: 'www.example.org',
+    domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
     path: '/api/v1',
   },
   {
     name: 'cookie4',
     value: '4',
-    domain: 'www.example.org',
+    domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
     path: '/api/v2',
   }
   ]);
-  await page.goto('https://www.example.com/api/v1');
+  await page.goto(server.PREFIX + '/api/v1');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
-  await context.removeCookies({ domain: 'www.example.com', path: '/api/v1' });
+  await context.removeCookies({ domain: new URL(server.PREFIX).hostname, path: '/api/v1' });
   expect(await page.evaluate('document.cookie')).toBe('');
-  await page.goto('https://www.example.com/api/v2');
+  await page.goto(server.PREFIX + '/api/v2');
   expect(await page.evaluate('document.cookie')).toBe('cookie2=2');
-  await page.goto('https://www.example.org/api/v2');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/api/v2');
   expect(await page.evaluate('document.cookie')).toBe('cookie4=4');
 });
 
@@ -183,29 +183,29 @@ it('should remove cookies by name, domain and path', async ({ context, page, ser
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v1',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/api/v2',
   },
   {
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.org',
+    domain: new URL(server.CROSS_PROCESS_PREFIX).hostname,
     path: '/api/v1',
   },
   ]);
-  await page.goto('https://www.example.com/api/v1');
+  await page.goto(server.PREFIX + '/api/v1');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
-  await context.removeCookies({ name: 'cookie1', domain: 'www.example.com', path: '/api/v1' });
+  await context.removeCookies({ name: 'cookie1', domain: new URL(server.PREFIX).hostname, path: '/api/v1' });
   expect(await page.evaluate('document.cookie')).toBe('');
-  await page.goto('https://www.example.com/api/v2');
+  await page.goto(server.PREFIX + '/api/v2');
   expect(await page.evaluate('document.cookie')).toBe('cookie2=2');
-  await page.goto('https://www.example.org/api/v1');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/api/v1');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
 });
 
@@ -213,17 +213,17 @@ it('should throw if empty object is passed', async ({ context, page, server }) =
   await context.addCookies([{
     name: 'cookie1',
     value: '1',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   },
   {
     name: 'cookie2',
     value: '2',
-    domain: 'www.example.com',
+    domain: new URL(server.PREFIX).hostname,
     path: '/',
   },
   ]);
-  await page.goto('https://www.example.com/');
+  await page.goto(server.PREFIX + '/');
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
   const error = await context.removeCookies({ }).catch(e => e);
   expect(error.message).toContain(`Either name, domain or path are required`);
