@@ -640,7 +640,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     skipped: 0,
   };
   let config: FullConfig;
-  receiver = new TeleReporterReceiver(pathSeparator, {
+  receiver = new TeleReporterReceiver({
     version: () => 'v2',
 
     onConfigure: (c: FullConfig) => {
@@ -649,12 +649,16 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       // run one test, we still get many tests via rootSuite.allTests().length.
       // To work around that, have a dedicated per-run receiver that will only have
       // suite for a single test run, and hence will have correct total.
-      lastRunReceiver = new TeleReporterReceiver(pathSeparator, {
+      lastRunReceiver = new TeleReporterReceiver({
         onBegin: (suite: Suite) => {
           lastRunTestCount = suite.allTests().length;
           lastRunReceiver = undefined;
         }
-      }, true, false);
+      }, {
+        pathSeparator,
+        mergeProjects: true,
+        mergeTestCases: false
+      });
     },
 
     onBegin: (suite: Suite) => {
@@ -700,7 +704,11 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     onExit: () => {},
     onStepBegin: () => {},
     onStepEnd: () => {},
-  }, true, true);
+  }, {
+    pathSeparator,
+    mergeProjects: true,
+    mergeTestCases: true,
+  });
   receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});
 };
