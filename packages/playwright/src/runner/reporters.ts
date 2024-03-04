@@ -33,7 +33,7 @@ import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
 import { type ReporterV2, wrapReporterAsV2 } from '../reporters/reporterV2';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
   const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
     blob: BlobReporter,
     dot: mode === 'list' ? ListModeReporter : DotReporter,
@@ -50,7 +50,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   descriptions ??= config.config.reporter;
   if (config.configCLIOverrides.additionalReporters)
     descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
-  const runOptions = { configDir: config.configDir, _mode: mode };
+  const runOptions = reporterOptions(config, mode);
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...runOptions, ...arg };
@@ -63,7 +63,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   }
   if (process.env.PW_TEST_REPORTER) {
     const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(wrapReporterAsV2(new reporterConstructor()));
+    reporters.push(wrapReporterAsV2(new reporterConstructor(runOptions)));
   }
 
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
@@ -76,6 +76,21 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
   return reporters;
+}
+
+export async function createReporterForTestServer(config: FullConfigInternal, file: string, mode: 'test' | 'list', messageSink: (message: any) => void): Promise<ReporterV2> {
+  const reporterConstructor = await loadReporter(config, file);
+  const runOptions = reporterOptions(config, mode, messageSink);
+  const instance = new reporterConstructor(runOptions);
+  return wrapReporterAsV2(instance);
+}
+
+function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'ui' | 'merge', send?: (message: any) => void) {
+  return {
+    configDir: config.configDir,
+    send,
+    _mode: mode,
+  };
 }
 
 class ListModeReporter extends EmptyReporter {
