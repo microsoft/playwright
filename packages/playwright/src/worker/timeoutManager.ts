@@ -56,14 +56,22 @@ export class TimeoutManager {
     this._timeoutRunner.interrupt();
   }
 
-  async withRunnable<R>(runnable: RunnableDescription, cb: () => Promise<R>): Promise<R> {
+  async withRunnable(runnable: RunnableDescription | undefined, cb: () => Promise<any>): Promise<Error | undefined> {
+    if (!runnable) {
+      await cb();
+      return;
+    }
     const existingRunnable = this._runnable;
     const effectiveRunnable = { ...runnable };
     if (!effectiveRunnable.slot)
       effectiveRunnable.slot = this._runnable.slot;
     this._updateRunnables(effectiveRunnable, undefined);
     try {
-      return await cb();
+      await this._timeoutRunner.run(cb);
+    } catch (error) {
+      if (!(error instanceof TimeoutRunnerError))
+        throw error;
+      return this._createTimeoutError();
     } finally {
       this._updateRunnables(existingRunnable, undefined);
     }
@@ -83,16 +91,6 @@ export class TimeoutManager {
     const slot = this._currentSlot();
     slot.timeout = slot.timeout * 3;
     this._timeoutRunner.updateTimeout(slot.timeout);
-  }
-
-  async runWithTimeout(cb: () => Promise<any>): Promise<Error | undefined> {
-    try {
-      await this._timeoutRunner.run(cb);
-    } catch (error) {
-      if (!(error instanceof TimeoutRunnerError))
-        throw error;
-      return this._createTimeoutError();
-    }
   }
 
   setTimeout(timeout: number) {

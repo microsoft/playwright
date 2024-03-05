@@ -45,11 +45,11 @@ export class TimeoutRunner {
       timeoutPromise: new ManualPromise(),
     };
     try {
+      this._updateTimeout(running, this._timeout);
       const resultPromise = Promise.race([
         cb(),
         running.timeoutPromise
       ]);
-      this._updateTimeout(running, this._timeout);
       return await resultPromise;
     } finally {
       this._updateTimeout(running, 0);
