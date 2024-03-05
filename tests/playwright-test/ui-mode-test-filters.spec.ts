@@ -24,7 +24,7 @@ const basicTestTree = {
     test('passes', () => {});
     test('fails', () => { expect(1).toBe(2); });
     test.describe('suite', () => {
-      test('inner passes', () => {});
+      test('inner passes', { tag: '@smoke' }, () => {});
       test('inner fails', () => { expect(1).toBe(2); });
     });
   `,
@@ -43,6 +43,16 @@ test('should filter by title', async ({ runUITest }) => {
       ▼ ◯ suite
           ◯ inner passes
           ◯ inner fails
+  `);
+});
+
+test('should filter by explicit tags', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+  await page.getByPlaceholder('Filter').fill('@smoke inner');
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+      ▼ ◯ suite
+          ◯ inner passes
   `);
 });
 
