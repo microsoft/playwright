@@ -4,6 +4,45 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.42
+
+### New Locator Handler
+
+New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
+  
+```csharp
+// Setup the handler.
+await Page.AddLocatorHandlerAsync(
+    Page.GetByRole(AriaRole.Heading, new() { Name = "Hej! You are in control of your cookies." }),
+    async () =>
+    {
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Accept all" }).ClickAsync();
+    });
+// Write the test as usual.
+await Page.GotoAsync("https://www.ikea.com/");
+await Page.GetByRole(AriaRole.Link, new() { Name = "Collection of blue and white" }).ClickAsync();
+await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Light and easy" })).ToBeVisibleAsync();
+```
+
+### New APIs
+
+- [`method: Page.pdf`] accepts two new options [`option: tagged`] and [`option: outline`].
+
+### Announcements
+
+* ⚠️ Ubuntu 18 is not supported anymore.
+
+### Browser Versions
+
+* Chromium 121.0.6167.57
+* Mozilla Firefox 121.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 120
+* Microsoft Edge 120
+
 ## Version 1.41
 
 ### New APIs
