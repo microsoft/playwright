@@ -126,6 +126,7 @@ type TeleReporterReceiverOptions = {
   mergeTestCases: boolean;
   resolvePath: (rootDir: string, relativePath: string) => string;
   configOverrides?: Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'reporter'>;
+  clearPreviousResultsWhenTestBegins?: boolean;
 };
 
 export class TeleReporterReceiver {
@@ -135,7 +136,6 @@ export class TeleReporterReceiver {
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _listOnly = false;
-  private _clearPreviousResultsWhenTestBegins: boolean = false;
   private _config!: reporterTypes.FullConfig;
 
   constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
@@ -189,10 +189,6 @@ export class TeleReporterReceiver {
       return this._onExit();
   }
 
-  _setClearPreviousResultsWhenTestBegins() {
-    this._clearPreviousResultsWhenTestBegins = true;
-  }
-
   private _onConfigure(config: JsonConfig) {
     this._rootDir = config.rootDir;
     this._config = this._parseConfig(config);
@@ -234,7 +230,7 @@ export class TeleReporterReceiver {
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
-    if (this._clearPreviousResultsWhenTestBegins)
+    if (this._options.clearPreviousResultsWhenTestBegins)
       test._clearResults();
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
