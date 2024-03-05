@@ -495,8 +495,7 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture" ran out of time.');
   expect(result.output).not.toContain('base.extend'); // Should not point to the location.
-  // TODO: this should be "not.toContain" actually.
-  expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "fixture".');
+  expect(result.output).not.toContain('Worker teardown timeout');
 });
 
 test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
@@ -675,4 +674,30 @@ test('tear down base fixture after error in derived', async ({ runInlineTest }) 
     'page teardown passed',
     'context teardown failed',
   ]);
+});
+
+test('should not continue with scope teardown after fixture teardown timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          console.log('in fixture teardown');
+        },
+        fixture2: async ({ fixture }, use) => {
+          await use();
+          console.log('in fixture2 teardown');
+          await new Promise(() => {});
+        },
+      });
+      test.use({ trace: 'on' });
+      test('good', async ({ fixture2 }) => {
+      });
+    `,
+  }, { reporter: 'list', timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture2" ran out of time.');
+  expect(result.output).not.toContain('in fixture teardown');
 });

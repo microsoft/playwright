@@ -23,7 +23,7 @@ import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
-import { TestInfoImpl, type TestStage } from './testInfo';
+import { SkipError, TestInfoImpl } from './testInfo';
 import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
@@ -31,6 +31,7 @@ import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { inheritFixutreNames } from '../common/fixtures';
+import { TimeoutManagerError } from './timeoutManager';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -147,8 +148,11 @@ export class WorkerMain extends ProcessRunner {
     // TODO: separate timeout for teardown?
     const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
     await fakeTestInfo._runAsStage({ title: 'teardown scopes', runnableType: 'teardown' }, async () => {
-      await this._fixtureRunner.teardownScope('test', fakeTestInfo);
-      await this._fixtureRunner.teardownScope('worker', fakeTestInfo);
+      try {
+        await this._fixtureRunner.teardownScope('test', fakeTestInfo);
+      } finally {
+        await this._fixtureRunner.teardownScope('worker', fakeTestInfo);
+      }
     });
     this._fatalErrors.push(...fakeTestInfo.errors);
   }
@@ -166,7 +170,7 @@ export class WorkerMain extends ProcessRunner {
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
     // and we restart the worker.
-    this._currentTest._unhandledError(error);
+    this._currentTest._failWithError(error, true /* isHardError */, true /* retriable */);
 
     // For tests marked with test.fail(), this might be a problem when unhandled error
     // is not coming from the user test code (legit failure), but from fixtures or test runner.
@@ -306,7 +310,7 @@ export class WorkerMain extends ProcessRunner {
       this._lastRunningTests.shift();
     let shouldRunAfterEachHooks = false;
 
-    await testInfo._runAsStage({ title: 'setup and test', runnableType: 'test', allowSkip: true, stopOnChildError: true }, async () => {
+    await testInfo._runAsStage({ title: 'setup and test', runnableType: 'test', allowSkip: true }, async () => {
       await testInfo._runAsStage({ title: 'start tracing', canTimeout: true }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
         // test runner instead of a fixture belonging to Playwright.
@@ -332,14 +336,13 @@ export class WorkerMain extends ProcessRunner {
       await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
-      const beforeHooksStage: TestStage = { title: 'Before Hooks', stepCategory: 'hook', stopOnChildError: true };
-      await testInfo._runAsStage(beforeHooksStage, async () => {
+      await testInfo._runAsStage({ title: 'Before Hooks', stepCategory: 'hook' }, async () => {
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites)
           await this._runBeforeAllHooksForSuite(suite, testInfo);
 
         // Run "beforeEach" hooks. Once started with "beforeEach", we must run all "afterEach" hooks as well.
-        shouldRunAfterEachHooks = !beforeHooksStage.error && !beforeHooksStage.triggeredSkip && !beforeHooksStage.triggeredTimeout;
+        shouldRunAfterEachHooks = true;
         await this._runEachHooksForSuites(suites, 'beforeEach', testInfo);
 
         // Setup fixtures required by the test.
@@ -356,7 +359,7 @@ export class WorkerMain extends ProcessRunner {
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
       });
-    });
+    }).catch(() => {});  // Ignore top-level error, we still have to run after hooks.
 
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
@@ -368,34 +371,56 @@ export class WorkerMain extends ProcessRunner {
       stepCategory: 'hook',
       runnableType: 'afterHooks',
       runnableSlot: afterHooksSlot,
-      continueOnChildTimeout: true,  // Make sure the full cleanup still runs after regular cleanup timeout.
     }, async () => {
-      // Wrap cleanup steps in a stage, to stop running after one of them times out.
-      await testInfo._runAsStage({ title: 'regular cleanup' }, async () => {
+      let firstAfterHooksError: Error | undefined;
+      let didTimeoutInRegularCleanup = false;
+
+      try {
         // Run "immediately upon test function finish" callback.
         await testInfo._runAsStage({ title: 'on-test-function-finish', canTimeout: true }, async () => testInfo._onDidFinishTestFunction?.());
+      } catch (error) {
+        if (error instanceof TimeoutManagerError)
+          didTimeoutInRegularCleanup = true;
+        firstAfterHooksError = firstAfterHooksError ?? error;
+      }
 
+      try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
-        if (shouldRunAfterEachHooks)
+        if (!didTimeoutInRegularCleanup && shouldRunAfterEachHooks)
           await this._runEachHooksForSuites(reversedSuites, 'afterEach', testInfo);
+      } catch (error) {
+        if (error instanceof TimeoutManagerError)
+          didTimeoutInRegularCleanup = true;
+        firstAfterHooksError = firstAfterHooksError ?? error;
+      }
 
-        // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
-        // they should probably increase the test timeout to fix this issue.
-        await testInfo._runAsStage({ title: 'teardown test scope', runnableType: 'test' }, async () => {
-          await this._fixtureRunner.teardownScope('test', testInfo);
-        });
+      try {
+        if (!didTimeoutInRegularCleanup) {
+          // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
+          // they should probably increase the test timeout to fix this issue.
+          await testInfo._runAsStage({ title: 'teardown test scope', runnableType: 'test' }, async () => {
+            await this._fixtureRunner.teardownScope('test', testInfo);
+          });
+        }
+      } catch (error) {
+        if (error instanceof TimeoutManagerError)
+          didTimeoutInRegularCleanup = true;
+        firstAfterHooksError = firstAfterHooksError ?? error;
+      }
 
-        // Run "afterAll" hooks for suites that are not shared with the next test.
-        // In case of failure the worker will be stopped and we have to make sure that afterAll
-        // hooks run before worker fixtures teardown.
-        // Continue running "afterAll" hooks even after some of them timeout.
-        await testInfo._runAsStage({ title: `after hooks suites`, continueOnChildTimeout: true }, async () => {
-          for (const suite of reversedSuites) {
-            if (!nextSuites.has(suite) || testInfo._isFailure())
-              await this._runAfterAllHooksForSuite(suite, testInfo);
+      // Run "afterAll" hooks for suites that are not shared with the next test.
+      // In case of failure the worker will be stopped and we have to make sure that afterAll
+      // hooks run before worker fixtures teardown.
+      for (const suite of reversedSuites) {
+        if (!nextSuites.has(suite) || testInfo._isFailure()) {
+          try {
+            await this._runAfterAllHooksForSuite(suite, testInfo);
+          } catch (error) {
+            // Continue running "afterAll" hooks even after some of them timeout.
+            firstAfterHooksError = firstAfterHooksError ?? error;
           }
-        });
-      });
+        }
+      }
 
       if (testInfo._isFailure())
         this._isStopped = true;
@@ -407,24 +432,40 @@ export class WorkerMain extends ProcessRunner {
 
         // Give it more time for the full cleanup.
         const teardownSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-        await testInfo._runAsStage({ title: 'full cleanup', runnableType: 'teardown', runnableSlot: teardownSlot }, async () => {
+        try {
           // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
-          await testInfo._runAsStage({ title: 'teardown test scope', runnableType: 'test' }, async () => {
+          await testInfo._runAsStage({ title: 'teardown test scope', runnableType: 'test', runnableSlot: teardownSlot }, async () => {
             await this._fixtureRunner.teardownScope('test', testInfo);
           });
+        } catch (error) {
+          firstAfterHooksError = firstAfterHooksError ?? error;
+        }
 
-          for (const suite of reversedSuites)
+        for (const suite of reversedSuites) {
+          try {
             await this._runAfterAllHooksForSuite(suite, testInfo);
+          } catch (error) {
+            firstAfterHooksError = firstAfterHooksError ?? error;
+          }
+        }
 
+        try {
           // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
-          await this._fixtureRunner.teardownScope('worker', testInfo);
-        });
+          await testInfo._runAsStage({ title: 'teardown worker scope', runnableType: 'teardown', runnableSlot: teardownSlot }, async () => {
+            await this._fixtureRunner.teardownScope('worker', testInfo);
+          });
+        } catch (error) {
+          firstAfterHooksError = firstAfterHooksError ?? error;
+        }
       }
-    });
+
+      if (firstAfterHooksError)
+        throw firstAfterHooksError;
+    }).catch(() => {});  // Ignore top-level error.
 
     await testInfo._runAsStage({ title: 'stop tracing' }, async () => {
       await testInfo._tracing.stopIfNeeded();
-    });
+    }).catch(() => {});  // Ignore top-level error.
 
     testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
 
@@ -472,38 +513,47 @@ export class WorkerMain extends ProcessRunner {
 
   private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: Annotation[]) {
     // Always run all the hooks, and capture the first error.
-    await testInfo._runAsStage({ title: `${type} hooks`, continueOnChildTimeout: true }, async () => {
-      for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
+    let firstError: Error | undefined;
+    for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
+      try {
         // Separate time slot for each beforeAll/afterAll hook.
         const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-        const stage: TestStage = {
+        await testInfo._runAsStage({
           title: hook.title,
           runnableType: hook.type,
           runnableSlot: timeSlot,
           stepCategory: 'hook',
           location: hook.location,
-          continueOnChildTimeout: true,  // Make sure to teardown the scope even after hook timeout.
-        };
-        await testInfo._runAsStage(stage, async () => {
+        }, async () => {
           const existingAnnotations = new Set(testInfo.annotations);
-          await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
-          if (extraAnnotations) {
-            // Inherit all annotations defined in the beforeAll/modifer to all tests in the suite.
-            const newAnnotations = testInfo.annotations.filter(a => !existingAnnotations.has(a));
-            extraAnnotations.push(...newAnnotations);
+          try {
+            await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
+          } finally {
+            if (extraAnnotations) {
+              // Inherit all annotations defined in the beforeAll/modifer to all tests in the suite.
+              const newAnnotations = testInfo.annotations.filter(a => !existingAnnotations.has(a));
+              extraAnnotations.push(...newAnnotations);
+            }
+            // Each beforeAll/afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
+            // Note: we must teardown even after hook fails, because we'll run more hooks.
+            await this._fixtureRunner.teardownScope('test', testInfo);
           }
-          // Each beforeAll/afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
-          // Note: we must teardown even after hook fails, because we'll run more hooks.
-          await this._fixtureRunner.teardownScope('test', testInfo);
         });
-        if ((stage.error || stage.triggeredTimeout) && type === 'beforeAll' && !this._skipRemainingTestsInSuite) {
+      } catch (error) {
+        firstError = firstError ?? error;
+        // Skip in beforeAll/modifier prevents others from running.
+        if (type === 'beforeAll' && (error instanceof SkipError))
+          break;
+        if (type === 'beforeAll' && !this._skipRemainingTestsInSuite) {
           // This will inform dispatcher that we should not run more tests from this group
           // because we had a beforeAll error.
           // This behavior avoids getting the same common error for each test.
           this._skipRemainingTestsInSuite = suite;
         }
       }
-    });
+    }
+    if (firstError)
+      throw firstError;
   }
 
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
@@ -514,10 +564,11 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl) {
-    // Wrap hooks in a stage, to always run all of them and capture the first error.
-    await testInfo._runAsStage({ title: `${type} hooks` }, async () => {
-      const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
-      for (const hook of hooks) {
+    // Always run all the hooks, unless one of the times out, and capture the first error.
+    let firstError: Error | undefined;
+    const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
+    for (const hook of hooks) {
+      try {
         await testInfo._runAsStage({
           title: hook.title,
           runnableType: hook.type,
@@ -526,8 +577,14 @@ export class WorkerMain extends ProcessRunner {
         }, async () => {
           await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test');
         });
+      } catch (error) {
+        if (error instanceof TimeoutManagerError)
+          throw error;
+        firstError = firstError ?? error;
       }
-    });
+    }
+    if (firstError)
+      throw firstError;
   }
 }
 

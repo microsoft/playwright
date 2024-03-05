@@ -17,7 +17,7 @@
 import { formatLocation, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
-import type { FixtureDescription } from './timeoutManager';
+import { TimeoutManagerError, type FixtureDescription } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -156,10 +156,14 @@ class Fixture {
         await this._selfTeardownComplete;
       }
     } finally {
-      for (const dep of this._deps)
-        dep._usages.delete(this);
-      this.runner.instanceForId.delete(this.registration.id);
+      this._cleanupInstance();
     }
+  }
+
+  _cleanupInstance() {
+    for (const dep of this._deps)
+      dep._usages.delete(this);
+    this.runner.instanceForId.delete(this.registration.id);
   }
 
   _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
@@ -201,17 +205,36 @@ export class FixtureRunner {
   }
 
   async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl) {
+    if (scope === 'worker') {
+      const collector = new Set<Fixture>();
+      for (const fixture of this.instanceForId.values())
+        fixture._collectFixturesInTeardownOrder('test', collector);
+      // Clean up test-scoped fixtures that did not teardown because of timeout in one of them.
+      // This preserves fixture integrity for worker fixtures.
+      for (const fixture of collector)
+        fixture._cleanupInstance();
+      this.testScopeClean = true;
+    }
+
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
-    await testInfo._runAsStage({ title: `teardown ${scope} scope` }, async () => {
-      for (const fixture of collector)
+    let firstError: Error | undefined;
+    for (const fixture of collector) {
+      try {
         await fixture.teardown(testInfo);
-    });
+      } catch (error) {
+        if (error instanceof TimeoutManagerError)
+          throw error;
+        firstError = firstError ?? error;
+      }
+    }
     if (scope === 'test')
       this.testScopeClean = true;
+    if (firstError)
+      throw firstError;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
@@ -238,10 +261,8 @@ export class FixtureRunner {
       this._collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
 
     // Setup fixtures.
-    await testInfo._runAsStage({ title: 'setup fixtures', stopOnChildError: true }, async () => {
-      for (const registration of collector)
-        await this._setupFixtureForRegistration(registration, testInfo);
-    });
+    for (const registration of collector)
+      await this._setupFixtureForRegistration(registration, testInfo);
 
     // Create params object.
     const params: { [key: string]: any } = {};
