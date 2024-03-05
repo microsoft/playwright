@@ -974,9 +974,9 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 
 - [`method: Page.route`] accepts new `times` option to specify how many times this route should be matched.
 - [Page.SetCheckedAsync(selector: string, checked: Boolean)](./api/class-page#page-set-checked) and [Locator.SetCheckedAsync(selector: string, checked: Boolean)](./api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
-- [Request.SizesAsync()](./api/class-request#request-sizes) Returns resource size information for given http request.
-- [Tracing.StartChunkAsync()](./api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
-- [Tracing.StopChunkAsync()](./api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
+- [`method: Request.sizes`] Returns resource size information for given http request.
+- [`method: Tracing.startChunk`] - Start a new trace chunk.
+- [`method: Tracing.stopChunk`] - Stops a new trace chunk.
 
 ### Important ⚠
 * ⬆ .NET Core Apps 2.1 are **no longer** supported for our CLI tooling. As of August 31st, 2021, .NET Core 2.1 is no [longer supported](https://devblogs.microsoft.com/dotnet/net-core-2-1-will-reach-end-of-support-on-august-21-2021/) and will not receive any security updates. We've decided to move the CLI forward and require .NET Core 3.1 as a minimum.

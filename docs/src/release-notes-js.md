@@ -1999,7 +1999,7 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 #### New APIs
 
 - [`method: Page.route`] accepts new `times` option to specify how many times this route should be matched.
-- [Page.setChecked(selector: string, checked: boolean)](./api/class-page#page-set-checked) and [Locator.setChecked(selector: string, checked: boolean)](./api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
+- [`method: Page.setChecked`] and [`method: Locator.setChecked`] were introduced to set the checked state of a checkbox.
 - [`method: Request.sizes`] Returns resource size information for given http request.
 - [`method: Tracing.startChunk`] - Start a new trace chunk.
 - [`method: Tracing.stopChunk`] - Stops a new trace chunk.
