@@ -22,7 +22,7 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, Location, TestError } from 'playwright/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location, TestError, TestResult } from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
 import type { SourceLocation } from './modelUtil';
@@ -151,7 +151,8 @@ export const UIModeView: React.FC<{}> = ({
         for (const test of testModel.rootSuite?.allTests() || []) {
           if (testIds.has(test.id)) {
             (test as TeleTestCase)._clearResults();
-            (test as TeleTestCase)._createTestResult('pending');
+            const result = (test as TeleTestCase)._createTestResult('pending');
+            (result as any)[statusEx] = 'scheduled';
           }
         }
         setTestModel({ ...testModel });
@@ -655,9 +656,9 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
           lastRunReceiver = undefined;
         }
       }, {
-        pathSeparator,
         mergeProjects: true,
-        mergeTestCases: false
+        mergeTestCases: false,
+        resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
       });
     },
 
@@ -675,17 +676,19 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       throttleUpdateRootSuite(config, rootSuite, loadErrors, progress, true);
     },
 
-    onTestBegin: () => {
+    onTestBegin: (test: TestCase, testResult: TestResult) => {
+      (testResult as any)[statusEx] = 'running';
       throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
 
-    onTestEnd: (test: TestCase) => {
+    onTestEnd: (test: TestCase, testResult: TestResult) => {
       if (test.outcome() === 'skipped')
         ++progress.skipped;
       else if (test.outcome() === 'unexpected')
         ++progress.failed;
       else
         ++progress.passed;
+      (testResult as any)[statusEx] = testResult.status;
       throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
 
@@ -705,9 +708,9 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     onStepBegin: () => {},
     onStepEnd: () => {},
   }, {
-    pathSeparator,
     mergeProjects: true,
     mergeTestCases: true,
+    resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
   });
   receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});
@@ -906,11 +909,11 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
         parentGroup.children.push(testCaseItem);
       }
 
-      const result = (test as TeleTestCase).results[0];
+      const result = test.results[0];
       let status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped' = 'none';
-      if (result?.statusEx === 'scheduled')
+      if ((result as any)?.[statusEx] === 'scheduled')
         status = 'scheduled';
-      else if (result?.statusEx === 'running')
+      else if ((result as any)?.[statusEx] === 'running')
         status = 'running';
       else if (result?.status === 'skipped')
         status = 'skipped';
@@ -1053,3 +1056,4 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
 }
 
 const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
+const statusEx = Symbol('statusEx');

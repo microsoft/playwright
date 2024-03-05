@@ -114,13 +114,13 @@ class Dispatcher implements TestServerInterface {
   async listTests(params: {
     configFile: string;
     locations: string[];
-    reporters: { file: string, event: string }[];
+    reporter: string;
     env: NodeJS.ProcessEnv;
   }) {
     const config = await this._loadConfig(params.configFile);
     config.cliArgs = params.locations || [];
-    const wireReporters = await this._wireReporters(config, 'list', params.reporters);
-    const reporter = new InternalReporter(new Multiplexer(wireReporters));
+    const wireReporter = await createReporterForTestServer(config, params.reporter, 'list', message => this._dispatchEvent('report', message));
+    const reporter = new InternalReporter(new Multiplexer([wireReporter]));
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -138,7 +138,7 @@ class Dispatcher implements TestServerInterface {
   async test(params: {
     configFile: string;
     locations: string[];
-    reporters: { file: string, event: string }[];
+    reporter: string;
     env: NodeJS.ProcessEnv;
     headed?: boolean;
     oneWorker?: boolean;
@@ -169,9 +169,9 @@ class Dispatcher implements TestServerInterface {
     config.cliGrep = params.grep;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
 
-    const wireReporters = await this._wireReporters(config, 'test', params.reporters);
+    const wireReporter = await createReporterForTestServer(config, params.reporter, 'test', message => this._dispatchEvent('report', message));
     const configReporters = await createReporters(config, 'test');
-    const reporter = new InternalReporter(new Multiplexer([...configReporters, ...wireReporters]));
+    const reporter = new InternalReporter(new Multiplexer([...configReporters, wireReporter]));
     const taskRunner = createTaskRunnerForTestServer(config, reporter);
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
@@ -184,14 +184,6 @@ class Dispatcher implements TestServerInterface {
     });
     this._testRun = { run, stop };
     await run;
-  }
-
-  private async _wireReporters(config: FullConfigInternal, mode: 'test' | 'list', reporters: { file: string, event: string }[]) {
-    return await Promise.all(reporters.map(r => {
-      return createReporterForTestServer(config, r.file, mode, message => {
-        this._dispatchEvent(r.event, message);
-      });
-    }));
   }
 
   async findRelatedTestFiles(params:  {

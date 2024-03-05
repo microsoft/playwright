@@ -88,7 +88,7 @@ export async function createReporterForTestServer(config: FullConfigInternal, fi
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'ui' | 'merge', send?: (message: any) => void) {
   return {
     configDir: config.configDir,
-    send,
+    _send: send,
     _mode: mode,
   };
 }

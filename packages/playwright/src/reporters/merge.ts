@@ -54,10 +54,9 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
   const receiver = new TeleReporterReceiver(multiplexer, {
-    pathSeparator,
     mergeProjects: false,
     mergeTestCases: false,
-    internString: s => stringPool.internString(s),
+    resolvePath: (rootDir, relativePath) => stringPool.internString(rootDir + pathSeparator + relativePath),
     configOverrides: config.config,
   });
   printStatus(`processing test events`);

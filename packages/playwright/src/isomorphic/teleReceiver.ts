@@ -122,10 +122,9 @@ export type JsonEvent = {
 };
 
 type TeleReporterReceiverOptions = {
-  pathSeparator: string;
   mergeProjects: boolean;
   mergeTestCases: boolean;
-  internString?: StringIntern;
+  resolvePath: (rootDir: string, relativePath: string) => string;
   configOverrides?: Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'reporter'>;
 };
 
@@ -242,7 +241,6 @@ export class TeleReporterReceiver {
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
     testResult.setStartTimeNumber(payload.startTime);
-    testResult.statusEx = 'running';
     this._reporter.onTestBegin?.(test, testResult);
   }
 
@@ -251,22 +249,21 @@ export class TeleReporterReceiver {
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
     test.annotations = testEndPayload.annotations;
-    const result = test.resultsMap.get(payload.id)!;
+    const result = test._resultsMap.get(payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
-    result.statusEx = payload.status;
     result.errors = payload.errors;
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
     // Free up the memory as won't see these step ids.
-    result.stepMap = new Map();
+    result._stepMap = new Map();
   }
 
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
     const test = this._tests.get(testId)!;
-    const result = test.resultsMap.get(resultId)!;
-    const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
+    const result = test._resultsMap.get(resultId)!;
+    const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
     const step = new TeleTestStep(payload, parentStep, location);
@@ -274,14 +271,14 @@ export class TeleReporterReceiver {
       parentStep.steps.push(step);
     else
       result.steps.push(step);
-    result.stepMap.set(payload.id, step);
+    result._stepMap.set(payload.id, step);
     this._reporter.onStepBegin?.(test, result, step);
   }
 
   private _onStepEnd(testId: string, resultId: string, payload: JsonTestStepEnd) {
     const test = this._tests.get(testId)!;
-    const result = test.resultsMap.get(resultId)!;
-    const step = result.stepMap.get(payload.id)!;
+    const result = test._resultsMap.get(resultId)!;
+    const step = result._stepMap.get(payload.id)!;
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
@@ -294,7 +291,7 @@ export class TeleReporterReceiver {
   private _onStdIO(type: JsonStdIOType, testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
     const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
-    const result = test && resultId ? test.resultsMap.get(resultId) : undefined;
+    const result = test && resultId ? test._resultsMap.get(resultId) : undefined;
     if (type === 'stdout') {
       result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
@@ -407,11 +404,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (relativePath === undefined)
       return;
-    return this._internString(this._rootDir + this._options.pathSeparator + relativePath);
-  }
-
-  private _internString(s: string): string {
-    return this._options.internString ? this._options.internString(s) : s;
+    return this._options.resolvePath(this._rootDir, relativePath);
   }
 }
 
@@ -475,7 +468,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   repeatEachIndex = 0;
   id: string;
 
-  resultsMap = new Map<string, TeleTestResult>();
+  _resultsMap = new Map<string, TeleTestResult>();
 
   constructor(id: string, title: string, location: reporterTypes.Location, repeatEachIndex: number) {
     this.id = id;
@@ -515,13 +508,13 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
   _clearResults() {
     this.results = [];
-    this.resultsMap.clear();
+    this._resultsMap.clear();
   }
 
   _createTestResult(id: string): TeleTestResult {
     const result = new TeleTestResult(this.results.length);
     this.results.push(result);
-    this.resultsMap.set(id, result);
+    this._resultsMap.set(id, result);
     return result;
   }
 }
@@ -571,8 +564,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   errors: reporterTypes.TestResult['errors'] = [];
   error: reporterTypes.TestResult['error'];
 
-  stepMap: Map<string, reporterTypes.TestStep> = new Map();
-  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running' = 'scheduled';
+  _stepMap: Map<string, reporterTypes.TestStep> = new Map();
 
   private _startTime: number = 0;
 

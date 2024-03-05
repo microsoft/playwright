@@ -167,7 +167,7 @@ class UIMode {
   }
 
   private async _listTests() {
-    const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent('listReport', e), true));
+    const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent('listReport', e), { omitBuffers: true }));
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
@@ -195,7 +195,7 @@ class UIMode {
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
-    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent('testReport', e), true));
+    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent('testReport', e), { omitBuffers: true }));
     const reporter = new InternalReporter(new Multiplexer(reporters));
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
