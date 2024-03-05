@@ -30,7 +30,7 @@ import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules
 const version = require('../../package.json').version;
 
 type ParsedTsConfigData = {
-  absoluteBaseUrl: string;
+  pathsBase?: string;
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
 };
@@ -58,16 +58,15 @@ export function transformConfig(): TransformConfig {
 }
 
 function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
-  // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   // When no explicit baseUrl is set, resolve paths relative to the tsconfig file.
   // See https://www.typescriptlang.org/tsconfig#paths
-  const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl ?? '.');
+  const pathsBase = tsconfig.absoluteBaseUrl ?? tsconfig.paths?.pathsBasePath;
   // Only add the catch-all mapping when baseUrl is specified
-  const pathsFallback = tsconfig.baseUrl ? [{ key: '*', values: ['*'] }] : [];
+  const pathsFallback = tsconfig.absoluteBaseUrl ? [{ key: '*', values: ['*'] }] : [];
   return {
     allowJs: !!tsconfig.allowJs,
-    absoluteBaseUrl,
-    paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
+    pathsBase,
+    paths: Object.entries(tsconfig.paths?.mapping || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
@@ -132,7 +131,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         let candidate = value;
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
-        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate);
+        candidate = path.resolve(tsconfig.pathsBase!, candidate);
         const existing = resolveImportSpecifierExtension(candidate);
         if (existing) {
           longestPrefixLength = keyPrefix.length;

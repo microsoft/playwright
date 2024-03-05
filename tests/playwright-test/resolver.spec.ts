@@ -505,6 +505,9 @@ test('should support extends in tsconfig.json', async ({ runInlineTest }) => {
     }`,
     'tsconfig.base1.json': `{
       "extends": "./tsconfig.base.json",
+      "compilerOptions": {
+        "allowJs": true,
+      },
     }`,
     'tsconfig.base2.json': `{
       "compilerOptions": {
@@ -518,7 +521,9 @@ test('should support extends in tsconfig.json', async ({ runInlineTest }) => {
         },
       },
     }`,
-    'a.test.ts': `
+    'a.test.js': `
+      // This js file is affected by tsconfig because allowJs is inherited.
+      // Next line resolve to the final baseUrl ("dir") + relative path mapping ("./foo/bar/util/*").
       const { foo } = require('util/file');
       import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
@@ -526,6 +531,36 @@ test('should support extends in tsconfig.json', async ({ runInlineTest }) => {
       });
     `,
     'dir/foo/bar/util/file.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve paths relative to the originating config when extending and no baseUrl', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "extends": ["./dir/tsconfig.base.json"],
+    }`,
+    'dir/tsconfig.base.json': `{
+      "compilerOptions": {
+        "paths": {
+          "~/*": ["../mapped/*"],
+        },
+      },
+    }`,
+    'a.test.ts': `
+      // This resolves relative to the base tsconfig that defined path mapping,
+      // because there is no baseUrl in the final tsconfig.
+      const { foo } = require('~/file');
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'mapped/file.ts': `
       module.exports = { foo: 'foo' };
     `,
   });
