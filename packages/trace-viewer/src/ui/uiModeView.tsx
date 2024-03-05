@@ -965,8 +965,8 @@ function filterTree(rootItem: GroupItem, filterText: string, statusFilters: Map<
   const filtersStatuses = [...statusFilters.values()].some(Boolean);
 
   const filter = (testCase: TestCaseItem) => {
-    const title = testCase.tests[0].titlePath().join(' ').toLowerCase();
-    if (!tokens.every(token => title.includes(token)) && !testCase.tests.some(t => runningTestIds?.has(t.id)))
+    const titleWithTags = [...testCase.tests[0].titlePath(), ...testCase.tests[0].tags].join(' ').toLowerCase();
+    if (!tokens.every(token => titleWithTags.includes(token)) && !testCase.tests.some(t => runningTestIds?.has(t.id)))
       return false;
     testCase.children = (testCase.children as TestItem[]).filter(test => {
       return !filtersStatuses || runningTestIds?.has(test.test.id) || statusFilters.get(test.status);
