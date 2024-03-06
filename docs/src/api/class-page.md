@@ -608,7 +608,7 @@ page.add_init_script(path="./preload.js")
 ```
 
 ```csharp
-await page.AddInitScriptAsync(scriptPath: "./preload.js");
+await Page.AddInitScriptAsync(scriptPath: "./preload.js");
 ```
 
 :::note
