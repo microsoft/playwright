@@ -364,8 +364,9 @@ export class WorkerMain extends ProcessRunner {
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
 
-    // A timed-out test gets a full additional timeout to run after hooks.
-    const afterHooksSlot = testInfo._didTimeout ? { timeout: this._project.project.timeout, elapsed: 0 } : undefined;
+    // After hooks get an additional timeout.
+    const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
+    const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
     await testInfo._runAsStage({
       title: 'After Hooks',
       stepCategory: 'hook',
@@ -467,7 +468,7 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore top-level error.
 
-    testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
+    testInfo.duration = (testInfo._timeoutManager.defaultSlotTimings().elapsed + afterHooksSlot.elapsed) | 0;
 
     this._currentTest = null;
     setCurrentTestInfo(null);
@@ -622,6 +623,11 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
+}
+
+function calculateMaxTimeout(t1: number, t2: number) {
+  // Zero means "no timeout".
+  return (!t1 || !t2) ? 0 : Math.max(t1, t2);
 }
 
 export const create = (params: WorkerInitParams) => new WorkerMain(params);

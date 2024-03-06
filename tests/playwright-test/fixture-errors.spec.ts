@@ -425,6 +425,38 @@ test('should give enough time for fixture teardown', async ({ runInlineTest }) =
       });
     `,
   });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'teardown start',
+    'teardown finished',
+  ]);
+});
+
+test('should not give enough time for second fixture teardown after timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fixture2: async ({ }, use) => {
+          await use();
+          console.log('\\n%%teardown2 start');
+          await new Promise(f => setTimeout(f, 3000));
+          console.log('\\n%%teardown2 finished');
+        },
+        fixture: async ({ fixture2 }, use) => {
+          await use();
+          console.log('\\n%%teardown start');
+          await new Promise(f => setTimeout(f, 3000));
+          console.log('\\n%%teardown finished');
+        },
+      });
+      test('fast enough but close', async ({ fixture }) => {
+        test.setTimeout(3000);
+        await new Promise(f => setTimeout(f, 2000));
+      });
+    `,
+  }, { timeout: 2000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test finished within timeout of 3000ms, but tearing down "fixture" ran out of time.');
