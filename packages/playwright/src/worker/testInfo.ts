@@ -92,6 +92,7 @@ export class TestInfoImpl implements TestInfo {
   readonly titlePath: string[];
   readonly file: string;
   readonly line: number;
+  readonly tags: string[];
   readonly column: number;
   readonly fn: Function;
   expectedStatus: TestStatus;
@@ -167,6 +168,7 @@ export class TestInfoImpl implements TestInfo {
     this.file = test?.location.file ?? '';
     this.line = test?.location.line ?? 0;
     this.column = test?.location.column ?? 0;
+    this.tags = test?.tags ?? [];
     this.fn = test?.fn ?? (() => {});
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
