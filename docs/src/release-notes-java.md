@@ -33,14 +33,14 @@ assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(
 
 ### Browser Versions
 
-* Chromium 121.0.6167.57
-* Mozilla Firefox 121.0
+* Chromium 123.0.6312.4
+* Mozilla Firefox 123.0
 * WebKit 17.4
 
 This version was also tested against the following stable channels:
 
-* Google Chrome 120
-* Microsoft Edge 120
+* Google Chrome 122
+* Microsoft Edge 123
 
 ## Version 1.41
 
