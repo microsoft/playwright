@@ -20,7 +20,7 @@ import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath, st
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
-import { TimeoutManager } from './timeoutManager';
+import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import type { RunnableDescription, RunnableType, TimeSlot } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
@@ -56,13 +56,7 @@ export type TestStage = {
   runnableSlot?: TimeSlot;
   canTimeout?: boolean;
   allowSkip?: boolean;
-  stopOnChildError?: boolean;
-  continueOnChildTimeout?: boolean;
-
   step?: TestStepInternal;
-  error?: Error;
-  triggeredSkip?: boolean;
-  triggeredTimeout?: boolean;
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -352,13 +346,6 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _unhandledError(error: Error) {
-    this._failWithError(error, true /* isHardError */, true /* retriable */);
-    const stage = this._stages[this._stages.length - 1];
-    if (stage)
-      stage.error = stage.error ?? error;
-  }
-
   _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
     if (!retriable)
       this._hasNonRetriableError = true;
@@ -385,22 +372,6 @@ export class TestInfoImpl implements TestInfo {
     const parent = this._stages[this._stages.length - 1];
     stage.allowSkip = stage.allowSkip ?? parent?.allowSkip ?? false;
 
-    if (parent?.allowSkip && parent?.triggeredSkip) {
-      // Do not run more child steps after "skip" has been triggered.
-      debugTest(`ignored stage "${stage.title}" after previous skip`);
-      return;
-    }
-    if (parent?.stopOnChildError && parent?.error) {
-      // Do not run more child steps after a previous one failed.
-      debugTest(`ignored stage "${stage.title}" after previous error`);
-      return;
-    }
-    if (parent?.triggeredTimeout && !parent?.continueOnChildTimeout) {
-      // Do not run more child steps after a previous one timed out.
-      debugTest(`ignored stage "${stage.title}" after previous timeout`);
-      return;
-    }
-
     if (debugTest.enabled) {
       const location = stage.location ? ` at "${formatLocation(stage.location)}"` : ``;
       debugTest(`started stage "${stage.title}"${location}`);
@@ -422,49 +393,44 @@ export class TestInfoImpl implements TestInfo {
       }
     }
 
-    const timeoutError = await this._timeoutManager.withRunnable(runnable, async () => {
-      try {
-        await cb();
-      } catch (e) {
-        if (stage.allowSkip && (e instanceof SkipError)) {
-          stage.triggeredSkip = true;
-          if (this.status === 'passed')
-            this.status = 'skipped';
-        } else {
-          // Prefer the first error.
-          stage.error = stage.error ?? e;
-          this._failWithError(e, true /* isHardError */, true /* retriable */);
+    try {
+      await this._timeoutManager.withRunnable(runnable, async () => {
+        // Note: separate try/catch is here to report errors after timeout.
+        // This way we get a nice "locator.click" error after the test times out and closes the page.
+        try {
+          await cb();
+        } catch (e) {
+          if (stage.allowSkip && (e instanceof SkipError)) {
+            if (this.status === 'passed')
+              this.status = 'skipped';
+          } else if (!(e instanceof TimeoutManagerError)) {
+            // Do not consider timeout errors in child stages as a regular "hard error".
+            this._failWithError(e, true /* isHardError */, true /* retriable */);
+          }
+          throw e;
         }
+      });
+      stage.step?.complete({});
+    } catch (error) {
+      // When interrupting, we arrive here with a TimeoutManagerError, but we should not
+      // consider it a timeout.
+      if (!this._wasInterrupted && !this._didTimeout && (error instanceof TimeoutManagerError)) {
+        this._didTimeout = true;
+        const serialized = serializeError(error);
+        this.errors.push(serialized);
+        this._tracing.appendForError(serialized);
+        // Do not overwrite existing failure upon hook/teardown timeout.
+        if (this.status === 'passed' || this.status === 'skipped')
+          this.status = 'timedOut';
       }
-    });
-    if (timeoutError)
-      stage.triggeredTimeout = true;
-
-    // When interrupting, we arrive here with a timeoutError, but we should not
-    // consider it a timeout.
-    if (!this._wasInterrupted && !this._didTimeout && timeoutError) {
-      stage.error = stage.error ?? timeoutError;
-      this._didTimeout = true;
-      const serialized = serializeError(timeoutError);
-      this.errors.push(serialized);
-      this._tracing.appendForError(serialized);
-      // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed' || this.status === 'skipped')
-        this.status = 'timedOut';
+      stage.step?.complete({ error });
+      throw error;
+    } finally {
+      if (this._stages[this._stages.length - 1] !== stage)
+        throw new Error(`Internal error: inconsistent stages!`);
+      this._stages.pop();
+      debugTest(`finished stage "${stage.title}"`);
     }
-
-    if (parent) {
-      // Notify parent about child error, skip and timeout.
-      parent.error = parent.error ?? stage.error;
-      parent.triggeredSkip = parent.triggeredSkip || stage.triggeredSkip;
-      parent.triggeredTimeout = parent.triggeredTimeout || stage.triggeredTimeout;
-    }
-
-    if (this._stages[this._stages.length - 1] !== stage)
-      throw new Error(`Internal error: inconsistent stages!`);
-    this._stages.pop();
-    stage.step?.complete({ error: stage.error });
-    debugTest(`finished stage "${stage.title}"`);
   }
 
   _isFailure() {
@@ -557,7 +523,7 @@ export class TestInfoImpl implements TestInfo {
   }
 }
 
-class SkipError extends Error {
+export class SkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');

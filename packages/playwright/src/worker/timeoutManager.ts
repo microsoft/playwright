@@ -56,22 +56,20 @@ export class TimeoutManager {
     this._timeoutRunner.interrupt();
   }
 
-  async withRunnable(runnable: RunnableDescription | undefined, cb: () => Promise<any>): Promise<Error | undefined> {
-    if (!runnable) {
-      await cb();
-      return;
-    }
+  async withRunnable<T>(runnable: RunnableDescription | undefined, cb: () => Promise<T>): Promise<T> {
+    if (!runnable)
+      return await cb();
     const existingRunnable = this._runnable;
     const effectiveRunnable = { ...runnable };
     if (!effectiveRunnable.slot)
       effectiveRunnable.slot = this._runnable.slot;
     this._updateRunnables(effectiveRunnable, undefined);
     try {
-      await this._timeoutRunner.run(cb);
+      return await this._timeoutRunner.run(cb);
     } catch (error) {
       if (!(error instanceof TimeoutRunnerError))
         throw error;
-      return this._createTimeoutError();
+      throw this._createTimeoutError();
     } finally {
       this._updateRunnables(existingRunnable, undefined);
     }
@@ -171,10 +169,12 @@ export class TimeoutManager {
       message = `Fixture "${fixtureWithSlot.title}" timeout of ${timeout}ms exceeded during ${fixtureWithSlot.phase}.`;
     message = colors.red(message);
     const location = (fixtureWithSlot || this._runnable).location;
-    const error = new Error(message);
+    const error = new TimeoutManagerError(message);
     error.name = '';
     // Include location for hooks, modifiers and fixtures to distinguish between them.
     error.stack = message + (location ? `\n    at ${location.file}:${location.line}:${location.column}` : '');
     return error;
   }
 }
+
+export class TimeoutManagerError extends Error {}
