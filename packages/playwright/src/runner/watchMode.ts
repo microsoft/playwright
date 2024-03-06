@@ -39,8 +39,8 @@ class FSWatcher {
   private _timer: NodeJS.Timeout | undefined;
 
   async update(config: FullConfigInternal) {
-    const commandLineFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : () => true;
-    const projects = filterProjects(config.projects, config.cliProjectFilter);
+    const commandLineFileMatcher = config.configCLIOverrides.cliArgs?.length ? createFileMatcherFromArguments(config.configCLIOverrides.cliArgs) : () => true;
+    const projects = filterProjects(config.projects, config.configCLIOverrides.projectFilter);
     const projectClosure = buildProjectsClosure(projects);
     const projectFilters = new Map<FullProjectInternal, Matcher>();
     for (const [project, type] of projectClosure) {
@@ -107,7 +107,7 @@ class FSWatcher {
 
 export async function runWatchModeLoop(config: FullConfigInternal): Promise<FullResult['status']> {
   // Reset the settings that don't apply to watch.
-  config.cliPassWithNoTests = true;
+  config.configCLIOverrides.passWithNoTests = true;
   for (const p of config.projects)
     p.project.retries = 0;
 
@@ -172,7 +172,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
       }).catch(() => ({ projectNames: null }));
       if (!projectNames)
         continue;
-      config.cliProjectFilter = projectNames.length ? projectNames : undefined;
+      config.configCLIOverrides.projectFilter = projectNames.length ? projectNames : undefined;
       await fsWatcher.update(config);
       await runTests(config, failedTestIdCollector);
       lastRun = { type: 'regular' };
@@ -188,9 +188,9 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
       if (filePattern === null)
         continue;
       if (filePattern.trim())
-        config.cliArgs = filePattern.split(' ');
+        config.configCLIOverrides.cliArgs = filePattern.split(' ');
       else
-        config.cliArgs = [];
+        config.configCLIOverrides.cliArgs = [];
       await fsWatcher.update(config);
       await runTests(config, failedTestIdCollector);
       lastRun = { type: 'regular' };
@@ -206,9 +206,9 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
       if (testPattern === null)
         continue;
       if (testPattern.trim())
-        config.cliGrep = testPattern;
+        config.configCLIOverrides.grep = testPattern;
       else
-        config.cliGrep = undefined;
+        config.configCLIOverrides.grep = undefined;
       await fsWatcher.update(config);
       await runTests(config, failedTestIdCollector);
       lastRun = { type: 'regular' };
@@ -263,7 +263,7 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
 
   // Collect all the affected projects, follow project dependencies.
   // Prepare to exclude all the projects that do not depend on this file, as if they did not exist.
-  const projects = filterProjects(config.projects, config.cliProjectFilter);
+  const projects = filterProjects(config.projects, config.configCLIOverrides.projectFilter);
   const projectClosure = buildProjectsClosure(projects);
   const affectedProjects = affectedProjectsClosure([...projectClosure.keys()], [...filesByProject.keys()]);
   const affectsAnyDependency = [...affectedProjects].some(p => projectClosure.get(p) === 'dependency');
@@ -386,11 +386,11 @@ function printConfiguration(config: FullConfigInternal, title?: string) {
   const packageManagerCommand = getPackageManagerExecCommand();
   const tokens: string[] = [];
   tokens.push(`${packageManagerCommand} playwright test`);
-  tokens.push(...(config.cliProjectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
-  if (config.cliGrep)
-    tokens.push(colors.red(`--grep ${config.cliGrep}`));
-  if (config.cliArgs)
-    tokens.push(...config.cliArgs.map(a => colors.bold(a)));
+  tokens.push(...(config.configCLIOverrides.projectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
+  if (config.configCLIOverrides.grep)
+    tokens.push(colors.red(`--grep ${config.configCLIOverrides.grep}`));
+  if (config.configCLIOverrides.cliArgs)
+    tokens.push(...config.configCLIOverrides.cliArgs.map(a => colors.bold(a)));
   if (title)
     tokens.push(colors.dim(`(${title})`));
   if (seq)

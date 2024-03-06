@@ -100,17 +100,11 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   return object as Config;
 }
 
-export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false): Promise<FullConfigInternal> {
+export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal> {
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
   const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
-  if (ignoreProjectDependencies) {
-    for (const project of fullConfig.projects) {
-      project.deps = [];
-      project.teardown = undefined;
-    }
-  }
   return fullConfig;
 }
 
@@ -316,7 +310,7 @@ export function resolveConfigFile(configFileOrDirectory: string): string | undef
   }
 }
 
-export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
+export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal | null> {
   const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
@@ -325,7 +319,7 @@ export async function loadConfigFromFileRestartIfNeeded(configFile: string | und
     configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory,
     resolvedConfigFile,
   };
-  return await loadConfig(location, overrides, ignoreDeps);
+  return await loadConfig(location, overrides);
 }
 
 export async function loadEmptyConfigForMergeReports() {

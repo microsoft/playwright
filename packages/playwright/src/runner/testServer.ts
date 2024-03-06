@@ -118,7 +118,7 @@ class Dispatcher implements TestServerInterface {
     env: NodeJS.ProcessEnv;
   }) {
     const config = await this._loadConfig(params.configFile);
-    config.cliArgs = params.locations || [];
+    config.configCLIOverrides.cliArgs = params.locations || [];
     const wireReporter = await createReporterForTestServer(config, params.reporter, 'list', message => this._dispatchEvent('report', message));
     const reporter = new InternalReporter(new Multiplexer([wireReporter]));
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: true });
@@ -164,10 +164,10 @@ class Dispatcher implements TestServerInterface {
     };
 
     const config = await this._loadConfig(params.configFile, overrides);
-    config.cliListOnly = false;
-    config.cliArgs = params.locations || [];
-    config.cliGrep = params.grep;
-    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
+    config.configCLIOverrides.listOnly = false;
+    config.configCLIOverrides.cliArgs = params.locations || [];
+    config.configCLIOverrides.grep = params.grep;
+    config.configCLIOverrides.projectFilter = params.projects?.length ? params.projects : undefined;
 
     const wireReporter = await createReporterForTestServer(config, params.reporter, 'test', message => this._dispatchEvent('report', message));
     const configReporters = await createReporters(config, 'test');

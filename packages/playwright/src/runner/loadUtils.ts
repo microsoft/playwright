@@ -36,11 +36,11 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : null;
+  const cliFileMatcher = config.configCLIOverrides.cliArgs?.length ? createFileMatcherFromArguments(config.configCLIOverrides.cliArgs) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
-  const filteredProjects = filterProjects(config.projects, config.cliProjectFilter);
+  const filteredProjects = filterProjects(config.projects, config.configCLIOverrides.projectFilter);
   for (const project of filteredProjects) {
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);
@@ -131,9 +131,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Filter all the projects using grep, testId, file names.
   {
     // Interpret cli parameters.
-    const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
-    const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
-    const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
+    const cliFileFilters = createFileFiltersFromArguments(config.configCLIOverrides.cliArgs || []);
+    const grepMatcher = config.configCLIOverrides.grep ? createTitleMatcher(forceRegExp(config.configCLIOverrides.grep)) : () => true;
+    const grepInvertMatcher = config.configCLIOverrides.grepInvert ? createTitleMatcher(forceRegExp(config.configCLIOverrides.grepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
     // Filter file suites for all projects.

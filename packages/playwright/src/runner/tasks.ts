@@ -175,7 +175,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
   return {
     setup: async ({ config }) => {
       const outputDirs = new Set<string>();
-      const projects = filterProjects(config.projects, config.cliProjectFilter);
+      const projects = filterProjects(config.projects, config.configCLIOverrides.projectFilter);
       projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
@@ -203,8 +203,8 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
-      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard) {
-        if (testRun.config.cliArgs.length) {
+      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.configCLIOverrides.passWithNoTests && !testRun.config.config.shard) {
+        if (testRun.config.configCLIOverrides.cliArgs?.length) {
           throw new Error([
             `No tests found.`,
             `Make sure that arguments are regular expressions matching test files.`,

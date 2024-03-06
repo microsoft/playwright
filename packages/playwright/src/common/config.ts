@@ -41,20 +41,12 @@ export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
   readonly config: FullConfig;
-  readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
-  readonly preserveOutputDir: boolean;
   readonly webServers: Exclude<FullConfig['webServer'], null>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
-  cliArgs: string[] = [];
-  cliGrep: string | undefined;
-  cliGrepInvert: string | undefined;
-  cliProjectFilter?: string[];
-  cliListOnly = false;
-  cliPassWithNoTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
@@ -69,8 +61,6 @@ export class FullConfigInternal {
 
     this.configDir = configDir;
     this.configCLIOverrides = configCLIOverrides;
-    this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, userConfig.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
-    this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
     this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, userConfig.ignoreSnapshots, false);
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
@@ -138,6 +128,13 @@ export class FullConfigInternal {
       external: userConfig.build?.external || [],
     });
     this.config.projects = this.projects.map(p => p.project);
+
+    if (configCLIOverrides.ignoreProjectDependencies) {
+      for (const project of this.projects) {
+        project.deps = [];
+        project.teardown = undefined;
+      }
+    }
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {

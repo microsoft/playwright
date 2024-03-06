@@ -43,8 +43,8 @@ class UIMode {
   constructor(config: FullConfigInternal) {
     this._config = config;
     process.env.PW_LIVE_TRACE_STACKS = '1';
-    config.cliListOnly = false;
-    config.cliPassWithNoTests = true;
+    config.configCLIOverrides.listOnly = false;
+    config.configCLIOverrides.passWithNoTests = true;
     config.config.preserveOutput = 'always';
 
     for (const p of config.projects) {
@@ -168,7 +168,7 @@ class UIMode {
 
   private async _listTests() {
     const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent('listReport', e), { omitBuffers: true }));
-    this._config.cliListOnly = true;
+    this._config.configCLIOverrides.listOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
     const testRun = new TestRun(this._config, reporter);
@@ -190,8 +190,8 @@ class UIMode {
     await this._stopTests();
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
-    this._config.cliListOnly = false;
-    this._config.cliProjectFilter = projects.length ? projects : undefined;
+    this._config.configCLIOverrides.listOnly = false;
+    this._config.configCLIOverrides.projectFilter = projects.length ? projects : undefined;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');

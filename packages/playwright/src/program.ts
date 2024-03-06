@@ -152,16 +152,9 @@ Examples:
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
-  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts), opts.deps === false);
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts, args));
   if (!config)
     return;
-
-  config.cliArgs = args;
-  config.cliGrep = opts.grep as string | undefined;
-  config.cliGrepInvert = opts.grepInvert as string | undefined;
-  config.cliListOnly = !!opts.list;
-  config.cliProjectFilter = opts.project || undefined;
-  config.cliPassWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
   let status: FullResult['status'];
@@ -226,9 +219,16 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
   gracefullyProcessExitDoNotHang(0);
 }
 
-function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
+function overridesFromOptions(options: { [key: string]: any }, args: string[]): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
   const overrides: ConfigCLIOverrides = {
+    cliArgs: args,
+    grep: options.grep as string | undefined,
+    grepInvert: options.grepInvert as string | undefined,
+    projectFilter: options.project || undefined,
+    listOnly: !!options.list,
+    passWithNoTests: !!options.passWithNoTests,
+    ignoreProjectDependencies: options.deps === false,
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
