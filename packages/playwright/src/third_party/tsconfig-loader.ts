@@ -44,8 +44,11 @@ interface TsConfig {
 
 export interface LoadedTsConfig {
   tsConfigPath: string;
-  baseUrl?: string;
-  paths?: { [key: string]: Array<string> };
+  paths?: {
+    mapping: { [key: string]: Array<string> };
+    pathsBasePath: string;  // absolute path
+  };
+  absoluteBaseUrl?: string;
   allowJs?: boolean;
 }
 
@@ -132,25 +135,27 @@ function loadTsConfig(
   for (const extendedConfig of extendsArray) {
     const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
     const base = loadTsConfig(extendedConfigPath, references, visited);
-
-    // baseUrl should be interpreted as relative to the base tsconfig,
-    // but we need to update it so it is relative to the original tsconfig being loaded
-    if (base.baseUrl && base.baseUrl) {
-      const extendsDir = path.dirname(extendedConfig);
-      base.baseUrl = path.join(extendsDir, base.baseUrl);
-    }
     // Retain result instance, so that caching works.
     Object.assign(result, base, { tsConfigPath: configFilePath });
   }
 
-  const loadedConfig = Object.fromEntries(Object.entries({
-    baseUrl: parsedConfig.compilerOptions?.baseUrl,
-    paths: parsedConfig.compilerOptions?.paths,
-    allowJs: parsedConfig?.compilerOptions?.allowJs,
-  }).filter(([, value]) => value !== undefined));
-
-  // Retain result instance, so that caching works.
-  Object.assign(result, loadedConfig);
+  if (parsedConfig.compilerOptions?.allowJs !== undefined)
+    result.allowJs = parsedConfig.compilerOptions.allowJs;
+  if (parsedConfig.compilerOptions?.paths !== undefined) {
+    // We must store pathsBasePath from the config that defines "paths" and later resolve
+    // based on this absolute path, when no "baseUrl" is specified. See tsc for reference:
+    // https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/commandLineParser.ts#L3129
+    // https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/moduleSpecifiers.ts#L510
+    result.paths = {
+      mapping: parsedConfig.compilerOptions.paths,
+      pathsBasePath: path.dirname(configFilePath),
+    };
+  }
+  if (parsedConfig.compilerOptions?.baseUrl !== undefined) {
+    // Follow tsc and resolve all relative file paths in the config right away.
+    // This way it is safe to inherit paths between the configs.
+    result.absoluteBaseUrl = path.resolve(path.dirname(configFilePath), parsedConfig.compilerOptions.baseUrl);
+  }
 
   for (const ref of parsedConfig.references || [])
     references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
