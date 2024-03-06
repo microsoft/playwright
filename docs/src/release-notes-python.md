@@ -18,7 +18,7 @@ page.add_locator_handler(
 )
 # Write the test as usual.
 page.goto("https://www.ikea.com/")
-page.getByRole("link", name="Collection of blue and white").click()
+page.get_by_role("link", name="Collection of blue and white").click()
 expect(page.getByRole("heading", name="Light and easy")).to_be_visible()
 ```
 
