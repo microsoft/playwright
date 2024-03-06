@@ -166,9 +166,9 @@ test('should be included in testInfo if comming from describe', async ({ runInli
   const result = await runInlineTest({
     'a.test.ts': `
     import { test, expect } from '@playwright/test';
-    test.describe('describe with tag', { tag: '@tag1' }, async ()=>{
+    test.describe('describe with tag', { tag: '@tag2' }, async ()=>{
       test('test with tag', async ({}, testInfo) => {
-        expect(testInfo.tags).toStrictEqual(["@tag1"]);
+        expect(testInfo.tags).toStrictEqual(["@tag2"]);
       });
     });
     `,
