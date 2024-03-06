@@ -32,8 +32,11 @@ page.get_by_role("button").click()
 ```
 
 ```csharp
-page.Dialog += (_, dialog) => dialog.AcceptAsync();
-await page.GetByRole(AriaRole.Button).ClickAsync();
+Page.Dialog += async (_, dialog) =>
+{
+    await dialog.AcceptAsync();
+};
+await Page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 :::note
@@ -116,10 +119,10 @@ page.close(run_before_unload=True)
 ```
 
 ```csharp
-page.Dialog += (_, dialog) =>
+Page.Dialog += async (_, dialog) =>
 {
     Assert.AreEqual("beforeunload", dialog.Type);
-    dialog.DismissAsync();
+    await dialog.DismissAsync();
 };
-await page.CloseAsync(runBeforeUnload: true);
+await Page.CloseAsync(new() { RunBeforeUnload = true });
 ```

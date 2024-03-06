@@ -186,7 +186,10 @@ context.on("dialog", lambda dialog: dialog.accept())
 ```
 
 ```csharp
-context.Dialog += (_, dialog) => dialog.AcceptAsync();
+Context.Dialog += async (_, dialog) =>
+{
+    await dialog.AcceptAsync();
+};
 ```
 
 :::note
@@ -390,7 +393,7 @@ browser_context.add_init_script(path="preload.js")
 ```
 
 ```csharp
-await context.AddInitScriptAsync(scriptPath: "preload.js");
+await Context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
 :::note
@@ -1180,7 +1183,7 @@ context.route("/api/**", handle_route)
 await page.RouteAsync("/api/**", async r =>
 {
     if (r.Request.PostData.Contains("my-string"))
-        await r.FulfillAsync(body: "mocked-data");
+        await r.FulfillAsync(new() { Body = "mocked-data" });
     else
         await r.ContinueAsync();
 });
