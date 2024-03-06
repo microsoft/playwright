@@ -53,14 +53,14 @@ def test_my_app_is_working(fixture_name):
 
 **Function scope**: These fixtures are created when requested in a test function and destroyed when the test ends.
 
-- `context`: New [browser context](https://playwright.dev/python/docs/browser-contexts) for a test.
-- `page`: New [browser page](https://playwright.dev/python/docs/pages) for a test.
+- `context`: New [browser context](./browser-contexts) for a test.
+- `page`: New [browser page](./pages) for a test.
 
 **Session scope**: These fixtures are created when requested in a test function and destroyed when all tests end.
 
-- `playwright`: [Playwright](https://playwright.dev/python/docs/api/class-playwright) instance.
-- `browser_type`: [BrowserType](https://playwright.dev/python/docs/api/class-browsertype) instance of the current browser.
-- `browser`: [Browser](https://playwright.dev/python/docs/api/class-browser) instance launched by Playwright.
+- `playwright`: [Playwright](./api/class-playwright) instance.
+- `browser_type`: [BrowserType](./api/class-browsertype) instance of the current browser.
+- `browser`: [Browser](./api/class-browser) instance launched by Playwright.
 - `browser_name`: Browser name as string.
 - `browser_channel`: Browser channel as string.
 - `is_chromium`, `is_webkit`, `is_firefox`: Booleans for the respective browser types.
