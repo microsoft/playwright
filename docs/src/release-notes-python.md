@@ -4,6 +4,43 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.42
+
+### New Locator Handler
+
+New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
+  
+```python
+# Setup the handler.
+page.add_locator_handler(
+    page.get_by_role("heading", name="Hej! You are in control of your cookies."),
+    lambda: page.get_by_role("button", name="Accept all").click(),
+)
+# Write the test as usual.
+page.goto("https://www.ikea.com/")
+page.get_by_role("link", name="Collection of blue and white").click()
+expect(page.get_by_role("heading", name="Light and easy")).to_be_visible()
+```
+
+### New APIs
+
+- [`method: Page.pdf`] accepts two new options [`option: tagged`] and [`option: outline`].
+
+### Announcements
+
+* ⚠️ Ubuntu 18 is not supported anymore.
+
+### Browser Versions
+
+* Chromium 121.0.6167.57
+* Mozilla Firefox 121.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 120
+* Microsoft Edge 120
+
 ## Version 1.41
 
 ### New APIs
