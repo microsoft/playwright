@@ -30,7 +30,6 @@ class Fixture {
 
   private _useFuncFinished: ManualPromise<void> | undefined;
   private _selfTeardownComplete: Promise<void> | undefined;
-  private _teardownWithDepsComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
   private _shouldGenerateStep = false;
@@ -135,9 +134,7 @@ class Fixture {
       stepCategory: this._shouldGenerateStep ? 'fixture' : undefined,
     }, async () => {
       testInfo._timeoutManager.setCurrentFixture(this._teardownDescription);
-      if (!this._teardownWithDepsComplete)
-        this._teardownWithDepsComplete = this._teardownInternal();
-      await this._teardownWithDepsComplete;
+      await this._teardownInternal();
       testInfo._timeoutManager.setCurrentFixture(undefined);
     });
   }
@@ -153,6 +150,7 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         this._useFuncFinished.resolve();
+        this._useFuncFinished = undefined;
         await this._selfTeardownComplete;
       }
     } finally {
@@ -205,36 +203,32 @@ export class FixtureRunner {
   }
 
   async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl) {
-    if (scope === 'worker') {
-      const collector = new Set<Fixture>();
-      for (const fixture of this.instanceForId.values())
-        fixture._collectFixturesInTeardownOrder('test', collector);
-      // Clean up test-scoped fixtures that did not teardown because of timeout in one of them.
-      // This preserves fixture integrity for worker fixtures.
-      for (const fixture of collector)
-        fixture._cleanupInstance();
-      this.testScopeClean = true;
-    }
-
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
-    let firstError: Error | undefined;
-    for (const fixture of collector) {
-      try {
-        await fixture.teardown(testInfo);
-      } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          throw error;
-        firstError = firstError ?? error;
+    try {
+      let firstError: Error | undefined;
+      for (const fixture of collector) {
+        try {
+          await fixture.teardown(testInfo);
+        } catch (error) {
+          if (error instanceof TimeoutManagerError)
+            throw error;
+          firstError = firstError ?? error;
+        }
       }
+      if (firstError)
+        throw firstError;
+    } finally {
+      // To preserve fixtures integrity, forcefully cleanup fixtures that did not teardown
+      // due to a timeout in one of them.
+      for (const fixture of collector)
+        fixture._cleanupInstance();
+      if (scope === 'test')
+        this.testScopeClean = true;
     }
-    if (scope === 'test')
-      this.testScopeClean = true;
-    if (firstError)
-      throw firstError;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {

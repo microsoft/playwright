@@ -2052,9 +2052,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       // Failing test first, then sorted by the run order.
       await expect(page.locator('.test-file-test')).toHaveText([
-        /main › fails\d+m?smain.spec.ts:9/,
-        /main › first › passes\d+m?sfirst.ts:12/,
-        /main › second › passes\d+m?ssecond.ts:5/,
+        /main › fails\d+m?s?main.spec.ts:9/,
+        /main › first › passes\d+m?s?first.ts:12/,
+        /main › second › passes\d+m?s?second.ts:5/,
       ]);
     });
 
