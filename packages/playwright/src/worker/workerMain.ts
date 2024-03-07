@@ -359,7 +359,7 @@ export class WorkerMain extends ProcessRunner {
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
       });
-    }).catch(() => {});  // Ignore top-level error, we still have to run after hooks.
+    }).catch(error => testInfo._handlePossibleTimeoutError(error));
 
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
@@ -462,11 +462,12 @@ export class WorkerMain extends ProcessRunner {
 
       if (firstAfterHooksError)
         throw firstAfterHooksError;
-    }).catch(() => {});  // Ignore top-level error.
+    }).catch(error => testInfo._handlePossibleTimeoutError(error));
 
-    await testInfo._runAsStage({ title: 'stop tracing' }, async () => {
+    const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
+    await testInfo._runAsStage({ title: 'stop tracing', canTimeout: true, runnableType: 'test', runnableSlot: tracingSlot }, async () => {
       await testInfo._tracing.stopIfNeeded();
-    }).catch(() => {});  // Ignore top-level error.
+    }).catch(error => testInfo._handlePossibleTimeoutError(error));
 
     testInfo.duration = (testInfo._timeoutManager.defaultSlotTimings().elapsed + afterHooksSlot.elapsed) | 0;
 
