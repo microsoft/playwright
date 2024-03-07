@@ -523,9 +523,12 @@ export class CRNetworkManager {
       response.setTransferSize(null);
       response.setEncodedBodySize(null);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+    } else {
+      // Loading failed before response has arrived - there will be no extra info events.
+      request.request.setRawRequestHeaders(null);
     }
     this._deleteRequest(request);
-    request.request._setFailureText(event.errorText);
+    request.request._setFailureText(event.errorText || event.blockedReason || '');
     (this._page?._frameManager || this._serviceWorker)!.requestFailed(request.request, !!event.canceled);
   }
 
