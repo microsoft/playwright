@@ -160,8 +160,8 @@ export const WorkbenchLoader: React.FunctionComponent<{
       </div>
     </div>}
     {!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
-      <div className='processing-error'>{processingErrorMessage}</div>
-      <div className='title'>Drop Playwright Trace to load</div>
+      <div className='processing-error' aria-live='assertive'>{processingErrorMessage}</div>
+      <div className='title' role='heading'>Drop Playwright Trace to load</div>
       <div>or</div>
       <button onClick={() => {
         const input = document.createElement('input');
