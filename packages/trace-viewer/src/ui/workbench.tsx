@@ -214,7 +214,7 @@ export const Workbench: React.FunctionComponent<{
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
 
-  return <div className='vbox workbench' {...(inert ? { inert: '' } : {})}>
+  return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     <Timeline
       model={model}
       boundaries={boundaries}

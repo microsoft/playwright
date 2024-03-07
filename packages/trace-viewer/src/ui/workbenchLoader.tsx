@@ -140,7 +140,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage));
 
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
-    <div className='hbox header' {...(showFileUploadDropArea ? { inert: '' } : {})}>
+    <div className='hbox header' {...(showFileUploadDropArea ? { inert: 'true' } : {})}>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
       </div>
