@@ -137,8 +137,10 @@ export const WorkbenchLoader: React.FunctionComponent<{
     })();
   }, [isServer, traceURLs, uploadedTraceNames]);
 
+  const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage));
+
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
-    <div className='hbox header'>
+    <div className='hbox header' {...(showFileUploadDropArea ? { inert: 'true' } : {})}>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
       </div>
@@ -150,7 +152,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} />
+    <Workbench model={model} inert={showFileUploadDropArea} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
       <div style={{ paddingTop: 20 }}>
@@ -159,9 +161,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
-    {!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
+    {showFileUploadDropArea && <div className='drop-target'>
       <div className='processing-error' aria-live='assertive'>{processingErrorMessage}</div>
-      <div className='title' role='heading'>Drop Playwright Trace to load</div>
+      <div className='title' role='heading' aria-level={1}>Drop Playwright Trace to load</div>
       <div>or</div>
       <button onClick={() => {
         const input = document.createElement('input');
@@ -169,7 +171,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         input.multiple = true;
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
-      }}>Select file(s)</button>
+      }} type='button'>Select file(s)</button>
       <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
         it opens it locally.</div>
     </div>}

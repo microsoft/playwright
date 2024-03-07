@@ -50,7 +50,8 @@ export const Workbench: React.FunctionComponent<{
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status }) => {
+  inert?: boolean,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -213,7 +214,7 @@ export const Workbench: React.FunctionComponent<{
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
 
-  return <div className='vbox workbench'>
+  return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     <Timeline
       model={model}
       boundaries={boundaries}
