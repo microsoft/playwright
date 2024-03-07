@@ -262,6 +262,10 @@ test('should report before hooks step error', async ({ runInlineTest }) => {
       title: 'After Hooks',
     },
     {
+      category: 'hook',
+      title: 'Worker Cleanup',
+    },
+    {
       error: expect.any(Object)
     }
   ]);
@@ -345,6 +349,12 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
           category: 'fixture',
           title: 'fixture: context',
         },
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'Worker Cleanup',
+      steps: [
         {
           category: 'fixture',
           title: 'fixture: browser',
@@ -578,6 +588,10 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
       title: 'After Hooks',
     },
     {
+      category: 'hook',
+      title: 'Worker Cleanup',
+    },
+    {
       error: expect.any(Object)
     }
   ]);
@@ -658,6 +672,7 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
       location: { file: 'a.test.ts', line: expect.any(Number), column: expect.any(Number) }
     },
     { title: 'After Hooks', category: 'hook' },
+    { title: 'Worker Cleanup', category: 'hook' },
     { error: expect.any(Object) }
   ]);
 });
@@ -972,6 +987,12 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
             },
           ],
         },
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'Worker Cleanup',
+      steps: [
         {
           category: 'fixture',
           title: 'fixture: browser',
@@ -1169,6 +1190,10 @@ test('should show final toPass error', async ({ runInlineTest }) => {
       category: 'hook',
     },
     {
+      title: 'Worker Cleanup',
+      category: 'hook',
+    },
+    {
       error: {
         message: expect.stringContaining('Error: expect(received).toBe(expected)'),
         stack: expect.stringContaining('a.test.ts:6'),
@@ -1254,6 +1279,10 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
     {
       category: 'hook',
       title: 'After Hooks',
+    },
+    {
+      category: 'hook',
+      title: 'Worker Cleanup',
     },
     {
       error: {
@@ -1349,6 +1378,10 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
       title: 'After Hooks',
     },
     {
+      category: 'hook',
+      title: 'Worker Cleanup',
+    },
+    {
       error: {
         message: expect.stringContaining('Error: expect(received).toBe(expected)'),
         stack: expect.stringContaining('a.test.ts:13'),
@@ -1405,6 +1438,10 @@ test('should step w/o box', async ({ runInlineTest }) => {
       title: 'After Hooks',
     },
     {
+      category: 'hook',
+      title: 'Worker Cleanup',
+    },
+    {
       error: {
         message: expect.stringContaining('Error: expect(received).toBe(expected)'),
         stack: expect.stringContaining('a.test.ts:3'),
@@ -1454,6 +1491,10 @@ test('should step w/ box', async ({ runInlineTest }) => {
       title: 'After Hooks',
     },
     {
+      category: 'hook',
+      title: 'Worker Cleanup',
+    },
+    {
       error: {
         message: expect.stringContaining('expect(received).toBe(expected)'),
         stack: expect.not.stringMatching(/a.test.ts:[^8]/),
@@ -1501,6 +1542,10 @@ test('should soft step w/ box', async ({ runInlineTest }) => {
     {
       category: 'hook',
       title: 'After Hooks',
+    },
+    {
+      category: 'hook',
+      title: 'Worker Cleanup',
     },
     {
       error: {

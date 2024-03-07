@@ -23,32 +23,30 @@ export type TimeSlot = {
   elapsed: number;
 };
 
-export type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'afterHooks' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
 
 export type RunnableDescription = {
   type: RunnableType;
   location?: Location;
   slot?: TimeSlot;  // Falls back to test slot.
+  fixture?: FixtureDescription;
 };
 
 export type FixtureDescription = {
   title: string;
   phase: 'setup' | 'teardown';
   location?: Location;
-  slot?: TimeSlot;  // Falls back to current runnable slot.
+  slot?: TimeSlot;  // Falls back to the runnable slot.
 };
 
 export class TimeoutManager {
   private _defaultSlot: TimeSlot;
-  private _defaultRunnable: RunnableDescription;
   private _runnable: RunnableDescription;
-  private _fixture: FixtureDescription | undefined;
   private _timeoutRunner: TimeoutRunner;
 
   constructor(timeout: number) {
     this._defaultSlot = { timeout, elapsed: 0 };
-    this._defaultRunnable = { type: 'test', slot: this._defaultSlot };
-    this._runnable = this._defaultRunnable;
+    this._runnable = { type: 'test' };
     this._timeoutRunner = new TimeoutRunner(timeout);
   }
 
@@ -59,11 +57,7 @@ export class TimeoutManager {
   async withRunnable<T>(runnable: RunnableDescription | undefined, cb: () => Promise<T>): Promise<T> {
     if (!runnable)
       return await cb();
-    const existingRunnable = this._runnable;
-    const effectiveRunnable = { ...runnable };
-    if (!effectiveRunnable.slot)
-      effectiveRunnable.slot = this._runnable.slot;
-    this._updateRunnables(effectiveRunnable, undefined);
+    this._updateRunnable(runnable);
     try {
       return await this._timeoutRunner.run(cb);
     } catch (error) {
@@ -71,12 +65,8 @@ export class TimeoutManager {
         throw error;
       throw this._createTimeoutError();
     } finally {
-      this._updateRunnables(existingRunnable, undefined);
+      this._updateRunnable({ type: 'test' });
     }
-  }
-
-  setCurrentFixture(fixture: FixtureDescription | undefined) {
-    this._updateRunnables(this._runnable, fixture);
   }
 
   defaultSlotTimings() {
@@ -100,7 +90,7 @@ export class TimeoutManager {
   }
 
   currentRunnableType() {
-    return this._runnable.type;
+    return this._runnable?.type || 'test';
   }
 
   currentSlotDeadline() {
@@ -108,15 +98,14 @@ export class TimeoutManager {
   }
 
   private _currentSlot() {
-    return this._fixture?.slot || this._runnable.slot || this._defaultSlot;
+    return this._runnable.fixture?.slot || this._runnable.slot || this._defaultSlot;
   }
 
-  private _updateRunnables(runnable: RunnableDescription, fixture: FixtureDescription | undefined) {
+  private _updateRunnable(runnable: RunnableDescription) {
     let slot = this._currentSlot();
     slot.elapsed = this._timeoutRunner.elapsed();
 
     this._runnable = runnable;
-    this._fixture = fixture;
 
     slot = this._currentSlot();
     this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
@@ -125,15 +114,14 @@ export class TimeoutManager {
   private _createTimeoutError(): Error {
     let message = '';
     const timeout = this._currentSlot().timeout;
-    switch (this._runnable.type) {
-      case 'afterHooks':
+    switch (this._runnable.type || 'test') {
       case 'test': {
-        if (this._fixture) {
-          if (this._fixture.phase === 'setup') {
-            message = `Test timeout of ${timeout}ms exceeded while setting up "${this._fixture.title}".`;
+        if (this._runnable.fixture) {
+          if (this._runnable.fixture.phase === 'setup') {
+            message = `Test timeout of ${timeout}ms exceeded while setting up "${this._runnable.fixture.title}".`;
           } else {
             message = [
-              `Test finished within timeout of ${timeout}ms, but tearing down "${this._fixture.title}" ran out of time.`,
+              `Test finished within timeout of ${timeout}ms, but tearing down "${this._runnable.fixture.title}" ran out of time.`,
               `Please allow more time for the test, since teardown is attributed towards the test timeout budget.`,
             ].join('\n');
           }
@@ -151,8 +139,8 @@ export class TimeoutManager {
         message = `"${this._runnable.type}" hook timeout of ${timeout}ms exceeded.`;
         break;
       case 'teardown': {
-        if (this._fixture)
-          message = `Worker teardown timeout of ${timeout}ms exceeded while ${this._fixture.phase === 'setup' ? 'setting up' : 'tearing down'} "${this._fixture.title}".`;
+        if (this._runnable.fixture)
+          message = `Worker teardown timeout of ${timeout}ms exceeded while ${this._runnable.fixture.phase === 'setup' ? 'setting up' : 'tearing down'} "${this._runnable.fixture.title}".`;
         else
           message = `Worker teardown timeout of ${timeout}ms exceeded.`;
         break;
@@ -164,7 +152,7 @@ export class TimeoutManager {
         message = `"${this._runnable.type}" modifier timeout of ${timeout}ms exceeded.`;
         break;
     }
-    const fixtureWithSlot = this._fixture?.slot ? this._fixture : undefined;
+    const fixtureWithSlot = this._runnable.fixture?.slot ? this._runnable.fixture : undefined;
     if (fixtureWithSlot)
       message = `Fixture "${fixtureWithSlot.title}" timeout of ${timeout}ms exceeded during ${fixtureWithSlot.phase}.`;
     message = colors.red(message);

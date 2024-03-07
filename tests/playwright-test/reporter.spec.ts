@@ -277,6 +277,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"Error: \\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\",\"location\":\"<location>\",\"snippet\":\"<snippet>\"}}`,
         `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
         `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+        `begin {\"title\":\"Worker Cleanup\",\"category\":\"hook\"}`,
+        `end {\"title\":\"Worker Cleanup\",\"category\":\"hook\"}`,
         `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
         `end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
         `begin {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
@@ -460,9 +462,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `end {\"title\":\"fixture: page\",\"category\":\"fixture\"}`,
         `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
         `end {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
+        `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"}]}`,
+        `begin {\"title\":\"Worker Cleanup\",\"category\":\"hook\"}`,
         `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
         `end {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
-        `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"fixture: browser\",\"category\":\"fixture\"}]}`,
+        `end {\"title\":\"Worker Cleanup\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: browser\",\"category\":\"fixture\"}]}`,
       ]);
     });
 

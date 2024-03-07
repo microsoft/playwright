@@ -129,6 +129,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: context',
     '  fixture: request',
     '    apiRequestContext.dispose',
+    'Worker Cleanup',
     '  fixture: browser',
   ]);
 });
@@ -332,6 +333,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '    apiRequestContext.get',
     '    fixture: request',
     '      apiRequestContext.dispose',
+    'Worker Cleanup',
     '  fixture: browser',
   ]);
   expect(trace1.errors).toEqual([`'oh no!'`]);
@@ -667,6 +669,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
+    'Worker Cleanup',
     '  fixture: browser',
   ]);
   expect(trace.errors).toEqual(['ReferenceError: undefinedVariable1 is not defined']);
@@ -985,6 +988,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      barPage teardown',
     '      step in barPage teardown',
     '        page.close',
+    'Worker Cleanup',
     '  fixture: browser',
   ]);
 });
@@ -1029,6 +1033,7 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
     'After Hooks',
+    'Worker Cleanup',
     '  fixture: foo',
     '    step in foo teardown',
   ]);

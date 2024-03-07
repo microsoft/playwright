@@ -21,7 +21,7 @@ import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } fro
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
-import type { RunnableDescription, RunnableType, TimeSlot } from './timeoutManager';
+import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
@@ -50,12 +50,8 @@ export interface TestStepInternal {
 
 export type TestStage = {
   title: string;
-  location?: Location;
-  stepCategory?: 'hook' | 'fixture';
-  runnableType?: RunnableType;
-  runnableSlot?: TimeSlot;
-  canTimeout?: boolean;
-  allowSkip?: boolean;
+  stepInfo?: { category: 'hook' | 'fixture', location?: Location };
+  runnable?: RunnableDescription;
   step?: TestStepInternal;
 };
 
@@ -69,7 +65,6 @@ export class TestInfoImpl implements TestInfo {
   private _hasHardError: boolean = false;
   readonly _tracing: TestTracing;
 
-  _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;
   private readonly _requireFile: string;
@@ -79,6 +74,7 @@ export class TestInfoImpl implements TestInfo {
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
   private readonly _stages: TestStage[] = [];
   _hasNonRetriableError = false;
+  _allowSkips = false;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -370,37 +366,19 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _runAsStage(stage: TestStage, cb: () => Promise<any>) {
-    // Inherit some properties from parent.
-    const parent = this._stages[this._stages.length - 1];
-    stage.allowSkip = stage.allowSkip ?? parent?.allowSkip ?? false;
-
     if (debugTest.enabled) {
-      const location = stage.location ? ` at "${formatLocation(stage.location)}"` : ``;
+      const location = stage.runnable?.location ? ` at "${formatLocation(stage.runnable.location)}"` : ``;
       debugTest(`started stage "${stage.title}"${location}`);
     }
-    stage.step = stage.stepCategory ? this._addStep({ title: stage.title, category: stage.stepCategory, location: stage.location, wallTime: Date.now(), isStage: true }) : undefined;
+    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, wallTime: Date.now(), isStage: true }) : undefined;
     this._stages.push(stage);
 
-    let runnable: RunnableDescription | undefined;
-    if (stage.canTimeout) {
-      // Choose the deepest runnable configuration.
-      runnable = { type: 'test' };
-      for (const s of this._stages) {
-        if (s.runnableType) {
-          runnable.type = s.runnableType;
-          runnable.location = s.location;
-        }
-        if (s.runnableSlot)
-          runnable.slot = s.runnableSlot;
-      }
-    }
-
     try {
-      await this._timeoutManager.withRunnable(runnable, async () => {
+      await this._timeoutManager.withRunnable(stage.runnable, async () => {
         try {
           await cb();
         } catch (e) {
-          if (stage.allowSkip && (e instanceof SkipError)) {
+          if (this._allowSkips && (e instanceof SkipError)) {
             if (this.status === 'passed')
               this.status = 'skipped';
           } else if (!(e instanceof TimeoutManagerError)) {
@@ -431,10 +409,8 @@ export class TestInfoImpl implements TestInfo {
   _handlePossibleTimeoutError(error: Error) {
     // When interrupting, we arrive here with a TimeoutManagerError, but we should not
     // consider it a timeout.
-    if (!this._wasInterrupted && !this._didTimeout && (error instanceof TimeoutManagerError)) {
-      // this._didTimeout = true;
+    if (!this._wasInterrupted && (error instanceof TimeoutManagerError))
       this._failWithError(error, false /* isHardError */, true /* retriable */);
-    }
   }
 
   _isFailure() {
