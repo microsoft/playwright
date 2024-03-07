@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
+import fs from 'fs';
 
 it('should work for main frame navigation request', async ({ page, server }) => {
   const requests = [];
@@ -481,4 +482,42 @@ it('page.reload return 304 status code', async ({ page, server, browserName }) =
     expect(response2.status()).toBe(304);
     expect(response2.statusText()).toBe('Not Modified');
   }
+});
+
+it('should handle mixed-content blocked requests', async ({ page, asset, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29833' });
+  it.skip(browserName !== 'chromium', 'FF and WK actually succeed with the request, and block afterwards');
+
+  await page.route('**/mixedcontent.html', route => {
+    void route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `
+        <!doctype html>
+        <meta charset="utf-8">
+        <style>
+        @font-face {
+          font-family: 'pwtest-iconfont';
+          src: url('http://another.com/iconfont.woff2') format('woff2');
+        }
+        body {
+          font-family: 'pwtest-iconfont';
+        }
+        </style>
+        <span>+-</span>
+    `,
+    });
+  });
+  await page.route('**/iconfont.woff2', async route => {
+    const body = await fs.promises.readFile(asset('webfont/iconfont2.woff'));
+    await route.fulfill({ body });
+  });
+
+  const [request] = await Promise.all([
+    page.waitForEvent('requestfailed', r => r.url().includes('iconfont.woff2')),
+    page.goto('https://example.com/mixedcontent.html'),
+  ]);
+  const headers = await request.allHeaders();
+  expect(headers['origin']).toBeTruthy();
+  expect(request.failure().errorText).toBe('mixed-content');
 });
