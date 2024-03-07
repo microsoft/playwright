@@ -23,6 +23,7 @@
   cursor: text;
   user-select: none;
   margin-left: 10px;
+  overflow-x: clip;
 }
 
 .timeline-divider {

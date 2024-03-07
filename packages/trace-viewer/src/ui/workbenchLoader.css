@@ -122,3 +122,10 @@ body.dark-mode .drop-target {
   text-overflow: ellipsis;
   text-wrap: nowrap;
 }
+
+/* Limit to a reasonable minimum viewport */
+html, body {
+  min-width: 550px;
+  min-height: 450px;
+  overflow: auto;
+}
