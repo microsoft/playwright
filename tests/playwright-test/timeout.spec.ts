@@ -479,3 +479,38 @@ test('beforeEach timeout should prevent others from running', async ({ runInline
   expect(result.failed).toBe(1);
   expect(result.outputLines).toEqual(['beforeEach1', 'afterEach']);
 });
+
+test('should report up to 3 timeout errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base } from '@playwright/test';
+
+      const test = base.extend<{}, { autoWorker: void }>({
+        autoWorker: [
+          async ({}, use) => {
+            await use();
+            await new Promise(() => {});
+          },
+          { scope: 'worker', auto: true },
+        ],
+      })
+
+      test('test1', async () => {
+        await new Promise(() => {});
+      });
+
+      test.afterEach(async () => {
+        await new Promise(() => {});
+      });
+
+      test.afterAll(async () => {
+        await new Promise(() => {});
+      });
+    `
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded while running "afterEach" hook.');
+  expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "autoWorker".');
+});
