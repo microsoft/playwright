@@ -358,7 +358,7 @@ export class WorkerMain extends ProcessRunner {
     }).catch(error => testInfo._handlePossibleTimeoutError(error));
 
     // Update duration, so it is available in fixture teardown and afterEach hooks.
-    testInfo.duration = testInfo._timeoutManager.defaultSlotTimings().elapsed | 0;
+    testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
 
     // No skips in after hooks.
     testInfo._allowSkips = true;
@@ -463,7 +463,7 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._tracing.stopIfNeeded();
     }).catch(error => testInfo._handlePossibleTimeoutError(error));
 
-    testInfo.duration = (testInfo._timeoutManager.defaultSlotTimings().elapsed + afterHooksSlot.elapsed) | 0;
+    testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed + afterHooksSlot.elapsed) | 0;
 
     this._currentTest = null;
     setCurrentTestInfo(null);

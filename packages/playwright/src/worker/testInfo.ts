@@ -16,11 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
-import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
+import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
@@ -113,7 +113,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   get timeout(): number {
-    return this._timeoutManager.defaultSlotTimings().timeout;
+    return this._timeoutManager.defaultSlot().timeout;
   }
 
   set timeout(timeout: number) {
@@ -122,7 +122,7 @@ export class TestInfoImpl implements TestInfo {
 
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
     const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : MaxTime;
+    const matcherDeadline = timeout ? startTime + timeout : kMaxDeadline;
     const testDeadline = this._timeoutManager.currentSlotDeadline() - 250;
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
@@ -415,6 +415,14 @@ export class TestInfoImpl implements TestInfo {
 
   _isFailure() {
     return this.status !== 'skipped' && this.status !== this.expectedStatus;
+  }
+
+  _currentHookType() {
+    for (let i = this._stages.length - 1; i >= 0; i--) {
+      const type = this._stages[i].runnable?.type;
+      if (type && ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type))
+        return type;
+    }
   }
 
   // ------------ TestInfo methods ------------
