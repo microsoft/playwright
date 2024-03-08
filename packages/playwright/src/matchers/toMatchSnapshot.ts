@@ -121,7 +121,7 @@ class SnapshotHelper {
     //   // noop
     //   expect.toMatchSnapshot('a.png')
 
-    let inputPathSegments: NameOrSegments | undefined;
+    let inputPathSegments: string[];
     if (!name) {
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
