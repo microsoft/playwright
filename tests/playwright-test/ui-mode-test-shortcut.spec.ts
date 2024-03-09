@@ -26,7 +26,7 @@ const basicTestTree = {
     test('test 2', async () => { await new Promise(() => {}); });
     test('test 3', async () => {});
   `
-}
+};
 
 test('should run on Meta(command) with R', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
