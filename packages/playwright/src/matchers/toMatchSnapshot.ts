@@ -23,7 +23,7 @@ import {
   addSuffixToFilePath,
   trimLongString, callLogText,
   expectTypes,
-  sanitizeFilePathBeforeExtension} from '../util';
+  sanitizeFilePathBeforeExtension } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
