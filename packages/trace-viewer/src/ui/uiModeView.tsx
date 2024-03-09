@@ -117,6 +117,27 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [reloadTests]);
 
+  React.useEffect(() => {
+    const onShortcutEvent = (e: KeyboardEvent) => {
+      if (e.code === 'KeyR' && (e.metaKey || e.ctrlKey)){
+        e.preventDefault();
+        runTests('bounce-if-busy', visibleTestIds)
+      } else if (e.code === 'KeyS' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendMessageNoReply('stop')
+      } else if (e.code === 'KeyU' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        reloadTests()
+      }
+    }
+
+    addEventListener("keydown", onShortcutEvent);
+
+    return () => {
+      removeEventListener("keydown", onShortcutEvent)
+    }
+  }, [visibleTestIds]);
+
   updateRootSuite = React.useCallback((config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], newProgress: Progress | undefined) => {
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
     for (const projectName of projectFilters.keys()) {
