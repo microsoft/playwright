@@ -201,6 +201,12 @@ export function addSuffixToFilePath(filePath: string, suffix: string): string {
   return base + suffix + ext;
 }
 
+export function sanitizeFilePathBeforeExtension(filePath: string): string {
+  const ext = path.extname(filePath);
+  const base = filePath.substring(0, filePath.length - ext.length);
+  return sanitizeForFilePath(base) + ext;
+}
+
 /**
  * Returns absolute path contained within parent directory.
  */

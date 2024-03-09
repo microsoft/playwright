@@ -22,7 +22,8 @@ import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/u
 import {
   addSuffixToFilePath,
   trimLongString, callLogText,
-  expectTypes } from '../util';
+  expectTypes,
+  sanitizeFilePathBeforeExtension} from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -131,8 +132,10 @@ class SnapshotHelper {
       inputPathSegments = [name];
       this.snapshotName = name;
     } else {
-      // We never sanitize the name here, because it's a user-provided value.
-      inputPathSegments = Array.isArray(name) ? name : [name];
+      // We intentionally do not sanitize user-provided array of segments, but for backwards
+      // compatibility we do sanitize the name if it is a single string.
+      // See https://github.com/microsoft/playwright/pull/9156
+      inputPathSegments = Array.isArray(name) ? name : [sanitizeFilePathBeforeExtension(name)];
       const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
@@ -143,7 +146,7 @@ class SnapshotHelper {
     }
     this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
     this.legacyExpectedPath = addSuffixToFilePath(testInfo._getOutputPath(...inputPathSegments), '-expected');
-    const outputFile = testInfo._getOutputPath(this.snapshotName);
+    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.snapshotName));
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
     this.diffPath = addSuffixToFilePath(outputFile, '-diff');
