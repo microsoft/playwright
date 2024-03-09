@@ -16,7 +16,7 @@
  */
 
 import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
-export type { FullConfig, TestStatus } from './test';
+export type { FullConfig, TestStatus, FullProject } from './test';
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
