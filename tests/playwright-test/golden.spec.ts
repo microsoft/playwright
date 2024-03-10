@@ -907,12 +907,12 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     {
       name: 'test/path/snapshot-actual.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-actual.png'
+      path: 'a-is-a-test/test-path-snapshot-actual.png'
     },
     {
       name: 'test/path/snapshot-diff.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-diff.png'
+      path: 'a-is-a-test/test-path-snapshot-diff.png'
     }
   ]);
 });

@@ -22,7 +22,8 @@ import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/u
 import {
   addSuffixToFilePath,
   trimLongString, callLogText,
-  expectTypes } from '../util';
+  expectTypes,
+  sanitizeFilePathBeforeExtension } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -101,9 +102,9 @@ class SnapshotHelper {
       name = nameOrOptions;
       this.options = { ...optOptions };
     } else {
-      name = nameOrOptions.name;
-      this.options = { ...nameOrOptions };
-      delete (this.options as any).name;
+      const { name: nameFromOptions, ...options } = nameOrOptions;
+      this.options = options;
+      name = nameFromOptions;
     }
 
     let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
@@ -121,25 +122,34 @@ class SnapshotHelper {
     //   // noop
     //   expect.toMatchSnapshot('a.png')
 
-    let actualModifier = '';
+    let inputPathSegments: string[];
     if (!name) {
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
       name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+      inputPathSegments = [name];
       this.snapshotName = name;
     } else {
+      // We intentionally do not sanitize user-provided array of segments, but for backwards
+      // compatibility we do sanitize the name if it is a single string.
+      // See https://github.com/microsoft/playwright/pull/9156
+      inputPathSegments = Array.isArray(name) ? name : [sanitizeFilePathBeforeExtension(name)];
       const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
-      if (index > 1) {
-        actualModifier = `-${index - 1}`;
+      if (index > 1)
         this.snapshotName = `${joinedName}-${index - 1}`;
-      } else {
+      else
         this.snapshotName = joinedName;
-      }
     }
+    this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
+    this.legacyExpectedPath = addSuffixToFilePath(testInfo._getOutputPath(...inputPathSegments), '-expected');
+    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.snapshotName));
+    this.previousPath = addSuffixToFilePath(outputFile, '-previous');
+    this.actualPath = addSuffixToFilePath(outputFile, '-actual');
+    this.diffPath = addSuffixToFilePath(outputFile, '-diff');
 
     const filteredConfigOptions = { ...configOptions };
     for (const prop of NonConfigProperties)
@@ -161,16 +171,6 @@ class SnapshotHelper {
     if (this.options.maxDiffPixelRatio !== undefined && (this.options.maxDiffPixelRatio < 0 || this.options.maxDiffPixelRatio > 1))
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
-    // sanitizes path if string
-    const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-    const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
-    this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
-    const inputFile = testInfo._getOutputPath(...inputPathSegments);
-    const outputFile = testInfo._getOutputPath(...outputPathSegments);
-    this.legacyExpectedPath = addSuffixToFilePath(inputFile, '-expected');
-    this.previousPath = addSuffixToFilePath(outputFile, '-previous');
-    this.actualPath = addSuffixToFilePath(outputFile, '-actual');
-    this.diffPath = addSuffixToFilePath(outputFile, '-diff');
     this.matcherName = matcherName;
     this.locator = locator;
 

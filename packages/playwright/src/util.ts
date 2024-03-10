@@ -195,12 +195,16 @@ export function trimLongString(s: string, length = 100) {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
-export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
-  const dirname = path.dirname(filePath);
+export function addSuffixToFilePath(filePath: string, suffix: string): string {
   const ext = path.extname(filePath);
-  const name = path.basename(filePath, ext);
-  const base = path.join(dirname, name);
-  return (sanitize ? sanitizeForFilePath(base) : base) + suffix + (customExtension || ext);
+  const base = filePath.substring(0, filePath.length - ext.length);
+  return base + suffix + ext;
+}
+
+export function sanitizeFilePathBeforeExtension(filePath: string): string {
+  const ext = path.extname(filePath);
+  const base = filePath.substring(0, filePath.length - ext.length);
+  return sanitizeForFilePath(base) + ext;
 }
 
 /**
