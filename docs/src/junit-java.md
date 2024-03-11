@@ -15,17 +15,15 @@ In [JUnit](https://junit.org/junit5/), you can use Playwright [fixtures](./junit
 ```java
 package org.example;
 
-import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.junit.UsePlaywright;
+import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.*;
-
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @UsePlaywright
 public class TestExample {
-
   @Test
   void shouldClickButton(Page page) {
     page.navigate("data:text/html,<script>var result;</script><button onclick='result=\"Clicked\"'>Go</button>");
@@ -37,7 +35,7 @@ public class TestExample {
   void shouldCheckTheBox(Page page) {
     page.setContent("<input id='checkbox' type='checkbox'></input>");
     page.locator("input").check();
-    assertTrue((Boolean) page.evaluate("() => window['checkbox'].checked"));
+    assertEquals(true, page.evaluate("window['checkbox'].checked"));
   }
 
   @Test
@@ -46,7 +44,7 @@ public class TestExample {
     page.locator("input[name=\"search\"]").click();
     page.locator("input[name=\"search\"]").fill("playwright");
     page.locator("input[name=\"search\"]").press("Enter");
-    assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
+    assertThat(page).hasURL("https://en.wikipedia.org/wiki/Playwright");
   }
 }
 ```
@@ -138,7 +136,7 @@ class Test1 {
   void shouldCheckTheBox(Page page) {
     page.setContent("<input id='checkbox' type='checkbox'></input>");
     page.locator("input").check();
-    assertTrue((Boolean) page.evaluate("() => window['checkbox'].checked"));
+    assertEquals(true, page.evaluate("window['checkbox'].checked"));
   }
 
   @Test
@@ -147,7 +145,7 @@ class Test1 {
     page.locator("input[name=\"search\"]").click();
     page.locator("input[name=\"search\"]").fill("playwright");
     page.locator("input[name=\"search\"]").press("Enter");
-    assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
+    assertThat(page).hasURL("https://en.wikipedia.org/wiki/Playwright");
   }
 }
 
