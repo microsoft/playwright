@@ -26,27 +26,53 @@ import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
 import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupportIfNeeded } from './compilationCache';
+import { debug, minimatch } from 'playwright-core/lib/utilsBundle';
 
 const version = require('../../package.json').version;
 
 type ParsedTsConfigData = {
+  tsConfigPath: string;
   pathsBase?: string;
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
+  files?: string[];
+  include: string[];
+  exclude: string[];
 };
-const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 
-export type TransformConfig = {
+type TransformConfig = {
   babelPlugins: [string, any?][];
   external: string[];
+  tsconfigs: ParsedTsConfigData[];
+  serializedTsconfigs: string;
 };
 
 let _transformConfig: TransformConfig = {
   babelPlugins: [],
   external: [],
+  tsconfigs: [],
+  serializedTsconfigs: JSON.stringify([]),
 };
-
 let _externalMatcher: Matcher = () => false;
+
+export function setupTransformConfig(babelPlugins: [string, any?][], external: string[], tsconfigDir: string, tsconfigBehavior: 'lookup-to-package-root' | 'switch-if-present') {
+  let tsconfigs = tsConfigLoader({
+    cwd: tsconfigDir,
+    searchUpToPackageRoot: tsconfigBehavior === 'lookup-to-package-root',
+  }).map(validateTsConfig);
+  if (tsconfigBehavior === 'switch-if-present' && !tsconfigs.length) {
+    // Keep existing tsconfig if the new one was not found.
+    tsconfigs = _transformConfig.tsconfigs;
+  }
+  if (tsconfigs.length)
+    debug('pw:test:transform')(`${tsconfigBehavior === 'switch-if-present' ? 'switching to' : 'using'} ${tsconfigs[0].tsConfigPath}`);
+  setTransformConfig({
+    babelPlugins,
+    external,
+    tsconfigs,
+    serializedTsconfigs: JSON.stringify(tsconfigs),
+  });
+}
 
 export function setTransformConfig(config: TransformConfig) {
   _transformConfig = config;
@@ -63,20 +89,65 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
   const pathsBase = tsconfig.absoluteBaseUrl ?? tsconfig.paths?.pathsBasePath;
   // Only add the catch-all mapping when baseUrl is specified
   const pathsFallback = tsconfig.absoluteBaseUrl ? [{ key: '*', values: ['*'] }] : [];
+  // https://www.typescriptlang.org/tsconfig#exclude
+  const defaultExclude = ['node_modules', 'bower_components', 'jspm_packages'];
+  if (tsconfig.outDir)
+    defaultExclude.push(tsconfig.outDir);
+  // Default "include" is **/*, unless "files" are specified.
+  // https://www.typescriptlang.org/tsconfig#include
+  const defaultInclude = tsconfig.files ? [] : ['**/*'];
   return {
+    tsConfigPath: tsconfig.tsConfigPath,
     allowJs: !!tsconfig.allowJs,
+    files: tsconfig.files,
+    include: tsconfig.include ?? defaultInclude,
+    exclude: tsconfig.exclude ?? defaultExclude,
     pathsBase,
     paths: Object.entries(tsconfig.paths?.mapping || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
-function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
-  const cwd = path.dirname(file);
-  if (!cachedTSConfigs.has(cwd)) {
-    const loaded = tsConfigLoader({ cwd });
-    cachedTSConfigs.set(cwd, loaded.map(validateTsConfig));
-  }
-  return cachedTSConfigs.get(cwd)!;
+function createTsconfigMatcher(tsconfig: ParsedTsConfigData): Matcher {
+  const include = tsconfig.include.map(makeMinimatcher);
+  const exclude = tsconfig.exclude.map(makeMinimatcher);
+  return (filename: string) => {
+    const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+    // Explicitly mentioning a file in "files" overrides "allowJs" setting.
+    if (tsconfig.files && tsconfig.files.includes(filename))
+      return true;
+    // On the other hand, "allowJs" overrides "includes".
+    if (!isTypeScript && !tsconfig.allowJs)
+      return false;
+    return include.some(matcher => matcher(filename)) && !exclude.some(matcher => matcher(filename));
+  };
+}
+
+function makeMinimatcher(pattern: string): Matcher {
+  // Note: this is an approximation of what tsc does.
+  // https://github.com/microsoft/TypeScript/blob/3a0869fd97ea38d2eedcda48d4c794487c345c42/src/compiler/utilities.ts#L9327
+  //
+  // From https://www.typescriptlang.org/tsconfig#include:
+  //   If the last path segment in a pattern does not contain a file extension or wildcard character,
+  //   then it is treated as a directory, and files with supported extensions inside that directory
+  //   are included (e.g. .ts, .tsx, and .d.ts by default, with .js and .jsx if allowJs is set to true).
+  // We just check allowJs later, so can list all the extensions here.
+  const [lastPart] = pattern.replace(/\\/g, '/').split('/').reverse();
+  if (!lastPart.includes('.') && !lastPart.includes('?') && !lastPart.includes('*'))
+    pattern = path.join(pattern, '**', '*@(.ts|.tsx|.js|.jsx)');
+  const m = new minimatch.Minimatch(pattern, { dot: true, nocase: true });
+  return (filename: string) => m.match(filename);
+}
+
+const cachedTsconfigMatcher = new Map<ParsedTsConfigData, Matcher>();
+function applicableTsconfigs(filename: string): ParsedTsConfigData[] {
+  return _transformConfig.tsconfigs.filter(tsconfig => {
+    let matcher = cachedTsconfigMatcher.get(tsconfig);
+    if (!matcher) {
+      matcher = createTsconfigMatcher(tsconfig);
+      cachedTsconfigMatcher.set(tsconfig, matcher);
+    }
+    return matcher(filename);
+  });
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
@@ -91,11 +162,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (isRelativeSpecifier(specifier))
     return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
-  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  const tsconfigs = loadAndValidateTsconfigsForFile(filename);
-  for (const tsconfig of tsconfigs) {
-    if (!isTypeScript && !tsconfig.allowJs)
-      continue;
+  for (const tsconfig of applicableTsconfigs(filename)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -196,6 +263,7 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
       .update(version)
       .update(pluginsPrologue.map(p => p[0]).join(','))
       .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .update(_transformConfig.serializedTsconfigs)
       .digest('hex');
   return hash;
 }

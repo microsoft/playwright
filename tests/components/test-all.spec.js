@@ -22,7 +22,7 @@ for (const dir of fs.readdirSync(__dirname)) {
       test(project, async () => {
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
-    } 
+    }
   });
 }
 
