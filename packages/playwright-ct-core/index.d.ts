@@ -38,6 +38,8 @@ export type TestType<ComponentFixtures> = BaseTestType<
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
+export const test: TestType<ComponentFixtures>;
+
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
