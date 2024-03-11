@@ -83,6 +83,8 @@ public class TestExample {
 
 See [here](./test-runners.md) for further details on how to run tests in parallel, etc.
 
+See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.
+
 ## What's Next
 
 - [Debugging tests](./debug.md)
