@@ -302,8 +302,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const contexts = new Map<BrowserContext, { pagesWithVideo: Page[] }>();
 
     await use(async options => {
-      const hook = hookType(testInfoImpl);
-      if (hook) {
+      const hook = testInfoImpl._currentHookType();
+      if (hook === 'beforeAll' || hook === 'afterAll') {
         throw new Error([
           `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis.`,
           `If you would like to reuse a single page between tests, create context manually with browser.newContext(). See https://aka.ms/playwright/reuse-page for details.`,
@@ -395,12 +395,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await request.dispose();
   },
 });
-
-function hookType(testInfo: TestInfoImpl): 'beforeAll' | 'afterAll' | undefined {
-  const type = testInfo._timeoutManager.currentRunnableType();
-  if (type === 'beforeAll' || type === 'afterAll')
-    return type;
-}
 
 type StackFrame = {
   file: string,
