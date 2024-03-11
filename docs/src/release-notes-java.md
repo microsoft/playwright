@@ -6,6 +6,88 @@ toc_max_heading_level: 2
 
 ## Version 1.42
 
+### Experimental JUnit integration
+
+Add new [`@UsePlaywright`](./junit.md) annotation to your test classes to start using Playwright
+fixtures for [Page], [BrowserContext], [Browser], [APIRequestContext] and [Playwright] in the
+test methods.
+
+```java
+package org.example;
+
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.junit.UsePlaywright;
+import org.junit.jupiter.api.Test;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@UsePlaywright
+public class TestExample {
+  void shouldNavigateToInstallationGuide(Page page) {
+    page.navigate("https://playwright.dev/java/");
+    page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Docs")).click();
+    assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Installation"))).isVisible();
+  }
+
+  @Test
+  void shouldCheckTheBox(Page page) {
+    page.setContent("<input id='checkbox' type='checkbox'></input>");
+    page.locator("input").check();
+    assertEquals(true, page.evaluate("window['checkbox'].checked"));
+  }
+
+  @Test
+  void shouldSearchWiki(Page page) {
+    page.navigate("https://www.wikipedia.org/");
+    page.locator("input[name=\"search\"]").click();
+    page.locator("input[name=\"search\"]").fill("playwright");
+    page.locator("input[name=\"search\"]").press("Enter");
+    assertThat(page).hasURL("https://en.wikipedia.org/wiki/Playwright");
+  }
+}
+```
+
+In the example above, all three test methods use the same [Browser]. Each test
+uses its own [BrowserContext] and [Page].
+
+**Custom options**
+
+Implement your own `OptionsFactory` to initialize the fixtures with custom configuration.
+
+```java
+import com.microsoft.playwright.junit.Options;
+import com.microsoft.playwright.junit.OptionsFactory;
+import com.microsoft.playwright.junit.UsePlaywright;
+
+@UsePlaywright(MyTest.CustomOptions.class)
+public class MyTest {
+
+  public static class CustomOptions implements OptionsFactory {
+    @Override
+    public Options getOptions() {
+      return new Options()
+          .setHeadless(false)
+          .setContextOption(new Browser.NewContextOptions()
+              .setBaseURL("https://github.com"))
+          .setApiRequestOptions(new APIRequest.NewContextOptions()
+              .setBaseURL("https://playwright.dev"));
+    }
+  }
+
+  @Test
+  public void testWithCustomOptions(Page page, APIRequestContext request) {
+    page.navigate("/");
+    assertThat(page).hasURL(Pattern.compile("github"));
+
+    APIResponse response = request.get("/");
+    assertTrue(response.text().contains("Playwright"));
+  }
+}
+```
+
+Learn more about the fixtures in our [JUnit guide](./junit.md).
+
 ### New Locator Handler
 
 New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
