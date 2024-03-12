@@ -140,7 +140,7 @@ class SnapshotHelper {
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
       if (index > 1)
-        this.snapshotName = `${joinedName}-${index - 1}`;
+        this.snapshotName = addSuffixToFilePath(joinedName, `-${index - 1}`);
       else
         this.snapshotName = joinedName;
     }

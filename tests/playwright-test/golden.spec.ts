@@ -128,14 +128,14 @@ test('should generate separate actual results for repeating names', async ({ run
       'path': 'a-is-a-test/foo-actual.txt'
     },
     {
-      'name': 'foo-expected.txt-1',
+      'name': 'foo-1-expected.txt',
       'contentType': 'text/plain',
       'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/foo.txt'
     },
     {
-      'name': 'foo-actual.txt-1',
+      'name': 'foo-1-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/foo-actual.txt-1'
+      'path': 'a-is-a-test/foo-1-actual.txt'
     },
     {
       'name': 'bar/baz-expected.txt',
@@ -148,14 +148,14 @@ test('should generate separate actual results for repeating names', async ({ run
       'path': 'a-is-a-test/bar-baz-actual.txt'
     },
     {
-      'name': 'bar/baz-expected.txt-1',
+      'name': 'bar/baz-1-expected.txt',
       'contentType': 'text/plain',
       'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/bar/baz.txt'
     },
     {
-      'name': 'bar/baz-actual.txt-1',
+      'name': 'bar/baz-1-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/bar-baz-actual.txt-1'
+      'path': 'a-is-a-test/bar-baz-1-actual.txt'
     }
   ]);
 });
