@@ -261,8 +261,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('data-testid=test-result-image-mismatch')).toHaveCount(3);
       await expect(page.locator('text=Image mismatch:')).toHaveText([
         'Image mismatch: expected.png',
-        'Image mismatch: expected.png-1',
-        'Image mismatch: expected.png-2',
+        'Image mismatch: expected-1.png',
+        'Image mismatch: expected-2.png',
       ]);
     });
 
