@@ -290,6 +290,20 @@ it('should parse the data if content-type is application/x-www-form-urlencoded',
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 
+it('should parse the data if content-type is application/x-www-form-urlencoded; charset=UTF-8', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29872' });
+  await page.goto(server.EMPTY_PAGE);
+  const requestPromise = page.waitForRequest('**/post');
+  await page.evaluate(() => fetch('./post', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    },
+    body: 'foo=bar&baz=123'
+  }));
+  expect((await requestPromise).postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
+});
+
 it('should get |undefined| with postDataJSON() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.request().postDataJSON()).toBe(null);
