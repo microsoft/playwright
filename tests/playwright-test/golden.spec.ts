@@ -90,6 +90,76 @@ test('should generate default name', async ({ runInlineTest }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-5.dat'))).toBe(true);
 });
 
+test('should generate separate actual results for repeating names', async ({ runInlineTest }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29719' });
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/foo.txt': `b`,
+    'a.spec.js-snapshots/bar/baz.txt': `c`,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
+      test('is a test', ({}) => {
+        expect.soft('a').toMatchSnapshot('foo.txt');
+        expect.soft('a').toMatchSnapshot('foo.txt');
+        expect.soft('b').toMatchSnapshot(['bar', 'baz.txt']);
+        expect.soft('b').toMatchSnapshot(['bar', 'baz.txt']);
+      });
+    `
+  });
+
+  const outputText = result.output;
+  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments) {
+    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+    attachment.name = attachment.name.replace(/\\/g, '/');
+  }
+  expect(attachments).toEqual([
+    {
+      'name': 'foo-expected.txt',
+      'contentType': 'text/plain',
+      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/foo.txt'
+    },
+    {
+      'name': 'foo-actual.txt',
+      'contentType': 'text/plain',
+      'path': 'a-is-a-test/foo-actual.txt'
+    },
+    {
+      'name': 'foo-1-expected.txt',
+      'contentType': 'text/plain',
+      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/foo.txt'
+    },
+    {
+      'name': 'foo-1-actual.txt',
+      'contentType': 'text/plain',
+      'path': 'a-is-a-test/foo-1-actual.txt'
+    },
+    {
+      'name': 'bar/baz-expected.txt',
+      'contentType': 'text/plain',
+      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/bar/baz.txt'
+    },
+    {
+      'name': 'bar/baz-actual.txt',
+      'contentType': 'text/plain',
+      'path': 'a-is-a-test/bar-baz-actual.txt'
+    },
+    {
+      'name': 'bar/baz-1-expected.txt',
+      'contentType': 'text/plain',
+      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/bar/baz.txt'
+    },
+    {
+      'name': 'bar/baz-1-actual.txt',
+      'contentType': 'text/plain',
+      'path': 'a-is-a-test/bar-baz-1-actual.txt'
+    }
+  ]);
+});
+
 test('should compile with different option combinations', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
