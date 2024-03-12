@@ -28,13 +28,24 @@ const basicTestTree = {
   `
 };
 
-test('should run on Enter with Shift', async ({ runUITest }) => {
+test('should run on Meta(command) with Enter', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
   await expect(page.getByTitle('Stop')).toBeDisabled();
 
-  await page.keyboard.press('Enter+Shift');
+  await page.keyboard.press('Meta+Enter');
+
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+});
+
+test('should run on Control with Enter', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await expect(page.getByTitle('Run all')).toBeEnabled();
+  await expect(page.getByTitle('Stop')).toBeDisabled();
+
+  await page.keyboard.press('Control+Enter');
 
   await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
 });
