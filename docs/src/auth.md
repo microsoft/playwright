@@ -113,6 +113,13 @@ test('test', async ({ page }) => {
 });
 ```
 
+### Authenticating in UI mode
+* langs: js
+
+UI mode will not run the `setup` project by default to improve testing speed. We recommend to authenticate by manually running the `auth.setup.ts` from time to time, whenever existing authentication expires.
+
+First [enable the `setup` project in the filters](./test-ui-mode#filtering-tests), then click the triangle button next to `auth.setup.ts` file, and then disable the `setup` project in the filters again.
+
 
 ## Moderate: one account per parallel worker
 * langs: js
@@ -456,6 +463,8 @@ test.describe(() => {
   });
 });
 ```
+
+See also about [authenticating in the UI mode](#authenticating-in-ui-mode).
 
 ### Testing multiple roles together
 * langs: js
