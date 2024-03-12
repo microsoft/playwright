@@ -13855,7 +13855,7 @@ type AccessibilityNode = {
 export const devices: Devices;
 
 //@ts-ignore this will be any if electron is not installed
-type ElectronType = typeof import('electron');
+type ElectronType = Electron.RemoteMainInterface;
 
 /**
  * Electron application representation. You can use
