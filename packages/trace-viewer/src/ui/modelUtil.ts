@@ -89,11 +89,12 @@ export class MultiTraceModel {
     this.platform = primaryContext?.platform || '';
     this.title = primaryContext?.title || '';
     this.options = primaryContext?.options || {};
+    // Next call updates all timestamps for all events in non-primary contexts, so it must be done first.
+    this.actions = mergeActionsAndUpdateTiming(contexts);
+    this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
-    this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
-    this.actions = mergeActions(contexts);
     this.events = ([] as (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]).concat(...contexts.map(c => c.events));
     this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
     this.errors = ([] as trace.ErrorTraceEvent[]).concat(...contexts.map(c => c.errors));
@@ -158,7 +159,7 @@ function indexModel(context: ContextEntry) {
     (event as any)[contextSymbol] = context;
 }
 
-function mergeActions(contexts: ContextEntry[]) {
+function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
   const map = new Map<string, ActionTraceEventInContext>();
 
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
@@ -176,12 +177,16 @@ function mergeActions(contexts: ContextEntry[]) {
   }
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
+  const nonPrimaryTimeDelta = new Map<ContextEntry, number>();
   for (const context of nonPrimaryContexts) {
     for (const action of context.actions) {
       if (offset) {
         const duration = action.endTime - action.startTime;
-        if (action.startTime)
-          action.startTime = action.wallTime + offset;
+        if (action.startTime) {
+          const newStartTime = action.wallTime + offset;
+          nonPrimaryTimeDelta.set(context, newStartTime - action.startTime);
+          action.startTime = newStartTime;
+        }
         if (action.endTime)
           action.endTime = action.startTime + duration;
       }
@@ -201,6 +206,17 @@ function mergeActions(contexts: ContextEntry[]) {
       if (action.parentId)
         action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
       map.set(key, { ...action, context });
+    }
+  }
+
+  for (const [context, timeDelta] of nonPrimaryTimeDelta) {
+    context.startTime += timeDelta;
+    context.endTime += timeDelta;
+    for (const event of context.events)
+      event.time += timeDelta;
+    for (const page of context.pages) {
+      for (const frame of page.screencastFrames)
+        frame.timestamp += timeDelta;
     }
   }
 
