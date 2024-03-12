@@ -76,7 +76,8 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[boolean]>
 
-Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`]. Useful on CI.
+Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`].
+Defaults to `false`. Useful on CI.
 
 **Usage**
 
@@ -93,7 +94,7 @@ export default defineConfig({
 - type: ?<[boolean]>
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
-By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
+Defaults to `false` - by default **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
 
 You can configure entire test run to concurrently execute all tests in all files using this option.
 
