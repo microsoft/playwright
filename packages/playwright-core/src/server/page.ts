@@ -19,7 +19,7 @@ import type * as dom from './dom';
 import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
-import * as network from './network';
+import type * as network from './network';
 import type * as channels from '@protocol/channels';
 import type { ScreenshotOptions } from './screenshotter';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
@@ -706,12 +706,9 @@ export class Page extends SdkObject {
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
-    const url = frame.url();
-    if (!url.startsWith('http'))
-      return;
-    const purl = network.parsedURL(url);
-    if (purl)
-      this._browserContext.addVisitedOrigin(purl.origin);
+    const origin = frame.origin();
+    if (origin)
+      this._browserContext.addVisitedOrigin(origin);
   }
 
   allBindings() {

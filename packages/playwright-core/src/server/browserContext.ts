@@ -484,14 +484,34 @@ export abstract class BrowserContext extends SdkObject {
       cookies: await this.cookies(),
       origins: []
     };
-    if (this._origins.size)  {
+    const originsToSave = new Set(this._origins);
+
+    // First try collecting storage stage from existing pages.
+    for (const page of this.pages()) {
+      const origin = page.mainFrame().origin();
+      if (!origin || !originsToSave.has(origin))
+        continue;
+      try {
+        const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`({
+          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
+        })`, false, 'utility');
+        if (storage.localStorage.length)
+          result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
+        originsToSave.delete(origin);
+      } catch {
+        // When failed on the live page, we'll retry on the blank page below.
+      }
+    }
+
+    // If there are still origins to save, create a blank page to iterate over origins.
+    if (originsToSave.size)  {
       const internalMetadata = serverSideCallMetadata();
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
         return true;
       });
-      for (const origin of this._origins) {
+      for (const origin of originsToSave) {
         const originStorage: channels.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);

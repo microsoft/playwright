@@ -34,16 +34,16 @@ it('should capture local storage', async ({ contextFactory }) => {
   });
   const { origins } = await context.storageState();
   expect(origins).toEqual([{
-    origin: 'https://www.example.com',
-    localStorage: [{
-      name: 'name1',
-      value: 'value1'
-    }],
-  }, {
     origin: 'https://www.domain.com',
     localStorage: [{
       name: 'name2',
       value: 'value2'
+    }],
+  }, {
+    origin: 'https://www.example.com',
+    localStorage: [{
+      name: 'name1',
+      value: 'value1'
     }],
   }]);
 });
@@ -221,4 +221,57 @@ it('should serialize storageState with lone surrogates', async ({ page, context,
   await page.evaluate(() => window.localStorage.setItem('foo', String.fromCharCode(55934)));
   const storageState = await context.storageState();
   expect(storageState.origins[0].localStorage[0].value).toBe(String.fromCharCode(55934));
+});
+
+it('should work when service worker is intefering', async ({ page, context, server, isAndroid, isElectron }) => {
+  it.skip(isAndroid);
+  it.skip(isElectron);
+
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <script>
+        console.log('from page');
+        window.localStorage.foo = 'bar';
+        window.registrationPromise = navigator.serviceWorker.register('sw.js');
+        window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+      </script>
+    `);
+  });
+
+  server.setRoute('/sw.js', (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript' });
+    res.end(`
+      const kHtmlPage = \`
+        <script>
+          console.log('from sw page');
+          let counter = window.localStorage.counter || 0;
+          ++counter;
+          window.localStorage.counter = counter;
+          setTimeout(() => {
+            window.location.href = counter + '.html';
+          }, 0);
+        </script>
+      \`;
+
+      console.log('from sw 1');
+      self.addEventListener('fetch', event => {
+        console.log('fetching ' + event.request.url);
+        const blob = new Blob([kHtmlPage], { type: 'text/html' });
+        const response = new Response(blob, { status: 200 , statusText: 'OK' });
+        event.respondWith(response);
+      });
+
+      self.addEventListener('activate', event => {
+        console.log('from sw 2');
+        event.waitUntil(clients.claim());
+      });
+    `);
+  });
+
+  await page.goto(server.PREFIX);
+  await page.evaluate(() => window['activationPromise']);
+
+  const storageState = await context.storageState();
+  expect(storageState.origins[0].localStorage[0]).toEqual({ name: 'foo', value: 'bar' });
 });
