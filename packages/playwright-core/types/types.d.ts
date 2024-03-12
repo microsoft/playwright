@@ -1781,9 +1781,11 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * When testing a web page, sometimes unexpected overlays like a coookie consent dialog appear and block actions you
-   * want to automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time,
-   * making them tricky to handle in automated tests.
+   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
+   *
+   * When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to
+   * automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making
+   * them tricky to handle in automated tests.
    *
    * This method lets you set up a special function, called a handler, that activates when it detects that overlay is
    * visible. The handler's job is to remove the overlay, allowing your test to continue as if the overlay wasn't there.
@@ -1817,12 +1819,12 @@ export interface Page {
    *
    * **Usage**
    *
-   * An example that closes a cookie consent dialog when it appears:
+   * An example that closes a "Sign up to the newsletter" dialog when it appears:
    *
    * ```js
    * // Setup the handler.
-   * await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
-   *   await page.getByRole('button', { name: 'Reject all cookies' }).click();
+   * await page.addLocatorHandler(page.getByText('Sign up to the newsletter'), async () => {
+   *   await page.getByRole('button', { name: 'No thanks' }).click();
    * });
    *
    * // Write the test as usual.
@@ -1835,7 +1837,7 @@ export interface Page {
    * ```js
    * // Setup the handler.
    * await page.addLocatorHandler(page.getByText('Confirm your security details'), async () => {
-   *   await page.getByRole('button', 'Remind me later').click();
+   *   await page.getByRole('button', { name: 'Remind me later' }).click();
    * });
    *
    * // Write the test as usual.

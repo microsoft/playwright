@@ -3146,7 +3146,11 @@ return value resolves to `[]`.
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
-When testing a web page, sometimes unexpected overlays like a coookie consent dialog appear and block actions you want to automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making them tricky to handle in automated tests.
+:::warning Experimental
+This method is experimental and its behavior may change in the upcoming releases.
+:::
+
+When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making them tricky to handle in automated tests.
 
 This method lets you set up a special function, called a handler, that activates when it detects that overlay is visible. The handler's job is to remove the overlay, allowing your test to continue as if the overlay wasn't there.
 
@@ -3168,12 +3172,12 @@ Another example is a series of mouse actions, where [`method: Mouse.move`] is fo
 
 **Usage**
 
-An example that closes a cookie consent dialog when it appears:
+An example that closes a "Sign up to the newsletter" dialog when it appears:
 
 ```js
 // Setup the handler.
-await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
-  await page.getByRole('button', { name: 'Reject all cookies' }).click();
+await page.addLocatorHandler(page.getByText('Sign up to the newsletter'), async () => {
+  await page.getByRole('button', { name: 'No thanks' }).click();
 });
 
 // Write the test as usual.
@@ -3183,8 +3187,8 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept all cookies")), () => {
-  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reject all cookies")).click();
+page.addLocatorHandler(page.getByText("Sign up to the newsletter"), () => {
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("No thanks")).click();
 });
 
 // Write the test as usual.
@@ -3195,8 +3199,8 @@ page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```python sync
 # Setup the handler.
 def handler():
-  page.get_by_role("button", name="Reject all cookies").click()
-page.add_locator_handler(page.get_by_role("button", name="Accept all cookies"), handler)
+  page.get_by_role("button", name="No thanks").click()
+page.add_locator_handler(page.get_by_text("Sign up to the newsletter"), handler)
 
 # Write the test as usual.
 page.goto("https://example.com")
@@ -3206,8 +3210,8 @@ page.get_by_role("button", name="Start here").click()
 ```python async
 # Setup the handler.
 def handler():
-  await page.get_by_role("button", name="Reject all cookies").click()
-await page.add_locator_handler(page.get_by_role("button", name="Accept all cookies"), handler)
+  await page.get_by_role("button", name="No thanks").click()
+await page.add_locator_handler(page.get_by_text("Sign up to the newsletter"), handler)
 
 # Write the test as usual.
 await page.goto("https://example.com")
@@ -3216,8 +3220,8 @@ await page.get_by_role("button", name="Start here").click()
 
 ```csharp
 // Setup the handler.
-await page.AddLocatorHandlerAsync(page.GetByRole(AriaRole.Button, new() { Name = "Accept all cookies" }), async () => {
-  await page.GetByRole(AriaRole.Button, new() { Name = "Reject all cookies" }).ClickAsync();
+await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), async () => {
+  await page.GetByRole(AriaRole.Button, new() { Name = "No thanks" }).ClickAsync();
 });
 
 // Write the test as usual.
@@ -3230,7 +3234,7 @@ An example that skips the "Confirm your security details" page when it is shown:
 ```js
 // Setup the handler.
 await page.addLocatorHandler(page.getByText('Confirm your security details'), async () => {
-  await page.getByRole('button', 'Remind me later').click();
+  await page.getByRole('button', { name: 'Remind me later' }).click();
 });
 
 // Write the test as usual.
