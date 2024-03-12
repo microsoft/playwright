@@ -40,7 +40,7 @@ import { TargetClosedError } from '../errors';
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
-  readonly cspErrorsAsynchronousForInlineScipts = true;
+  readonly cspErrorsAsynchronousForInlineScripts = true;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
