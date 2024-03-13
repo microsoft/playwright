@@ -117,7 +117,7 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
   const url = await server.start({ preferredPort: port, host });
   const { app } = options || {};
   const searchQuery = params.length ? '?' + params.join('&') : '';
-  const urlPath  = `/trace/${app || 'index.html'}${searchQuery}`;
+  const urlPath  = `./trace/${app || 'index.html'}${searchQuery}`;
 
   server.routePath('/', (request, response) => {
     response.statusCode = 302;
