@@ -141,7 +141,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       return null;
 
     const contentType = this.headers()['content-type'];
-    if (contentType.includes('application/x-www-form-urlencoded')) {
+    if (contentType?.includes('application/x-www-form-urlencoded')) {
       const entries: Record<string, string> = {};
       const parsed = new URLSearchParams(postData);
       for (const [k, v] of parsed.entries())
