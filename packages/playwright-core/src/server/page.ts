@@ -95,7 +95,7 @@ export interface PageDelegate {
   // Work around Chrome's non-associated input and protocol.
   inputActionEpilogue(): Promise<void>;
   // Work around for asynchronously dispatched CSP errors in Firefox.
-  readonly cspErrorsAsynchronousForInlineScipts?: boolean;
+  readonly cspErrorsAsynchronousForInlineScripts?: boolean;
   // Work around for mouse position in Firefox.
   resetForReuse(): Promise<void>;
   // WebKit hack.
