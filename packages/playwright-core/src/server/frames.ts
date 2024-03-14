@@ -1662,7 +1662,7 @@ export class Frame extends SdkObject {
   }
 
   async resetStorageForCurrentOriginBestEffort(newStorage: channels.OriginStorage | undefined) {
-    const context = await this._utilityContext();
+    const context = await this._mainContext();
     await context.evaluate(async ({ ls }) => {
       // Clean DOMStorage.
       sessionStorage.clear();
@@ -1692,6 +1692,14 @@ export class Frame extends SdkObject {
         if (db.name)
           indexedDB.deleteDatabase(db.name!);
       }
+
+      try {
+        // Clean StorageManager
+        const root = await navigator.storage.getDirectory();
+        // @ts-expect-error
+        for await (const [name] of await root.entries())
+          await root.removeEntry(name, { recursive: true });
+      } catch (e) {}
     }, { ls: newStorage?.localStorage }).catch(() => {});
   }
 
