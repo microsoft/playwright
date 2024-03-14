@@ -90,7 +90,8 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
 
 it('should throw an error if the file does not exist', async ({ page, server, asset }) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
-  const error = await page.locator('input').first().setInputFiles('i actually do not exist.txt').catch(e => e);
+  const input = await page.$('input');
+  const error = await input.setInputFiles('i actually do not exist.txt').catch(e => e);
   expect(error.message).toContain('ENOENT: no such file or directory');
   expect(error.message).toContain('i actually do not exist.txt');
 });
