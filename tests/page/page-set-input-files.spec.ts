@@ -105,6 +105,14 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
+it('should throw an error if the file does not exist', async ({ page, server, asset }) => {
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const input = await page.$('input');
+  const error = await input.setInputFiles('i actually do not exist.txt').catch(e => e);
+  expect(error.message).toContain('ENOENT: no such file or directory');
+  expect(error.message).toContain('i actually do not exist.txt');
+});
+
 it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
