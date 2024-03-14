@@ -39,28 +39,31 @@ export type TestCaseItem = TreeItemBase & {
   kind: 'case',
   tests: reporterTypes.TestCase[];
   children: TestItem[];
+  test: reporterTypes.TestCase | undefined;
+  project: reporterTypes.FullProject | undefined;
 };
 
 export type TestItem = TreeItemBase & {
   kind: 'test',
   test: reporterTypes.TestCase;
-  project: string;
+  project: reporterTypes.FullProject;
 };
 
 export type TreeItem = GroupItem | TestCaseItem | TestItem;
 
 export class TestTree {
   rootItem: GroupItem;
-  readonly treeItemMap = new Map<string, TreeItem>();
-  readonly visibleTestIds = new Set<string>();
-  readonly fileNames = new Set<string>();
+  private _treeItemById = new Map<string, TreeItem>();
+  private _treeItemByTestId = new Map<string, TestItem | TestCaseItem>();
+  readonly pathSeparator: string;
 
-  constructor(rootSuite: reporterTypes.Suite | undefined, loadErrors: reporterTypes.TestError[], projectFilters: Map<string, boolean>) {
-    const filterProjects = [...projectFilters.values()].some(Boolean);
+  constructor(rootFolder: string, rootSuite: reporterTypes.Suite | undefined, loadErrors: reporterTypes.TestError[], projectFilters: Map<string, boolean> | undefined, pathSeparator: string) {
+    const filterProjects = projectFilters && [...projectFilters.values()].some(Boolean);
+    this.pathSeparator = pathSeparator;
     this.rootItem = {
       kind: 'group',
       subKind: 'folder',
-      id: 'root',
+      id: rootFolder,
       title: '',
       location: { file: '', line: 0, column: 0 },
       duration: 0,
@@ -69,8 +72,9 @@ export class TestTree {
       status: 'none',
       hasLoadErrors: false,
     };
+    this._treeItemById.set(rootFolder, this.rootItem);
 
-    const visitSuite = (projectName: string, parentSuite: reporterTypes.Suite, parentGroup: GroupItem) => {
+    const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem) => {
       for (const suite of parentSuite.suites) {
         const title = suite.title || '<anonymous>';
         let group = parentGroup.children.find(item => item.kind === 'group' && item.title === title) as GroupItem | undefined;
@@ -87,9 +91,9 @@ export class TestTree {
             status: 'none',
             hasLoadErrors: false,
           };
-          parentGroup.children.push(group);
+          this._addChild(parentGroup, group);
         }
-        visitSuite(projectName, suite, group);
+        visitSuite(project, suite, group);
       }
 
       for (const test of parentSuite.tests) {
@@ -106,8 +110,10 @@ export class TestTree {
             location: test.location,
             duration: 0,
             status: 'none',
+            project: undefined,
+            test: undefined,
           };
-          parentGroup.children.push(testCaseItem);
+          this._addChild(parentGroup, testCaseItem);
         }
 
         const result = test.results[0];
@@ -126,38 +132,45 @@ export class TestTree {
           status = 'passed';
 
         testCaseItem.tests.push(test);
-        testCaseItem.children.push({
+        const testItem: TestItem = {
           kind: 'test',
           id: test.id,
-          title: projectName,
+          title: project.name,
           location: test.location!,
           test,
           parent: testCaseItem,
           children: [],
           status,
           duration: test.results.length ? Math.max(0, test.results[0].duration) : 0,
-          project: projectName,
-        });
+          project,
+        };
+        this._addChild(testCaseItem, testItem);
+        this._treeItemByTestId.set(test.id, testItem);
         testCaseItem.duration = (testCaseItem.children as TestItem[]).reduce((a, b) => a + b.duration, 0);
       }
     };
 
-    const fileMap = new Map<string, GroupItem>();
     for (const projectSuite of rootSuite?.suites || []) {
       if (filterProjects && !projectFilters.get(projectSuite.title))
         continue;
       for (const fileSuite of projectSuite.suites) {
-        const fileItem = this._fileItem(fileSuite.location!.file.split(pathSeparator), true, fileMap);
-        visitSuite(projectSuite.title, fileSuite, fileItem);
+        const fileItem = this._fileItem(fileSuite.location!.file.split(pathSeparator), true);
+        visitSuite(projectSuite.project()!, fileSuite, fileItem);
       }
     }
 
     for (const loadError of loadErrors) {
       if (!loadError.location)
         continue;
-      const fileItem = this._fileItem(loadError.location.file.split(pathSeparator), true, fileMap);
+      const fileItem = this._fileItem(loadError.location.file.split(pathSeparator), true);
       fileItem.hasLoadErrors = true;
     }
+  }
+
+  private _addChild(parent: TreeItem, child: TreeItem) {
+    parent.children.push(child);
+    child.parent = parent;
+    this._treeItemById.set(child.id, child);
   }
 
   filterTree(filterText: string, statusFilters: Map<string, boolean>, runningTestIds: Set<string> | undefined) {
@@ -192,14 +205,14 @@ export class TestTree {
     visit(this.rootItem);
   }
 
-  private _fileItem(filePath: string[], isFile: boolean, fileItems: Map<string, GroupItem>): GroupItem {
+  private _fileItem(filePath: string[], isFile: boolean): GroupItem {
     if (filePath.length === 0)
       return this.rootItem;
-    const fileName = filePath.join(pathSeparator);
-    const existingFileItem = fileItems.get(fileName);
+    const fileName = filePath.join(this.pathSeparator);
+    const existingFileItem = this._treeItemById.get(fileName);
     if (existingFileItem)
-      return existingFileItem;
-    const parentFileItem = this._fileItem(filePath.slice(0, filePath.length - 1), false, fileItems);
+      return existingFileItem as GroupItem;
+    const parentFileItem = this._fileItem(filePath.slice(0, filePath.length - 1), false);
     const fileItem: GroupItem = {
       kind: 'group',
       subKind: isFile ? 'file' : 'folder',
@@ -212,8 +225,7 @@ export class TestTree {
       status: 'none',
       hasLoadErrors: false,
     };
-    parentFileItem.children.push(fileItem);
-    fileItems.set(fileName, fileItem);
+    this._addChild(parentFileItem, fileItem);
     return fileItem;
   }
 
@@ -221,12 +233,16 @@ export class TestTree {
     sortAndPropagateStatus(this.rootItem);
   }
 
-  hideOnlyTests() {
+  flattenForSingleProject() {
     const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'case' && treeItem.children.length === 1)
+      if (treeItem.kind === 'case' && treeItem.children.length === 1) {
+        treeItem.project = treeItem.children[0].project;
+        treeItem.test = treeItem.children[0].test;
         treeItem.children = [];
-      else
+        this._treeItemByTestId.set(treeItem.test.id, treeItem);
+      } else {
         treeItem.children.forEach(visit);
+      }
     };
     visit(this.rootItem);
   }
@@ -239,16 +255,41 @@ export class TestTree {
     this.rootItem = shortRoot;
   }
 
-  indexTree() {
+  testIds(): Set<string> {
+    const result = new Set<string>();
     const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'group' && treeItem.location.file)
-        this.fileNames.add(treeItem.location.file);
       if (treeItem.kind === 'case')
-        treeItem.tests.forEach(t => this.visibleTestIds.add(t.id));
+        treeItem.tests.forEach(t => result.add(t.id));
       treeItem.children.forEach(visit);
-      this.treeItemMap.set(treeItem.id, treeItem);
     };
     visit(this.rootItem);
+    return result;
+  }
+
+  fileNames(): string[] {
+    const result = new Set<string>();
+    const visit = (treeItem: TreeItem) => {
+      if (treeItem.kind === 'group' && treeItem.subKind === 'file')
+        result.add(treeItem.id);
+      else
+        treeItem.children.forEach(visit);
+    };
+    visit(this.rootItem);
+    return [...result];
+  }
+
+  flatTreeItems(): TreeItem[] {
+    const result: TreeItem[] = [];
+    const visit = (treeItem: TreeItem) => {
+      result.push(treeItem);
+      treeItem.children.forEach(visit);
+    };
+    visit(this.rootItem);
+    return result;
+  }
+
+  treeItemById(id: string): TreeItem | undefined {
+    return this._treeItemById.get(id);
   }
 
   collectTestIds(treeItem?: TreeItem): Set<string> {
@@ -312,5 +353,4 @@ export function sortAndPropagateStatus(treeItem: TreeItem) {
     treeItem.status = 'passed';
 }
 
-export const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
 export const statusEx = Symbol('statusEx');

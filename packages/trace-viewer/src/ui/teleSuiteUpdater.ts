@@ -15,7 +15,7 @@
  */
 
 import { TeleReporterReceiver } from '@testIsomorphic/teleReceiver';
-import { pathSeparator, statusEx } from '@testIsomorphic/testTree';
+import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
 
@@ -28,7 +28,8 @@ export type Progress = {
 
 export type TeleSuiteUpdaterOptions = {
   onUpdate: (source: TeleSuiteUpdater, force?: boolean) => void,
-  onError?: (error: reporterTypes.TestError) => void
+  onError?: (error: reporterTypes.TestError) => void;
+  pathSeparator: string;
 };
 
 export class TeleSuiteUpdater {
@@ -51,7 +52,7 @@ export class TeleSuiteUpdater {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
       mergeProjects: true,
       mergeTestCases: true,
-      resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
+      resolvePath: (rootDir, relativePath) => rootDir + options.pathSeparator + relativePath,
       clearPreviousResultsWhenTestBegins: true,
     });
     this._options = options;
@@ -75,7 +76,7 @@ export class TeleSuiteUpdater {
         }, {
           mergeProjects: true,
           mergeTestCases: false,
-          resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
+          resolvePath: (rootDir, relativePath) => rootDir + this._options.pathSeparator + relativePath,
         });
       },
 

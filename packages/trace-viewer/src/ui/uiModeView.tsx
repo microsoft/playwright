@@ -379,13 +379,12 @@ const TestList: React.FC<{
 
   // Build the test tree.
   const { testTree } = React.useMemo(() => {
-    const testTree = new TestTree(testModel.rootSuite, testModel.loadErrors, projectFilters);
+    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
     testTree.filterTree(filterText, statusFilters, runningState?.testIds);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
-    testTree.hideOnlyTests();
-    testTree.indexTree();
-    setVisibleTestIds(testTree.visibleTestIds);
+    testTree.flattenForSingleProject();
+    setVisibleTestIds(testTree.testIds());
     return { testTree };
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState]);
 
@@ -394,8 +393,8 @@ const TestList: React.FC<{
     // If collapse was requested, clear the expanded items and return w/o selected item.
     if (collapseAllCount !== requestedCollapseAllCount) {
       treeState.expandedItems.clear();
-      for (const item of testTree.treeItemMap.keys())
-        treeState.expandedItems.set(item, false);
+      for (const item of testTree.flatTreeItems())
+        treeState.expandedItems.set(item.id, false);
       setCollapseAllCount(requestedCollapseAllCount);
       setSelectedTreeItemId(undefined);
       setTreeState({ ...treeState });
@@ -424,7 +423,7 @@ const TestList: React.FC<{
 
   // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
-    const selectedTreeItem = selectedTreeItemId ? testTree.treeItemMap.get(selectedTreeItemId) : undefined;
+    const selectedTreeItem = selectedTreeItemId ? testTree.treeItemById(selectedTreeItemId) : undefined;
     let testFile: SourceLocation | undefined;
     if (selectedTreeItem) {
       testFile = {
@@ -450,11 +449,11 @@ const TestList: React.FC<{
     if (isLoading)
       return;
     if (watchAll) {
-      sendMessageNoReply('watch', { fileNames: [...testTree.fileNames] });
+      sendMessageNoReply('watch', { fileNames: testTree.fileNames() });
     } else {
       const fileNames = new Set<string>();
       for (const itemId of watchedTreeIds.value) {
-        const treeItem = testTree.treeItemMap.get(itemId);
+        const treeItem = testTree.treeItemById(itemId);
         const fileName = treeItem?.location.file;
         if (fileName)
           fileNames.add(fileName);
@@ -482,7 +481,7 @@ const TestList: React.FC<{
       visit(testTree.rootItem);
     } else {
       for (const treeId of watchedTreeIds.value) {
-        const treeItem = testTree.treeItemMap.get(treeId);
+        const treeItem = testTree.treeItemById(treeId);
         const fileName = treeItem?.location.file;
         if (fileName && set.has(fileName))
           testIds.push(...testTree.collectTestIds(treeItem));
@@ -624,6 +623,7 @@ const refreshRootSuite = (): Promise<void> => {
     onError: error => {
       xtermDataSource.write((error.stack || error.value || '') + '\n');
     },
+    pathSeparator,
   });
   return sendMessage('list', {});
 };
@@ -681,3 +681,5 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
 }
+
+export const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
