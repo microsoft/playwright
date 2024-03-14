@@ -37,7 +37,7 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload the file with a popup which opened/closed before', async ({ page, server, asset, browserName }) => {
+it('should upload the file after popup', async ({ page, server, asset, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
   it.fixme(browserName === 'firefox');
   await page.goto(server.PREFIX + '/input/fileupload.html');
@@ -47,7 +47,6 @@ it('should upload the file with a popup which opened/closed before', async ({ pa
       page.evaluate(() => window['__popup'] = window.open('about:blank')),
     ]);
     await popup.close();
-    await page.waitForTimeout(1000)
   }
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   const input = await page.$('input');
