@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.42
 
+<LiteYouTube
+  id="KjSaIQLlgns"
+  title="Playwright 1.41 & 1.42"
+/>
+
 ### New APIs
 
 - New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears:
