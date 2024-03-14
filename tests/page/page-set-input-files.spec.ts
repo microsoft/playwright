@@ -37,6 +37,24 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
+it('should upload the file with a popup which opened/closed before', async ({ page, server, asset, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  {
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window['__popup'] = window.open('about:blank')),
+    ]);
+    await popup.close();
+    await page.waitForTimeout(1000)
+  }
+  const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
+  const input = await page.$('input');
+  await input.setInputFiles(filePath);
+  expect(await page.evaluate(e => e.files[0].name, input)).toBe('file-to-upload.txt');
+});
+
 it('should upload large file', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
