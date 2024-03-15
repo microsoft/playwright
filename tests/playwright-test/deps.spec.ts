@@ -82,11 +82,29 @@ test('should inherit env changes from dependencies', async ({ runInlineTest }) =
         console.log('\\n%%E-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
       });
     `,
-  }, {}, { SET_OUTSIDE: 'outside' });
+    'myReporter.ts': `
+      export default class MyReporter {
+        onEnd() {
+          console.log('\\n%%Reporter-onEnd-TEST_WORKER_INDEX=' + process.env.TEST_WORKER_INDEX);
+          console.log('\\n%%Reporter-onEnd-TEST_PARALLEL_INDEX=' + process.env.TEST_PARALLEL_INDEX);
+          console.log('\\n%%Reporter-onEnd-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
+        }
+      }
+    `
+  }, { reporter: './myReporter.ts,list' }, { SET_OUTSIDE: 'outside' });
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.outputLines.sort()).toEqual(['A', 'B', 'C-valuea-undefined-undefined', 'D-undefined-valueb-outside', 'E-undefined-valueb-outside']);
+  expect(result.outputLines.sort()).toEqual([
+    'A',
+    'B',
+    'C-valuea-undefined-undefined',
+    'D-undefined-valueb-outside',
+    'E-undefined-valueb-outside',
+    'Reporter-onEnd-TEST_PARALLEL_INDEX=undefined',
+    'Reporter-onEnd-TEST_WORKER_INDEX=undefined',
+    'Reporter-onEnd-valuea-valueb-undefined',
+  ]);
 });
 
 test('should not run projects with dependencies when --no-deps is passed', async ({ runInlineTest }) => {

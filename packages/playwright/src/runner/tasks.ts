@@ -315,8 +315,12 @@ function createRunTestsTask(): Task<TestRun> {
       }
     },
     teardown: async ({ phases }) => {
-      for (const { dispatcher } of phases.reverse())
+      for (const { dispatcher, projects } of phases.reverse()) {
+        for (const project of projects)
+          process.env = { ...process.env, ...dispatcher.producedEnvByProjectId().get(project.project.id) };
+        dispatcher.producedEnvByProjectId();
         await dispatcher.stop();
+      }
     },
   };
 }

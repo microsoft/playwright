@@ -63,6 +63,7 @@ if (process.env.PW_TS_ESM_LOADER_ON)
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;
 const startingEnv = { ...process.env };
+const kPredefinedWorkerEnvs = new Set(['TEST_WORKER_INDEX', 'TEST_PARALLEL_INDEX']);
 
 process.on('message', async (message: any) => {
   if (message.method === '__init__') {
@@ -77,7 +78,7 @@ process.on('message', async (message: any) => {
   }
   if (message.method === '__stop__') {
     const keys = new Set([...Object.keys(process.env), ...Object.keys(startingEnv)]);
-    const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key]).map(key => [key, process.env[key] ?? null]);
+    const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key] && !kPredefinedWorkerEnvs.has(key)).map(key => [key, process.env[key] ?? null]);
     sendMessageToParent({ method: '__env_produced__', params: producedEnv });
     await gracefullyCloseAndExit();
     return;
