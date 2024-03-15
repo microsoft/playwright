@@ -68,6 +68,10 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
 
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
+  // In order to make Accessibility Insights for Web work.
+  if (event.request.url.startsWith('chrome-extension://'))
+    return fetch(event.request);
+
   const request = event.request;
   const client = await self.clients.get(event.clientId);
 
