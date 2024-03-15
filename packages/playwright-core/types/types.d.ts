@@ -18340,7 +18340,7 @@ export interface Keyboard {
  * (async () => {
  *   const browser = await chromium.launch({
  *     logger: {
- *       isEnabled: (name, severity) => name === 'browser',
+ *       isEnabled: (name, severity) => name === 'api',
  *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
  *     }
  *   });
