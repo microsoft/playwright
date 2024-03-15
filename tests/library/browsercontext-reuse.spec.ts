@@ -254,7 +254,6 @@ test('should reset Origin Private File System', async ({ reusedContext, httpsSer
   context = await reusedContext({ ignoreHTTPSErrors: true });
   page = await context.newPage();
   await page.goto(httpsServer.EMPTY_PAGE);
-
   const { directoryExits, fileExits } = await page.evaluate(async () => {
     const root = await navigator.storage.getDirectory();
     let directoryExits = true, fileExits = true;

@@ -1662,7 +1662,7 @@ export class Frame extends SdkObject {
   }
 
   async resetStorageForCurrentOriginBestEffort(newStorage: channels.OriginStorage | undefined) {
-    const context = await this._mainContext();
+    const context = await this._utilityContext();
     await context.evaluate(async ({ ls }) => {
       // Clean DOMStorage.
       sessionStorage.clear();
@@ -1693,13 +1693,16 @@ export class Frame extends SdkObject {
           indexedDB.deleteDatabase(db.name!);
       }
 
-      try {
-        // Clean StorageManager
-        const root = await navigator.storage.getDirectory();
-        // @ts-expect-error
-        for await (const [name] of await root.entries())
-          await root.removeEntry(name, { recursive: true });
-      } catch (e) {}
+      // Clean StorageManager
+      const root = await navigator.storage.getDirectory();
+      const entries = await (root as any).entries();
+      // Manual loop instead of for await because in Firefox's utility context instanceof AsyncIterable is not working.
+      let entry = await entries.next();
+      while (!entry.done) {
+        const [name] = entry.value;
+        await root.removeEntry(name, { recursive: true });
+        entry = await entries.next();
+      }
     }, { ls: newStorage?.localStorage }).catch(() => {});
   }
 
