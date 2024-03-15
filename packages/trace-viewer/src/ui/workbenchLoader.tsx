@@ -162,7 +162,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       </div>
     </div>}
     {showFileUploadDropArea && <div className='drop-target'>
-      <div className='processing-error' aria-live='assertive'>{processingErrorMessage}</div>
+      <div className='processing-error' role='alert'>{processingErrorMessage}</div>
       <div className='title' role='heading' aria-level={1}>Drop Playwright Trace to load</div>
       <div>or</div>
       <button onClick={() => {
