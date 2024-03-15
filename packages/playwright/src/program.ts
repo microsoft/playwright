@@ -34,7 +34,6 @@ export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import { cacheDir } from './transform/compilationCache';
-import { runTestServer } from './runner/testServer';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -108,9 +107,9 @@ function addFindRelatedTestFilesCommand(program: Command) {
 function addTestServerCommand(program: Command) {
   const command = program.command('test-server', { hidden: true });
   command.description('start test server');
-  command.action(() => {
-    void runTestServer();
-  });
+  command.option('--host <host>', 'Host to start the server on', 'localhost');
+  command.option('--port <port>', 'Port to start the server on', '0');
+  command.action(opts => runTestServer(opts));
 }
 
 function addShowReportCommand(program: Command) {
@@ -166,12 +165,25 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const runner = new Runner(config);
   let status: FullResult['status'];
   if (opts.ui || opts.uiHost || opts.uiPort)
-    status = await runner.uiAllTests({ host: opts.uiHost, port: opts.uiPort ? +opts.uiPort : undefined });
+    status = await runner.runUIMode({ host: opts.uiHost, port: opts.uiPort ? +opts.uiPort : undefined });
   else if (process.env.PWTEST_WATCH)
     status = await runner.watchAllTests();
   else
     status = await runner.runAllTests();
   await stopProfiling('runner');
+  const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+  gracefullyProcessExitDoNotHang(exitCode);
+}
+
+async function runTestServer(opts: { [key: string]: any }) {
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts), opts.deps === false);
+  if (!config)
+    return;
+  config.cliPassWithNoTests = true;
+  const runner = new Runner(config);
+  const host = opts.host || 'localhost';
+  const port = opts.port ? +opts.port : 0;
+  const status = await runner.runTestServer({ host, port });
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
