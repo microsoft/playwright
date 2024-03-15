@@ -15,13 +15,16 @@
  */
 
 import { browserTest, expect } from '../config/browserTest';
-import type { BrowserContext } from '@playwright/test';
+import type { BrowserContext, BrowserContextOptions } from '@playwright/test';
 
-const test = browserTest.extend<{ reusedContext: () => Promise<BrowserContext> }>({
+const test = browserTest.extend<{ reusedContext: (options?: BrowserContextOptions) => Promise<BrowserContext> }>({
   reusedContext: async ({ browserType, browser }, use) => {
-    await use(async () => {
+    await use(async (options: BrowserContextOptions = {}) => {
       const defaultContextOptions = (browserType as any)._defaultContextOptions;
-      const context = await (browser as any)._newContextForReuse(defaultContextOptions);
+      const context = await (browser as any)._newContextForReuse({
+        ...defaultContextOptions,
+        ...options,
+      });
       return context;
     });
   },
@@ -233,6 +236,33 @@ test('should reset mouse position', async ({ reusedContext, browserName, platfor
   await page.setContent(pageContent);
   await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
   await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+});
+
+test('should reset Origin Private File System', async ({ reusedContext, httpsServer, browserName }) => {
+  test.skip(browserName === 'webkit', 'getDirectory is not supported in ephemeral context in WebKit https://github.com/microsoft/playwright/issues/18235#issuecomment-1289792576');
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29901' });
+
+  let context = await reusedContext({ ignoreHTTPSErrors: true });
+  let page = await context.newPage();
+  await page.goto(httpsServer.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    await root.getDirectoryHandle('someDirectoryName', { create: true });
+    await root.getFileHandle('foo.txt', { create: true });
+  });
+
+  context = await reusedContext({ ignoreHTTPSErrors: true });
+  page = await context.newPage();
+  await page.goto(httpsServer.EMPTY_PAGE);
+  const { directoryExits, fileExits } = await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    let directoryExits = true, fileExits = true;
+    await root.getDirectoryHandle('someDirectoryName').catch(() => { directoryExits = false; });
+    await root.getFileHandle('foo.txt').catch(() => { fileExits = false; });
+    return { directoryExits, fileExits };
+  });
+  expect(directoryExits).toBe(false);
+  expect(fileExits).toBe(false);
 });
 
 test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
