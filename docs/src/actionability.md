@@ -83,9 +83,9 @@ Learn more in the [assertions guide](./test-assertions.md).
 Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style.
 
 Note that according to this definition:
-* Elements of zero size **are not** considered visible.
-* Elements with `display:none` **are not** considered visible.
-* Elements with `opacity:0` **are** considered visible.
+* **Not visible:** Elements of zero size.
+* **Not visible:** Elements with `display:none`.
+* **Visible:** Elements with `opacity:0`.
 
 ## Stable
 
