@@ -15,9 +15,9 @@
  */
 
 import { registry, startTraceViewerServer } from 'playwright-core/lib/server';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import type { Transport, HttpServer } from 'playwright-core/lib/utils';
-import type { FullResult } from '../../types/testReporter';
+import type { FullResult, Location, TestError } from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
@@ -29,14 +29,15 @@ import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
+import type { TestServerInterface } from './testServerInterface';
+import { Runner } from './runner';
+import { serializeError } from '../util';
+import { prepareErrorStack } from '../reporters/base';
 
 class TestServer {
   private _config: FullConfigInternal;
-  private _transport: Transport | undefined;
-  private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  private _dispatcher: TestServerDispatcher | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
-  private _globalWatcher: Watcher;
-  private _testWatcher: Watcher;
   private _originalStdoutWrite: NodeJS.WriteStream['write'];
   private _originalStderrWrite: NodeJS.WriteStream['write'];
 
@@ -56,12 +57,6 @@ class TestServer {
 
     this._originalStdoutWrite = process.stdout.write;
     this._originalStderrWrite = process.stderr.write;
-    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
-    this._testWatcher = new Watcher('flat', events => {
-      const collector = new Set<string>();
-      events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent('testFilesChanged', { testFileNames: [...collector] });
-    });
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
@@ -81,56 +76,18 @@ class TestServer {
   }
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
-    let queue = Promise.resolve();
-    const transport: Transport = {
-      dispatch: async (method, params) => {
-        if (method === 'ping')
-          return;
-
-        if (method === 'watch') {
-          this._watchFiles(params.fileNames);
-          return;
-        }
-        if (method === 'open' && params.location) {
-          open('vscode://file/' + params.location).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
-          return;
-        }
-        if (method === 'resizeTerminal') {
-          process.stdout.columns = params.cols;
-          process.stdout.rows = params.rows;
-          process.stderr.columns = params.cols;
-          process.stderr.columns = params.rows;
-          return;
-        }
-        if (method === 'stop') {
-          void this._stopTests();
-          return;
-        }
-        if (method === 'checkBrowsers')
-          return { hasBrowsers: hasSomeBrowsers() };
-        if (method === 'installBrowsers') {
-          await installBrowsers();
-          return;
-        }
-
-        queue = queue.then(() => this._queueListOrRun(method, params));
-        await queue;
-      },
-
-      onclose: () => {},
-    };
-    this._transport = transport;
-    return await startTraceViewerServer({ ...options, transport });
+    this._dispatcher = new TestServerDispatcher(this._config);
+    return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
   }
 
   wireStdIO() {
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
+        this._dispatcher?._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
       };
       process.stderr.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
+        this._dispatcher?._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
         return true;
       };
     }
@@ -142,20 +99,71 @@ class TestServer {
       process.stderr.write = this._originalStderrWrite;
     }
   }
+}
 
-  private async _queueListOrRun(method: string, params: any) {
-    if (method === 'list')
-      await this._listTests();
-    if (method === 'run')
-      await this._runTests(params.testIds, params.projects);
+class TestServerDispatcher implements TestServerInterface {
+  private _config: FullConfigInternal;
+  private _globalWatcher: Watcher;
+  private _testWatcher: Watcher;
+  private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  readonly transport: Transport;
+  private _queue = Promise.resolve();
+
+  constructor(config: FullConfigInternal) {
+    this._config = config;
+    this.transport = {
+      dispatch: (method, params) => (this as any)[method](params),
+      onclose: () => {},
+    };
+    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
+    this._testWatcher = new Watcher('flat', events => {
+      const collector = new Set<string>();
+      events.forEach(f => collectAffectedTestFiles(f.file, collector));
+      this._dispatchEvent('testFilesChanged', { testFileNames: [...collector] });
+    });
   }
 
-  private _dispatchEvent(method: string, params?: any) {
-    this._transport?.sendEvent?.(method, params);
+  async ping() {}
+
+  async open(params: { location: Location }) {
+    // eslint-disable-next-line no-console
+    open('vscode://file/' + params.location.file + ':' + params.location.column).catch(e => console.error(e));
   }
 
-  private async _listTests() {
+  async resizeTerminal(params: { cols: number; rows: number; }) {
+    process.stdout.columns = params.cols;
+    process.stdout.rows = params.rows;
+    process.stderr.columns = params.cols;
+    process.stderr.columns = params.rows;
+  }
+
+  async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
+    return { hasBrowsers: hasSomeBrowsers() };
+  }
+
+  async installBrowsers() {
+    await installBrowsers();
+  }
+
+  async listFiles() {
+    try {
+      const runner = new Runner(this._config);
+      return runner.listTestFiles();
+    } catch (e) {
+      const error: TestError = serializeError(e);
+      error.location = prepareErrorStack(e.stack).location;
+      return { projects: [], error };
+    }
+  }
+
+  async listTests(params: { reporter?: string; fileNames: string[]; }) {
+    this._queue = this._queue.then(() => this._innerListTests(params));
+    await this._queue;
+  }
+
+  private async _innerListTests(params: { reporter?: string; fileNames?: string[]; }) {
     const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent('listReport', e), { omitBuffers: true }));
+    this._config.cliArgs = params.fileNames || [];
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
@@ -174,12 +182,20 @@ class TestServer {
     this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
   }
 
-  private async _runTests(testIds: string[], projects: string[]) {
-    await this._stopTests();
+  async runTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
+    this._queue = this._queue.then(() => this._innerRunTests(params));
+    await this._queue;
+  }
+
+  private async _innerRunTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
+    await this.stop();
+    const { testIds, projects, locations, grep } = params;
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
+    this._config.cliArgs = locations ? locations : [];
+    this._config.cliGrep = grep;
     this._config.cliListOnly = false;
-    this._config.cliProjectFilter = projects.length ? projects : undefined;
+    this._config.cliProjectFilter = projects?.length ? projects : undefined;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
@@ -200,18 +216,31 @@ class TestServer {
     await run;
   }
 
-  private _watchFiles(fileNames: string[]) {
+  async watch(params: { fileNames: string[]; }) {
     const files = new Set<string>();
-    for (const fileName of fileNames) {
+    for (const fileName of params.fileNames) {
       files.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => files.add(file));
     }
     this._testWatcher.update([...files], [], true);
   }
 
-  private async _stopTests() {
+  findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: TestError[] | undefined; }> {
+    const runner = new Runner(this._config);
+    return runner.findRelatedTestFiles('out-of-process', params.files);
+  }
+
+  async stop() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
+  }
+
+  async closeGracefully() {
+    gracefullyProcessExitDoNotHang(0);
+  }
+
+  _dispatchEvent(method: string, params?: any) {
+    this.transport.sendEvent?.(method, params);
   }
 }
 
