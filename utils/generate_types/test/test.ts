@@ -323,6 +323,13 @@ playwright.chromium.launch().then(async browser => {
   console.log(await resultHandle.jsonValue());
   await resultHandle.dispose();
 
+  // evaluteHandle with two different return types
+  {
+    const handle = await page.evaluateHandle(() => '' as string | number);
+    const result = await handle.evaluate(value => value);
+    const assertion: AssertType<string | number, typeof result> = true;
+  }
+
   await browser.close();
 })();
 
@@ -606,7 +613,7 @@ playwright.chromium.launch().then(async browser => {
   {
     const handle = await page.waitForSelector('*');
     const value = await handle.evaluateHandle((e: HTMLInputElement, x) => e.disabled || x, 123);
-    const assertion: AssertType<playwright.JSHandle<boolean> | playwright.JSHandle<number>, typeof value> = true;
+    const assertion: AssertType<playwright.JSHandle<boolean | number>, typeof value> = true;
   }
 
   {
