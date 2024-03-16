@@ -21,8 +21,7 @@ import type { FullResult, Location, TestError } from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
-import { TeleReporterEmitter } from '../reporters/teleEmitter';
-import { createReporters } from './reporters';
+import { createReporterForTestServer, createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
@@ -157,12 +156,13 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async listTests(params: { reporter?: string; fileNames: string[]; }) {
-    this._queue = this._queue.then(() => this._innerListTests(params));
+    this._queue = this._queue.then(() => this._innerListTests(params)).catch(printInternalError);
     await this._queue;
   }
 
   private async _innerListTests(params: { reporter?: string; fileNames?: string[]; }) {
-    const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent('listReport', e), { omitBuffers: true }));
+    const wireReporter = await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => this._dispatchEvent('listReport', e));
+    const reporter = new InternalReporter(wireReporter);
     this._config.cliArgs = params.fileNames || [];
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
@@ -183,7 +183,7 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async runTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
-    this._queue = this._queue.then(() => this._innerRunTests(params));
+    this._queue = this._queue.then(() => this._innerRunTests(params)).catch(printInternalError);
     await this._queue;
   }
 
@@ -199,7 +199,7 @@ class TestServerDispatcher implements TestServerInterface {
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
-    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent('testReport', e), { omitBuffers: true }));
+    reporters.push(await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => this._dispatchEvent('testReport', e)));
     const reporter = new InternalReporter(new Multiplexer(reporters));
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
@@ -290,4 +290,9 @@ function hasSomeBrowsers(): boolean {
 async function installBrowsers() {
   const executables = registry.defaultExecutables();
   await registry.install(executables, false);
+}
+
+function printInternalError(e: Error) {
+  // eslint-disable-next-line no-console
+  console.error('Internal error:', e);
 }
