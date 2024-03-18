@@ -747,6 +747,51 @@ Resolves given locator to the first matching DOM element. If there are no matchi
 
 Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.
 
+## method: Locator.enterFrame
+* since: v1.43
+- returns: <[FrameLocator]>
+
+Returns a [FrameLocator] object pointing to the same `iframe` as this locator.
+
+Useful when you have a [Locator] object obtained somewhere, and later on would like to interact with the content inside the frame.
+
+**Usage**
+
+```js
+const locator = page.locator('iframe[name="embedded"]');
+// ...
+const frameLocator = locator.enterFrame();
+await frameLocator.getByRole('button').click();
+```
+
+```java
+Locator locator = page.locator("iframe[name=\"embedded\"]");
+// ...
+FrameLocator frameLocator = locator.enterFrame();
+frameLocator.getByRole(AriaRole.BUTTON).click();
+```
+
+```python async
+locator = page.locator("iframe[name=\"embedded\"]")
+# ...
+frame_locator = locator.enter_frame
+await frame_locator.get_by_role("button").click()
+```
+
+```python sync
+locator = page.locator("iframe[name=\"embedded\"]")
+# ...
+frame_locator = locator.enter_frame
+frame_locator.get_by_role("button").click()
+```
+
+```csharp
+var locator = Page.Locator("iframe[name=\"embedded\"]");
+// ...
+var frameLocator = locator.EnterFrame;
+await frameLocator.GetByRole(AriaRole.Button).ClickAsync();
+```
+
 ## async method: Locator.evaluate
 * since: v1.14
 - returns: <[Serializable]>
