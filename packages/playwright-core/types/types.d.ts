@@ -11461,6 +11461,24 @@ export interface Locator {
   elementHandles(): Promise<Array<ElementHandle>>;
 
   /**
+   * Returns a {@link FrameLocator} object pointing to the same `iframe` as this locator.
+   *
+   * Useful when you have a {@link Locator} object obtained somewhere, and later on would like to interact with the
+   * content inside the frame.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('iframe[name="embedded"]');
+   * // ...
+   * const frameLocator = locator.enterFrame();
+   * await frameLocator.getByRole('button').click();
+   * ```
+   *
+   */
+  enterFrame(): FrameLocator;
+
+  /**
    * Set a value to the input field.
    *
    * **Usage**
@@ -17761,14 +17779,32 @@ export interface FileChooser {
  * **Converting Locator to FrameLocator**
  *
  * If you have a {@link Locator} object pointing to an `iframe` it can be converted to {@link FrameLocator} using
- * [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+ * [locator.enterFrame()](https://playwright.dev/docs/api/class-locator#locator-enter-frame).
  *
- * ```js
- * const frameLocator = locator.frameLocator(':scope');
- * ```
+ * **Converting FrameLocator to Locator**
  *
+ * If you have a {@link FrameLocator} object it can be converted to {@link Locator} pointing to the same `iframe`
+ * using [frameLocator.exitFrame()](https://playwright.dev/docs/api/class-framelocator#frame-locator-exit-frame).
  */
 export interface FrameLocator {
+  /**
+   * Returns a {@link Locator} object pointing to the same `iframe` as this frame locator.
+   *
+   * Useful when you have a {@link FrameLocator} object obtained somewhere, and later on would like to interact with the
+   * `iframe` element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
+   * // ...
+   * const locator = frameLocator.exitFrame();
+   * await expect(locator).toBeVisible();
+   * ```
+   *
+   */
+  exitFrame(): Locator;
+
   /**
    * Returns locator to the first matching frame.
    */
