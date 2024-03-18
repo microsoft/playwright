@@ -159,7 +159,7 @@ function downloadHeadersForAttachment(traceModel: TraceModel, sha1: string): Hea
   if (!attachment)
     return;
   const headers = new Headers();
-  headers.set('Content-Disposition', `attachment; filename="${attachment.name}"`);
+  headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(attachment.name)}`);
   if (attachment.contentType)
     headers.set('Content-Type', attachment.contentType);
   return headers;
