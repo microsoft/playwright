@@ -552,7 +552,9 @@ test('should load cjs config and test in non-ESM mode', async ({ runInlineTest }
   expect(result.passed).toBe(2);
 });
 
-test('should disallow ESM when config is cjs', async ({ runInlineTest }) => {
+test('should allow ESM when config is cjs', async ({ runInlineTest, nodeVersion }) => {
+  test.skip(nodeVersion.major < 18, 'ESM loader is enabled conditionally with older API');
+
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.cjs': `
@@ -567,8 +569,24 @@ test('should disallow ESM when config is cjs', async ({ runInlineTest }) => {
     `,
   });
 
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Unknown file extension ".ts"');
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should load mts without config', async ({ runInlineTest, nodeVersion }) => {
+  test.skip(nodeVersion.major < 18, 'ESM loader is enabled conditionally with older API');
+
+  const result = await runInlineTest({
+    'a.test.mts': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(true).toBe(true);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should be able to use use execSync with a Node.js file inside a spec', async ({ runInlineTest }) => {
