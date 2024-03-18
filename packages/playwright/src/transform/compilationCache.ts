@@ -27,7 +27,7 @@ export type MemoryCache = {
   moduleUrl?: string;
 };
 
-type SerializedCompilationCache = {
+export type SerializedCompilationCache = {
   sourceMaps: [string, string][],
   memoryCache: [string, MemoryCache][],
   fileDependencies: [string, string[]][],
@@ -158,15 +158,19 @@ export function serializeCompilationCache(): SerializedCompilationCache {
   };
 }
 
-export function addToCompilationCache(payload: any) {
+export function addToCompilationCache(payload: SerializedCompilationCache) {
   for (const entry of payload.sourceMaps)
     sourceMaps.set(entry[0], entry[1]);
   for (const entry of payload.memoryCache)
     memoryCache.set(entry[0], entry[1]);
-  for (const entry of payload.fileDependencies)
-    fileDependencies.set(entry[0], new Set(entry[1]));
-  for (const entry of payload.externalDependencies)
-    externalDependencies.set(entry[0], new Set(entry[1]));
+  for (const entry of payload.fileDependencies) {
+    const existing = fileDependencies.get(entry[0]) || [];
+    fileDependencies.set(entry[0], new Set([...entry[1], ...existing]));
+  }
+  for (const entry of payload.externalDependencies) {
+    const existing = externalDependencies.get(entry[0]) || [];
+    externalDependencies.set(entry[0], new Set([...entry[1], ...existing]));
+  }
 }
 
 function calculateCachePath(filePath: string, hash: string): string {
@@ -249,9 +253,9 @@ const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/con
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
-  if (file.startsWith(kPlaywrightInternalPrefix) && file.endsWith('.js'))
+  if (file.startsWith(kPlaywrightInternalPrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
     return true;
-  if (file.startsWith(kPlaywrightCoveragePrefix) && file.endsWith('.js'))
+  if (file.startsWith(kPlaywrightCoveragePrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
     return true;
   return false;
 }

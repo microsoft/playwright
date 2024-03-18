@@ -240,7 +240,7 @@ function installTransform(): () => void {
     if (!shouldTransform(filename))
       return code;
     return transformHook(code, filename).code;
-  }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });
+  }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts'] });
 
   return () => {
     reverted = true;

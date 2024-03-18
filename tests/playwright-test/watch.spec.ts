@@ -91,8 +91,85 @@ test('should print dependencies in ESM mode', async ({ runInlineTest }) => {
   const output = result.output;
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
-    'a.test.ts': ['helperA.ts', 'index.mjs'],
-    'b.test.ts': ['helperA.ts', 'helperB.ts', 'index.mjs'],
+    'a.test.ts': ['helperA.ts'],
+    'b.test.ts': ['helperA.ts', 'helperB.ts'],
+  });
+});
+
+test('should print dependencies in mixed CJS/ESM mode 1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        globalTeardown: './globalTeardown.ts',
+      });
+    `,
+    'helperA.cjs': `exports.foo = () => {}`,
+    'helperB.cjs': `require('./helperA');`,
+    'a.test.ts': `
+      import './helperA';
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'b.test.cjs': `
+      require('./helperB');
+      const { test, expect } = require('@playwright/test');
+      test('passes', () => {});
+    `,
+    'globalTeardown.ts': `
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      export default () => {
+        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+      };
+    `
+  }, {});
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  const output = result.output;
+  const deps = JSON.parse(output.match(/###(.*)###/)![1]);
+  expect(deps).toEqual({
+    'a.test.ts': ['helperA.cjs'],
+    'b.test.cjs': ['helperA.cjs', 'helperB.cjs'],
+  });
+});
+
+test('should print dependencies in mixed CJS/ESM mode 2', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.mts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        globalTeardown: './globalTeardown.ts',
+      });
+    `,
+    'helperA.cjs': `exports.foo = () => {}`,
+    'helperB.cts': `import './helperA';`,
+    'a.test.mts': `
+      import './helperA';
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'b.test.ts': `
+      import './helperB';
+      const { test, expect } = require('@playwright/test');
+      test('passes', () => {});
+    `,
+    'globalTeardown.ts': `
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      export default () => {
+        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+      };
+    `
+  }, {});
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  const output = result.output;
+  const deps = JSON.parse(output.match(/###(.*)###/)![1]);
+  expect(deps).toEqual({
+    'a.test.mts': ['helperA.cjs'],
+    'b.test.ts': ['helperA.cjs', 'helperB.cts'],
   });
 });
 

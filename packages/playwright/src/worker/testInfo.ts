@@ -171,7 +171,7 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
+      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
 
