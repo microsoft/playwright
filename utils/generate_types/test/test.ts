@@ -331,9 +331,9 @@ playwright.chromium.launch().then(async browser => {
   }
   // evaluteHandle with two different return types (ElementHandle)
   {
-    const handle = await page.evaluateHandle(() => '' as HTMLInputElement | HTMLTextAreaElement);
+    const handle = await page.evaluateHandle(() => '' as any as HTMLInputElement | HTMLTextAreaElement);
     await handle.evaluate(element => element.value);
-    const assertion: AssertType<ElementHandle<HTMLInputElement | HTMLTextAreaElement>, typeof handle> = true;
+    const assertion: AssertType<playwright.ElementHandle<HTMLInputElement | HTMLTextAreaElement>, typeof handle> = true;
   }
 
 
