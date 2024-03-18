@@ -16,7 +16,8 @@
  */
 
 import path from 'path';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import type { HttpServer, ManualPromise } from 'playwright-core/lib/utils';
+import { isUnderTest, monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
@@ -25,12 +26,13 @@ import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
-import { runUIMode } from './uiMode';
+import { runTestServer } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
 import { affectedTestFiles } from '../transform/compilationCache';
+import { installRootRedirect, openTraceInBrowser, openTraceViewerApp } from 'playwright-core/lib/server';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -146,10 +148,32 @@ export class Runner {
     return await runWatchModeLoop(config);
   }
 
-  async uiAllTests(options: { host?: string, port?: number }): Promise<FullResult['status']> {
+  async runUIMode(options: { host?: string, port?: number }): Promise<FullResult['status']> {
     const config = this._config;
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    return await runUIMode(config, options);
+    return await runTestServer(config, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
+      await installRootRedirect(server, [], { webApp: 'uiMode.html' });
+      if (options.host !== undefined || options.port !== undefined) {
+        await openTraceInBrowser(server.urlPrefix());
+      } else {
+        const page = await openTraceViewerApp(server.urlPrefix(), 'chromium', {
+          headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
+          persistentContextOptions: {
+            handleSIGINT: false,
+          },
+        });
+        page.on('close', () => cancelPromise.resolve());
+      }
+    });
+  }
+
+  async runTestServer(options: { host?: string, port?: number }): Promise<FullResult['status']> {
+    const config = this._config;
+    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+    return await runTestServer(config, options, async server => {
+      // eslint-disable-next-line no-console
+      console.log('Listening on ' + server.urlPrefix().replace('http:', 'ws:') + '/' + server.wsGuid());
+    });
   }
 
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {

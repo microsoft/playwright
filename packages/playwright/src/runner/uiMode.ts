@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { openTraceViewerApp, openTraceInBrowser, registry } from 'playwright-core/lib/server';
-import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
+import { registry, startTraceViewerServer } from 'playwright-core/lib/server';
+import { ManualPromise } from 'playwright-core/lib/utils';
+import type { Transport, HttpServer } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
@@ -25,14 +26,13 @@ import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
-import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
 
-class UIMode {
+class TestServer {
   private _config: FullConfigInternal;
-  private _transport!: Transport;
+  private _transport: Transport | undefined;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _globalWatcher: Watcher;
@@ -80,10 +80,9 @@ class UIMode {
     return status;
   }
 
-  async showUI(options: { host?: string, port?: number }, cancelPromise: ManualPromise<void>) {
+  async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     let queue = Promise.resolve();
-
-    this._transport = {
+    const transport: Transport = {
       dispatch: async (method, params) => {
         if (method === 'ping')
           return;
@@ -118,25 +117,13 @@ class UIMode {
         await queue;
       },
 
-      onclose: () => { },
+      onclose: () => {},
     };
-    const openOptions: OpenTraceViewerOptions = {
-      app: 'uiMode.html',
-      headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
-      transport: this._transport,
-      host: options.host,
-      port: options.port,
-      persistentContextOptions: {
-        handleSIGINT: false,
-      },
-    };
-    if (options.host !== undefined || options.port !== undefined) {
-      await openTraceInBrowser([], openOptions);
-    } else {
-      const page = await openTraceViewerApp([], 'chromium', openOptions);
-      page.on('close', () => cancelPromise.resolve());
-    }
+    this._transport = transport;
+    return await startTraceViewerServer({ ...options, transport });
+  }
 
+  wireStdIO() {
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
@@ -147,8 +134,9 @@ class UIMode {
         return true;
       };
     }
-    await cancelPromise;
+  }
 
+  unwireStdIO() {
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = this._originalStdoutWrite;
       process.stderr.write = this._originalStderrWrite;
@@ -163,7 +151,7 @@ class UIMode {
   }
 
   private _dispatchEvent(method: string, params?: any) {
-    this._transport.sendEvent?.(method, params);
+    this._transport?.sendEvent?.(method, params);
   }
 
   private async _listTests() {
@@ -227,20 +215,24 @@ class UIMode {
   }
 }
 
-export async function runUIMode(config: FullConfigInternal, options: { host?: string, port?: number }): Promise<FullResult['status']> {
-  const uiMode = new UIMode(config);
-  const globalSetupStatus = await uiMode.runGlobalSetup();
+export async function runTestServer(config: FullConfigInternal, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<FullResult['status']> {
+  const testServer = new TestServer(config);
+  const globalSetupStatus = await testServer.runGlobalSetup();
   if (globalSetupStatus !== 'passed')
     return globalSetupStatus;
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
-    await uiMode.showUI(options, cancelPromise);
+    const server = await testServer.start(options);
+    await openUI(server, cancelPromise);
+    testServer.wireStdIO();
+    await cancelPromise;
   } finally {
+    testServer.unwireStdIO();
     sigintWatcher.disarm();
   }
-  return await uiMode.globalCleanup?.() || (sigintWatcher.hadSignal() ? 'interrupted' : 'passed');
+  return await testServer.globalCleanup?.() || (sigintWatcher.hadSignal() ? 'interrupted' : 'passed');
 }
 
 type StdioPayload = {

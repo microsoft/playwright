@@ -78,7 +78,7 @@ export function createTaskRunnerForWatchSetup(config: FullConfigInternal, report
 
 export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: ReporterV2, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunTestsOutsideProjectFilter: true, additionalFileMatcher }));
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true, additionalFileMatcher }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -86,7 +86,7 @@ export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: R
 export function createTaskRunnerForTestServer(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
   addGlobalSetupTasks(taskRunner, config);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunTestsOutsideProjectFilter: true }));
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -195,10 +195,10 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunTestsOutsideProjectFilter?: boolean, additionalFileMatcher?: Matcher }): Task<TestRun> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean, additionalFileMatcher?: Matcher }): Task<TestRun> {
   return {
     setup: async (testRun, errors, softErrors) => {
-      await collectProjectsAndTestFiles(testRun, !!options.doNotRunTestsOutsideProjectFilter, options.additionalFileMatcher);
+      await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter, options.additionalFileMatcher);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);

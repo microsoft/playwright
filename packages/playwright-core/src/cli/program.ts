@@ -23,8 +23,8 @@ import type { Command } from '../utilsBundle';
 import { program } from '../utilsBundle';
 export { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
-import type { OpenTraceViewerOptions } from '../server/trace/viewer/traceViewer';
-import { openTraceInBrowser, openTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import type { BrowserContext } from '../client/browserContext';
 import type { Browser } from '../client/browser';
@@ -305,19 +305,16 @@ program
       if (options.browser === 'wk')
         options.browser = 'webkit';
 
-      const openOptions: OpenTraceViewerOptions = {
-        headless: false,
+      const openOptions: TraceViewerServerOptions = {
         host: options.host,
         port: +options.port,
         isServer: !!options.stdin,
       };
-      if (options.port !== undefined || options.host !== undefined) {
-        openTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
-      } else {
-        openTraceViewerApp(traces, options.browser, openOptions).then(page => {
-          page.on('close', () => gracefullyProcessExitDoNotHang(0));
-        }).catch(logErrorAndExit);
-      }
+
+      if (options.port !== undefined || options.host !== undefined)
+        runTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
+      else
+        runTraceViewerApp(traces, options.browser, openOptions, true).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
