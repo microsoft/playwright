@@ -166,7 +166,7 @@ export const UIModeView: React.FC<{}> = ({
       setProgress({ total: 0, passed: 0, failed: 0, skipped: 0 });
       setRunningState({ testIds });
 
-      await sendMessage('run', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
+      await sendMessage('runTests', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
@@ -625,7 +625,7 @@ const refreshRootSuite = (): Promise<void> => {
     },
     pathSeparator,
   });
-  return sendMessage('list', {});
+  return sendMessage('listTests', {});
 };
 
 const sendMessageNoReply = (method: string, params?: any) => {
@@ -641,7 +641,7 @@ const sendMessageNoReply = (method: string, params?: any) => {
 
 const dispatchEvent = (method: string, params?: any) => {
   if (method === 'listChanged') {
-    sendMessage('list', {}).catch(() => {});
+    sendMessage('listTests', {}).catch(() => {});
     return;
   }
 

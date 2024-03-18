@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../../types/testReporter';
+import type * as reporterTypes from '../../types/testReporter';
 
 export interface TestServerInterface {
-  listFiles(params: {
-    configFile: string;
-  }): Promise<{
+  ping(): Promise<void>;
+
+  watch(params: {
+    fileNames: string[];
+  }): Promise<void>;
+
+  open(params: { location: reporterTypes.Location }): Promise<void>;
+
+  resizeTerminal(params: { cols: number, rows: number }): Promise<void>;
+
+  checkBrowsers(): Promise<{ hasBrowsers: boolean }>;
+
+  installBrowsers(): Promise<void>;
+
+  listFiles(): Promise<{
     projects: {
       name: string;
       testDir: string;
@@ -27,41 +39,40 @@ export interface TestServerInterface {
       files: string[];
     }[];
     cliEntryPoint?: string;
-    error?: TestError;
+    error?: reporterTypes.TestError;
   }>;
 
   listTests(params: {
-    configFile: string;
-    locations: string[];
-    reporter: string;
+    reporter?: string;
+    fileNames?: string[];
   }): Promise<void>;
 
-  test(params: {
-    configFile: string;
-    locations: string[];
-    reporter: string;
+  runTests(params: {
+    reporter?: string;
+    locations?: string[];
+    grep?: string;
+    testIds?: string[];
     headed?: boolean;
     oneWorker?: boolean;
     trace?: 'on' | 'off';
     projects?: string[];
-    grep?: string;
     reuseContext?: boolean;
     connectWsEndpoint?: string;
   }): Promise<void>;
 
   findRelatedTestFiles(params: {
-    configFile: string;
     files: string[];
-  }): Promise<{ testFiles: string[]; errors?: TestError[]; }>;
+  }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }>;
 
-  stop(params: {
-    configFile: string;
-  }): Promise<void>;
+  stop(): Promise<void>;
 
   closeGracefully(): Promise<void>;
 }
 
 export interface TestServerEvents {
-  on(event: 'report', listener: (params: any) => void): void;
+  on(event: 'listReport', listener: (params: any) => void): void;
+  on(event: 'testReport', listener: (params: any) => void): void;
   on(event: 'stdio', listener: (params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }) => void): void;
+  on(event: 'listChanged', listener: () => void): void;
+  on(event: 'testFilesChanged', listener: (testFileNames: string[]) => void): void;
 }
