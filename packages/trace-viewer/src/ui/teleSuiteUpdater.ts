@@ -128,11 +128,16 @@ export class TeleSuiteUpdater {
     };
   }
 
-  dispatch(mode: 'test' | 'list', message: any) {
+  processListReport(report: any[]) {
+    this._receiver.reset();
+    for (const message of report)
+      this._receiver.dispatch(message);
+  }
+
+  processTestReport(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    if (mode === 'test')
-      this._lastRunReceiver?.dispatch('test', message)?.catch(() => {});
-    this._receiver.dispatch(mode, message)?.catch(() => {});
+    this._lastRunReceiver?.dispatch(message)?.catch(() => {});
+    this._receiver.dispatch(message)?.catch(() => {});
   }
 }

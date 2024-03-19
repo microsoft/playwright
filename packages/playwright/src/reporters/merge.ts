@@ -65,7 +65,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     for (const event of events) {
       if (event.method === 'onEnd')
         printStatus(`building final report`);
-      await receiver.dispatch('test', event);
+      await receiver.dispatch(event);
       if (event.method === 'onEnd')
         printStatus(`finished building report`);
     }

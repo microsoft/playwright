@@ -135,7 +135,6 @@ export class TeleReporterReceiver {
   private _reporter: Partial<ReporterV2>;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
-  private _listOnly = false;
   private _config!: reporterTypes.FullConfig;
 
   constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
@@ -144,11 +143,16 @@ export class TeleReporterReceiver {
     this._reporter = reporter;
   }
 
-  dispatch(mode: 'list' | 'test', message: JsonEvent): Promise<void> | void {
+  reset() {
+    this._rootSuite.suites = [];
+    this._rootSuite.tests = [];
+    this._tests.clear();
+  }
+
+  dispatch(message: JsonEvent): Promise<void> | void {
     const { method, params } = message;
     if (method === 'onConfigure') {
       this._onConfigure(params.config);
-      this._listOnly = mode === 'list';
       return;
     }
     if (method === 'onProject') {
@@ -205,23 +209,6 @@ export class TeleReporterReceiver {
     // Always update project in watch mode.
     projectSuite._project = this._parseProject(project);
     this._mergeSuitesInto(project.suites, projectSuite);
-
-    // Remove deleted tests when listing. Empty suites will be auto-filtered
-    // in the UI layer.
-    if (this._listOnly) {
-      const testIds = new Set<string>();
-      const collectIds = (suite: JsonSuite) => {
-        suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
-        suite.suites.forEach(collectIds);
-      };
-      project.suites.forEach(collectIds);
-
-      const filterTests = (suite: TeleSuite) => {
-        suite.tests = suite.tests.filter(t => testIds.has(t.id));
-        suite.suites.forEach(filterTests);
-      };
-      filterTests(projectSuite);
-    }
   }
 
   private _onBegin() {

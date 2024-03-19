@@ -89,7 +89,6 @@ function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'ui
   return {
     configDir: config.configDir,
     _send: send,
-    _mode: mode,
   };
 }
 
