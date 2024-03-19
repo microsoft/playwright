@@ -15,7 +15,7 @@
  */
 
 import util from 'util';
-import { serializeCompilationCache } from '../transform/compilationCache';
+import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
@@ -43,7 +43,7 @@ export type ConfigCLIOverrides = {
 export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
-  compilationCache: any;
+  compilationCache?: SerializedCompilationCache;
 };
 
 export type TtyParams = {
