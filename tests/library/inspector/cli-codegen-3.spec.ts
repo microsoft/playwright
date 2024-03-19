@@ -648,4 +648,18 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     expect.soft(sources1.get('Java')!.text).toContain(`assertThat(page.getByRole(AriaRole.TEXTBOX)).isVisible()`);
     expect.soft(sources1.get('C#')!.text).toContain(`await Expect(page.GetByRole(AriaRole.Textbox)).ToBeVisibleAsync()`);
   });
+
+  test('should assert screenshot', async ({ openRecorder }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`<div>Hello, world</div>`);
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'toHaveScreenshot'),
+      recorder.page.click('x-pw-tool-item.screenshot'),
+    ]);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`await expect(page).toHaveScreenshot()`);
+    expect.soft(sources.get('Python')!.text).toContain(`# assert_screenshot(page.screenshot())`);
+    expect.soft(sources.get('Python Async')!.text).toContain(`# assert_screenshot(await page.screenshot())`);
+    expect.soft(sources.get('Java')!.text).toContain(`// assertScreenshot(page.screenshot());`);
+    expect.soft(sources.get('C#')!.text).toContain(`// AssertScreenshot(await page.ScreenshotAsync())`);
+  });
 });

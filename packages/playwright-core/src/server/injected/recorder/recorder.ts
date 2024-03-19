@@ -761,6 +761,7 @@ class Overlay {
   private _assertVisibilityToggle: HTMLElement;
   private _assertTextToggle: HTMLElement;
   private _assertValuesToggle: HTMLElement;
+  private _assertScreenshotButton: HTMLElement;
   private _offsetX = 0;
   private _dragState: { offsetX: number, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
@@ -807,6 +808,12 @@ class Overlay {
     this._assertValuesToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
     toolsListElement.appendChild(this._assertValuesToggle);
 
+    this._assertScreenshotButton = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertScreenshotButton.title = 'Assert screenshot';
+    this._assertScreenshotButton.classList.add('screenshot');
+    this._assertScreenshotButton.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    toolsListElement.appendChild(this._assertScreenshotButton);
+
     this._updateVisualPosition();
     this._refreshListeners();
   }
@@ -845,6 +852,15 @@ class Overlay {
         if (!this._assertValuesToggle.classList.contains('disabled'))
           this._recorder.delegate.setMode?.(this._recorder.state.mode === 'assertingValue' ? 'recording' : 'assertingValue');
       }),
+      addEventListener(this._assertScreenshotButton, 'click', () => {
+        if (!this._assertScreenshotButton.classList.contains('disabled')) {
+          this._recorder.delegate.recordAction?.({
+            name: 'assertScreenshot',
+            signals: [],
+          });
+          this.flashToolSucceeded('assertScreenshot');
+        }
+      }),
     ];
   }
 
@@ -867,6 +883,7 @@ class Overlay {
     this._assertTextToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertValuesToggle.classList.toggle('active', state.mode === 'assertingValue');
     this._assertValuesToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
+    this._assertScreenshotButton.classList.toggle('disabled', state.mode !== 'recording');
     if (this._offsetX !== state.overlay.offsetX) {
       this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
@@ -877,8 +894,12 @@ class Overlay {
       this._showOverlay();
   }
 
-  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue') {
-    const element = tool === 'assertingVisibility' ? this._assertVisibilityToggle : this._assertValuesToggle;
+  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue' | 'assertScreenshot') {
+    const element = {
+      'assertingVisibility': this._assertVisibilityToggle,
+      'assertingValue': this._assertValuesToggle,
+      'assertScreenshot': this._assertScreenshotButton,
+    }[tool];
     element.classList.add('succeeded');
     setTimeout(() => element.classList.remove('succeeded'), 2000);
   }
