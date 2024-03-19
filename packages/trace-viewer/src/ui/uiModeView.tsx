@@ -193,7 +193,7 @@ export const UIModeView: React.FC<{}> = ({
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests, visibleTestIds]);
+  }, [runTests, reloadTests]);
 
   const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
