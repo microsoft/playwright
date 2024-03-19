@@ -1797,8 +1797,8 @@ export interface Page {
    * - Playwright checks for the overlay every time before executing or retrying an action that requires an
    *   [actionability check](https://playwright.dev/docs/actionability), or before performing an auto-waiting assertion check. When overlay
    *   is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the
-   *   handler is called only when you perform an action and the locator is visible, if the overlay becomes visible
-   *   but you don't call any action, the hadler will not be triggered.
+   *   handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't
+   *   perform any actions, the handler will not be triggered.
    * - The execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
    *   If your handler takes too long, it might cause timeouts.
    * - You can register multiple handlers. However, only a single handler will be running at a time. Make sure the
