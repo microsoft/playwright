@@ -16,67 +16,94 @@
 
 import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
 import type { Location, TestError } from 'playwright/types/testReporter';
-import { connect } from './wsPort';
-import type { Event } from '@testIsomorphic/events';
-import { EventEmitter } from '@testIsomorphic/events';
+import * as events from './events';
 
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
-  readonly onClose: Event<void>;
-  readonly onListReport: Event<any>;
-  readonly onTestReport: Event<any>;
-  readonly onStdio: Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
-  readonly onListChanged: Event<void>;
-  readonly onTestFilesChanged: Event<string[]>;
+  readonly onClose: events.Event<void>;
+  readonly onListReport: events.Event<any>;
+  readonly onTestReport: events.Event<any>;
+  readonly onStdio: events.Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
+  readonly onListChanged: events.Event<void>;
+  readonly onTestFilesChanged: events.Event<{ testFiles: string[] }>;
+  readonly onLoadTraceRequested: events.Event<{ traceUrl: string }>;
 
-  private _onCloseEmitter = new EventEmitter<void>();
-  private _onListReportEmitter = new EventEmitter<any>();
-  private _onTestReportEmitter = new EventEmitter<any>();
-  private _onStdioEmitter = new EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
-  private _onListChangedEmitter = new EventEmitter<void>();
-  private _onTestFilesChangedEmitter = new EventEmitter<string[]>();
+  private _onCloseEmitter = new events.EventEmitter<void>();
+  private _onListReportEmitter = new events.EventEmitter<any>();
+  private _onTestReportEmitter = new events.EventEmitter<any>();
+  private _onStdioEmitter = new events.EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
+  private _onListChangedEmitter = new events.EventEmitter<void>();
+  private _onTestFilesChangedEmitter = new events.EventEmitter<{ testFiles: string[] }>();
+  private _onLoadTraceRequestedEmitter = new events.EventEmitter<{ traceUrl: string }>();
 
-  private _send: Promise<(method: string, params?: any) => Promise<any>>;
+  private _lastId = 0;
+  private _ws: WebSocket;
+  private _callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
+  private _connectedPromise: Promise<void>;
 
-  constructor() {
+  constructor(wsURL: string) {
     this.onClose = this._onCloseEmitter.event;
     this.onListReport = this._onListReportEmitter.event;
     this.onTestReport = this._onTestReportEmitter.event;
     this.onStdio = this._onStdioEmitter.event;
     this.onListChanged = this._onListChangedEmitter.event;
     this.onTestFilesChanged = this._onTestFilesChangedEmitter.event;
+    this.onLoadTraceRequested = this._onLoadTraceRequestedEmitter.event;
 
-    this._send = connect({
-      onEvent: (method, params) => this._dispatchEvent(method, params),
-      onClose: () => this._onCloseEmitter.fire(),
+    this._ws = new WebSocket(wsURL);
+    this._ws.addEventListener('message', event => {
+      const message = JSON.parse(String(event.data));
+      const { id, result, error, method, params } = message;
+      if (id) {
+        const callback = this._callbacks.get(id);
+        if (!callback)
+          return;
+        this._callbacks.delete(id);
+        if (error)
+          callback.reject(new Error(error));
+        else
+          callback.resolve(result);
+      } else {
+        this._dispatchEvent(method, params);
+      }
+    });
+    const pingInterval = setInterval(() => this._sendMessage('ping').catch(() => {}), 30000);
+    this._connectedPromise = new Promise<void>((f, r) => {
+      this._ws.addEventListener('open', () => {
+        f();
+        this._ws.send(JSON.stringify({ method: 'ready' }));
+      });
+      this._ws.addEventListener('error', r);
+    });
+    this._ws.addEventListener('close', () => {
+      this._onCloseEmitter.fire();
+      clearInterval(pingInterval);
     });
   }
 
   private async _sendMessage(method: string, params?: any): Promise<any> {
-    if ((window as any)._sniffProtocolForTest)
-      (window as any)._sniffProtocolForTest({ method, params }).catch(() => {});
-
-    const send = await this._send;
-    const logForTest = (window as any).__logForTest;
+    const logForTest = (globalThis as any).__logForTest;
     logForTest?.({ method, params });
-    return send(method, params).catch((e: Error) => {
-      // eslint-disable-next-line no-console
-      console.error(e);
+
+    await this._connectedPromise;
+    const id = ++this._lastId;
+    const message = { id, method, params };
+    this._ws.send(JSON.stringify(message));
+    return new Promise((resolve, reject) => {
+      this._callbacks.set(id, { resolve, reject });
     });
   }
 
   private _dispatchEvent(method: string, params?: any) {
-    if (method === 'close')
-      this._onCloseEmitter.fire(undefined);
-    else if (method === 'listReport')
+    if (method === 'listReport')
       this._onListReportEmitter.fire(params);
     else if (method === 'testReport')
       this._onTestReportEmitter.fire(params);
     else if (method === 'stdio')
       this._onStdioEmitter.fire(params);
     else if (method === 'listChanged')
-      this._onListChangedEmitter.fire(undefined);
+      this._onListChangedEmitter.fire(params);
     else if (method === 'testFilesChanged')
-      this._onTestFilesChangedEmitter.fire(params.testFileNames);
+      this._onTestFilesChangedEmitter.fire(params);
   }
 
   async ping(): Promise<void> {

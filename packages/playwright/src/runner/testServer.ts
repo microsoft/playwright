@@ -28,7 +28,7 @@ import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
-import type { TestServerInterface } from '../isomorphic/testServerInterface';
+import type { TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import { Runner } from './runner';
 import { serializeError } from '../util';
 import { prepareErrorStack } from '../reporters/base';
@@ -95,6 +95,7 @@ class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
   private _queue = Promise.resolve();
   private _globalCleanup: (() => Promise<FullResult['status']>) | undefined;
+  readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
   constructor(config: FullConfigInternal) {
     this._config = config;
@@ -106,8 +107,9 @@ class TestServerDispatcher implements TestServerInterface {
     this._testWatcher = new Watcher('flat', events => {
       const collector = new Set<string>();
       events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent('testFilesChanged', { testFileNames: [...collector] });
+      this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
     });
+    this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
   }
 
   async ping() {}
@@ -251,10 +253,6 @@ class TestServerDispatcher implements TestServerInterface {
 
   async closeGracefully() {
     gracefullyProcessExitDoNotHang(0);
-  }
-
-  _dispatchEvent(method: string, params?: any) {
-    this.transport.sendEvent?.(method, params);
   }
 }
 

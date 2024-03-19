@@ -210,10 +210,10 @@ class StdinServer implements Transport {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  private _loadTrace(url: string) {
-    this._traceUrl = url;
+  private _loadTrace(traceUrl: string) {
+    this._traceUrl = traceUrl;
     clearTimeout(this._pollTimer);
-    this.sendEvent?.('loadTrace', { url });
+    this.sendEvent?.('loadTraceRequested', { traceUrl });
   }
 
   private _pollLoadTrace(url: string) {

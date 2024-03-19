@@ -169,7 +169,7 @@ test('should pick new / deleted nested tests', async ({ runUITest, writeFiles, d
   `);
 });
 
-test('should update test locations', async ({ runUITest, writeFiles, deleteFile }) => {
+test('should update test locations', async ({ runUITest, writeFiles }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -182,8 +182,8 @@ test('should update test locations', async ({ runUITest, writeFiles, deleteFile 
         ◯ passes
   `);
 
-  const messages: any = [];
-  await page.exposeBinding('_sniffProtocolForTest', (_, data) => messages.push(data));
+  const messages: any[] = [];
+  await page.exposeBinding('__logForTest', (source, arg) => messages.push(arg));
 
   const passesItemLocator = page.getByRole('listitem').filter({ hasText: 'passes' });
   await passesItemLocator.hover();

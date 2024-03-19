@@ -42,7 +42,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
 import { testStatusIcon } from './testUtils';
-import { TestServerConnection } from './testServerConnection';
+import { TestServerConnection } from '@testIsomorphic/testServerConnection';
 
 let updateRootSuite: (config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
@@ -90,7 +90,10 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    const connection = new TestServerConnection();
+    const guid = new URLSearchParams(window.location.search).get('ws');
+    const wsURL = new URL(`../${guid}`, window.location.toString());
+    wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+    const connection = new TestServerConnection(wsURL.toString());
     wireConnectionListeners(connection);
     connection.onClose(() => setIsDisconnected(true));
     setTestServerConnection(connection);
@@ -653,8 +656,8 @@ const wireConnectionListeners = (testServerConnection: TestServerConnection) => 
     testServerConnection.listTests({}).catch(() => {});
   });
 
-  testServerConnection.onTestFilesChanged(testFiles => {
-    runWatchedTests(testFiles);
+  testServerConnection.onTestFilesChanged(params => {
+    runWatchedTests(params.testFiles);
   });
 
   testServerConnection.onStdio(params => {
