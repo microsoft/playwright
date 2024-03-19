@@ -438,3 +438,19 @@ it('should fulfill json', async ({ page, server }) => {
   expect(response.headers()['content-type']).toBe('application/json');
   expect(body).toBe(JSON.stringify({ bar: 'baz' }));
 });
+
+it('should fulfill with gzip and readback', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29261' },
+}, async ({ page, server }) => {
+  server.enableGzip('/one-style.html');
+  await page.route('**/one-style.html', async route => {
+    const response = await route.fetch();
+    expect(response.headers()['content-encoding']).toBe('gzip');
+    await route.fulfill({ response });
+  });
+
+  const response = await page.goto(server.PREFIX + '/one-style.html');
+  await expect(page.locator('div')).toHaveText('hello, world!');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+  expect(await response.text()).toContain(`<div>hello, world!</div>`);
+});
