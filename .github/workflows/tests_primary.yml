@@ -6,9 +6,6 @@ on:
       - main
       - release-*
   pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
     branches:
       - main
       - release-*
