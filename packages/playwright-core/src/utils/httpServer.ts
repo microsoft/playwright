@@ -86,8 +86,12 @@ export class HttpServer {
       transport.close = () => ws.close();
       ws.on('message', async (message: string) => {
         const { id, method, params } = JSON.parse(message);
-        const result = await transport.dispatch(method, params);
-        ws.send(JSON.stringify({ id, result }));
+        try {
+          const result = await transport.dispatch(method, params);
+          ws.send(JSON.stringify({ id, result }));
+        } catch (e) {
+          ws.send(JSON.stringify({ id, error: String(e) }));
+        }
       });
       ws.on('close', () => transport.onclose());
       ws.on('error', () => transport.onclose());
