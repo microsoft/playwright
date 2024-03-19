@@ -152,6 +152,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `hasValue(${quote(action.value)})` : `isEmpty()`;
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${assertion};`;
       }
+      case 'assertScreenshot':
+        return `// assertScreenshot(${subject}.screenshot());`;
     }
   }
 
