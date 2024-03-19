@@ -41,6 +41,7 @@ jobs:
     - name: Update to Evergreen WebView2 Runtime
       shell: pwsh
       run: |
+        # See here: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
         Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'setup.exe'
         Start-Process -FilePath setup.exe -Verb RunAs -Wait
     - run: npm run webview2test
