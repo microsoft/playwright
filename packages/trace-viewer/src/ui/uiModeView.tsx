@@ -179,13 +179,10 @@ export const UIModeView: React.FC<{}> = ({
 
   React.useEffect(() => {
     const onShortcutEvent = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        runTests('bounce-if-busy', visibleTestIds);
-      } else if (e.code === 'KeyS' && (e.metaKey || e.ctrlKey)) {
+      if (e.code === 'F6') {
         e.preventDefault();
         sendMessageNoReply('stop');
-      } else if (e.code === 'KeyU' && (e.metaKey || e.ctrlKey)) {
+      } else if (e.code === 'F5') {
         e.preventDefault();
         reloadTests();
       }
