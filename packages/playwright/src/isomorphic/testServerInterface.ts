@@ -15,6 +15,7 @@
  */
 
 import type * as reporterTypes from '../../types/testReporter';
+import type { Event } from './events';
 
 export interface TestServerInterface {
   ping(): Promise<void>;
@@ -30,6 +31,10 @@ export interface TestServerInterface {
   checkBrowsers(): Promise<{ hasBrowsers: boolean }>;
 
   installBrowsers(): Promise<void>;
+
+  runGlobalSetup(): Promise<reporterTypes.FullResult['status']>;
+
+  runGlobalTeardown(): Promise<reporterTypes.FullResult['status']>;
 
   listFiles(): Promise<{
     projects: {
@@ -69,10 +74,11 @@ export interface TestServerInterface {
   closeGracefully(): Promise<void>;
 }
 
-export interface TestServerEvents {
-  on(event: 'listReport', listener: (params: any) => void): void;
-  on(event: 'testReport', listener: (params: any) => void): void;
-  on(event: 'stdio', listener: (params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }) => void): void;
-  on(event: 'listChanged', listener: () => void): void;
-  on(event: 'testFilesChanged', listener: (testFileNames: string[]) => void): void;
+export interface TestServerInterfaceEvents {
+  onClose: Event<void>;
+  onListReport: Event<any>;
+  onTestReport: Event<any>;
+  onStdio: Event<{ type: 'stdout' | 'stderr', text?: string, buffer?: string }>;
+  onListChanged: Event<void>;
+  onTestFilesChanged: Event<string[]>;
 }

@@ -308,12 +308,6 @@ export class TestTree {
     visit(treeItem);
     return testIds;
   }
-
-  locationToOpen(treeItem?: TreeItem) {
-    if (!treeItem)
-      return;
-    return treeItem.location.file + ':' + treeItem.location.line;
-  }
 }
 
 export function sortAndPropagateStatus(treeItem: TreeItem) {
