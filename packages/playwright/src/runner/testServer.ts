@@ -15,7 +15,7 @@
  */
 
 import { registry, startTraceViewerServer } from 'playwright-core/lib/server';
-import { ManualPromise, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import type { Transport, HttpServer } from 'playwright-core/lib/utils';
 import type { FullResult, Location, TestError } from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
@@ -28,7 +28,7 @@ import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
-import type { TestServerInterface } from './testServerInterface';
+import type { TestServerInterface } from '../isomorphic/testServerInterface';
 import { Runner } from './runner';
 import { serializeError } from '../util';
 import { prepareErrorStack } from '../reporters/base';
@@ -36,7 +36,6 @@ import { prepareErrorStack } from '../reporters/base';
 class TestServer {
   private _config: FullConfigInternal;
   private _dispatcher: TestServerDispatcher | undefined;
-  globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _originalStdoutWrite: NodeJS.WriteStream['write'];
   private _originalStderrWrite: NodeJS.WriteStream['write'];
 
@@ -58,25 +57,13 @@ class TestServer {
     this._originalStderrWrite = process.stderr.write;
   }
 
-  async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = new InternalReporter(new ListReporter());
-    const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
-    reporter.onConfigure(this._config.config);
-    const testRun = new TestRun(this._config, reporter);
-    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
-    if (status !== 'passed') {
-      await globalCleanup();
-      return status;
-    }
-    this.globalCleanup = globalCleanup;
-    return status;
-  }
-
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._config);
     return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
+  }
+
+  async stop() {
+    await this._dispatcher?.runGlobalTeardown();
   }
 
   wireStdIO() {
@@ -107,6 +94,7 @@ class TestServerDispatcher implements TestServerInterface {
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   readonly transport: Transport;
   private _queue = Promise.resolve();
+  private _globalCleanup: (() => Promise<FullResult['status']>) | undefined;
 
   constructor(config: FullConfigInternal) {
     this._config = config;
@@ -125,8 +113,10 @@ class TestServerDispatcher implements TestServerInterface {
   async ping() {}
 
   async open(params: { location: Location }) {
+    if (isUnderTest())
+      return;
     // eslint-disable-next-line no-console
-    open('vscode://file/' + params.location.file + ':' + params.location.column).catch(e => console.error(e));
+    open('vscode://file/' + params.location.file + ':' + params.location.line).catch(e => console.error(e));
   }
 
   async resizeTerminal(params: { cols: number; rows: number; }) {
@@ -142,6 +132,30 @@ class TestServerDispatcher implements TestServerInterface {
 
   async installBrowsers() {
     await installBrowsers();
+  }
+
+  async runGlobalSetup(): Promise<FullResult['status']> {
+    await this.runGlobalTeardown();
+
+    const reporter = new InternalReporter(new ListReporter());
+    const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
+    reporter.onConfigure(this._config.config);
+    const testRun = new TestRun(this._config, reporter);
+    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    if (status !== 'passed') {
+      await globalCleanup();
+      return status;
+    }
+    this._globalCleanup = globalCleanup;
+    return status;
+  }
+
+  async runGlobalTeardown() {
+    const result = (await this._globalCleanup?.()) || 'passed';
+    this._globalCleanup = undefined;
+    return result;
   }
 
   async listFiles() {
@@ -246,9 +260,6 @@ class TestServerDispatcher implements TestServerInterface {
 
 export async function runTestServer(config: FullConfigInternal, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<FullResult['status']> {
   const testServer = new TestServer(config);
-  const globalSetupStatus = await testServer.runGlobalSetup();
-  if (globalSetupStatus !== 'passed')
-    return globalSetupStatus;
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
@@ -259,9 +270,10 @@ export async function runTestServer(config: FullConfigInternal, options: { host?
     await cancelPromise;
   } finally {
     testServer.unwireStdIO();
+    await testServer.stop();
     sigintWatcher.disarm();
   }
-  return await testServer.globalCleanup?.() || (sigintWatcher.hadSignal() ? 'interrupted' : 'passed');
+  return sigintWatcher.hadSignal() ? 'interrupted' : 'passed';
 }
 
 type StdioPayload = {

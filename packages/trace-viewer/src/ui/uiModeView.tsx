@@ -39,25 +39,20 @@ import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
 import type { ActionTraceEvent } from '@trace/trace';
-import { connect } from './wsPort';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
 import { testStatusIcon } from './testUtils';
+import { TestServerConnection } from './testServerConnection';
 
 let updateRootSuite: (config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
-let sendMessage: (method: string, params?: any) => Promise<any> = async () => {};
-
 const xtermDataSource: XtermDataSource = {
   pending: [],
   clear: () => {},
   write: data => xtermDataSource.pending.push(data),
-  resize: (cols: number, rows: number) => {
-    xtermSize = { cols, rows };
-    sendMessageNoReply('resizeTerminal', { cols, rows });
-  },
+  resize: () => {},
 };
 
 type TestModel = {
@@ -90,31 +85,32 @@ export const UIModeView: React.FC<{}> = ({
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
   const [hasBrowsers, setHasBrowsers] = React.useState(true);
+  const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
+    const connection = new TestServerConnection();
+    wireConnectionListeners(connection);
+    connection.onClose(() => setIsDisconnected(true));
+    setTestServerConnection(connection);
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), [], undefined);
-    refreshRootSuite().then(async () => {
+    (async () => {
+      const status = await connection.runGlobalSetup();
+      if (status === 'passed')
+        await refreshRootSuite(connection);
       setIsLoading(false);
-      const { hasBrowsers } = await sendMessage('checkBrowsers');
+      const { hasBrowsers } = await connection.checkBrowsers();
       setHasBrowsers(hasBrowsers);
-    });
+    })();
   }, []);
 
   React.useEffect(() => {
     inputRef.current?.focus();
     setIsLoading(true);
-    connect({ onEvent: dispatchEvent, onClose: () => setIsDisconnected(true) }).then(send => {
-      sendMessage = async (method, params) => {
-        const logForTest = (window as any).__logForTest;
-        logForTest?.({ method, params });
-        await send(method, params);
-      };
-      reloadTests();
-    });
+    reloadTests();
   }, [reloadTests]);
 
   updateRootSuite = React.useCallback((config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], newProgress: Progress | undefined) => {
@@ -139,6 +135,8 @@ export const UIModeView: React.FC<{}> = ({
   }, [projectFilters, runningState]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
+    if (!testServerConnection)
+      return;
     if (mode === 'bounce-if-busy' && runningState)
       return;
 
@@ -166,7 +164,7 @@ export const UIModeView: React.FC<{}> = ({
       setProgress({ total: 0, passed: 0, failed: 0, skipped: 0 });
       setRunningState({ testIds });
 
-      await sendMessage('runTests', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
+      await testServerConnection.runTests({ testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
@@ -175,13 +173,15 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(undefined);
     });
-  }, [projectFilters, runningState, testModel]);
+  }, [projectFilters, runningState, testModel, testServerConnection]);
 
   React.useEffect(() => {
+    if (!testServerConnection)
+      return;
     const onShortcutEvent = (e: KeyboardEvent) => {
       if (e.code === 'F6') {
         e.preventDefault();
-        sendMessageNoReply('stop');
+        testServerConnection?.stop().catch(() => {});
       } else if (e.code === 'F5') {
         e.preventDefault();
         reloadTests();
@@ -193,7 +193,7 @@ export const UIModeView: React.FC<{}> = ({
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests]);
+  }, [runTests, reloadTests, testServerConnection]);
 
   const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -210,12 +210,12 @@ export const UIModeView: React.FC<{}> = ({
   const installBrowsers = React.useCallback((e: React.MouseEvent) => {
     closeInstallDialog(e);
     setIsShowingOutput(true);
-    sendMessage('installBrowsers').then(async () => {
+    testServerConnection?.installBrowsers().then(async () => {
       setIsShowingOutput(false);
-      const { hasBrowsers } = await sendMessage('checkBrowsers');
+      const { hasBrowsers } = await testServerConnection?.checkBrowsers();
       setHasBrowsers(hasBrowsers);
     });
-  }, [closeInstallDialog]);
+  }, [closeInstallDialog, testServerConnection]);
 
   return <div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
@@ -275,7 +275,7 @@ export const UIModeView: React.FC<{}> = ({
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => testServerConnection?.stop()} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
             setWatchedTreeIds({ value: new Set() });
             setWatchAll(!watchAll);
@@ -297,7 +297,8 @@ export const UIModeView: React.FC<{}> = ({
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
           isLoading={isLoading}
-          requestedCollapseAllCount={collapseAllCount} />
+          requestedCollapseAllCount={collapseAllCount}
+          testServerConnection={testServerConnection} />
       </div>
     </SplitView>
   </div>;
@@ -390,7 +391,8 @@ const TestList: React.FC<{
   setVisibleTestIds: (testIds: Set<string>) => void,
   onItemSelected: (item: { treeItem?: TreeItem, testCase?: reporterTypes.TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount }) => {
+  testServerConnection: TestServerConnection | undefined,
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount, testServerConnection }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
@@ -464,10 +466,10 @@ const TestList: React.FC<{
 
   // Update watch all.
   React.useEffect(() => {
-    if (isLoading)
+    if (isLoading || !testServerConnection)
       return;
     if (watchAll) {
-      sendMessageNoReply('watch', { fileNames: testTree.fileNames() });
+      testServerConnection.watch({ fileNames: testTree.fileNames() }).catch(() => {});
     } else {
       const fileNames = new Set<string>();
       for (const itemId of watchedTreeIds.value) {
@@ -476,9 +478,9 @@ const TestList: React.FC<{
         if (fileName)
           fileNames.add(fileName);
       }
-      sendMessageNoReply('watch', { fileNames: [...fileNames] });
+      testServerConnection.watch({ fileNames: [...fileNames] }).catch(() => {});
     }
-  }, [isLoading, testTree, watchAll, watchedTreeIds]);
+  }, [isLoading, testTree, watchAll, watchedTreeIds, testServerConnection]);
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
@@ -520,7 +522,7 @@ const TestList: React.FC<{
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
-          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: testTree.locationToOpen(treeItem) })} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
+          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => testServerConnection?.open({ location: treeItem.location }).catch(() => {})} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
           {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
             if (watchedTreeIds.value.has(treeItem.id))
               watchedTreeIds.value.delete(treeItem.id);
@@ -633,7 +635,7 @@ const throttleUpdateRootSuite = (config: reporterTypes.FullConfig, rootSuite: re
     throttleTimer = setTimeout(throttledAction, 250);
 };
 
-const refreshRootSuite = (): Promise<void> => {
+const refreshRootSuite = async (testServerConnection: TestServerConnection): Promise<void> => {
   teleSuiteUpdater = new TeleSuiteUpdater({
     onUpdate: (source, immediate) => {
       throttleUpdateRootSuite(source.config!, source.rootSuite || new TeleSuite('', 'root'), source.loadErrors, source.progress, immediate);
@@ -643,45 +645,39 @@ const refreshRootSuite = (): Promise<void> => {
     },
     pathSeparator,
   });
-  return sendMessage('listTests', {});
+  return testServerConnection.listTests({});
 };
 
-const sendMessageNoReply = (method: string, params?: any) => {
-  if ((window as any)._overrideProtocolForTest) {
-    (window as any)._overrideProtocolForTest({ method, params }).catch(() => {});
-    return;
-  }
-  sendMessage(method, params).catch((e: Error) => {
-    // eslint-disable-next-line no-console
-    console.error(e);
+const wireConnectionListeners = (testServerConnection: TestServerConnection) => {
+  testServerConnection.onListChanged(() => {
+    testServerConnection.listTests({}).catch(() => {});
   });
-};
 
-const dispatchEvent = (method: string, params?: any) => {
-  if (method === 'listChanged') {
-    sendMessage('listTests', {}).catch(() => {});
-    return;
-  }
+  testServerConnection.onTestFilesChanged(testFiles => {
+    runWatchedTests(testFiles);
+  });
 
-  if (method === 'testFilesChanged') {
-    runWatchedTests(params.testFileNames);
-    return;
-  }
-
-  if (method === 'stdio') {
+  testServerConnection.onStdio(params => {
     if (params.buffer) {
       const data = atob(params.buffer);
       xtermDataSource.write(data);
     } else {
-      xtermDataSource.write(params.text);
+      xtermDataSource.write(params.text!);
     }
-    return;
-  }
+  });
 
-  if (method === 'listReport')
+  testServerConnection.onListReport(params => {
     teleSuiteUpdater?.dispatch('list', params);
-  if (method === 'testReport')
+  });
+
+  testServerConnection.onTestReport(params => {
     teleSuiteUpdater?.dispatch('test', params);
+  });
+
+  xtermDataSource.resize = (cols, rows) => {
+    xtermSize = { cols, rows };
+    testServerConnection.resizeTerminal({ cols, rows }).catch(() => {});
+  };
 };
 
 const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefined => {

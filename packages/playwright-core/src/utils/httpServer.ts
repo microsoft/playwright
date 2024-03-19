@@ -84,8 +84,8 @@ export class HttpServer {
     wss.on('connection', ws => {
       transport.sendEvent = (method, params)  => ws.send(JSON.stringify({ method, params }));
       transport.close = () => ws.close();
-      ws.on('message', async (message: string) => {
-        const { id, method, params } = JSON.parse(message);
+      ws.on('message', async message => {
+        const { id, method, params } = JSON.parse(String(message));
         try {
           const result = await transport.dispatch(method, params);
           ws.send(JSON.stringify({ id, result }));

@@ -120,12 +120,12 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   });
 }
 
-export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions, exitOnClose?: boolean) {
+export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
   if (!validateTraceUrls(traceUrls))
     return;
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
-  const page = await openTraceViewerApp(server.urlPrefix(), browserName);
+  const page = await openTraceViewerApp(server.urlPrefix(), browserName, options);
   if (exitOnClose)
     page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
@@ -150,7 +150,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     persistentContextOptions: {
       ...options?.persistentContextOptions,
       useWebSocket: isUnderTest(),
-      headless: options?.headless,
+      headless: !!options?.headless,
     },
   });
 

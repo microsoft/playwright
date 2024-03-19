@@ -183,7 +183,7 @@ test('should update test locations', async ({ runUITest, writeFiles, deleteFile 
   `);
 
   const messages: any = [];
-  await page.exposeBinding('_overrideProtocolForTest', (_, data) => messages.push(data));
+  await page.exposeBinding('_sniffProtocolForTest', (_, data) => messages.push(data));
 
   const passesItemLocator = page.getByRole('listitem').filter({ hasText: 'passes' });
   await passesItemLocator.hover();
@@ -192,7 +192,11 @@ test('should update test locations', async ({ runUITest, writeFiles, deleteFile 
   expect(messages).toEqual([{
     method: 'open',
     params: {
-      location: expect.stringContaining('a.test.ts:3'),
+      location: {
+        file: expect.stringContaining('a.test.ts'),
+        line: 3,
+        column: 11,
+      }
     },
   }]);
 
@@ -218,7 +222,11 @@ test('should update test locations', async ({ runUITest, writeFiles, deleteFile 
   expect(messages).toEqual([{
     method: 'open',
     params: {
-      location: expect.stringContaining('a.test.ts:5'),
+      location: {
+        file: expect.stringContaining('a.test.ts'),
+        line: 5,
+        column: 11,
+      }
     },
   }]);
 
