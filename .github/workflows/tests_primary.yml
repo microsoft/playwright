@@ -48,5 +48,4 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-      job_name: ${{ env.PWTEST_BOT_NAME }}
     
