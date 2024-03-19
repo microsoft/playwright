@@ -28,29 +28,7 @@ const basicTestTree = {
   `
 };
 
-test('should run on Meta(command) with Enter', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-
-  await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
-
-  await page.keyboard.press('Meta+Enter');
-
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
-});
-
-test('should run on Control with Enter', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-
-  await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
-
-  await page.keyboard.press('Control+Enter');
-
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
-});
-
-test('should stop on Meta(command) with S', async ({ runUITest }) => {
+test('should stop on F6', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
@@ -69,7 +47,7 @@ test('should stop on Meta(command) with S', async ({ runUITest }) => {
   await expect(page.getByTitle('Run all')).toBeDisabled();
   await expect(page.getByTitle('Stop')).toBeEnabled();
 
-  await page.keyboard.press('Meta+s');
+  await page.keyboard.press('F6');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
@@ -80,52 +58,12 @@ test('should stop on Meta(command) with S', async ({ runUITest }) => {
   `);
 });
 
-test('should stop on Control with S', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-
-  await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
-
-  await page.getByTitle('Run all').click();
-
-  await expect.poll(dumpTestTree(page)).toBe(`
-    ▼ ↻ a.test.ts
-        ⊘ test 0
-        ✅ test 1
-        ↻ test 2
-        🕦 test 3
-  `);
-
-  await expect(page.getByTitle('Run all')).toBeDisabled();
-  await expect(page.getByTitle('Stop')).toBeEnabled();
-
-  await page.keyboard.press('Control+s');
-
-  await expect.poll(dumpTestTree(page)).toBe(`
-    ▼ ◯ a.test.ts
-        ⊘ test 0
-        ✅ test 1
-        ◯ test 2
-        ◯ test 3
-  `);
-});
-
-test('should reload on Meta(command) with U', async ({ runUITest }) => {
+test('should reload on F5', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
 
-  await page.keyboard.press('Meta+u');
-  await expect(page.getByTestId('status-line')).toBeHidden();
-});
-
-test('should reload on Control with U', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-
-  await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
-
-  await page.keyboard.press('Control+u');
+  await page.keyboard.press('F5');
   await expect(page.getByTestId('status-line')).toBeHidden();
 });
