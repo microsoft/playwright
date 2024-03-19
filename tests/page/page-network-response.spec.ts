@@ -352,7 +352,7 @@ it('should bypass disk cache when interception is enabled', async ({ page, serve
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   it.fixme(browserName === 'firefox', 'Returns cached response.');
   await page.goto(server.PREFIX + '/frames/one-frame.html');
-  page.route('**/api*', route => route.continue());
+  await page.route('**/api*', route => route.continue());
   {
     const requests = [];
     server.setRoute('/api', (req, res) => {
@@ -386,7 +386,7 @@ it('should bypass disk cache when interception is enabled', async ({ page, serve
       res.end('Hello');
     });
     for (let i = 0; i < 3; i++) {
-      await it.step(`main frame iteration ${i}`, async () => {
+      await it.step(`subframe iteration ${i}`, async () => {
         const respPromise = page.waitForResponse('**/frame/api');
         await page.frame({ url: '**/frame.html' }).evaluate(async () => {
           const response = await fetch("/frame/api");
