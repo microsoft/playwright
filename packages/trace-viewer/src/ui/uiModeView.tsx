@@ -177,6 +177,24 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, runningState, testModel]);
 
+  React.useEffect(() => {
+    const onShortcutEvent = (e: KeyboardEvent) => {
+      if (e.code === 'F6') {
+        e.preventDefault();
+        sendMessageNoReply('stop');
+      } else if (e.code === 'F5') {
+        e.preventDefault();
+        reloadTests();
+      }
+    };
+
+    addEventListener('keydown', onShortcutEvent);
+
+    return () => {
+      removeEventListener('keydown', onShortcutEvent);
+    };
+  }, [runTests, reloadTests]);
+
   const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   const openInstallDialog = React.useCallback((e: React.MouseEvent) => {
