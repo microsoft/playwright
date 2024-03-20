@@ -16,6 +16,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
+import type * as channels from '@protocol/channels';
 
 export type ProtocolRequest = {
   id: number;
@@ -135,44 +136,19 @@ export class Backend extends EventEmitter {
     };
   }
 
-  async initialize() {
-    await this._send('initialize', { codegenId: 'playwright-test', sdkLanguage: 'javascript' });
+  channel(): channels.DebugControllerChannel & { close(): Promise<void> } {
+    return new Proxy(this, {
+      get: (target, propKey) => {
+        const origMethod = target[propKey];
+        if (typeof origMethod === 'function')
+          return origMethod.bind(target);
+        return (...args: any) => this._send(String(propKey), ...args);
+      }
+    }) as any;
   }
 
   async close() {
     await this._transport.closeAndWait();
-  }
-
-  async resetForReuse() {
-    await this._send('resetForReuse');
-  }
-
-  async navigate(params: { url: string }) {
-    await this._send('navigate', params);
-  }
-
-  async setMode(params: { mode: 'none' | 'inspecting' | 'recording', language?: string, file?: string, testIdAttributeName?: string }) {
-    await this._send('setRecorderMode', params);
-  }
-
-  async setReportStateChanged(params: { enabled: boolean }) {
-    await this._send('setReportStateChanged', params);
-  }
-
-  async highlight(params: { selector: string }) {
-    await this._send('highlight', params);
-  }
-
-  async hideHighlight() {
-    await this._send('hideHighlight');
-  }
-
-  async resume() {
-    await this._send('resume');
-  }
-
-  async kill() {
-    await this._send('kill');
   }
 
   private _send(method: string, params: any = {}): Promise<any> {
