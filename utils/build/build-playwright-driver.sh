@@ -22,7 +22,6 @@ function build {
   NODE_DIR=$1
   SUFFIX=$2
   ARCHIVE=$3
-  RUN_DRIVER=$4
   NODE_URL=https://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIR}.${ARCHIVE}
 
   echo "Building playwright-${PACKAGE_VERSION}-${SUFFIX}"
@@ -57,16 +56,6 @@ function build {
   rm package-lock.json
 
   cd ..
-  if [[ "${RUN_DRIVER}" == *".cmd" ]]; then
-    cp ../../${RUN_DRIVER} ./playwright.cmd
-    chmod +x ./playwright.cmd
-  elif [[ "${RUN_DRIVER}" == *".sh" ]]; then
-    cp ../../${RUN_DRIVER} ./playwright.sh
-    chmod +x ./playwright.sh
-  else
-    echo "Unsupported RUN_DRIVER ${RUN_DRIVER}"
-    exit 1
-  fi
 
   # NPM install does intentionally set the modification date back to 1985 for all the files. This confuses language binding
   # update mechanisms, which expect the modification date to be recent to decide which file to override. See:
@@ -77,8 +66,8 @@ function build {
   zip -q -r ../playwright-${PACKAGE_VERSION}-${SUFFIX}.zip .
 }
 
-build "node-v${NODE_VERSION}-darwin-x64" "mac" "tar.gz" "run-driver-posix.sh"
-build "node-v${NODE_VERSION}-darwin-arm64" "mac-arm64" "tar.gz" "run-driver-posix.sh"
-build "node-v${NODE_VERSION}-linux-x64" "linux" "tar.gz" "run-driver-posix.sh"
-build "node-v${NODE_VERSION}-linux-arm64" "linux-arm64" "tar.gz" "run-driver-posix.sh"
-build "node-v${NODE_VERSION}-win-x64" "win32_x64" "zip" "run-driver-win.cmd"
+build "node-v${NODE_VERSION}-darwin-x64" "mac" "tar.gz"
+build "node-v${NODE_VERSION}-darwin-arm64" "mac-arm64" "tar.gz"
+build "node-v${NODE_VERSION}-linux-x64" "linux" "tar.gz"
+build "node-v${NODE_VERSION}-linux-arm64" "linux-arm64" "tar.gz"
+build "node-v${NODE_VERSION}-win-x64" "win32_x64" "zip"
