@@ -123,10 +123,10 @@ export function babelTransform(code: string, filename: string, isTypeScript: boo
   let options: TransformOptions;
 
   try {
-    if(process.env.PW_TEST_BABEL_TRANSFORM_OPTIONS_FILE) {
+    if (process.env.PW_TEST_BABEL_TRANSFORM_OPTIONS_FILE) {
       const importedBabelTransformOptions = require(process.env.PW_TEST_BABEL_TRANSFORM_OPTIONS_FILE);
       options = importedBabelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
-    }else {
+    } else {
       options = babelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
     }
     return babel.transform(code, { filename, ...options })!;
