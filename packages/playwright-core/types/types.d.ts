@@ -13170,6 +13170,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
      * `headless` option will be set `false`.
+     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
      */
     devtools?: boolean;
 
@@ -13574,6 +13575,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
      * `headless` option will be set `false`.
+     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
      */
     devtools?: boolean;
 
@@ -20268,6 +20270,7 @@ export interface LaunchOptions {
   /**
    * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
    * `headless` option will be set `false`.
+   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
    */
   devtools?: boolean;
 
