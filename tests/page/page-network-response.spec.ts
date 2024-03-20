@@ -366,7 +366,7 @@ it('should bypass disk cache when interception is enabled', async ({ page, serve
       await it.step(`main frame iteration ${i}`, async () => {
         const respPromise = page.waitForResponse('**/api');
         await page.evaluate(async () => {
-          const response = await fetch("/api");
+          const response = await fetch('/api');
           return response.status;
         });
         const response = await respPromise;
@@ -389,7 +389,7 @@ it('should bypass disk cache when interception is enabled', async ({ page, serve
       await it.step(`subframe iteration ${i}`, async () => {
         const respPromise = page.waitForResponse('**/frame/api');
         await page.frame({ url: '**/frame.html' }).evaluate(async () => {
-          const response = await fetch("/frame/api");
+          const response = await fetch('/frame/api');
           return response.status;
         });
         const response = await respPromise;
