@@ -16,6 +16,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
+import type * as channels from '@protocol/channels';
 
 export type ProtocolRequest = {
   id: number;
@@ -109,6 +110,7 @@ export class Backend extends EventEmitter {
   private static _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (a: any) => void, reject: (e: Error) => void }>();
   private _transport!: WebSocketTransport;
+  channel: channels.DebugControllerChannel;
 
   constructor() {
     super();
@@ -133,46 +135,21 @@ export class Backend extends EventEmitter {
         pair.fulfill(message.result);
       }
     };
+    this.channel = new Proxy(this, {
+      get: (target, propKey) => {
+        if (['on', 'once'].includes(String(propKey)))
+          return target[propKey].bind(target);
+        return (...args: any) => this._send(String(propKey), ...args);
+      }
+    }) as any;
   }
 
   async initialize() {
-    await this._send('initialize', { codegenId: 'playwright-test', sdkLanguage: 'javascript' });
+    await this.channel.initialize({ codegenId: 'playwright-test', sdkLanguage: 'javascript' });
   }
 
   async close() {
     await this._transport.closeAndWait();
-  }
-
-  async resetForReuse() {
-    await this._send('resetForReuse');
-  }
-
-  async navigate(params: { url: string }) {
-    await this._send('navigate', params);
-  }
-
-  async setMode(params: { mode: 'none' | 'inspecting' | 'recording', language?: string, file?: string, testIdAttributeName?: string }) {
-    await this._send('setRecorderMode', params);
-  }
-
-  async setReportStateChanged(params: { enabled: boolean }) {
-    await this._send('setReportStateChanged', params);
-  }
-
-  async highlight(params: { selector: string }) {
-    await this._send('highlight', params);
-  }
-
-  async hideHighlight() {
-    await this._send('hideHighlight');
-  }
-
-  async resume() {
-    await this._send('resume');
-  }
-
-  async kill() {
-    await this._send('kill');
   }
 
   private _send(method: string, params: any = {}): Promise<any> {
