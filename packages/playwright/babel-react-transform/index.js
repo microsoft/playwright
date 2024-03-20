@@ -15,7 +15,7 @@
  */
 
 
-function crseateElement() {
+function createElement() {
   return {
     __pw_type: 'jsx',
   };
