@@ -41,7 +41,6 @@ test('should print the correct context options when using a device and lang', as
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import pytest
 import re
-
 from playwright.sync_api import Page, expect
 
 
