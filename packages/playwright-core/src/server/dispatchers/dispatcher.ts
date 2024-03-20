@@ -24,7 +24,6 @@ import { SdkObject } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
 import type { RegisteredListener } from '../..//utils/eventsHelper';
-import type * as trace from '@trace/trace';
 import { isProtocolError } from '../protocolError';
 
 export const dispatcherSymbol = Symbol('dispatcher');
@@ -81,7 +80,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     }
 
     if (this._parent)
-      this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
+      this._connection.sendCreate(this._parent, type, guid, initializer);
     this._connection.maybeDisposeStaleDispatchers(this._gcBucket);
   }
 
@@ -121,8 +120,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
       // Just ignore this event outside of tests.
       return;
     }
-    const sdkObject = this._object instanceof SdkObject ? this._object : undefined;
-    this._connection.sendEvent(this, method as string, params, sdkObject);
+    this._connection.sendEvent(this, method as string, params);
   }
 
   _dispose(reason?: 'gc') {
@@ -195,39 +193,24 @@ export class DispatcherConnection {
     this._isLocal = !!isLocal;
   }
 
-  sendEvent(dispatcher: DispatcherScope, event: string, params: any, sdkObject?: SdkObject) {
+  sendEvent(dispatcher: DispatcherScope, event: string, params: any) {
     const validator = findValidator(dispatcher._type, event, 'Event');
     params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
-    this._sendMessageToClient(dispatcher._guid, dispatcher._type, event, params, sdkObject);
+    this.onmessage({ guid: dispatcher._guid, method: event, params });
   }
 
-  sendCreate(parent: DispatcherScope, type: string, guid: string, initializer: any, sdkObject?: SdkObject) {
+  sendCreate(parent: DispatcherScope, type: string, guid: string, initializer: any) {
     const validator = findValidator(type, '', 'Initializer');
     initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
-    this._sendMessageToClient(parent._guid, type, '__create__', { type, initializer, guid }, sdkObject);
+    this.onmessage({ guid: parent._guid, method: '__create__', params: { type, initializer, guid } });
   }
 
   sendAdopt(parent: DispatcherScope, dispatcher: DispatcherScope) {
-    this._sendMessageToClient(parent._guid, dispatcher._type, '__adopt__', { guid: dispatcher._guid });
+    this.onmessage({ guid: parent._guid, method: '__adopt__', params: { guid: dispatcher._guid } });
   }
 
   sendDispose(dispatcher: DispatcherScope, reason?: 'gc') {
-    this._sendMessageToClient(dispatcher._guid, dispatcher._type, '__dispose__', { reason });
-  }
-
-  private _sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
-    if (sdkObject) {
-      const event: trace.EventTraceEvent = {
-        type: 'event',
-        class: type,
-        method,
-        params: params || {},
-        time: monotonicTime(),
-        pageId: sdkObject?.attribution?.page?.guid,
-      };
-      sdkObject.instrumentation?.onEvent(sdkObject, event);
-    }
-    this.onmessage({ guid, method, params });
+    this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason } });
   }
 
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
