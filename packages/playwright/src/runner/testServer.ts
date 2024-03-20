@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import type { Transport, HttpServer } from 'playwright-core/lib/utils';
@@ -172,12 +174,17 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async listTests(params: { reporter?: string; fileNames: string[]; }) {
-    this._queue = this._queue.then(() => this._innerListTests(params)).catch(printInternalError);
+    let report: any[] = [];
+    this._queue = this._queue.then(async () => {
+      report = await this._innerListTests(params);
+    }).catch(printInternalError);
     await this._queue;
+    return { report };
   }
 
   private async _innerListTests(params: { reporter?: string; fileNames?: string[]; }) {
-    const wireReporter = await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => this._dispatchEvent('listReport', e));
+    const report: any[] = [];
+    const wireReporter = await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => report.push(e));
     const reporter = new InternalReporter(wireReporter);
     this._config.cliArgs = params.fileNames || [];
     this._config.cliListOnly = true;
@@ -195,7 +202,15 @@ class TestServerDispatcher implements TestServerInterface {
       projectDirs.add(p.project.testDir);
       projectOutputs.add(p.project.outputDir);
     }
+
+    const result = await resolveCtDirs(this._config);
+    if (result) {
+      projectDirs.add(result.templateDir);
+      projectOutputs.add(result.outDir);
+    }
+
     this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
+    return report;
   }
 
   async runTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
@@ -204,7 +219,7 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   private async _innerRunTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
-    await this.stop();
+    await this.stopTests();
     const { testIds, projects, locations, grep } = params;
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
@@ -215,7 +230,7 @@ class TestServerDispatcher implements TestServerInterface {
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
-    reporters.push(await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => this._dispatchEvent('testReport', e)));
+    reporters.push(await createReporterForTestServer(this._config, params.reporter || require.resolve('./uiModeReporter'), 'list', e => this._dispatchEvent('report', e)));
     const reporter = new InternalReporter(new Multiplexer(reporters));
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
@@ -246,7 +261,7 @@ class TestServerDispatcher implements TestServerInterface {
     return runner.findRelatedTestFiles('out-of-process', params.files);
   }
 
-  async stop() {
+  async stopTests() {
     this._testRun?.stop?.resolve();
     await this._testRun?.run;
   }
@@ -305,4 +320,18 @@ async function installBrowsers() {
 function printInternalError(e: Error) {
   // eslint-disable-next-line no-console
   console.error('Internal error:', e);
+}
+
+// TODO: remove CT dependency.
+export async function resolveCtDirs(config: FullConfigInternal) {
+  const use = config.config.projects[0].use as any;
+  const relativeTemplateDir = use.ctTemplateDir || 'playwright';
+  const templateDir = await fs.promises.realpath(path.normalize(path.join(config.configDir, relativeTemplateDir))).catch(() => undefined);
+  if (!templateDir)
+    return null;
+  const outDir = use.ctCacheDir ? path.resolve(config.configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache');
+  return {
+    outDir,
+    templateDir
+  };
 }

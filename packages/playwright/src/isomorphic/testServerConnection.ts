@@ -20,16 +20,14 @@ import * as events from './events';
 
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
   readonly onClose: events.Event<void>;
-  readonly onListReport: events.Event<any>;
-  readonly onTestReport: events.Event<any>;
+  readonly onReport: events.Event<any>;
   readonly onStdio: events.Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
   readonly onListChanged: events.Event<void>;
   readonly onTestFilesChanged: events.Event<{ testFiles: string[] }>;
   readonly onLoadTraceRequested: events.Event<{ traceUrl: string }>;
 
   private _onCloseEmitter = new events.EventEmitter<void>();
-  private _onListReportEmitter = new events.EventEmitter<any>();
-  private _onTestReportEmitter = new events.EventEmitter<any>();
+  private _onReportEmitter = new events.EventEmitter<any>();
   private _onStdioEmitter = new events.EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
   private _onListChangedEmitter = new events.EventEmitter<void>();
   private _onTestFilesChangedEmitter = new events.EventEmitter<{ testFiles: string[] }>();
@@ -42,8 +40,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
 
   constructor(wsURL: string) {
     this.onClose = this._onCloseEmitter.event;
-    this.onListReport = this._onListReportEmitter.event;
-    this.onTestReport = this._onTestReportEmitter.event;
+    this.onReport = this._onReportEmitter.event;
     this.onStdio = this._onStdioEmitter.event;
     this.onListChanged = this._onListChangedEmitter.event;
     this.onTestFilesChanged = this._onTestFilesChangedEmitter.event;
@@ -94,10 +91,8 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   private _dispatchEvent(method: string, params?: any) {
-    if (method === 'listReport')
-      this._onListReportEmitter.fire(params);
-    else if (method === 'testReport')
-      this._onTestReportEmitter.fire(params);
+    if (method === 'report')
+      this._onReportEmitter.fire(params);
     else if (method === 'stdio')
       this._onStdioEmitter.fire(params);
     else if (method === 'listChanged')
@@ -142,9 +137,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('listFiles');
   }
 
-  async listTests(params: { reporter?: string | undefined; fileNames?: string[] | undefined; }): Promise<void> {
-    await this._sendMessage('listTests', params);
+  async listTests(params: { reporter?: string | undefined; fileNames?: string[] | undefined; }): Promise<{ report: any[] }> {
+    return await this._sendMessage('listTests', params);
   }
+
   async runTests(params: { reporter?: string | undefined; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }): Promise<void> {
     await this._sendMessage('runTests', params);
   }
@@ -153,8 +149,8 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('findRelatedTestFiles', params);
   }
 
-  async stop(): Promise<void> {
-    await this._sendMessage('stop');
+  async stopTests(): Promise<void> {
+    await this._sendMessage('stopTests');
   }
 
   async closeGracefully(): Promise<void> {

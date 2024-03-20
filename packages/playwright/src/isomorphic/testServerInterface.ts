@@ -47,10 +47,13 @@ export interface TestServerInterface {
     error?: reporterTypes.TestError;
   }>;
 
+  /**
+   * Returns list of teleReporter events.
+   */
   listTests(params: {
     reporter?: string;
     fileNames?: string[];
-  }): Promise<void>;
+  }): Promise<{ report: any[] }>;
 
   runTests(params: {
     reporter?: string;
@@ -69,15 +72,14 @@ export interface TestServerInterface {
     files: string[];
   }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }>;
 
-  stop(): Promise<void>;
+  stopTests(): Promise<void>;
 
   closeGracefully(): Promise<void>;
 }
 
 export interface TestServerInterfaceEvents {
   onClose: Event<void>;
-  onListReport: Event<any>;
-  onTestReport: Event<any>;
+  onReport: Event<any>;
   onStdio: Event<{ type: 'stdout' | 'stderr', text?: string, buffer?: string }>;
   onListChanged: Event<void>;
   onTestFilesChanged: Event<{ testFiles: string[] }>;
@@ -86,8 +88,7 @@ export interface TestServerInterfaceEvents {
 
 export interface TestServerInterfaceEventEmitters {
   dispatchEvent(event: 'close', params: {}): void;
-  dispatchEvent(event: 'listReport', params: any): void;
-  dispatchEvent(event: 'testReport', params: any): void;
+  dispatchEvent(event: 'report', params: any): void;
   dispatchEvent(event: 'stdio', params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }): void;
   dispatchEvent(event: 'listChanged', params: {}): void;
   dispatchEvent(event: 'testFilesChanged', params: { testFiles: string[] }): void;

@@ -184,7 +184,7 @@ export const UIModeView: React.FC<{}> = ({
     const onShortcutEvent = (e: KeyboardEvent) => {
       if (e.code === 'F6') {
         e.preventDefault();
-        testServerConnection?.stop().catch(() => {});
+        testServerConnection?.stopTests().catch(() => {});
       } else if (e.code === 'F5') {
         e.preventDefault();
         reloadTests();
@@ -278,7 +278,7 @@ export const UIModeView: React.FC<{}> = ({
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => testServerConnection?.stop()} disabled={!isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => testServerConnection?.stopTests()} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
             setWatchedTreeIds({ value: new Set() });
             setWatchAll(!watchAll);
@@ -648,12 +648,14 @@ const refreshRootSuite = async (testServerConnection: TestServerConnection): Pro
     },
     pathSeparator,
   });
-  return testServerConnection.listTests({});
+  const { report } = await testServerConnection.listTests({});
+  teleSuiteUpdater?.processListReport(report);
 };
 
 const wireConnectionListeners = (testServerConnection: TestServerConnection) => {
-  testServerConnection.onListChanged(() => {
-    testServerConnection.listTests({}).catch(() => {});
+  testServerConnection.onListChanged(async () => {
+    const { report } = await testServerConnection.listTests({});
+    teleSuiteUpdater?.processListReport(report);
   });
 
   testServerConnection.onTestFilesChanged(params => {
@@ -669,12 +671,8 @@ const wireConnectionListeners = (testServerConnection: TestServerConnection) => 
     }
   });
 
-  testServerConnection.onListReport(params => {
-    teleSuiteUpdater?.dispatch('list', params);
-  });
-
-  testServerConnection.onTestReport(params => {
-    teleSuiteUpdater?.dispatch('test', params);
+  testServerConnection.onReport(params => {
+    teleSuiteUpdater?.processTestReport(params);
   });
 
   xtermDataSource.resize = (cols, rows) => {
