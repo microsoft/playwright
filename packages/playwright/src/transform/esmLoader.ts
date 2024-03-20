@@ -19,23 +19,23 @@ import url from 'url';
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { transformHook, resolveHook, setTransformConfig, shouldTransform } from './transform';
 import { PortTransport } from './portTransport';
-import { CLIENT_EXTENSIONS } from './clientExtensions.js'
+import { CLIENT_EXTENSIONS } from './clientExtensions.js';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
 async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
-  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => specifier.endsWith(ext))
+  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => specifier.endsWith(ext));
 
   // Short-circuit the resolver to be able to load client extensions.
   if (isClientExtension) {
-    const nextResult = await defaultResolve(specifier, context, defaultResolve)
-    const specifierSegments = specifier.split('.')
+    const nextResult = await defaultResolve(specifier, context, defaultResolve);
+    const specifierSegments = specifier.split('.');
 
     return {
       format: '.' + specifierSegments[specifierSegments.length - 1],
       shortCircuit: true,
       url: nextResult.url,
-    }
+    };
   }
 
   if (context.parentURL && context.parentURL.startsWith('file://')) {
@@ -56,17 +56,17 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
 // Node < 18.6: defaultLoad takes 3 arguments.
 // Node >= 18.6: nextLoad from the chain takes 2 arguments.
 async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
-  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => context.format === ext)
+  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => context.format === ext);
 
   // If the module is a client extension, we need to short-circuit the loader and return the raw source.
   if (isClientExtension) {
-    const rawSource = '' + fs.readFileSync(url.fileURLToPath(moduleUrl), 'utf-8')
+    const rawSource = '' + fs.readFileSync(url.fileURLToPath(moduleUrl), 'utf-8');
 
     return {
       format: 'json',
       shortCircuit: true,
       source: JSON.stringify(rawSource),
-    }
+    };
   }
 
 
