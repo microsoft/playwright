@@ -136,7 +136,7 @@ export class Backend extends EventEmitter {
     };
   }
 
-  channel(): channels.DebugControllerChannel & { close(): Promise<void> } {
+  channel(): channels.DebugControllerChannel {
     return new Proxy(this, {
       get: (target, propKey) => {
         const origMethod = target[propKey];
