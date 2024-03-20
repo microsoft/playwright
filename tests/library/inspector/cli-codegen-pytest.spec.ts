@@ -22,7 +22,8 @@ const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets',
 
 test('should print the correct imports and context options', async ({ runCLI }) => {
   const cli = runCLI(['--target=python-pytest', emptyHTML]);
-  const expectedResult = `from playwright.sync_api import Page, expect
+  const expectedResult = `import re
+from playwright.sync_api import Page, expect
 
 
 def test_example(page: Page) -> None:`;
@@ -39,7 +40,7 @@ test('should print the correct context options when using a device and lang', as
   await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import pytest
-
+import re
 from playwright.sync_api import Page, expect
 
 
@@ -60,7 +61,8 @@ test('should save the codegen output to a file if specified', async ({ runCLI },
   });
   await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
-  expect(content.toString()).toBe(`from playwright.sync_api import Page, expect
+  expect(content.toString()).toBe(`import re
+from playwright.sync_api import Page, expect
 
 
 def test_example(page: Page) -> None:
