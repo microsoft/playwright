@@ -630,3 +630,13 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
     expect(req.headers['x-custom-header']).toBe('custom!');
   });
 });
+
+playwrightTest('should trigger context close event when last page closed if not mac', async ({ browserType, createUserDataDir, isMac }, testInfo) => {
+  if (!isMac) {
+    const context = await browserType.launchPersistentContext(await createUserDataDir());
+    let closed = false;
+    context.on('close', () => closed = true);
+    await context.pages()[0].close();
+    expect(closed).toBe(true);
+  }
+});

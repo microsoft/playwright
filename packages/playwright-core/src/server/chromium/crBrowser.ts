@@ -275,6 +275,8 @@ export class CRBrowser extends Browser {
   }
 
   async _closePage(crPage: CRPage) {
+    if (this._platform() !== 'mac' && this._crPages.size === 1)
+      await this.close({ reason: 'Last Page closed' });
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
   }
 
