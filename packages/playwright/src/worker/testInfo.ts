@@ -44,7 +44,6 @@ export interface TestStepInternal {
   error?: TestInfoError;
   infectParentStepsWithError?: boolean;
   box?: boolean;
-  isSoft?: boolean;
   isStage?: boolean;
 }
 
@@ -62,7 +61,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
-  private _hasHardError: boolean = false;
   readonly _tracing: TestTracing;
 
   _wasInterrupted = false;
@@ -74,6 +72,7 @@ export class TestInfoImpl implements TestInfo {
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
   private readonly _stages: TestStage[] = [];
   _hasNonRetriableError = false;
+  _hasUnhandledError = false;
   _allowSkips = false;
 
   // ------------ TestInfo fields ------------
@@ -314,9 +313,6 @@ export class TestInfoImpl implements TestInfo {
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
-
-        if (step.isSoft && result.error)
-          this._failWithError(result.error, false /* isHardError */, true /* retriable */);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -344,17 +340,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
-    if (!retriable)
-      this._hasNonRetriableError = true;
-    // Do not overwrite any previous hard errors.
-    // Some (but not all) scenarios include:
-    //   - expect() that fails after uncaught exception.
-    //   - fail in fixture teardown after the test failure.
-    if (isHardError && this._hasHardError)
-      return;
-    if (isHardError)
-      this._hasHardError = true;
+  _failWithError(error: Error) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = serializeError(error);
@@ -378,24 +364,31 @@ export class TestInfoImpl implements TestInfo {
         try {
           await cb();
         } catch (e) {
+          // Only handle errors directly thrown by the user code.
+          if (!stage.runnable)
+            throw e;
           if (this._allowSkips && (e instanceof SkipError)) {
             if (this.status === 'passed')
               this.status = 'skipped';
-          } else if (!(e instanceof TimeoutManagerError)) {
-            // Note: we handle timeout errors at the top level, so ignore them here.
-            // Unfortunately, we cannot ignore user errors here. Consider the following scenario:
+          } else {
+            // Unfortunately, we have to handle user errors and timeout errors differently.
+            // Consider the following scenario:
             // - locator.click times out
             // - all stages containing the test function finish with TimeoutManagerError
             // - test finishes, the page is closed and this triggers locator.click error
             // - we would like to present the locator.click error to the user
             // - therefore, we need a try/catch inside the "run with timeout" block and capture the error
-            this._failWithError(e, true /* isHardError */, true /* retriable */);
+            this._failWithError(e);
           }
           throw e;
         }
       });
       stage.step?.complete({});
     } catch (error) {
+      // When interrupting, we arrive here with a TimeoutManagerError, but we should not
+      // consider it a timeout.
+      if (!this._wasInterrupted && (error instanceof TimeoutManagerError) && stage.runnable)
+        this._failWithError(error);
       stage.step?.complete({ error });
       throw error;
     } finally {
@@ -404,13 +397,6 @@ export class TestInfoImpl implements TestInfo {
       this._stages.pop();
       debugTest(`finished stage "${stage.title}"`);
     }
-  }
-
-  _handlePossibleTimeoutError(error: Error) {
-    // When interrupting, we arrive here with a TimeoutManagerError, but we should not
-    // consider it a timeout.
-    if (!this._wasInterrupted && (error instanceof TimeoutManagerError))
-      this._failWithError(error, false /* isHardError */, true /* retriable */);
   }
 
   _isFailure() {
