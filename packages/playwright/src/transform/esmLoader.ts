@@ -24,7 +24,7 @@ import { CLIENT_EXTENSIONS } from './clientExtensions.js';
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
 async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
-  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => specifier.endsWith(ext));
+  const isClientExtension = CLIENT_EXTENSIONS.some(ext => specifier.endsWith(ext));
 
   // Short-circuit the resolver to be able to load client extensions.
   if (isClientExtension) {
@@ -56,7 +56,7 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
 // Node < 18.6: defaultLoad takes 3 arguments.
 // Node >= 18.6: nextLoad from the chain takes 2 arguments.
 async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
-  const isClientExtension = CLIENT_EXTENSIONS.some((ext) => context.format === ext);
+  const isClientExtension = CLIENT_EXTENSIONS.some(ext => context.format === ext);
 
   // If the module is a client extension, we need to short-circuit the loader and return the raw source.
   if (isClientExtension) {
