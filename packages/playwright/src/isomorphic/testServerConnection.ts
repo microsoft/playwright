@@ -90,6 +90,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     });
   }
 
+  private _sendMessageNoReply(method: string, params?: any) {
+    this._sendMessage(method, params).catch(() => {});
+  }
+
   private _dispatchEvent(method: string, params?: any) {
     if (method === 'report')
       this._onReportEmitter.fire(params);
@@ -105,16 +109,32 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     await this._sendMessage('ping');
   }
 
+  async pingNoReply() {
+    await this._sendMessageNoReply('ping');
+  }
+
   async watch(params: { fileNames: string[]; }): Promise<void> {
     await this._sendMessage('watch', params);
+  }
+
+  watchNoReply(params: { fileNames: string[]; }) {
+    this._sendMessageNoReply('watch', params);
   }
 
   async open(params: { location: Location; }): Promise<void> {
     await this._sendMessage('open', params);
   }
 
+  openNoReply(params: { location: Location; }) {
+    this._sendMessageNoReply('open', params);
+  }
+
   async resizeTerminal(params: { cols: number; rows: number; }): Promise<void> {
     await this._sendMessage('resizeTerminal', params);
+  }
+
+  resizeTerminalNoReply(params: { cols: number; rows: number; }) {
+    this._sendMessageNoReply('resizeTerminal', params);
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
@@ -152,6 +172,11 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   async stopTests(): Promise<void> {
     await this._sendMessage('stopTests');
   }
+
+  stopTestsNoReply() {
+    this._sendMessageNoReply('stopTests');
+  }
+
 
   async closeGracefully(): Promise<void> {
     await this._sendMessage('closeGracefully');
