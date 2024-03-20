@@ -166,6 +166,7 @@ def browser_context_args(browser_context_args, playwright) {
 ` : '';
       formatter.add(`${options.deviceName ? 'import pytest\n' : ''}
 from playwright.sync_api import Page, expect
+import re
 ${fixture}
 
 def test_example(page: Page) -> None {`);
@@ -174,6 +175,7 @@ def test_example(page: Page) -> None {`);
 import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None {
@@ -182,6 +184,7 @@ async def run(playwright: Playwright) -> None {
     } else {
       formatter.add(`
 from playwright.sync_api import Playwright, sync_playwright, expect
+import re
 
 
 def run(playwright: Playwright) -> None {

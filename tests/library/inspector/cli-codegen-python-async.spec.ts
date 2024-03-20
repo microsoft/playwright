@@ -28,6 +28,7 @@ test('should print the correct imports and context options', async ({ browserNam
   const expectedResult = `import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
@@ -41,6 +42,7 @@ test('should print the correct context options for custom settings', async ({ br
   const expectedResult = `import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
@@ -56,6 +58,7 @@ test('should print the correct context options when using a device', async ({ br
   const expectedResult = `import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
@@ -71,6 +74,7 @@ test('should print the correct context options when using a device and additiona
   const expectedResult = `import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
@@ -89,6 +93,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   expect(content.toString()).toBe(`import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
@@ -120,6 +125,7 @@ test('should print load/save storage_state', async ({ browserName, channel, runC
   const expectedResult1 = `import asyncio
 
 from playwright.async_api import Playwright, async_playwright, expect
+import re
 
 
 async def run(playwright: Playwright) -> None:
