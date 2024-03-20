@@ -17,9 +17,9 @@
 import '@web/third_party/vscode/codicon.css';
 import '@web/common.css';
 import React from 'react';
-import { baseFullConfig, TeleSuite } from '@testIsomorphic/teleReceiver';
+import { TeleSuite } from '@testIsomorphic/teleReceiver';
 import { TeleSuiteUpdater } from './teleSuiteUpdater';
-import type { Progress } from './teleSuiteUpdater';
+import type { Progress } from './uiModeModel';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
@@ -33,7 +33,6 @@ import { toggleTheme } from '@web/theme';
 import { settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
-import type { Disposable  } from '@testIsomorphic/events';
 import { TestServerConnection } from '@testIsomorphic/testServerConnection';
 import { pathSeparator } from './uiModeModel';
 import type { TestModel } from './uiModeModel';
@@ -41,10 +40,7 @@ import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 
-let updateRootSuite: (config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], progress: Progress | undefined) => void = () => {};
-// let runWatchedTests = (fileNames: string[]) => {};
 let xtermSize = { cols: 80, rows: 24 };
-
 const xtermDataSource: XtermDataSource = {
   pending: [],
   clear: () => {},
@@ -62,7 +58,7 @@ export const UIModeView: React.FC<{}> = ({
     ['skipped', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
-  const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined, loadErrors: [] });
+  const [testModel, setTestModel] = React.useState<TestModel>();
   const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
   const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
@@ -83,62 +79,132 @@ export const UIModeView: React.FC<{}> = ({
     const guid = new URLSearchParams(window.location.search).get('ws');
     const wsURL = new URL(`../${guid}`, window.location.toString());
     wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-    const connection = new TestServerConnection(wsURL.toString());
-    setTestServerConnection(connection);
-    setIsLoading(true);
-    setWatchedTreeIds({ value: new Set() });
-    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), [], undefined);
-    (async () => {
-      const status = await connection.runGlobalSetup();
-      if (status === 'passed')
-        await refreshRootSuite(connection);
-      setIsLoading(false);
-      const { hasBrowsers } = await connection.checkBrowsers();
-      setHasBrowsers(hasBrowsers);
-    })();
+    setTestServerConnection(new TestServerConnection(wsURL.toString()));
   }, []);
 
-  React.useEffect(() => {
-    if (!testServerConnection)
-      return;
-    const disposables = [
-      ...wireConnectionListeners(testServerConnection),
-      testServerConnection.onClose(() => setIsDisconnected(true))
-    ];
-    return () => {
-      for (const disposable of disposables)
-        disposable.dispose();
-    };
-  }, [testServerConnection]);
-
+  // Load tests on startup.
   React.useEffect(() => {
     inputRef.current?.focus();
     setIsLoading(true);
     reloadTests();
   }, [reloadTests]);
 
-  updateRootSuite = React.useCallback((config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], newProgress: Progress | undefined) => {
+  // Wire server connection to the auxiliary UI features.
+  React.useEffect(() => {
+    if (!testServerConnection)
+      return;
+    const disposables = [
+      testServerConnection.onStdio(params => {
+        if (params.buffer) {
+          const data = atob(params.buffer);
+          xtermDataSource.write(data);
+        } else {
+          xtermDataSource.write(params.text!);
+        }
+      }),
+      testServerConnection.onClose(() => setIsDisconnected(true))
+    ];
+    xtermDataSource.resize = (cols, rows) => {
+      xtermSize = { cols, rows };
+      testServerConnection.resizeTerminalNoReply({ cols, rows });
+    };
+    return () => {
+      for (const disposable of disposables)
+        disposable.dispose();
+    };
+  }, [testServerConnection]);
+
+
+  // This is the main routine, every time connection updates it starts the
+  // whole workflow.
+  React.useEffect(() => {
+    if (!testServerConnection)
+      return;
+
+    let throttleTimer: NodeJS.Timeout | undefined;
+    const teleSuiteUpdater = new TeleSuiteUpdater({
+      onUpdate: immediate => {
+        clearTimeout(throttleTimer);
+        throttleTimer = undefined;
+        if (immediate) {
+          setTestModel(teleSuiteUpdater.asModel());
+        } else if (!throttleTimer) {
+          throttleTimer = setTimeout(() => {
+            setTestModel(teleSuiteUpdater.asModel());
+          }, 250);
+        }
+      },
+      onError: error => {
+        xtermDataSource.write((error.stack || error.value || '') + '\n');
+      },
+      pathSeparator,
+    });
+
+    const updateList = async () => {
+      setIsLoading(true);
+      const result = await testServerConnection.listTests({});
+      teleSuiteUpdater.processListReport(result.report);
+      setIsLoading(false);
+    };
+
+    setTestModel(undefined);
+    setIsLoading(true);
+    setWatchedTreeIds({ value: new Set() });
+    (async () => {
+      const status = await testServerConnection.runGlobalSetup();
+      if (status !== 'passed')
+        return;
+      const result = await testServerConnection.listTests({});
+      teleSuiteUpdater.processListReport(result.report);
+
+      testServerConnection.onListChanged(updateList);
+      testServerConnection.onReport(params => {
+        teleSuiteUpdater.processTestReportEvent(params);
+      });
+      setIsLoading(false);
+
+      const { hasBrowsers } = await testServerConnection.checkBrowsers();
+      setHasBrowsers(hasBrowsers);
+    })();
+    return () => {
+      clearTimeout(throttleTimer);
+    };
+  }, [testServerConnection]);
+
+  // Update project filter default values.
+  React.useEffect(() => {
+    if (!testModel)
+      return;
+
+    const { config, rootSuite } = testModel;
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
-    for (const projectName of projectFilters.keys()) {
+    const newFilter = new Map(projectFilters);
+    for (const projectName of newFilter.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
-        projectFilters.delete(projectName);
+        newFilter.delete(projectName);
     }
     for (const projectSuite of rootSuite.suites) {
-      if (!projectFilters.has(projectSuite.title))
-        projectFilters.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
+      if (!newFilter.has(projectSuite.title))
+        newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
-    if (!selectedProjects && projectFilters.size && ![...projectFilters.values()].includes(true))
-      projectFilters.set(projectFilters.entries().next().value[0], true);
+    if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
+      newFilter.set(newFilter.entries().next().value[0], true);
+    if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
+      setProjectFilters(newFilter);
+  }, [projectFilters, testModel]);
 
-    setTestModel({ config, rootSuite, loadErrors });
-    setProjectFilters(new Map(projectFilters));
-    if (runningState && newProgress)
-      setProgress(newProgress);
-    else if (!newProgress)
+  // Update progress.
+  React.useEffect(() => {
+    if (runningState && testModel?.progress)
+      setProgress(testModel.progress);
+    else if (!testModel)
       setProgress(undefined);
-  }, [projectFilters, runningState]);
+  }, [testModel, runningState]);
 
+  // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
+    if (!testModel)
+      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, pathSeparator) };
     const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
     testTree.filterTree(filterText, statusFilters, runningState?.testIds);
     testTree.sortAndPropagateStatus();
@@ -149,7 +215,7 @@ export const UIModeView: React.FC<{}> = ({
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
-    if (!testServerConnection)
+    if (!testServerConnection || !testModel)
       return;
     if (mode === 'bounce-if-busy' && runningState)
       return;
@@ -189,6 +255,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, runningState, testModel, testServerConnection]);
 
+  // Watch implementation.
   React.useEffect(() => {
     if (!testServerConnection)
       return;
@@ -217,6 +284,7 @@ export const UIModeView: React.FC<{}> = ({
     return () => disposable.dispose();
   }, [runTests, testServerConnection, testTree, watchAll, watchedTreeIds]);
 
+  // Shortcuts.
   React.useEffect(() => {
     if (!testServerConnection)
       return;
@@ -229,9 +297,7 @@ export const UIModeView: React.FC<{}> = ({
         reloadTests();
       }
     };
-
     addEventListener('keydown', onShortcutEvent);
-
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
@@ -287,7 +353,7 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
+          <TraceView item={selectedItem} rootDir={testModel?.config?.rootDir} />
         </div>
       </div>
       <div className='vbox ui-mode-sidebar'>
@@ -342,61 +408,4 @@ export const UIModeView: React.FC<{}> = ({
       </div>
     </SplitView>
   </div>;
-};
-
-let teleSuiteUpdater: TeleSuiteUpdater | undefined;
-
-let throttleTimer: NodeJS.Timeout | undefined;
-let throttleData: { config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], progress: Progress } | undefined;
-const throttledAction = () => {
-  clearTimeout(throttleTimer);
-  throttleTimer = undefined;
-  updateRootSuite(throttleData!.config, throttleData!.rootSuite, throttleData!.loadErrors, throttleData!.progress);
-};
-
-const throttleUpdateRootSuite = (config: reporterTypes.FullConfig, rootSuite: reporterTypes.Suite, loadErrors: reporterTypes.TestError[], progress: Progress, immediate = false) => {
-  throttleData = { config, rootSuite, loadErrors, progress };
-  if (immediate)
-    throttledAction();
-  else if (!throttleTimer)
-    throttleTimer = setTimeout(throttledAction, 250);
-};
-
-const refreshRootSuite = async (testServerConnection: TestServerConnection): Promise<void> => {
-  teleSuiteUpdater = new TeleSuiteUpdater({
-    onUpdate: (source, immediate) => {
-      throttleUpdateRootSuite(source.config!, source.rootSuite || new TeleSuite('', 'root'), source.loadErrors, source.progress, immediate);
-    },
-    onError: error => {
-      xtermDataSource.write((error.stack || error.value || '') + '\n');
-    },
-    pathSeparator,
-  });
-  const { report } = await testServerConnection.listTests({});
-  teleSuiteUpdater?.processListReport(report);
-};
-
-const wireConnectionListeners = (testServerConnection: TestServerConnection): Disposable[] => {
-  const disposables: Disposable[] = [
-    testServerConnection.onListChanged(async () => {
-      const { report } = await testServerConnection.listTests({});
-      teleSuiteUpdater?.processListReport(report);
-    }),
-    testServerConnection.onStdio(params => {
-      if (params.buffer) {
-        const data = atob(params.buffer);
-        xtermDataSource.write(data);
-      } else {
-        xtermDataSource.write(params.text!);
-      }
-    }),
-    testServerConnection.onReport(params => {
-      teleSuiteUpdater?.processTestReport(params);
-    }),
-  ];
-  xtermDataSource.resize = (cols, rows) => {
-    xtermSize = { cols, rows };
-    testServerConnection.resizeTerminalNoReply({ cols, rows });
-  };
-  return disposables;
 };
