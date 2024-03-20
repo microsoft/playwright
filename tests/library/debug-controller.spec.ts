@@ -40,9 +40,8 @@ const test = baseTest.extend<Fixtures>({
   backend: async ({ wsEndpoint }, use) => {
     const backend = new Backend();
     await backend.connect(wsEndpoint);
-    const channel = backend.channel();
-    await channel.initialize({ codegenId: 'playwright-test', sdkLanguage: 'javascript' });
-    await use(channel);
+    await backend.initialize();
+    await use(backend.channel);
     await backend.close();
   },
   connectedBrowserFactory: async ({ wsEndpoint, browserType }, use) => {

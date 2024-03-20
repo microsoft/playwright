@@ -110,6 +110,7 @@ export class Backend extends EventEmitter {
   private static _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (a: any) => void, reject: (e: Error) => void }>();
   private _transport!: WebSocketTransport;
+  channel: channels.DebugControllerChannel;
 
   constructor() {
     super();
@@ -134,17 +135,17 @@ export class Backend extends EventEmitter {
         pair.fulfill(message.result);
       }
     };
-  }
-
-  channel(): channels.DebugControllerChannel {
-    return new Proxy(this, {
+    this.channel = new Proxy(this, {
       get: (target, propKey) => {
-        const origMethod = target[propKey];
-        if (typeof origMethod === 'function')
-          return origMethod.bind(target);
+        if (['on', 'once'].includes(String(propKey)))
+          return target[propKey].bind(target);
         return (...args: any) => this._send(String(propKey), ...args);
       }
     }) as any;
+  }
+
+  async initialize() {
+    await this.channel.initialize({ codegenId: 'playwright-test', sdkLanguage: 'javascript' });
   }
 
   async close() {
