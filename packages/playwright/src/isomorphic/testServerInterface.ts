@@ -66,7 +66,7 @@ export interface TestServerInterface {
     projects?: string[];
     reuseContext?: boolean;
     connectWsEndpoint?: string;
-  }): Promise<void>;
+  }): Promise<{ status: reporterTypes.FullResult['status'] }>;
 
   findRelatedTestFiles(params: {
     files: string[];
