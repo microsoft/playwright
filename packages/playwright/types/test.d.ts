@@ -702,6 +702,11 @@ interface TestConfig {
        * timeout for toPass method in milliseconds.
        */
       timeout?: number;
+
+      /**
+       * intervals for toPass method in milliseconds.
+       */
+      intervals?: number[];
     };
   };
 
@@ -8596,6 +8601,11 @@ interface TestProject {
        * timeout for toPass method in milliseconds.
        */
       timeout?: number;
+
+      /**
+       * interval for toPass method in milliseconds.
+       */
+      intervals?: number[];
     };
   };
 
