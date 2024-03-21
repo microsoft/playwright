@@ -232,7 +232,8 @@ class SnapshotHelper {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(new Error(message), false /* isHardError */, false /* retriable */);
+      this.testInfo._hasNonRetriableError = true;
+      this.testInfo._failWithError(new Error(message));
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);

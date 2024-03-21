@@ -733,3 +733,24 @@ test('should not continue with scope teardown after fixture teardown timeout', a
   expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture2" ran out of time.');
   expect(result.output).not.toContain('in fixture teardown');
 });
+
+test('should report fixture teardown error after test error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: async ({ }, use) => {
+          await use();
+          throw new Error('Error from the fixture foo');
+        },
+      });
+      test('fails', async ({ foo }) => {
+        throw new Error('Error from the test');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error from the fixture foo');
+  expect(result.output).toContain('Error from the test');
+});

@@ -147,8 +147,9 @@ export class WorkerMain extends ProcessRunner {
   private async _teardownScopes() {
     const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
     const runnable = { type: 'teardown' } as const;
-    await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(error => fakeTestInfo._handlePossibleTimeoutError(error));
-    await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(error => fakeTestInfo._handlePossibleTimeoutError(error));
+    // Ignore top-level errors, they are already inside TestInfo.errors.
+    await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(() => {});
+    await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
     this._fatalErrors.push(...fakeTestInfo.errors);
   }
 
@@ -165,7 +166,10 @@ export class WorkerMain extends ProcessRunner {
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
     // and we restart the worker.
-    this._currentTest._failWithError(error, true /* isHardError */, true /* retriable */);
+    if (!this._currentTest._hasUnhandledError) {
+      this._currentTest._hasUnhandledError = true;
+      this._currentTest._failWithError(error);
+    }
 
     // For tests marked with test.fail(), this might be a problem when unhandled error
     // is not coming from the user test code (legit failure), but from fixtures or test runner.
@@ -355,7 +359,7 @@ export class WorkerMain extends ProcessRunner {
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
       });
-    }).catch(error => testInfo._handlePossibleTimeoutError(error));
+    }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
@@ -416,7 +420,7 @@ export class WorkerMain extends ProcessRunner {
       }
       if (firstAfterHooksError)
         throw firstAfterHooksError;
-    }).catch(error => testInfo._handlePossibleTimeoutError(error));
+    }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
     if (testInfo._isFailure())
       this._isStopped = true;
@@ -455,13 +459,13 @@ export class WorkerMain extends ProcessRunner {
 
         if (firstWorkerCleanupError)
           throw firstWorkerCleanupError;
-      }).catch(error => testInfo._handlePossibleTimeoutError(error));
+      }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
     }
 
     const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
     await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
       await testInfo._tracing.stopIfNeeded();
-    }).catch(error => testInfo._handlePossibleTimeoutError(error));
+    }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
     testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed + afterHooksSlot.elapsed) | 0;
 
