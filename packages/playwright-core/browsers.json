@@ -15,13 +15,13 @@
     },
     {
       "name": "firefox",
-      "revision": "1444",
+      "revision": "1445",
       "installByDefault": true,
       "browserVersion": "123.0"
     },
     {
       "name": "firefox-asan",
-      "revision": "1444",
+      "revision": "1445",
       "installByDefault": false,
       "browserVersion": "123.0"
     },
