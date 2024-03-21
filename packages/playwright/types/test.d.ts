@@ -702,11 +702,6 @@ interface TestConfig {
        * timeout for toPass method in milliseconds.
        */
       timeout?: number;
-
-      /**
-       * intervals for toPass method in milliseconds.
-       */
-      intervals?: number[];
     };
   };
 
