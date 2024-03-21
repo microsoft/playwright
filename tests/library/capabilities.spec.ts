@@ -302,3 +302,51 @@ it('Intl.ListFormat should work', async ({ page, server, browserName }) => {
   });
   expect(formatted).toBe('first, second, or third');
 });
+
+it('service worker should cover the iframe', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29267' });
+
+  server.setRoute('/sw.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' }).end(`
+      <script>
+        window.registrationPromise = navigator.serviceWorker.register('sw.js');
+        window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+      </script>
+    `);
+  });
+
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' }).end(`<div>from the server</div>`);
+  });
+
+  server.setRoute('/sw.js', (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript' }).end(`
+      const kIframeHtml = "<div>from the service worker</div>";
+
+      self.addEventListener('fetch', event => {
+        if (event.request.url.endsWith('iframe.html')) {
+          const blob = new Blob([kIframeHtml], { type: 'text/html' });
+          const response = new Response(blob, { status: 200 , statusText: 'OK' });
+          event.respondWith(response);
+          return;
+        }
+        event.respondWith(fetch(event.request));
+      });
+
+      self.addEventListener('activate', event => {
+        event.waitUntil(clients.claim());
+      });
+    `);
+  });
+
+  await page.goto(server.PREFIX + '/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = '/iframe.html';
+    document.body.appendChild(iframe);
+  });
+
+  await expect(page.frameLocator('iframe').locator('div')).toHaveText('from the service worker');
+});
