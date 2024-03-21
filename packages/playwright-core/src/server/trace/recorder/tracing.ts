@@ -43,6 +43,7 @@ import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
+import { serializeError } from '../../errors';
 
 const version: trace.VERSION = 6;
 
@@ -182,6 +183,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._context.instrumentation.addListener(this, this._context);
     this._eventListeners.push(
         eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
+        eventsHelper.addEventListener(this._context, BrowserContext.Events.PageError, this._onPageError.bind(this)),
     );
     if (this._state.options.screenshots)
       this._startScreencast();
@@ -396,18 +398,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
   }
 
-  onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent) {
-    if (!sdkObject.attribution.context)
-      return;
-    if (event.method === 'console' ||
-        (event.method === '__create__' && event.class === 'ConsoleMessage') ||
-        (event.method === '__create__' && event.class === 'JSHandle')) {
-      // Console messages are handled separately.
-      return;
-    }
-    this._appendTraceEvent(event);
-  }
-
   onEntryStarted(entry: har.Entry) {
     this._pendingHarEntries.add(entry);
   }
@@ -452,6 +442,18 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       location: message.location(),
       time: monotonicTime(),
       pageId: message.page()?.guid,
+    };
+    this._appendTraceEvent(event);
+  }
+
+  private _onPageError(error: Error, page: Page) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'pageError',
+      params: { error: serializeError(error) },
+      pageId: page.guid,
     };
     this._appendTraceEvent(event);
   }
