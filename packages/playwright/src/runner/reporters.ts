@@ -33,7 +33,7 @@ import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
 import { type ReporterV2, wrapReporterAsV2 } from '../reporters/reporterV2';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
   const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
     blob: BlobReporter,
     dot: mode === 'list' ? ListModeReporter : DotReporter,
@@ -43,14 +43,14 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     json: JSONReporter,
     junit: JUnitReporter,
     null: EmptyReporter,
-    html: mode === 'ui' ? LineReporter : HtmlReporter,
+    html: HtmlReporter,
     markdown: MarkdownReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
   if (config.configCLIOverrides.additionalReporters)
     descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
-  const runOptions = reporterOptions(config, mode);
+  const runOptions = reporterOptions(config, mode, isTestServer);
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...runOptions, ...arg };
@@ -78,17 +78,19 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   return reporters;
 }
 
-export async function createReporterForTestServer(config: FullConfigInternal, file: string, mode: 'test' | 'list', messageSink: (message: any) => void): Promise<ReporterV2> {
+export async function createReporterForTestServer(config: FullConfigInternal, mode: 'list' | 'test', file: string, messageSink: (message: any) => void): Promise<ReporterV2> {
   const reporterConstructor = await loadReporter(config, file);
-  const runOptions = reporterOptions(config, mode, messageSink);
+  const runOptions = reporterOptions(config, mode, true, messageSink);
   const instance = new reporterConstructor(runOptions);
   return wrapReporterAsV2(instance);
 }
 
-function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'ui' | 'merge', send?: (message: any) => void) {
+function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, send?: (message: any) => void) {
   return {
     configDir: config.configDir,
     _send: send,
+    _mode: mode,
+    _isTestServer: isTestServer,
   };
 }
 

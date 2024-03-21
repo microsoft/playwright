@@ -36,6 +36,14 @@ export type TraceViewerServerOptions = {
 };
 
 export type TraceViewerRedirectOptions = {
+  args?: string[];
+  grep?: string;
+  grepInvert?: string;
+  project?: string[];
+  workers?: number | string;
+  headed?: boolean;
+  timeout?: number;
+  reporter?: string[];
   webApp?: string;
   isServer?: boolean;
 };
@@ -102,19 +110,36 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 }
 
 export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
-  const params = (traceUrls || []).map(t => `trace=${encodeURIComponent(t)}`);
+  const params = new URLSearchParams();
+  for (const traceUrl of traceUrls)
+    params.append('trace', traceUrl);
   if (server.wsGuid())
-    params.push('ws=' + server.wsGuid());
+    params.append('ws', server.wsGuid()!);
   if (options?.isServer)
-    params.push('isServer');
+    params.append('isServer', '');
   if (isUnderTest())
-    params.push('isUnderTest=true');
-  const searchQuery = params.length ? '?' + params.join('&') : '';
-  const urlPath  = `/trace/${options.webApp || 'index.html'}${searchQuery}`;
+    params.append('isUnderTest', 'true');
+  for (const arg of options.args || [])
+    params.append('arg', arg);
+  if (options.grep)
+    params.append('grep', options.grep);
+  if (options.grepInvert)
+    params.append('grepInvert', options.grepInvert);
+  for (const project of options.project || [])
+    params.append('project', project);
+  if (options.workers)
+    params.append('workers', String(options.workers));
+  if (options.timeout)
+    params.append('timeout', String(options.timeout));
+  if (options.headed)
+    params.append('headed', '');
+  for (const reporter of options.reporter || [])
+    params.append('reporter', reporter);
 
-  server.routePath('/', (request, response) => {
+  const urlPath  = `/trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  server.routePath('/', (_, response) => {
     response.statusCode = 302;
-    response.setHeader('Location', urlPath + request.url!.substring(1));
+    response.setHeader('Location', urlPath);
     response.end();
     return true;
   });

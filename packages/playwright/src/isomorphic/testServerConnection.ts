@@ -15,7 +15,6 @@
  */
 
 import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
-import type * as reporterTypes from 'playwright/types/testReporter';
 import * as events from './events';
 
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
@@ -67,7 +66,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     this._connectedPromise = new Promise<void>((f, r) => {
       this._ws.addEventListener('open', () => {
         f();
-        this._ws.send(JSON.stringify({ method: 'ready' }));
+        this._ws.send(JSON.stringify({ id: -1, method: 'ready' }));
       });
       this._ws.addEventListener('error', r);
     });
@@ -75,6 +74,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._onCloseEmitter.fire();
       clearInterval(pingInterval);
     });
+  }
+
+  connect() {
+    return this._connectedPromise;
   }
 
   private async _sendMessage(method: string, params?: any): Promise<any> {
@@ -103,81 +106,83 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._onListChangedEmitter.fire(params);
     else if (method === 'testFilesChanged')
       this._onTestFilesChangedEmitter.fire(params);
+    else if (method === 'loadTraceRequested')
+      this._onLoadTraceRequestedEmitter.fire(params);
   }
 
-  async ping(): Promise<void> {
+  async ping(params: Parameters<TestServerInterface['ping']>[0]): ReturnType<TestServerInterface['ping']> {
     await this._sendMessage('ping');
   }
 
-  async pingNoReply() {
+  async pingNoReply(params: Parameters<TestServerInterface['ping']>[0]) {
     this._sendMessageNoReply('ping');
   }
 
-  async watch(params: { fileNames: string[]; }): Promise<void> {
+  async watch(params: Parameters<TestServerInterface['watch']>[0]): ReturnType<TestServerInterface['watch']> {
     await this._sendMessage('watch', params);
   }
 
-  watchNoReply(params: { fileNames: string[]; }) {
+  watchNoReply(params: Parameters<TestServerInterface['watch']>[0]) {
     this._sendMessageNoReply('watch', params);
   }
 
-  async open(params: { location: reporterTypes.Location; }): Promise<void> {
+  async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
     await this._sendMessage('open', params);
   }
 
-  openNoReply(params: { location: reporterTypes.Location; }) {
+  openNoReply(params: Parameters<TestServerInterface['open']>[0]) {
     this._sendMessageNoReply('open', params);
   }
 
-  async resizeTerminal(params: { cols: number; rows: number; }): Promise<void> {
+  async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
     await this._sendMessage('resizeTerminal', params);
   }
 
-  resizeTerminalNoReply(params: { cols: number; rows: number; }) {
+  resizeTerminalNoReply(params: Parameters<TestServerInterface['resizeTerminal']>[0]) {
     this._sendMessageNoReply('resizeTerminal', params);
   }
 
-  async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
+  async checkBrowsers(params: Parameters<TestServerInterface['checkBrowsers']>[0]): ReturnType<TestServerInterface['checkBrowsers']> {
     return await this._sendMessage('checkBrowsers');
   }
 
-  async installBrowsers(): Promise<void> {
+  async installBrowsers(params: Parameters<TestServerInterface['installBrowsers']>[0]): ReturnType<TestServerInterface['installBrowsers']> {
     await this._sendMessage('installBrowsers');
   }
 
-  async runGlobalSetup(): Promise<'passed' | 'failed' | 'timedout' | 'interrupted'> {
+  async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     return await this._sendMessage('runGlobalSetup');
   }
 
-  async runGlobalTeardown(): Promise<'passed' | 'failed' | 'timedout' | 'interrupted'> {
+  async runGlobalTeardown(params: Parameters<TestServerInterface['runGlobalTeardown']>[0]): ReturnType<TestServerInterface['runGlobalTeardown']> {
     return await this._sendMessage('runGlobalTeardown');
   }
 
-  async listFiles(): Promise<{ projects: { name: string; testDir: string; use: { testIdAttribute?: string | undefined; }; files: string[]; }[]; cliEntryPoint?: string | undefined; error?: reporterTypes.TestError | undefined; }> {
-    return await this._sendMessage('listFiles');
+  async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
+    return await this._sendMessage('listFiles', params);
   }
 
-  async listTests(params: { reporter?: string | undefined; fileNames?: string[] | undefined; }): Promise<{ report: any[] }> {
+  async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
     return await this._sendMessage('listTests', params);
   }
 
-  async runTests(params: { reporter?: string | undefined; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }): Promise<{ status: reporterTypes.FullResult['status'] }> {
+  async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     return await this._sendMessage('runTests', params);
   }
 
-  async findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[] | undefined; }> {
+  async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
     return await this._sendMessage('findRelatedTestFiles', params);
   }
 
-  async stopTests(): Promise<void> {
+  async stopTests(params: Parameters<TestServerInterface['stopTests']>[0]): ReturnType<TestServerInterface['stopTests']> {
     await this._sendMessage('stopTests');
   }
 
-  stopTestsNoReply() {
+  stopTestsNoReply(params: Parameters<TestServerInterface['stopTests']>[0]) {
     this._sendMessageNoReply('stopTests');
   }
 
-  async closeGracefully(): Promise<void> {
+  async closeGracefully(params: Parameters<TestServerInterface['closeGracefully']>[0]): ReturnType<TestServerInterface['closeGracefully']> {
     await this._sendMessage('closeGracefully');
   }
 }
