@@ -37,7 +37,7 @@ export const TestListView: React.FC<{
   filterText: string,
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
-  testModel: TestModel,
+  testModel?: TestModel,
   runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   watchAll: boolean,
@@ -86,6 +86,8 @@ export const TestListView: React.FC<{
 
   // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
+    if (!testModel)
+      return { selectedTreeItem: undefined };
     const selectedTreeItem = selectedTreeItemId ? testTree.treeItemById(selectedTreeItemId) : undefined;
     let testFile: SourceLocation | undefined;
     if (selectedTreeItem) {

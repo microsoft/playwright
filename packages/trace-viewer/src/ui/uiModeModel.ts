@@ -16,10 +16,18 @@
 
 import type * as reporterTypes from 'playwright/types/testReporter';
 
+export type Progress = {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+};
+
 export type TestModel = {
-  config: reporterTypes.FullConfig | undefined;
-  rootSuite: reporterTypes.Suite | undefined;
+  config: reporterTypes.FullConfig;
+  rootSuite: reporterTypes.Suite;
   loadErrors: reporterTypes.TestError[];
+  progress: Progress;
 };
 
 export const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
