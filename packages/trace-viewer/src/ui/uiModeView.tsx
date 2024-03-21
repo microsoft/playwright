@@ -66,7 +66,7 @@ export const UIModeView: React.FC<{}> = ({
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
   const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
-  const runTestPromiseChain = React.useRef(Promise.resolve());
+  const commandQueue = React.useRef(Promise.resolve());
   const runTestBacklog = React.useRef<Set<string>>(new Set());
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
@@ -114,7 +114,6 @@ export const UIModeView: React.FC<{}> = ({
     };
   }, [testServerConnection]);
 
-
   // This is the main routine, every time connection updates it starts the
   // whole workflow.
   React.useEffect(() => {
@@ -141,10 +140,18 @@ export const UIModeView: React.FC<{}> = ({
     });
 
     const updateList = async () => {
-      setIsLoading(true);
-      const result = await testServerConnection.listTests({});
-      teleSuiteUpdater.processListReport(result.report);
-      setIsLoading(false);
+      commandQueue.current = commandQueue.current.then(async () => {
+        setIsLoading(true);
+        try {
+          const result = await testServerConnection.listTests({});
+          teleSuiteUpdater.processListReport(result.report);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(e);
+        } finally {
+          setIsLoading(false);
+        }
+      });
     };
 
     setTestModel(undefined);
@@ -221,7 +228,7 @@ export const UIModeView: React.FC<{}> = ({
       return;
 
     runTestBacklog.current = new Set([...runTestBacklog.current, ...testIds]);
-    runTestPromiseChain.current = runTestPromiseChain.current.then(async () => {
+    commandQueue.current = commandQueue.current.then(async () => {
       const testIds = runTestBacklog.current;
       runTestBacklog.current = new Set();
       if (!testIds.size)

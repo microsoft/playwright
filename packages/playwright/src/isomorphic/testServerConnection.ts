@@ -15,7 +15,7 @@
  */
 
 import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
-import type { Location, TestError } from 'playwright/types/testReporter';
+import type * as reporterTypes from 'playwright/types/testReporter';
 import * as events from './events';
 
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
@@ -110,7 +110,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   async pingNoReply() {
-    await this._sendMessageNoReply('ping');
+    this._sendMessageNoReply('ping');
   }
 
   async watch(params: { fileNames: string[]; }): Promise<void> {
@@ -121,11 +121,11 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     this._sendMessageNoReply('watch', params);
   }
 
-  async open(params: { location: Location; }): Promise<void> {
+  async open(params: { location: reporterTypes.Location; }): Promise<void> {
     await this._sendMessage('open', params);
   }
 
-  openNoReply(params: { location: Location; }) {
+  openNoReply(params: { location: reporterTypes.Location; }) {
     this._sendMessageNoReply('open', params);
   }
 
@@ -153,7 +153,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('runGlobalTeardown');
   }
 
-  async listFiles(): Promise<{ projects: { name: string; testDir: string; use: { testIdAttribute?: string | undefined; }; files: string[]; }[]; cliEntryPoint?: string | undefined; error?: TestError | undefined; }> {
+  async listFiles(): Promise<{ projects: { name: string; testDir: string; use: { testIdAttribute?: string | undefined; }; files: string[]; }[]; cliEntryPoint?: string | undefined; error?: reporterTypes.TestError | undefined; }> {
     return await this._sendMessage('listFiles');
   }
 
@@ -161,11 +161,11 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('listTests', params);
   }
 
-  async runTests(params: { reporter?: string | undefined; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }): Promise<void> {
-    await this._sendMessage('runTests', params);
+  async runTests(params: { reporter?: string | undefined; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }): Promise<{ status: reporterTypes.FullResult['status'] }> {
+    return await this._sendMessage('runTests', params);
   }
 
-  async findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: TestError[] | undefined; }> {
+  async findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[] | undefined; }> {
     return await this._sendMessage('findRelatedTestFiles', params);
   }
 
@@ -176,7 +176,6 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   stopTestsNoReply() {
     this._sendMessageNoReply('stopTests');
   }
-
 
   async closeGracefully(): Promise<void> {
     await this._sendMessage('closeGracefully');

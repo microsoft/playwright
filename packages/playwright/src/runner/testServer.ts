@@ -19,7 +19,7 @@ import path from 'path';
 import { registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import type { Transport, HttpServer } from 'playwright-core/lib/utils';
-import type { FullResult, Location, TestError } from '../../types/testReporter';
+import type * as reporterTypes from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
@@ -93,10 +93,10 @@ class TestServerDispatcher implements TestServerInterface {
   private _config: FullConfigInternal;
   private _globalWatcher: Watcher;
   private _testWatcher: Watcher;
-  private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   readonly transport: Transport;
   private _queue = Promise.resolve();
-  private _globalCleanup: (() => Promise<FullResult['status']>) | undefined;
+  private _globalCleanup: (() => Promise<reporterTypes.FullResult['status']>) | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
   constructor(config: FullConfigInternal) {
@@ -116,7 +116,7 @@ class TestServerDispatcher implements TestServerInterface {
 
   async ping() {}
 
-  async open(params: { location: Location }) {
+  async open(params: { location: reporterTypes.Location }) {
     if (isUnderTest())
       return;
     // eslint-disable-next-line no-console
@@ -138,7 +138,7 @@ class TestServerDispatcher implements TestServerInterface {
     await installBrowsers();
   }
 
-  async runGlobalSetup(): Promise<FullResult['status']> {
+  async runGlobalSetup(): Promise<reporterTypes.FullResult['status']> {
     await this.runGlobalTeardown();
 
     const reporter = new InternalReporter(new ListReporter());
@@ -167,7 +167,7 @@ class TestServerDispatcher implements TestServerInterface {
       const runner = new Runner(this._config);
       return runner.listTestFiles();
     } catch (e) {
-      const error: TestError = serializeError(e);
+      const error: reporterTypes.TestError = serializeError(e);
       error.location = prepareErrorStack(e.stack).location;
       return { projects: [], error };
     }
@@ -214,11 +214,15 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async runTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
-    this._queue = this._queue.then(() => this._innerRunTests(params)).catch(printInternalError);
+    let status: reporterTypes.FullResult['status'];
+    this._queue = this._queue.then(async () => {
+      status = await this._innerRunTests(params).catch(printInternalError) || 'failed';
+    });
     await this._queue;
+    return { status: status! };
   }
 
-  private async _innerRunTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }) {
+  private async _innerRunTests(params: { reporter?: string; locations?: string[] | undefined; grep?: string | undefined; testIds?: string[] | undefined; headed?: boolean | undefined; oneWorker?: boolean | undefined; trace?: 'off' | 'on' | undefined; projects?: string[] | undefined; reuseContext?: boolean | undefined; connectWsEndpoint?: string | undefined; }): Promise<reporterTypes.FullResult['status']> {
     await this.stopTests();
     const { testIds, projects, locations, grep } = params;
 
@@ -244,7 +248,7 @@ class TestServerDispatcher implements TestServerInterface {
       return status;
     });
     this._testRun = { run, stop };
-    await run;
+    return await run;
   }
 
   async watch(params: { fileNames: string[]; }) {
@@ -256,7 +260,7 @@ class TestServerDispatcher implements TestServerInterface {
     this._testWatcher.update([...files], [], true);
   }
 
-  findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: TestError[] | undefined; }> {
+  findRelatedTestFiles(params: { files: string[]; }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[] | undefined; }> {
     const runner = new Runner(this._config);
     return runner.findRelatedTestFiles('out-of-process', params.files);
   }
@@ -271,7 +275,7 @@ class TestServerDispatcher implements TestServerInterface {
   }
 }
 
-export async function runTestServer(config: FullConfigInternal, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<FullResult['status']> {
+export async function runTestServer(config: FullConfigInternal, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
   const testServer = new TestServer(config);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
