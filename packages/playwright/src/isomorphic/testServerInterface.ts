@@ -18,7 +18,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { Event } from './events';
 
 export interface TestServerInterface {
-  ping(): Promise<void>;
+  ping(params: {}): Promise<void>;
 
   watch(params: {
     fileNames: string[];
@@ -28,15 +28,17 @@ export interface TestServerInterface {
 
   resizeTerminal(params: { cols: number, rows: number }): Promise<void>;
 
-  checkBrowsers(): Promise<{ hasBrowsers: boolean }>;
+  checkBrowsers(params: {}): Promise<{ hasBrowsers: boolean }>;
 
-  installBrowsers(): Promise<void>;
+  installBrowsers(params: {}): Promise<void>;
 
-  runGlobalSetup(): Promise<reporterTypes.FullResult['status']>;
+  runGlobalSetup(params: {}): Promise<reporterTypes.FullResult['status']>;
 
-  runGlobalTeardown(): Promise<reporterTypes.FullResult['status']>;
+  runGlobalTeardown(params: {}): Promise<reporterTypes.FullResult['status']>;
 
-  listFiles(): Promise<{
+  listFiles(params: {
+    projects?: string[];
+  }): Promise<{
     projects: {
       name: string;
       testDir: string;
@@ -51,17 +53,21 @@ export interface TestServerInterface {
    * Returns list of teleReporter events.
    */
   listTests(params: {
-    reporter?: string;
-    fileNames?: string[];
+    serializer?: string;
+    projects?: string[];
+    locations?: string[];
   }): Promise<{ report: any[] }>;
 
   runTests(params: {
-    reporter?: string;
+    serializer?: string;
     locations?: string[];
     grep?: string;
+    grepInvert?: string;
     testIds?: string[];
     headed?: boolean;
-    oneWorker?: boolean;
+    workers?: number | string;
+    timeout?: number,
+    reporters?: string[],
     trace?: 'on' | 'off';
     projects?: string[];
     reuseContext?: boolean;
@@ -72,9 +78,9 @@ export interface TestServerInterface {
     files: string[];
   }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }>;
 
-  stopTests(): Promise<void>;
+  stopTests(params: {}): Promise<void>;
 
-  closeGracefully(): Promise<void>;
+  closeGracefully(params: {}): Promise<void>;
 }
 
 export interface TestServerInterfaceEvents {

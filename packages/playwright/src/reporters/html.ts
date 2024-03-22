@@ -51,7 +51,8 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
-  _mode?: string;
+  _mode?: 'test' | 'list';
+  _isTestServer?: boolean;
 };
 
 class HtmlReporter extends EmptyReporter {
@@ -67,6 +68,8 @@ class HtmlReporter extends EmptyReporter {
   constructor(options: HtmlReporterOptions) {
     super();
     this._options = options;
+    if (options._mode === 'test')
+      process.env.PW_HTML_REPORT = '1';
   }
 
   override printsToStdio() {
@@ -125,7 +128,7 @@ class HtmlReporter extends EmptyReporter {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else if (this._options._mode === 'test') {
