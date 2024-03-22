@@ -12,6 +12,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Integrity check
+      shell: bash
+      run: |
+        for file in ${{ inputs.report_dir }}/*.zip; do
+          unzip -t $file
+        done
     - name: Upload blob report to GitHub
       if: ${{ !cancelled() && github.event_name == 'pull_request' }}
       uses: actions/upload-artifact@v4
