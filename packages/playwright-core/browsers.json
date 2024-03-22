@@ -15,15 +15,15 @@
     },
     {
       "name": "firefox",
-      "revision": "1445",
+      "revision": "1446",
       "installByDefault": true,
-      "browserVersion": "123.0"
+      "browserVersion": "124.0"
     },
     {
       "name": "firefox-asan",
-      "revision": "1445",
+      "revision": "1446",
       "installByDefault": false,
-      "browserVersion": "123.0"
+      "browserVersion": "124.0"
     },
     {
       "name": "firefox-beta",
