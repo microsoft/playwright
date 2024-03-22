@@ -210,6 +210,14 @@ Optional description that will be reflected in a test report.
 
 Test function as passed to `test(title, testFunction)`.
 
+## property: TestInfo.tags
+* since: v1.43
+- type: <[Array]<[string]>>
+
+Tags that apply to the test. Learn more about [tags](../test-annotations.md#tag-tests).
+
+Note that any changes made to this list while the test is running will not be visible to test reporters.
+
 ## property: TestInfo.testId
 * since: v1.32
 - type: <[string]>

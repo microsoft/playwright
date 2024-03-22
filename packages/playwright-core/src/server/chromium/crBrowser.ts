@@ -562,7 +562,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async clearCache(): Promise<void> {
     for (const page of this._crPages())
-      await page._mainFrameSession._networkManager.clearCache();
+      await page._networkManager.clearCache();
   }
 
   async cancelDownload(guid: string) {
@@ -594,7 +594,8 @@ export class CRBrowserContext extends BrowserContext {
       targetId = (page._delegate as CRPage)._targetId;
     } else if (page instanceof Frame) {
       const session = (page._page._delegate as CRPage)._sessions.get(page._id);
-      if (!session) throw new Error(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
+      if (!session)
+        throw new Error(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
       targetId = session._targetId;
     } else {
       throw new Error('page: expected Page or Frame');

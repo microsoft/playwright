@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import type { Suite } from './testReporter';
+import { TeleReporterEmitter } from '../reporters/teleEmitter';
 
-export interface SuitePrivate extends Suite {
-  _fileId: string | undefined;
-  _parallelMode: 'none' | 'default' | 'serial' | 'parallel';
+class UIModeReporter extends TeleReporterEmitter {
+  constructor(options: any) {
+    super(options._send, { omitBuffers: true });
+  }
 }
+
+export default UIModeReporter;

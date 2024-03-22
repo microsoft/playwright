@@ -48,6 +48,7 @@ module.exports = {
         "arrow-parens": [2, "as-needed"],
         "prefer-const": 2,
         "quote-props": [2, "consistent"],
+        "nonblock-statement-body-position": [2, "below"],
 
         // anti-patterns
         "no-var": 2,

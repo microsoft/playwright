@@ -334,25 +334,33 @@ export async function loadEmptyConfigForMergeReports() {
 }
 
 export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
-  const nodeVersion = +process.versions.node.split('.')[0];
-  // New experimental loader is only supported on Node 16+.
-  if (nodeVersion < 16)
-    return false;
-  if (!configFile && !force)
-    return false;
+  // Opt-out switch.
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  // Node.js < 20
+
+  // There are two esm loader APIs:
+  // - Older API that needs a process restart. Available in Node 16, 17, and non-latest 18, 19 and 20.
+  // - Newer API that works in-process. Available in Node 21+ and latest 18, 19 and 20.
+
+  // First check whether we have already restarted with the ESM loader from the older API.
   if ((globalThis as any).__esmLoaderPortPreV20) {
     // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
   }
-  if (!force && !fileIsModule(configFile!))
-    return false;
 
-  // Node.js < 20
+  // Now check for the newer API presence.
   if (!require('node:module').register) {
+    // Older API is experimental, only supported on Node 16+.
+    const nodeVersion = +process.versions.node.split('.')[0];
+    if (nodeVersion < 16)
+      return false;
+
+    // With older API requiring a process restart, do so conditionally on the config.
+    const configIsModule = !!configFile && fileIsModule(configFile);
+    if (!force && !configIsModule)
+      return false;
+
     const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
       env: {
         ...process.env,
@@ -367,7 +375,8 @@ export function restartWithExperimentalTsEsm(configFile: string | undefined, for
     });
     return true;
   }
-  // Nodejs >= 21
+
+  // With the newer API, always enable the ESM loader, because it does not need a restart.
   registerESMLoader();
   return false;
 }

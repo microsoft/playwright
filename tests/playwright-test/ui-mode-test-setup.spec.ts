@@ -40,9 +40,12 @@ test('should run global setup and teardown', async ({ runUITest }) => {
   });
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText('from-global-setup');
   await page.close();
+
   await expect.poll(() => testProcess.outputLines()).toEqual([
-    'from-global-setup',
     'from-global-teardown',
   ]);
 });
@@ -70,9 +73,11 @@ test('should teardown on sigint', async ({ runUITest }) => {
   });
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText('from-global-setup');
+
   testProcess.process.kill('SIGINT');
   await expect.poll(() => testProcess.outputLines()).toEqual([
-    'from-global-setup',
     'from-global-teardown',
   ]);
 });

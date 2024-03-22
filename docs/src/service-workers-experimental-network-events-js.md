@@ -137,10 +137,12 @@ self.addEventListener('fetch', event => {
       (async () => {
         // 1. Try to first serve directly from caches
         const response = await caches.match(event.request);
-        if (response) return response;
+        if (response)
+          return response;
 
         // 2. Re-write request for /foo to /bar
-        if (event.request.url.endsWith('foo')) return fetch('./bar');
+        if (event.request.url.endsWith('foo'))
+          return fetch('./bar');
 
         // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
         if (event.request.url.endsWith('tracker.js')) {

@@ -44,8 +44,11 @@ interface TsConfig {
 
 export interface LoadedTsConfig {
   tsConfigPath: string;
-  baseUrl?: string;
-  paths?: { [key: string]: Array<string> };
+  paths?: {
+    mapping: { [key: string]: Array<string> };
+    pathsBasePath: string;  // absolute path
+  };
+  absoluteBaseUrl?: string;
   allowJs?: boolean;
 }
 
@@ -101,7 +104,8 @@ function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string)
     referencedConfigFile += '.json';
   const currentDir = path.dirname(baseConfigFile);
   let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
-  if (referencedConfigFile.indexOf('/') !== -1 && referencedConfigFile.indexOf('.') !== -1 && !fs.existsSync(referencedConfigFile))
+  // TODO: I don't see how this makes sense, delete in the next minor release.
+  if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
     resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
   return resolvedConfigFile;
 }
@@ -117,6 +121,7 @@ function loadTsConfig(
   let result: LoadedTsConfig = {
     tsConfigPath: configFilePath,
   };
+  // Retain result instance below, so that caching works.
   visited.set(configFilePath, result);
 
   if (!fs.existsSync(configFilePath))
@@ -130,23 +135,27 @@ function loadTsConfig(
   for (const extendedConfig of extendsArray) {
     const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
     const base = loadTsConfig(extendedConfigPath, references, visited);
-
-    // baseUrl should be interpreted as relative to the base tsconfig,
-    // but we need to update it so it is relative to the original tsconfig being loaded
-    if (base.baseUrl && base.baseUrl) {
-      const extendsDir = path.dirname(extendedConfig);
-      base.baseUrl = path.join(extendsDir, base.baseUrl);
-    }
-    result = { ...result, ...base, tsConfigPath: configFilePath };
+    // Retain result instance, so that caching works.
+    Object.assign(result, base, { tsConfigPath: configFilePath });
   }
 
-  const loadedConfig = Object.fromEntries(Object.entries({
-    baseUrl: parsedConfig.compilerOptions?.baseUrl,
-    paths: parsedConfig.compilerOptions?.paths,
-    allowJs: parsedConfig?.compilerOptions?.allowJs,
-  }).filter(([, value]) => value !== undefined));
-
-  result = { ...result, ...loadedConfig };
+  if (parsedConfig.compilerOptions?.allowJs !== undefined)
+    result.allowJs = parsedConfig.compilerOptions.allowJs;
+  if (parsedConfig.compilerOptions?.paths !== undefined) {
+    // We must store pathsBasePath from the config that defines "paths" and later resolve
+    // based on this absolute path, when no "baseUrl" is specified. See tsc for reference:
+    // https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/commandLineParser.ts#L3129
+    // https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/moduleSpecifiers.ts#L510
+    result.paths = {
+      mapping: parsedConfig.compilerOptions.paths,
+      pathsBasePath: path.dirname(configFilePath),
+    };
+  }
+  if (parsedConfig.compilerOptions?.baseUrl !== undefined) {
+    // Follow tsc and resolve all relative file paths in the config right away.
+    // This way it is safe to inherit paths between the configs.
+    result.absoluteBaseUrl = path.resolve(path.dirname(configFilePath), parsedConfig.compilerOptions.baseUrl);
+  }
 
   for (const ref of parsedConfig.references || [])
     references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));

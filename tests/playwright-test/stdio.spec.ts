@@ -128,3 +128,30 @@ test('should not throw type error when using assert', async ({ runInlineTest }) 
   expect(result.output).not.toContain(`TypeError: process.stderr.hasColors is not a function`);
   expect(result.output).toContain(`AssertionError`);
 });
+
+test('should provide stubs for tty.WriteStream methods on process.stdout/stderr', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29839' });
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import type * as tty from 'tty';
+      async function checkMethods(stream: tty.WriteStream) {
+        expect(stream.isTTY).toBe(true);
+        await new Promise<void>(r =>  stream.clearLine(-1, r));;
+        await new Promise<void>(r =>  stream.clearScreenDown(r));;
+        await new Promise<void>(r =>  stream.cursorTo(0, 0, r));;
+        await new Promise<void>(r =>  stream.cursorTo(0, r));;
+        await new Promise<void>(r =>  stream.moveCursor(1, 1, r));;
+        expect(stream.getWindowSize()).toEqual([stream.columns, stream.rows]);
+        // getColorDepth() and hasColors() are covered in other tests.
+      }
+      test('process.stdout implementd tty.WriteStream methods', () => {
+        checkMethods(process.stdout);
+      });
+      test('process.stderr implementd tty.WriteStream methods', () => {
+        checkMethods(process.stderr);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

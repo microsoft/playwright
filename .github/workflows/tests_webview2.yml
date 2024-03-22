@@ -38,6 +38,12 @@ jobs:
     - run: npm run build
     - run: dotnet build
       working-directory: tests/webview2/webview2-app/
+    - name: Update to Evergreen WebView2 Runtime
+      shell: pwsh
+      run: |
+        # See here: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+        Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'setup.exe'
+        Start-Process -FilePath setup.exe -Verb RunAs -Wait
     - run: npm run webview2test
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()

@@ -31,6 +31,42 @@ it('should create new context @smoke', async function({ browser }) {
   expect(browser).toBe(context.browser());
 });
 
+it('should be able to click across browser contexts', async function({ browser }) {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29096' });
+  expect(browser.contexts().length).toBe(0);
+
+  const createPage = async () => {
+    const page = await browser.newPage();
+    await page.setContent(`<button>Click me</button>`);
+    await page.locator('button').evaluate(button => {
+      window['clicks'] = 0;
+      button.addEventListener('click', () => ++window['clicks'], false);
+    });
+    return page;
+  };
+
+  const clickInPage = async (page, count) => {
+    for (let i = 0; i < count; ++i)
+      await page.locator('button').click();
+  };
+
+  const getClicks = async page => page.evaluate(() => window['clicks']);
+
+  const page1 = await createPage();
+  const page2 = await createPage();
+
+  const CLICK_COUNT = 20;
+  await Promise.all([
+    clickInPage(page1, CLICK_COUNT),
+    clickInPage(page2, CLICK_COUNT),
+  ]);
+  expect(await getClicks(page1)).toBe(CLICK_COUNT);
+  expect(await getClicks(page2)).toBe(CLICK_COUNT);
+
+  await page1.close();
+  await page2.close();
+});
+
 it('window.open should use parent tab context', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();

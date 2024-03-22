@@ -6,6 +6,89 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.42
+
+<LiteYouTube
+  id="KjSaIQLlgns"
+  title="Playwright 1.41 & 1.42"
+/>
+
+### New APIs
+
+- New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears:
+```js
+// Setup the handler.
+await page.addLocatorHandler(
+    page.getByRole('heading', { name: 'Hej! You are in control of your cookies.' }),
+    async () => {
+      await page.getByRole('button', { name: 'Accept all' }).click();
+    });
+// Write the test as usual.
+await page.goto('https://www.ikea.com/');
+await page.getByRole('link', { name: 'Collection of blue and white' }).click();
+await expect(page.getByRole('heading', { name: 'Light and easy' })).toBeVisible();
+```
+
+- `expect(callback).toPass()` timeout can now be configured by `expect.toPass.timeout` option [globally](./api/class-testconfig#test-config-expect) or in [project config](./api/class-testproject#test-project-expect)
+
+- [`event: ElectronApplication.console`] event is emitted when Electron main process calls console API methods.
+```js
+electronApp.on('console', async msg => {
+  const values = [];
+  for (const arg of msg.args())
+    values.push(await arg.jsonValue());
+  console.log(...values);
+});
+await electronApp.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+```
+
+- [New syntax](./test-annotations#tag-tests) for adding tags to the tests (@-tokens in the test title are still supported):
+```js
+test('test customer login', {
+  tag: ['@fast', '@login'],
+}, async ({ page }) => {
+  // ...
+});
+```
+ Use `--grep` command line option to run only tests with certain tags.
+```sh
+npx playwright test --grep @fast
+```
+
+- `--project` command line [flag](./test-cli#reference) now supports '*' wildcard:
+```sh
+npx playwright test --project='*mobile*'
+```
+
+- [New syntax](./test-annotations#annotate-tests) for test annotations:
+```js
+test('test full report', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23180' },
+    { type: 'docs', description: 'https://playwright.dev/docs/test-annotations#tag-tests' },
+  ],
+}, async ({ page }) => {
+  // ...
+});
+```
+
+- [`method: Page.pdf`] accepts two new options [`tagged`](./api/class-page#page-pdf-option-tagged) and [`outline`](./api/class-page#page-pdf-option-outline).
+
+### Announcements
+
+* ⚠️ Ubuntu 18 is not supported anymore.
+
+### Browser Versions
+
+* Chromium 123.0.6312.4
+* Mozilla Firefox 123.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 122
+* Microsoft Edge 123
+
 ## Version 1.41
 
 ### New APIs
@@ -1900,31 +1983,31 @@ This version of Playwright was also tested against the following stable channels
 
 #### 🖱️ Mouse Wheel
 
-By using [`Page.mouse.wheel`](https://playwright.dev/docs/api/class-mouse#mouse-wheel) you are now able to scroll vertically or horizontally.
+By using [`method: Mouse.wheel`] you are now able to scroll vertically or horizontally.
 
 #### 📜 New Headers API
 
 Previously it was not possible to get multiple header values of a response. This is now  possible and additional helper functions are available:
 
-- [Request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers)
-- [Request.headersArray()](https://playwright.dev/docs/api/class-request#request-headers-array)
-- [Request.headerValue(name: string)](https://playwright.dev/docs/api/class-request#request-header-value)
-- [Response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers)
-- [Response.headersArray()](https://playwright.dev/docs/api/class-response#response-headers-array)
-- [Response.headerValue(name: string)](https://playwright.dev/docs/api/class-response#response-header-value)
-- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response#response-header-values)
+- [`method: Request.allHeaders`]
+- [`method: Request.headersArray`]
+- [`method: Request.headerValue`]
+- [`method: Response.allHeaders`]
+- [`method: Response.headersArray`]
+- [`method: Response.headerValue`]
+- [`method: Response.headerValues`]
 
 #### 🌈 Forced-Colors emulation
 
-Its now possible to emulate the `forced-colors` CSS media feature by passing it in the [context options](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors) or calling [Page.emulateMedia()](https://playwright.dev/docs/api/class-page#page-emulate-media).
+Its now possible to emulate the `forced-colors` CSS media feature by passing it in the [`method: Browser.newContext`] or calling [`method: Page.emulateMedia`].
 
 #### New APIs
 
-- [Page.route()](https://playwright.dev/docs/api/class-page#page-route) accepts new `times` option to specify how many times this route should be matched.
-- [Page.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-page#page-set-checked) and [Locator.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
-- [Request.sizes()](https://playwright.dev/docs/api/class-request#request-sizes) Returns resource size information for given http request.
-- [BrowserContext.tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
-- [BrowserContext.tracing.stopChunk()](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
+- [`method: Page.route`] accepts new `times` option to specify how many times this route should be matched.
+- [`method: Page.setChecked`] and [`method: Locator.setChecked`] were introduced to set the checked state of a checkbox.
+- [`method: Request.sizes`] Returns resource size information for given http request.
+- [`method: Tracing.startChunk`] - Start a new trace chunk.
+- [`method: Tracing.stopChunk`] - Stops a new trace chunk.
 
 ### 🎭 Playwright Test
 
@@ -1939,11 +2022,11 @@ test.describe.parallel('group', () => {
 });
 ```
 
-By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now run them in parallel with [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel).
+By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now run them in parallel with [test.describe.parallel(title, callback)](./api/class-test#test-describe-parallel).
 
 #### 🛠 Add `--debug` CLI flag
 
-By using `npx playwright test --debug` it will enable the [Playwright Inspector](https://playwright.dev/docs/debug#playwright-inspector) for you to debug your tests.
+By using `npx playwright test --debug` it will enable the [Playwright Inspector](./debug#playwright-inspector) for you to debug your tests.
 
 ### Browser Versions
 

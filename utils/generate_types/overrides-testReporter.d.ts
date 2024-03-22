@@ -15,7 +15,7 @@
  */
 
 import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
-export type { FullConfig, TestStatus } from './test';
+export type { FullConfig, TestStatus, FullProject } from './test';
 
 export interface Suite {
   project(): FullProject | undefined;

@@ -1781,26 +1781,32 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * Sometimes, the web page can show an overlay that obstructs elements behind it and prevents certain actions, like
-   * click, from completing. When such an overlay is shown predictably, we recommend dismissing it as a part of your
-   * test flow. However, sometimes such an overlay may appear non-deterministically, for example certain cookies consent
-   * dialogs behave this way. In this case,
-   * [page.addLocatorHandler(locator, handler)](https://playwright.dev/docs/api/class-page#page-add-locator-handler)
-   * allows handling an overlay during an action that it would block.
+   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
    *
-   * This method registers a handler for an overlay that is executed once the locator is visible on the page. The
-   * handler should get rid of the overlay so that actions blocked by it can proceed. This is useful for
-   * nondeterministic interstitial pages or dialogs, like a cookie consent dialog.
+   * When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to
+   * automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making
+   * them tricky to handle in automated tests.
    *
-   * Note that execution time of the handler counts towards the timeout of the action/assertion that executed the
-   * handler.
+   * This method lets you set up a special function, called a handler, that activates when it detects that overlay is
+   * visible. The handler's job is to remove the overlay, allowing your test to continue as if the overlay wasn't there.
    *
-   * You can register multiple handlers. However, only a single handler will be running at a time. Any actions inside a
-   * handler must not require another handler to run.
+   * Things to keep in mind:
+   * - When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as
+   *   a part of your normal test flow, instead of using
+   *   [page.addLocatorHandler(locator, handler)](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   * - Playwright checks for the overlay every time before executing or retrying an action that requires an
+   *   [actionability check](https://playwright.dev/docs/actionability), or before performing an auto-waiting assertion check. When overlay
+   *   is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the
+   *   handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't
+   *   perform any actions, the handler will not be triggered.
+   * - The execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
+   *   If your handler takes too long, it might cause timeouts.
+   * - You can register multiple handlers. However, only a single handler will be running at a time. Make sure the
+   *   actions within a handler don't depend on another handler.
    *
-   * **NOTE** Running the interceptor will alter your page state mid-test. For example it will change the currently
-   * focused element and move the mouse. Make sure that the actions that run after the interceptor are self-contained
-   * and do not rely on the focus and mouse state. <br /> <br /> For example, consider a test that calls
+   * **NOTE** Running the handler will alter your page state mid-test. For example it will change the currently focused
+   * element and move the mouse. Make sure that actions that run after the handler are self-contained and do not rely on
+   * the focus and mouse state being unchanged. <br /> <br /> For example, consider a test that calls
    * [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) followed by
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press). If your handler
    * clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen
@@ -1809,17 +1815,18 @@ export interface Page {
    * problem. <br /> <br /> Another example is a series of mouse actions, where
    * [mouse.move(x, y[, options])](https://playwright.dev/docs/api/class-mouse#mouse-move) is followed by
    * [mouse.down([options])](https://playwright.dev/docs/api/class-mouse#mouse-down). Again, when the handler runs
-   * between these two actions, the mouse position will be wrong during the mouse down. Prefer methods like
-   * [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) that are self-contained.
+   * between these two actions, the mouse position will be wrong during the mouse down. Prefer self-contained actions
+   * like [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) that do not rely on
+   * the state being unchanged by a handler.
    *
    * **Usage**
    *
-   * An example that closes a cookie dialog when it appears:
+   * An example that closes a "Sign up to the newsletter" dialog when it appears:
    *
    * ```js
    * // Setup the handler.
-   * await page.addLocatorHandler(page.getByRole('button', { name: 'Accept all cookies' }), async () => {
-   *   await page.getByRole('button', { name: 'Reject all cookies' }).click();
+   * await page.addLocatorHandler(page.getByText('Sign up to the newsletter'), async () => {
+   *   await page.getByRole('button', { name: 'No thanks' }).click();
    * });
    *
    * // Write the test as usual.
@@ -1832,7 +1839,7 @@ export interface Page {
    * ```js
    * // Setup the handler.
    * await page.addLocatorHandler(page.getByText('Confirm your security details'), async () => {
-   *   await page.getByRole('button', 'Remind me later').click();
+   *   await page.getByRole('button', { name: 'Remind me later' }).click();
    * });
    *
    * // Write the test as usual.
@@ -8439,6 +8446,28 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
+   * Removes cookies from context. At least one of the removal criteria should be provided.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await browserContext.removeCookies({ name: 'session-id' });
+   * await browserContext.removeCookies({ domain: 'my-origin.com' });
+   * await browserContext.removeCookies({ path: '/api/v1' });
+   * await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
+   * ```
+   *
+   * @param filter
+   */
+  removeCookies(filter: {
+    name?: string;
+
+    domain?: string;
+
+    path?: string;
+  }): Promise<void>;
+
+  /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
    * route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
@@ -11434,6 +11463,24 @@ export interface Locator {
   elementHandles(): Promise<Array<ElementHandle>>;
 
   /**
+   * Returns a {@link FrameLocator} object pointing to the same `iframe` as this locator.
+   *
+   * Useful when you have a {@link Locator} object obtained somewhere, and later on would like to interact with the
+   * content inside the frame.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('iframe[name="embedded"]');
+   * // ...
+   * const frameLocator = locator.enterFrame();
+   * await frameLocator.getByRole('button').click();
+   * ```
+   *
+   */
+  enterFrame(): FrameLocator;
+
+  /**
    * Set a value to the input field.
    *
    * **Usage**
@@ -13125,6 +13172,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
      * `headless` option will be set `false`.
+     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
      */
     devtools?: boolean;
 
@@ -13529,6 +13577,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
      * `headless` option will be set `false`.
+     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
      */
     devtools?: boolean;
 
@@ -17734,14 +17783,32 @@ export interface FileChooser {
  * **Converting Locator to FrameLocator**
  *
  * If you have a {@link Locator} object pointing to an `iframe` it can be converted to {@link FrameLocator} using
- * [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+ * [locator.enterFrame()](https://playwright.dev/docs/api/class-locator#locator-enter-frame).
  *
- * ```js
- * const frameLocator = locator.frameLocator(':scope');
- * ```
+ * **Converting FrameLocator to Locator**
  *
+ * If you have a {@link FrameLocator} object it can be converted to {@link Locator} pointing to the same `iframe`
+ * using [frameLocator.exitFrame()](https://playwright.dev/docs/api/class-framelocator#frame-locator-exit-frame).
  */
 export interface FrameLocator {
+  /**
+   * Returns a {@link Locator} object pointing to the same `iframe` as this frame locator.
+   *
+   * Useful when you have a {@link FrameLocator} object obtained somewhere, and later on would like to interact with the
+   * `iframe` element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
+   * // ...
+   * const locator = frameLocator.exitFrame();
+   * await expect(locator).toBeVisible();
+   * ```
+   *
+   */
+  exitFrame(): Locator;
+
   /**
    * Returns locator to the first matching frame.
    */
@@ -18313,7 +18380,7 @@ export interface Keyboard {
  * (async () => {
  *   const browser = await chromium.launch({
  *     logger: {
- *       isEnabled: (name, severity) => name === 'browser',
+ *       isEnabled: (name, severity) => name === 'api',
  *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
  *     }
  *   });
@@ -20205,6 +20272,7 @@ export interface LaunchOptions {
   /**
    * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
    * `headless` option will be set `false`.
+   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
    */
   devtools?: boolean;
 

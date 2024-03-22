@@ -845,51 +845,11 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
   })).filter(accessibleName => !!accessibleName).join(' ');
 }
 
-export function getElementsByRole(document: Document, role: string): Element[] {
-  if (document === cacheElementsByRoleDocument)
-    return cacheElementsByRole!.get(role) || [];
-  const map = calculateElementsByRoleMap(document);
-  if (cachesCounter) {
-    cacheElementsByRoleDocument = document;
-    cacheElementsByRole = map;
-  }
-  return map.get(role) || [];
-}
-
-function calculateElementsByRoleMap(document: Document) {
-  const result = new Map<string, Element[]>();
-
-  const visit = (root: Element | ShadowRoot | Document) => {
-    const shadows: ShadowRoot[] = [];
-    if ((root as Element).shadowRoot)
-      shadows.push((root as Element).shadowRoot!);
-    for (const element of root.querySelectorAll('*')) {
-      const role = getAriaRole(element);
-      if (role) {
-        let list = result.get(role);
-        if (!list) {
-          list = [];
-          result.set(role, list);
-        }
-        list.push(element);
-      }
-      if (element.shadowRoot)
-        shadows.push(element.shadowRoot);
-    }
-    shadows.forEach(visit);
-  };
-  visit(document);
-
-  return result;
-}
-
 let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
-let cacheElementsByRole: Map<string, Element[]> | undefined;
-let cacheElementsByRoleDocument: Document | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
@@ -908,7 +868,5 @@ export function endAriaCaches() {
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
-    cacheElementsByRole = undefined;
-    cacheElementsByRoleDocument = undefined;
   }
 }

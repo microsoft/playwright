@@ -261,8 +261,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('data-testid=test-result-image-mismatch')).toHaveCount(3);
       await expect(page.locator('text=Image mismatch:')).toHaveText([
         'Image mismatch: expected.png',
-        'Image mismatch: expected.png-1',
-        'Image mismatch: expected.png-2',
+        'Image mismatch: expected-1.png',
+        'Image mismatch: expected-2.png',
       ]);
     });
 
@@ -442,8 +442,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
+          async function evaluateWrapper(page, expression) {
+            await page.evaluate(expression);
+          }
           test('passes', async ({ page }) => {
-            await page.evaluate('2 + 2');
+            await evaluateWrapper(page, '2 + 2');
           });
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
@@ -466,6 +469,36 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         /a.test.js:[\d]+/,
       ]);
       await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toContainText('a.test.js');
+    });
+
+    test('should not show stack trace', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { use: { trace: 'on' } };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ page }) => {
+            await page.evaluate('2 + 2');
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=passes');
+      await page.click('img');
+      await page.click('.action-title >> text=page.evaluate');
+      await page.click('text=Source');
+
+      await expect(page.locator('.CodeMirror-line')).toContainText([
+        /import.*test/,
+        /page\.evaluate/
+      ]);
+      await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
+
+      await expect(page.getByTestId('stack-trace-list')).toHaveCount(0);
     });
 
     test('should show trace title', async ({ runInlineTest, page, showReport }) => {
@@ -2019,9 +2052,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       // Failing test first, then sorted by the run order.
       await expect(page.locator('.test-file-test')).toHaveText([
-        /main › fails\d+m?smain.spec.ts:9/,
-        /main › first › passes\d+m?sfirst.ts:12/,
-        /main › second › passes\d+m?ssecond.ts:5/,
+        /main › fails\d+m?s?main.spec.ts:9/,
+        /main › first › passes\d+m?s?first.ts:12/,
+        /main › second › passes\d+m?s?second.ts:5/,
       ]);
     });
 

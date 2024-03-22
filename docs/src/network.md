@@ -550,7 +550,7 @@ await page.RouteAsync("**/*", async route => {
 });
 
 // Continue requests as POST.
-await page.RouteAsync("**/*", async route => await route.ContinueAsync(method: "POST"));
+await Page.RouteAsync("**/*", async route => await route.ContinueAsync(new() { Method = "POST" }));
 ```
 
 You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.

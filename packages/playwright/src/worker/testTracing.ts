@@ -48,8 +48,31 @@ export class TestTracing {
     this._tracesDir = path.join(this._artifactsDir, 'traces');
   }
 
+  private _shouldCaptureTrace() {
+    if (process.env.PW_TEST_DISABLE_TRACING)
+      return false;
+
+    if (this._options?.mode === 'on')
+      return true;
+
+    if (this._options?.mode === 'retain-on-failure')
+      return true;
+
+    if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1)
+      return true;
+
+    if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0)
+      return true;
+
+    if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0)
+      return true;
+
+    return false;
+  }
+
   async startIfNeeded(value: TraceFixtureValue) {
     const defaultTraceOptions: TraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, _live: false, mode: 'off' };
+
     if (!value) {
       this._options = defaultTraceOptions;
     } else if (typeof value === 'string') {
@@ -59,9 +82,7 @@ export class TestTracing {
       this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
 
-    let shouldCaptureTrace = this._options.mode === 'on' || this._options.mode === 'retain-on-failure' || (this._options.mode === 'on-first-retry' && this._testInfo.retry === 1) || (this._options.mode === 'on-all-retries' && this._testInfo.retry > 0);
-    shouldCaptureTrace = shouldCaptureTrace && !process.env.PW_TEST_DISABLE_TRACING;
-    if (!shouldCaptureTrace) {
+    if (!this._shouldCaptureTrace()) {
       this._options = undefined;
       return;
     }
@@ -110,7 +131,8 @@ export class TestTracing {
       return;
 
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
-    const shouldAbandonTrace = !testFailed && this._options.mode === 'retain-on-failure';
+    const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
+
     if (shouldAbandonTrace) {
       for (const file of this._temporaryTraceFiles)
         await fs.promises.unlink(file).catch(() => {});

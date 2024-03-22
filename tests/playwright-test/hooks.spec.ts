@@ -526,7 +526,7 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
       test.afterAll(async () => {
         console.log('\\n%%afterAll2');
       });
-      test('does not run', () => {
+      test('run in a different worker', () => {
         console.log('\\n%%test2');
       });
     `,

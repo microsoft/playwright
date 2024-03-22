@@ -212,7 +212,7 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 
@@ -377,7 +377,7 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 
@@ -1152,7 +1152,7 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'], cwd: mergeCwd });
   expect(exitCode).toBe(0);
 
-  expect(output).toContain('To open last HTML report run:');
+  expect(output).not.toContain('To open last HTML report run:');
 
   await showReport();
 
@@ -1205,9 +1205,9 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
 
       class EchoReporter {
         onBegin(config, suite) {
-          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.reportName.localeCompare(b.metadata.reportName));
+          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.botName.localeCompare(b.metadata.botName));
           console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('reportNames: ' + projects.map(p => p.metadata.reportName));
+          console.log('botNames: ' + projects.map(p => p.metadata.botName));
         }
       }
       module.exports = EchoReporter;
@@ -1233,7 +1233,7 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
   expect(output).toContain(`projectNames: foo,foo`);
-  expect(output).toContain(`reportNames: first,second`);
+  expect(output).toContain(`botNames: first,second`);
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {

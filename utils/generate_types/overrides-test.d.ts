@@ -248,7 +248,7 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
-export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries';
+export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 export interface PlaywrightTestOptions {
@@ -341,7 +341,24 @@ interface GenericAssertions<R> {
 
 type FunctionAssertions = {
   /**
-   * Retries the callback until it passes.
+   * Retries the callback until all assertions within it pass or the `timeout` value is reached.
+   * The `intervals` parameter can be used to establish the probing frequency or pattern.
+   *
+   * **Usage**
+   * ```js
+   * await expect(async () => {
+   *   const response = await page.request.get('https://api.example.com');
+   *   expect(response.status()).toBe(200);
+   * }).toPass({
+   *   // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+   *   intervals: [1_000, 2_000, 10_000], // Defaults to [100, 250, 500, 1000].
+   *   timeout: 60_000 // Defaults to 0
+   * });
+   * ```
+   *
+   * Note that by default `toPass` does not respect custom expect timeout.
+   *
+   * @param options
    */
   toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
 };
@@ -484,4 +501,5 @@ type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
 export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
-export {};
+export { };
+

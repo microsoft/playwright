@@ -286,6 +286,6 @@ test('should not watch output', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
-  expect(commands).toContain('run');
-  expect(commands).not.toContain('list');
+  expect(commands).toContain('runTests');
+  expect(commands).not.toContain('listTests');
 });

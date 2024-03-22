@@ -438,7 +438,8 @@ test(`should support self signed certificate`, async ({ runInlineTest, httpsServ
 test('should send Accept header', async ({ runInlineTest, server }) => {
   let acceptHeader: string | undefined | null = null;
   server.setRoute('/hello', (req, res) => {
-    if (acceptHeader === null) acceptHeader = req.headers.accept;
+    if (acceptHeader === null)
+      acceptHeader = req.headers.accept;
     res.end('<html><body>hello</body></html>');
   });
   const result = await runInlineTest({
@@ -661,7 +662,7 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Process started');
-  expect(result.output).toContain(`HTTP HEAD: http://localhost:${port}/`);
+  expect(result.output).toContain(`HTTP GET: http://localhost:${port}/`);
   expect(result.output).toContain('WebServer available');
 });
 

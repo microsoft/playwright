@@ -212,7 +212,7 @@ test('should clean storage', async ({ runInlineTest }) => {
       let lastContextGuid;
 
       test.beforeEach(async ({ page }) => {
-        await page.route('**/*', route => route.fulfill('<html></html>'));
+        await page.route('**/*', route => route.fulfill({ body: '<html></html>', contentType: 'text/html' }));
         await page.goto('http://example.com');
       });
 
@@ -273,7 +273,7 @@ test('should restore localStorage', async ({ runInlineTest }) => {
       });
 
       test.beforeEach(async ({ page }) => {
-        await page.route('**/*', route => route.fulfill('<html></html>'));
+        await page.route('**/*', route => route.fulfill({ body: '<html></html>', contentType: 'text/html' }));
         await page.goto('http://example.com');
       });
 
@@ -330,7 +330,7 @@ test('should clean db', async ({ runInlineTest }) => {
       let lastContextGuid;
 
       test.beforeEach(async ({ page }) => {
-        await page.route('**/*', route => route.fulfill('<html></html>'));
+        await page.route('**/*', route => route.fulfill({ body: '<html></html>', contentType: 'text/html' }));
         await page.goto('http://example.com');
       });
 
@@ -380,7 +380,7 @@ test('should restore cookies', async ({ runInlineTest }) => {
       });
 
       test.beforeEach(async ({ page }) => {
-        await page.route('**/*', route => route.fulfill('<html></html>'));
+        await page.route('**/*', route => route.fulfill({ body: '<html></html>', contentType: 'text/html' }));
         await page.goto('http://example.com');
       });
 

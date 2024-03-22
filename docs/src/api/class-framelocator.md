@@ -74,27 +74,58 @@ await page.FrameLocator(".result-frame").First.getByRole(AriaRole.Button).ClickA
 
 **Converting Locator to FrameLocator**
 
-If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`method: Locator.enterFrame`].
+
+**Converting FrameLocator to Locator**
+
+If you have a [FrameLocator] object it can be converted to [Locator] pointing to the same `iframe` using [`method: FrameLocator.exitFrame`].
+
+
+## method: FrameLocator.exitFrame
+* since: v1.43
+- returns: <[Locator]>
+
+Returns a [Locator] object pointing to the same `iframe` as this frame locator.
+
+Useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
+
+**Usage**
 
 ```js
-const frameLocator = locator.frameLocator(':scope');
+const frameLocator = page.frameLocator('iframe[name="embedded"]');
+// ...
+const locator = frameLocator.exitFrame();
+await expect(locator).toBeVisible();
 ```
 
 ```java
-Locator frameLocator = locator.frameLocator(':scope');
+FrameLocator frameLocator = page.frameLocator("iframe[name=\"embedded\"]");
+// ...
+Locator locator = frameLocator.exitFrame();
+assertThat(locator).isVisible();
 ```
 
 ```python async
-frameLocator = locator.frame_locator(":scope")
+frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+# ...
+locator = frame_locator.exit_frame
+await expect(locator).to_be_visible()
 ```
 
 ```python sync
-frameLocator = locator.frame_locator(":scope")
+frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+# ...
+locator = frame_locator.exit_frame
+expect(locator).to_be_visible()
 ```
 
 ```csharp
-var frameLocator = locator.FrameLocator(":scope");
+var frameLocator = Page.FrameLocator("iframe[name=\"embedded\"]");
+// ...
+var locator = frameLocator.ExitFrame;
+await Expect(locator).ToBeVisibleAsync();
 ```
+
 
 ## method: FrameLocator.first
 * since: v1.17

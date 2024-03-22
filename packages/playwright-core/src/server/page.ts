@@ -19,7 +19,7 @@ import type * as dom from './dom';
 import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
-import * as network from './network';
+import type * as network from './network';
 import type * as channels from '@protocol/channels';
 import type { ScreenshotOptions } from './screenshotter';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
@@ -80,7 +80,7 @@ export interface PageDelegate {
   getOwnerFrame(handle: dom.ElementHandle): Promise<string | null>; // Returns frameId.
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
   setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void>;
-  setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void>;
+  setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
@@ -95,7 +95,7 @@ export interface PageDelegate {
   // Work around Chrome's non-associated input and protocol.
   inputActionEpilogue(): Promise<void>;
   // Work around for asynchronously dispatched CSP errors in Firefox.
-  readonly cspErrorsAsynchronousForInlineScipts?: boolean;
+  readonly cspErrorsAsynchronousForInlineScripts?: boolean;
   // Work around for mouse position in Firefox.
   resetForReuse(): Promise<void>;
   // WebKit hack.
@@ -706,12 +706,9 @@ export class Page extends SdkObject {
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
-    const url = frame.url();
-    if (!url.startsWith('http'))
-      return;
-    const purl = network.parsedURL(url);
-    if (purl)
-      this._browserContext.addVisitedOrigin(purl.origin);
+    const origin = frame.origin();
+    if (origin)
+      this._browserContext.addVisitedOrigin(origin);
   }
 
   allBindings() {

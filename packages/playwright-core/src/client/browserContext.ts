@@ -269,6 +269,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.clearCookies();
   }
 
+  async removeCookies(filter: network.RemoveNetworkCookieParam): Promise<void> {
+    await this._channel.removeCookies({ filter });
+  }
+
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {
     await this._channel.grantPermissions({ permissions, ...options });
   }
@@ -526,7 +530,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   if (acceptDownloads === undefined)
     return undefined;
-  if (acceptDownloads === true)
+  if (acceptDownloads)
     return 'accept';
   return 'deny';
 }

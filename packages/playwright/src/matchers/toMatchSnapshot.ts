@@ -22,7 +22,9 @@ import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/u
 import {
   addSuffixToFilePath,
   trimLongString, callLogText,
-  expectTypes  } from '../util';
+  expectTypes,
+  sanitizeFilePathBeforeExtension,
+  windowsFilesystemFriendlyLength } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -73,7 +75,7 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
 
 class SnapshotHelper {
   readonly testInfo: TestInfoImpl;
-  readonly snapshotName: string;
+  readonly outputBaseName: string;
   readonly legacyExpectedPath: string;
   readonly previousPath: string;
   readonly snapshotPath: string;
@@ -91,7 +93,6 @@ class SnapshotHelper {
     testInfo: TestInfoImpl,
     matcherName: string,
     locator: Locator | undefined,
-    snapshotPathResolver: (...pathSegments: string[]) => string,
     anonymousSnapshotExtension: string,
     configOptions: ToHaveScreenshotConfigOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions,
@@ -102,9 +103,9 @@ class SnapshotHelper {
       name = nameOrOptions;
       this.options = { ...optOptions };
     } else {
-      name = nameOrOptions.name;
-      this.options = { ...nameOrOptions };
-      delete (this.options as any).name;
+      const { name: nameFromOptions, ...options } = nameOrOptions;
+      this.options = options;
+      name = nameFromOptions;
     }
 
     let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
@@ -122,25 +123,34 @@ class SnapshotHelper {
     //   // noop
     //   expect.toMatchSnapshot('a.png')
 
-    let actualModifier = '';
+    let inputPathSegments: string[];
     if (!name) {
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
-      name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
-      this.snapshotName = name;
+      inputPathSegments = [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension];
+      // Trim the output file paths more aggresively to avoid hitting Windows filesystem limits.
+      this.outputBaseName = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength)) + '.' + anonymousSnapshotExtension;
     } else {
+      // We intentionally do not sanitize user-provided array of segments, but for backwards
+      // compatibility we do sanitize the name if it is a single string.
+      // See https://github.com/microsoft/playwright/pull/9156
+      inputPathSegments = Array.isArray(name) ? name : [sanitizeFilePathBeforeExtension(name)];
       const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
       snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
       const index = snapshotNames.namedSnapshotIndex[joinedName];
-      if (index > 1) {
-        actualModifier = `-${index - 1}`;
-        this.snapshotName = `${joinedName}-${index - 1}`;
-      } else {
-        this.snapshotName = joinedName;
-      }
+      if (index > 1)
+        this.outputBaseName = addSuffixToFilePath(joinedName, `-${index - 1}`);
+      else
+        this.outputBaseName = joinedName;
     }
+    this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
+    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.outputBaseName));
+    this.legacyExpectedPath = addSuffixToFilePath(outputFile, '-expected');
+    this.previousPath = addSuffixToFilePath(outputFile, '-previous');
+    this.actualPath = addSuffixToFilePath(outputFile, '-actual');
+    this.diffPath = addSuffixToFilePath(outputFile, '-diff');
 
     const filteredConfigOptions = { ...configOptions };
     for (const prop of NonConfigProperties)
@@ -162,16 +172,6 @@ class SnapshotHelper {
     if (this.options.maxDiffPixelRatio !== undefined && (this.options.maxDiffPixelRatio < 0 || this.options.maxDiffPixelRatio > 1))
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
-    // sanitizes path if string
-    const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-    const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
-    this.snapshotPath = snapshotPathResolver(...inputPathSegments);
-    const inputFile = testInfo._getOutputPath(...inputPathSegments);
-    const outputFile = testInfo._getOutputPath(...outputPathSegments);
-    this.legacyExpectedPath = addSuffixToFilePath(inputFile, '-expected');
-    this.previousPath = addSuffixToFilePath(outputFile, '-previous');
-    this.actualPath = addSuffixToFilePath(outputFile, '-actual');
-    this.diffPath = addSuffixToFilePath(outputFile, '-diff');
     this.matcherName = matcherName;
     this.locator = locator;
 
@@ -223,7 +223,7 @@ class SnapshotHelper {
     if (isWriteMissingMode) {
       writeFileSync(this.snapshotPath, actual);
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     }
     const message = `A snapshot doesn't exist at ${this.snapshotPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (this.updateSnapshots === 'all') {
@@ -232,7 +232,8 @@ class SnapshotHelper {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(new Error(message), false /* isHardError */, false /* retriable */);
+      this.testInfo._hasNonRetriableError = true;
+      this.testInfo._failWithError(new Error(message));
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);
@@ -257,22 +258,22 @@ class SnapshotHelper {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
       output.push(`\nExpected: ${colors.yellow(this.snapshotPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
 
@@ -304,10 +305,10 @@ export function toMatchSnapshot(
   if (testInfo._configInternal.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
 
+  const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
   const helper = new SnapshotHelper(
-      testInfo, 'toMatchSnapshot', undefined, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
-      testInfo._projectInternal.expect?.toMatchSnapshot || {},
-      nameOrOptions, optOptions);
+      testInfo, 'toMatchSnapshot', undefined, determineFileExtension(received),
+      configOptions, nameOrOptions, optOptions);
 
   if (this.isNot) {
     if (!fs.existsSync(helper.snapshotPath))
@@ -362,10 +363,7 @@ export async function toHaveScreenshot(
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
-  const snapshotPathResolver = testInfo.snapshotPath.bind(testInfo);
-  const helper = new SnapshotHelper(
-      testInfo, 'toHaveScreenshot', locator, snapshotPathResolver, 'png',
-      configOptions, nameOrOptions, optOptions);
+  const helper = new SnapshotHelper(testInfo, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');

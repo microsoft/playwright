@@ -186,7 +186,10 @@ context.on("dialog", lambda dialog: dialog.accept())
 ```
 
 ```csharp
-context.Dialog += (_, dialog) => dialog.AcceptAsync();
+Context.Dialog += async (_, dialog) =>
+{
+    await dialog.AcceptAsync();
+};
 ```
 
 :::note
@@ -390,7 +393,7 @@ browser_context.add_init_script(path="preload.js")
 ```
 
 ```csharp
-await context.AddInitScriptAsync(scriptPath: "preload.js");
+await Context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
 :::note
@@ -1010,6 +1013,27 @@ Creates a new page in the browser context.
 
 Returns all open pages in the context.
 
+## async method: BrowserContext.removeCookies
+* since: v1.43
+
+Removes cookies from context. At least one of the removal criteria should be provided.
+
+**Usage**
+
+```js
+await browserContext.removeCookies({ name: 'session-id' });
+await browserContext.removeCookies({ domain: 'my-origin.com' });
+await browserContext.removeCookies({ path: '/api/v1' });
+await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
+```
+
+### param: BrowserContext.removeCookies.filter
+* since: v1.43
+- `filter` <[Object]>
+  - `name` ?<[string]>
+  - `domain` ?<[string]>
+  - `path` ?<[string]>
+
 ## property: BrowserContext.request
 * since: v1.16
 * langs:
@@ -1159,7 +1183,7 @@ context.route("/api/**", handle_route)
 await page.RouteAsync("/api/**", async r =>
 {
     if (r.Request.PostData.Contains("my-string"))
-        await r.FulfillAsync(body: "mocked-data");
+        await r.FulfillAsync(new() { Body = "mocked-data" });
     else
         await r.ContinueAsync();
 });

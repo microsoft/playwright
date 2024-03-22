@@ -16,15 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
-import { TimeoutManager } from './timeoutManager';
-import type { RunnableType, TimeSlot } from './timeoutManager';
+import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
+import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
+import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
@@ -44,9 +44,15 @@ export interface TestStepInternal {
   error?: TestInfoError;
   infectParentStepsWithError?: boolean;
   box?: boolean;
-  isSoft?: boolean;
-  forceNoParent?: boolean;
+  isStage?: boolean;
 }
+
+export type TestStage = {
+  title: string;
+  stepInfo?: { category: 'hook' | 'fixture', location?: Location };
+  runnable?: RunnableDescription;
+  step?: TestStepInternal;
+};
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
@@ -55,19 +61,19 @@ export class TestInfoImpl implements TestInfo {
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
-  private _hasHardError: boolean = false;
   readonly _tracing: TestTracing;
 
-  _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;
   private readonly _requireFile: string;
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
-  readonly _steps: TestStepInternal[] = [];
+  private readonly _steps: TestStepInternal[] = [];
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
-
+  private readonly _stages: TestStage[] = [];
   _hasNonRetriableError = false;
+  _hasUnhandledError = false;
+  _allowSkips = false;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -81,6 +87,7 @@ export class TestInfoImpl implements TestInfo {
   readonly titlePath: string[];
   readonly file: string;
   readonly line: number;
+  readonly tags: string[];
   readonly column: number;
   readonly fn: Function;
   expectedStatus: TestStatus;
@@ -105,7 +112,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   get timeout(): number {
-    return this._timeoutManager.defaultSlotTimings().timeout;
+    return this._timeoutManager.defaultSlot().timeout;
   }
 
   set timeout(timeout: number) {
@@ -114,7 +121,7 @@ export class TestInfoImpl implements TestInfo {
 
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
     const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : MaxTime;
+    const matcherDeadline = timeout ? startTime + timeout : kMaxDeadline;
     const testDeadline = this._timeoutManager.currentSlotDeadline() - 250;
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
@@ -156,17 +163,18 @@ export class TestInfoImpl implements TestInfo {
     this.file = test?.location.file ?? '';
     this.line = test?.location.line ?? 0;
     this.column = test?.location.column ?? 0;
+    this.tags = test?.tags ?? [];
     this.fn = test?.fn ?? (() => {});
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
+      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
 
-      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
+      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec), windowsFilesystemFriendlyLength);
       if (projectInternal.id)
         testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
       if (this.retry)
@@ -218,36 +226,6 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
-    const timeoutError = await this._timeoutManager.runWithTimeout(cb);
-    // When interrupting, we arrive here with a timeoutError, but we should not
-    // consider it a timeout.
-    if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
-      this._didTimeout = true;
-      const serialized = serializeError(timeoutError);
-      this.errors.push(serialized);
-      this._tracing.appendForError(serialized);
-      // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed' || this.status === 'skipped')
-        this.status = 'timedOut';
-    }
-    this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
-  }
-
-  async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<Error | undefined> {
-    try {
-      await fn();
-    } catch (error) {
-      if (skips === 'allowSkips' && error instanceof SkipError) {
-        if (this.status === 'passed')
-          this.status = 'skipped';
-      } else {
-        this._failWithError(error, true /* isHardError */, true /* retriable */);
-        return error;
-      }
-    }
-  }
-
   private _findLastNonFinishedStep(filter: (step: TestStepInternal) => boolean) {
     let result: TestStepInternal | undefined;
     const visit = (step: TestStepInternal) => {
@@ -259,33 +237,32 @@ export class TestInfoImpl implements TestInfo {
     return result;
   }
 
+  private _findLastStageStep() {
+    for (let i = this._stages.length - 1; i >= 0; i--) {
+      if (this._stages[i].step)
+        return this._stages[i].step;
+    }
+  }
+
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
     const rawStack = captureRawStack();
 
     let parentStep: TestStepInternal | undefined;
-    if (data.category === 'hook' || data.category === 'fixture') {
-      // Predefined steps form a fixed hierarchy - find the last non-finished one.
-      parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
+    if (data.isStage) {
+      // Predefined stages form a fixed hierarchy - use the current one as parent.
+      parentStep = this._findLastStageStep();
     } else {
       parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
-      if (parentStep?.category === 'hook' || parentStep?.category === 'fixture') {
-        // Prefer last non-finished predefined step over the on-stack one, because
-        // some predefined steps may be missing on the stack.
-        parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
-      } else if (!parentStep) {
-        if (data.category === 'test.step') {
-          // Nest test.step without a good stack in the last non-finished predefined step like a hook.
-          parentStep = this._findLastNonFinishedStep(step => step.category === 'fixture' || step.category === 'hook');
-        } else {
-          // Do not nest chains of route.continue.
-          parentStep = this._findLastNonFinishedStep(step => step.title !== data.title);
-        }
+      if (!parentStep && data.category !== 'test.step') {
+        // API steps (but not test.step calls) can be nested by time, instead of by stack.
+        // However, do not nest chains of route.continue by checking the title.
+        parentStep = this._findLastNonFinishedStep(step => step.title !== data.title);
       }
-    }
-    if (data.forceNoParent) {
-      // This is used to reset step hierarchy after test timeout.
-      parentStep = undefined;
+      if (!parentStep) {
+        // If no parent step on stack, assume the current stage as parent.
+        parentStep = this._findLastStageStep();
+      }
     }
 
     const filteredStack = filteredStackTrace(rawStack);
@@ -336,9 +313,6 @@ export class TestInfoImpl implements TestInfo {
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
-
-        if (step.isSoft && result.error)
-          this._failWithError(result.error, false /* isHardError */, true /* retriable */);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -366,19 +340,9 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error, isHardError: boolean, retriable: boolean) {
-    if (!retriable)
-      this._hasNonRetriableError = true;
-    // Do not overwrite any previous hard errors.
-    // Some (but not all) scenarios include:
-    //   - expect() that fails after uncaught exception.
-    //   - fail after the timeout, e.g. due to fixture teardown.
-    if (isHardError && this._hasHardError)
-      return;
-    if (isHardError)
-      this._hasHardError = true;
+  _failWithError(error: Error) {
     if (this.status === 'passed' || this.status === 'skipped')
-      this.status = 'failed';
+      this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = serializeError(error);
     const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
     if (step && step.boxedStack)
@@ -387,37 +351,64 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStepWithRunnable<T>(
-    stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & {
-      wallTime?: number,
-      runnableType: RunnableType;
-      runnableSlot?: TimeSlot;
-    }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
-    return await this._timeoutManager.withRunnable({
-      type: stepInfo.runnableType,
-      slot: stepInfo.runnableSlot,
-      location: stepInfo.location,
-    }, async () => {
-      return await this._runAsStep(stepInfo, cb);
-    });
-  }
+  async _runAsStage(stage: TestStage, cb: () => Promise<any>) {
+    if (debugTest.enabled) {
+      const location = stage.runnable?.location ? ` at "${formatLocation(stage.runnable.location)}"` : ``;
+      debugTest(`started stage "${stage.title}"${location}`);
+    }
+    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, wallTime: Date.now(), isStage: true }) : undefined;
+    this._stages.push(stage);
 
-  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
-    const step = this._addStep({ wallTime: Date.now(), ...stepInfo });
-    return await zones.run('stepZone', step, async () => {
-      try {
-        const result = await cb(step);
-        step.complete({});
-        return result;
-      } catch (e) {
-        step.complete({ error: e instanceof SkipError ? undefined : e });
-        throw e;
-      }
-    });
+    try {
+      await this._timeoutManager.withRunnable(stage.runnable, async () => {
+        try {
+          await cb();
+        } catch (e) {
+          // Only handle errors directly thrown by the user code.
+          if (!stage.runnable)
+            throw e;
+          if (this._allowSkips && (e instanceof SkipError)) {
+            if (this.status === 'passed')
+              this.status = 'skipped';
+          } else {
+            // Unfortunately, we have to handle user errors and timeout errors differently.
+            // Consider the following scenario:
+            // - locator.click times out
+            // - all stages containing the test function finish with TimeoutManagerError
+            // - test finishes, the page is closed and this triggers locator.click error
+            // - we would like to present the locator.click error to the user
+            // - therefore, we need a try/catch inside the "run with timeout" block and capture the error
+            this._failWithError(e);
+          }
+          throw e;
+        }
+      });
+      stage.step?.complete({});
+    } catch (error) {
+      // When interrupting, we arrive here with a TimeoutManagerError, but we should not
+      // consider it a timeout.
+      if (!this._wasInterrupted && (error instanceof TimeoutManagerError) && stage.runnable)
+        this._failWithError(error);
+      stage.step?.complete({ error });
+      throw error;
+    } finally {
+      if (this._stages[this._stages.length - 1] !== stage)
+        throw new Error(`Internal error: inconsistent stages!`);
+      this._stages.pop();
+      debugTest(`finished stage "${stage.title}"`);
+    }
   }
 
   _isFailure() {
     return this.status !== 'skipped' && this.status !== this.expectedStatus;
+  }
+
+  _currentHookType() {
+    for (let i = this._stages.length - 1; i >= 0; i--) {
+      const type = this._stages[i].runnable?.type;
+      if (type && ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type))
+        return type;
+    }
   }
 
   // ------------ TestInfo methods ------------
@@ -506,7 +497,7 @@ export class TestInfoImpl implements TestInfo {
   }
 }
 
-class SkipError extends Error {
+export class SkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');

@@ -146,3 +146,32 @@ test('should enforce @ symbol', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: Tag must start with "@" symbol, got "foo" instead.`);
 });
+
+test('should be included in testInfo', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('test without tag', async ({}, testInfo) => {
+      expect(testInfo.tags).toStrictEqual([]);
+    });
+    test('test with tag',{ tag: '@tag1' }, async ({}, testInfo) => {
+      expect(testInfo.tags).toStrictEqual(["@tag1"]);
+    });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should be included in testInfo if comming from describe', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test.describe('describe with tag', { tag: '@tag2' }, async ()=>{
+      test('test with tag', async ({}, testInfo) => {
+        expect(testInfo.tags).toStrictEqual(["@tag2"]);
+      });
+    });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});

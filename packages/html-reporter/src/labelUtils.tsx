@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-import type { TestCaseSummary } from './types';
-
-const labelsSymbol = Symbol('labels');
-
-// Note: all labels start with "@"
-export function testCaseLabels(test: TestCaseSummary): string[] {
-  if (!(test as any)[labelsSymbol]) {
-    const labels: string[] = [];
-    if (test.botName)
-      labels.push('@' + test.botName);
-    labels.push(...test.tags);
-    (test as any)[labelsSymbol] = labels;
-  }
-  return (test as any)[labelsSymbol];
-}
-
 // hash string to integer in range [0, 6] for color index, to get same color for same tag
 export function hashStringToInt(str: string) {
   let hash = 0;

@@ -24,6 +24,7 @@ test('should contain text attachment', async ({ runUITest }) => {
       import { test } from '@playwright/test';
       test('attach test', async () => {
         await test.info().attach('note', { path: __filename });
+        await test.info().attach('🎭', { body: 'hi tester!', contentType: 'text/plain' });
       });
     `,
   });
@@ -31,12 +32,17 @@ test('should contain text attachment', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  await page.getByText('attach "note"', { exact: true }).click();
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'note' }).click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe('note');
-  expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
+  for (const { name, content } of [
+    { name: 'note', content: 'attach test' },
+    { name: '🎭', content: 'hi tester!' }
+  ]) {
+    await page.getByText(`attach "${name}"`, { exact: true }).click();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('link', { name: name }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(name);
+    expect((await readAllFromStream(await download.createReadStream())).toString()).toContain(content);
+  }
 });
 
 test('should contain binary attachment', async ({ runUITest }) => {

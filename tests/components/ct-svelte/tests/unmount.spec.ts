@@ -21,3 +21,13 @@ test('unmount a multi root component', async ({ page, mount }) => {
   await expect(page.locator('#root')).not.toContainText('root 1');
   await expect(page.locator('#root')).not.toContainText('root 2');
 });
+
+test('unmount twice throws an error', async ({ mount }) => {
+  const component = await mount(Button, {
+    props: {
+      title: 'Submit',
+    },
+  });
+  await component.unmount();
+  await expect(component.unmount()).rejects.toThrowError('Component was not mounted');
+});

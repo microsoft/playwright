@@ -375,6 +375,8 @@ public class TestGitHubAPI {
 }
 ```
 
+See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.
+
 ## Prepare server state via API calls
 
 The following test creates a new issue via API and then navigates to the list of all issues in the

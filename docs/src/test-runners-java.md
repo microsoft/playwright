@@ -87,6 +87,8 @@ public class TestExample {
 }
 ```
 
+See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.
+
 ### Running Tests in Parallel
 
 By default JUnit will run all tests sequentially on a single thread. Since JUnit 5.3 you can change this behavior to run tests in parallel

@@ -40,7 +40,7 @@ import { TargetClosedError } from '../errors';
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
-  readonly cspErrorsAsynchronousForInlineScipts = true;
+  readonly cspErrorsAsynchronousForInlineScripts = true;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
@@ -543,16 +543,12 @@ export class FFPage implements PageDelegate {
       injected.setInputFiles(node, files), files);
   }
 
-  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
-    await Promise.all([
-      this._session.send('Page.setFileInputFiles', {
-        frameId: handle._context.frame._id,
-        objectId: handle._objectId,
-        files
-      }),
-      handle.dispatchEvent(progress.metadata, 'input'),
-      handle.dispatchEvent(progress.metadata, 'change')
-    ]);
+  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
+    await this._session.send('Page.setFileInputFiles', {
+      frameId: handle._context.frame._id,
+      objectId: handle._objectId,
+      files
+    });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

@@ -31,6 +31,7 @@ export default async () => {
       resolve();
   }));
   const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
+  console.log(`Using version ${browser.version()} WebView2 runtime`);
   const page = browser.contexts()[0].pages()[0];
   await page.goto('data:text/html,');
   const chromeVersion = await page.evaluate(() => navigator.userAgent.match(/Chrome\/(.*?) /)[1]);
