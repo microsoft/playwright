@@ -497,6 +497,24 @@ test('should render component via re-export', async ({ runInlineTest }, testInfo
   expect(result.passed).toBe(1);
 });
 
+test('should import json', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/some.json': `{ "some": "value" }`,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import json from './some.json';
+      test('pass', async ({}) => {
+        expect(json.some).toBe('value');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should render component exported via fixture', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightCtConfigText,

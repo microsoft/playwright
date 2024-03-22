@@ -193,7 +193,4 @@ const artifactExtensions = new Set([
   '.ttf',
   '.otf',
   '.eot',
-
-  // Other assets
-  '.json',
 ]);
