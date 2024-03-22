@@ -73,7 +73,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (signals.dialog)
       formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);
 
-    let code = this._generateActionCall(subject, action);
+    let code = `${this._awaitPrefix}${this._generateActionCall(subject, action)}`;
 
     if (signals.popup) {
       code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {
@@ -99,7 +99,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'openPage':
         throw Error('Not reached');
       case 'closePage':
-        return `${this._awaitPrefix}${subject}.close()`;
+        return `${subject}.close()`;
       case 'click': {
         let method = 'click';
         if (action.clickCount === 2)
@@ -115,37 +115,35 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsString = formatOptions(options, false);
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
+        return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
       }
       case 'check':
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.check()`;
+        return `${subject}.${this._asLocator(action.selector)}.check()`;
       case 'uncheck':
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.uncheck()`;
+        return `${subject}.${this._asLocator(action.selector)}.uncheck()`;
       case 'fill':
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)})`;
+        return `${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return `${subject}.${this._asLocator(action.selector)}.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)})`;
+        return `${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)})`;
       }
       case 'navigate':
-        return `${this._awaitPrefix}${subject}.goto(${quote(action.url)})`;
+        return `${subject}.goto(${quote(action.url)})`;
       case 'select':
-        return `${this._awaitPrefix}${subject}.${this._asLocator(action.selector)}.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return `${subject}.${this._asLocator(action.selector)}.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
       case 'assertText':
-        return `${this._awaitPrefix}expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'to_contain_text' : 'to_have_text'}(${quote(action.text)})`;
+        return `expect(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'to_contain_text' : 'to_have_text'}(${quote(action.text)})`;
       case 'assertChecked':
-        return `${this._awaitPrefix}expect(${subject}.${this._asLocator(action.selector)}).${action.checked ? 'to_be_checked()' : 'not_to_be_checked()'}`;
+        return `expect(${subject}.${this._asLocator(action.selector)}).${action.checked ? 'to_be_checked()' : 'not_to_be_checked()'}`;
       case 'assertVisible':
-        return `${this._awaitPrefix}expect(${subject}.${this._asLocator(action.selector)}).to_be_visible()`;
+        return `expect(${subject}.${this._asLocator(action.selector)}).to_be_visible()`;
       case 'assertValue': {
         const assertion = action.value ? `to_have_value(${quote(action.value)})` : `to_be_empty()`;
-        return `${this._awaitPrefix}expect(${subject}.${this._asLocator(action.selector)}).${assertion}`;
+        return `expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
-      case 'assertScreenshot':
-        return `# assert_screenshot(${this._awaitPrefix}${subject}.screenshot())`;
     }
   }
 
