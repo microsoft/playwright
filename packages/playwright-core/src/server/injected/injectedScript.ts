@@ -1166,7 +1166,7 @@ export class InjectedScript {
           throw this.createStacklessError('Element is not a checkbox');
         if (elementState === 'error:notconnected')
           throw this.createStacklessError('Element is not connected');
-        return { received: elementState, matches: elementState };
+        return { matches: elementState };
       }
     }
 

@@ -40,13 +40,13 @@ export async function toBeTruthy(
   };
 
   const timeout = currentExpectTimeout(options);
-  const { matches, log, timedOut } = await query(!!this.isNot, timeout);
+  const { matches, log, timedOut, received } = await query(!!this.isNot, timeout);
   const actual = matches ? expected : unexpected;
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
     const logText = callLogText(log);
-    return matches ? `${header}Expected: not ${expected}\nReceived: ${expected}${logText}` :
-      `${header}Expected: ${expected}\nReceived: ${unexpected}${logText}`;
+    return matches ? `${header}Expected: not ${expected}\nReceived: ${received ?? expected}${logText}` :
+      `${header}Expected: ${expected}\nReceived: ${received ?? unexpected}${logText}`;
   };
   return {
     message,

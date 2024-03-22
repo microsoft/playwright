@@ -1382,6 +1382,8 @@ export class Frame extends SdkObject {
     // Library mode special case for the expect errors which are return values, not exceptions.
     if (result.matches === options.isNot)
       metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
+    if (result.log?.[result.log.length - 1].startsWith('waiting for '))
+      result.received = '<element(s) not found>';
     return result;
   }
 
