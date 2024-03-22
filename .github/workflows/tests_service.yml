@@ -33,7 +33,7 @@ jobs:
         PLAYWRIGHT_SERVICE_OS: ${{ matrix.service-os }}
         PLAYWRIGHT_SERVICE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
     - name: Upload blob report to GitHub
-      if: always()
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
       with:
         name: all-blob-reports
@@ -43,7 +43,7 @@ jobs:
   merge_reports:
     name: "Merge reports"
     needs: [test]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
