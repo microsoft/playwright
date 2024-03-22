@@ -4,12 +4,10 @@ inputs:
   namePrefix:
     description: 'Name prefix of the artifacts to download'
     required: true
-    type: string
     default: 'blob-report'
   path:
     description: 'Directory with downloaded artifacts'
     required: true
-    type: string
     default: '.'
 runs:
   using: "composite"

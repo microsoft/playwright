@@ -4,16 +4,13 @@ inputs:
   blob_prefix:
     description: 'Name of the Azure blob storage directory containing blob report'
     required: true
-    type: string
   output_dir:
     description: 'Output directory where downloaded blobs will be stored'
     required: true
-    type: string
     default: 'blob-report'
   connection_string:
     description: 'Azure connection string'
     required: true
-    type: string
 runs:
   using: "composite"
   steps:
