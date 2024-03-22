@@ -69,11 +69,11 @@ export async function toMatchText(
       typeof expected === 'string'
         ? matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined) +
         `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
-        `Received string: ${printReceivedStringContainExpectedSubstring(
+        `Received string: ${receivedString.indexOf(expected) !== -1 ? printReceivedStringContainExpectedSubstring(
             receivedString,
             receivedString.indexOf(expected),
             expected.length,
-        )}` + callLogText(log)
+        ) : '"' + receivedString + '"'}` + callLogText(log)
         : matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined) +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedResult(
