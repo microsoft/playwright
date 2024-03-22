@@ -20,6 +20,8 @@ import type { Locator } from 'playwright-core';
 import type { StackFrame } from '@protocol/channels';
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
 
+export const kNoElementsFoundError = '<element(s) not found>';
+
 export function matcherHint(state: ExpectMatcherContext, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
   let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + '\n\n';
   if (timeout)
