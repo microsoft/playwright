@@ -24,7 +24,7 @@ import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
 import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
@@ -97,7 +97,7 @@ class TestServerDispatcher implements TestServerInterface {
     this._configFile = configFile;
     this.transport = {
       dispatch: (method, params) => (this as any)[method](params),
-      onclose: () => {},
+      onclose: () => gracefullyProcessExitDoNotHang(0),
     };
     this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
     this._testWatcher = new Watcher('flat', events => {
@@ -238,7 +238,7 @@ class TestServerDispatcher implements TestServerInterface {
       timeout: params.timeout,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
-        trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : undefined,
+        trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
         headless: params.headed ? false : undefined,
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
@@ -263,7 +263,7 @@ class TestServerDispatcher implements TestServerInterface {
     const reporters = await createReporters(config, 'test', true);
     reporters.push(await createReporterForTestServer(config, 'test', params.serializer || require.resolve('./uiModeReporter'), e => this._dispatchEvent('report', e)));
     const reporter = new InternalReporter(new Multiplexer(reporters));
-    const taskRunner = createTaskRunnerForWatch(config, reporter);
+    const taskRunner = createTaskRunnerForTestServer(config, reporter);
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
     const stop = new ManualPromise();
