@@ -42,18 +42,23 @@ it('should print no-locator-resolved error when locator matcher did not resolve 
     () => expectWithShortLivingTimeout(myLocator).toHaveAttribute('abc'),
     () => expectWithShortLivingTimeout(myLocator).toHaveClass('abc'),
     () => expectWithShortLivingTimeout(myLocator).toHaveCSS('abc', 'abc'),
+    () => expectWithShortLivingTimeout(myLocator).toHaveCSS('abc', /abc/),
     () => expectWithShortLivingTimeout(myLocator).toHaveId('abc'),
+    () => expectWithShortLivingTimeout(myLocator).toHaveId(/abc/),
     () => expectWithShortLivingTimeout(myLocator).toHaveJSProperty('abc', 'abc'),
     () => expectWithShortLivingTimeout(myLocator).toHaveText('abc'),
+    () => expectWithShortLivingTimeout(myLocator).toHaveText(/abc/),
     () => expectWithShortLivingTimeout(myLocator).toHaveValue('abc'),
+    () => expectWithShortLivingTimeout(myLocator).toHaveValue(/abc/),
     () => expectWithShortLivingTimeout(myLocator).toHaveValues(['abc']),
+    () => expectWithShortLivingTimeout(myLocator).toHaveValues([/abc/]),
   ];
   for (const matcher of locatorMatchers) {
     await it.step(matcher.toString(), async () => {
       const error = await matcher().catch(e => e);
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain(`waiting for locator('.nonexisting')`);
-      expect(stripAnsi(error.message)).toMatch(/Received( string)?: "?<element\(s\) not found>/);
+      expect(stripAnsi(error.message)).toMatch(/Received:  ?"?<element\(s\) not found>/);
     });
   }
 });
