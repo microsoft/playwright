@@ -228,6 +228,29 @@ export abstract class BrowserContext extends SdkObject {
     await page?.resetForReuse(metadata);
   }
 
+  async reapplyContextOptionsIfNeeded(options: channels.BrowserNewContextForReuseParams = {}) {
+    const promises: Promise<any>[] = [];
+    const hash = (obj: any) => JSON.stringify(obj);
+    if (options.viewport && hash(options.viewport) !== hash(this._options.viewport))
+      promises.push(...this.pages().map(page => page.setViewportSize(options.viewport!)));
+    if (options.extraHTTPHeaders && hash(options.extraHTTPHeaders) !== hash(this._options.extraHTTPHeaders))
+      promises.push(this.setExtraHTTPHeaders(options.extraHTTPHeaders));
+    if (options.geolocation && hash(options.geolocation) !== hash(this._options.geolocation))
+      promises.push(this.setGeolocation(options.geolocation));
+    if (options.offline !== undefined && options.offline !== this._options.offline)
+      promises.push(this.setOffline(!!options.offline));
+    if (options.userAgent && options.userAgent !== this._options.userAgent)
+      promises.push(this.setUserAgent(options.userAgent));
+    if (options.storageState && hash(options.storageState) !== hash(this._options.storageState))
+      promises.push(this.setStorageState(serverSideCallMetadata(), options.storageState));
+    if (options.permissions && hash(options.permissions) !== hash(this._options.permissions))
+      promises.push(this.grantPermissions(options.permissions));
+    const hashMedia = (colorScheme?: types.ColorScheme, reducedMotion?: types.ReducedMotion, forcedColors?: types.ForcedColors) => hash({ colorScheme, reducedMotion, forcedColors });
+    if (hashMedia(options.colorScheme, options.reducedMotion, options.forcedColors) !== hashMedia(this._options.colorScheme, this._options.reducedMotion, this._options.forcedColors))
+      promises.push(...this.pages().map(page => page.emulateMedia({ colorScheme: options.colorScheme, reducedMotion: options.reducedMotion, forcedColors: options.forcedColors })));
+    await Promise.all(promises);
+  }
+
   _browserClosed() {
     for (const page of this.pages())
       page._didClose();

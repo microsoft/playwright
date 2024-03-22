@@ -181,13 +181,7 @@ export class PlaywrightConnection {
     debugLogger.log('server', `[${this._id}] engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
 
-    const requestedOptions = launchOptionsHash(this._options.launchOptions);
-    let browser = playwright.allBrowsers().find(b => {
-      if (b.options.name !== this._options.browserName)
-        return false;
-      const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
-      return existingOptions === requestedOptions;
-    });
+    let browser = playwright.findBrowserWithMatchingOptions(this._options.browserName, this._options.launchOptions);
 
     // Close remaining browsers of this type+channel. Keep different browser types for the speed.
     for (const b of playwright.allBrowsers()) {
@@ -272,18 +266,6 @@ export class PlaywrightConnection {
   }
 }
 
-function launchOptionsHash(options: LaunchOptions) {
-  const copy = { ...options };
-  for (const k of Object.keys(copy)) {
-    const key = k as keyof LaunchOptions;
-    if (copy[key] === defaultLaunchOptions[key])
-      delete copy[key];
-  }
-  for (const key of optionsThatAllowBrowserReuse)
-    delete copy[key];
-  return JSON.stringify(copy);
-}
-
 function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
   return {
     channel: options.channel,
@@ -299,17 +281,3 @@ function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
     executablePath: isUnderTest() ? options.executablePath : undefined,
   };
 }
-
-const defaultLaunchOptions: LaunchOptions = {
-  ignoreAllDefaultArgs: false,
-  handleSIGINT: false,
-  handleSIGTERM: false,
-  handleSIGHUP: false,
-  headless: true,
-  devtools: false,
-};
-
-const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
-  'headless',
-  'tracesDir',
-];

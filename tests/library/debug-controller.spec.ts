@@ -18,10 +18,10 @@ import { expect, playwrightTest as baseTest } from '../config/browserTest';
 import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/playwrightServer';
 import { createGuid } from '../../packages/playwright-core/lib/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
-import type { Browser, BrowserContext } from '@playwright/test';
+import type { Browser, BrowserContext, BrowserContextOptions } from '@playwright/test';
 import type * as channels from '@protocol/channels';
 
-type BrowserWithReuse = Browser & { _newContextForReuse: () => Promise<BrowserContext> };
+type BrowserWithReuse = Browser & { _newContextForReuse: (options?: BrowserContextOptions) => Promise<BrowserContext> };
 type Fixtures = {
   wsEndpoint: string;
   backend: channels.DebugControllerChannel;
@@ -30,8 +30,8 @@ type Fixtures = {
 };
 
 const test = baseTest.extend<Fixtures>({
-  wsEndpoint: async ({ }, use) => {
-    process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
+  wsEndpoint: async ({ headless }, use) => {
+    process.env.PW_DEBUG_CONTROLLER_HEADLESS = headless ? '1' : '';
     const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
@@ -195,23 +195,186 @@ test('test', async ({ page }) => {
   expect(events).toHaveLength(length);
 });
 
+test('should record with the same browser if triggered with the same options', async ({ backend, connectedBrowser }) => {
+  // This test emulates when the user records a test, stops recording, and then records another test with the same browserName/launchOptions/contextOptions
+
+  const events = [];
+  backend.on('sourceChanged', event => events.push(event));
+
+  // 1. Start Recording
+  await backend.setRecorderMode({ mode: 'recording' });
+  const context = await connectedBrowser._newContextForReuse();
+  expect(context.pages().length).toBe(1);
+
+  // 2. Record a click action.
+  const page = context.pages()[0];
+  await page.setContent('<button>Submit</button>');
+  await page.getByRole('button').click();
+
+  // 3. Stop recording.
+  await backend.setRecorderMode({ mode: 'none' });
+
+  // 4. Start recording again.
+  await backend.setRecorderMode({ mode: 'recording' });
+  expect(context.pages().length).toBe(1);
+
+  // 5. Record another click action.
+  await page.getByRole('button').click();
+
+  // 4. Expect the click action to be recorded.
+  await expect.poll(() => events[events.length - 1]).toEqual({
+    header: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {`,
+    footer: `});`,
+    actions: [
+      `  await page.getByRole('button', { name: 'Submit' }).click();`,
+    ],
+    text: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.getByRole('button', { name: 'Submit' }).click();
+});`
+  });
+});
+
+test('should record with a new browser if triggered with different browserName', async ({ wsEndpoint, playwright, backend }) => {
+  // This test emulates when the user records a test, stops recording, and then records another test with a different browserName
+
+  const events = [];
+  backend.on('sourceChanged', event => events.push(event));
+
+  // 1. Start Recording
+  const browser1 = await playwright.chromium.connect(wsEndpoint, {
+    headers: {
+      'x-playwright-reuse-context': '1',
+    }
+  }) as BrowserWithReuse;
+  await backend.setRecorderMode({ mode: 'recording' });
+
+  // 2. Record a click action.
+  {
+    const context = await browser1._newContextForReuse();
+    expect(context.pages().length).toBe(1);
+    const page = context.pages()[0];
+    await page.setContent('<button>Submit</button>');
+    await page.getByRole('button').click();
+    expect(page.context().browser().browserType().name()).toBe('chromium');
+  }
+
+  // 3. Stop recording.
+  await backend.setRecorderMode({ mode: 'none' });
+
+  // 4. Start recording again with a different browserName.
+  await backend.setRecorderMode({ mode: 'recording', browserName: 'firefox' });
+
+  // 5. Record another click action.
+  {
+    expect(browser1.isConnected()).toBe(false);
+    const browser = await playwright.firefox.connect(wsEndpoint, {
+      headers: {
+        'x-playwright-reuse-context': '1',
+      }
+    }) as BrowserWithReuse;
+    expect(browser.browserType().name()).toBe('firefox');
+    const context = await browser._newContextForReuse();
+    const page = context.pages()[0];
+    await page.setContent('<button>Submit</button>');
+    await page.getByRole('button').click();
+  }
+
+  // 6. Expect the click action to be recorded.
+  await expect.poll(() => events[events.length - 1]).toEqual({
+    header: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {`,
+    footer: `});`,
+    actions: [
+      "  await page.goto('about:blank');",
+      `  await page.getByRole('button', { name: 'Submit' }).click();`,
+    ],
+    text: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('about:blank');
+  await page.getByRole('button', { name: 'Submit' }).click();
+});`
+  });
+});
+
+test('should record with same browser but re-applied context options if triggered with different contextOptions', async ({ playwright, wsEndpoint, backend,  }) => {
+  // This test emulates when the user records a test, stops recording, and then records another test with different contextOptions
+
+  const events = [];
+  backend.on('sourceChanged', event => events.push(event));
+
+  // 1. Start Recording
+  await backend.setRecorderMode({ mode: 'recording' });
+  const browser = await playwright.chromium.connect(wsEndpoint, {
+    headers: {
+      'x-playwright-reuse-context': '1',
+    }
+  }) as BrowserWithReuse;
+  const context = await browser._newContextForReuse({ userAgent: 'hello 123', viewport: { width: 1111, height: 1111 } });
+  expect(context.pages().length).toBe(1);
+
+  // 2. Record a click action.
+  const page = context.pages()[0];
+  await page.setContent('<button>Submit</button>');
+  await page.getByRole('button').click();
+  expect(await page.evaluate(() => window.innerWidth)).toBe(1111);
+  expect(await page.evaluate(() => window.innerHeight)).toBe(1111);
+  expect(await page.evaluate(() => navigator.userAgent)).toBe('hello 123');
+
+  // 3. Stop recording.
+  await backend.setRecorderMode({ mode: 'none' });
+
+  // 4. Start recording again with different contextOptions.
+  await backend.setRecorderMode({ mode: 'recording', contextOptions: { userAgent: 'hello 345', viewport: { width: 500, height: 500 } } });
+  expect(context.pages().length).toBe(1);
+  expect(await page.evaluate(() => window.innerWidth)).toBe(500);
+  expect(await page.evaluate(() => window.innerHeight)).toBe(500);
+  expect(await page.evaluate(() => navigator.userAgent)).toBe('hello 345');
+
+  // 5. Record another click action.
+  await page.getByRole('button').click();
+
+  // 6. Expect the click action to be recorded.
+  await expect.poll(() => events[events.length - 1]).toEqual({
+    header: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {`,
+    footer: `});`,
+    actions: [
+      `  await page.getByRole('button', { name: 'Submit' }).click();`,
+    ],
+    text: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.getByRole('button', { name: 'Submit' }).click();
+});`
+  });
+});
+
 test('should record custom data-testid', async ({ backend, connectedBrowser }) => {
   // This test emulates "record at cursor" functionality
   // with custom test id attribute in the config.
 
   const events = [];
   backend.on('sourceChanged', event => events.push(event));
-
   // 1. "Show browser" (or "run test").
-  const context = await connectedBrowser._newContextForReuse();
-  const page = await context.newPage();
-  await page.setContent(`<div data-custom-id='one'>One</div>`);
-
+  {
+    const page = await connectedBrowser._newContextForReuse().then(context => context.newPage());
+    await page.setContent(`<div data-custom-id='one'>One</div>`);
+  }
   // 2. "Record at cursor".
   await backend.setRecorderMode({ mode: 'recording', testIdAttributeName: 'data-custom-id' });
 
   // 3. Record a click action.
-  await page.locator('div').click();
+  {
+    const page = (connectedBrowser.contexts())[0].pages()[0];
+    await page.locator('div').click();
+  }
 
   // 4. Expect "getByTestId" locator.
   await expect.poll(() => events[events.length - 1]).toEqual({
