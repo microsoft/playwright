@@ -350,7 +350,6 @@ it('should return body for prefetch script', async ({ page, server, browserName 
 
 it('should bypass disk cache when interception is enabled', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
-  it.fixme(browserName === 'firefox', 'Returns cached response.');
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   await page.route('**/api*', route => route.continue());
   {
