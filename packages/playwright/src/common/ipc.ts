@@ -18,6 +18,7 @@ import util from 'util';
 import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
+import type { TTYParams } from './tty';
 
 export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
@@ -46,15 +47,9 @@ export type SerializedConfig = {
   compilationCache?: SerializedCompilationCache;
 };
 
-export type TtyParams = {
-  rows: number | undefined;
-  columns: number | undefined;
-  colorDepth: number;
-};
-
 export type ProcessInitParams = {
-  stdoutParams: TtyParams;
-  stderrParams: TtyParams;
+  stdoutTTY: TTYParams | undefined;
+  stderrTTY: TTYParams | undefined;
   processName: string;
 };
 

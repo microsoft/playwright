@@ -15,8 +15,9 @@
  */
 
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
-import { colors, BaseReporter, formatError, formatTestTitle, isTTY, stepSuffix, stripAnsiEscapes, ttyWidth } from './base';
+import { colors, BaseReporter, formatError, formatTestTitle, stepSuffix, stripAnsiEscapes } from './base';
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import { stdoutTTY } from '../common/tty';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -35,7 +36,7 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { omitFailures?: boolean, printSteps?: boolean } = {}) {
     super(options);
-    this._printSteps = isTTY && (options.printSteps || !!process.env.PW_TEST_DEBUG_REPORTERS_PRINT_STEPS);
+    this._printSteps = !!stdoutTTY && (options.printSteps || !!process.env.PW_TEST_DEBUG_REPORTERS_PRINT_STEPS);
   }
 
   override printsToStdio() {
@@ -53,7 +54,7 @@ class ListReporter extends BaseReporter {
 
   override onTestBegin(test: TestCase, result: TestResult) {
     super.onTestBegin(test, result);
-    if (!isTTY)
+    if (!stdoutTTY)
       return;
     this._maybeWriteNewLine();
     const index = String(this._resultIndex.size + 1);
@@ -80,7 +81,7 @@ class ListReporter extends BaseReporter {
       return;
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
-      if (isTTY)
+      if (stdoutTTY)
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
@@ -90,7 +91,7 @@ class ListReporter extends BaseReporter {
     const stepIndex = `${testIndex}.${ordinal}`;
     this._stepIndex.set(step, stepIndex);
 
-    if (isTTY) {
+    if (stdoutTTY) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
       const prefix = this._testPrefix(stepIndex, '');
@@ -106,7 +107,7 @@ class ListReporter extends BaseReporter {
 
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
-      if (isTTY)
+      if (stdoutTTY)
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
@@ -133,7 +134,7 @@ class ListReporter extends BaseReporter {
 
   private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (!ttyWidth)
+    if (!stdoutTTY?.columns)
       return;
     for (const ch of text) {
       if (ch === '\n') {
@@ -142,7 +143,7 @@ class ListReporter extends BaseReporter {
         continue;
       }
       ++this._lastColumn;
-      if (this._lastColumn > ttyWidth) {
+      if (this._lastColumn > stdoutTTY.columns) {
         this._lastColumn = 0;
         ++this._lastRow;
       }
@@ -192,7 +193,7 @@ class ListReporter extends BaseReporter {
   }
 
   private _updateOrAppendLine(row: number, text: string, prefix: string) {
-    if (isTTY) {
+    if (stdoutTTY) {
       this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();
@@ -229,8 +230,6 @@ class ListReporter extends BaseReporter {
     // Go down if needed.
     if (row !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - row}E`);
-    if (process.env.PWTEST_TTY_WIDTH)
-      process.stdout.write('\n');  // For testing.
   }
 
   private _testPrefix(index: string, statusMark: string) {

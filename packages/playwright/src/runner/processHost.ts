@@ -22,6 +22,7 @@ import type { ProtocolResponse } from '../common/process';
 import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
 import { assert } from 'playwright-core/lib/utils';
 import { esmLoaderRegistered } from '../common/esmLoaderHost';
+import { stderrTTY, stdoutTTY } from '../common/tty';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -111,20 +112,7 @@ export class ProcessHost extends EventEmitter {
     if (error)
       return error;
 
-    const processParams: ProcessInitParams = {
-      stdoutParams: {
-        rows: process.stdout.rows,
-        columns: process.stdout.columns,
-        colorDepth: process.stdout.getColorDepth?.() || 8
-      },
-      stderrParams: {
-        rows: process.stderr.rows,
-        columns: process.stderr.columns,
-        colorDepth: process.stderr.getColorDepth?.() || 8
-      },
-      processName: this._processName
-    };
-
+    const processParams: ProcessInitParams = { stdoutTTY, stderrTTY, processName: this._processName };
     this.send({
       method: '__init__', params: {
         processParams,

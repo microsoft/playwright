@@ -39,6 +39,7 @@ import { loadConfig, resolveConfigFile, restartWithExperimentalTsEsm } from '../
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { TestRunnerPluginRegistration } from '../plugins';
+import { resizeTTY } from '../common/tty';
 
 class TestServer {
   private _configFile: string | undefined;
@@ -120,10 +121,7 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
-    process.stdout.columns = params.cols;
-    process.stdout.rows = params.rows;
-    process.stderr.columns = params.cols;
-    process.stderr.columns = params.rows;
+    resizeTTY(params.cols, params.rows);
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {

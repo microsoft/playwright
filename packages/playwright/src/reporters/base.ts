@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
+import { colors, stdoutTTY } from '../common/tty';
+
+export { colors } from '../common/tty';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
@@ -42,28 +45,6 @@ type TestSummary = {
   flaky: TestCase[];
   failuresToPrint: TestCase[];
   fatalErrors: TestError[];
-};
-
-export const isTTY = !!process.env.PWTEST_TTY_WIDTH || process.stdout.isTTY;
-export const ttyWidth = process.env.PWTEST_TTY_WIDTH ? parseInt(process.env.PWTEST_TTY_WIDTH, 10) : process.stdout.columns || 0;
-let useColors = isTTY;
-if (process.env.DEBUG_COLORS === '0'
-    || process.env.DEBUG_COLORS === 'false'
-    || process.env.FORCE_COLOR === '0'
-    || process.env.FORCE_COLOR === 'false')
-  useColors = false;
-else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
-  useColors = true;
-
-export const colors = useColors ? realColors : {
-  bold: (t: string) => t,
-  cyan: (t: string) => t,
-  dim: (t: string) => t,
-  gray: (t: string) => t,
-  green: (t: string) => t,
-  red: (t: string) => t,
-  yellow: (t: string) => t,
-  enabled: false,
 };
 
 export class BaseReporter implements ReporterV2 {
@@ -145,11 +126,11 @@ export class BaseReporter implements ReporterV2 {
   }
 
   protected fitToScreen(line: string, prefix?: string): string {
-    if (!ttyWidth) {
+    if (!stdoutTTY?.columns) {
       // Guard against the case where we cannot determine available width.
       return line;
     }
-    return fitToWidth(line, ttyWidth, prefix);
+    return fitToWidth(line, stdoutTTY.columns, prefix);
   }
 
   protected generateStartingMessage() {
@@ -491,7 +472,7 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
 export function separator(text: string = ''): string {
   if (text)
     text += ' ';
-  const columns = Math.min(100, ttyWidth || 100);
+  const columns = Math.min(100, stdoutTTY?.columns || 100);
   return text + colors.dim('─'.repeat(Math.max(0, columns - text.length)));
 }
 

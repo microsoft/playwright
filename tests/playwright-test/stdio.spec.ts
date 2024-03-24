@@ -89,7 +89,7 @@ test('should support console colors', async ({ runInlineTest }) => {
         console.error({ b: false, n: 123, s: 'abc' });
       });
     `
-  });
+  }, {}, { PLAYWRIGHT_TTY: '80' });
   expect(result.output).toContain(`process.stdout.isTTY = true`);
   expect(result.output).toContain(`process.stderr.isTTY = true`);
   // The output should have colors.
@@ -102,17 +102,22 @@ test('should override hasColors and getColorDepth', async ({ runInlineTest }) =>
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
       test('console log', () => {
-        console.log('process.stdout.hasColors(1) = ' + process.stdout.hasColors(1));
-        console.log('process.stderr.hasColors(1) = ' + process.stderr.hasColors(1));
-        console.log('process.stdout.getColorDepth() > 0 = ' + (process.stdout.getColorDepth() > 0));
-        console.log('process.stderr.getColorDepth() > 0 = ' + (process.stderr.getColorDepth() > 0));
+        expect(process.stdout.hasColors(1)).toBe(true);
+        expect(process.stdout.isTTY).toBe(true);
+        expect(process.stdout.columns).toBe(60);
+        expect(process.stdout.rows).toBe(15);
+        expect(process.stdout.getColorDepth()).toBe(16);
+
+        expect(process.stderr.hasColors(1)).toBe(true);
+        expect(process.stderr.isTTY).toBe(true);
+        expect(process.stderr.columns).toBe(60);
+        expect(process.stderr.rows).toBe(15);
+        expect(process.stderr.getColorDepth()).toBe(16);
       });
     `
-  });
-  expect(result.output).toContain(`process.stdout.hasColors(1) = true`);
-  expect(result.output).toContain(`process.stderr.hasColors(1) = true`);
-  expect(result.output).toContain(`process.stdout.getColorDepth() > 0 = true`);
-  expect(result.output).toContain(`process.stderr.getColorDepth() > 0 = true`);
+  }, {}, { PLAYWRIGHT_TTY: '60x15x16' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should not throw type error when using assert', async ({ runInlineTest }) => {
@@ -152,6 +157,25 @@ test('should provide stubs for tty.WriteStream methods on process.stdout/stderr'
         checkMethods(process.stderr);
       });
     `
-  });
+  }, {}, { PLAYWRIGHT_TTY: '80' });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should respect PLAYWRIGHT_TTY=0', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29422' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {
+        expect(process.stdout.isTTY).toBe(false);
+        expect(process.stdout.columns).toBe(0);
+        expect(process.stdout.rows).toBe(0);
+        expect(process.stderr.isTTY).toBe(false);
+        expect(process.stderr.columns).toBe(0);
+        expect(process.stderr.rows).toBe(0);
+      });
+    `
+  }, {}, { PLAYWRIGHT_TTY: '0' });
   expect(result.exitCode).toBe(0);
 });
