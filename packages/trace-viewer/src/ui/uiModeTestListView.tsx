@@ -140,12 +140,12 @@ export const TestListView: React.FC<{
     if (e.metaKey || e.ctrlKey) {
       const parts = filterText.split(' ');
       if (parts.includes(tag))
-        setFilterText(parts.filter(t => t !== tag).join(' '));
+        setFilterText(parts.filter(t => t !== tag).join(' ').trim());
       else
         setFilterText((filterText + ' ' + tag).trim());
     } else {
       // Replace all existing tags with this tag.
-      setFilterText(filterText.split(' ').filter(t => !t.startsWith('@')).join(' ') + ' ' + tag);
+      setFilterText((filterText.split(' ').filter(t => !t.startsWith('@')).join(' ') + ' ' + tag).trim());
     }
   };
 
@@ -157,8 +157,8 @@ export const TestListView: React.FC<{
     dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox ui-mode-list-item'>
-        <div className='ui-mode-list-item-title' title={treeItem.title}>
-          {treeItem.title}
+        <div className='ui-mode-list-item-title'>
+          <span title={treeItem.title}>{treeItem.title}</span>
           {treeItem.kind === 'case' ? treeItem.tags.map(tag => <TagView key={tag} tag={tag.slice(1)} onClick={e => handleTagClick(e, tag)} />) : null}
         </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
