@@ -137,14 +137,15 @@ export const TestListView: React.FC<{
   const handleTagClick = (e: React.MouseEvent, tag: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.metaKey) {
+    if (e.metaKey || e.ctrlKey) {
       const parts = filterText.split(' ');
       if (parts.includes(tag))
         setFilterText(parts.filter(t => t !== tag).join(' '));
       else
         setFilterText((filterText + ' ' + tag).trim());
     } else {
-      setFilterText(tag);
+      // Replace all existing tags with this tag.
+      setFilterText(filterText.split(' ').filter(t => !t.startsWith('@')).join(' ') + ' ' + tag);
     }
   };
 
