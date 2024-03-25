@@ -172,7 +172,8 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     (async () => {
-      const status = await testServerConnection.runGlobalSetup({});
+      await testServerConnection.watchTestDir({});
+      const { status } = await testServerConnection.runGlobalSetup({});
       if (status !== 'passed')
         return;
       const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });

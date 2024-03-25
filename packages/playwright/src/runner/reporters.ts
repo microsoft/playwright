@@ -78,17 +78,16 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   return reporters;
 }
 
-export async function createReporterForTestServer(config: FullConfigInternal, mode: 'list' | 'test', file: string, messageSink: (message: any) => void): Promise<ReporterV2> {
-  const reporterConstructor = await loadReporter(config, file);
-  const runOptions = reporterOptions(config, mode, true, messageSink);
-  const instance = new reporterConstructor(runOptions);
-  return wrapReporterAsV2(instance);
+export async function createReporterForTestServer(file: string, messageSink: (message: any) => void): Promise<ReporterV2> {
+  const reporterConstructor = await loadReporter(null, file);
+  return wrapReporterAsV2(new reporterConstructor({
+    _send: messageSink,
+  }));
 }
 
-function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, send?: (message: any) => void) {
+function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {
   return {
     configDir: config.configDir,
-    _send: send,
     _mode: mode,
     _isTestServer: isTestServer,
   };

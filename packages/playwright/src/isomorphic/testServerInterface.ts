@@ -16,13 +16,20 @@
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { Event } from './events';
+import type { JsonEvent } from './teleReceiver';
+
+export type ReportEntry = JsonEvent;
 
 export interface TestServerInterface {
+  setSerializer(params: { serializer: string }): Promise<void>;
+
   ping(params: {}): Promise<void>;
 
   watch(params: {
     fileNames: string[];
   }): Promise<void>;
+
+  watchTestDir(params: {}): Promise<void>;
 
   open(params: { location: reporterTypes.Location }): Promise<void>;
 
@@ -32,34 +39,35 @@ export interface TestServerInterface {
 
   installBrowsers(params: {}): Promise<void>;
 
-  runGlobalSetup(params: {}): Promise<reporterTypes.FullResult['status']>;
+  runGlobalSetup(params: {}): Promise<{
+    report: ReportEntry[],
+    status: reporterTypes.FullResult['status']
+  }>;
 
-  runGlobalTeardown(params: {}): Promise<reporterTypes.FullResult['status']>;
+  runGlobalTeardown(params: {}): Promise<{
+    report: ReportEntry[],
+    status: reporterTypes.FullResult['status']
+  }>;
 
   listFiles(params: {
     projects?: string[];
   }): Promise<{
-    projects: {
-      name: string;
-      testDir: string;
-      use: { testIdAttribute?: string };
-      files: string[];
-    }[];
-    cliEntryPoint?: string;
-    error?: reporterTypes.TestError;
+    report: ReportEntry[];
+    status: reporterTypes.FullResult['status']
   }>;
 
   /**
    * Returns list of teleReporter events.
    */
   listTests(params: {
-    serializer?: string;
     projects?: string[];
     locations?: string[];
-  }): Promise<{ report: any[] }>;
+  }): Promise<{
+    report: ReportEntry[],
+    status: reporterTypes.FullResult['status']
+  }>;
 
   runTests(params: {
-    serializer?: string;
     locations?: string[];
     grep?: string;
     grepInvert?: string;
@@ -72,7 +80,9 @@ export interface TestServerInterface {
     projects?: string[];
     reuseContext?: boolean;
     connectWsEndpoint?: string;
-  }): Promise<{ status: reporterTypes.FullResult['status'] }>;
+  }): Promise<{
+    status: reporterTypes.FullResult['status'];
+  }>;
 
   findRelatedTestFiles(params: {
     files: string[];
@@ -84,7 +94,6 @@ export interface TestServerInterface {
 }
 
 export interface TestServerInterfaceEvents {
-  onClose: Event<void>;
   onReport: Event<any>;
   onStdio: Event<{ type: 'stdout' | 'stderr', text?: string, buffer?: string }>;
   onListChanged: Event<void>;
@@ -93,8 +102,7 @@ export interface TestServerInterfaceEvents {
 }
 
 export interface TestServerInterfaceEventEmitters {
-  dispatchEvent(event: 'close', params: {}): void;
-  dispatchEvent(event: 'report', params: any): void;
+  dispatchEvent(event: 'report', params: ReportEntry): void;
   dispatchEvent(event: 'stdio', params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }): void;
   dispatchEvent(event: 'listChanged', params: {}): void;
   dispatchEvent(event: 'testFilesChanged', params: { testFiles: string[] }): void;

@@ -24,21 +24,20 @@ import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
 import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
-import type { TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
+import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import { Runner } from './runner';
-import { serializeError } from '../util';
-import { prepareErrorStack } from '../reporters/base';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import { loadConfig, resolveConfigFile, restartWithExperimentalTsEsm } from '../common/configLoader';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { TestRunnerPluginRegistration } from '../plugins';
+import { serializeError } from '../util';
 
 class TestServer {
   private _configFile: string | undefined;
@@ -89,9 +88,11 @@ class TestServerDispatcher implements TestServerInterface {
   private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   readonly transport: Transport;
   private _queue = Promise.resolve();
-  private _globalCleanup: (() => Promise<reporterTypes.FullResult['status']>) | undefined;
+  private _globalSetup: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
   private _plugins: TestRunnerPluginRegistration[] | undefined;
+  private _serializer = require.resolve('./uiModeReporter');
+  private _watchTestDir = false;
 
   constructor(configFile: string | undefined) {
     this._configFile = configFile;
@@ -106,6 +107,21 @@ class TestServerDispatcher implements TestServerInterface {
       this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
     });
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
+  }
+
+  async setSerializer(params: { serializer: string; }): Promise<void> {
+    this._serializer = params.serializer;
+  }
+
+  private async _wireReporter(messageSink: (message: any) => void) {
+    return await createReporterForTestServer(this._serializer, messageSink);
+  }
+
+  private async _collectingReporter() {
+    const report: ReportEntry[] = [];
+    const wireReporter = await createReporterForTestServer(this._serializer, e => report.push(e));
+    const reporter = new InternalReporter(wireReporter);
+    return { reporter, report };
   }
 
   async ready() {}
@@ -134,14 +150,19 @@ class TestServerDispatcher implements TestServerInterface {
     await installBrowsers();
   }
 
-  async runGlobalSetup(): Promise<reporterTypes.FullResult['status']> {
+  async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     await this.runGlobalTeardown();
 
-    const config = await this._loadConfig(this._configFile);
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+    const { reporter, report } = await this._collectingReporter();
+    const { config, error } = await this._loadConfig(this._configFile);
+    if (!config) {
+      reporter.onError(error!);
+      return { status: 'failed', report };
+    }
 
-    const reporter = new InternalReporter(new ListReporter());
-    const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
+    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+    const listReporter = new InternalReporter(new ListReporter());
+    const taskRunner = createTaskRunnerForWatchSetup(config, new Multiplexer([reporter, listReporter]));
     reporter.onConfigure(config.config);
     const testRun = new TestRun(config, reporter);
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
@@ -149,28 +170,35 @@ class TestServerDispatcher implements TestServerInterface {
     await reporter.onExit();
     if (status !== 'passed') {
       await globalCleanup();
-      return status;
+      return { report, status };
     }
-    this._globalCleanup = globalCleanup;
-    return status;
+    this._globalSetup = { cleanup: globalCleanup, report };
+    return { report, status };
   }
 
   async runGlobalTeardown() {
-    const result = (await this._globalCleanup?.()) || 'passed';
-    this._globalCleanup = undefined;
-    return result;
+    const globalSetup = this._globalSetup;
+    const status = await globalSetup?.cleanup();
+    this._globalSetup = undefined;
+    return { status, report: globalSetup?.report || [] };
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
-    try {
-      const config = await this._loadConfig(this._configFile);
-      const runner = new Runner(config);
-      return runner.listTestFiles(params.projects);
-    } catch (e) {
-      const error: reporterTypes.TestError = serializeError(e);
-      error.location = prepareErrorStack(e.stack).location;
-      return { projects: [], error };
+    const { reporter, report } = await this._collectingReporter();
+    const { config, error } = await this._loadConfig(this._configFile);
+    if (!config) {
+      reporter.onError(error!);
+      return { status: 'failed', report };
     }
+
+    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
+    const taskRunner = createTaskRunnerForListFiles(config, reporter);
+    reporter.onConfigure(config.config);
+    const testRun = new TestRun(config, reporter);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    return { report, status };
   }
 
   async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
@@ -187,14 +215,16 @@ class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
     };
-    const config = await this._loadConfig(this._configFile, overrides);
+    const { reporter, report } = await this._collectingReporter();
+    const { config, error } = await this._loadConfig(this._configFile, overrides);
+    if (!config) {
+      reporter.onError(error!);
+      return { report: [], status: 'failed' };
+    }
+
     config.cliArgs = params.locations || [];
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     config.cliListOnly = true;
-
-    const wireReporter = await createReporterForTestServer(config, 'list', params.serializer || require.resolve('./uiModeReporter'), e => report.push(e));
-    const report: any[] = [];
-    const reporter = new InternalReporter(wireReporter);
 
     const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: false });
     const testRun = new TestRun(config, reporter);
@@ -216,17 +246,18 @@ class TestServerDispatcher implements TestServerInterface {
       projectOutputs.add(result.outDir);
     }
 
-    this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
-    return { report };
+    if (this._watchTestDir)
+      this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
+    return { report, status };
   }
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
-    let result: Awaited<ReturnType<TestServerInterface['runTests']>>;
+    let result: Awaited<ReturnType<TestServerInterface['runTests']>> = { status: 'passed' };
     this._queue = this._queue.then(async () => {
-      result = await this._innerRunTests(params).catch(printInternalError) || { status: 'failed' };
+      result = await this._innerRunTests(params).catch(e => { printInternalError(e); return { status: 'failed' }; });
     });
     await this._queue;
-    return result!;
+    return result;
   }
 
   private async _innerRunTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
@@ -250,8 +281,14 @@ class TestServerDispatcher implements TestServerInterface {
     else
       process.env.PW_LIVE_TRACE_STACKS = undefined;
 
+    const { config, error } = await this._loadConfig(this._configFile, overrides);
+    if (!config) {
+      const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
+      wireReporter.onError(error!);
+      return { status: 'failed' };
+    }
+
     const testIdSet = params.testIds ? new Set<string>(params.testIds) : null;
-    const config = await this._loadConfig(this._configFile, overrides);
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
     config.cliArgs = params.locations || [];
@@ -261,7 +298,8 @@ class TestServerDispatcher implements TestServerInterface {
     config.testIdMatcher = testIdSet ? id => testIdSet.has(id) : undefined;
 
     const reporters = await createReporters(config, 'test', true);
-    reporters.push(await createReporterForTestServer(config, 'test', params.serializer || require.resolve('./uiModeReporter'), e => this._dispatchEvent('report', e)));
+    const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
+    reporters.push(wireReporter);
     const reporter = new InternalReporter(new Multiplexer(reporters));
     const taskRunner = createTaskRunnerForTestServer(config, reporter);
     const testRun = new TestRun(config, reporter);
@@ -274,8 +312,11 @@ class TestServerDispatcher implements TestServerInterface {
       return status;
     });
     this._testRun = { run, stop };
-    const status = await run;
-    return { status };
+    return { status: await run };
+  }
+
+  async watchTestDir() {
+    this._watchTestDir = true;
   }
 
   async watch(params: { fileNames: string[]; }) {
@@ -288,8 +329,10 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
-    const config = await this._loadConfig(this._configFile);
-    const runner = new Runner(config);
+    const { config, error } = await this._loadConfig(this._configFile);
+    if (error)
+      return { testFiles: [], errors: [error] };
+    const runner = new Runner(config!);
     return runner.findRelatedTestFiles('out-of-process', params.files);
   }
 
@@ -302,17 +345,20 @@ class TestServerDispatcher implements TestServerInterface {
     gracefullyProcessExitDoNotHang(0);
   }
 
-  private async _loadConfig(configFile: string | undefined, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal> {
+  private async _loadConfig(configFile: string | undefined, overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
     const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
     const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-    const config = await loadConfig({ resolvedConfigFile, configDir: resolvedConfigFile === configFileOrDirectory ? path.dirname(resolvedConfigFile) : configFileOrDirectory  }, overrides);
-
-    // Preserve plugin instances between setup and build.
-    if (!this._plugins)
-      this._plugins = config.plugins || [];
-    else
-      config.plugins.splice(0, config.plugins.length, ...this._plugins);
-    return config;
+    try {
+      const config = await loadConfig({ resolvedConfigFile, configDir: resolvedConfigFile === configFileOrDirectory ? path.dirname(resolvedConfigFile) : configFileOrDirectory  }, overrides);
+      // Preserve plugin instances between setup and build.
+      if (!this._plugins)
+        this._plugins = config.plugins || [];
+      else
+        config.plugins.splice(0, config.plugins.length, ...this._plugins);
+      return { config };
+    } catch (e) {
+      return { config: null, error: serializeError(e) };
+    }
   }
 }
 

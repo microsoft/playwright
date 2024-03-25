@@ -40,7 +40,6 @@ type ProjectConfigWithFiles = {
 
 type ConfigListFilesReport = {
   projects: ProjectConfigWithFiles[];
-  cliEntryPoint?: string;
   error?: TestError;
 };
 
@@ -57,11 +56,9 @@ export class Runner {
   }
 
   async listTestFiles(projectNames?: string[]): Promise<ConfigListFilesReport> {
-    const frameworkPackage = (this._config.config as any)['@playwright/test']?.['packageJSON'];
     const projects = filterProjects(this._config.projects, projectNames);
     const report: ConfigListFilesReport = {
       projects: [],
-      cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
     };
     for (const project of projects) {
       report.projects.push({
