@@ -30,6 +30,7 @@ import { testStatusIcon } from './testUtils';
 import type { TestModel } from './uiModeModel';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import Tag, { tagNametoColor } from './tag';
 
 const TestTreeView = TreeView<TreeItem>;
 
@@ -46,7 +47,8 @@ export const TestListView: React.FC<{
   isLoading?: boolean,
   onItemSelected: (item: { treeItem?: TreeItem, testCase?: reporterTypes.TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
-}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount }) => {
+  setFilterText: (text: string) => void;
+}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, setFilterText }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
@@ -140,7 +142,10 @@ export const TestListView: React.FC<{
     dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox ui-mode-list-item'>
-        <div className='ui-mode-list-item-title' title={treeItem.title}>{treeItem.title}</div>
+        <div className='ui-mode-list-item-title' title={treeItem.title}>
+          {treeItem.title}
+          {treeItem.kind === 'case' ? treeItem.tags.map(tag => <Tag key={tag} color={tagNametoColor(tag)} onClick={e => {e.preventDefault(); setFilterText(tag);}}>{tag.slice(1)}</Tag>) : null}
+        </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>

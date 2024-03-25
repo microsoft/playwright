@@ -56,6 +56,22 @@ test('should filter by explicit tags', async ({ runUITest }) => {
   `);
 });
 
+test('should display native tags and filter by them on click', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+      test('passes with tags', { tag: '@smoke' }, () => {});
+  `,
+  });
+  await page.locator('.ui-mode-list-item-title').getByText('smoke').click();
+  await expect(page.getByPlaceholder('Filter')).toHaveValue('@smoke');
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes with tags <=
+  `);
+});
+
 test('should filter by status', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 

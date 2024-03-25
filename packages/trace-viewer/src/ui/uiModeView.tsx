@@ -64,6 +64,7 @@ const queryParams = {
 };
 
 const isMac = navigator.platform === 'MacIntel';
+const isUnderTest = searchParams.get('isUnderTest') === 'true';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
@@ -376,7 +377,7 @@ export const UIModeView: React.FC<{}> = ({
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
     </div>}
-    <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
+    <SplitView sidebarSize={isUnderTest ? 350 : 250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
@@ -439,7 +440,9 @@ export const UIModeView: React.FC<{}> = ({
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
           isLoading={isLoading}
-          requestedCollapseAllCount={collapseAllCount} />
+          requestedCollapseAllCount={collapseAllCount}
+          setFilterText={setFilterText}
+        />
       </div>
     </SplitView>
   </div>;

@@ -14,10 +14,24 @@
  * limitations under the License.
  */
 
+import './tag.css';
+
+const Tag: React.FC<{ color: number, children: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }> = ({ color, children, style, onClick }) => {
+  return <span
+    className={`label label-color-${color}`}
+    onClick={onClick}
+    style={{ margin: '6px 0 0 6px', ...style }}
+  >
+    {children}
+  </span>;
+};
+
 // hash string to integer in range [0, 6] for color index, to get same color for same tag
-export function hashStringToInt(str: string) {
+export function tagNametoColor(str: string) {
   let hash = 0;
   for (let i = 0; i < str.length; i++)
     hash = str.charCodeAt(i) + ((hash << 8) - hash);
   return Math.abs(hash % 6);
 }
+
+export default Tag;
