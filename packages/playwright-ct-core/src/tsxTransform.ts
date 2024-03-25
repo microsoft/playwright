@@ -150,7 +150,7 @@ export type ImportInfo = {
 
 export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
   const importSource = importNode.source.value;
-  const idPrefix = importSource.replace(/[^\w_\d]/g, '_');
+  const idPrefix = path.join(filename, '..', importSource).replace(/[^\w_\d]/g, '_');
 
   const result: ImportInfo = {
     id: idPrefix,
