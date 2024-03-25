@@ -999,11 +999,10 @@ disable timeout.
 If specified, traces are saved into this directory.
 
 ## browser-option-devtools
+* deprecated: Use [debugging tools](../debug.md) instead.
 - `devtools` <[boolean]>
 
-**Deprecated, Chromium-only.** Use [debugging tools](../debug.md) instead.
-
-Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
 [`option: headless`] option will be set `false`.
 
 ## browser-option-slowmo

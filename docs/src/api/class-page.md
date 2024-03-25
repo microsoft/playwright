@@ -3146,7 +3146,7 @@ return value resolves to `[]`.
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
-:::warning Experimental
+:::warning[Experimental]
 This method is experimental and its behavior may change in the upcoming releases.
 :::
 
@@ -3160,7 +3160,7 @@ Things to keep in mind:
 * The execution time of the handler counts towards the timeout of the action/assertion that executed the handler. If your handler takes too long, it might cause timeouts.
 * You can register multiple handlers. However, only a single handler will be running at a time. Make sure the actions within a handler don't depend on another handler.
 
-:::warning
+:::danger[Warning]
 Running the handler will alter your page state mid-test. For example it will change the currently focused element and move the mouse. Make sure that actions that run after the handler are self-contained and do not rely on the focus and mouse state being unchanged.
 <br />
 <br />
