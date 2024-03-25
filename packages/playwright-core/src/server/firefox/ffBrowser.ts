@@ -366,7 +366,10 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
-    await this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
+    await Promise.all([
+      this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor }),
+      this._browser.session.send('Browser.setCacheDisabled', { browserContextId: this._browserContextId, cacheDisabled: !!this._requestInterceptor }),
+    ]);
   }
 
   onClosePersistent() {}
