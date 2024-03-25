@@ -25,6 +25,7 @@ import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { hashStringToInt } from './labelUtils';
 import { msToString } from './uiUtils';
+import { CopyToClipboard } from './copyToClipboard';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -68,15 +69,19 @@ function renderAnnotationDescription(description: string) {
   try {
     if (['http:', 'https:'].includes(new URL(description).protocol))
       return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
-  } catch {}
+  } catch { }
   return description;
 }
 
 function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+  const [hover, setHover] = React.useState(false);
+  const onHover = () => setHover(true);
+  const onLeave = () => setHover(false);
   return (
-    <div className='test-case-annotation'>
-      <span style={{ fontWeight: 'bold' }}>{type}</span>
+    <div className='test-case-annotation' onMouseEnter={onHover} onMouseLeave={onLeave}>
+      <span style={{ fontWeight: 'bold', display: 'inline-block', marginBlock: '3px' }}>{type}</span>
       {description && <span>: {renderAnnotationDescription(description)}</span>}
+      <span style={{ paddingLeft: '3px' }}>{hover && description && <CopyToClipboard value={description} />}</span>
     </div>
   );
 }
