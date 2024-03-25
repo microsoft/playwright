@@ -4,7 +4,7 @@
 
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`] method.
 
-:::caution Discouraged
+:::warning[Discouraged]
 The use of ElementHandle is discouraged, use [Locator] objects and web-first assertions instead.
 :::
 
