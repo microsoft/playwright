@@ -319,10 +319,10 @@ export const UIModeView: React.FC<{}> = ({
     if (!testServerConnection)
       return;
     const onShortcutEvent = (e: KeyboardEvent) => {
-      if (e.code === 'Backquote' && (e.ctrlKey || e.metaKey)) {
+      if (e.code === 'Backquote' && e.ctrlKey) {
         e.preventDefault();
         setIsShowingOutput(!isShowingOutput);
-      } else if ((e.shiftKey || e.metaKey) && e.code === 'F5') {
+      } else if (e.code === 'F5' && e.shiftKey) {
         e.preventDefault();
         testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
@@ -395,7 +395,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          <ToolbarButton icon='terminal' title={'Toggle output - ' + (navigator.platform === 'MacIntel' ? '⌘ + `' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
@@ -415,8 +415,8 @@ export const UIModeView: React.FC<{}> = ({
           {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
-          <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run all - F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title='Stop - F5 + Shift' onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
             setWatchedTreeIds({ value: new Set() });
             setWatchAll(!watchAll);
