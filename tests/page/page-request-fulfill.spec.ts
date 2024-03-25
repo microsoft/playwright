@@ -441,7 +441,9 @@ it('should fulfill json', async ({ page, server }) => {
 
 it('should fulfill with gzip and readback', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29261' },
-}, async ({ page, server }) => {
+}, async ({ page, server, isAndroid, isElectron }) => {
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   server.enableGzip('/one-style.html');
   await page.route('**/one-style.html', async route => {
     const response = await route.fetch();
