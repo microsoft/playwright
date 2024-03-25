@@ -65,7 +65,7 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
     - uses: actions/upload-artifact@v4
-      if: always()
+      if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
@@ -103,7 +103,7 @@ jobs:
     - name: Run your tests
       run: pytest --tracing=retain-on-failure
     - uses: actions/upload-artifact@v4
-      if: always()
+      if: ${{ !cancelled() }}
       with:
         name: playwright-traces
         path: test-results/
