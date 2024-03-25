@@ -78,7 +78,14 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   expect(result.output).not.toContain('%%');
 });
 
-test('should support console colors', async ({ runInlineTest }) => {
+test('should support console colors but not tty', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15366' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29839' },
+  ],
+}, async ({ runInlineTest, nodeVersion }) => {
+  test.skip(nodeVersion.major < 18, 'Node16 does not respect FORCE_COLOR in onsole');
+
   const result = await runInlineTest({
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
@@ -90,29 +97,11 @@ test('should support console colors', async ({ runInlineTest }) => {
       });
     `
   });
-  expect(result.output).toContain(`process.stdout.isTTY = true`);
-  expect(result.output).toContain(`process.stderr.isTTY = true`);
+  expect(result.output).toContain(`process.stdout.isTTY = undefined`);
+  expect(result.output).toContain(`process.stderr.isTTY = undefined`);
   // The output should have colors.
   expect(result.rawOutput).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
   expect(result.rawOutput).toContain(`{ b: \x1b[33mfalse\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
-});
-
-test('should override hasColors and getColorDepth', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('console log', () => {
-        console.log('process.stdout.hasColors(1) = ' + process.stdout.hasColors(1));
-        console.log('process.stderr.hasColors(1) = ' + process.stderr.hasColors(1));
-        console.log('process.stdout.getColorDepth() > 0 = ' + (process.stdout.getColorDepth() > 0));
-        console.log('process.stderr.getColorDepth() > 0 = ' + (process.stderr.getColorDepth() > 0));
-      });
-    `
-  });
-  expect(result.output).toContain(`process.stdout.hasColors(1) = true`);
-  expect(result.output).toContain(`process.stderr.hasColors(1) = true`);
-  expect(result.output).toContain(`process.stdout.getColorDepth() > 0 = true`);
-  expect(result.output).toContain(`process.stderr.getColorDepth() > 0 = true`);
 });
 
 test('should not throw type error when using assert', async ({ runInlineTest }) => {
@@ -127,31 +116,4 @@ test('should not throw type error when using assert', async ({ runInlineTest }) 
   });
   expect(result.output).not.toContain(`TypeError: process.stderr.hasColors is not a function`);
   expect(result.output).toContain(`AssertionError`);
-});
-
-test('should provide stubs for tty.WriteStream methods on process.stdout/stderr', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29839' });
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      import type * as tty from 'tty';
-      async function checkMethods(stream: tty.WriteStream) {
-        expect(stream.isTTY).toBe(true);
-        await new Promise<void>(r =>  stream.clearLine(-1, r));;
-        await new Promise<void>(r =>  stream.clearScreenDown(r));;
-        await new Promise<void>(r =>  stream.cursorTo(0, 0, r));;
-        await new Promise<void>(r =>  stream.cursorTo(0, r));;
-        await new Promise<void>(r =>  stream.moveCursor(1, 1, r));;
-        expect(stream.getWindowSize()).toEqual([stream.columns, stream.rows]);
-        // getColorDepth() and hasColors() are covered in other tests.
-      }
-      test('process.stdout implementd tty.WriteStream methods', () => {
-        checkMethods(process.stdout);
-      });
-      test('process.stderr implementd tty.WriteStream methods', () => {
-        checkMethods(process.stderr);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
 });

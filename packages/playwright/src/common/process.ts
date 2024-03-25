@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { WriteStream } from 'tty';
-import type { EnvProducedPayload, ProcessInitParams, TtyParams } from './ipc';
+import type { EnvProducedPayload, ProcessInitParams } from './ipc';
 import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from '../../types/test';
 import { serializeError } from '../util';
@@ -67,8 +66,6 @@ const startingEnv = { ...process.env };
 process.on('message', async (message: any) => {
   if (message.method === '__init__') {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
-    setTtyParams(process.stdout, processParams.stdoutParams);
-    setTtyParams(process.stderr, processParams.stderrParams);
     void startProfiling();
     const { create } = require(runnerScript);
     processRunner = create(runnerParams) as ProcessRunner;
@@ -116,41 +113,4 @@ function sendMessageToParent(message: { method: string, params?: any }) {
   } catch (e) {
     // Can throw when closing.
   }
-}
-
-function setTtyParams(stream: WriteStream, params: TtyParams) {
-  stream.isTTY = true;
-  if (params.rows)
-    stream.rows = params.rows;
-  if (params.columns)
-    stream.columns = params.columns;
-  stream.getColorDepth = () => params.colorDepth;
-  stream.hasColors = ((count = 16) => {
-    // count is optional and the first argument may actually be env.
-    if (typeof count !== 'number')
-      count = 16;
-    return count <= 2 ** params.colorDepth;
-  })as any;
-
-  // Stubs for the rest of the methods to avoid exceptions in user code.
-  stream.clearLine = (dir: any, callback?: () => void) => {
-    callback?.();
-    return true;
-  };
-  stream.clearScreenDown = (callback?: () => void) => {
-    callback?.();
-    return true;
-  };
-  (stream as any).cursorTo = (x: number, y?: number | (() => void), callback?: () => void) => {
-    if (callback)
-      callback();
-    else if (y instanceof Function)
-      y();
-    return true;
-  };
-  stream.moveCursor = (dx: number, dy: number, callback?: () => void) => {
-    callback?.();
-    return true;
-  };
-  stream.getWindowSize = () => [stream.columns, stream.rows];
 }

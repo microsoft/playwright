@@ -112,16 +112,6 @@ export class ProcessHost extends EventEmitter {
       return error;
 
     const processParams: ProcessInitParams = {
-      stdoutParams: {
-        rows: process.stdout.rows,
-        columns: process.stdout.columns,
-        colorDepth: process.stdout.getColorDepth?.() || 8
-      },
-      stderrParams: {
-        rows: process.stderr.rows,
-        columns: process.stderr.columns,
-        colorDepth: process.stderr.getColorDepth?.() || 8
-      },
       processName: this._processName
     };
 
