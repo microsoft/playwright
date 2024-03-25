@@ -30,7 +30,7 @@ import { testStatusIcon } from './testUtils';
 import type { TestModel } from './uiModeModel';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
-import Tag, { tagNametoColor } from './tag';
+import { TagView } from './tag';
 
 const TestTreeView = TreeView<TreeItem>;
 
@@ -134,6 +134,20 @@ export const TestListView: React.FC<{
     runTests('bounce-if-busy', testTree.collectTestIds(treeItem));
   };
 
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.metaKey) {
+      const parts = filterText.split(' ');
+      if (parts.includes(tag))
+        setFilterText(parts.filter(t => t !== tag).join(' '));
+      else
+        setFilterText((filterText + ' ' + tag).trim());
+    } else {
+      setFilterText(tag);
+    }
+  };
+
   return <TestTreeView
     name='tests'
     treeState={treeState}
@@ -144,7 +158,7 @@ export const TestListView: React.FC<{
       return <div className='hbox ui-mode-list-item'>
         <div className='ui-mode-list-item-title' title={treeItem.title}>
           {treeItem.title}
-          {treeItem.kind === 'case' ? treeItem.tags.map(tag => <Tag key={tag} color={tagNametoColor(tag)} onClick={e => {e.preventDefault(); setFilterText(tag);}}>{tag.slice(1)}</Tag>) : null}
+          {treeItem.kind === 'case' ? treeItem.tags.map(tag => <TagView key={tag} tag={tag.slice(1)} onClick={e => handleTagClick(e, tag)} />) : null}
         </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>

@@ -14,21 +14,8 @@
  * limitations under the License.
  */
 
-import './tag.css';
-
-export const TagView: React.FC<{ tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }> = ({ tag, style, onClick }) => {
-  return <span
-    className={`tag tag-color-${tagNameToColor(tag)}`}
-    onClick={onClick}
-    style={{ margin: '6px 0 0 6px', ...style }}
-    title={`Click to filter by tag: ${tag}`}
-  >
-    {tag}
-  </span>;
-};
-
 // hash string to integer in range [0, 6] for color index, to get same color for same tag
-function tagNameToColor(str: string) {
+export function hashStringToInt(str: string) {
   let hash = 0;
   for (let i = 0; i < str.length; i++)
     hash = str.charCodeAt(i) + ((hash << 8) - hash);

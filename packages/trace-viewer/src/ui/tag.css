@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.label {
+.tag {
   display: inline-block;
   padding: 0 8px;
   font-size: 12px;
@@ -29,63 +29,63 @@
   font-weight: 600;
 }
 
-.light-mode .label-color-0 {
+.light-mode .tag-color-0 {
   background-color: #ddf4ff;
   color: #0550ae;
   border: 1px solid #218bff;
 }
-.light-mode .label-color-1 {
+.light-mode .tag-color-1 {
   background-color: #fff8c5;
   color: #7d4e00;
   border: 1px solid #bf8700;
 }
-.light-mode .label-color-2 {
+.light-mode .tag-color-2 {
   background-color: #fbefff;
   color: #6e40c9;
   border: 1px solid #a475f9;
 }
-.light-mode .label-color-3 {
+.light-mode .tag-color-3 {
   background-color: #ffeff7;
   color: #99286e;
   border: 1px solid #e85aad;
 }
-.light-mode .label-color-4 {
+.light-mode .tag-color-4 {
   background-color: #FFF0EB;
   color: #9E2F1C;
   border: 1px solid #EA6045;
 }
-.light-mode .label-color-5 {
+.light-mode .tag-color-5 {
   background-color: #fff1e5;
   color: #9b4215;
   border: 1px solid #e16f24;
 }
 
-.dark-mode .label-color-0 {
+.dark-mode .tag-color-0 {
   background-color: #051d4d;
   color: #80ccff;
   border: 1px solid #218bff;
 }
-.dark-mode .label-color-1 {
+.dark-mode .tag-color-1 {
   background-color: #3b2300;
   color: #eac54f;
   border: 1px solid #bf8700;
 }
-.dark-mode .label-color-2 {
+.dark-mode .tag-color-2 {
   background-color: #271052;
   color: #d2a8ff;
   border: 1px solid #a475f9;
 }
-.dark-mode .label-color-3 {
+.dark-mode .tag-color-3 {
   background-color: #42062a;
   color: #ff9bce;
   border: 1px solid #e85aad;
 }
-.dark-mode .label-color-4 {
+.dark-mode .tag-color-4 {
   background-color: #460701;
   color: #FFA28B;
   border: 1px solid #EC6547;
 }
-.dark-mode .label-color-5 {
+.dark-mode .tag-color-5 {
   background-color: #471700;
   color: #ffa657;
   border: 1px solid #e16f24;
