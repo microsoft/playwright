@@ -395,7 +395,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='terminal' title={'Toggle output - ' + (navigator.platform === 'MacIntel' ? '⌘ + `' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          <ToolbarButton icon='terminal' title={'Toggle output — ' + (navigator.platform === 'MacIntel' ? '⌃ `' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
