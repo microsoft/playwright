@@ -11239,6 +11239,27 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Returns a {@link FrameLocator} object pointing to the same `iframe` as this locator.
+   *
+   * Useful when you have a {@link Locator} object obtained somewhere, and later on would like to interact with the
+   * content inside the frame.
+   *
+   * For a reverse operation, use
+   * [frameLocator.owner()](https://playwright.dev/docs/api/class-framelocator#frame-locator-owner).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('iframe[name="embedded"]');
+   * // ...
+   * const frameLocator = locator.contentFrame();
+   * await frameLocator.getByRole('button').click();
+   * ```
+   *
+   */
+  contentFrame(): FrameLocator;
+
+  /**
    * Returns the number of elements matching the locator.
    *
    * **NOTE** If you need to assert the number of elements on the page, prefer
@@ -11461,24 +11482,6 @@ export interface Locator {
    * Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.
    */
   elementHandles(): Promise<Array<ElementHandle>>;
-
-  /**
-   * Returns a {@link FrameLocator} object pointing to the same `iframe` as this locator.
-   *
-   * Useful when you have a {@link Locator} object obtained somewhere, and later on would like to interact with the
-   * content inside the frame.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.locator('iframe[name="embedded"]');
-   * // ...
-   * const frameLocator = locator.enterFrame();
-   * await frameLocator.getByRole('button').click();
-   * ```
-   *
-   */
-  enterFrame(): FrameLocator;
 
   /**
    * Set a value to the input field.
@@ -13170,9 +13173,10 @@ export interface BrowserType<Unused = {}> {
     deviceScaleFactor?: number;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-     * `headless` option will be set `false`.
-     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
+     * **Deprecated, Chromium-only.** Use [debugging tools](https://playwright.dev/docs/debug) instead.
+     *
+     * Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be
+     * set `false`.
      */
     devtools?: boolean;
 
@@ -13575,9 +13579,10 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-     * `headless` option will be set `false`.
-     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
+     * **Deprecated, Chromium-only.** Use [debugging tools](https://playwright.dev/docs/debug) instead.
+     *
+     * Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be
+     * set `false`.
      */
     devtools?: boolean;
 
@@ -17783,32 +17788,14 @@ export interface FileChooser {
  * **Converting Locator to FrameLocator**
  *
  * If you have a {@link Locator} object pointing to an `iframe` it can be converted to {@link FrameLocator} using
- * [locator.enterFrame()](https://playwright.dev/docs/api/class-locator#locator-enter-frame).
+ * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame).
  *
  * **Converting FrameLocator to Locator**
  *
  * If you have a {@link FrameLocator} object it can be converted to {@link Locator} pointing to the same `iframe`
- * using [frameLocator.exitFrame()](https://playwright.dev/docs/api/class-framelocator#frame-locator-exit-frame).
+ * using [frameLocator.owner()](https://playwright.dev/docs/api/class-framelocator#frame-locator-owner).
  */
 export interface FrameLocator {
-  /**
-   * Returns a {@link Locator} object pointing to the same `iframe` as this frame locator.
-   *
-   * Useful when you have a {@link FrameLocator} object obtained somewhere, and later on would like to interact with the
-   * `iframe` element.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
-   * // ...
-   * const locator = frameLocator.exitFrame();
-   * await expect(locator).toBeVisible();
-   * ```
-   *
-   */
-  exitFrame(): Locator;
-
   /**
    * Returns locator to the first matching frame.
    */
@@ -18190,6 +18177,27 @@ export interface FrameLocator {
    * @param index
    */
   nth(index: number): FrameLocator;
+
+  /**
+   * Returns a {@link Locator} object pointing to the same `iframe` as this frame locator.
+   *
+   * Useful when you have a {@link FrameLocator} object obtained somewhere, and later on would like to interact with the
+   * `iframe` element.
+   *
+   * For a reverse operation, use
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
+   * // ...
+   * const locator = frameLocator.owner();
+   * await expect(locator).toBeVisible();
+   * ```
+   *
+   */
+  owner(): Locator;
 }
 
 /**
@@ -20270,9 +20278,10 @@ export interface LaunchOptions {
   chromiumSandbox?: boolean;
 
   /**
-   * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-   * `headless` option will be set `false`.
-   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
+   * **Deprecated, Chromium-only.** Use [debugging tools](https://playwright.dev/docs/debug) instead.
+   *
+   * Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be
+   * set `false`.
    */
   devtools?: boolean;
 

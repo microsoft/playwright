@@ -5590,10 +5590,11 @@ export interface PlaywrightWorkerOptions {
    * Whether to record trace for each test. Defaults to `'off'`.
    * - `'off'`: Do not record trace.
    * - `'on'`: Record trace for each test.
-   * - `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
    * - `'on-first-retry'`: Record trace only when retrying a test for the first time.
-   * - `'on-all-retries'`: Record traces only when retrying for all retries.
-   * - `'retain-on-first-failure'`: Record traces only when the test fails for the first time.
+   * - `'on-all-retries'`: Record trace only when retrying a test.
+   * - `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
+   * - `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retires. When test run
+   *   passes, remove the recorded trace.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
    *

@@ -299,22 +299,22 @@ it('should work with COEP/COOP/CORP isolated iframe', async ({ page, server, bro
   expect(await page.frames()[1].evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('locator.enterFrame should work', async ({ page, server }) => {
+it('locator.contentFrame should work', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const locator = page.locator('iframe');
-  const frameLocator = locator.enterFrame();
+  const frameLocator = locator.contentFrame();
   const button = frameLocator.locator('button');
   expect(await button.innerText()).toBe('Hello iframe');
   await expect(button).toHaveText('Hello iframe');
   await button.click();
 });
 
-it('frameLocator.exitFrame should work', async ({ page, server }) => {
+it('frameLocator.owner should work', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const frameLocator = page.frameLocator('iframe');
-  const locator = frameLocator.exitFrame();
+  const locator = frameLocator.owner();
   await expect(locator).toBeVisible();
   expect(await locator.getAttribute('name')).toBe('frame1');
 });

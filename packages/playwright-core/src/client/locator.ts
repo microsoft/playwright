@@ -192,7 +192,7 @@ export class Locator implements api.Locator {
     return await this._frame.$$(this._selector);
   }
 
-  enterFrame() {
+  contentFrame() {
     return new FrameLocator(this._frame, this._selector);
   }
 
@@ -408,7 +408,7 @@ export class FrameLocator implements api.FrameLocator {
     return this.locator(getByRoleSelector(role, options));
   }
 
-  exitFrame() {
+  owner() {
     return new Locator(this._frame, this._frameSelector);
   }
 
