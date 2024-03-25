@@ -28,7 +28,7 @@ import { TaskRunner } from './taskRunner';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
-import type { Suite } from '../common/test';
+import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 
@@ -116,6 +116,13 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Re
   return taskRunner;
 }
 
+export function createTaskRunnerForListFiles(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
+  taskRunner.addTask('load tests', createListFilesTask());
+  taskRunner.addTask('report begin', createReportBeginTask());
+  return taskRunner;
+}
+
 function createReportBeginTask(): Task<TestRun> {
   return {
     setup: async ({ reporter, rootSuite }) => {
@@ -191,6 +198,29 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
           throw error;
         }
       })));
+    },
+  };
+}
+
+function createListFilesTask(): Task<TestRun> {
+  return {
+    setup: async (testRun, errors) => {
+      testRun.rootSuite = await createRootSuite(testRun, errors, false);
+      testRun.failureTracker.onRootSuite(testRun.rootSuite);
+      await collectProjectsAndTestFiles(testRun, false);
+      for (const [project, files] of testRun.projectFiles) {
+        const projectSuite = new Suite(project.project.name, 'project');
+        projectSuite._fullProject = project;
+        testRun.rootSuite._addSuite(projectSuite);
+        const suites = files.map(file => {
+          const title = path.relative(testRun.config.config.rootDir, file);
+          const suite =  new Suite(title, 'file');
+          suite.location = { file, line: 0, column: 0 };
+          projectSuite._addSuite(suite);
+          return suite;
+        });
+        testRun.projectSuites.set(project, suites);
+      }
     },
   };
 }
