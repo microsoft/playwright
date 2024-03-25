@@ -15,12 +15,12 @@
 */
 
 import type { TestCaseSummary } from './types';
-
 export class Filter {
   project: string[] = [];
   status: string[] = [];
   text: string[] = [];
   labels: string[] = [];
+  annotations: string[] = [];
 
   empty(): boolean {
     return this.project.length + this.status.length + this.text.length === 0;
@@ -32,6 +32,7 @@ export class Filter {
     const status = new Set<string>();
     const text: string[] = [];
     const labels = new Set<string>();
+    const annotations = new Set<string>();
     for (const token of tokens) {
       if (token.startsWith('p:')) {
         project.add(token.slice(2));
@@ -45,6 +46,10 @@ export class Filter {
         labels.add(token);
         continue;
       }
+      if (token.startsWith('a:')) {
+        annotations.add(token.slice(2));
+        continue;
+      }
       text.push(token.toLowerCase());
     }
 
@@ -53,6 +58,7 @@ export class Filter {
     filter.project = [...project];
     filter.status = [...status];
     filter.labels = [...labels];
+    filter.annotations = [...annotations];
     return filter;
   }
 
@@ -114,6 +120,7 @@ export class Filter {
         line: String(test.location.line),
         column: String(test.location.column),
         labels: test.tags.map(tag => tag.toLowerCase()),
+        annotations: test.annotations.map(a => a.type.toLowerCase() + ':' + a.description?.toLocaleLowerCase())
       };
       (test as any).searchValues = searchValues;
     }
@@ -144,7 +151,14 @@ export class Filter {
       if (!matches)
         return false;
     }
-
+    if (this.annotations.length) {
+      const matches = this.annotations.every(annotation =>
+        searchValues.annotations.some(_annotation => (
+          _annotation.includes(annotation)
+        )));
+      if (!matches)
+        return false;
+    }
     return true;
   }
 }
@@ -157,5 +171,6 @@ type SearchValues = {
   line: string;
   column: string;
   labels: string[];
+  annotations: string[];
 };
 
