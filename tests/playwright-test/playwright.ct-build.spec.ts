@@ -16,6 +16,7 @@
 
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import fs from 'fs';
+import path from 'path';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -183,11 +184,11 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
   }, {
     id: expect.stringContaining('_one'),
     importSource: expect.stringContaining('.'),
-    filename: expect.stringContaining('one/one.spec.tsx'),
+    filename: expect.stringContaining(`one${path.sep}one.spec.tsx`),
   }, {
     id: expect.stringContaining('_two'),
     importSource: expect.stringContaining('.'),
-    filename: expect.stringContaining('two/two.spec.tsx'),
+    filename: expect.stringContaining(`two${path.sep}two.spec.tsx`),
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))
@@ -214,13 +215,13 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
       expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('button.tsx'),
     ]],
-    [expect.stringContaining('one/index.tsx'), [
+    [expect.stringContaining(`one${path.sep}index.tsx`), [
       expect.stringContaining('jsx-runtime.js'),
-      expect.stringContaining('one/index.tsx'),
+      expect.stringContaining(`one${path.sep}index.tsx`),
     ]],
-    [expect.stringContaining('two/index.tsx'), [
+    [expect.stringContaining(`two${path.sep}index.tsx`), [
       expect.stringContaining('jsx-runtime.js'),
-      expect.stringContaining('two/index.tsx'),
+      expect.stringContaining(`two${path.sep}index.tsx`),
     ]],
   ]);
 });
