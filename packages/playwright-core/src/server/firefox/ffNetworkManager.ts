@@ -50,7 +50,10 @@ export class FFNetworkManager {
   }
 
   async setRequestInterception(enabled: boolean) {
-    await this._session.send('Network.setRequestInterception', { enabled });
+    await Promise.all([
+      this._session.send('Network.setRequestInterception', { enabled }),
+      this._session.send('Page.setCacheDisabled', { cacheDisabled: enabled }),
+    ]);
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
