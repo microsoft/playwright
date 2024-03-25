@@ -992,7 +992,7 @@ it('should support repeating names in multipart/form-data', async function({ con
         'content-type': 'text/plain',
       });
       res.end('OK.');
-      });
+    });
   });
   const [postBody, response] = await Promise.all([
     postBodyPromise,

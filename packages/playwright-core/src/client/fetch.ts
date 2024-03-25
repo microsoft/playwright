@@ -189,9 +189,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         // Convert file-like values to ServerFilePayload structs.
         for (const [name, value] of Object.entries(options.multipart)) {
           if (Array.isArray(value)) {
-            for (const item of value) {
+            for (const item of value)
               multipartData.push(await toFormField(name, item));
-            }
           } else {
             multipartData.push(await toFormField(name, value));
           }
