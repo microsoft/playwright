@@ -319,19 +319,22 @@ export const UIModeView: React.FC<{}> = ({
     if (!testServerConnection)
       return;
     const onShortcutEvent = (e: KeyboardEvent) => {
-      if (e.code === 'F6') {
+      if (e.code === 'Backquote' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setIsShowingOutput(!isShowingOutput);
+      } else if ((e.shiftKey || e.metaKey) && e.code === 'F5') {
         e.preventDefault();
         testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
-        reloadTests();
+        runTests('bounce-if-busy', visibleTestIds);
       }
     };
     addEventListener('keydown', onShortcutEvent);
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests, testServerConnection]);
+  }, [runTests, reloadTests, testServerConnection, visibleTestIds, isShowingOutput]);
 
   const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
