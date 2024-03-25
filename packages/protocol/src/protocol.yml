@@ -1031,15 +1031,16 @@ BrowserContext:
         source: string
 
     clearCookies:
-
-    removeCookies:
       parameters:
-        filter:
-          type: object
-          properties:
-            name: string?
-            domain: string?
-            path: string?
+        name: string?
+        nameRegexSource: string?
+        nameRegexFlags: string?
+        domain: string?
+        domainRegexSource: string?
+        domainRegexFlags: string?
+        path: string?
+        pathRegexSource: string?
+        pathRegexFlags: string?
 
     clearPermissions:
 

@@ -1426,8 +1426,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   _type_BrowserContext: boolean;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: CallMetadata): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: CallMetadata): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params?: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
-  removeCookies(params: BrowserContextRemoveCookiesParams, metadata?: CallMetadata): Promise<BrowserContextRemoveCookiesResult>;
+  clearCookies(params: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
   clearPermissions(params?: BrowserContextClearPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextClearPermissionsResult>;
   close(params: BrowserContextCloseParams, metadata?: CallMetadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: CallMetadata): Promise<BrowserContextCookiesResult>;
@@ -1521,20 +1520,29 @@ export type BrowserContextAddInitScriptOptions = {
 
 };
 export type BrowserContextAddInitScriptResult = void;
-export type BrowserContextClearCookiesParams = {};
-export type BrowserContextClearCookiesOptions = {};
+export type BrowserContextClearCookiesParams = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
+export type BrowserContextClearCookiesOptions = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
 export type BrowserContextClearCookiesResult = void;
-export type BrowserContextRemoveCookiesParams = {
-  filter: {
-    name?: string,
-    domain?: string,
-    path?: string,
-  },
-};
-export type BrowserContextRemoveCookiesOptions = {
-
-};
-export type BrowserContextRemoveCookiesResult = void;
 export type BrowserContextClearPermissionsParams = {};
 export type BrowserContextClearPermissionsOptions = {};
 export type BrowserContextClearPermissionsResult = void;

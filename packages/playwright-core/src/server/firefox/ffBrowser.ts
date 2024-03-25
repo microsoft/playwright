@@ -295,7 +295,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: cc });
   }
 
-  async clearCookies() {
+  async doClearCookies() {
     await this._browser.session.send('Browser.clearCookies', { browserContextId: this._browserContextId });
   }
 
