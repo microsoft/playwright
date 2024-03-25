@@ -216,7 +216,7 @@ When you **disable parallel test execution**, Playwright Test runs test files in
 
 ### Use a "test list" file
 
-:::danger[Warning]
+:::warning
 Tests lists are discouraged and supported as a best-effort only. Some features such as VS Code Extension and tracing may not work properly with test lists.
 :::
 
