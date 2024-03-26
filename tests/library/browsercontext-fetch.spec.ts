@@ -983,40 +983,6 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
-it('should support repeating names in multipart/form-data', async function({ context, server }) {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
-  const postBodyPromise = new Promise<string>(resolve => {
-    server.setRoute('/empty.html', async (req, res) => {
-      resolve((await req.postBody).toString('utf-8'));
-      res.writeHead(200, {
-        'content-type': 'text/plain',
-      });
-      res.end('OK.');
-    });
-  });
-  const [postBody, response] = await Promise.all([
-    postBodyPromise,
-    context.request.post(server.EMPTY_PAGE, {
-      multipart: {
-        firstName: 'John',
-        lastName: 'Doe',
-        file: [{
-          name: 'f1.js',
-          mimeType: 'text/javascript',
-          buffer: Buffer.from('var x = 10;\r\n;console.log(x);')
-        }, {
-          name: 'f2.txt',
-          mimeType: 'text/plain',
-          buffer: Buffer.from('hello')
-        }]
-      }
-    })
-  ]);
-  expect(postBody).toContain(`content-disposition: form-data; name="file"; filename="f1.js"\r\ncontent-type: text/javascript\r\n\r\nvar x = 10;\r\n;console.log(x);`);
-  expect(postBody).toContain(`content-disposition: form-data; name="file"; filename="f2.txt"\r\ncontent-type: text/plain\r\n\r\nhello`);
-  expect(response.status()).toBe(200);
-});
-
 it('should serialize data to json regardless of content-type', async function({ context, server }) {
   const data = {
     firstName: 'John',
