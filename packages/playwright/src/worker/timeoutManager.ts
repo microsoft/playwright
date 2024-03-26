@@ -137,14 +137,10 @@ export class TimeoutManager {
     switch (runnable.type) {
       case 'test': {
         if (runnable.fixture) {
-          if (runnable.fixture.phase === 'setup') {
+          if (runnable.fixture.phase === 'setup')
             message = `Test timeout of ${timeout}ms exceeded while setting up "${runnable.fixture.title}".`;
-          } else {
-            message = [
-              `Test finished within timeout of ${timeout}ms, but tearing down "${runnable.fixture.title}" ran out of time.`,
-              `Please allow more time for the test, since teardown is attributed towards the test timeout budget.`,
-            ].join('\n');
-          }
+          else
+            message = `Tearing down "${runnable.fixture.title}" exceeded the test timeout of ${timeout}ms.`;
         } else {
           message = `Test timeout of ${timeout}ms exceeded.`;
         }
