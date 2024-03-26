@@ -22,7 +22,7 @@ import type { Annotation, FixturesWithLocation, FullProjectInternal } from './co
 import type { FullProject } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
-class Base {
+abstract class Base {
   title: string;
   _only = false;
   _requireFile: string = '';
@@ -39,7 +39,7 @@ export type Modifier = {
   description: string | undefined
 };
 
-export class Suite extends Base {
+export class Suite extends Base implements reporterTypes.Suite {
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
@@ -62,6 +62,14 @@ export class Suite extends Base {
     super(title);
     this._type = type;
     this._testTypeImpl = testTypeImpl;
+  }
+
+  get type(): 'root' | 'project' | 'file' | 'describe' {
+    return this._type;
+  }
+
+  entries(): (reporterTypes.Suite | reporterTypes.TestCase)[] {
+    return this._entries;
   }
 
   get suites(): Suite[] {
@@ -240,6 +248,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   results: reporterTypes.TestResult[] = [];
   location: Location;
   parent!: Suite;
+  type: 'test' = 'test';
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;

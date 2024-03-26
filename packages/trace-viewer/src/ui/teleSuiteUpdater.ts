@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
+import { TeleReporterReceiver, TeleRootSuite } from '@testIsomorphic/teleReceiver';
 import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
@@ -137,7 +137,7 @@ export class TeleSuiteUpdater {
 
   asModel(): TestModel {
     return {
-      rootSuite: this.rootSuite || new TeleSuite('', 'root'),
+      rootSuite: this.rootSuite || new TeleRootSuite(),
       config: this.config!,
       loadErrors: this.loadErrors,
       progress: this.progress,

@@ -17,7 +17,7 @@
 import '@web/third_party/vscode/codicon.css';
 import '@web/common.css';
 import React from 'react';
-import { TeleSuite } from '@testIsomorphic/teleReceiver';
+import { TeleRootSuite } from '@testIsomorphic/teleReceiver';
 import { TeleSuiteUpdater } from './teleSuiteUpdater';
 import type { Progress } from './uiModeModel';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
@@ -226,7 +226,7 @@ export const UIModeView: React.FC<{}> = ({
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
-      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, pathSeparator) };
+      return { testTree: new TestTree('', new TeleRootSuite(), [], projectFilters, pathSeparator) };
     const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
     testTree.filterTree(filterText, statusFilters, runningState?.testIds);
     testTree.sortAndPropagateStatus();

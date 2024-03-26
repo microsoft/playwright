@@ -57,8 +57,9 @@ export type JsonProject = {
 export type JsonSuite = {
   title: string;
   location?: JsonLocation;
-  suites: JsonSuite[];
-  tests: JsonTestCase[];
+  entries: (JsonSuite | JsonTestCase)[];
+  suites?: JsonSuite[]; // used before v1.44
+  tests?: JsonTestCase[]; // used before v1.44
 };
 
 export type JsonTestCase = {
@@ -130,7 +131,7 @@ type TeleReporterReceiverOptions = {
 };
 
 export class TeleReporterReceiver {
-  private _rootSuite: TeleSuite;
+  private _rootSuite: TeleRootSuite;
   private _options: TeleReporterReceiverOptions;
   private _reporter: Partial<ReporterV2>;
   private _tests = new Map<string, TeleTestCase>();
@@ -138,14 +139,13 @@ export class TeleReporterReceiver {
   private _config!: reporterTypes.FullConfig;
 
   constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
-    this._rootSuite = new TeleSuite('', 'root');
+    this._rootSuite = new TeleRootSuite();
     this._options = options;
     this._reporter = reporter;
   }
 
   reset() {
-    this._rootSuite.suites = [];
-    this._rootSuite.tests = [];
+    this._rootSuite.reset();
     this._tests.clear();
   }
 
@@ -202,13 +202,13 @@ export class TeleReporterReceiver {
   private _onProject(project: JsonProject) {
     let projectSuite = this._options.mergeProjects ? this._rootSuite.suites.find(suite => suite.project()!.name === project.name) : undefined;
     if (!projectSuite) {
-      projectSuite = new TeleSuite(project.name, 'project');
-      this._rootSuite.suites.push(projectSuite);
-      projectSuite.parent = this._rootSuite;
+      projectSuite = new TeleProjectSuite(project.name);
+      this._rootSuite._addSuite(projectSuite);
     }
     // Always update project in watch mode.
-    projectSuite._project = this._parseProject(project);
-    this._mergeSuitesInto(project.suites, projectSuite);
+    (projectSuite as TeleProjectSuite)._project = this._parseProject(project);
+    for (const suite of project.suites)
+      this._mergeSuiteInto(suite, projectSuite);
   }
 
   private _onBegin() {
@@ -336,31 +336,37 @@ export class TeleReporterReceiver {
     });
   }
 
-  private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite) {
-    for (const jsonSuite of jsonSuites) {
-      let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
-      if (!targetSuite) {
-        targetSuite = new TeleSuite(jsonSuite.title, parent._type === 'project' ? 'file' : 'describe');
-        targetSuite.parent = parent;
-        parent.suites.push(targetSuite);
-      }
-      targetSuite.location = this._absoluteLocation(jsonSuite.location);
-      this._mergeSuitesInto(jsonSuite.suites, targetSuite);
-      this._mergeTestsInto(jsonSuite.tests, targetSuite);
+  private _mergeSuiteInto(jsonSuite: JsonSuite, parent: TeleSuite): void {
+    let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
+    if (!targetSuite) {
+      targetSuite = parent.type === 'project' ? new TeleFileSuite(jsonSuite.title) : new TeleDescribeSuite(jsonSuite.title);
+      parent._addSuite(targetSuite);
+    }
+    targetSuite.location = this._absoluteLocation(jsonSuite.location);
+    if (jsonSuite.entries) {
+      jsonSuite.entries.forEach(e => {
+        if ('testId' in e)
+          this._mergeTestInto(e, targetSuite!);
+        else
+          this._mergeSuiteInto(e, targetSuite!);
+      });
+    } else {
+      // before 1.44
+      for (const jsonChildSuite of jsonSuite.suites!)
+        this._mergeSuiteInto(jsonChildSuite, targetSuite);
+      for (const jsonTest of jsonSuite.tests!)
+        this._mergeTestInto(jsonTest, targetSuite);
     }
   }
 
-  private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
-    for (const jsonTest of jsonTests) {
-      let targetTest = this._options.mergeTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
-      if (!targetTest) {
-        targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location), jsonTest.repeatEachIndex);
-        targetTest.parent = parent;
-        parent.tests.push(targetTest);
-        this._tests.set(targetTest.id, targetTest);
-      }
-      this._updateTest(jsonTest, targetTest);
+  private _mergeTestInto(jsonTest: JsonTestCase, parent: TeleSuite) {
+    let targetTest = this._options.mergeTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
+    if (!targetTest) {
+      targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location), jsonTest.repeatEachIndex);
+      parent._addTest(targetTest);
+      this._tests.set(targetTest.id, targetTest);
     }
+    this._updateTest(jsonTest, targetTest);
   }
 
   private _updateTest(payload: JsonTestCase, test: TeleTestCase): TeleTestCase {
@@ -391,32 +397,44 @@ export class TeleReporterReceiver {
   }
 }
 
-export class TeleSuite implements reporterTypes.Suite {
+export abstract class TeleSuite implements reporterTypes.Suite {
   title: string;
-  location?: reporterTypes.Location;
-  parent?: TeleSuite;
+  abstract location?: reporterTypes.Location;
+  abstract parent?: reporterTypes.Suite;
   _requireFile: string = '';
-  suites: TeleSuite[] = [];
-  tests: TeleTestCase[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
-  _project: TeleFullProject | undefined;
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   readonly _type: 'root' | 'project' | 'file' | 'describe';
+  _entries: (TeleSuite | TeleTestCase)[] = [];
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
     this.title = title;
     this._type = type;
   }
 
-  allTests(): TeleTestCase[] {
-    const result: TeleTestCase[] = [];
-    const visit = (suite: TeleSuite) => {
+  abstract type: 'root' | 'project' | 'file' | 'describe';
+
+  get suites(): TeleSuite[] {
+    return this._entries.filter(e => e.type !== 'test') as TeleSuite[];
+  }
+
+  get tests(): TeleTestCase[] {
+    return this._entries.filter(e => e.type === 'test') as TeleTestCase[];
+  }
+
+  entries(): (reporterTypes.Suite | reporterTypes.TestCase)[] {
+    return this._entries;
+  }
+
+  allTests(): reporterTypes.TestCase[] {
+    const result: reporterTypes.TestCase[] = [];
+    const visit = (suite: reporterTypes.Suite) => {
       for (const entry of [...suite.suites, ...suite.tests]) {
-        if (entry instanceof TeleSuite)
-          visit(entry);
-        else
+        if (entry.type === 'test')
           result.push(entry);
+        else
+          visit(entry);
       }
     };
     visit(this);
@@ -431,8 +449,72 @@ export class TeleSuite implements reporterTypes.Suite {
     return titlePath;
   }
 
-  project(): TeleFullProject | undefined {
-    return this._project ?? this.parent?.project();
+  abstract project(): TeleFullProject | undefined;
+
+  _addTest(test: TeleTestCase) {
+    test.parent = this;
+    this._entries.push(test);
+    this.tests.push(test);
+  }
+
+  _addSuite(suite: TeleSuite) {
+    suite.parent = this;
+    this._entries.push(suite);
+    this.suites.push(suite);
+  }
+}
+
+export class TeleDescribeSuite extends TeleSuite implements reporterTypes.DescribeSuite {
+  type: 'describe' = 'describe';
+  override location!: reporterTypes.Location;
+  override parent!: TeleDescribeSuite | TeleFileSuite;
+  constructor(title: string) {
+    super(title, 'project');
+  }
+  override project(): TeleFullProject {
+    return this.parent.project()!;
+  }
+}
+
+export class TeleFileSuite extends TeleSuite implements reporterTypes.FileSuite {
+  type: 'file' = 'file';
+  override location!: reporterTypes.Location;
+  override parent!: TeleProjectSuite;
+  constructor(title: string) {
+    super(title, 'project');
+  }
+  override project(): TeleFullProject {
+    return this.parent.project();
+  }
+}
+
+export class TeleProjectSuite extends TeleSuite implements reporterTypes.ProjectSuite {
+  type: 'project' = 'project';
+  _project!: TeleFullProject;
+  override location = undefined;
+  override parent!: TeleRootSuite;
+  constructor(title: string) {
+    super(title, 'project');
+  }
+  override project(): TeleFullProject {
+    return this._project!;
+  }
+}
+
+export class TeleRootSuite extends TeleSuite implements reporterTypes.RootSuite {
+  type: 'root' = 'root';
+  override location = undefined;
+  override parent = undefined;
+  // override suites: TeleProjectSuite[] = [];
+  constructor() {
+    super('', 'root');
+  }
+  override project(): undefined {
+    return undefined;
+  }
+
+  reset() {
+    this._entries = [];
   }
 }
 
@@ -442,6 +524,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   results: TeleTestResult[] = [];
   location: reporterTypes.Location;
   parent!: TeleSuite;
+  type: 'test' = 'test';
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
