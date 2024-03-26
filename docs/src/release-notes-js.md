@@ -29,7 +29,7 @@ await page.getByRole('link', { name: 'Collection of blue and white' }).click();
 await expect(page.getByRole('heading', { name: 'Light and easy' })).toBeVisible();
 ```
 
-- `expect(callback).toPass()` timeout and intervals can now be configured by `expect.toPass.timeout` and `expect.toPass.intervals` options [globally](./api/class-testconfig#test-config-expect) or in [project config](./api/class-testproject#test-project-expect)
+- `expect(callback).toPass()` timeout can now be configured by `expect.toPass.timeout` option [globally](./api/class-testconfig#test-config-expect) or in [project config](./api/class-testproject#test-project-expect)
 
 - [`event: ElectronApplication.console`] event is emitted when Electron main process calls console API methods.
 ```js
