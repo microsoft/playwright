@@ -24,6 +24,7 @@ export type HostPlatform = 'win64' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
                            'mac13' | 'mac13-arm64' |
+                           'mac14' | 'mac14-arm64' |
                            'ubuntu18.04-x64' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04-x64' | 'ubuntu20.04-arm64' |
                            'ubuntu22.04-x64' | 'ubuntu22.04-arm64' |
@@ -45,7 +46,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       macVersion = 'mac10.15';
     } else {
       // ver[0] >= 20
-      const LAST_STABLE_MAC_MAJOR_VERSION = 13;
+      const LAST_STABLE_MAC_MAJOR_VERSION = 14;
       // Best-effort support for MacOS beta versions.
       macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
       // BigSur is the first version that might run on Apple Silicon.

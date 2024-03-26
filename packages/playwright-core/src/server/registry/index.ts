@@ -96,6 +96,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'mac13': 'builds/chromium/%s/chromium-mac.zip',
     'mac13-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
+    'mac14': 'builds/chromium/%s/chromium-mac.zip',
+    'mac14-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-tip-of-tree': {
@@ -119,6 +121,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'mac13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
     'mac13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
+    'mac14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
+    'mac14-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'win64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-win64.zip',
   },
   'firefox': {
@@ -142,6 +146,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
     'mac13': 'builds/firefox/%s/firefox-mac-13.zip',
     'mac13-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
+    'mac14': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac14-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -165,6 +171,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'mac13': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
     'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
+    'mac14': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac14-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'firefox-asan': {
@@ -188,6 +196,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': undefined,
     'mac13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
     'mac13-arm64': undefined,
+    'mac14': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac14-arm64': undefined,
     'win64': undefined,
   },
   'webkit': {
@@ -211,6 +221,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/webkit/%s/webkit-mac-12-arm64.zip',
     'mac13': 'builds/webkit/%s/webkit-mac-13.zip',
     'mac13-arm64': 'builds/webkit/%s/webkit-mac-13-arm64.zip',
+    'mac14': 'builds/webkit/%s/webkit-mac-14.zip',
+    'mac14-arm64': 'builds/webkit/%s/webkit-mac-14-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -234,6 +246,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'mac13': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac13-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac14-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
   'android': {
@@ -257,6 +271,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/android/%s/android.zip',
     'mac13': 'builds/android/%s/android.zip',
     'mac13-arm64': 'builds/android/%s/android.zip',
+    'mac14': 'builds/android/%s/android.zip',
+    'mac14-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
 };
