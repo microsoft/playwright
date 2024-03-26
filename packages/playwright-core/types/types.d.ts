@@ -15683,8 +15683,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -15701,22 +15700,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -15833,8 +15817,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -15851,22 +15834,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -15943,8 +15911,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -15961,22 +15928,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -16039,8 +15991,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -16057,22 +16008,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -16135,8 +16071,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -16153,22 +16088,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -16282,8 +16202,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -16300,22 +16219,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -16378,8 +16282,7 @@ export interface APIRequestContext {
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
-     * name, mime-type and its content. If the value is an array, each element will be sent as a separate field with the
-     * same name.
+     * name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -16396,22 +16299,7 @@ export interface APIRequestContext {
        * File content
        */
       buffer: Buffer;
-    }|Array<string|number|boolean|ReadStream|{
-      /**
-       * File name
-       */
-      name: string;
-
-      /**
-       * File type
-       */
-      mimeType: string;
-
-      /**
-       * File content
-       */
-      buffer: Buffer;
-    }>; };
+    }; };
 
     /**
      * Query parameters to be sent with the URL.

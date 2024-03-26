@@ -566,7 +566,7 @@ api_request_context.post("https://example.com/api/createBook", data=data)
 
 ```csharp
 var data = new Dictionary<string, object>() {
-  { "firstName", "John" },
+  { "firstNam", "John" },
   { "lastName", "Doe" }
 };
 await request.PostAsync("https://example.com/api/createBook", new() { DataObject = data });
