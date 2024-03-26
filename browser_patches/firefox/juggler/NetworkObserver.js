@@ -553,7 +553,11 @@ class NetworkRequest {
 
   _sendOnRequestFinished() {
     const pageNetwork = this._pageNetwork;
-    if (pageNetwork) {
+    // Undefined |responseEndTime| means there has been no response yet.
+    // This happens when request interception API is used to redirect
+    // the request to a different URL.
+    // In this case, we should not emit "requestFinished" event.
+    if (pageNetwork && this.httpChannel.responseEndTime !== undefined) {
       let protocolVersion = undefined;
       try {
         protocolVersion = this.httpChannel.protocolVersion;
