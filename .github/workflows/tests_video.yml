@@ -36,5 +36,5 @@ jobs:
       env:
         PWTEST_VIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash

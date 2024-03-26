@@ -37,7 +37,7 @@ test('should handle fixture timeout', async ({ runInlineTest }) => {
     `
   }, { timeout: 500 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Test finished within timeout of 500ms, but tearing down "timeout" ran out of time.');
+  expect(result.output).toContain('Tearing down "timeout" exceeded the test timeout of 500ms.');
   expect(result.failed).toBe(2);
 });
 
@@ -459,7 +459,7 @@ test('should not give enough time for second fixture teardown after timeout', as
   }, { timeout: 2000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Test finished within timeout of 3000ms, but tearing down "fixture" ran out of time.');
+  expect(result.output).toContain('Tearing down "fixture" exceeded the test timeout of 3000ms.');
   expect(result.outputLines).toEqual([
     'teardown start',
     'teardown finished',
@@ -525,7 +525,7 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture" ran out of time.');
+  expect(result.output).toContain('Tearing down "fixture" exceeded the test timeout of 1000ms.');
   expect(result.output).not.toContain('base.extend'); // Should not point to the location.
   expect(result.output).not.toContain('Worker teardown timeout');
 });
@@ -730,7 +730,7 @@ test('should not continue with scope teardown after fixture teardown timeout', a
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture2" ran out of time.');
+  expect(result.output).toContain('Tearing down "fixture2" exceeded the test timeout of 1000ms.');
   expect(result.output).not.toContain('in fixture teardown');
 });
 

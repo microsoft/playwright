@@ -89,7 +89,7 @@ jobs:
       run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
     - name: Upload blob report to GitHub Actions Artifacts
-      if: always()
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ matrix.shardIndex }}
@@ -104,7 +104,7 @@ jobs:
 ...
   merge-reports:
     # Merge reports after playwright-tests, even if some shards have failed
-    if: always()
+    if: ${{ !cancelled() }}
     needs: [playwright-tests]
 
     runs-on: ubuntu-latest

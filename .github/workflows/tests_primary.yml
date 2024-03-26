@@ -58,10 +58,10 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-*
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -92,10 +92,10 @@ jobs:
         PWTEST_CHANNEL: chromium-tip-of-tree
         PWTEST_BOT_NAME: "${{ matrix.os }}-chromium-tip-of-tree"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -145,10 +145,10 @@ jobs:
     - run: xvfb-run npm run ttest --  --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -172,18 +172,18 @@ jobs:
       env:
         PWTEST_BOT_NAME: "web-components-html-reporter"
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: packages/html-reporter/blob-report
         job_name: "web-components-html-reporter"
 
     - run: npm run test-web
-      if: always()
+      if: ${{ !cancelled() }}
       env:
         PWTEST_BOT_NAME: "web-components-web"
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: packages/web/blob-report
@@ -219,7 +219,7 @@ jobs:
       run: npm run test -- --workers=1
       working-directory: ./playwright-vscode
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: playwright-vscode/blob-report
@@ -255,10 +255,10 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report

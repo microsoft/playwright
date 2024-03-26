@@ -48,6 +48,23 @@ const xtermDataSource: XtermDataSource = {
   resize: () => {},
 };
 
+const searchParams = new URLSearchParams(window.location.search);
+const guid = searchParams.get('ws');
+const wsURL = new URL(`../${guid}`, window.location.toString());
+wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+const queryParams = {
+  args: searchParams.getAll('arg'),
+  grep: searchParams.get('grep') || undefined,
+  grepInvert: searchParams.get('grepInvert') || undefined,
+  projects: searchParams.getAll('project'),
+  workers: searchParams.get('workers') || undefined,
+  timeout: searchParams.has('timeout') ? +searchParams.get('timeout')! : undefined,
+  headed: searchParams.has('headed'),
+  reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
+};
+
+const isMac = navigator.platform === 'MacIntel';
+
 export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
@@ -76,9 +93,6 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    const guid = new URLSearchParams(window.location.search).get('ws');
-    const wsURL = new URL(`../${guid}`, window.location.toString());
-    wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
     setTestServerConnection(new TestServerConnection(wsURL.toString()));
   }, []);
 
@@ -143,7 +157,7 @@ export const UIModeView: React.FC<{}> = ({
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
-          const result = await testServerConnection.listTests({});
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
           teleSuiteUpdater.processListReport(result.report);
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -158,10 +172,11 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     (async () => {
-      const status = await testServerConnection.runGlobalSetup();
+      await testServerConnection.watchTestDir({});
+      const { status } = await testServerConnection.runGlobalSetup({});
       if (status !== 'passed')
         return;
-      const result = await testServerConnection.listTests({});
+      const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
       teleSuiteUpdater.processListReport(result.report);
 
       testServerConnection.onListChanged(updateList);
@@ -170,7 +185,7 @@ export const UIModeView: React.FC<{}> = ({
       });
       setIsLoading(false);
 
-      const { hasBrowsers } = await testServerConnection.checkBrowsers();
+      const { hasBrowsers } = await testServerConnection.checkBrowsers({});
       setHasBrowsers(hasBrowsers);
     })();
     return () => {
@@ -251,7 +266,18 @@ export const UIModeView: React.FC<{}> = ({
       setProgress({ total: 0, passed: 0, failed: 0, skipped: 0 });
       setRunningState({ testIds });
 
-      await testServerConnection.runTests({ testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
+      await testServerConnection.runTests({
+        locations: queryParams.args,
+        grep: queryParams.grep,
+        grepInvert: queryParams.grepInvert,
+        testIds: [...testIds],
+        projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
+        workers: queryParams.workers,
+        timeout: queryParams.timeout,
+        headed: queryParams.headed,
+        reporters: queryParams.reporters,
+        trace: 'on',
+      });
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
@@ -296,19 +322,22 @@ export const UIModeView: React.FC<{}> = ({
     if (!testServerConnection)
       return;
     const onShortcutEvent = (e: KeyboardEvent) => {
-      if (e.code === 'F6') {
+      if (e.code === 'Backquote' && e.ctrlKey) {
         e.preventDefault();
-        testServerConnection?.stopTestsNoReply();
+        setIsShowingOutput(!isShowingOutput);
+      } else if (e.code === 'F5' && e.shiftKey) {
+        e.preventDefault();
+        testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
-        reloadTests();
+        runTests('bounce-if-busy', visibleTestIds);
       }
     };
     addEventListener('keydown', onShortcutEvent);
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests, testServerConnection]);
+  }, [runTests, reloadTests, testServerConnection, visibleTestIds, isShowingOutput]);
 
   const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -325,9 +354,9 @@ export const UIModeView: React.FC<{}> = ({
   const installBrowsers = React.useCallback((e: React.MouseEvent) => {
     closeInstallDialog(e);
     setIsShowingOutput(true);
-    testServerConnection?.installBrowsers().then(async () => {
+    testServerConnection?.installBrowsers({}).then(async () => {
       setIsShowingOutput(false);
-      const { hasBrowsers } = await testServerConnection?.checkBrowsers();
+      const { hasBrowsers } = await testServerConnection?.checkBrowsers({});
       setHasBrowsers(hasBrowsers);
     });
   }, [closeInstallDialog, testServerConnection]);
@@ -369,7 +398,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          <ToolbarButton icon='terminal' title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
@@ -389,8 +418,8 @@ export const UIModeView: React.FC<{}> = ({
           {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
-          <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => testServerConnection?.stopTests()} disabled={!isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
             setWatchedTreeIds({ value: new Set() });
             setWatchAll(!watchAll);
@@ -411,7 +440,9 @@ export const UIModeView: React.FC<{}> = ({
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
           isLoading={isLoading}
-          requestedCollapseAllCount={collapseAllCount} />
+          requestedCollapseAllCount={collapseAllCount}
+          setFilterText={setFilterText}
+        />
       </div>
     </SplitView>
   </div>;

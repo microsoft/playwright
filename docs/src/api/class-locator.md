@@ -53,7 +53,7 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
 
 Returns an array of `node.innerText` values for all matching nodes.
 
-:::caution Asserting text
+:::warning[Asserting text]
 If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -85,7 +85,7 @@ var texts = await page.GetByRole(AriaRole.Link).AllInnerTextsAsync();
 
 Returns an array of `node.textContent` values for all matching nodes.
 
-:::caution Asserting text
+:::warning[Asserting text]
 If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -443,7 +443,7 @@ await page.Locator("canvas").ClickAsync(new() {
 
 Returns the number of elements matching the locator.
 
-:::caution Asserting count
+:::warning[Asserting count]
 If you need to assert the number of elements on the page, prefer [`method: LocatorAssertions.toHaveCount`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -747,7 +747,7 @@ Resolves given locator to the first matching DOM element. If there are no matchi
 
 Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.
 
-## method: Locator.enterFrame
+## method: Locator.contentFrame
 * since: v1.43
 - returns: <[FrameLocator]>
 
@@ -755,40 +755,42 @@ Returns a [FrameLocator] object pointing to the same `iframe` as this locator.
 
 Useful when you have a [Locator] object obtained somewhere, and later on would like to interact with the content inside the frame.
 
+For a reverse operation, use [`method: FrameLocator.owner`].
+
 **Usage**
 
 ```js
 const locator = page.locator('iframe[name="embedded"]');
 // ...
-const frameLocator = locator.enterFrame();
+const frameLocator = locator.contentFrame();
 await frameLocator.getByRole('button').click();
 ```
 
 ```java
 Locator locator = page.locator("iframe[name=\"embedded\"]");
 // ...
-FrameLocator frameLocator = locator.enterFrame();
+FrameLocator frameLocator = locator.contentFrame();
 frameLocator.getByRole(AriaRole.BUTTON).click();
 ```
 
 ```python async
 locator = page.locator("iframe[name=\"embedded\"]")
 # ...
-frame_locator = locator.enter_frame
+frame_locator = locator.content_frame
 await frame_locator.get_by_role("button").click()
 ```
 
 ```python sync
 locator = page.locator("iframe[name=\"embedded\"]")
 # ...
-frame_locator = locator.enter_frame
+frame_locator = locator.content_frame
 frame_locator.get_by_role("button").click()
 ```
 
 ```csharp
 var locator = Page.Locator("iframe[name=\"embedded\"]");
 // ...
-var frameLocator = locator.EnterFrame;
+var frameLocator = locator.ContentFrame;
 await frameLocator.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
@@ -1119,7 +1121,7 @@ await locator.ClickAsync();
 
 Returns the matching element's attribute value.
 
-:::caution Asserting attributes
+:::warning[Asserting attributes]
 If you need to assert an element's attribute, prefer [`method: LocatorAssertions.toHaveAttribute`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1291,7 +1293,7 @@ Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/A
 
 Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
 
-:::caution Asserting text
+:::warning[Asserting text]
 If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1307,7 +1309,7 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 
 Returns the value for the matching `<input>` or `<textarea>` or `<select>` element.
 
-:::caution Asserting value
+:::warning[Asserting value]
 If you need to assert input value, prefer [`method: LocatorAssertions.toHaveValue`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1349,7 +1351,7 @@ Throws elements that are not an input, textarea or a select. However, if the ele
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
-:::caution Asserting checked state
+:::warning[Asserting checked state]
 If you need to assert that checkbox is checked, prefer [`method: LocatorAssertions.toBeChecked`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1387,7 +1389,7 @@ var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
-:::caution Asserting disabled state
+:::warning[Asserting disabled state]
 If you need to assert that an element is disabled, prefer [`method: LocatorAssertions.toBeDisabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1425,7 +1427,7 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 
 Returns whether the element is [editable](../actionability.md#editable).
 
-:::caution Asserting editable state
+:::warning[Asserting editable state]
 If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1463,7 +1465,7 @@ Boolean editable = await page.GetByRole(AriaRole.Textbox).IsEditableAsync();
 
 Returns whether the element is [enabled](../actionability.md#enabled).
 
-:::caution Asserting enabled state
+:::warning[Asserting enabled state]
 If you need to assert that an element is enabled, prefer [`method: LocatorAssertions.toBeEnabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1501,7 +1503,7 @@ Boolean enabled = await page.GetByRole(AriaRole.Button).IsEnabledAsync();
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
-:::caution Asserting visibility
+:::warning[Asserting visibility]
 If you need to assert that element is hidden, prefer [`method: LocatorAssertions.toBeHidden`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -1538,7 +1540,7 @@ Boolean hidden = await page.GetByRole(AriaRole.Button).IsHiddenAsync();
 
 Returns whether the element is [visible](../actionability.md#visible).
 
-:::caution Asserting visibility
+:::warning[Asserting visibility]
 If you need to assert that element is visible, prefer [`method: LocatorAssertions.toBeVisible`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
@@ -2322,7 +2324,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent).
 
-:::caution Asserting text
+:::warning[Asserting text]
 If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 

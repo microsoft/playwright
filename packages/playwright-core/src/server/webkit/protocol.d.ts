@@ -1569,7 +1569,7 @@ export module Protocol {
     /**
      * The reason the console is being cleared.
      */
-    export type ClearReason = "console-api"|"main-frame-navigation";
+    export type ClearReason = "console-api"|"frontend"|"main-frame-navigation";
     /**
      * Logging channel.
      */
@@ -1737,6 +1737,14 @@ export module Protocol {
     export type clearMessagesParameters = {
     }
     export type clearMessagesReturnValue = {
+    }
+    /**
+     * Control whether calling <code>console.clear()</code> has an effect in Web Inspector. Defaults to true.
+     */
+    export type setConsoleClearAPIEnabledParameters = {
+      enable: boolean;
+    }
+    export type setConsoleClearAPIEnabledReturnValue = {
     }
     /**
      * List of the different message sources that are non-default logging channels.
@@ -9388,6 +9396,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.enable": Console.enableParameters;
     "Console.disable": Console.disableParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
+    "Console.setConsoleClearAPIEnabled": Console.setConsoleClearAPIEnabledParameters;
     "Console.getLoggingChannels": Console.getLoggingChannelsParameters;
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelParameters;
     "DOM.getDocument": DOM.getDocumentParameters;
@@ -9698,6 +9707,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Console.enable": Console.enableReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
+    "Console.setConsoleClearAPIEnabled": Console.setConsoleClearAPIEnabledReturnValue;
     "Console.getLoggingChannels": Console.getLoggingChannelsReturnValue;
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelReturnValue;
     "DOM.getDocument": DOM.getDocumentReturnValue;

@@ -32,7 +32,7 @@ import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
-export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher: Matcher | undefined) {
+export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
@@ -60,8 +60,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
       return hasMatchingSources;
     });
     const filteredFiles = matchedFiles.filter(Boolean) as string[];
-    if (filteredFiles.length)
-      filesToRunByProject.set(project, filteredFiles);
+    filesToRunByProject.set(project, filteredFiles);
   }
 
   // (Re-)add all files for dependent projects, disregard filters.
@@ -316,7 +315,7 @@ export function loadGlobalHook(config: FullConfigInternal, file: string): Promis
   return requireOrImportDefaultFunction(path.resolve(config.config.rootDir, file), false);
 }
 
-export function loadReporter(config: FullConfigInternal, file: string): Promise<new (arg?: any) => Reporter> {
+export function loadReporter(config: FullConfigInternal | null, file: string): Promise<new (arg?: any) => Reporter> {
   return requireOrImportDefaultFunction(config ? path.resolve(config.config.rootDir, file) : file, true);
 }
 

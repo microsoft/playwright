@@ -3146,7 +3146,7 @@ return value resolves to `[]`.
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
-:::warning Experimental
+:::warning[Experimental]
 This method is experimental and its behavior may change in the upcoming releases.
 :::
 

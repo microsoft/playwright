@@ -405,7 +405,7 @@ An instance of [FormData] can be created via [`method: APIRequestContext.createF
 
 ## js-python-fetch-option-multipart
 * langs: js, python
-- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]|Array<[string]|[float]|[boolean]|[ReadStream]|[Object]>>>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -413,7 +413,8 @@ An instance of [FormData] can be created via [`method: APIRequestContext.createF
 Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
 this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
 unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
-or as file-like object containing file name, mime-type and its content.
+or as file-like object containing file name, mime-type and its content. If the value is an array, each element
+will be sent as a separate field with the same name.
 
 ## csharp-fetch-option-multipart
 * langs: csharp

@@ -46,5 +46,5 @@ jobs:
         Start-Process -FilePath setup.exe -Verb RunAs -Wait
     - run: npm run webview2test
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash

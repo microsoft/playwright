@@ -30,6 +30,7 @@ import { testStatusIcon } from './testUtils';
 import type { TestModel } from './uiModeModel';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import { TagView } from './tag';
 
 const TestTreeView = TreeView<TreeItem>;
 
@@ -46,7 +47,8 @@ export const TestListView: React.FC<{
   isLoading?: boolean,
   onItemSelected: (item: { treeItem?: TreeItem, testCase?: reporterTypes.TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
-}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount }) => {
+  setFilterText: (text: string) => void;
+}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, setFilterText }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
@@ -132,6 +134,21 @@ export const TestListView: React.FC<{
     runTests('bounce-if-busy', testTree.collectTestIds(treeItem));
   };
 
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.metaKey || e.ctrlKey) {
+      const parts = filterText.split(' ');
+      if (parts.includes(tag))
+        setFilterText(parts.filter(t => t !== tag).join(' ').trim());
+      else
+        setFilterText((filterText + ' ' + tag).trim());
+    } else {
+      // Replace all existing tags with this tag.
+      setFilterText((filterText.split(' ').filter(t => !t.startsWith('@')).join(' ') + ' ' + tag).trim());
+    }
+  };
+
   return <TestTreeView
     name='tests'
     treeState={treeState}
@@ -140,7 +157,10 @@ export const TestListView: React.FC<{
     dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox ui-mode-list-item'>
-        <div className='ui-mode-list-item-title' title={treeItem.title}>{treeItem.title}</div>
+        <div className='ui-mode-list-item-title'>
+          <span title={treeItem.title}>{treeItem.title}</span>
+          {treeItem.kind === 'case' ? treeItem.tags.map(tag => <TagView key={tag} tag={tag.slice(1)} onClick={e => handleTagClick(e, tag)} />) : null}
+        </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>

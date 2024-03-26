@@ -75,7 +75,7 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
       const indent = listItem.querySelectorAll('.list-view-indent').length;
       const watch = listItem.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
       const selected = listItem.classList.contains('selected') ? ' <=' : '';
-      const title = listItem.querySelector('.ui-mode-list-item-title').textContent;
+      const title = listItem.querySelector('.ui-mode-list-item-title').childNodes[0].textContent;
       const timeElement = options.time ? listItem.querySelector('.ui-mode-list-item-time') : undefined;
       const time = timeElement ? ' ' + timeElement.textContent.replace(/[.\d]+m?s/, 'XXms') : '';
       result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + title + time + watch + selected);

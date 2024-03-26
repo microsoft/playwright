@@ -51,7 +51,8 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
-  _mode?: string;
+  _mode?: 'test' | 'list';
+  _isTestServer?: boolean;
 };
 
 class HtmlReporter extends EmptyReporter {
@@ -67,6 +68,8 @@ class HtmlReporter extends EmptyReporter {
   constructor(options: HtmlReporterOptions) {
     super();
     this._options = options;
+    if (options._mode === 'test')
+      process.env.PW_HTML_REPORT = '1';
   }
 
   override printsToStdio() {
@@ -125,7 +128,7 @@ class HtmlReporter extends EmptyReporter {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else if (this._options._mode === 'test') {
@@ -213,6 +216,8 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
+  private _projectToId: Map<Suite, number> = new Map();
+  private _lastProjectId = 0;
 
   constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
     this._config = config;
@@ -353,7 +358,7 @@ class HtmlBuilder {
     path = path.slice(1);
 
     const [file, ...titles] = test.titlePath();
-    const testIdExpression = `[project=${projectName}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${test.repeatEachIndex})`;
+    const testIdExpression = `[project=${this._projectId(test.parent)}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${test.repeatEachIndex})`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
 
     const results = test.results.map(r => this._createTestResult(test, r));
@@ -390,6 +395,16 @@ class HtmlBuilder {
         }),
       },
     };
+  }
+
+  private _projectId(suite: Suite): number {
+    const project = projectSuite(suite);
+    let id = this._projectToId.get(project);
+    if (!id) {
+      id = ++this._lastProjectId;
+      this._projectToId.set(project, id);
+    }
+    return id;
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
@@ -627,6 +642,12 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
+}
+
+function projectSuite(suite: Suite): Suite {
+  while (suite.parent?.parent)
+    suite = suite.parent;
+  return suite;
 }
 
 export default HtmlReporter;

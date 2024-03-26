@@ -1236,6 +1236,39 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
   expect(output).toContain(`botNames: first,second`);
 });
 
+test('keep projects with same name different bot name separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const files = (reportName: string) => ({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { fileName: '${reportName}.zip' }]],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => { expect('${reportName}').toBe('second'); });
+    `,
+  });
+
+  await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
+  await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
+
+  await page.getByText(/test 1.*first/).getByRole('link', { name: 'test' }).click();
+  await expect(page.getByText('Errors')).toBeVisible();
+  await page.goBack();
+  await page.getByText(/test 1.*second/).getByRole('link', { name: 'test' }).click();
+  await expect(page.getByText('Errors')).not.toBeVisible();
+});
+
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   fs.mkdirSync(reportDir, { recursive: true });

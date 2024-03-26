@@ -45,10 +45,10 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-*
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -77,10 +77,10 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}-*
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -113,10 +113,10 @@ jobs:
       if: matrix.browser != 'firefox'
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -151,7 +151,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
 
   headed_tests:
@@ -176,14 +176,14 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-* --headed
-      if: always() && startsWith(matrix.os, 'ubuntu-')
+      if: ${{ !cancelled() && startsWith(matrix.os, 'ubuntu-') }}
     - run: npm run test -- --project=${{ matrix.browser }}-* --headed
-      if: always() && !startsWith(matrix.os, 'ubuntu-')
+      if: ${{ !cancelled() && !startsWith(matrix.os, 'ubuntu-') }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -213,10 +213,10 @@ jobs:
       env:
         PWTEST_MODE: ${{ matrix.mode }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -252,10 +252,10 @@ jobs:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -280,10 +280,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -309,10 +309,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -337,10 +337,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -371,10 +371,10 @@ jobs:
     - run: npm run ctest
       if: matrix.os != 'ubuntu-20.04'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -405,10 +405,10 @@ jobs:
     - run: npm run ctest -- --headed
       if: matrix.os != 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -433,10 +433,10 @@ jobs:
       env:
         PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -462,10 +462,10 @@ jobs:
       env:
         PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -490,10 +490,10 @@ jobs:
       env:
         PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -518,10 +518,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -547,10 +547,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -575,10 +575,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -603,10 +603,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -632,10 +632,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -660,10 +660,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -688,10 +688,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -717,10 +717,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -745,10 +745,10 @@ jobs:
       env:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -773,10 +773,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -802,10 +802,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -830,10 +830,10 @@ jobs:
       env:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
@@ -873,10 +873,10 @@ jobs:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
     - run: node tests/config/checkCoverage.js chromium
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
+      if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report

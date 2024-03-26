@@ -348,7 +348,7 @@ it('should return body for prefetch script', async ({ page, server, browserName 
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
-it('should bypass disk cache when interception is enabled', async ({ page, server, browserName }) => {
+it('should bypass disk cache when page interception is enabled', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   it.fixme(browserName === 'firefox', 'Returns cached response.');
   await page.goto(server.PREFIX + '/frames/one-frame.html');
@@ -390,6 +390,35 @@ it('should bypass disk cache when interception is enabled', async ({ page, serve
         const respPromise = page.waitForResponse('**/frame/api');
         await page.frame({ url: '**/frame.html' }).evaluate(async () => {
           const response = await fetch('/frame/api');
+          return response.status;
+        });
+        const response = await respPromise;
+        expect(response.status()).toBe(200);
+        expect(requests.length).toBe(i + 1);
+      });
+    }
+  }
+});
+
+it('should bypass disk cache when context interception is enabled', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
+  it.fixme(browserName === 'firefox', 'Returns cached response.');
+  await page.context().route('**/api*', route => route.continue());
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  {
+    const requests = [];
+    server.setRoute('/api', (req, res) => {
+      requests.push(req);
+      res.statusCode = 200;
+      res.setHeader('content-type', 'text/plain');
+      res.setHeader('cache-control', 'public, max-age=31536000');
+      res.end('Hello');
+    });
+    for (let i = 0; i < 3; i++) {
+      await it.step(`main frame iteration ${i}`, async () => {
+        const respPromise = page.waitForResponse('**/api');
+        await page.evaluate(async () => {
+          const response = await fetch('/api');
           return response.status;
         });
         const response = await respPromise;

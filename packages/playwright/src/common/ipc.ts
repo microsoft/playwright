@@ -46,15 +46,7 @@ export type SerializedConfig = {
   compilationCache?: SerializedCompilationCache;
 };
 
-export type TtyParams = {
-  rows: number | undefined;
-  columns: number | undefined;
-  colorDepth: number;
-};
-
 export type ProcessInitParams = {
-  stdoutParams: TtyParams;
-  stderrParams: TtyParams;
   processName: string;
 };
 
