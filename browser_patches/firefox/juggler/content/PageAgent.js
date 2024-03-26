@@ -62,7 +62,6 @@ class PageAgent {
 
     const docShell = frameTree.mainFrame().docShell();
     this._docShell = docShell;
-    this._initialDPPX = docShell.contentViewer.overrideDPPX;
 
     // Dispatch frameAttached events for all initial frames
     for (const frame of this._frameTree.frames()) {
