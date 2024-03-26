@@ -49,6 +49,6 @@ export class FailureTracker {
   }
 
   result(): 'failed' | 'passed' {
-    return this._hasWorkerErrors || this._rootSuite?.allTests().some(test => !test.ok()) ? 'failed' : 'passed';
+    return this._hasWorkerErrors || this.hasReachedMaxFailures() || this._rootSuite?.allTests().some(test => !test.ok()) ? 'failed' : 'passed';
   }
 }
