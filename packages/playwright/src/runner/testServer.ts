@@ -98,7 +98,7 @@ class TestServerDispatcher implements TestServerInterface {
     this._configFile = configFile;
     this.transport = {
       dispatch: (method, params) => (this as any)[method](params),
-      onclose: () => gracefullyProcessExitDoNotHang(0),
+      onclose: () => {},
     };
     this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
     this._testWatcher = new Watcher('flat', events => {
@@ -392,6 +392,7 @@ async function innerRunTestServer(configFile: string | undefined, options: { hos
   const testServer = new TestServer(configFile);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
+  process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
     const server = await testServer.start(options);
