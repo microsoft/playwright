@@ -229,7 +229,6 @@ class StdinServer implements Transport {
   }
 
   onclose() {
-    gracefullyProcessExitDoNotHang(0);
   }
 
   sendEvent?: (method: string, params: any) => void;
