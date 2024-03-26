@@ -229,13 +229,6 @@ export class Dispatcher {
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
     this._checkFinished();
   }
-
-  private _reportTestEnd(test: TestCase, result: TestResult) {
-    this._reporter.onTestEnd(test, result);
-    this._failureTracker.onTestEnd(test, result);
-    if (this._failureTracker.hasReachedMaxFailures())
-      this.stop().catch(e => {});
-  }
 }
 
 class JobDispatcher {
