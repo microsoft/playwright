@@ -189,8 +189,11 @@ export class TeleReporterEmitter implements ReporterV2 {
     const result = {
       title: suite.title,
       location: this._relativeLocation(suite.location),
-      suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t)),
+      entries: suite.entries().map(e => {
+        if (e.type === 'test')
+          return this._serializeTest(e);
+        return this._serializeSuite(e);
+      })
     };
     return result;
   }

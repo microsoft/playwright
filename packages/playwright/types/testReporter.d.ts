@@ -41,6 +41,10 @@ export type { FullConfig, TestStatus, FullProject } from './test';
  */
 export interface Suite {
   /**
+   * Returns type of the suite.
+   */
+  type: 'root' | 'project' | 'file' | 'describe';
+  /**
    * Configuration of the project this suite belongs to, or [void] for the root suite.
    */
   project(): FullProject | undefined;
@@ -49,6 +53,11 @@ export interface Suite {
    * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
    */
   allTests(): Array<TestCase>;
+
+  /**
+   * Test cases and suites defined directly in this suite. The elements returned in their declaration order.
+   */
+  entries(): Array<TestCase|Suite>;
 
   /**
    * Returns a list of titles from the root down to this suite.
@@ -98,6 +107,10 @@ export interface Suite {
  * projects' suites.
  */
 export interface TestCase {
+  /**
+   * Returns type of the test.
+   */
+  type: 'test';
   /**
    * Expected test status.
    * - Tests marked as
@@ -222,6 +235,33 @@ export interface TestCase {
    * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) call.
    */
   title: string;
+}
+
+export interface FileSuite extends Suite {
+  type: 'file';
+  location: Location;
+  parent: Suite;
+//  suites: Array<DescribeSuite>;
+}
+
+export interface DescribeSuite extends Suite {
+  type: 'describe';
+  location: Location;
+  parent: Suite;
+//  suites: Array<DescribeSuite>;
+}
+
+export interface ProjectSuite extends Suite {
+  type: 'project';
+  location: undefined;
+//  suites: Array<FileSuite>;
+}
+
+export interface RootSuite extends Suite {
+  type: 'root';
+  parent: undefined;
+  location: undefined;
+//  suites: Array<ProjectSuite>;
 }
 
 /**
