@@ -60,6 +60,23 @@ test('show battery status', async ({ page }) => {
 
 ```
 
+## Mocking read-only APIs
+
+Some APIs are read-only so you won't be able to assign to a navigator property. For example,
+
+```js
+// Following line will have no effect.
+navigator.cookieEnabled = true;
+```
+
+However, if the property is [configurable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty#configurable), you can still override it using the plain JavaScript:
+
+```js
+await page.addInitScript(() => {
+  Object.defineProperty(Object.getPrototypeOf(navigator), 'cookieEnabled', { value: false });
+});
+```
+
 ## Verifying API calls
 
 Sometimes it is useful to check if the page made all expected APIs calls. You can
