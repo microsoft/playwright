@@ -754,7 +754,7 @@ test('should include metainfo', async ({ showTraceViewer, browserName }) => {
 
 test('should open two trace files', async ({ context, page, request, server, showTraceViewer }, testInfo) => {
   await (request as any)._tracing.start({ snapshots: true });
-  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  await context.tracing.start({ snapshots: true, sources: true });
   {
     const response = await request.get(server.PREFIX + '/simple.json');
     await expect(response).toBeOK();

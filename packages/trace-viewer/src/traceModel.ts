@@ -244,6 +244,10 @@ export class TraceModel {
         this._snapshotStorage!.addFrameSnapshot(event.snapshot);
         break;
     }
+    // Make sure there is a page entry for each page, even without screencast frames,
+    // to show in the metadata view.
+    if (('pageId' in event) && event.pageId)
+      this._pageEntry(contextEntry, event.pageId);
     if (event.type === 'action' || event.type === 'before')
       contextEntry.startTime = Math.min(contextEntry.startTime, event.startTime);
     if (event.type === 'action' || event.type === 'after')
