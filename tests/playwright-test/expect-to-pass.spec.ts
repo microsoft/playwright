@@ -260,3 +260,35 @@ test('should give priority to timeout parameter over timeout in config file', as
   4 |         await test.expect(() => {
   `.trim());
 });
+
+test('should respect intervals in config file when intervals parameter is not passed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `module.exports = { expect: { toPass: { intervals: [100, 200] } } }`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await test.expect(() => {
+          expect(1).toBe(2);
+        }).toPass();
+      });
+    `
+  });
+  expect(result.exitCode).toBe('TODO');
+  // TODO
+});
+
+test('should give priority to intervals parameter over intervals in config file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `module.exports = { expect: { toPass: { intervals: [100, 200] } } }`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await test.expect(() => {
+          expect(1).toBe(2);
+        }).toPass({ intervals: [500] });
+      });
+    `
+  });
+  expect(result.exitCode).toBe('TODO');
+  // TODO
+});
