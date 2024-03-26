@@ -411,7 +411,7 @@ export class CRBrowserContext extends BrowserContext {
     await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
   }
 
-  async clearCookies() {
+  async doClearCookies() {
     await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId });
   }
 

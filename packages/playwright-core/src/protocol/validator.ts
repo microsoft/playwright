@@ -826,16 +826,18 @@ scheme.BrowserContextAddInitScriptParams = tObject({
   source: tString,
 });
 scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
-scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
-scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
-scheme.BrowserContextRemoveCookiesParams = tObject({
-  filter: tObject({
-    name: tOptional(tString),
-    domain: tOptional(tString),
-    path: tOptional(tString),
-  }),
+scheme.BrowserContextClearCookiesParams = tObject({
+  name: tOptional(tString),
+  nameRegexSource: tOptional(tString),
+  nameRegexFlags: tOptional(tString),
+  domain: tOptional(tString),
+  domainRegexSource: tOptional(tString),
+  domainRegexFlags: tOptional(tString),
+  path: tOptional(tString),
+  pathRegexSource: tOptional(tString),
+  pathRegexFlags: tOptional(tString),
 });
-scheme.BrowserContextRemoveCookiesResult = tOptional(tObject({}));
+scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
 scheme.BrowserContextCloseParams = tObject({

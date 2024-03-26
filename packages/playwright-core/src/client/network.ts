@@ -58,10 +58,10 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export type RemoveNetworkCookieParam = {
-  name?: string,
-  domain?: string,
-  path?: string,
+export type ClearNetworkCookieOptions = {
+  name?: string | RegExp,
+  domain?: string | RegExp,
+  path?: string | RegExp,
 };
 
 type SerializedFallbackOverrides = {
