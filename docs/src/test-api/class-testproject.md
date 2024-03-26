@@ -104,6 +104,7 @@ export default defineConfig({
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
   - `toPass` ?<[Object]> Configuration for the [expect(value).toPass()](../test-assertions.md) method.
     - `timeout` ?<[int]> timeout for toPass method in milliseconds.
+    - `intervals` ?<[Array]<[int]>> probe intervals for toPass method in milliseconds.
 
 Configuration for the `expect` assertion library.
 
