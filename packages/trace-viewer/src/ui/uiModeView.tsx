@@ -440,7 +440,9 @@ export const UIModeView: React.FC<{}> = ({
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
           isLoading={isLoading}
-          requestedCollapseAllCount={collapseAllCount} />
+          requestedCollapseAllCount={collapseAllCount}
+          setFilterText={setFilterText}
+        />
       </div>
     </SplitView>
   </div>;
