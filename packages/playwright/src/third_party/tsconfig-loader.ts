@@ -38,8 +38,12 @@ interface TsConfig {
     paths?: { [key: string]: Array<string> };
     strict?: boolean;
     allowJs?: boolean;
+    outDir?: string;
   };
   references?: { path: string }[];
+  files?: string[];
+  include?: string[];
+  exclude?: string[];
 }
 
 export interface LoadedTsConfig {
@@ -50,14 +54,19 @@ export interface LoadedTsConfig {
   };
   absoluteBaseUrl?: string;
   allowJs?: boolean;
+  files?: string[];  // absolute paths
+  include?: string[];  // absolute path patterns
+  exclude?: string[];  // absolute path patterns
+  outDir?: string;  // absolute path
 }
 
 export interface TsConfigLoaderParams {
   cwd: string;
+  searchUpToPackageRoot?: boolean;
 }
 
-export function tsConfigLoader({ cwd, }: TsConfigLoaderParams): LoadedTsConfig[] {
-  const configPath = resolveConfigPath(cwd);
+export function tsConfigLoader({ cwd, searchUpToPackageRoot }: TsConfigLoaderParams): LoadedTsConfig[] {
+  const configPath = resolveConfigPath(cwd, searchUpToPackageRoot);
 
   if (!configPath)
     return [];
@@ -67,26 +76,28 @@ export function tsConfigLoader({ cwd, }: TsConfigLoaderParams): LoadedTsConfig[]
   return [config, ...references];
 }
 
-function resolveConfigPath(cwd: string): string | undefined {
-  if (fs.statSync(cwd).isFile()) {
-    return path.resolve(cwd);
-  }
-
-  const configAbsolutePath = walkForTsConfig(cwd);
+function resolveConfigPath(cwd: string, searchUpToPackageRoot?: boolean): string | undefined {
+  const configAbsolutePath = walkForTsConfig(cwd, searchUpToPackageRoot);
   return configAbsolutePath ? path.resolve(configAbsolutePath) : undefined;
 }
 
-export function walkForTsConfig(
+function walkForTsConfig(
   directory: string,
-  existsSync: (path: string) => boolean = fs.existsSync
+  searchUpToPackageRoot?: boolean,
 ): string | undefined {
   const tsconfigPath = path.join(directory, "./tsconfig.json");
-  if (existsSync(tsconfigPath)) {
+  if (fs.existsSync(tsconfigPath)) {
     return tsconfigPath;
   }
   const jsconfigPath = path.join(directory, "./jsconfig.json");
-  if (existsSync(jsconfigPath)) {
+  if (fs.existsSync(jsconfigPath)) {
     return jsconfigPath;
+  }
+  if (fs.existsSync(path.join(directory, 'package.json'))) {
+    return undefined;
+  }
+  if (!searchUpToPackageRoot) {
+    return undefined;
   }
 
   const parentDirectory = path.join(directory, "../");
@@ -96,7 +107,7 @@ export function walkForTsConfig(
     return undefined;
   }
 
-  return walkForTsConfig(parentDirectory, existsSync);
+  return walkForTsConfig(parentDirectory, searchUpToPackageRoot);
 }
 
 function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
@@ -139,6 +150,7 @@ function loadTsConfig(
     Object.assign(result, base, { tsConfigPath: configFilePath });
   }
 
+  const configDir = path.dirname(configFilePath);
   if (parsedConfig.compilerOptions?.allowJs !== undefined)
     result.allowJs = parsedConfig.compilerOptions.allowJs;
   if (parsedConfig.compilerOptions?.paths !== undefined) {
@@ -148,14 +160,22 @@ function loadTsConfig(
     // https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/moduleSpecifiers.ts#L510
     result.paths = {
       mapping: parsedConfig.compilerOptions.paths,
-      pathsBasePath: path.dirname(configFilePath),
+      pathsBasePath: configDir,
     };
   }
   if (parsedConfig.compilerOptions?.baseUrl !== undefined) {
     // Follow tsc and resolve all relative file paths in the config right away.
     // This way it is safe to inherit paths between the configs.
-    result.absoluteBaseUrl = path.resolve(path.dirname(configFilePath), parsedConfig.compilerOptions.baseUrl);
+    result.absoluteBaseUrl = path.resolve(configDir, parsedConfig.compilerOptions.baseUrl);
   }
+  if (parsedConfig.files)
+    result.files = parsedConfig.files.map(file => path.resolve(configDir, file));
+  if (parsedConfig.include)
+    result.include = parsedConfig.include.map(pattern => path.resolve(configDir, pattern));
+  if (parsedConfig.exclude)
+    result.exclude = parsedConfig.exclude.map(pattern => path.resolve(configDir, pattern));
+  if (parsedConfig.compilerOptions?.outDir)
+    result.outDir = path.resolve(configDir, parsedConfig.compilerOptions.outDir);
 
   for (const ref of parsedConfig.references || [])
     references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));

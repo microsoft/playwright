@@ -24,7 +24,6 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/test';
-import { setTransformConfig } from '../transform/transform';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;
@@ -133,10 +132,6 @@ export class FullConfigInternal {
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, throwawayArtifactsPath));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
-    setTransformConfig({
-      babelPlugins: privateConfiguration?.babelPlugins || [],
-      external: userConfig.build?.external || [],
-    });
     this.config.projects = this.projects.map(p => p.project);
   }
 

@@ -67,7 +67,7 @@ export async function incorporateCompilationCache() {
   addToCompilationCache(result.cache);
 }
 
-export async function initializeEsmLoader() {
+export async function configureESMLoader() {
   if (!loaderChannel)
     return;
   await loaderChannel.send('setTransformConfig', { config: transformConfig() });

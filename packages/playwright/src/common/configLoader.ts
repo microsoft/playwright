@@ -18,13 +18,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { gracefullyProcessExitDoNotHang, isRegExp } from 'playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
-import { requireOrImport } from '../transform/transform';
+import { requireOrImport, setupTransformConfig } from '../transform/transform';
 import type { Config, Project } from '../../types/test';
 import { errorWithFile, fileIsModule } from '../util';
 import type { ConfigLocation } from './config';
 import { FullConfigInternal } from './config';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { initializeEsmLoader, registerESMLoader } from './esmLoaderHost';
+import { configureESMLoader, registerESMLoader } from './esmLoaderHost';
 import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
@@ -88,9 +88,7 @@ export async function deserializeConfig(data: SerializedConfig): Promise<FullCon
   if (data.compilationCache)
     addToCompilationCache(data.compilationCache);
 
-  const config = await loadConfig(data.location, data.configCLIOverrides);
-  await initializeEsmLoader();
-  return config;
+  return await loadConfig(data.location, data.configCLIOverrides);
 }
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {
@@ -101,8 +99,16 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
 }
 
 export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false): Promise<FullConfigInternal> {
+  // 1. Look for tsconfig starting with `configDir` and going up to the package.json level.
+  setupTransformConfig([], [], location.configDir, 'lookup-to-package-root');
+
+  // 2. Send tsconfig to ESM loader.
+  await configureESMLoader();
+
+  // 3. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
+
   const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
   if (ignoreProjectDependencies) {
@@ -111,6 +117,17 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
       project.teardown = undefined;
     }
   }
+
+  // 4. Load transform options from the playwright config.
+  const babelPlugins = (userConfig as any)['@playwright/test']?.babelPlugins || [];
+  const external = userConfig.build?.external || [];
+
+  // 5. When {config.testDir}/tsconfig.json is present, switch to it for backwards compatibility.
+  setupTransformConfig(babelPlugins, external, fullConfig.config.rootDir, 'switch-if-present');
+
+  // 6. Sync new transform options to ESM loader.
+  await configureESMLoader();
+
   return fullConfig;
 }
 

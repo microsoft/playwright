@@ -22,7 +22,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { incorporateCompilationCache, initializeEsmLoader } from '../common/esmLoaderHost';
+import { incorporateCompilationCache } from '../common/esmLoaderHost';
 
 export class InProcessLoaderHost {
   private _config: FullConfigInternal;
@@ -34,7 +34,6 @@ export class InProcessLoaderHost {
   }
 
   async start(errors: TestError[]) {
-    await initializeEsmLoader();
     return true;
   }
 

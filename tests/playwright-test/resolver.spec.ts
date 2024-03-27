@@ -62,6 +62,9 @@ test('should respect path resolver', async ({ runInlineTest }) => {
     'foo/bar/util/b.ts': `
       export const foo: string = 'foo';
     `,
+    'foo/bar/wrong-util/b.ts': `
+      export const foo: string = 'wrong';
+    `,
     'helper.ts': `
       export { foo } from 'util3';
     `,
@@ -72,13 +75,13 @@ test('should respect path resolver', async ({ runInlineTest }) => {
         "lib": ["esnext", "dom", "DOM.Iterable"],
         "baseUrl": ".",
         "paths": {
-          "parent-util/*": ["../foo/bar/util/*"],
+          "util/*": ["../foo/bar/wrong-util/*"],
         },
       },
     }`,
     'dir/inner.spec.ts': `
-      // This import should pick up <root>/dir/tsconfig
-      import { foo } from 'parent-util/b';
+      // Note: <root>/dir/tsconfig should be ignored, <root>/tsconfig should be used instead
+      import { foo } from 'util/b';
       // This import should pick up <root>/tsconfig through the helper
       import { foo as foo2 } from '../helper';
       import { test, expect } from '@playwright/test';
@@ -141,6 +144,9 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
     'foo/bar/util/b.ts': `
       export const foo = 42;
     `,
+    'playwright.config.ts': `
+      export default { testDir: 'dir2' };
+    `,
     'dir2/tsconfig.json': `{
       "compilerOptions": {
         "target": "ES2019",
@@ -171,6 +177,9 @@ test('should fallback to *:* when baseurl and paths are specified', async ({ run
     `,
     'shared/x.ts': `
       export const x = 43;
+    `,
+    'playwright.config.ts': `
+      export default { testDir: 'dir2' };
     `,
     'dir2/tsconfig.json': `{
       "compilerOptions": {
@@ -205,6 +214,9 @@ test('should use the location of the tsconfig as the paths root when no baseUrl 
   const result = await runInlineTest({
     'foo/bar/util/b.ts': `
       export const foo = 42;
+    `,
+    'playwright.config.ts': `
+      export default { testDir: 'dir2' };
     `,
     'dir2/tsconfig.json': `{
       "compilerOptions": {
@@ -366,6 +378,9 @@ test('should not use baseurl for relative imports when dir with same name exists
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15891' });
 
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { testDir: 'frontend' };
+    `,
     'frontend/tsconfig.json': `{
       "compilerOptions": {
         "baseUrl": "src",
@@ -640,4 +655,245 @@ test('should respect tsconfig project references', async ({ runInlineTest }) => 
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('should respect files property with allowJs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "allowJs": false,
+        "paths": {
+          "~/*": ["./mapped/*"],
+        },
+      },
+      "files": ["example.spec.js"],
+    }`,
+    'example.spec.js': `
+      import { foo } from '~/helper';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'mapped/helper.ts': `
+      export const foo = 42;
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Could not`);
+});
+
+test('should respect files property', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "allowJs": false,
+        "paths": {
+          "~/*": ["./mapped/*"],
+        },
+      },
+      "files": ["one.spec.ts"],
+    }`,
+    'one.spec.ts': `
+      import { foo } from '~/helper1';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'two.spec.ts': `
+      import { foo } from '~/helper2';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'mapped/helper1.ts': `
+      export const foo = 42;
+    `,
+    'mapped/helper2.ts': `
+      export const foo = 42;
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain(`Cannot find module '~/helper1'`);
+  expect(result.output).toContain(`Cannot find module '~/helper2'`);
+});
+
+test('should respect include property', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "allowJs": false,
+        "paths": {
+          "~/*": ["./mapped/*"],
+        },
+      },
+      "include": ["**/one*"],
+    }`,
+    'one.spec.ts': `
+      import { foo } from '~/helper1';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'two.spec.ts': `
+      import { foo } from '~/helper2';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'mapped/helper1.ts': `
+      export const foo = 42;
+    `,
+    'mapped/helper2.ts': `
+      export const foo = 42;
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain(`Cannot find module '~/helper1'`);
+  expect(result.output).toContain(`Cannot find module '~/helper2'`);
+});
+
+test('should respect exclude property', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "allowJs": false,
+        "paths": {
+          "~/*": ["./mapped/*"],
+        },
+      },
+      "exclude": ["**/two*"],
+    }`,
+    'one.spec.ts': `
+      import { foo } from '~/helper1';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'two.spec.ts': `
+      import { foo } from '~/helper2';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'mapped/helper1.ts': `
+      export const foo = 42;
+    `,
+    'mapped/helper2.ts': `
+      export const foo = 42;
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain(`Cannot find module '~/helper1'`);
+  expect(result.output).toContain(`Cannot find module '~/helper2'`);
+});
+
+test('should use root tsconfig for playwright.config and switch', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { foo } from '~/foo';
+      export default {
+        testDir: './tests' + foo,
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-root/*"],
+        },
+      },
+    }`,
+    'mapped-from-root/foo.ts': `
+      export const foo = 42;
+    `,
+    'tests42/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["../mapped-from-tests/*"],
+        },
+      },
+    }`,
+    'tests42/a.test.ts': `
+      import { foo } from '~/foo';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(foo).toBe(43);
+      });
+    `,
+    'mapped-from-tests/foo.ts': `
+      export const foo = 43;
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
+});
+
+test('should work in the recommended setup', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        testDir: './tests',
+      };
+    `,
+    'tsconfig.json': `{
+      "files": [],
+      "references": [
+        { "path": "./tsconfig.app.json" },
+        { "path": "./tsconfig.test.json" }
+      ]
+    }`,
+    'tsconfig.app.json': `{
+      "include": ["./src"],
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "@helpers/*": ["./src/helpers/*"],
+        },
+      }
+    }`,
+    'tsconfig.test.json': `{
+      "include": ["./tests"],
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./src/*"],
+        },
+      }
+    }`,
+    'src/helpers/foo.ts': `
+      export const foo = 42;
+    `,
+    'src/source.ts': `
+      export { foo } from '@helpers/foo';
+    `,
+    'tests/a.spec.ts': `
+      import { foo } from '~/source';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(foo).toBe(42);
+      });
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
 });
