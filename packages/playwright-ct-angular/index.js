@@ -17,8 +17,6 @@
 const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
 const path = require('path');
 
-process.env['NODE_ENV'] = 'test';
-
 const defineConfig = (config, ...configs) => {
   return originalDefineConfig({
     ...config,
