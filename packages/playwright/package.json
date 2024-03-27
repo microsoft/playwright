@@ -30,10 +30,10 @@
     "./lib/transform/transform": "./lib/transform/transform.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
-    "./jsx-runtime": {
-      "import": "./jsx-runtime.mjs",
-      "require": "./jsx-runtime.js",
-      "default": "./jsx-runtime.js"
+    "./babel-react-transform/*": {
+      "import": "./babel-react-transform/*.mjs",
+      "require": "./babel-react-transform/*.js",
+      "default": "./babel-react-transform/*.js"
     },
     "./lib/util": "./lib/util.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
