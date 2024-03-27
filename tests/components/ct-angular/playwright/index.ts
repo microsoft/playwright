@@ -4,6 +4,7 @@ import { routes } from '@/router';
 import { APP_INITIALIZER, inject } from '@angular/core';
 import { Router, provideRouter } from '@angular/router';
 import { afterMount, beforeMount } from '@playwright/experimental-ct-angular/hooks';
+import { BrowserPlatformLocation, PlatformLocation } from '@angular/common';
 
 export type HooksConfig = {
   routing?: boolean;
@@ -15,6 +16,7 @@ beforeMount<HooksConfig>(async ({ hooksConfig, TestBed }) => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
+        { provide: PlatformLocation, useExisting: BrowserPlatformLocation },
         {
           provide: APP_INITIALIZER,
           multi: true,
