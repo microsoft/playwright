@@ -369,6 +369,7 @@ export async function toPass(
 ) {
   const testInfo = currentTestInfo();
   const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
+  const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
 
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
@@ -380,7 +381,7 @@ export async function toPass(
     } catch (e) {
       return { continuePolling: !this.isNot, result: e };
     }
-  }, deadline, options.intervals || [100, 250, 500, 1000]);
+  }, deadline, intervals);
 
   if (result.timedOut) {
     const message = result.result ? [
