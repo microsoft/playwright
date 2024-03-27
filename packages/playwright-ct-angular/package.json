@@ -47,7 +47,6 @@
     "typescript": ">=5.2.0"
   },
   "bin": {
-    "playwright": "cli.js",
-    "pw-angular": "cli.js"
+    "playwright": "cli.js"
   }
 }
