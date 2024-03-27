@@ -15,7 +15,7 @@
  */
 
 import { expectTypes, callLogText } from '../util';
-import { matcherHint } from './matcherHint';
+import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
 import { currentExpectTimeout } from '../common/globals';
 import type { ExpectMatcherContext } from './expect';
@@ -40,13 +40,14 @@ export async function toBeTruthy(
   };
 
   const timeout = currentExpectTimeout(options);
-  const { matches, log, timedOut } = await query(!!this.isNot, timeout);
+  const { matches, log, timedOut, received } = await query(!!this.isNot, timeout);
+  const notFound = received === kNoElementsFoundError ? received : undefined;
   const actual = matches ? expected : unexpected;
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
     const logText = callLogText(log);
-    return matches ? `${header}Expected: not ${expected}\nReceived: ${expected}${logText}` :
-      `${header}Expected: ${expected}\nReceived: ${unexpected}${logText}`;
+    return matches ? `${header}Expected: not ${expected}\nReceived: ${notFound ? kNoElementsFoundError : expected}${logText}` :
+      `${header}Expected: ${expected}\nReceived: ${notFound ? kNoElementsFoundError : unexpected}${logText}`;
   };
   return {
     message,

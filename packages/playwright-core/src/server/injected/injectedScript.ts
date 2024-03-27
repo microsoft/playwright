@@ -1098,7 +1098,7 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingRecevied?: boolean }> {
+  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
@@ -1119,7 +1119,7 @@ export class InjectedScript {
       if (options.isNot && options.expression === 'to.be.in.viewport')
         return { matches: false };
       // When none of the above applies, expect does not match.
-      return { matches: options.isNot, missingRecevied: true };
+      return { matches: options.isNot, missingReceived: true };
     }
     return await this.expectSingleElement(element, options);
   }

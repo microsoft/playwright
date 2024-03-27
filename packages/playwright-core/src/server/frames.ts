@@ -1420,7 +1420,7 @@ export class Frame extends SdkObject {
         const injected = await context.injectedScript();
         progress.throwIfAborted();
 
-        const { log, matches, received, missingRecevied } = await injected.evaluate(async (injected, { info, options, callId }) => {
+        const { log, matches, received, missingReceived, elements } = await injected.evaluate(async (injected, { info, options, callId }) => {
           const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
           const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
           let log = '';
@@ -1432,17 +1432,25 @@ export class Frame extends SdkObject {
             log = `  locator resolved to ${injected.previewNode(elements[0])}`;
           if (callId)
             injected.markTargetElements(new Set(elements), callId);
-          return { log, ...(await injected.expect(elements[0], options, elements)) };
+          return {
+            log,
+            elements: elements.length,
+            ...await injected.expect(elements[0], options, elements),
+          };
         }, { info, options, callId: metadata.id });
 
         if (log)
           progress.log(log);
         // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
-        if (matches === options.isNot && !missingRecevied) {
+        if (matches === options.isNot && !missingReceived) {
           lastIntermediateResult.received = received;
           lastIntermediateResult.isSet = true;
           if (!Array.isArray(received))
             progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
+        }
+        if (elements === 0 && options.expression !== 'to.have.count') {
+          lastIntermediateResult.isSet = true;
+          lastIntermediateResult.received = '<element(s) not found>';
         }
         if (!oneShot && matches === options.isNot) {
           // Keep waiting in these cases:
