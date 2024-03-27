@@ -21,6 +21,7 @@ import { setTransformData } from 'playwright/lib/transform/transform';
 const t: typeof T = types;
 
 let jsxComponentNames: Set<string>;
+let classComponentNames: Set<string>;
 let importInfos: Map<string, ImportInfo>;
 
 export default declare((api: BabelAPI) => {
@@ -32,6 +33,7 @@ export default declare((api: BabelAPI) => {
       Program: {
         enter(path) {
           jsxComponentNames = collectJsxComponentUsages(path.node);
+          classComponentNames = collectClassMountUsages(path.node);
           importInfos = new Map();
         },
         exit(path) {
@@ -93,7 +95,7 @@ export default declare((api: BabelAPI) => {
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
           const { localName, info } = importInfo(importNode, specifier, this.filename!);
-          if (jsxComponentNames.has(localName)) {
+          if (jsxComponentNames.has(localName) || classComponentNames.has(localName)) {
             importInfos.set(localName, info);
             ++importCount;
           }
@@ -136,6 +138,20 @@ function collectJsxComponentUsages(node: T.Node): Set<string> {
         if (t.isJSXMemberExpression(p.node.openingElement.name) && t.isJSXIdentifier(p.node.openingElement.name.object) && t.isJSXIdentifier(p.node.openingElement.name.property))
           names.add(p.node.openingElement.name.object.name);
       }
+    }
+  });
+  return names;
+}
+
+function collectClassMountUsages(node: T.Node): Set<string> {
+  const names = new Set<string>();
+  traverse(node, {
+    enter: p => {
+      // Treat calls to mount as component usages.
+      // e.g. mount(MyComponent, ...)
+      if (t.isCallExpression(p.node) && t.isIdentifier(p.node.callee) && p.node.callee.name === 'mount' && t.isIdentifier(p.node.arguments[0]))
+        names.add(p.node.arguments[0].name);
+
     }
   });
   return names;
