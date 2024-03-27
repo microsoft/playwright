@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/experimental-ct-angular"
 test('render a template', async ({ mount }) => {
   const component = await mount('<h1>{{ 1 + 1 }}</h1>');
 
-  await expect(component.getByRole('heading')).toContainText('2');
+  await expect(component).toHaveText('2');
 })
 
 test('render a template with child components', async ({ mount }) => {
@@ -38,7 +38,7 @@ test('render a template with outputs', async ({ mount }) => {
     }
   });
 
-  component.getByRole('button').click();
+  await component.getByRole('button').click();
 
   await expect(async () => {expect(_message).toBe('hello')}).toPass();
 })

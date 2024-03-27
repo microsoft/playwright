@@ -147,11 +147,15 @@ function collectClassMountUsages(node: T.Node): Set<string> {
   const names = new Set<string>();
   traverse(node, {
     enter: p => {
-      // Treat calls to mount as component usages.
-      // e.g. mount(MyComponent, ...)
-      if (t.isCallExpression(p.node) && t.isIdentifier(p.node.callee) && p.node.callee.name === 'mount' && t.isIdentifier(p.node.arguments[0]))
-        names.add(p.node.arguments[0].name);
-
+      // Treat calls to mount and all identifiers in arguments as component usages.
+      // e.g. mount(MyComponent, { imports: [OtherComponent], providers: [Token]})
+      if (t.isCallExpression(p.node) && t.isIdentifier(p.node.callee) && p.node.callee.name === 'mount') {
+        p.traverse({
+          Identifier: p => {
+            names.add(p.node.name);
+          }
+        });
+      }
     }
   });
   return names;
