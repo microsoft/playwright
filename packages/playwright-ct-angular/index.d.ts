@@ -15,26 +15,17 @@
  */
 
 import type {
-  TestType,
+  Locator,
   PlaywrightTestArgs,
-  PlaywrightTestConfig as BasePlaywrightTestConfig,
   PlaywrightTestOptions,
   PlaywrightWorkerArgs,
   PlaywrightWorkerOptions,
-  Locator,
+  TestType,
 } from '@playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
-import type { InlineConfig } from 'vite';
 import type { Provider, Type } from '@angular/core';
 
-export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
-  use?: BasePlaywrightTestConfig<T, W>['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
-  };
-};
+export type { PlaywrightTestConfig } from '@playwright/experimental-ct-core';
 
 type ComponentEvents = Record<string, Function>;
 
