@@ -61,6 +61,7 @@ class Locator {
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);
     self.and = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:and=` + JSON.stringify(locator[selectorSymbol]));
     self.or = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:or=` + JSON.stringify(locator[selectorSymbol]));
+    self.highlight = () => injectedScript.highlight(injectedScript.parseSelector(selectorBase));
   }
 }
 
