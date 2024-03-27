@@ -459,7 +459,7 @@ export class InjectedScript {
       return null;
     if (behavior === 'none')
       return element;
-    if (!element.matches('input, textarea, select')) {
+    if (!element.matches('input, textarea, select') && !(element as any).isContentEditable) {
       if (behavior === 'button-link')
         element = element.closest('button, [role=button], a, [role=link]') || element;
       else
