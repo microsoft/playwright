@@ -409,7 +409,7 @@ export type ExpectMatcherState = {
   utils: ExpectMatcherUtils;
 };
 
-type MatcherReturnType = {
+export type MatcherReturnType = {
   message: () => string;
   pass: boolean;
   name?: string;
