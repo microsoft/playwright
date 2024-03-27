@@ -745,6 +745,14 @@ DebugController:
             - recording
             - none
         testIdAttributeName: string?
+        browserName:
+          type: enum?
+          literals:
+            - chromium
+            - firefox
+            - webkit
+        contextOptions: BrowserNewContextForReuseParams?
+        launchOptions: BrowserTypeLaunchParams?
 
     highlight:
       parameters:

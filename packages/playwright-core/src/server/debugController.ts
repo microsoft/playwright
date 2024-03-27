@@ -25,6 +25,7 @@ import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import type { Language } from '../utils/isomorphic/locatorGenerators';
+import type { BrowserNewContextForReuseParams, BrowserTypeLaunchParams } from '@protocol/channels';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -79,12 +80,12 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async resetForReuse() {
+  async resetForReuse(params: BrowserNewContextForReuseParams | null = null) {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.context());
     for (const context of contexts)
-      await context.resetForReuse(internalMetadata, null);
+      await context.resetForReuse(internalMetadata, params);
   }
 
   async navigate(url: string) {
@@ -92,7 +93,14 @@ export class DebugController extends SdkObject {
       await p.mainFrame().goto(internalMetadata, url);
   }
 
-  async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
+  async setRecorderMode(params: {
+    mode: Mode,
+    file?: string,
+    testIdAttributeName?: string,
+    browserName?: 'chromium' | 'firefox' | 'webkit',
+    contextOptions?: BrowserNewContextForReuseParams,
+    launchOptions?: BrowserTypeLaunchParams,
+  }) {
     // TODO: |file| is only used in the legacy mode.
     await this._closeBrowsersWithoutPages();
 
@@ -105,15 +113,22 @@ export class DebugController extends SdkObject {
       return;
     }
 
-    if (!this._playwright.allBrowsers().length)
-      await this._playwright.chromium.launch(internalMetadata, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS });
-    // Create page if none.
-    const pages = this._playwright.allPages();
-    if (!pages.length) {
-      const [browser] = this._playwright.allBrowsers();
-      const { context } = await browser.newContextForReuse({}, internalMetadata);
-      await context.newPage(internalMetadata);
+    // Previous browser + launchOptions did not match the previous one.
+    const launchOptions = {
+      ...params.launchOptions,
+      headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
+    };
+    const browserName = params.browserName ?? 'chromium';
+    let browser = this._playwright.findBrowserWithMatchingOptions(browserName, launchOptions);
+    if (!browser) {
+      await this.closeAllBrowsers();
+      browser = await this._playwright[browserName].launch(internalMetadata, launchOptions);
     }
+    // Create page if none.
+    const { context } = await browser.newContextForReuse(params.contextOptions || {}, internalMetadata);
+    await context.reapplyContextOptionsIfNeeded(params.contextOptions);
+    if (!context.pages().length)
+      await context.newPage(internalMetadata);
     // Update test id attribute.
     if (params.testIdAttributeName) {
       for (const page of this._playwright.allPages())
