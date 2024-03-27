@@ -29,7 +29,7 @@
     }
   },
   "dependencies": {
-    "@playwright/experimental-ct-core": "1.42.0-next"
+    "@playwright/experimental-ct-core": "1.43.0-next"
   },
   "devDependencies": {
     "@angular/compiler": "^17.0.0",
