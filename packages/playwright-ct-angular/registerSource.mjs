@@ -53,7 +53,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
 window.playwrightUnmount = async rootElement => {
   const fixture = __pwFixtureRegistry.get(rootElement.id);
-  if (!fixture) throw new Error('Component was not mounted');
+  if (!fixture)
+    throw new Error('Component was not mounted');
 
   /* Unsubscribe from all outputs. */
   for (const subscription of Object.values(__pwOutputSubscriptionRegistry.get(fixture) ?? {}))
@@ -130,7 +131,8 @@ async function __pwRenderComponent(component) {
  * @param {ComponentInfo} componentInfo
  */
 function __pwUpdateProps(fixture, componentInfo) {
-  if (!componentInfo.props) return;
+  if (!componentInfo.props)
+    return;
 
   if (__pwIsTemplate(componentInfo)) {
     Object.assign(fixture.componentInstance, componentInfo.props);

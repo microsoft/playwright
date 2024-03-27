@@ -1,10 +1,10 @@
 {
   "name": "@playwright/experimental-ct-angular",
-  "version": "1.42.0-next",
+  "version": "1.43.0-next",
   "description": "Playwright Component Testing for Angular",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sand4rt/playwright-ct-angular.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
