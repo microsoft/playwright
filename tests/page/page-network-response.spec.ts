@@ -348,9 +348,8 @@ it('should return body for prefetch script', async ({ page, server, browserName 
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
-it('should bypass disk cache when page interception is enabled', async ({ page, server, browserName }) => {
+it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
-  it.fixme(browserName === 'firefox', 'Returns cached response.');
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   await page.route('**/api*', route => route.continue());
   {
@@ -400,9 +399,8 @@ it('should bypass disk cache when page interception is enabled', async ({ page, 
   }
 });
 
-it('should bypass disk cache when context interception is enabled', async ({ page, server, browserName }) => {
+it('should bypass disk cache when context interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
-  it.fixme(browserName === 'firefox', 'Returns cached response.');
   await page.context().route('**/api*', route => route.continue());
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   {
