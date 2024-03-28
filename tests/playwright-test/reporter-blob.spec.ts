@@ -1741,3 +1741,52 @@ test('TestSuite.project() should return owning project', async ({ runInlineTest,
   expect(exitCode).toBe(0);
   expect(output).toContain(`test project: my-project`);
 });
+
+test('open blob-1.42', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29984' });
+  await runInlineTest({
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        lines = [];
+        onTestBegin(test) {
+          this.lines.push(test.titlePath().join(' > '));
+        }
+        onEnd() {
+          console.log(this.lines.join('\\n'));
+        }
+      };
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+      reporter: './echo-reporter.js'
+     };`,
+  });
+
+  const blobDir = test.info().outputPath('blob-report');
+  await fs.promises.mkdir(blobDir, { recursive: true });
+  await fs.promises.copyFile(path.join(__dirname, '../assets/blob-1.42.zip'), path.join(blobDir, 'blob-1.42.zip'));
+
+  const { exitCode, output } = await mergeReports(blobDir, undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(` > chromium > example.spec.ts > test 0
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 3
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 4
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 2
+ > chromium > example.spec.ts > describe 1 > test 1
+ > chromium > example.spec.ts > describe 1 > test 5
+ > chromium > example.spec.ts > test 6
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 2
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 3
+ > firefox > example.spec.ts > test 0
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 4
+ > firefox > example.spec.ts > describe 1 > test 1
+ > firefox > example.spec.ts > test 6
+ > firefox > example.spec.ts > describe 1 > test 5
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 4
+ > webkit > example.spec.ts > test 0
+ > webkit > example.spec.ts > describe 1 > test 1
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 2
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 3
+ > webkit > example.spec.ts > test 6
+ > webkit > example.spec.ts > describe 1 > test 5`);
+});
