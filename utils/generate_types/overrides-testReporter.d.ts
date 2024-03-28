@@ -31,27 +31,23 @@ export interface FileSuite extends Suite {
   type: 'file';
   location: Location;
   parent: Suite;
-//  suites: Array<DescribeSuite>;
 }
 
 export interface DescribeSuite extends Suite {
   type: 'describe';
   location: Location;
   parent: Suite;
-//  suites: Array<DescribeSuite>;
 }
 
 export interface ProjectSuite extends Suite {
   type: 'project';
   location: undefined;
-//  suites: Array<FileSuite>;
 }
 
 export interface RootSuite extends Suite {
   type: 'root';
   parent: undefined;
   location: undefined;
-//  suites: Array<ProjectSuite>;
 }
 
 export interface TestResult {
