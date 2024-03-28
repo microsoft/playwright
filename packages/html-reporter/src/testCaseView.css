@@ -74,3 +74,13 @@
   flex-direction: row;
   flex-wrap: wrap;
 }
+
+#annotation-copy-button{
+  padding-left: 3px;
+  display: none;
+}
+
+.test-case-annotation:hover #annotation-copy-button{
+  padding-left: 3px;
+  display: inline;
+}

@@ -120,7 +120,7 @@ export class Filter {
         line: String(test.location.line),
         column: String(test.location.column),
         labels: test.tags.map(tag => tag.toLowerCase()),
-        annotations: test.annotations.map(a => a.type.toLowerCase() + ':' + a.description?.toLocaleLowerCase())
+        annotations: test.annotations.map(a => a.type.toLowerCase() + '=' + a.description?.toLocaleLowerCase())
       };
       (test as any).searchValues = searchValues;
     }
