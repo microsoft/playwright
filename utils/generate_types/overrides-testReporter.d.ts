@@ -27,29 +27,6 @@ export interface TestCase {
   expectedStatus: TestStatus;
 }
 
-export interface FileSuite extends Suite {
-  type: 'file';
-  location: Location;
-  parent: Suite;
-}
-
-export interface DescribeSuite extends Suite {
-  type: 'describe';
-  location: Location;
-  parent: Suite;
-}
-
-export interface ProjectSuite extends Suite {
-  type: 'project';
-  location: undefined;
-}
-
-export interface RootSuite extends Suite {
-  type: 'root';
-  parent: undefined;
-  location: undefined;
-}
-
 export interface TestResult {
   status: TestStatus;
 }

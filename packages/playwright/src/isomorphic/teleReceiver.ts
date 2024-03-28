@@ -131,7 +131,7 @@ type TeleReporterReceiverOptions = {
 };
 
 export class TeleReporterReceiver {
-  private _rootSuite: TeleRootSuite;
+  private _rootSuite: TeleSuite;
   private _options: TeleReporterReceiverOptions;
   private _reporter: Partial<ReporterV2>;
   private _tests = new Map<string, TeleTestCase>();
@@ -139,13 +139,13 @@ export class TeleReporterReceiver {
   private _config!: reporterTypes.FullConfig;
 
   constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
-    this._rootSuite = new TeleRootSuite();
+    this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
   }
 
   reset() {
-    this._rootSuite.reset();
+    this._rootSuite._entries = [];
     this._tests.clear();
   }
 
@@ -202,11 +202,11 @@ export class TeleReporterReceiver {
   private _onProject(project: JsonProject) {
     let projectSuite = this._options.mergeProjects ? this._rootSuite.suites.find(suite => suite.project()!.name === project.name) : undefined;
     if (!projectSuite) {
-      projectSuite = new TeleProjectSuite(project.name);
+      projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite._addSuite(projectSuite);
     }
     // Always update project in watch mode.
-    (projectSuite as TeleProjectSuite)._project = this._parseProject(project);
+    projectSuite._project = this._parseProject(project);
     for (const suite of project.suites)
       this._mergeSuiteInto(suite, projectSuite);
   }
@@ -339,7 +339,7 @@ export class TeleReporterReceiver {
   private _mergeSuiteInto(jsonSuite: JsonSuite, parent: TeleSuite): void {
     let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
     if (!targetSuite) {
-      targetSuite = parent.type === 'project' ? new TeleFileSuite(jsonSuite.title) : new TeleDescribeSuite(jsonSuite.title);
+      targetSuite = new TeleSuite(jsonSuite.title, parent.type === 'project' ? 'file' : 'describe');
       parent._addSuite(targetSuite);
     }
     targetSuite.location = this._absoluteLocation(jsonSuite.location);
@@ -397,23 +397,26 @@ export class TeleReporterReceiver {
   }
 }
 
-export abstract class TeleSuite implements reporterTypes.Suite {
+export class TeleSuite implements reporterTypes.Suite {
   title: string;
-  abstract location?: reporterTypes.Location;
-  abstract parent?: reporterTypes.Suite;
+  location?: reporterTypes.Location;
+  parent?: TeleSuite;
+  _entries: (TeleSuite | TeleTestCase)[] = [];
   _requireFile: string = '';
   _timeout: number | undefined;
   _retries: number | undefined;
+  _project: TeleFullProject | undefined;
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
-  readonly _type: 'root' | 'project' | 'file' | 'describe';
-  _entries: (TeleSuite | TeleTestCase)[] = [];
+  private readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
     this.title = title;
     this._type = type;
   }
 
-  abstract type: 'root' | 'project' | 'file' | 'describe';
+  get type() {
+    return this._type;
+  }
 
   get suites(): TeleSuite[] {
     return this._entries.filter(e => e.type !== 'test') as TeleSuite[];
@@ -423,7 +426,7 @@ export abstract class TeleSuite implements reporterTypes.Suite {
     return this._entries.filter(e => e.type === 'test') as TeleTestCase[];
   }
 
-  entries(): (reporterTypes.Suite | reporterTypes.TestCase)[] {
+  entries() {
     return this._entries;
   }
 
@@ -449,7 +452,9 @@ export abstract class TeleSuite implements reporterTypes.Suite {
     return titlePath;
   }
 
-  abstract project(): TeleFullProject | undefined;
+  project(): TeleFullProject | undefined {
+    return this._project ?? this.parent?.project();
+  }
 
   _addTest(test: TeleTestCase) {
     test.parent = this;
@@ -461,59 +466,6 @@ export abstract class TeleSuite implements reporterTypes.Suite {
     suite.parent = this;
     this._entries.push(suite);
     this.suites.push(suite);
-  }
-}
-
-export class TeleDescribeSuite extends TeleSuite implements reporterTypes.DescribeSuite {
-  type: 'describe' = 'describe';
-  override location!: reporterTypes.Location;
-  override parent!: TeleDescribeSuite | TeleFileSuite;
-  constructor(title: string) {
-    super(title, 'project');
-  }
-  override project(): TeleFullProject {
-    return this.parent.project()!;
-  }
-}
-
-export class TeleFileSuite extends TeleSuite implements reporterTypes.FileSuite {
-  type: 'file' = 'file';
-  override location!: reporterTypes.Location;
-  override parent!: TeleProjectSuite;
-  constructor(title: string) {
-    super(title, 'project');
-  }
-  override project(): TeleFullProject {
-    return this.parent.project();
-  }
-}
-
-export class TeleProjectSuite extends TeleSuite implements reporterTypes.ProjectSuite {
-  type: 'project' = 'project';
-  _project!: TeleFullProject;
-  override location = undefined;
-  override parent!: TeleRootSuite;
-  constructor(title: string) {
-    super(title, 'project');
-  }
-  override project(): TeleFullProject {
-    return this._project!;
-  }
-}
-
-export class TeleRootSuite extends TeleSuite implements reporterTypes.RootSuite {
-  type: 'root' = 'root';
-  override location = undefined;
-  override parent = undefined;
-  constructor() {
-    super('', 'root');
-  }
-  override project(): undefined {
-    return undefined;
-  }
-
-  reset() {
-    this._entries = [];
   }
 }
 

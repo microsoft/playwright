@@ -22,7 +22,7 @@ import type { Annotation, FixturesWithLocation, FullProjectInternal } from './co
 import type { FullProject } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
-abstract class Base {
+class Base {
   title: string;
   _only = false;
   _requireFile: string = '';
@@ -39,7 +39,7 @@ export type Modifier = {
   description: string | undefined
 };
 
-export class Suite extends Base implements reporterTypes.Suite {
+export class Suite extends Base {
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
@@ -68,7 +68,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     return this._type;
   }
 
-  entries(): (reporterTypes.Suite | reporterTypes.TestCase)[] {
+  entries() {
     return this._entries;
   }
 
