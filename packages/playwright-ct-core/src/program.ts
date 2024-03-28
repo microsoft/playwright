@@ -21,7 +21,7 @@ import { runDevServer } from './devServer';
 export { program } from 'playwright/lib/program';
 
 function addDevServerCommand(program: Command) {
-  const command = program.command('dev-server');
+  const command = program.command('dev-server', { hidden: true });
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(options => {
