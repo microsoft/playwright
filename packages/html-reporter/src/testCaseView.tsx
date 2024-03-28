@@ -78,7 +78,7 @@ function TestCaseAnnotationView({ annotation: { type, description } }: { annotat
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold', display: 'inline-block', marginBlock: '3px' }}>{type}</span>
       {description && <span>: {renderAnnotationDescription(description)}</span>}
-      <span id='annotation-copy-button'>{description && <CopyToClipboard value={description} />}</span>
+      <span className='annotation-copy-button'>{description && <CopyToClipboard value={description} />}</span>
     </div>
   );
 }

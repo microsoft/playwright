@@ -64,7 +64,13 @@ const testCase: TestCase = {
 
 test('should render test case', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
-  await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
+  const firstAnnotationElement = component.getByText('Annotation text', { exact: false }).first();
+  await expect(firstAnnotationElement).toBeVisible();
+  await expect(component.getByRole('button', { name: 'copy to clipboard' }).first()).not.toBeVisible();
+  await expect(component.getByRole('button', { name: 'copy to clipboard' }).nth(1)).not.toBeVisible();
+  await firstAnnotationElement.hover();
+  await expect(component.getByRole('button', { name: 'copy to clipboard' }).first()).toBeVisible();
+  await expect(component.getByRole('button', { name: 'copy to clipboard' }).nth(1)).not.toBeVisible();
   await component.getByText('Annotations').click();
   await expect(component.getByText('Annotation text')).not.toBeVisible();
   await expect(component.getByText('Outer step')).toBeVisible();
