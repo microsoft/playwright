@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -387,14 +387,31 @@ class IdsPatcher {
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.tests.forEach(test => {
-      test.testId = this._mapTestId(test.testId);
-      if (this._botName) {
-        test.tags = test.tags || [];
-        test.tags.unshift('@' + this._botName);
-      }
-    });
-    suite.suites.forEach(suite => this._updateTestIds(suite));
+    if (suite.entries) { // Starting 1.44
+      suite.entries.forEach(entry => {
+        if ('testId' in entry)
+          this._updateTestId(entry);
+        else
+          this._updateTestIds(entry);
+      });
+    } else { // before 1.44
+      suite.tests!.forEach(test => {
+        test.testId = this._mapTestId(test.testId);
+        if (this._botName) {
+          test.tags = test.tags || [];
+          test.tags.unshift('@' + this._botName);
+        }
+      });
+      suite.suites!.forEach(suite => this._updateTestIds(suite));
+    }
+  }
+
+  private _updateTestId(test: JsonTestCase) {
+    test.testId = this._mapTestId(test.testId);
+    if (this._botName) {
+      test.tags = test.tags || [];
+      test.tags.unshift('@' + this._botName);
+    }
   }
 
   private _mapTestId(testId: string): string {
@@ -460,10 +477,19 @@ class PathSeparatorPatcher {
     this._updateLocation(suite.location);
     if (isFileSuite)
       suite.title = this._updatePath(suite.title);
-    for (const child of suite.suites)
-      this._updateSuite(child);
-    for (const test of suite.tests)
-      this._updateLocation(test.location);
+    if (suite.entries) { // starting 1.44
+      for (const entry of suite.entries) {
+        if ('testId' in entry)
+          this._updateLocation(entry.location);
+        else
+          this._updateSuite(entry);
+      }
+    } else { // before 1.44
+      for (const child of suite.suites!)
+        this._updateSuite(child);
+      for (const test of suite.tests!)
+        this._updateLocation(test.location);
+    }
   }
 
   private _updateLocation(location?: JsonLocation) {

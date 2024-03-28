@@ -18,11 +18,36 @@ import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
 export type { FullConfig, TestStatus, FullProject } from './test';
 
 export interface Suite {
+  type: 'root' | 'project' | 'file' | 'describe';
   project(): FullProject | undefined;
 }
 
 export interface TestCase {
+  type: 'test';
   expectedStatus: TestStatus;
+}
+
+export interface FileSuite extends Suite {
+  type: 'file';
+  location: Location;
+  parent: Suite;
+}
+
+export interface DescribeSuite extends Suite {
+  type: 'describe';
+  location: Location;
+  parent: Suite;
+}
+
+export interface ProjectSuite extends Suite {
+  type: 'project';
+  location: undefined;
+}
+
+export interface RootSuite extends Suite {
+  type: 'root';
+  parent: undefined;
+  location: undefined;
 }
 
 export interface TestResult {

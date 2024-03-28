@@ -246,7 +246,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, [], testEntries);
+        this._processSuite(fileSuite, fileId, projectSuite.project()!.name, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -346,10 +346,14 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _processSuite(suite: Suite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, newPath)));
+    suite.entries().forEach(e => {
+      if (e.type === 'test')
+        outTests.push(this._createTestEntry(fileId, e, projectName, newPath));
+      else
+        this._processSuite(e, fileId, projectName, newPath, outTests);
+    });
   }
 
   private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, path: string[]): TestEntry {

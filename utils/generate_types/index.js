@@ -600,6 +600,10 @@ class TypesGenerator {
         'JSONReportTest',
         'JSONReportTestResult',
         'JSONReportTestStep',
+        'FileSuite',
+        'DescribeSuite',
+        'ProjectSuite',
+        'RootSuite',
       ]),
       includeExperimental,
     });
