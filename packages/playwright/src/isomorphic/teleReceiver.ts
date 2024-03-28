@@ -505,7 +505,6 @@ export class TeleRootSuite extends TeleSuite implements reporterTypes.RootSuite 
   type: 'root' = 'root';
   override location = undefined;
   override parent = undefined;
-  // override suites: TeleProjectSuite[] = [];
   constructor() {
     super('', 'root');
   }

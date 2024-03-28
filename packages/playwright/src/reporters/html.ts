@@ -354,8 +354,6 @@ class HtmlBuilder {
       else
         this._processSuite(e, fileId, projectName, newPath, outTests);
     });
-    // suite.suites.forEach(s => this._processSuite(s, fileId, projectName, newPath, outTests));
-    // suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, newPath)));
   }
 
   private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, path: string[]): TestEntry {
