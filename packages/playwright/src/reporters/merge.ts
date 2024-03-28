@@ -381,8 +381,7 @@ class IdsPatcher {
   }
 
   private _onProject(project: JsonProject) {
-    project.metadata = project.metadata ?? {};
-    project.metadata.botName = this._botName;
+    project.metadata ??= {};
     project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
