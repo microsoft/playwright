@@ -538,16 +538,13 @@ class BlobModernizer {
   _modernize_1_to_2(events: JsonEvent[]): JsonEvent[] {
     return events.map(event => {
       if (event.method === 'onProject') {
-        const modernizeSuite = (suite: blobV1.JsonSuite) => {
-          for (const child of suite.suites)
-            modernizeSuite(child);
-          (suite as any).entries = [...suite.suites, ...suite.tests];
-          (suite as any).suites = undefined;
-          (suite as any).tests = undefined;
+        const modernizeSuite = (suite: blobV1.JsonSuite): JsonSuite => {
+          const newSuites = suite.suites.map(modernizeSuite);
+          const { suites, tests, ...remainder } = suite;
+          return { entries: [...newSuites, ...tests], ...remainder };
         };
-        const project = event.params.project as blobV1.JsonProject;
-        for (const suite of project.suites)
-          modernizeSuite(suite);
+        const project = event.params.project;
+        project.suites = project.suites.map(modernizeSuite);
       }
       return event;
     });

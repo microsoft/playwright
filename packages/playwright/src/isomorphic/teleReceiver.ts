@@ -341,20 +341,12 @@ export class TeleReporterReceiver {
       parent._addSuite(targetSuite);
     }
     targetSuite.location = this._absoluteLocation(jsonSuite.location);
-    if (jsonSuite.entries) {
-      jsonSuite.entries.forEach(e => {
-        if ('testId' in e)
-          this._mergeTestInto(e, targetSuite!);
-        else
-          this._mergeSuiteInto(e, targetSuite!);
-      });
-    } else {
-      // before 1.44
-      for (const jsonChildSuite of jsonSuite.suites!)
-        this._mergeSuiteInto(jsonChildSuite, targetSuite);
-      for (const jsonTest of jsonSuite.tests!)
-        this._mergeTestInto(jsonTest, targetSuite);
-    }
+    jsonSuite.entries.forEach(e => {
+      if ('testId' in e)
+        this._mergeTestInto(e, targetSuite!);
+      else
+        this._mergeSuiteInto(e, targetSuite!);
+    });
   }
 
   private _mergeTestInto(jsonTest: JsonTestCase, parent: TeleSuite) {
@@ -431,7 +423,7 @@ export class TeleSuite implements reporterTypes.Suite {
   allTests(): reporterTypes.TestCase[] {
     const result: reporterTypes.TestCase[] = [];
     const visit = (suite: reporterTypes.Suite) => {
-      for (const entry of [...suite.suites, ...suite.tests]) {
+      for (const entry of suite.entries()) {
         if (entry.type === 'test')
           result.push(entry);
         else
@@ -457,13 +449,11 @@ export class TeleSuite implements reporterTypes.Suite {
   _addTest(test: TeleTestCase) {
     test.parent = this;
     this._entries.push(test);
-    this.tests.push(test);
   }
 
   _addSuite(suite: TeleSuite) {
     suite.parent = this;
     this._entries.push(suite);
-    this.suites.push(suite);
   }
 }
 
