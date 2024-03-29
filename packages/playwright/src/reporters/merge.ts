@@ -540,6 +540,7 @@ class BlobModernizer {
       if (event.method === 'onProject') {
         const modernizeSuite = (suite: blobV1.JsonSuite): JsonSuite => {
           const newSuites = suite.suites.map(modernizeSuite);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { suites, tests, ...remainder } = suite;
           return { entries: [...newSuites, ...tests], ...remainder };
         };
