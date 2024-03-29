@@ -32,7 +32,7 @@ type BlobReporterOptions = {
   fileName?: string;
 };
 
-export const currentBlobReportVersion = 1;
+export const currentBlobReportVersion = 2;
 
 export type BlobReportMetadata = {
   version: number;

@@ -2058,6 +2058,39 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
+    test('html report should preserve declaration order within file', async ({ runInlineTest, showReport, page }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29984' });
+      await runInlineTest({
+        'main.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('test 0', async ({}) => {});
+          test.describe('describe 1', () => {
+            test('test 1', async ({}) => {});
+            test.describe('describe 2', () => {
+              test('test 2', async ({}) => {});
+              test('test 3', async ({}) => {});
+              test('test 4', async ({}) => {});
+            });
+            test('test 5', async ({}) => {});
+          });
+          test('test 6', async ({}) => {});
+        `,
+      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      await showReport();
+
+      // Failing test first, then sorted by the run order.
+      await expect(page.locator('.test-file-title')).toHaveText([
+        /test 0/,
+        /describe 1 › test 1/,
+        /describe 1 › describe 2 › test 2/,
+        /describe 1 › describe 2 › test 3/,
+        /describe 1 › describe 2 › test 4/,
+        /describe 1 › test 5/,
+        /test 6/,
+      ]);
+    });
+
     test('tests should filter by file', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'file-a.test.js': `

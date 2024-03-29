@@ -41,6 +41,11 @@ export type { FullConfig, TestStatus, FullProject } from './test';
  */
 export interface Suite {
   /**
+   * Returns the type of the suite. The Suites form the following hierarchy: `root` -> `project` -> `file` -> `describe`
+   * -> ...`describe` -> `test`.
+   */
+  type: 'root' | 'project' | 'file' | 'describe';
+  /**
    * Configuration of the project this suite belongs to, or [void] for the root suite.
    */
   project(): FullProject | undefined;
@@ -49,6 +54,14 @@ export interface Suite {
    * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
    */
   allTests(): Array<TestCase>;
+
+  /**
+   * Test cases and suites defined directly in this suite. The elements are returned in their declaration order. You can
+   * discriminate between different entry types using
+   * [testCase.type](https://playwright.dev/docs/api/class-testcase#test-case-type) and
+   * [suite.type](https://playwright.dev/docs/api/class-suite#suite-type).
+   */
+  entries(): Array<TestCase|Suite>;
 
   /**
    * Returns a list of titles from the root down to this suite.
@@ -98,6 +111,10 @@ export interface Suite {
  * projects' suites.
  */
 export interface TestCase {
+  /**
+   * Returns type of the test.
+   */
+  type: 'test';
   /**
    * Expected test status.
    * - Tests marked as

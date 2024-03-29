@@ -26,6 +26,12 @@ Reporter is given a root suite in the [`method: Reporter.onBegin`] method.
 
 Returns the list of all test cases in this suite and its descendants, as opposite to [`property: Suite.tests`].
 
+## method: Suite.entries
+* since: v1.44
+- type: <[Array]<[TestCase]|[Suite]>>
+
+Test cases and suites defined directly in this suite. The elements are returned in their declaration order. You can discriminate between different entry types using [`property: TestCase.type`] and [`property: Suite.type`].
+
 ## property: Suite.location
 * since: v1.10
 - type: ?<[Location]>
@@ -72,3 +78,10 @@ Suite title.
 - returns: <[Array]<[string]>>
 
 Returns a list of titles from the root down to this suite.
+
+## property: Suite.type
+* since: v1.44
+- returns: <[SuiteType]<'root' | 'project' | 'file' | 'describe'>>
+
+Returns the type of the suite. The Suites form the following hierarchy:
+`root` -> `project` -> `file` -> `describe` -> ...`describe` -> `test`.

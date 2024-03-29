@@ -64,6 +64,14 @@ export class Suite extends Base {
     this._testTypeImpl = testTypeImpl;
   }
 
+  get type(): 'root' | 'project' | 'file' | 'describe' {
+    return this._type;
+  }
+
+  entries() {
+    return this._entries;
+  }
+
   get suites(): Suite[] {
     return this._entries.filter(entry => entry instanceof Suite) as Suite[];
   }
@@ -240,6 +248,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   results: reporterTypes.TestResult[] = [];
   location: Location;
   parent!: Suite;
+  type: 'test' = 'test';
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
