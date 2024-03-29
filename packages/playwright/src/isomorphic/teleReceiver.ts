@@ -58,8 +58,6 @@ export type JsonSuite = {
   title: string;
   location?: JsonLocation;
   entries: (JsonSuite | JsonTestCase)[];
-  suites?: JsonSuite[]; // used before v1.44
-  tests?: JsonTestCase[]; // used before v1.44
 };
 
 export type JsonTestCase = {

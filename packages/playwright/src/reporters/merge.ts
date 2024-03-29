@@ -27,6 +27,7 @@ import { ZipFile } from 'playwright-core/lib/utils';
 import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
 import type { TestError } from '../../types/testReporter';
+import type * as blobV1 from './versions/blobV1';
 
 type StatusCallback = (message: string) => void;
 
@@ -136,15 +137,17 @@ async function extractAndParseReports(dir: string, shardFiles: string[], interna
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
         fileName = reportNames.makeUnique(fileName);
-        const parsedEvents = parseCommonEvents(content);
+        let parsedEvents = parseCommonEvents(content);
         // Passing reviver to JSON.parse doesn't work, as the original strings
         // keep beeing used. To work around that we traverse the parsed events
         // as a post-processing step.
         internalizer.traverse(parsedEvents);
+        const metadata = findMetadata(parsedEvents, file);
+        parsedEvents = modernizer.modernize(metadata.version, parsedEvents);
         shardEvents.push({
           file,
           localPath: fileName,
-          metadata: findMetadata(parsedEvents, file),
+          metadata,
           parsedEvents
         });
       }
@@ -387,23 +390,12 @@ class IdsPatcher {
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    if (suite.entries) { // Starting 1.44
-      suite.entries.forEach(entry => {
-        if ('testId' in entry)
-          this._updateTestId(entry);
-        else
-          this._updateTestIds(entry);
-      });
-    } else { // before 1.44
-      suite.tests!.forEach(test => {
-        test.testId = this._mapTestId(test.testId);
-        if (this._botName) {
-          test.tags = test.tags || [];
-          test.tags.unshift('@' + this._botName);
-        }
-      });
-      suite.suites!.forEach(suite => this._updateTestIds(suite));
-    }
+    suite.entries.forEach(entry => {
+      if ('testId' in entry)
+        this._updateTestId(entry);
+      else
+        this._updateTestIds(entry);
+    });
   }
 
   private _updateTestId(test: JsonTestCase) {
@@ -477,18 +469,11 @@ class PathSeparatorPatcher {
     this._updateLocation(suite.location);
     if (isFileSuite)
       suite.title = this._updatePath(suite.title);
-    if (suite.entries) { // starting 1.44
-      for (const entry of suite.entries) {
-        if ('testId' in entry)
-          this._updateLocation(entry.location);
-        else
-          this._updateSuite(entry);
-      }
-    } else { // before 1.44
-      for (const child of suite.suites!)
-        this._updateSuite(child);
-      for (const test of suite.tests!)
-        this._updateLocation(test.location);
+    for (const entry of suite.entries) {
+      if ('testId' in entry)
+        this._updateLocation(entry.location);
+      else
+        this._updateSuite(entry);
     }
   }
 
@@ -534,3 +519,39 @@ class JsonEventPatchers {
     }
   }
 }
+
+class BlobModernizer {
+  modernize(fromVersion: number, events: JsonEvent[]): JsonEvent[] {
+    const result = [];
+    for (const event of events)
+      result.push(...this._modernize(fromVersion, event));
+    return result;
+  }
+
+  private _modernize(fromVersion: number, event: JsonEvent): JsonEvent[] {
+    let events = [event];
+    for (let version = fromVersion; version < currentBlobReportVersion; ++version)
+      events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
+    return events;
+  }
+
+  _modernize_1_to_2(events: JsonEvent[]): JsonEvent[] {
+    return events.map(event => {
+      if (event.method === 'onProject') {
+        const modernizeSuite = (suite: blobV1.JsonSuite) => {
+          for (const child of suite.suites)
+            modernizeSuite(child);
+          (suite as any).entries = [...suite.suites, ...suite.tests];
+          (suite as any).suites = undefined;
+          (suite as any).tests = undefined;
+        };
+        const project = event.params.project as blobV1.JsonProject;
+        for (const suite of project.suites)
+          modernizeSuite(suite);
+      }
+      return event;
+    });
+  }
+}
+
+const modernizer = new BlobModernizer();
