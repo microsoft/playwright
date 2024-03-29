@@ -30,7 +30,7 @@ Returns the list of all test cases in this suite and its descendants, as opposit
 * since: v1.44
 - type: <[Array]<[TestCase]|[Suite]>>
 
-Test cases and suites defined directly in this suite. The elements returned in their declaration order.
+Test cases and suites defined directly in this suite. The elements returned in their declaration order. You can discriminate between different entry types using [`property: TestCase.type`] and [`property: Suite.type`].
 
 ## property: Suite.location
 * since: v1.10
@@ -83,4 +83,5 @@ Returns a list of titles from the root down to this suite.
 * since: v1.44
 - returns: <[SuiteType]<'root' | 'project' | 'file' | 'describe'>>
 
-Returns type of the suite.
+Returns type of the suite. The Suites form the following hierarchy:
+`root` -> `project` -> `file` -> `describe` -> ...`describe` -> `test`.
