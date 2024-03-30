@@ -90,6 +90,8 @@ export interface TestServerInterface {
 
   stopTests(params: {}): Promise<void>;
 
+  setInterceptStdio(params: { intercept: boolean }): Promise<void>;
+
   closeGracefully(params: {}): Promise<void>;
 }
 

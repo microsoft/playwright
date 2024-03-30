@@ -172,6 +172,7 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     (async () => {
+      await testServerConnection.setInterceptStdio({ intercept: true });
       await testServerConnection.watchTestDir({});
       const { status } = await testServerConnection.runGlobalSetup({});
       if (status !== 'passed')
