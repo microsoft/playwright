@@ -39,16 +39,15 @@ import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playw
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { serializeError } from '../util';
 
+const originalStdoutWrite = process.stdout.write;
+const originalStderrWrite = process.stderr.write;
+
 class TestServer {
   private _configFile: string | undefined;
   private _dispatcher: TestServerDispatcher | undefined;
-  private _originalStdoutWrite: NodeJS.WriteStream['write'];
-  private _originalStderrWrite: NodeJS.WriteStream['write'];
 
   constructor(configFile: string | undefined) {
     this._configFile = configFile;
-    this._originalStdoutWrite = process.stdout.write;
-    this._originalStderrWrite = process.stderr.write;
   }
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
@@ -57,27 +56,8 @@ class TestServer {
   }
 
   async stop() {
+    await this._dispatcher?.setInterceptStdio({ intercept: false });
     await this._dispatcher?.runGlobalTeardown();
-  }
-
-  wireStdIO() {
-    if (!process.env.PWTEST_DEBUG) {
-      process.stdout.write = (chunk: string | Buffer) => {
-        this._dispatcher?._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
-        return true;
-      };
-      process.stderr.write = (chunk: string | Buffer) => {
-        this._dispatcher?._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
-        return true;
-      };
-    }
-  }
-
-  unwireStdIO() {
-    if (!process.env.PWTEST_DEBUG) {
-      process.stdout.write = this._originalStdoutWrite;
-      process.stderr.write = this._originalStderrWrite;
-    }
   }
 }
 
@@ -341,6 +321,24 @@ class TestServerDispatcher implements TestServerInterface {
     await this._testRun?.run;
   }
 
+  async setInterceptStdio(params: Parameters<TestServerInterface['setInterceptStdio']>[0]): ReturnType<TestServerInterface['setInterceptStdio']> {
+    if (process.env.PWTEST_DEBUG)
+      return;
+    if (params.intercept) {
+      process.stdout.write = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
+        return true;
+      };
+      process.stderr.write = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
+        return true;
+      };
+    } else {
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+    }
+  }
+
   async closeGracefully() {
     gracefullyProcessExitDoNotHang(0);
   }
@@ -362,7 +360,7 @@ class TestServerDispatcher implements TestServerInterface {
   }
 }
 
-export async function runUIMode(configFile: string | undefined, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
+export async function runUIMode(configFile: string | undefined, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   return await innerRunTestServer(configFile, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
@@ -379,16 +377,16 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   });
 }
 
-export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status']> {
+export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   return await innerRunTestServer(configFile, options, async server => {
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix().replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configFile: string | undefined, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
+async function innerRunTestServer(configFile: string | undefined, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   if (restartWithExperimentalTsEsm(undefined, true))
-    return 'passed';
+    return 'restarted';
   const testServer = new TestServer(configFile);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
@@ -397,10 +395,8 @@ async function innerRunTestServer(configFile: string | undefined, options: { hos
   try {
     const server = await testServer.start(options);
     await openUI(server, cancelPromise);
-    testServer.wireStdIO();
     await cancelPromise;
   } finally {
-    testServer.unwireStdIO();
     await testServer.stop();
     sigintWatcher.disarm();
   }

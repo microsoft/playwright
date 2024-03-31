@@ -115,11 +115,11 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   async ping(params: Parameters<TestServerInterface['ping']>[0]): ReturnType<TestServerInterface['ping']> {
-    await this._sendMessage('ping');
+    await this._sendMessage('ping', params);
   }
 
   async pingNoReply(params: Parameters<TestServerInterface['ping']>[0]) {
-    this._sendMessageNoReply('ping');
+    this._sendMessageNoReply('ping', params);
   }
 
   async watch(params: Parameters<TestServerInterface['watch']>[0]): ReturnType<TestServerInterface['watch']> {
@@ -151,19 +151,19 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   async checkBrowsers(params: Parameters<TestServerInterface['checkBrowsers']>[0]): ReturnType<TestServerInterface['checkBrowsers']> {
-    return await this._sendMessage('checkBrowsers');
+    return await this._sendMessage('checkBrowsers', params);
   }
 
   async installBrowsers(params: Parameters<TestServerInterface['installBrowsers']>[0]): ReturnType<TestServerInterface['installBrowsers']> {
-    await this._sendMessage('installBrowsers');
+    await this._sendMessage('installBrowsers', params);
   }
 
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
-    return await this._sendMessage('runGlobalSetup');
+    return await this._sendMessage('runGlobalSetup', params);
   }
 
   async runGlobalTeardown(params: Parameters<TestServerInterface['runGlobalTeardown']>[0]): ReturnType<TestServerInterface['runGlobalTeardown']> {
-    return await this._sendMessage('runGlobalTeardown');
+    return await this._sendMessage('runGlobalTeardown', params);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
@@ -183,14 +183,18 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   async stopTests(params: Parameters<TestServerInterface['stopTests']>[0]): ReturnType<TestServerInterface['stopTests']> {
-    await this._sendMessage('stopTests');
+    await this._sendMessage('stopTests', params);
   }
 
   stopTestsNoReply(params: Parameters<TestServerInterface['stopTests']>[0]) {
-    this._sendMessageNoReply('stopTests');
+    this._sendMessageNoReply('stopTests', params);
+  }
+
+  async setInterceptStdio(params: Parameters<TestServerInterface['setInterceptStdio']>[0]): ReturnType<TestServerInterface['setInterceptStdio']> {
+    await this._sendMessage('setInterceptStdio', params);
   }
 
   async closeGracefully(params: Parameters<TestServerInterface['closeGracefully']>[0]): ReturnType<TestServerInterface['closeGracefully']> {
-    await this._sendMessage('closeGracefully');
+    await this._sendMessage('closeGracefully', params);
   }
 }
