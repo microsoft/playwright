@@ -116,6 +116,13 @@ The opposite of [`method: PageAssertions.toHaveURL`].
 
 Expected URL string or RegExp.
 
+### option: PageAssertions.NotToHaveURL.ignoreCase
+* since: v1.44
+* langs: js
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -324,6 +331,13 @@ await Expect(Page).ToHaveURL(new Regex(".*checkout"));
 - `urlOrRegExp` <[string]|[RegExp]>
 
 Expected URL string or RegExp.
+
+### option: PageAssertions.toHaveURL.ignoreCase
+* since: v1.44
+* langs: js
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
