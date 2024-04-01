@@ -4,7 +4,8 @@
 
 Runtime representation of the test project configuration that is passed
 to [Reporter]. It exposes some of the resolved fields declared in
-[TestProject].
+[TestProject]. You can get [FullProject] instance from [`property: FullConfig.projects`]
+or [`property: Suite.project`].
 
 ## property: FullProject.dependencies
 * since: v1.31
