@@ -95,10 +95,10 @@ class Helper {
     };
   }
 
-  static formatBrowserLogs(logs: string[]) {
-    if (!logs.length)
+  static formatBrowserLogs(logs: string[], disconnectReason?: string) {
+    if (!disconnectReason && !logs.length)
       return '';
-    return '\n' + logs.join('\n');
+    return '\n' + (disconnectReason ? disconnectReason + '\n' : '') + logs.join('\n');
   }
 }
 

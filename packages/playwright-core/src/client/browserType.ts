@@ -143,8 +143,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       connection.on('close', closePipe);
 
       let browser: Browser;
-      let closeError: Error | undefined;
-      const onPipeClosed = () => {
+      let closeError: string | undefined;
+      const onPipeClosed = (reason?: string) => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
           for (const page of context.pages())
@@ -152,16 +152,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           context._onClose();
         }
         browser?._didClose();
-        connection.close(closeError);
+        connection.close(reason || closeError);
       };
-      pipe.on('closed', onPipeClosed);
-      connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
+      pipe.on('closed', params => onPipeClosed(params.reason));
+      connection.onmessage = message => pipe.send({ message }).catch(() => onPipeClosed());
 
       pipe.on('message', ({ message }) => {
         try {
           connection!.dispatch(message);
         } catch (e) {
-          closeError = e;
+          closeError = String(e);
           closePipe();
         }
       });

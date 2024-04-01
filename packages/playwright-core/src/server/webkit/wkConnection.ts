@@ -78,11 +78,11 @@ export class WKConnection {
     this.browserSession.dispatchMessage(message);
   }
 
-  _onClose() {
+  _onClose(reason?: string) {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
+    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     this.browserSession.dispose();
     this._onDisconnect();
   }

@@ -75,11 +75,11 @@ export class CRConnection extends EventEmitter {
       session._onMessage(message);
   }
 
-  _onClose() {
+  _onClose(reason?: string) {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
+    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     this.rootSession.dispose();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }

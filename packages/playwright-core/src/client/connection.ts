@@ -191,8 +191,8 @@ export class Connection extends EventEmitter {
     (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
   }
 
-  close(cause?: Error) {
-    this._closedError = new TargetClosedError(cause?.toString());
+  close(cause?: string) {
+    this._closedError = new TargetClosedError(cause);
     for (const callback of this._callbacks.values())
       callback.reject(this._closedError);
     this._callbacks.clear();
