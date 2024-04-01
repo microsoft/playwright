@@ -64,7 +64,6 @@ await context.CloseAsync();
 
 ## event: BrowserContext.backgroundPage
 * since: v1.11
-* langs: js, python
 - argument: <[Page]>
 
 :::note
@@ -72,6 +71,13 @@ Only works with Chromium browser's persistent context.
 :::
 
 Emitted when new background page is created in the context.
+
+```java
+Page backgroundPage = context.waitForBackgroundPage(() -> {
+  page.getByText("activate extension").click();
+});
+System.out.println(backgroundPage.evaluate("location.href"));
+```
 
 ```js
 const backgroundPage = await context.waitForEvent('backgroundpage');
@@ -83,6 +89,14 @@ background_page = await context.wait_for_event("backgroundpage")
 
 ```python sync
 background_page = context.wait_for_event("backgroundpage")
+```
+
+```csharp
+var backgroundPage = await context.RunAndWaitForBackgoundPageAsync(async =>
+{
+    await page.GetByText("activate extension").ClickAsync();
+});
+Console.WriteLine(await backgroundPage.EvaluateAsync<string>("location.href"));
 ```
 
 ## event: BrowserContext.close
@@ -441,7 +455,6 @@ Script to be evaluated in all pages in the browser context. Optional.
 
 ## method: BrowserContext.backgroundPages
 * since: v1.11
-* langs: js, python
 - returns: <[Array]<[Page]>>
 
 :::note
