@@ -135,9 +135,7 @@ export class Filter {
     }
     if (this.annotations.length) {
       const matches = this.annotations.every(annotation =>
-        searchValues.annotations.some(_annotation => (
-          _annotation.includes(annotation)
-        )));
+        searchValues.annotations.some(_annotation => _annotation.includes(annotation)));
       if (!matches)
         return false;
     }
