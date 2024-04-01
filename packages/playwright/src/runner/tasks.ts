@@ -85,7 +85,6 @@ export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: R
 
 export function createTaskRunnerForTestServer(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
-  addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
