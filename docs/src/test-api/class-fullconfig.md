@@ -2,6 +2,8 @@
 * since: v1.10
 * langs: js
 
+Resolved configuration passed to [`method: Reporter.onBegin`].
+
 ## property: FullConfig.configFile
 * since: v1.20
 - type: ?<[string]>

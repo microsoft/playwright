@@ -2,6 +2,10 @@
 * since: v1.10
 * langs: js
 
+Runtime representation of the test project configuration that is passed
+to [Reporter]. It exposes some of the resolved fields declared in
+[TestProject].
+
 ## property: FullProject.dependencies
 * since: v1.31
 - type: ?<[Array]<[string]>>
