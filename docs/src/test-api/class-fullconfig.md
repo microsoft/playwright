@@ -2,6 +2,12 @@
 * since: v1.10
 * langs: js
 
+## property: FullConfig.configFile
+* since: v1.20
+- type: ?<[string]>
+
+Path to the configuration file (if any) used to run the tests.
+
 ## property: FullConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
@@ -90,6 +96,10 @@ See [`property: TestConfig.reporter`].
 
 See [`property: TestConfig.reportSlowTests`].
 
+## property: FullConfig.rootDir
+* since: v1.20
+- type: <[string]>
+
 ## property: FullConfig.shard
 * since: v1.10
 - type: ?<[null]|[Object]>
@@ -103,6 +113,12 @@ See [`property: TestConfig.shard`].
 - type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
 
 See [`property: TestConfig.updateSnapshots`].
+
+## property: FullConfig.version
+* since: v1.20
+- type: <[string]>
+
+Playwright version.
 
 ## property: FullConfig.webServer
 * since: v1.10
