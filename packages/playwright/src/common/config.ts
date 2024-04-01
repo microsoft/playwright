@@ -182,7 +182,7 @@ export class FullProjectInternal {
       // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
       repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
-      metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
+      metadata: takeFirst(projectConfig.metadata, config.metadata, {}),
       name: takeFirst(projectConfig.name, config.name, ''),
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),

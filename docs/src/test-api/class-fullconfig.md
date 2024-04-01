@@ -12,79 +12,79 @@ Path to the configuration file (if any) used to run the tests.
 
 ## property: FullConfig.forbidOnly
 * since: v1.10
-- type: ?<[boolean]>
+- type: <[boolean]>
 
 See [`property: TestConfig.forbidOnly`].
 
 ## property: FullConfig.fullyParallel
 * since: v1.20
-- type: ?<[boolean]>
+- type: <[boolean]>
 
 See [`property: TestConfig.fullyParallel`].
 
 ## property: FullConfig.globalSetup
 * since: v1.10
-- type: ?<[string]>
+- type: <[null]|[string]>
 
 See [`property: TestConfig.globalSetup`].
 
 ## property: FullConfig.globalTeardown
 * since: v1.10
-- type: ?<[string]>
+- type: <[null]|[string]>
 
 See [`property: TestConfig.globalTeardown`].
 
 ## property: FullConfig.globalTimeout
 * since: v1.10
-- type: ?<[int]>
+- type: <[int]>
 
 See [`property: TestConfig.globalTimeout`].
 
 ## property: FullConfig.grep
 * since: v1.10
-- type: ?<[RegExp]|[Array]<[RegExp]>>
+- type: <[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestConfig.grep`].
 
 ## property: FullConfig.grepInvert
 * since: v1.10
-- type: ?<[RegExp]|[Array]<[RegExp]>>
+- type: <[null]|[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestConfig.grepInvert`].
 
 ## property: FullConfig.maxFailures
 * since: v1.10
-- type: ?<[int]>
+- type: <[int]>
 
 See [`property: TestConfig.maxFailures`].
 
 ## property: FullConfig.metadata
 * since: v1.10
-- type: ?<[Metadata]>
+- type: <[Metadata]>
 
 See [`property: TestConfig.metadata`].
 
 ## property: FullConfig.preserveOutput
 * since: v1.10
-- type: ?<[PreserveOutput]<"always"|"never"|"failures-only">>
+- type: <[PreserveOutput]<"always"|"never"|"failures-only">>
 
 See [`property: TestConfig.preserveOutput`].
 
 ## property: FullConfig.projects
 * since: v1.10
-- type: ?<[Array]<[TestProject]>>
+- type: <[Array]<[FullProject]>>
 
-See [`property: TestConfig.projects`].
+List of resolved projects. See [`property: TestConfig.projects`].
 
 ## property: FullConfig.quiet
 * since: v1.10
-- type: ?<[boolean]>
+- type: <[boolean]>
 
 See [`property: TestConfig.quiet`].
 
 ## property: FullConfig.reporter
 * since: v1.10
-- type: ?<[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
+- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 
@@ -92,7 +92,7 @@ See [`property: TestConfig.reporter`].
 
 ## property: FullConfig.reportSlowTests
 * since: v1.10
-- type: ?<[null]|[Object]>
+- type: <[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
   - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
 
@@ -104,7 +104,7 @@ See [`property: TestConfig.reportSlowTests`].
 
 ## property: FullConfig.shard
 * since: v1.10
-- type: ?<[null]|[Object]>
+- type: <[null]|[Object]>
   - `total` <[int]> The total number of shards.
   - `current` <[int]> The index of the shard to execute, one-based.
 
@@ -112,7 +112,7 @@ See [`property: TestConfig.shard`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
-- type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
+- type: <[UpdateSnapshots]<"all"|"none"|"missing">>
 
 See [`property: TestConfig.updateSnapshots`].
 
@@ -124,7 +124,7 @@ Playwright version.
 
 ## property: FullConfig.webServer
 * since: v1.10
-- type: ?<[Object]|[Array]<[Object]>>
+- type: <[null]|[Object]>
   - `command` <[string]> Shell command to start. For example `npm run start`..
   - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port` or `url` should be specified.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
@@ -140,6 +140,6 @@ See [`property: TestConfig.webServer`].
 
 ## property: FullConfig.workers
 * since: v1.10
-- type: ?<[int]|[string]>
+- type: <[int]>
 
 See [`property: TestConfig.workers`].
