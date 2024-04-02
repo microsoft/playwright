@@ -29,7 +29,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;

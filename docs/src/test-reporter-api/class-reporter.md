@@ -37,7 +37,7 @@ module.exports = MyReporter;
 
 ```js tab=js-ts title="my-awesome-reporter.ts"
 import type {
-  Reporter, FullConfig, Suite, TestCase, TestResult, FullResult
+  Reporter, ReporterConfig, Suite, TestCase, TestResult, FullResult
 } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
@@ -45,7 +45,7 @@ class MyReporter implements Reporter {
     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: ReporterConfig, suite: Suite) {
     console.log(`Starting the run with ${suite.allTests().length} tests`);
   }
 
@@ -94,7 +94,7 @@ Called once before running tests. All tests have been already discovered and put
 
 ### param: Reporter.onBegin.config
 * since: v1.10
-- `config` <[FullConfig]>
+- `config` <[ReporterConfig]>
 
 Resolved configuration.
 

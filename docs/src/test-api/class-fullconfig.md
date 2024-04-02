@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-Resolved configuration passed to [`method: Reporter.onBegin`].
+Resolved configuration available as [`property: TestInfo.config`].
 
 ## property: FullConfig.configFile
 * since: v1.20

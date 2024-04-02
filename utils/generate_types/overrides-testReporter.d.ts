@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
+import type { FullConfig, FullProject, TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions } from './test';
 export type { FullConfig, TestStatus, FullProject } from './test';
+
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
+
+export interface ReporterProject<TestArgs = {}, WorkerArgs = {}> {
+  use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+}
 
 export interface Suite {
   type: 'root' | 'project' | 'file' | 'describe';

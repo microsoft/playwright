@@ -22,7 +22,7 @@ Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [paralleli
 
 ## property: WorkerInfo.project
 * since: v1.10
-- type: <[TestProject]>
+- type: <[FullProject]>
 
 Processed project configuration from the [configuration file](../test-configuration.md).
 

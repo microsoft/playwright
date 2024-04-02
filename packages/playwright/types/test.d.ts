@@ -30,7 +30,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
@@ -111,336 +111,72 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 }
 
 /**
- * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
- * multiple configurations. For example, consider running tests against multiple browsers.
- *
- * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of {@link TestProject} are available in
- * the top-level {@link TestConfig}, in which case they are shared between all projects.
- *
- * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
- * versions.
- *
- * ```js
- * // playwright.config.ts
- * import { defineConfig, devices } from '@playwright/test';
- *
- * export default defineConfig({
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'chromium',
- *       use: devices['Desktop Chrome'],
- *     },
- *     {
- *       name: 'firefox',
- *       use: devices['Desktop Firefox'],
- *     },
- *     {
- *       name: 'webkit',
- *       use: devices['Desktop Safari'],
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * });
- * ```
- *
+ * Runtime representation of the test project configuration that can be accessed in the tests via
+ * [testInfo.project](https://playwright.dev/docs/api/class-testinfo#test-info-project) and
+ * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project).
  */
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
-   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
-   * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
-   *
-   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   * See [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep).
    */
   grep: RegExp | RegExp[];
   /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   * See [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert).
    */
   grepInvert: RegExp | RegExp[] | null;
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
+   * See [testProject.metadata](https://playwright.dev/docs/api/class-testproject#test-project-metadata).
    */
   metadata: Metadata;
   /**
-   * Project name is visible in the report and during test execution.
+   * See [testProject.name](https://playwright.dev/docs/api/class-testproject#test-project-name).
    */
   name: string;
   /**
-   * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
-   * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
-   * the dependencies and behaves as if they were not specified.
-   *
-   * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
-   * report, etc.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'setup',
-   *       testMatch: /global.setup\.ts/,
-   *     },
-   *     {
-   *       name: 'chromium',
-   *       use: devices['Desktop Chrome'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'firefox',
-   *       use: devices['Desktop Firefox'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'webkit',
-   *       use: devices['Desktop Safari'],
-   *       dependencies: ['setup'],
-   *     },
-   *   ],
-   * });
-   * ```
-   *
+   * See [testProject.dependencies](https://playwright.dev/docs/api/class-testproject#test-project-dependencies).
    */
   dependencies: string[];
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
-   *
-   * The directory for each test can be accessed by
-   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
-   *
-   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
-   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir)
-   * would resolve to `snapshots/a.spec.js-snapshots`.
+   * See [testProject.snapshotDir](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-dir).
    */
   snapshotDir: string;
   /**
-   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
-   *
-   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
-   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
-   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
-   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
-   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
-   *
-   * Here is an example that uses
-   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to
-   * create a temporary file.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-   * });
-   * ```
-   *
-   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
-   * option for all projects.
+   * See [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir).
    */
   outputDir: string;
   /**
-   * The number of times to repeat each test, useful for debugging flaky tests.
-   *
-   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change
-   * this option for all projects.
+   * See [testProject.repeatEach](https://playwright.dev/docs/api/class-testproject#test-project-repeat-each).
    */
   repeatEach: number;
   /**
-   * The maximum number of retry attempts given to failed tests. Learn more about
-   * [test retries](https://playwright.dev/docs/test-retries#retries).
-   *
-   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to
-   * change the number of retries for a specific file or a group of tests.
-   *
-   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this
-   * option for all projects.
+   * See [testProject.retries](https://playwright.dev/docs/api/class-testproject#test-project-retries).
    */
   retries: number;
   /**
-   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
-   * cleanup any resources acquired by this project.
-   *
-   * Passing `--no-deps` argument ignores
-   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
-   * it was not specified.
-   *
-   * **Usage**
-   *
-   * A common pattern is a "setup" dependency that has a corresponding "teardown":
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'setup',
-   *       testMatch: /global.setup\.ts/,
-   *       teardown: 'teardown',
-   *     },
-   *     {
-   *       name: 'teardown',
-   *       testMatch: /global.teardown\.ts/,
-   *     },
-   *     {
-   *       name: 'chromium',
-   *       use: devices['Desktop Chrome'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'firefox',
-   *       use: devices['Desktop Firefox'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'webkit',
-   *       use: devices['Desktop Safari'],
-   *       dependencies: ['setup'],
-   *     },
-   *   ],
-   * });
-   * ```
-   *
+   * See [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown).
    */
   teardown?: string;
   /**
-   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
-   *
-   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all
-   * other tests in stable Chrome browser.
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'Smoke Chromium',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke WebKit',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke Firefox',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
-   *     },
-   *     {
-   *       name: 'Chrome Stable',
-   *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
-   *       }
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this
-   * option for all projects.
+   * See [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    */
   testDir: string;
   /**
-   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute
-   * file path. Strings are treated as glob patterns.
-   *
-   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
-   *
-   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change
-   * this option for all projects.
+   * See [testProject.testIgnore](https://playwright.dev/docs/api/class-testproject#test-project-test-ignore).
    */
   testIgnore: string | RegExp | (string | RegExp)[];
   /**
-   * Only the files matching one of these patterns are executed as test files. Matching is performed against the
-   * absolute file path. Strings are treated as glob patterns.
-   *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
-   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
-   * `login-screen.wrong-credentials.spec.ts`.
-   *
-   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
-   * option for all projects.
+   * See [testProject.testMatch](https://playwright.dev/docs/api/class-testproject#test-project-test-match).
    */
   testMatch: string | RegExp | (string | RegExp)[];
   /**
-   * Timeout for each test in milliseconds. Defaults to 30 seconds.
-   *
-   * This is a base timeout for all tests. Each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of
-   * tests can configure the timeout with
-   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
-   *
-   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this
-   * option for all projects.
+   * See [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout).
    */
   timeout: number;
   /**
-   * Options for all tests in this project, for example
-   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
-   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options]{@link TestOptions}.
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'Chromium',
-   *       use: {
-   *         browserName: 'chromium',
-   *       },
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   * Use [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) to change this option for
-   * all projects.
+   * See [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
    */
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+
 }
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
@@ -1445,445 +1181,92 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 export type Metadata = { [key: string]: any };
 
 /**
- * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
- * or `testDir`. These options are described in the {@link TestConfig} object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
- *
- * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level {@link
- * TestConfig} can also define base options shared between all projects.
- *
- * ```js
- * // playwright.config.ts
- * import { defineConfig } from '@playwright/test';
- *
- * export default defineConfig({
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * });
- * ```
- *
+ * Resolved configuration available as
+ * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config).
  */
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
-   * Whether to exit with an error if any tests or groups are marked as
-   * [test.only(title[, details, body])](https://playwright.dev/docs/api/class-test#test-only) or
-   * [test.describe.only([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-only).
-   * Useful on CI.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   forbidOnly: !!process.env.CI,
-   * });
-   * ```
-   *
+   * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).
    */
   forbidOnly: boolean;
   /**
-   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the
-   * same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same
-   * worker process.
-   *
-   * You can configure entire test run to concurrently execute all tests in all files using this option.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   fullyParallel: true,
-   * });
-   * ```
-   *
+   * See [testConfig.fullyParallel](https://playwright.dev/docs/api/class-testconfig#test-config-fully-parallel).
    */
   fullyParallel: boolean;
   /**
-   * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function that takes a [`TestConfig`] argument.
-   *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   globalSetup: './global-setup',
-   * });
-   * ```
-   *
+   * See [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
    */
   globalSetup: string | null;
   /**
-   * Path to the global teardown file. This file will be required and run after all the tests. It must export a single
-   * function. See also
-   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
-   *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   globalTeardown: './global-teardown',
-   * });
-   * ```
-   *
+   * See [testConfig.globalTeardown](https://playwright.dev/docs/api/class-testconfig#test-config-global-teardown).
    */
   globalTeardown: string | null;
   /**
-   * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on
-   * CI to prevent broken setup from running too long and wasting resources. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-   * });
-   * ```
-   *
+   * See [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout).
    */
   globalTimeout: number;
   /**
-   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
-   * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
-   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
-   *
-   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   grep: /smoke/,
-   * });
-   * ```
-   *
+   * See [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep).
    */
   grep: RegExp | RegExp[];
   /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep). Also available in the
-   * [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   grepInvert: /manual/,
-   * });
-   * ```
-   *
+   * See [testConfig.grepInvert](https://playwright.dev/docs/api/class-testconfig#test-config-grep-invert).
    */
   grepInvert: RegExp | RegExp[] | null;
   /**
-   * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and
-   * exit with an error. Setting to zero (default) disables this behavior.
-   *
-   * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   maxFailures: process.env.CI ? 1 : 0,
-   * });
-   * ```
-   *
+   * See [testConfig.maxFailures](https://playwright.dev/docs/api/class-testconfig#test-config-max-failures).
    */
   maxFailures: number;
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   metadata: 'acceptance tests',
-   * });
-   * ```
-   *
+   * See [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
    */
   metadata: Metadata;
+  /**
+   * Playwright version.
+   */
   version: string;
   /**
-   * Whether to preserve test output in the
-   * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to
-   * `'always'`.
-   * - `'always'` - preserve output for all tests;
-   * - `'never'` - do not preserve output for any tests;
-   * - `'failures-only'` - only preserve output for failed tests.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   preserveOutput: 'always',
-   * });
-   * ```
-   *
+   * See [testConfig.preserveOutput](https://playwright.dev/docs/api/class-testconfig#test-config-preserve-output).
    */
   preserveOutput: 'always' | 'never' | 'failures-only';
   /**
-   * Playwright Test supports running multiple test projects at the same time. See {@link TestProject} for more
-   * information.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig, devices } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     { name: 'chromium', use: devices['Desktop Chrome'] }
-   *   ]
-   * });
-   * ```
-   *
+   * List of resolved projects.
    */
   projects: FullProject<TestArgs, WorkerArgs>[];
   /**
-   * The list of reporters to use. Each reporter can be:
-   * - A builtin reporter name like `'list'` or `'json'`.
-   * - A module name like `'my-awesome-reporter'`.
-   * - A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
-   *
-   * You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
-   *
-   * Learn more in the [reporters guide](https://playwright.dev/docs/test-reporters).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   reporter: 'line',
-   * });
-   * ```
-   *
+   * See [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
    */
   reporter: ReporterDescription[];
   /**
-   * Whether to report slow test files. Pass `null` to disable this feature.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   reportSlowTests: null,
-   * });
-   * ```
-   *
-   * **Details**
-   *
-   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no
-   * more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
+   * See [testConfig.reportSlowTests](https://playwright.dev/docs/api/class-testconfig#test-config-report-slow-tests).
    */
   reportSlowTests: { max: number, threshold: number } | null;
   rootDir: string;
   /**
-   * Whether to suppress stdio and stderr output from the tests.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   quiet: !!process.env.CI,
-   * });
-   * ```
-   *
+   * See [testConfig.quiet](https://playwright.dev/docs/api/class-testconfig#test-config-quiet).
    */
   quiet: boolean;
   /**
-   * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
-   *
-   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   shard: { total: 10, current: 3 },
-   * });
-   * ```
-   *
+   * See [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard).
    */
   shard: { total: number, current: number } | null;
   /**
-   * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-   * - `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be
-   *   updated.
-   * - `'none'` - No snapshots are updated.
-   * - `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first
-   *   time. This is the default.
-   *
-   * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   updateSnapshots: 'missing',
-   * });
-   * ```
-   *
+   * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
-   * logical CPU cores, e.g. `'50%'.`
-   *
-   * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be
-   * used to speed up test execution.
-   *
-   * Defaults to half of the number of logical CPU cores. Learn more about
-   * [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   workers: 3,
-   * });
-   * ```
-   *
+   * See [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers).
    */
   workers: number;
   /**
-   * Launch a development web server (or multiple) during the tests.
-   *
-   * **Details**
-   *
-   * If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running
-   * the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or
-   * 403 status code before running the tests.
-   *
-   * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not
-   * use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
-   *
-   * The `port` (but not the `url`) gets passed over to Playwright as a
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port
-   * `8080` produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must
-   * explicitly configure the `baseURL` (even if it only has one entry).
-   *
-   * **NOTE** It is also recommended to specify
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so
-   * that tests could use relative urls.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   * export default defineConfig({
-   *   webServer: {
-   *     command: 'npm run start',
-   *     url: 'http://127.0.0.1:3000',
-   *     timeout: 120 * 1000,
-   *     reuseExistingServer: !process.env.CI,
-   *   },
-   *   use: {
-   *     baseURL: 'http://localhost:3000/',
-   *   },
-   * });
-   * ```
-   *
-   * Now you can use a relative path when navigating the page:
-   *
-   * ```js
-   * // test.spec.ts
-   * import { test } from '@playwright/test';
-   *
-   * test('test', async ({ page }) => {
-   *   // This will result in http://localhost:3000/foo
-   *   await page.goto('/foo');
-   * });
-   * ```
-   *
-   * Multiple web servers (or background processes) can be launched:
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   * export default defineConfig({
-   *   webServer: [
-   *     {
-   *       command: 'npm run start',
-   *       url: 'http://127.0.0.1:3000',
-   *       timeout: 120 * 1000,
-   *       reuseExistingServer: !process.env.CI,
-   *     },
-   *     {
-   *       command: 'npm run backend',
-   *       url: 'http://127.0.0.1:3333',
-   *       timeout: 120 * 1000,
-   *       reuseExistingServer: !process.env.CI,
-   *     }
-   *   ],
-   *   use: {
-   *     baseURL: 'http://127.0.0.1:3000',
-   *   },
-   * });
-   * ```
-   *
+   * See [testConfig.webServer](https://playwright.dev/docs/api/class-testconfig#test-config-web-server).
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * Path to the configuration file (if any) used to run the tests.
+   */
   configFile?: string;
+
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
