@@ -73,10 +73,9 @@ Only works with Chromium browser's persistent context.
 Emitted when new background page is created in the context.
 
 ```java
-Page backgroundPage = context.waitForBackgroundPage(() -> {
-  page.getByText("activate extension").click();
+context.onBackgroundPage(backgroundPage -> {
+  System.out.println(backgroundPage.url());
 });
-System.out.println(backgroundPage.evaluate("location.href"));
 ```
 
 ```js
@@ -92,11 +91,11 @@ background_page = context.wait_for_event("backgroundpage")
 ```
 
 ```csharp
-var backgroundPage = await context.RunAndWaitForBackgoundPageAsync(async =>
+context.BackgroundPage += (backgroundPage) =>
 {
-    await page.GetByText("activate extension").ClickAsync();
-});
-Console.WriteLine(await backgroundPage.EvaluateAsync<string>("location.href"));
+    Console.WriteLine(backgroundPage.Url());
+};
+
 ```
 
 ## event: BrowserContext.close
