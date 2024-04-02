@@ -38,7 +38,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullProjectInternal instead.
-export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
@@ -74,7 +74,7 @@ export type Metadata = { [key: string]: any };
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullConfigInternal instead.
-export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
   fullyParallel: boolean;
   globalSetup: string | null;
@@ -86,7 +86,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   metadata: Metadata;
   version: string;
   preserveOutput: 'always' | 'never' | 'failures-only';
-  projects: FullProject<TestArgs, WorkerArgs>[];
+  projects: ProjectInWorker<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
   reportSlowTests: { max: number, threshold: number } | null;
   rootDir: string;
@@ -102,13 +102,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 export interface WorkerInfo {
-  config: FullConfig;
-  project: FullProject;
+  config: ConfigInWorker;
+  project: ProjectInWorker;
 }
 
 export interface TestInfo {
-  config: FullConfig;
-  project: FullProject;
+  config: ConfigInWorker;
+  project: ProjectInWorker;
 }
 
 type TestDetailsAnnotation = {

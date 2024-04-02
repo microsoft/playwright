@@ -561,9 +561,6 @@ class TypesGenerator {
         ['AsymmetricMatchers', 'GenericAssertions'],
       ]),
       ignoreMissing: new Set([
-        'FullConfig.configFile',
-        'FullConfig.version',
-        'FullConfig.rootDir',
         'SuiteFunction',
         'TestFunction',
         'PlaywrightWorkerOptions.defaultBrowserType',

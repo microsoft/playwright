@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
+import type { TestInfoError, TestInfo, TestStatus, ProjectInWorker, ConfigInWorker } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
@@ -81,8 +81,8 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: FullProject;
-  readonly config: FullConfig;
+  readonly project: ProjectInWorker;
+  readonly config: ConfigInWorker;
   readonly title: string;
   readonly titlePath: string[];
   readonly file: string;

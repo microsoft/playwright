@@ -23,7 +23,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
-import type { FullConfig, FullProject } from '../../types/test';
+import type { ConfigInWorker, ProjectInWorker } from '../../types/test';
 import { setTransformConfig } from '../transform/transform';
 
 export type ConfigLocation = {
@@ -40,13 +40,13 @@ export type Annotation = { type: string, description?: string };
 export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
-  readonly config: FullConfig;
+  readonly config: ConfigInWorker;
   readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
   readonly preserveOutputDir: boolean;
-  readonly webServers: Exclude<FullConfig['webServer'], null>[];
+  readonly webServers: Exclude<ConfigInWorker['webServer'], null>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
@@ -119,7 +119,7 @@ export class FullConfigInternal {
 
     const webServers = takeFirst(userConfig.webServer, null);
     if (Array.isArray(webServers)) { // multiple web server mode
-      // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
+      // Due to previous choices, this value shows up to the user in globalSetup as part of ConfigInWorker. Arrays are not supported by the old type.
       this.config.webServer = null;
       this.webServers = webServers;
     } else if (webServers) { // legacy singleton mode
@@ -158,7 +158,7 @@ export class FullConfigInternal {
 }
 
 export class FullProjectInternal {
-  readonly project: FullProject;
+  readonly project: ProjectInWorker;
   readonly fullConfig: FullConfigInternal;
   readonly fullyParallel: boolean;
   readonly expect: Project['expect'];
@@ -286,6 +286,6 @@ export const defaultReporter = process.env.CI ? 'dot' : 'list';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
 
-export function getProjectId(project: FullProject): string {
+export function getProjectId(project: ProjectInWorker): string {
   return (project as any).__projectId!;
 }

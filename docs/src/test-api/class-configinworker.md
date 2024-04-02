@@ -1,88 +1,88 @@
-# class: FullConfig
+# class: ConfigInWorker
 * since: v1.10
 * langs: js
 
-Resolved configuration available as [`property: TestInfo.config`].
+Resolved configuration available via [`property: TestInfo.config`] and [`property: WorkerInfo.config`].
 
-## property: FullConfig.configFile
+## property: ConfigInWorker.configFile
 * since: v1.20
 - type: ?<[string]>
 
 Path to the configuration file (if any) used to run the tests.
 
-## property: FullConfig.forbidOnly
+## property: ConfigInWorker.forbidOnly
 * since: v1.10
 - type: <[boolean]>
 
 See [`property: TestConfig.forbidOnly`].
 
-## property: FullConfig.fullyParallel
+## property: ConfigInWorker.fullyParallel
 * since: v1.20
 - type: <[boolean]>
 
 See [`property: TestConfig.fullyParallel`].
 
-## property: FullConfig.globalSetup
+## property: ConfigInWorker.globalSetup
 * since: v1.10
 - type: <[null]|[string]>
 
 See [`property: TestConfig.globalSetup`].
 
-## property: FullConfig.globalTeardown
+## property: ConfigInWorker.globalTeardown
 * since: v1.10
 - type: <[null]|[string]>
 
 See [`property: TestConfig.globalTeardown`].
 
-## property: FullConfig.globalTimeout
+## property: ConfigInWorker.globalTimeout
 * since: v1.10
 - type: <[int]>
 
 See [`property: TestConfig.globalTimeout`].
 
-## property: FullConfig.grep
+## property: ConfigInWorker.grep
 * since: v1.10
 - type: <[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestConfig.grep`].
 
-## property: FullConfig.grepInvert
+## property: ConfigInWorker.grepInvert
 * since: v1.10
 - type: <[null]|[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestConfig.grepInvert`].
 
-## property: FullConfig.maxFailures
+## property: ConfigInWorker.maxFailures
 * since: v1.10
 - type: <[int]>
 
 See [`property: TestConfig.maxFailures`].
 
-## property: FullConfig.metadata
+## property: ConfigInWorker.metadata
 * since: v1.10
 - type: <[Metadata]>
 
 See [`property: TestConfig.metadata`].
 
-## property: FullConfig.preserveOutput
+## property: ConfigInWorker.preserveOutput
 * since: v1.10
 - type: <[PreserveOutput]<"always"|"never"|"failures-only">>
 
 See [`property: TestConfig.preserveOutput`].
 
-## property: FullConfig.projects
+## property: ConfigInWorker.projects
 * since: v1.10
-- type: <[Array]<[FullProject]>>
+- type: <[Array]<[ProjectInWorker]>>
 
 List of resolved projects.
 
-## property: FullConfig.quiet
+## property: ConfigInWorker.quiet
 * since: v1.10
 - type: <[boolean]>
 
 See [`property: TestConfig.quiet`].
 
-## property: FullConfig.reporter
+## property: ConfigInWorker.reporter
 * since: v1.10
 - type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
   - `0` <[string]> Reporter name or module or file path
@@ -90,7 +90,7 @@ See [`property: TestConfig.quiet`].
 
 See [`property: TestConfig.reporter`].
 
-## property: FullConfig.reportSlowTests
+## property: ConfigInWorker.reportSlowTests
 * since: v1.10
 - type: <[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
@@ -98,11 +98,11 @@ See [`property: TestConfig.reporter`].
 
 See [`property: TestConfig.reportSlowTests`].
 
-## property: FullConfig.rootDir
+## property: ConfigInWorker.rootDir
 * since: v1.20
 - type: <[string]>
 
-## property: FullConfig.shard
+## property: ConfigInWorker.shard
 * since: v1.10
 - type: <[null]|[Object]>
   - `total` <[int]> The total number of shards.
@@ -110,25 +110,25 @@ See [`property: TestConfig.reportSlowTests`].
 
 See [`property: TestConfig.shard`].
 
-## property: FullConfig.updateSnapshots
+## property: ConfigInWorker.updateSnapshots
 * since: v1.10
 - type: <[UpdateSnapshots]<"all"|"none"|"missing">>
 
 See [`property: TestConfig.updateSnapshots`].
 
-## property: FullConfig.version
+## property: ConfigInWorker.version
 * since: v1.20
 - type: <[string]>
 
 Playwright version.
 
-## property: FullConfig.webServer
+## property: ConfigInWorker.webServer
 * since: v1.10
 - type: <[null]|[Object]>
 
 See [`property: TestConfig.webServer`].
 
-## property: FullConfig.workers
+## property: ConfigInWorker.workers
 * since: v1.10
 - type: <[int]>
 

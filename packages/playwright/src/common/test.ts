@@ -19,7 +19,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
-import type { FullProject } from '../../types/test';
+import type { ProjectInWorker } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 class Base {
@@ -238,7 +238,7 @@ export class Suite extends Base {
     return suite;
   }
 
-  project(): FullProject | undefined {
+  project(): ProjectInWorker | undefined {
     return this._fullProject?.project || this.parent?.project();
   }
 }

@@ -2,8 +2,10 @@
 * since: v1.10
 * langs: js
 
-Runtime representation of the test project configuration that can be accessed
-in the tests via [`property: TestInfo.project`] and [`property: WorkerInfo.project`].
+Runtime representation of the test project configuration that is passed
+to [Reporter]. It exposes some of the resolved fields declared in
+[TestProject]. You can get [FullProject] instance from [`property: FullConfig.projects`]
+or [`method: Suite.project`].
 
 ## property: FullProject.dependencies
 * since: v1.31

@@ -1,97 +1,95 @@
-# class: ReporterProject
+# class: ProjectInWorker
 * since: v1.10
 * langs: js
 
-Runtime representation of the test project configuration that is passed
-to [Reporter]. It exposes some of the resolved fields declared in
-[TestProject]. You can get [ReporterProject] instance from [`property: ReporterConfig.projects`]
-or [`method: Suite.project`].
+Runtime representation of the test project configuration that can be accessed
+in the tests via [`property: TestInfo.project`] and [`property: WorkerInfo.project`].
 
-## property: ReporterProject.dependencies
+## property: ProjectInWorker.dependencies
 * since: v1.31
 - type: <[Array]<[string]>>
 
 See [`property: TestProject.dependencies`].
 
-## property: ReporterProject.grep
+## property: ProjectInWorker.grep
 * since: v1.10
 - type: <[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestProject.grep`].
 
-## property: ReporterProject.grepInvert
+## property: ProjectInWorker.grepInvert
 * since: v1.10
 - type: <[null]|[RegExp]|[Array]<[RegExp]>>
 
 See [`property: TestProject.grepInvert`].
 
-## property: ReporterProject.metadata
+## property: ProjectInWorker.metadata
 * since: v1.10
 - type: <[Metadata]>
 
 See [`property: TestProject.metadata`].
 
-## property: ReporterProject.name
+## property: ProjectInWorker.name
 * since: v1.10
 - type: <[string]>
 
 See [`property: TestProject.name`].
 
-## property: ReporterProject.snapshotDir
+## property: ProjectInWorker.snapshotDir
 * since: v1.10
 - type: <[string]>
 
 See [`property: TestProject.snapshotDir`].
 
-## property: ReporterProject.outputDir
+## property: ProjectInWorker.outputDir
 * since: v1.10
 - type: <[string]>
 
 See [`property: TestProject.outputDir`].
 
-## property: ReporterProject.repeatEach
+## property: ProjectInWorker.repeatEach
 * since: v1.10
 - type: <[int]>
 
 See [`property: TestProject.repeatEach`].
 
-## property: ReporterProject.retries
+## property: ProjectInWorker.retries
 * since: v1.10
 - type: <[int]>
 
 See [`property: TestProject.retries`].
 
-## property: ReporterProject.teardown
+## property: ProjectInWorker.teardown
 * since: v1.34
 - type: ?<[string]>
 
 See [`property: TestProject.teardown`].
 
-## property: ReporterProject.testDir
+## property: ProjectInWorker.testDir
 * since: v1.10
 - type: <[string]>
 
 See [`property: TestProject.testDir`].
 
-## property: ReporterProject.testIgnore
+## property: ProjectInWorker.testIgnore
 * since: v1.10
 - type: <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 See [`property: TestProject.testIgnore`].
 
-## property: ReporterProject.testMatch
+## property: ProjectInWorker.testMatch
 * since: v1.10
 - type: <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 See [`property: TestProject.testMatch`].
 
-## property: ReporterProject.timeout
+## property: ProjectInWorker.timeout
 * since: v1.10
 - type: <[int]>
 
 See [`property: TestProject.timeout`].
 
-## property: ReporterProject.use
+## property: ProjectInWorker.use
 * since: v1.10
 - type: <[Fixtures]>
 

@@ -115,7 +115,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  * [testInfo.project](https://playwright.dev/docs/api/class-testinfo#test-info-project) and
  * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project).
  */
-export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep).
    */
@@ -1181,10 +1181,11 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 export type Metadata = { [key: string]: any };
 
 /**
- * Resolved configuration available as
- * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config).
+ * Resolved configuration available via
+ * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config) and
+ * [workerInfo.config](https://playwright.dev/docs/api/class-workerinfo#worker-info-config).
  */
-export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).
    */
@@ -1232,7 +1233,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * List of resolved projects.
    */
-  projects: FullProject<TestArgs, WorkerArgs>[];
+  projects: ProjectInWorker<TestArgs, WorkerArgs>[];
   /**
    * See [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
    */
@@ -1279,11 +1280,11 @@ export interface WorkerInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: FullConfig;
+  config: ConfigInWorker;
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: FullProject;
+  project: ProjectInWorker;
   /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
    * a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has
@@ -1327,11 +1328,11 @@ export interface TestInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: FullConfig;
+  config: ConfigInWorker;
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: FullProject;
+  project: ProjectInWorker;
   /**
    * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either `path` or
    * `body` must be specified, but not both.
