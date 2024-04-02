@@ -101,16 +101,6 @@ export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
-export interface WorkerInfo {
-  config: ConfigInWorker;
-  project: ProjectInWorker;
-}
-
-export interface TestInfo {
-  config: ConfigInWorker;
-  project: ProjectInWorker;
-}
-
 type TestDetailsAnnotation = {
   type: string;
   description?: string;

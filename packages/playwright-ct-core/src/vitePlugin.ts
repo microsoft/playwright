@@ -22,8 +22,7 @@ import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'pla
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { stoppable } from 'playwright/lib/utilsBundle';
-import type { ConfigInWorker } from 'playwright/test';
-import type { Suite } from 'playwright/types/testReporter';
+import type { FullConfig, Suite } from 'playwright/types/testReporter';
 import type { PluginContext } from 'rollup';
 import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
@@ -40,11 +39,11 @@ const playwrightVersion = getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
   let configDir: string;
-  let config: ConfigInWorker;
+  let config: FullConfig;
   return {
     name: 'playwright-vite-plugin',
 
-    setup: async (configObject: ConfigInWorker, configDirectory: string) => {
+    setup: async (configObject: FullConfig, configDirectory: string) => {
       config = configObject;
       configDir = configDirectory;
     },
@@ -88,7 +87,7 @@ type BuildInfo = {
   }
 };
 
-export async function buildBundle(config: ConfigInWorker, configDir: string, suite: Suite): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+export async function buildBundle(config: FullConfig, configDir: string, suite: Suite): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
   {
     // Detect a running dev server and use it if available.

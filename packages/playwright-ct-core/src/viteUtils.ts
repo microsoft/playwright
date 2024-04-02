@@ -18,7 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { getUserData } from 'playwright/lib/transform/compilationCache';
-import type { PlaywrightTestConfig as BasePlaywrightTestConfig, ConfigInWorker } from 'playwright/test';
+import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from 'playwright/types/test';
+import type { FullConfig } from 'playwright/types/testReporter';
 import type { InlineConfig, Plugin, TransformResult, UserConfig } from 'vite';
 import type { ImportInfo } from './tsxTransform';
 import { resolveHook } from 'playwright/lib/transform/transform';
@@ -39,7 +40,7 @@ export type ComponentDirs = {
   templateDir: string;
 };
 
-export async function resolveDirs(configDir: string, config: ConfigInWorker): Promise<ComponentDirs | null> {
+export async function resolveDirs(configDir: string, config: FullConfig): Promise<ComponentDirs | null> {
   const use = config.projects[0].use as CtConfig;
   // FIXME: use build plugin to determine html location to resolve this.
   // TemplateDir must be relative, otherwise we can't move the final index.html into its target location post-build.
@@ -56,7 +57,7 @@ export async function resolveDirs(configDir: string, config: ConfigInWorker): Pr
   };
 }
 
-export function resolveEndpoint(config: ConfigInWorker) {
+export function resolveEndpoint(config: FullConfig) {
   const use = config.projects[0].use as CtConfig;
   const baseURL = new URL(use.baseURL || 'http://localhost');
   return {
@@ -66,7 +67,7 @@ export function resolveEndpoint(config: ConfigInWorker) {
   };
 }
 
-export async function createConfig(dirs: ComponentDirs, config: ConfigInWorker, frameworkPluginFactory: (() => Promise<Plugin>) | undefined, supportJsxInJs: boolean) {
+export async function createConfig(dirs: ComponentDirs, config: FullConfig, frameworkPluginFactory: (() => Promise<Plugin>) | undefined, supportJsxInJs: boolean) {
   // We are going to have 3 config files:
   // - the defaults that user config overrides (baseConfig)
   // - the user config (userConfig)
@@ -193,6 +194,6 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   };
 }
 
-export function frameworkConfig(config: ConfigInWorker): { registerSourceFile: string, frameworkPluginFactory?: () => Promise<Plugin> } {
+export function frameworkConfig(config: FullConfig): { registerSourceFile: string, frameworkPluginFactory?: () => Promise<Plugin> } {
   return (config as any)['@playwright/experimental-ct-core'];
 }

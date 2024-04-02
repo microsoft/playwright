@@ -46,7 +46,7 @@ export class FullConfigInternal {
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
   readonly preserveOutputDir: boolean;
-  readonly webServers: NonNullable<ConfigInWorker['webServer']>[];
+  readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
@@ -123,7 +123,7 @@ export class FullConfigInternal {
       this.config.webServer = null;
       this.webServers = webServers;
     } else if (webServers) { // legacy singleton mode
-      this.config.webServer = webServers as NonNullable<ConfigInWorker['webServer']>;
+      this.config.webServer = webServers;
       this.webServers = [webServers];
     } else {
       this.webServers = [];

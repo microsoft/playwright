@@ -19,17 +19,16 @@ import { removeFolder } from 'playwright/lib/program';
 import { affectedTestFiles, cacheDir } from 'playwright/lib/transform/compilationCache';
 import { buildBundle } from './vitePlugin';
 import { resolveDirs } from './viteUtils';
-import type { Suite } from 'playwright/lib/common/test';
-import type { ConfigInWorker } from 'playwright/test';
+import type { FullConfig, Suite } from 'playwright/types/testReporter';
 
-export async function clearCacheCommand(config: ConfigInWorker, configDir: string) {
+export async function clearCacheCommand(config: FullConfig, configDir: string) {
   const dirs = await resolveDirs(configDir, config);
   if (dirs)
     await removeFolder(dirs.outDir);
   await removeFolder(cacheDir);
 }
 
-export async function findRelatedTestFilesCommand(files: string[],  config: ConfigInWorker, configDir: string, suite: Suite) {
+export async function findRelatedTestFilesCommand(files: string[],  config: FullConfig, configDir: string, suite: Suite) {
   await buildBundle(config, configDir, suite);
   return { testFiles: affectedTestFiles(files) };
 }
