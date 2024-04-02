@@ -182,7 +182,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
- * - Root suite has a child suite for each [ReporterProject].
+ * - Root suite has a child suite for each {@link FullProject}.
  *   - Project suite #1. Has a child suite for each test file in the project.
  *     - File suite #1
  *       - {@link TestCase} #1
