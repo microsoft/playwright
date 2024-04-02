@@ -22,8 +22,7 @@ import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'pla
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { stoppable } from 'playwright/lib/utilsBundle';
-import type { FullConfig } from 'playwright/test';
-import type { Suite } from 'playwright/types/testReporter';
+import type { FullConfig, Suite } from 'playwright/types/testReporter';
 import type { PluginContext } from 'rollup';
 import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';

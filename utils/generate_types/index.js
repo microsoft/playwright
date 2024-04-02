@@ -553,9 +553,7 @@ class TypesGenerator {
       overridesToDocsClassMapping: new Map([
         ['TestType', 'Test'],
         ['Config', 'TestConfig'],
-        ['FullConfig', 'TestConfig'],
         ['Project', 'TestProject'],
-        ['FullProject', 'TestProject'],
         ['PlaywrightWorkerOptions', 'TestOptions'],
         ['PlaywrightTestOptions', 'TestOptions'],
         ['PlaywrightWorkerArgs', 'Fixtures'],
@@ -563,9 +561,6 @@ class TypesGenerator {
         ['AsymmetricMatchers', 'GenericAssertions'],
       ]),
       ignoreMissing: new Set([
-        'FullConfig.configFile',
-        'FullConfig.version',
-        'FullConfig.rootDir',
         'SuiteFunction',
         'TestFunction',
         'PlaywrightWorkerOptions.defaultBrowserType',

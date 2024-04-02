@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
-export type { FullConfig, TestStatus, FullProject } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, ConfigInWorker } from './test';
+export type { TestStatus } from './test';
+
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
+
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+  projects: FullProject<TestArgs, WorkerArgs>[];
+  reporter: ReporterDescription[];
+  webServer: ConfigInWorker['webServer'];
+}
+
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+  use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+}
 
 export interface Suite {
   type: 'root' | 'project' | 'file' | 'describe';
-  project(): FullProject | undefined;
 }
 
 export interface TestCase {
@@ -56,7 +67,6 @@ export interface FullResult {
 }
 
 export interface Reporter {
-  onBegin?(config: FullConfig, suite: Suite): void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 

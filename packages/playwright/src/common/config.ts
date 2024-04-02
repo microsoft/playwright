@@ -23,7 +23,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
-import type { FullConfig, FullProject } from '../../types/test';
+import type { FullConfig, FullProject } from '../../types/testReporter';
 import { setTransformConfig } from '../transform/transform';
 
 export type ConfigLocation = {
@@ -46,7 +46,7 @@ export class FullConfigInternal {
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
   readonly preserveOutputDir: boolean;
-  readonly webServers: Exclude<FullConfig['webServer'], null>[];
+  readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
@@ -182,7 +182,7 @@ export class FullProjectInternal {
       // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
       repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
-      metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
+      metadata: takeFirst(projectConfig.metadata, config.metadata, {}),
       name: takeFirst(projectConfig.name, config.name, ''),
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),

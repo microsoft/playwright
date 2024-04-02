@@ -103,7 +103,7 @@ Called once before running tests. All tests have been already discovered and put
 
 ### param: Reporter.onBegin.config
 * since: v1.10
-- `config` <[TestConfig]>
+- `config` <[FullConfig]>
 
 Resolved configuration.
 

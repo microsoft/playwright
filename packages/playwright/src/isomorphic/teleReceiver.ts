@@ -15,7 +15,7 @@
  */
 
 import type { Annotation } from '../common/config';
-import type { FullProject, Metadata } from '../../types/test';
+import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
@@ -590,7 +590,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   }
 }
 
-export type TeleFullProject = FullProject;
+export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
   forbidOnly: false,

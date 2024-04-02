@@ -4,7 +4,7 @@
 
 `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
 
-* Root suite has a child suite for each [TestProject].
+* Root suite has a child suite for each [FullProject].
   * Project suite #1. Has a child suite for each test file in the project.
     * File suite #1
       * [TestCase] #1
@@ -46,7 +46,7 @@ Parent suite, missing for the root suite.
 
 ## method: Suite.project
 * since: v1.10
-- returns: ?<[TestProject]>
+- returns: <[FullProject]|[undefined]>
 
 Configuration of the project this suite belongs to, or [void] for the root suite.
 
