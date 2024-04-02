@@ -76,7 +76,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       connection.on('close', closePipe);
 
       let device: AndroidDevice;
-      let closeError: Error | undefined;
+      let closeError: string | undefined;
       const onPipeClosed = () => {
         device?._didClose();
         connection.close(closeError);
@@ -88,7 +88,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         try {
           connection!.dispatch(message);
         } catch (e) {
-          closeError = e;
+          closeError = String(e);
           closePipe();
         }
       });

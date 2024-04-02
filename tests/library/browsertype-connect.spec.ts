@@ -129,6 +129,16 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).not.toContain('secret=MYSECRET');
     });
 
+    test('should print custom ws close error', async ({ connect, server }) => {
+      server.onceWebSocketConnection((ws, request) => {
+        ws.on('message', message => {
+          ws.close(4123, 'Oh my!');
+        });
+      });
+      const error = await connect(`ws://localhost:${server.PORT}/ws`).catch(e => e);
+      expect(error.message).toContain('browserType.connect: Oh my!');
+    });
+
     test('should be able to reconnect to a browser', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       {
@@ -325,7 +335,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       expect(browser.isConnected()).toBe(false);
       const error = await page.evaluate('1 + 1').catch(e => e) as Error;
-      expect(error.message).toContain('has been closed');
+      expect(error.message).toContain('closed');
     });
 
     test('should throw when calling waitForNavigation after disconnect', async ({ connect, startRemoteServer }) => {

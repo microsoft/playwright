@@ -2586,7 +2586,7 @@ scheme.JsonPipeMessageEvent = tObject({
   message: tAny,
 });
 scheme.JsonPipeClosedEvent = tObject({
-  error: tOptional(tType('SerializedError')),
+  reason: tOptional(tString),
 });
 scheme.JsonPipeSendParams = tObject({
   message: tAny,

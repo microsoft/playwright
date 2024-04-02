@@ -527,3 +527,13 @@ test('setInputFiles should preserve lastModified timestamp', async ({ browserTyp
     await browserServer.close();
   }
 });
+
+test('should print custom ws close error', async ({ browserType, server }) => {
+  server.onceWebSocketConnection((ws, request) => {
+    ws.on('message', message => {
+      ws.close(4123, 'Oh my!');
+    });
+  });
+  const error = await browserType.connectOverCDP(`ws://localhost:${server.PORT}/ws`).catch(e => e);
+  expect(error.message).toContain(`Browser logs:\n\nOh my!\n`);
+});

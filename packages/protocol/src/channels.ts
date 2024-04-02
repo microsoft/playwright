@@ -4674,7 +4674,7 @@ export type JsonPipeMessageEvent = {
   message: any,
 };
 export type JsonPipeClosedEvent = {
-  error?: SerializedError,
+  reason?: string,
 };
 export type JsonPipeSendParams = {
   message: any,

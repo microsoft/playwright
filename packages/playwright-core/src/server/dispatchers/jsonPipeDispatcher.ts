@@ -17,7 +17,6 @@
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
-import { serializeError } from '../errors';
 import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 
 export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
@@ -43,10 +42,9 @@ export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.Js
       this._dispatchEvent('message', { message });
   }
 
-  wasClosed(error?: Error): void {
+  wasClosed(reason?: string): void {
     if (!this._disposed) {
-      const params = error ? { error: serializeError(error) } : {};
-      this._dispatchEvent('closed', params);
+      this._dispatchEvent('closed', { reason });
       this._dispose();
     }
   }

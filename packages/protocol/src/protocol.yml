@@ -3548,4 +3548,4 @@ JsonPipe:
 
     closed:
       parameters:
-        error: SerializedError?
+        reason: string?
