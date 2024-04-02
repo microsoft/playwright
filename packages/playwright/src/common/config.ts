@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
+import type { Config, ConfigInWorker, Fixtures, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
-import type { ConfigInWorker, ProjectInWorker } from '../../types/test';
+import type { FullConfig, FullProject } from '../../types/testReporter';
 import { setTransformConfig } from '../transform/transform';
 
 export type ConfigLocation = {
@@ -40,13 +40,13 @@ export type Annotation = { type: string, description?: string };
 export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
-  readonly config: ConfigInWorker;
+  readonly config: FullConfig;
   readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly ignoreSnapshots: boolean;
   readonly preserveOutputDir: boolean;
-  readonly webServers: Exclude<ConfigInWorker['webServer'], null>[];
+  readonly webServers: NonNullable<ConfigInWorker['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
@@ -123,7 +123,7 @@ export class FullConfigInternal {
       this.config.webServer = null;
       this.webServers = webServers;
     } else if (webServers) { // legacy singleton mode
-      this.config.webServer = webServers;
+      this.config.webServer = webServers as NonNullable<ConfigInWorker['webServer']>;
       this.webServers = [webServers];
     } else {
       this.webServers = [];
@@ -158,7 +158,7 @@ export class FullConfigInternal {
 }
 
 export class FullProjectInternal {
-  readonly project: ProjectInWorker;
+  readonly project: FullProject;
   readonly fullConfig: FullConfigInternal;
   readonly fullyParallel: boolean;
   readonly expect: Project['expect'];
@@ -286,6 +286,6 @@ export const defaultReporter = process.env.CI ? 'dot' : 'list';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
 
-export function getProjectId(project: ProjectInWorker): string {
+export function getProjectId(project: FullProject): string {
   return (project as any).__projectId!;
 }

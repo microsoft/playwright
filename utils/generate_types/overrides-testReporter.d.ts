@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, ConfigInWorker } from './test';
 export type { TestStatus } from './test';
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
@@ -42,7 +42,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   shard: { total: number, current: number } | null;
   updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
-  webServer: TestConfigWebServer | null;
+  webServer: NonNullable<ConfigInWorker['webServer']>|null;
   configFile?: string;
 }
 // [internal] !!! DO NOT ADD TO THIS !!! See prior note.

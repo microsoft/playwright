@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, ConfigInWorker } from './test';
 export type { TestStatus } from './test';
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
@@ -101,7 +101,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testConfig.webServer](https://playwright.dev/docs/api/class-testconfig#test-config-web-server).
    */
-  webServer: TestConfigWebServer | null;
+  webServer: NonNullable<ConfigInWorker['webServer']>|null;
   /**
    * Path to the configuration file (if any) used to run the tests.
    */
