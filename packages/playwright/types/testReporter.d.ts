@@ -441,6 +441,17 @@ export interface FullResult {
  * [reporter.printsToStdio()](https://playwright.dev/docs/api/class-reporter#reporter-prints-to-stdio) and return
  * `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter
  * to enhance user experience.
+ *
+ * **Merged report API notes**
+ *
+ * When merging mutliple [`blob`](https://playwright.dev/docs/api/test-reporters#blob-reporter) reports via
+ * [`merge-reports`](https://playwright.dev/docs/api/test-sharding#merge-reports-cli) CLI command, the same {@link Reporter} API is called to
+ * produce final reports and all existing reporters should work without any changes. There some subtle differences
+ * though which might affect some custom reporters.
+ * - Projects from different shards are always kept as separate {@link TestProject} objects. E.g. if project
+ *   'Desktop Chrome' was sharded across 5 machines then there will be 5 instances of projects with the same name in
+ *   the config passed to
+ *   [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin).
  */
 export interface Reporter {
   /**
