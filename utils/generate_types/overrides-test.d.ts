@@ -35,27 +35,9 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullProjectInternal instead.
 export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  metadata: Metadata;
-  name: string;
-  dependencies: string[];
-  snapshotDir: string;
-  outputDir: string;
-  repeatEach: number;
-  retries: number;
-  teardown?: string;
-  testDir: string;
-  testIgnore: string | RegExp | (string | RegExp)[];
-  testMatch: string | RegExp | (string | RegExp)[];
-  timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
-// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
@@ -71,32 +53,10 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 
 export type Metadata = { [key: string]: any };
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
-  forbidOnly: boolean;
-  fullyParallel: boolean;
-  globalSetup: string | null;
-  globalTeardown: string | null;
-  globalTimeout: number;
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  maxFailures: number;
-  metadata: Metadata;
-  version: string;
-  preserveOutput: 'always' | 'never' | 'failures-only';
   projects: ProjectInWorker<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
-  reportSlowTests: { max: number, threshold: number } | null;
-  rootDir: string;
-  quiet: boolean;
-  shard: { total: number, current: number } | null;
-  updateSnapshots: 'all' | 'none' | 'missing';
-  workers: number;
   webServer: TestConfigWebServer | null;
-  configFile?: string;
-  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';

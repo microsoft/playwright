@@ -19,60 +19,18 @@ export type { TestStatus } from './test';
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  forbidOnly: boolean;
-  fullyParallel: boolean;
-  globalSetup: string | null;
-  globalTeardown: string | null;
-  globalTimeout: number;
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  maxFailures: number;
-  metadata: Metadata;
-  version: string;
-  preserveOutput: 'always' | 'never' | 'failures-only';
   projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
-  reportSlowTests: { max: number, threshold: number } | null;
-  rootDir: string;
-  quiet: boolean;
-  shard: { total: number, current: number } | null;
-  updateSnapshots: 'all' | 'none' | 'missing';
-  workers: number;
-  webServer: NonNullable<ConfigInWorker['webServer']>|null;
-  configFile?: string;
+  webServer: ConfigInWorker['webServer'];
 }
-// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
-
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullProjectInternal instead.
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  metadata: Metadata;
-  name: string;
-  dependencies: string[];
-  snapshotDir: string;
-  outputDir: string;
-  repeatEach: number;
-  retries: number;
-  teardown?: string;
-  testDir: string;
-  testIgnore: string | RegExp | (string | RegExp)[];
-  testMatch: string | RegExp | (string | RegExp)[];
-  timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
-// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 export interface Suite {
   type: 'root' | 'project' | 'file' | 'describe';
-  project(): FullProject | undefined;
 }
 
 export interface TestCase {
@@ -109,7 +67,6 @@ export interface FullResult {
 }
 
 export interface Reporter {
-  onBegin?(config: FullConfig, suite: Suite): void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 

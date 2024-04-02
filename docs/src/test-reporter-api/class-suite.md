@@ -46,7 +46,7 @@ Parent suite, missing for the root suite.
 
 ## method: Suite.project
 * since: v1.10
-- returns: ?<[FullProject]>
+- returns: <[FullProject]|[undefined]>
 
 Configuration of the project this suite belongs to, or [void] for the root suite.
 
