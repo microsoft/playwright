@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { Config, ConfigInWorker, Fixtures, Project, ReporterDescription } from '../../types/test';
+import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
@@ -119,7 +119,7 @@ export class FullConfigInternal {
 
     const webServers = takeFirst(userConfig.webServer, null);
     if (Array.isArray(webServers)) { // multiple web server mode
-      // Due to previous choices, this value shows up to the user in globalSetup as part of ConfigInWorker. Arrays are not supported by the old type.
+      // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
       this.config.webServer = null;
       this.webServers = webServers;
     } else if (webServers) { // legacy singleton mode
