@@ -245,6 +245,11 @@ test.describe('toHaveURL', () => {
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
     expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
   });
+
+  test('support ignoreCase', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    await expect(page).toHaveURL('DATA:teXT/HTml,<div>a</div>', { ignoreCase: true });
+  });
 });
 
 test.describe('toHaveAttribute', () => {

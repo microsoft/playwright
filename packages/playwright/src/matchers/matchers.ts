@@ -326,13 +326,13 @@ export function toHaveURL(
   this: ExpectMatcherContext,
   page: Page,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { ignoreCase?: boolean, timeout?: number },
 ) {
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
   const locator = page.locator(':root') as LocatorEx;
   return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
 }
