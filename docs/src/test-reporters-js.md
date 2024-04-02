@@ -349,19 +349,6 @@ Or just pass the reporter file path as `--reporter` command line option:
 npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 ```
 
-## Merged report API notes
-
-When merging mutliple [`blob`](./test-reporters#blob-reporter) reports via [`merge-reports`](./test-sharding#merge-reports-cli) CLI
-command, the same [Reporter] API is called to produce final reports and all existing reporters
-should work without any changes. There some subtle differences though which might affect some custom
-reporters.
-
-**Merging projects**
-
-Projects from different shards are always kept as separate [TestProject] objects. E.g. if project
-'Desktop Chrome' was sharded across 5 machines then there will be 5 instances of projects with the
-same name in the config passed to [`method: Reporter.onBegin`].
-
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
