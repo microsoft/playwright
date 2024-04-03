@@ -553,9 +553,7 @@ class TypesGenerator {
         'GenericAssertions.stringMatching',
         'PlaywrightAssertions',
         'Test',
-        'TestConfig.use',
         'TestOptions',
-        'TestProject.use',
       ]),
       overridesToDocsClassMapping: new Map([
         ['AsymmetricMatchers', 'GenericAssertions'],
