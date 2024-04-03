@@ -221,6 +221,7 @@ async function run() {
               }
               if (!node.text)
                 return;
+              // Match links in a lax way (.+), so they can include spaces, backticks etc.
               for (const [, mdLinkName, mdLink] of node.text.matchAll(/\[(.+)\]\((.*?)\)/g)) {
                 const isExternal = mdLink.startsWith('http://') || mdLink.startsWith('https://');
                 if (isExternal)
