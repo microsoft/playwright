@@ -280,6 +280,33 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
+    test('should includeProjectInTestName', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            projects: [ { name: 'project1' }, { name: 'project2' } ],
+            reporter: [['junit', { includeProjectInTestName: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: '' });
+      expect(result.exitCode).toBe(0);
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['testsuite'][0]['$']['name']).toBe('a.test.js');
+      expect(xml['testsuites']['testsuite'][0]['$']['hostname']).toBe('project1');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('[project1] one');
+      expect(xml['testsuites']['testsuite'][1]['$']['name']).toBe('a.test.js');
+      expect(xml['testsuites']['testsuite'][1]['$']['hostname']).toBe('project2');
+      expect(xml['testsuites']['testsuite'][1]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('[project2] one');
+    });
+
     test('should render existing attachments, but not missing ones', async ({ runInlineTest }) => {
       test.skip(useIntermediateMergeReport, 'Blob report hashes attachment paths');
       const result = await runInlineTest({
