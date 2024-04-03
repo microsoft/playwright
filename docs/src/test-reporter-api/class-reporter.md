@@ -89,7 +89,7 @@ If your custom reporter does not print anything to the terminal, implement [`met
 
 **Merged report API notes**
 
-When merging mutliple [`blob`](./test-reporters#blob-reporter) reports via [`merge-reports`](./test-sharding#merge-reports-cli) CLI
+When merging multiple [`blob`](../test-reporters#blob-reporter) reports via [`merge-reports`](../test-sharding#merge-reports-cli) CLI
 command, the same [Reporter] API is called to produce final reports and all existing reporters
 should work without any changes. There some subtle differences though which might affect some custom
 reporters.

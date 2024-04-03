@@ -6,9 +6,6 @@
 Error is raised whenever certain operations are terminated abnormally, e.g.
 browser closes while [`method: Page.evaluate`] is running. All Playwright exceptions
 inherit from this class.
-- [error.message](./class-error.md#errormessage)
-- [error.name](./class-error.md#errorname)
-- [error.stack](./class-error.md#errorstack)
 
 ## property: Error.message
 * since: v1.11

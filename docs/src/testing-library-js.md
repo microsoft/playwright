@@ -99,7 +99,7 @@ await expect(page.getByText('the lion king')).toBeVisible();
 await expect(page.getByText('the mummy')).toBeHidden();
 ```
 
-When you cannot find a suitable assertion, use [`expect.poll`](./test-assertions#polling) instead.
+When you cannot find a suitable assertion, use [`expect.poll`](./test-assertions#expectpoll) instead.
 
 ```js
 await expect.poll(async () => {

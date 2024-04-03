@@ -133,14 +133,14 @@ async function run() {
     for (const lang of langs) {
       try {
         let documentation = parseApi(path.join(documentationRoot, 'api'));
-        documentation.filterForLanguage(lang);
         if (lang === 'js') {
-          const testDocumentation = parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'));
-          testDocumentation.filterForLanguage('js');
-          const testReporterDocumentation = parseApi(path.join(documentationRoot, 'test-reporter-api'));
-          testReporterDocumentation.filterForLanguage('js');
-          documentation = documentation.mergeWith(testDocumentation).mergeWith(testReporterDocumentation);
+          documentation = documentation.mergeWith(
+            parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'))
+          ).mergeWith(
+            parseApi(path.join(documentationRoot, 'test-reporter-api'))
+          );
         }
+        documentation.filterForLanguage(lang);
 
         // This validates member links.
         documentation.setLinkRenderer(() => undefined);
@@ -153,8 +153,18 @@ async function run() {
 
         for (const cls of documentation.classesArray) {
           const filePath = path.join(documentationRoot, 'api', 'class-' + cls.name.toLowerCase() + '.md');
-          for (const member of cls.membersArray)
-            mdSections.add(filePath + '#' + toKebabCase(cls.name).toLowerCase() + '-' + toKebabCase(member.name).toLowerCase());
+          for (const member of cls.membersArray) {
+            const memberHash = filePath + '#' + toKebabCase(cls.name).toLowerCase() + '-' + toKebabCase(member.name).toLowerCase()
+            mdSections.add(memberHash);
+            for (const arg of member.argsArray) {
+              mdSections.add(memberHash + '-option-' + toKebabCase(arg.name).toLowerCase());
+              if (arg.name === "options" && arg.type) {
+                for (const option of arg.type.deepProperties())
+                  mdSections.add(memberHash + '-option-' + toKebabCase(option.name).toLowerCase());
+              }
+            }
+          }
+
           for (const event of cls.eventsArray)
             mdSections.add(filePath + '#' + toKebabCase(cls.name).toLowerCase() + '-event-' + toKebabCase(event.name).toLowerCase());
         }
@@ -211,7 +221,8 @@ async function run() {
               }
               if (!node.text)
                 return;
-              for (const [, mdLinkName, mdLink] of node.text.matchAll(/\[([\w\s\d]+)\]\((.*?)\)/g)) {
+              // Match links in a lax way (.+), so they can include spaces, backticks etc.
+              for (const [, mdLinkName, mdLink] of node.text.matchAll(/\[(.+)\]\((.*?)\)/g)) {
                 const isExternal = mdLink.startsWith('http://') || mdLink.startsWith('https://');
                 if (isExternal)
                   continue;
@@ -296,6 +307,10 @@ async function getBrowserVersions() {
   return result;
 }
 
+/**
+ * @param {string} text
+ * @returns {string}
+ */
 function mdSectionHash(text) {
   return text.toLowerCase().replace(/\s/g, '-').replace(/[^-_a-z0-9]/g, '').replace(/^-+/, '');
 }

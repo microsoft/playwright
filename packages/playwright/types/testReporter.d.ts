@@ -336,8 +336,8 @@ export interface FullResult {
  *
  * **Merged report API notes**
  *
- * When merging mutliple [`blob`](https://playwright.dev/docs/api/test-reporters#blob-reporter) reports via
- * [`merge-reports`](https://playwright.dev/docs/api/test-sharding#merge-reports-cli) CLI command, the same {@link Reporter} API is called to
+ * When merging multiple [`blob`](https://playwright.dev/docs/test-reporters#blob-reporter) reports via
+ * [`merge-reports`](https://playwright.dev/docs/test-sharding#merge-reports-cli) CLI command, the same {@link Reporter} API is called to
  * produce final reports and all existing reporters should work without any changes. There some subtle differences
  * though which might affect some custom reporters.
  * - Projects from different shards are always kept as separate {@link TestProject} objects. E.g. if project

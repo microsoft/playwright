@@ -80,14 +80,14 @@ npx playwright test --debug
 ```
 #### Debug one test on all browsers
 
-To debug one test on a specific line run the test command followed by the name of the test file and the line number of the test you want to debug, followed by the `--debug` flag. This will run a single test in each browser configured in your [`playwright.config`](/test-configuration.md#multiple-browsers) and open the inspector.
+To debug one test on a specific line run the test command followed by the name of the test file and the line number of the test you want to debug, followed by the `--debug` flag. This will run a single test in each browser configured in your [`playwright.config`](./test-projects.md#configure-projects-for-multiple-browsers) and open the inspector.
 
 ```bash
 npx playwright test example.spec.ts:10 --debug
 ```
 #### Debug on a specific browser
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers). Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
+In Playwright you can configure projects in your [`playwright.config`](./test-projects.md#configure-projects-for-multiple-browsers). Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
 
 ```bash
 npx playwright test --project=chromium --debug
