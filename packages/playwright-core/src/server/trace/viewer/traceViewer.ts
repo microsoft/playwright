@@ -216,7 +216,7 @@ class StdinServer implements Transport {
   }
 
   async dispatch(method: string, params: any) {
-    if (method === 'ready') {
+    if (method === 'initialize') {
       if (this._traceUrl)
         this._loadTrace(this._traceUrl);
     }

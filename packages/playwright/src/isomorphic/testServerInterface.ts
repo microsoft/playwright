@@ -21,15 +21,18 @@ import type { JsonEvent } from './teleReceiver';
 export type ReportEntry = JsonEvent;
 
 export interface TestServerInterface {
-  setSerializer(params: { serializer: string }): Promise<void>;
+  initialize(params: {
+    serializer?: string,
+    closeOnDisconnect?: boolean,
+    interceptStdio?: boolean,
+    watchTestDirs?: boolean,
+  }): Promise<void>;
 
   ping(params: {}): Promise<void>;
 
   watch(params: {
     fileNames: string[];
   }): Promise<void>;
-
-  watchTestDir(params: {}): Promise<void>;
 
   open(params: { location: reporterTypes.Location }): Promise<void>;
 
@@ -89,8 +92,6 @@ export interface TestServerInterface {
   }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }>;
 
   stopTests(params: {}): Promise<void>;
-
-  setInterceptStdio(params: { intercept: boolean }): Promise<void>;
 
   closeGracefully(params: {}): Promise<void>;
 }
