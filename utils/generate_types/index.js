@@ -509,7 +509,7 @@ class TypesGenerator {
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
     const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
     types += [
-      `type Devices = {`,
+      `export type Devices = {`,
       namedDevices,
       `  [key: string]: DeviceDescriptor;`,
       `}`,
