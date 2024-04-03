@@ -29,19 +29,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
 
-export interface Suite {
-  type: 'root' | 'project' | 'file' | 'describe';
-}
-
-export interface TestCase {
-  type: 'test';
-  expectedStatus: TestStatus;
-}
-
-export interface TestResult {
-  status: TestStatus;
-}
-
 /**
  * Result of the full test run.
  */

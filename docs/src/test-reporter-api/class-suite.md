@@ -81,7 +81,7 @@ Returns a list of titles from the root down to this suite.
 
 ## property: Suite.type
 * since: v1.44
-- returns: <[SuiteType]<'root' | 'project' | 'file' | 'describe'>>
+- returns: <[SuiteType]<"root"|"project"|"file"|"describe">>
 
 Returns the type of the suite. The Suites form the following hierarchy:
 `root` -> `project` -> `file` -> `describe` -> ...`describe` -> `test`.

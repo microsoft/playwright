@@ -110,6 +110,6 @@ Returns a list of titles from the root down to this test.
 
 ## property: TestCase.type
 * since: v1.44
-- returns: <[TestCaseType]<'test'>>
+- returns: <[TestCaseType]<"test">>
 
 Returns type of the test.
