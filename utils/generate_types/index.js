@@ -493,7 +493,14 @@ class TypesGenerator {
   const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  const assertionClasses = new Set(['GenericAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'SnapshotAssertions', 'PlaywrightAssertions']);
+  const assertionClasses = new Set([
+    'APIResponseAssertions',
+    'GenericAssertions',
+    'LocatorAssertions',
+    'PageAssertions',
+    'PlaywrightAssertions',
+    'SnapshotAssertions',
+  ]);
 
   /**
    * @param {boolean} includeExperimental
@@ -503,7 +510,7 @@ class TypesGenerator {
     const documentation = coreDocumentation.clone();
     const generator = new TypesGenerator({
       documentation,
-      doNotGenerate: new Set([...assertionClasses]),
+      doNotGenerate: assertionClasses,
       includeExperimental,
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
@@ -536,12 +543,7 @@ class TypesGenerator {
       documentation,
       doNotGenerate: new Set([
         ...coreDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name)),
-        'PlaywrightAssertions',
-        'Test',
         'Fixtures',
-        'TestOptions',
-        'TestConfig.use',
-        'TestProject.use',
         'GenericAssertions.any',
         'GenericAssertions.anything',
         'GenericAssertions.arrayContaining',
@@ -549,26 +551,29 @@ class TypesGenerator {
         'GenericAssertions.objectContaining',
         'GenericAssertions.stringContaining',
         'GenericAssertions.stringMatching',
+        'PlaywrightAssertions',
+        'Test',
+        'TestOptions',
       ]),
       overridesToDocsClassMapping: new Map([
-        ['TestType', 'Test'],
-        ['Config', 'TestConfig'],
-        ['Project', 'TestProject'],
-        ['PlaywrightWorkerOptions', 'TestOptions'],
+        ['AsymmetricMatchers', 'GenericAssertions'],
+        ['PlaywrightTestArgs', 'Fixtures'],
         ['PlaywrightTestOptions', 'TestOptions'],
         ['PlaywrightWorkerArgs', 'Fixtures'],
-        ['PlaywrightTestArgs', 'Fixtures'],
-        ['AsymmetricMatchers', 'GenericAssertions'],
+        ['PlaywrightWorkerOptions', 'TestOptions'],
+        ['TestType', 'Test'],
       ]),
       ignoreMissing: new Set([
+        'Config',
+        'ExpectMatcherUtils',
+        'Matchers',
+        'PlaywrightWorkerArgs.playwright',
+        'PlaywrightWorkerOptions.defaultBrowserType',
+        'Project',
         'SuiteFunction',
         'TestFunction',
-        'PlaywrightWorkerOptions.defaultBrowserType',
-        'PlaywrightWorkerArgs.playwright',
-        'Matchers',
-        'ExpectMatcherUtils',
       ]),
-      doNotExportClassNames: new Set([...assertionClasses, 'TestProject']),
+      doNotExportClassNames: assertionClasses,
       includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
@@ -590,8 +595,8 @@ class TypesGenerator {
         'FullResult',
         'JSONReport',
         'JSONReportError',
-        'JSONReportSuite',
         'JSONReportSpec',
+        'JSONReportSuite',
         'JSONReportTest',
         'JSONReportTestResult',
         'JSONReportTestStep',

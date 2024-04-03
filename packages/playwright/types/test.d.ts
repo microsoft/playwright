@@ -82,7 +82,7 @@ type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
  * ```
  *
  */
-export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
+interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Options for all tests in this project, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
@@ -108,6 +108,485 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    * all projects.
    */
   use?: UseOptions<TestArgs, WorkerArgs>;
+  /**
+   * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
+   * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
+   * the dependencies and behaves as if they were not specified.
+   *
+   * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
+   * report, etc.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  dependencies?: Array<string>;
+
+  /**
+   * Configuration for the `expect` assertion library.
+   *
+   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option
+   * for all projects.
+   */
+  expect?: {
+    /**
+     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+     */
+    timeout?: number;
+
+    /**
+     * Configuration for the
+     * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+     * method.
+     */
+    toHaveScreenshot?: {
+      /**
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
+       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
+       * Defaults to `"disabled"`.
+       */
+      animations?: "allow"|"disabled";
+
+      /**
+       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"hide"`.
+       */
+      caret?: "hide"|"initial";
+
+      /**
+       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"css"`.
+       */
+      scale?: "css"|"device";
+
+      /**
+       * See `style` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
+       */
+      stylePath?: string|Array<string>;
+    };
+
+    /**
+     * Configuration for the
+     * [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1)
+     * method.
+     */
+    toMatchSnapshot?: {
+      /**
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * default.
+       */
+      maxDiffPixelRatio?: number;
+    };
+
+    /**
+     * Configuration for the [expect(value).toPass()](https://playwright.dev/docs/test-assertions) method.
+     */
+    toPass?: {
+      /**
+       * timeout for toPass method in milliseconds.
+       */
+      timeout?: number;
+
+      /**
+       * probe intervals for toPass method in milliseconds.
+       */
+      intervals?: Array<number>;
+    };
+  };
+
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the
+   * same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same
+   * worker process.
+   *
+   * You can configure entire test project to concurrently run all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
+
+  /**
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
+   * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
+   * option. The regular expression will be tested against the string that consists of the test file name,
+   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grep?: RegExp|Array<RegExp>;
+
+  /**
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Metadata that will be put directly to the test report serialized as JSON.
+   */
+  metadata?: Metadata;
+
+  /**
+   * Project name is visible in the report and during test execution.
+   */
+  name?: string;
+
+  /**
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+   *
+   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
+   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
+   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
+   *
+   * Here is an example that uses
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to
+   * create a temporary file.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   * import fs from 'fs';
+   *
+   * test('example test', async ({}, testInfo) => {
+   *   const file = testInfo.outputPath('temporary-file.txt');
+   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
+   * });
+   * ```
+   *
+   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
+   * option for all projects.
+   */
+  outputDir?: string;
+
+  /**
+   * The number of times to repeat each test, useful for debugging flaky tests.
+   *
+   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change
+   * this option for all projects.
+   */
+  repeatEach?: number;
+
+  /**
+   * The maximum number of retry attempts given to failed tests. Learn more about
+   * [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to
+   * change the number of retries for a specific file or a group of tests.
+   *
+   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this
+   * option for all projects.
+   */
+  retries?: number;
+
+  /**
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
+   *
+   * The directory for each test can be accessed by
+   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
+   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   *
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir)
+   * would resolve to `snapshots/a.spec.js-snapshots`.
+   */
+  snapshotDir?: string;
+
+  /**
+   * This option configures a template controlling location of snapshots generated by
+   * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+   * and
+   * [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   testDir: './tests',
+   *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The value might include some "tokens" that will be replaced with actual values during test execution.
+   *
+   * Consider the following file structure:
+   *
+   * ```txt
+   * playwright.config.ts
+   * tests/
+   * └── page/
+   *     └── page-click.spec.ts
+   * ```
+   *
+   * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
+   *
+   * ```js
+   * // page-click.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('suite', () => {
+   *   test('test should work', async ({ page }) => {
+   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+   *   });
+   * });
+   * ```
+   *
+   * The list of supported tokens:
+   * - `{testDir}` - Project's
+   *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
+   *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
+   *     config)
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
+   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+   * - `{platform}` - The value of `process.platform`.
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
+   * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
+   *   - Value: `page`
+   * - `{testFileName}` - Test file name with extension.
+   *   - Value: `page-click.spec.ts`
+   * - `{testFilePath}` - Relative path from `testDir` to **test file**
+   *   - Value: `page/page-click.spec.ts`
+   * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
+   *   - Value: `suite-test-should-work`
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
+   *   - Value: `foo/bar/baz`
+   * - `{ext}` - snapshot extension (with dots)
+   *   - Value: `.png`
+   *
+   * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
+   *
+   * Consider the following config:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
+   *   testMatch: 'example.spec.ts',
+   *   projects: [
+   *     { use: { browserName: 'firefox' } },
+   *     { name: 'chromium', use: { browserName: 'chromium' } },
+   *   ],
+   * });
+   * ```
+   *
+   * In this config:
+   * 1. First project **does not** have a name, so its snapshots will be stored in
+   *    `<configDir>/__screenshots__/example.spec.ts/...`.
+   * 1. Second project **does** have a name, so its snapshots will be stored in
+   *    `<configDir>/__screenshots__/chromium/example.spec.ts/..`.
+   * 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
+   * 1. Forward slashes `"/"` can be used as path separators on any platform.
+   */
+  snapshotPathTemplate?: string;
+
+  /**
+   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
+   * cleanup any resources acquired by this project.
+   *
+   * Passing `--no-deps` argument ignores
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
+   * it was not specified.
+   *
+   * **Usage**
+   *
+   * A common pattern is a "setup" dependency that has a corresponding "teardown":
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *       teardown: 'teardown',
+   *     },
+   *     {
+   *       name: 'teardown',
+   *       testMatch: /global.teardown\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  teardown?: string;
+
+  /**
+   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   *
+   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all
+   * other tests in stable Chrome browser.
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'Smoke Chromium',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'chromium',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke WebKit',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'webkit',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke Firefox',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'firefox',
+   *       }
+   *     },
+   *     {
+   *       name: 'Chrome Stable',
+   *       testDir: './',
+   *       use: {
+   *         browserName: 'chromium',
+   *         channel: 'chrome',
+   *       }
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this
+   * option for all projects.
+   */
+  testDir?: string;
+
+  /**
+   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute
+   * file path. Strings are treated as glob patterns.
+   *
+   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
+   *
+   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change
+   * this option for all projects.
+   */
+  testIgnore?: string|RegExp|Array<string|RegExp>;
+
+  /**
+   * Only the files matching one of these patterns are executed as test files. Matching is performed against the
+   * absolute file path. Strings are treated as glob patterns.
+   *
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * `login-screen.wrong-credentials.spec.ts`.
+   *
+   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
+   * option for all projects.
+   */
+  testMatch?: string|RegExp|Array<string|RegExp>;
+
+  /**
+   * Timeout for each test in milliseconds. Defaults to 30 seconds.
+   *
+   * This is a base timeout for all tests. Each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of
+   * tests can configure the timeout with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
+   *
+   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this
+   * option for all projects.
+   */
+  timeout?: number;
+}
+
+export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
 }
 
 /**
@@ -215,7 +694,26 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  * ```
  *
  */
-interface TestConfig {
+interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
+  /**
+   * Playwright Test supports running multiple test projects at the same time. See {@link TestProject} for more
+   * information.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig, devices } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     { name: 'chromium', use: devices['Desktop Chrome'] }
+   *   ]
+   * });
+   * ```
+   *
+   */
+  projects?: Project<TestArgs, WorkerArgs>[];
   /**
    * The list of reporters to use. Each reporter can be:
    * - A builtin reporter name like `'list'` or `'json'`.
@@ -239,6 +737,26 @@ interface TestConfig {
    *
    */
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  /**
+   * Global options for all tests, for example
+   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
+   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options]{@link TestOptions}.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     browserName: 'chromium',
+   *   },
+   * });
+   * ```
+   *
+   */
+  use?: UseOptions<TestArgs, WorkerArgs>;
   /**
    * Launch a development web server (or multiple) during the tests.
    *
@@ -737,26 +1255,6 @@ interface TestConfig {
   preserveOutput?: "always"|"never"|"failures-only";
 
   /**
-   * Playwright Test supports running multiple test projects at the same time. See {@link TestProject} for more
-   * information.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig, devices } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     { name: 'chromium', use: devices['Desktop Chrome'] }
-   *   ]
-   * });
-   * ```
-   *
-   */
-  projects?: Array<TestProject>;
-
-  /**
    * Whether to suppress stdio and stderr output from the tests.
    *
    * **Usage**
@@ -1126,68 +1624,7 @@ interface TestConfig {
   workers?: number|string;
 }
 
-/**
- * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
- * or `testDir`. These options are described in the {@link TestConfig} object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
- *
- * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level {@link
- * TestConfig} can also define base options shared between all projects.
- *
- * ```js
- * // playwright.config.ts
- * import { defineConfig } from '@playwright/test';
- *
- * export default defineConfig({
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * });
- * ```
- *
- */
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
-  /**
-   * Playwright Test supports running multiple test projects at the same time. See {@link TestProject} for more
-   * information.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig, devices } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     { name: 'chromium', use: devices['Desktop Chrome'] }
-   *   ]
-   * });
-   * ```
-   *
-   */
-  projects?: Project<TestArgs, WorkerArgs>[];
-  /**
-   * Global options for all tests, for example
-   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
-   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options]{@link TestOptions}.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   use: {
-   *     browserName: 'chromium',
-   *   },
-   * });
-   * ```
-   *
-   */
-  use?: UseOptions<TestArgs, WorkerArgs>;
+export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
 }
 
 export type Metadata = { [key: string]: any };
@@ -7821,535 +8258,6 @@ export interface TestInfoError {
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
-}
-
-/**
- * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
- * multiple configurations. For example, consider running tests against multiple browsers.
- *
- * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of {@link TestProject} are available in
- * the top-level {@link TestConfig}, in which case they are shared between all projects.
- *
- * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
- * versions.
- *
- * ```js
- * // playwright.config.ts
- * import { defineConfig, devices } from '@playwright/test';
- *
- * export default defineConfig({
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'chromium',
- *       use: devices['Desktop Chrome'],
- *     },
- *     {
- *       name: 'firefox',
- *       use: devices['Desktop Firefox'],
- *     },
- *     {
- *       name: 'webkit',
- *       use: devices['Desktop Safari'],
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * });
- * ```
- *
- */
-interface TestProject {
-  /**
-   * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
-   * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
-   * the dependencies and behaves as if they were not specified.
-   *
-   * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
-   * report, etc.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'setup',
-   *       testMatch: /global.setup\.ts/,
-   *     },
-   *     {
-   *       name: 'chromium',
-   *       use: devices['Desktop Chrome'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'firefox',
-   *       use: devices['Desktop Firefox'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'webkit',
-   *       use: devices['Desktop Safari'],
-   *       dependencies: ['setup'],
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   */
-  dependencies?: Array<string>;
-
-  /**
-   * Configuration for the `expect` assertion library.
-   *
-   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option
-   * for all projects.
-   */
-  expect?: {
-    /**
-     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
-     */
-    timeout?: number;
-
-    /**
-     * Configuration for the
-     * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
-     * method.
-     */
-    toHaveScreenshot?: {
-      /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
-       */
-      maxDiffPixels?: number;
-
-      /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
-       */
-      maxDiffPixelRatio?: number;
-
-      /**
-       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
-       * Defaults to `"disabled"`.
-       */
-      animations?: "allow"|"disabled";
-
-      /**
-       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"hide"`.
-       */
-      caret?: "hide"|"initial";
-
-      /**
-       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"css"`.
-       */
-      scale?: "css"|"device";
-
-      /**
-       * See `style` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
-       */
-      stylePath?: string|Array<string>;
-    };
-
-    /**
-     * Configuration for the
-     * [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1)
-     * method.
-     */
-    toMatchSnapshot?: {
-      /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
-       */
-      maxDiffPixels?: number;
-
-      /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
-       */
-      maxDiffPixelRatio?: number;
-    };
-
-    /**
-     * Configuration for the [expect(value).toPass()](https://playwright.dev/docs/test-assertions) method.
-     */
-    toPass?: {
-      /**
-       * timeout for toPass method in milliseconds.
-       */
-      timeout?: number;
-
-      /**
-       * probe intervals for toPass method in milliseconds.
-       */
-      intervals?: Array<number>;
-    };
-  };
-
-  /**
-   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the
-   * same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same
-   * worker process.
-   *
-   * You can configure entire test project to concurrently run all tests in all files using this option.
-   */
-  fullyParallel?: boolean;
-
-  /**
-   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
-   * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
-   *
-   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grep?: RegExp|Array<RegExp>;
-
-  /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grepInvert?: RegExp|Array<RegExp>;
-
-  /**
-   * Metadata that will be put directly to the test report serialized as JSON.
-   */
-  metadata?: Metadata;
-
-  /**
-   * Project name is visible in the report and during test execution.
-   */
-  name?: string;
-
-  /**
-   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
-   *
-   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
-   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
-   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
-   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
-   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
-   *
-   * Here is an example that uses
-   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to
-   * create a temporary file.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-   * });
-   * ```
-   *
-   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
-   * option for all projects.
-   */
-  outputDir?: string;
-
-  /**
-   * The number of times to repeat each test, useful for debugging flaky tests.
-   *
-   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change
-   * this option for all projects.
-   */
-  repeatEach?: number;
-
-  /**
-   * The maximum number of retry attempts given to failed tests. Learn more about
-   * [test retries](https://playwright.dev/docs/test-retries#retries).
-   *
-   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to
-   * change the number of retries for a specific file or a group of tests.
-   *
-   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this
-   * option for all projects.
-   */
-  retries?: number;
-
-  /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
-   *
-   * The directory for each test can be accessed by
-   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
-   *
-   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
-   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir)
-   * would resolve to `snapshots/a.spec.js-snapshots`.
-   */
-  snapshotDir?: string;
-
-  /**
-   * This option configures a template controlling location of snapshots generated by
-   * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
-   * and
-   * [expect(value).toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   testDir: './tests',
-   *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
-   * });
-   * ```
-   *
-   * **Details**
-   *
-   * The value might include some "tokens" that will be replaced with actual values during test execution.
-   *
-   * Consider the following file structure:
-   *
-   * ```txt
-   * playwright.config.ts
-   * tests/
-   * └── page/
-   *     └── page-click.spec.ts
-   * ```
-   *
-   * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
-   *
-   * ```js
-   * // page-click.spec.ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.describe('suite', () => {
-   *   test('test should work', async ({ page }) => {
-   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
-   *   });
-   * });
-   * ```
-   *
-   * The list of supported tokens:
-   * - `{testDir}` - Project's
-   *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
-   *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
-   *     config)
-   * - `{snapshotDir}` - Project's
-   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
-   * - `{platform}` - The value of `process.platform`.
-   * - `{projectName}` - Project's file-system-sanitized name, if any.
-   *   - Value: `''` (empty string).
-   * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
-   *   - Value: `page`
-   * - `{testFileName}` - Test file name with extension.
-   *   - Value: `page-click.spec.ts`
-   * - `{testFilePath}` - Relative path from `testDir` to **test file**
-   *   - Value: `page/page-click.spec.ts`
-   * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
-   *   - Value: `suite-test-should-work`
-   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
-   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
-   *   snapshot name.
-   *   - Value: `foo/bar/baz`
-   * - `{ext}` - snapshot extension (with dots)
-   *   - Value: `.png`
-   *
-   * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
-   *
-   * Consider the following config:
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
-   *   testMatch: 'example.spec.ts',
-   *   projects: [
-   *     { use: { browserName: 'firefox' } },
-   *     { name: 'chromium', use: { browserName: 'chromium' } },
-   *   ],
-   * });
-   * ```
-   *
-   * In this config:
-   * 1. First project **does not** have a name, so its snapshots will be stored in
-   *    `<configDir>/__screenshots__/example.spec.ts/...`.
-   * 1. Second project **does** have a name, so its snapshots will be stored in
-   *    `<configDir>/__screenshots__/chromium/example.spec.ts/..`.
-   * 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
-   * 1. Forward slashes `"/"` can be used as path separators on any platform.
-   */
-  snapshotPathTemplate?: string;
-
-  /**
-   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
-   * cleanup any resources acquired by this project.
-   *
-   * Passing `--no-deps` argument ignores
-   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
-   * it was not specified.
-   *
-   * **Usage**
-   *
-   * A common pattern is a "setup" dependency that has a corresponding "teardown":
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'setup',
-   *       testMatch: /global.setup\.ts/,
-   *       teardown: 'teardown',
-   *     },
-   *     {
-   *       name: 'teardown',
-   *       testMatch: /global.teardown\.ts/,
-   *     },
-   *     {
-   *       name: 'chromium',
-   *       use: devices['Desktop Chrome'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'firefox',
-   *       use: devices['Desktop Firefox'],
-   *       dependencies: ['setup'],
-   *     },
-   *     {
-   *       name: 'webkit',
-   *       use: devices['Desktop Safari'],
-   *       dependencies: ['setup'],
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   */
-  teardown?: string;
-
-  /**
-   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
-   *
-   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all
-   * other tests in stable Chrome browser.
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   projects: [
-   *     {
-   *       name: 'Smoke Chromium',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke WebKit',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke Firefox',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
-   *     },
-   *     {
-   *       name: 'Chrome Stable',
-   *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
-   *       }
-   *     },
-   *   ],
-   * });
-   * ```
-   *
-   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this
-   * option for all projects.
-   */
-  testDir?: string;
-
-  /**
-   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute
-   * file path. Strings are treated as glob patterns.
-   *
-   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
-   *
-   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change
-   * this option for all projects.
-   */
-  testIgnore?: string|RegExp|Array<string|RegExp>;
-
-  /**
-   * Only the files matching one of these patterns are executed as test files. Matching is performed against the
-   * absolute file path. Strings are treated as glob patterns.
-   *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
-   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
-   * `login-screen.wrong-credentials.spec.ts`.
-   *
-   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
-   * option for all projects.
-   */
-  testMatch?: string|RegExp|Array<string|RegExp>;
-
-  /**
-   * Timeout for each test in milliseconds. Defaults to 30 seconds.
-   *
-   * This is a base timeout for all tests. Each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of
-   * tests can configure the timeout with
-   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
-   *
-   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this
-   * option for all projects.
-   */
-  timeout?: number;
 }
 
 /**

@@ -31,8 +31,11 @@ export type ReporterDescription =
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
-export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
+interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
+}
+
+export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
 }
 
 export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
@@ -41,14 +44,14 @@ export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
-interface TestConfig {
+interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
+  projects?: Project<TestArgs, WorkerArgs>[];
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  use?: UseOptions<TestArgs, WorkerArgs>;
   webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
-  projects?: Project<TestArgs, WorkerArgs>[];
-  use?: UseOptions<TestArgs, WorkerArgs>;
+export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
 }
 
 export type Metadata = { [key: string]: any };
