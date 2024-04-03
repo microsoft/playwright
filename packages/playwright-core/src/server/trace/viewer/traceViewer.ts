@@ -146,7 +146,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
 }
 
 export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
-  if (!validateTraceUrls(traceUrls))
+  if (!await validateTraceUrls(traceUrls))
     return;
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
@@ -157,7 +157,7 @@ export async function runTraceViewerApp(traceUrls: string[], browserName: string
 }
 
 export async function runTraceInBrowser(traceUrls: string[], options: TraceViewerServerOptions) {
-  if (!validateTraceUrls(traceUrls))
+  if (!await validateTraceUrls(traceUrls))
     return;
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
