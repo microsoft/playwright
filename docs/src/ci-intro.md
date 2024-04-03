@@ -30,7 +30,7 @@ To add a [GitHub Actions](https://docs.github.com/en/actions) file first create 
 #### You will learn
 * langs: python, java, csharp
   
-- [How to run tests on push/pull_request](/ci.md#on-pushpull_request)
+- [How to run tests on push/pull_request](/ci-intro.md#on-pushpull_request)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
 

@@ -262,7 +262,7 @@ test('pass', async ({ page }) => {
 });
 ```
 
-See the documentation [for a full example](./test-assertions.md#add-custom-matchers-using-expectextend).
+See the documentation [for a full example](./test-assertions#add-custom-matchers-using-expectextend).
 
 ### Merge test fixtures
 
@@ -1753,7 +1753,7 @@ This version was also tested against the following stable channels:
 ### Locator Improvements
 
 - [`method: Locator.dragTo`]
-- [`expect(locator).toBeChecked({ checked })`](./test-assertions#locator-assertions-to-be-checked)
+- [`expect(locator).toBeChecked({ checked })`](./api/class-locatorassertions#locator-assertions-to-be-checked)
 - Each locator can now be optionally filtered by the text it contains:
     ```js
     await page.locator('li', { hasText: 'my item' }).locator('button').click();
@@ -1908,7 +1908,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - [`testInfo.parallelIndex`](./api/class-testinfo#test-info-parallel-index)
 - [`testInfo.titlePath`](./api/class-testinfo#test-info-title-path)
 - [`testOptions.trace`](./api/class-testoptions#test-options-trace) has new options
-- [`expect.toMatchSnapshot`](./test-assertions#expectvaluetomatchsnapshotname-options) supports subdirectories
+- [`expect.toMatchSnapshot`](./api/class-genericassertions.md) supports subdirectories
 - [`reporter.printsToStdio()`](./api/class-reporter#reporter-prints-to-stdio)
 
 
@@ -2189,25 +2189,25 @@ By default, the timeout for assertions is not set, so it'll wait forever, until 
 
 List of all new assertions:
 
-- [`expect(locator).toBeChecked()`](./test-assertions#expectlocatortobechecked)
-- [`expect(locator).toBeDisabled()`](./test-assertions#expectlocatortobedisabled)
-- [`expect(locator).toBeEditable()`](./test-assertions#expectlocatortobeeditable)
-- [`expect(locator).toBeEmpty()`](./test-assertions#expectlocatortobeempty)
-- [`expect(locator).toBeEnabled()`](./test-assertions#expectlocatortobeenabled)
-- [`expect(locator).toBeFocused()`](./test-assertions#expectlocatortobefocused)
-- [`expect(locator).toBeHidden()`](./test-assertions#expectlocatortobehidden)
-- [`expect(locator).toBeVisible()`](./test-assertions#expectlocatortobevisible)
-- [`expect(locator).toContainText(text, options?)`](./test-assertions#expectlocatortocontaintexttext-options)
-- [`expect(locator).toHaveAttribute(name, value)`](./test-assertions#expectlocatortohaveattributename-value)
-- [`expect(locator).toHaveClass(expected)`](./test-assertions#expectlocatortohaveclassexpected)
-- [`expect(locator).toHaveCount(count)`](./test-assertions#expectlocatortohavecountcount)
-- [`expect(locator).toHaveCSS(name, value)`](./test-assertions#expectlocatortohavecssname-value)
-- [`expect(locator).toHaveId(id)`](./test-assertions#expectlocatortohaveidid)
-- [`expect(locator).toHaveJSProperty(name, value)`](./test-assertions#expectlocatortohavejspropertyname-value)
-- [`expect(locator).toHaveText(expected, options)`](./test-assertions#expectlocatortohavetextexpected-options)
-- [`expect(page).toHaveTitle(title)`](./test-assertions#expectpagetohavetitletitle)
-- [`expect(page).toHaveURL(url)`](./test-assertions#expectpagetohaveurlurl)
-- [`expect(locator).toHaveValue(value)`](./test-assertions#expectlocatortohavevaluevalue)
+- [`expect(locator).toBeChecked()`](./api/class-locatorassertions#locator-assertions-to-be-checked)
+- [`expect(locator).toBeDisabled()`](./api/class-locatorassertions#locator-assertions-to-be-disabled)
+- [`expect(locator).toBeEditable()`](./api/class-locatorassertions#locator-assertions-to-be-editable)
+- [`expect(locator).toBeEmpty()`](./api/class-locatorassertions#locator-assertions-to-be-empty)
+- [`expect(locator).toBeEnabled()`](./api/class-locatorassertions#locator-assertions-to-be-enabled)
+- [`expect(locator).toBeFocused()`](./api/class-locatorassertions#locator-assertions-to-be-focused)
+- [`expect(locator).toBeHidden()`](./api/class-locatorassertions#locator-assertions-to-be-hidden)
+- [`expect(locator).toBeVisible()`](./api/class-locatorassertions#locator-assertions-to-be-visible)
+- [`expect(locator).toContainText(text, options?)`](./api/class-locatorassertions#locator-assertions-to-contain-text)
+- [`expect(locator).toHaveAttribute(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-attribute)
+- [`expect(locator).toHaveClass(expected)`](./api/class-locatorassertions#locator-assertions-to-have-class)
+- [`expect(locator).toHaveCount(count)`](./api/class-locatorassertions#locator-assertions-to-have-count)
+- [`expect(locator).toHaveCSS(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-css)
+- [`expect(locator).toHaveId(id)`](./api/class-locatorassertions#locator-assertions-to-have-id)
+- [`expect(locator).toHaveJSProperty(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-js-property)
+- [`expect(locator).toHaveText(expected, options)`](./api/class-locatorassertions#locator-assertions-to-have-text)
+- [`expect(page).toHaveTitle(title)`](./api/class-pageassertions#page-assertions-to-have-title)
+- [`expect(page).toHaveURL(url)`](./api/class-pageassertions#page-assertions-to-have-url)
+- [`expect(locator).toHaveValue(value)`](./api/class-locatorassertions#locator-assertions-to-have-value)
 
 #### ⛓ Serial mode with [`describe.serial`](./api/class-test#test-describe-serial)
 
@@ -2243,7 +2243,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-webserver) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-webserver) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-testoptions#test-options-base-url) when creating a context.
 
 ```ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -2272,7 +2272,7 @@ Learn more in the [documentation](./test-webserver).
 #### Playwright Test
 
 - **⚡️ Introducing [Reporter API](https://github.com/microsoft/playwright/blob/65a9037461ffc15d70cdc2055832a0c5512b227c/packages/playwright-test/types/testReporter.d.ts)** which is already used to create an [Allure Playwright reporter](https://github.com/allure-framework/allure-js/pull/297).
-- **⛺️ New [`baseURL` fixture](./test-configuration#basic-options)** to support relative paths in tests.
+- **⛺️ New [`baseURL` fixture](./test-configuration#basic-configuration)** to support relative paths in tests.
 
 
 #### Playwright

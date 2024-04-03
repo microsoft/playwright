@@ -644,7 +644,7 @@ This version was also tested against the following stable channels:
 
 ### New APIs & changes
 
-- Default assertions timeout now can be changed with [`setDefaultAssertionTimeout`](./test-assertions#playwright-assertions-set-default-assertion-timeout).
+- Default assertions timeout now can be changed with [`setDefaultAssertionTimeout`](./api/class-playwrightassertions#playwright-assertions-set-default-assertion-timeout).
 
 ### Announcements
 
