@@ -56,7 +56,7 @@ class TestServer {
   }
 
   async stop() {
-    await this._dispatcher?.setInterceptStdio({ intercept: false });
+    await this._dispatcher?._setInterceptStdio(false);
     await this._dispatcher?.runGlobalTeardown();
   }
 }
@@ -72,13 +72,17 @@ class TestServerDispatcher implements TestServerInterface {
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _serializer = require.resolve('./uiModeReporter');
-  private _watchTestDir = false;
+  private _watchTestDirs = false;
+  private _closeOnDisconnect = false;
 
   constructor(configFile: string | undefined) {
     this._configFile = configFile;
     this.transport = {
       dispatch: (method, params) => (this as any)[method](params),
-      onclose: () => {},
+      onclose: () => {
+        if (this._closeOnDisconnect)
+          gracefullyProcessExitDoNotHang(0);
+      },
     };
     this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
     this._testWatcher = new Watcher('flat', events => {
@@ -87,10 +91,6 @@ class TestServerDispatcher implements TestServerInterface {
       this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
     });
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
-  }
-
-  async setSerializer(params: { serializer: string; }): Promise<void> {
-    this._serializer = params.serializer;
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
@@ -104,7 +104,16 @@ class TestServerDispatcher implements TestServerInterface {
     return { reporter, report };
   }
 
-  async ready() {}
+  async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
+    if (params.serializer)
+      this._serializer = params.serializer;
+    if (params.closeOnDisconnect)
+      this._closeOnDisconnect = true;
+    if (params.interceptStdio)
+      await this._setInterceptStdio(true);
+    if (params.watchTestDirs)
+      this._watchTestDirs = true;
+  }
 
   async ping() {}
 
@@ -226,7 +235,7 @@ class TestServerDispatcher implements TestServerInterface {
       projectOutputs.add(result.outDir);
     }
 
-    if (this._watchTestDir)
+    if (this._watchTestDirs)
       this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
     return { report, status };
   }
@@ -295,10 +304,6 @@ class TestServerDispatcher implements TestServerInterface {
     return { status: await run };
   }
 
-  async watchTestDir() {
-    this._watchTestDir = true;
-  }
-
   async watch(params: { fileNames: string[]; }) {
     const files = new Set<string>();
     for (const fileName of params.fileNames) {
@@ -321,10 +326,10 @@ class TestServerDispatcher implements TestServerInterface {
     await this._testRun?.run;
   }
 
-  async setInterceptStdio(params: Parameters<TestServerInterface['setInterceptStdio']>[0]): ReturnType<TestServerInterface['setInterceptStdio']> {
+  async _setInterceptStdio(intercept: boolean) {
     if (process.env.PWTEST_DEBUG)
       return;
-    if (params.intercept) {
+    if (intercept) {
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
