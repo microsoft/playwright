@@ -53,20 +53,16 @@ export type TraceViewerAppOptions = {
   persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
 };
 
-async function validateTraceUrls(traceUrls: string[]) {
+function validateTraceUrls(traceUrls: string[]) {
   for (const traceUrl of traceUrls) {
     let traceFile = traceUrl;
     // If .json is requested, we'll synthesize it.
     if (traceUrl.endsWith('.json'))
       traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
 
-    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace')) {
-      // eslint-disable-next-line no-console
-      console.error(`Trace file ${traceUrl} does not exist!`);
-      return false;
-    }
+    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace'))
+      throw new Error(`Trace file ${traceUrl} does not exist!`);
   }
-  return true;
 }
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
@@ -146,8 +142,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
 }
 
 export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
-  if (!await validateTraceUrls(traceUrls))
-    return;
+  validateTraceUrls(traceUrls);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
   const page = await openTraceViewerApp(server.urlPrefix(), browserName, options);
@@ -157,8 +152,7 @@ export async function runTraceViewerApp(traceUrls: string[], browserName: string
 }
 
 export async function runTraceInBrowser(traceUrls: string[], options: TraceViewerServerOptions) {
-  if (!await validateTraceUrls(traceUrls))
-    return;
+  validateTraceUrls(traceUrls);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
   await openTraceInBrowser(server.urlPrefix());

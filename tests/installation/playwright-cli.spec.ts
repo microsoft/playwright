@@ -58,4 +58,14 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
     await exec('npx playwright screenshot about:blank two.png');
     await fs.promises.stat(path.join(tmpWorkspace, 'two.png'));
   });
+
+  await test.step('show-trace', async () => {
+    const result = await exec('npx playwright show-trace i-do-not-exist.zip', { expectToExitWithError: true });
+    expect(result).toContain(`Trace file i-do-not-exist.zip does not exist`);
+  });
+
+  await test.step('show-report', async () => {
+    const result = await exec('npx playwright show-report', { expectToExitWithError: true });
+    expect(result).toContain(`No report found at "${path.join(fs.realpathSync(tmpWorkspace), 'playwright-report')}"`);
+  });
 });
