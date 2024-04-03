@@ -93,7 +93,7 @@ background_page = context.wait_for_event("backgroundpage")
 ```csharp
 context.BackgroundPage += (backgroundPage) =>
 {
-    Console.WriteLine(backgroundPage.Url());
+    Console.WriteLine(backgroundPage.Url);
 };
 
 ```
