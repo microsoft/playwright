@@ -63,6 +63,10 @@ export class Watcher {
     });
   }
 
+  async close() {
+    await this._fsWatcher?.close();
+  }
+
   private _reportEventsIfAny() {
     if (this._collector.length)
       this._onChange(this._collector.slice());

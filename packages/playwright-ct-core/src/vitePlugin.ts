@@ -96,7 +96,7 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
     const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
     if (await isURLAvailable(url, true)) {
       // eslint-disable-next-line no-console
-      console.log(`Test Server is already running at ${url.toString()}, using it.\n`);
+      console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
       process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
       return null;
     }

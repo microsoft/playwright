@@ -19,6 +19,8 @@ import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
+// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
+
 export type StringIntern = (s: string) => string;
 export type JsonLocation = reporterTypes.Location;
 export type JsonError = string;

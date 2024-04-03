@@ -17,6 +17,8 @@
 export type TestItemStatus = 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped';
 import type * as reporterTypes from '../../types/testReporter';
 
+// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
+
 export type TreeItemBase = {
   kind: 'root' | 'group' | 'case' | 'test',
   id: string;

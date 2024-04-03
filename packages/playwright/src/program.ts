@@ -105,6 +105,25 @@ function addFindRelatedTestFilesCommand(program: Command) {
   });
 }
 
+function addDevServerCommand(program: Command) {
+  const command = program.command('dev-server', { hidden: true });
+  command.description('start dev server');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.action(async options => {
+    const configInternal = await loadConfigFromFileRestartIfNeeded(options.config);
+    if (!configInternal)
+      return;
+    const { config } = configInternal;
+    const implementation = (config as any)['@playwright/test']?.['cli']?.['dev-server'];
+    if (implementation) {
+      await implementation(configInternal);
+    } else {
+      console.log(`DevServer is not available in the package you are using. Did you mean to use component testing?`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  });
+}
+
 function addTestServerCommand(program: Command) {
   const command = program.command('test-server', { hidden: true });
   command.description('start test server');
@@ -362,4 +381,5 @@ addListFilesCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addFindRelatedTestFilesCommand(program);
+addDevServerCommand(program);
 addTestServerCommand(program);
