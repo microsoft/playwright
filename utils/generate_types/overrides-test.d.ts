@@ -35,7 +35,8 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type Project<TestArgs = {}, WorkerArgs = {}> = TestProject<TestArgs, WorkerArgs>;
+export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
+}
 
 export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
@@ -50,7 +51,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
-export type Config<TestArgs = {}, WorkerArgs = {}> = TestConfig<TestArgs, WorkerArgs>;
+export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
+}
 
 export type Metadata = { [key: string]: any };
 

@@ -552,6 +552,8 @@ class TypesGenerator {
       ]),
       overridesToDocsClassMapping: new Map([
         ['TestType', 'Test'],
+        ['Config', 'TestConfig'],
+        ['Project', 'TestProject'],
         ['PlaywrightWorkerOptions', 'TestOptions'],
         ['PlaywrightTestOptions', 'TestOptions'],
         ['PlaywrightWorkerArgs', 'Fixtures'],

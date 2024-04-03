@@ -586,7 +586,58 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   timeout?: number;
 }
 
-export type Project<TestArgs = {}, WorkerArgs = {}> = TestProject<TestArgs, WorkerArgs>;
+/**
+ * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
+ * multiple configurations. For example, consider running tests against multiple browsers.
+ *
+ * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
+ * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of {@link TestProject} are available in
+ * the top-level {@link TestConfig}, in which case they are shared between all projects.
+ *
+ * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
+ * versions.
+ *
+ * ```js
+ * // playwright.config.ts
+ * import { defineConfig, devices } from '@playwright/test';
+ *
+ * export default defineConfig({
+ *   // Options shared for all projects.
+ *   timeout: 30000,
+ *   use: {
+ *     ignoreHTTPSErrors: true,
+ *   },
+ *
+ *   // Options specific to each project.
+ *   projects: [
+ *     {
+ *       name: 'chromium',
+ *       use: devices['Desktop Chrome'],
+ *     },
+ *     {
+ *       name: 'firefox',
+ *       use: devices['Desktop Firefox'],
+ *     },
+ *     {
+ *       name: 'webkit',
+ *       use: devices['Desktop Safari'],
+ *     },
+ *     {
+ *       name: 'Mobile Chrome',
+ *       use: devices['Pixel 5'],
+ *     },
+ *     {
+ *       name: 'Mobile Safari',
+ *       use: devices['iPhone 12'],
+ *     },
+ *   ],
+ * });
+ * ```
+ *
+ */
+export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
+}
 
 /**
  * Runtime representation of the test project configuration that can be accessed in the tests via
@@ -1623,7 +1674,30 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   workers?: number|string;
 }
 
-export type Config<TestArgs = {}, WorkerArgs = {}> = TestConfig<TestArgs, WorkerArgs>;
+/**
+ * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
+ * or `testDir`. These options are described in the {@link TestConfig} object in the
+ * [configuration file](https://playwright.dev/docs/test-configuration).
+ *
+ * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
+ * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level {@link
+ * TestConfig} can also define base options shared between all projects.
+ *
+ * ```js
+ * // playwright.config.ts
+ * import { defineConfig } from '@playwright/test';
+ *
+ * export default defineConfig({
+ *   timeout: 30000,
+ *   globalTimeout: 600000,
+ *   reporter: 'list',
+ *   testDir: './tests',
+ * });
+ * ```
+ *
+ */
+export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
+}
 
 export type Metadata = { [key: string]: any };
 
