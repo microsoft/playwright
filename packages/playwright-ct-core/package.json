@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "playwright-core": "1.43.0",
-    "vite": "^5.0.12",
+    "vite": "^5.0.13",
     "playwright": "1.43.0"
   },
   "bin": {
