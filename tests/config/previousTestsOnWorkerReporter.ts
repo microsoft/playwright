@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 import type { Reporter, TestCase, TestResult } from '@playwright/test/reporter';
+import path from 'path';
 
 export default class PreviousTestsOnWorkerReporter implements Reporter {
-  parallelIndex2TestCase: Map<number, TestCase[]> = new Map();
+  private _parallelIndex2TestCase: Map<number, TestCase[]> = new Map();
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (!this.parallelIndex2TestCase.has(result.parallelIndex))
-      this.parallelIndex2TestCase.set(result.parallelIndex, []);
+    const toRelativPath = (file: string) => path.relative(path.join(__dirname, '../..'), file);
+
+    if (!this._parallelIndex2TestCase.has(result.parallelIndex))
+      this._parallelIndex2TestCase.set(result.parallelIndex, []);
+    this._parallelIndex2TestCase.get(result.parallelIndex)!.push(test);
     if (!test.ok()) {
-      console.log(`Test ${test.title}(${test.location.file}:${test.location.line})failed on worker ${result.parallelIndex} with error: ${result.error?.message}`);
+      console.log(`Test ${test.title}(${toRelativPath(test.location.file)}:${test.location.line})failed on worker ${result.parallelIndex} with error: ${result.error?.message}`);
       console.log(`The following tests were running before on the same worker:`);
-      for (const test of this.parallelIndex2TestCase.get(result.parallelIndex)!)
-        console.log(`  ${test.location.file}:${test.location.line}`);
-      this.parallelIndex2TestCase.delete(result.parallelIndex);
-    } else {
-      this.parallelIndex2TestCase.get(result.parallelIndex)!.push(test);
+      for (const test of this._parallelIndex2TestCase.get(result.parallelIndex)!)
+        console.log(`  ${toRelativPath(test.location.file)}:${test.location.line}`);
+      console.log(`The following files were running before on the same worker:`);
+      const files = new Set<string>(this._parallelIndex2TestCase.get(result.parallelIndex)!.map(test => test.location.file));
+      for (const file of files)
+        console.log(`  ${toRelativPath(file)}`);
+      this._parallelIndex2TestCase.delete(result.parallelIndex);
     }
   }
 }
