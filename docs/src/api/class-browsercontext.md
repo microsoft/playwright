@@ -218,7 +218,7 @@ also fire for popup pages. See also [`event: Page.popup`] to receive events abou
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-done and its response has started loading in the popup.
+done and its response has started loading in the popup. If you would like to route/listen to this network request, use [`method: BrowserContext.route`] and [`event: BrowserContext.request`] respectively instead of similar methods on the [Page].
 
 ```js
 const newPagePromise = context.waitForEvent('page');

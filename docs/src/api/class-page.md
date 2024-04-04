@@ -448,7 +448,7 @@ Emitted when the page opens a new tab or window. This event is emitted in additi
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-done and its response has started loading in the popup.
+done and its response has started loading in the popup. If you would like to route/listen to this network request, use [`method: BrowserContext.route`] and [`event: BrowserContext.request`] respectively instead of similar methods on the [Page].
 
 ```js
 // Start waiting for popup before clicking. Note no await.
@@ -3409,6 +3409,10 @@ The handler will only be called for the first url if the response is a redirect.
 
 :::note
 [`method: Page.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
+:::
+
+:::note
+[`method: Page.route`] will not intercept the first request of a popup page. Use [`method: BrowserContext.route`] instead.
 :::
 
 **Usage**

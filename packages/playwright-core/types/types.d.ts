@@ -1031,7 +1031,12 @@ export interface Page {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * // Start waiting for popup before clicking. Note no await.
@@ -1326,7 +1331,12 @@ export interface Page {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * // Start waiting for popup before clicking. Note no await.
@@ -1716,7 +1726,12 @@ export interface Page {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * // Start waiting for popup before clicking. Note no await.
@@ -3658,6 +3673,11 @@ export interface Page {
    * issue. We recommend disabling Service Workers when using request interception by setting
    * `Browser.newContext.serviceWorkers` to `'block'`.
    *
+   * **NOTE** [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not
+   * intercept the first request of a popup page. Use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * instead.
+   *
    * **Usage**
    *
    * An example of a naive handler that aborts all image requests:
@@ -4504,7 +4524,12 @@ export interface Page {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * // Start waiting for popup before clicking. Note no await.
@@ -7745,7 +7770,12 @@ export interface BrowserContext {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * const newPagePromise = context.waitForEvent('page');
@@ -7936,7 +7966,12 @@ export interface BrowserContext {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * const newPagePromise = context.waitForEvent('page');
@@ -8182,7 +8217,12 @@ export interface BrowserContext {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * const newPagePromise = context.waitForEvent('page');
@@ -8827,7 +8867,12 @@ export interface BrowserContext {
    *
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to
-   * "http://example.com" is done and its response has started loading in the popup.
+   * "http://example.com" is done and its response has started loading in the popup. If you would like to route/listen
+   * to this network request, use
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * and
+   * [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   * respectively instead of similar methods on the {@link Page}.
    *
    * ```js
    * const newPagePromise = context.waitForEvent('page');
