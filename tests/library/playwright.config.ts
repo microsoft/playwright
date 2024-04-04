@@ -47,8 +47,10 @@ const reporters = () => {
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    [require.resolve('../config/previousTestsOnWorkerReporter.ts')],
   ] : [
-    ['html', { open: 'on-failure' }]
+    ['html', { open: 'on-failure' }],
+    [require.resolve('../config/previousTestsOnWorkerReporter.ts')],
   ];
   return result;
 };
