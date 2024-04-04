@@ -113,49 +113,49 @@ test('should generate separate actual results for repeating names', async ({ run
   const outputText = result.output;
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments) {
-    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+    attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
     attachment.name = attachment.name.replace(/\\/g, '/');
   }
   expect(attachments).toEqual([
     {
       'name': 'foo-expected.txt',
       'contentType': 'text/plain',
-      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/foo.txt'
+      'path': 'a.spec.js-snapshots/foo.txt'
     },
     {
       'name': 'foo-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/foo-actual.txt'
+      'path': 'test-results/a-is-a-test/foo-actual.txt'
     },
     {
       'name': 'foo-1-expected.txt',
       'contentType': 'text/plain',
-      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/foo.txt'
+      'path': 'a.spec.js-snapshots/foo.txt'
     },
     {
       'name': 'foo-1-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/foo-1-actual.txt'
+      'path': 'test-results/a-is-a-test/foo-1-actual.txt'
     },
     {
       'name': 'bar/baz-expected.txt',
       'contentType': 'text/plain',
-      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/bar/baz.txt'
+      'path': 'a.spec.js-snapshots/bar/baz.txt'
     },
     {
       'name': 'bar/baz-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/bar-baz-actual.txt'
+      'path': 'test-results/a-is-a-test/bar-baz-actual.txt'
     },
     {
       'name': 'bar/baz-1-expected.txt',
       'contentType': 'text/plain',
-      'path': 'golden-should-generate-separate-actual-results-for-repeating-names-playwright-test/a.spec.js-snapshots/bar/baz.txt'
+      'path': 'a.spec.js-snapshots/bar/baz.txt'
     },
     {
       'name': 'bar/baz-1-actual.txt',
       'contentType': 'text/plain',
-      'path': 'a-is-a-test/bar-baz-1-actual.txt'
+      'path': 'test-results/a-is-a-test/bar-baz-1-actual.txt'
     }
   ]);
 });
@@ -1047,22 +1047,22 @@ test('should attach expected/actual/diff for different sizes', async ({ runInlin
   expect(outputText).toContain('4 pixels (ratio 1.00 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
-    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+    attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'golden-should-attach-expected-actual-diff-for-different-sizes-playwright-test/a.spec.js-snapshots/snapshot.png'
+      path: 'a.spec.js-snapshots/snapshot.png'
     },
     {
       name: 'snapshot-actual.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-actual.png'
+      path: 'test-results/a-is-a-test/snapshot-actual.png'
     },
     {
       name: 'snapshot-diff.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-diff.png'
+      path: 'test-results/a-is-a-test/snapshot-diff.png'
     },
   ]);
 });
