@@ -589,6 +589,28 @@ test('should load mts without config', async ({ runInlineTest, nodeVersion }) =>
   expect(result.passed).toBe(1);
 });
 
+test('should load type module without config', async ({ runInlineTest, nodeVersion }) => {
+  test.skip(nodeVersion.major < 18, 'ESM loader is enabled conditionally with older API');
+
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'helper.js': `
+      const foo = 42;
+      export default foo;
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import foo from './helper.js';
+      test('check project name', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should be able to use use execSync with a Node.js file inside a spec', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24516' });
   const result = await runInlineTest({
