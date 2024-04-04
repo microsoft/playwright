@@ -18,12 +18,6 @@
     "vite": "^5.0.11"
   },
   "dependencies": {
-    "svelte": "^4.2.8",
-    "svelte-navigator": "^3.2.2"
-  },
-  "overrides": {
-    "svelte-navigator": {
-      "svelte": "$svelte"
-    }
+    "svelte": "^4.2.8"
   }
 }
