@@ -33,11 +33,13 @@ class JUnitReporter extends EmptyReporter {
   private outputFile: string | undefined;
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
+  private includeProjectInTestName = false;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean } = {}) {
     super();
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this.includeProjectInTestName = options.includeProjectInTestName || false;
   }
 
   override printsToStdio() {
@@ -98,6 +100,7 @@ class JUnitReporter extends EmptyReporter {
     let failures = 0;
     let duration = 0;
     const children: XMLEntry[] = [];
+    const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
     for (const test of suite.allTests()){
       ++tests;
@@ -107,7 +110,7 @@ class JUnitReporter extends EmptyReporter {
         ++failures;
       for (const result of test.results)
         duration += result.duration;
-      await this._addTestCase(suite.title, test, children);
+      await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
     }
 
     this.totalTests += tests;
@@ -132,12 +135,12 @@ class JUnitReporter extends EmptyReporter {
     return entry;
   }
 
-  private async _addTestCase(suiteName: string, test: TestCase, entries: XMLEntry[]) {
+  private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
     const entry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
-        name: test.titlePath().slice(3).join(' › '),
+        name: namePrefix + test.titlePath().slice(3).join(' › '),
         // filename
         classname: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
