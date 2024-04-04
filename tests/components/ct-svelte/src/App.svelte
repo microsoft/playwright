@@ -1,16 +1,34 @@
-<script lang="ts">
-import { Link, Route, Router } from "svelte-navigator";
+<script>
+import { onMount, onDestroy } from 'svelte';
 import LoginPage from './pages/LoginPage.svelte';
 import DashboardPage from './pages/DashboardPage.svelte';
+
+let path = '';
+function updatePath() {
+  path = window.location.pathname;
+}
+onMount(() => {
+  updatePath();
+  window.addEventListener('popstate', updatePath);
+});
+onDestroy(() => {
+  window.removeEventListener('popstate', updatePath);
+});
+/**
+ * @param newPath {string}
+ */
+function navigate(newPath) {
+  history.pushState({}, '', newPath);
+  updatePath();
+}
 </script>
 
-<Router>
-  <header>
-    <Link to="/">Login</Link>
-    <Link to="/dashboard">Dashboard</Link>
-  </header>
-  <Route path="/*">
-    <Route component="{LoginPage}" />
-    <Route path="dashboard" component="{DashboardPage}" />
-  </Route>
-</Router>
+<header>
+  <a on:click={(e) => { e.preventDefault(); navigate('/'); }} href='/login'>Login</a>
+  <a on:click={(e) => { e.preventDefault(); navigate('/dashboard'); }} href='/dashboard'>Dashboard</a>
+</header>
+{#if path === '/'}
+  <LoginPage />
+{:else if path === '/dashboard'}
+  <DashboardPage />
+{/if}
