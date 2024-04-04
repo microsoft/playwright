@@ -6,6 +6,7 @@ Resolved configuration passed to [`method: Reporter.onBegin`].
 
 ## property: FullConfig.configFile
 * since: v1.20
+* deprecated: Use [`property: FullProject.configFile`] instead.
 - type: ?<[string]>
 
 Path to the configuration file (if any) used to run the tests.
@@ -36,6 +37,7 @@ See [`property: TestConfig.globalTeardown`].
 
 ## property: FullConfig.globalTimeout
 * since: v1.10
+* deprecated: Use [`property: FullProject.globalTimeout`] instead.
 - type: <[int]>
 
 See [`property: TestConfig.globalTimeout`].
@@ -54,6 +56,7 @@ See [`property: TestConfig.grepInvert`].
 
 ## property: FullConfig.maxFailures
 * since: v1.10
+* deprecated: Use [`property: FullProject.maxFailures`] instead.
 - type: <[int]>
 
 See [`property: TestConfig.maxFailures`].
@@ -130,6 +133,7 @@ See [`property: TestConfig.webServer`].
 
 ## property: FullConfig.workers
 * since: v1.10
+* deprecated: Use [`property: FullProject.workers`] instead.
 - type: <[int]>
 
 See [`property: TestConfig.workers`].

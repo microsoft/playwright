@@ -39,6 +39,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   webServer: ConfigInWorker['webServer'];
   /**
    * Path to the configuration file (if any) used to run the tests.
+   * @deprecated Use [fullProject.configFile](https://playwright.dev/docs/api/class-fullproject#full-project-config-file) instead.
    */
   configFile?: string;
 
@@ -64,6 +65,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * See [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout).
+   * @deprecated Use [fullProject.globalTimeout](https://playwright.dev/docs/api/class-fullproject#full-project-global-timeout)
+   * instead.
    */
   globalTimeout: number;
 
@@ -79,6 +82,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * See [testConfig.maxFailures](https://playwright.dev/docs/api/class-testconfig#test-config-max-failures).
+   * @deprecated Use [fullProject.maxFailures](https://playwright.dev/docs/api/class-fullproject#full-project-max-failures) instead.
    */
   maxFailures: number;
 
@@ -141,6 +145,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * See [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers).
+   * @deprecated Use [fullProject.workers](https://playwright.dev/docs/api/class-fullproject#full-project-workers) instead.
    */
   workers: number;
 }
@@ -157,9 +162,19 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
   /**
+   * Path to the configuration file (if any) used to run the tests.
+   */
+  configFile?: string;
+
+  /**
    * See [testProject.dependencies](https://playwright.dev/docs/api/class-testproject#test-project-dependencies).
    */
   dependencies: Array<string>;
+
+  /**
+   * See [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout).
+   */
+  globalTimeout: number;
 
   /**
    * See [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep).
@@ -170,6 +185,11 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * See [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert).
    */
   grepInvert: null|RegExp|Array<RegExp>;
+
+  /**
+   * See [testConfig.maxFailures](https://playwright.dev/docs/api/class-testconfig#test-config-max-failures).
+   */
+  maxFailures: number;
 
   /**
    * See [testProject.metadata](https://playwright.dev/docs/api/class-testproject#test-project-metadata).
@@ -225,6 +245,12 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * See [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout).
    */
   timeout: number;
+
+  /**
+   * Number of test workers that ran tests from this project. See
+   * [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers).
+   */
+  workers: number;
 }
 
 /**

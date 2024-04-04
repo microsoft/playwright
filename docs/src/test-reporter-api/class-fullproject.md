@@ -7,11 +7,23 @@ to [Reporter]. It exposes some of the resolved fields declared in
 [TestProject]. You can get [FullProject] instance from [`property: FullConfig.projects`]
 or [`method: Suite.project`].
 
+## property: FullProject.configFile
+* since: v1.44
+- type: ?<[string]>
+
+Path to the configuration file (if any) used to run the tests.
+
 ## property: FullProject.dependencies
 * since: v1.31
 - type: <[Array]<[string]>>
 
 See [`property: TestProject.dependencies`].
+
+## property: FullProject.globalTimeout
+* since: v1.44
+- type: <[int]>
+
+See [`property: TestConfig.globalTimeout`].
 
 ## property: FullProject.grep
 * since: v1.10
@@ -42,6 +54,12 @@ See [`property: TestProject.name`].
 - type: <[string]>
 
 See [`property: TestProject.snapshotDir`].
+
+## property: FullProject.maxFailures
+* since: v1.44
+- type: <[int]>
+
+See [`property: TestConfig.maxFailures`].
 
 ## property: FullProject.outputDir
 * since: v1.10
@@ -96,3 +114,9 @@ See [`property: TestProject.timeout`].
 - type: <[Fixtures]>
 
 See [`property: TestProject.use`].
+
+## property: FullProject.workers
+* since: v1.44
+- type: <[int]>
+
+Number of test workers that ran tests from this project. See [`property: TestConfig.workers`].
