@@ -17,6 +17,8 @@
 import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
 import * as events from './events';
 
+// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
+
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
   readonly onClose: events.Event<void>;
   readonly onReport: events.Event<any>;
@@ -153,6 +155,14 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
 
   async runGlobalTeardown(params: Parameters<TestServerInterface['runGlobalTeardown']>[0]): ReturnType<TestServerInterface['runGlobalTeardown']> {
     return await this._sendMessage('runGlobalTeardown', params);
+  }
+
+  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
+    return await this._sendMessage('startDevServer', params);
+  }
+
+  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
+    return await this._sendMessage('stopDevServer', params);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {

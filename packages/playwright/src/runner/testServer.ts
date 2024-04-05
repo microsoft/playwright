@@ -74,6 +74,7 @@ class TestServerDispatcher implements TestServerInterface {
   private _serializer = require.resolve('./uiModeReporter');
   private _watchTestDirs = false;
   private _closeOnDisconnect = false;
+  private _devServerHandle: (() => Promise<void>) | undefined;
 
   constructor(configFile: string | undefined) {
     this._configFile = configFile;
@@ -170,6 +171,43 @@ class TestServerDispatcher implements TestServerInterface {
     const status = await globalSetup?.cleanup();
     this._globalSetup = undefined;
     return { status, report: globalSetup?.report || [] };
+  }
+
+  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
+    if (this._devServerHandle)
+      return { status: 'failed', report: [] };
+    const { reporter, report } = await this._collectingReporter();
+    const { config, error } = await this._loadConfig(this._configFile);
+    if (!config) {
+      reporter.onError(error!);
+      return { status: 'failed', report };
+    }
+    const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
+    if (!devServerCommand) {
+      reporter.onError({ message: 'No dev-server command found in the configuration' });
+      return { status: 'failed', report };
+    }
+    try {
+      this._devServerHandle = await devServerCommand(config);
+      return { status: 'passed', report };
+    } catch (e) {
+      reporter.onError(serializeError(e));
+      return { status: 'failed', report };
+    }
+  }
+
+  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
+    if (!this._devServerHandle)
+      return { status: 'failed', report: [] };
+    try {
+      await this._devServerHandle();
+      this._devServerHandle = undefined;
+      return { status: 'passed', report: [] };
+    } catch (e) {
+      const { reporter, report } = await this._collectingReporter();
+      reporter.onError(serializeError(e));
+      return { status: 'failed', report };
+    }
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {

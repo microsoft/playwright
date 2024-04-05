@@ -29,8 +29,5 @@
     "playwright-core": "1.44.0-next",
     "vite": "^5.0.13",
     "playwright": "1.44.0-next"
-  },
-  "bin": {
-    "playwright": "cli.js"
   }
 }
