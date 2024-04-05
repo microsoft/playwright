@@ -5,7 +5,7 @@ title: "Sharding"
 
 ## Introduction
 
-By default, Playwright runs tests in [parallel](/test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding".
+By default, Playwright runs test files in [parallel](./test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding".
 
 ## Sharding tests between multiple machines
 
@@ -19,6 +19,8 @@ npx playwright test --shard=4/4
 ```
 
 Now, if you run these shards in parallel on different computers, your test suite completes four times faster.
+
+Note that Playwright can only shard tests that can be run in parallel. By default, this means Playwright will shard test files. Learn about other options in the [parallelism guide](./test-parallel.md).
 
 ## Merging reports from multiple shards
 
@@ -47,7 +49,7 @@ This will produce a standard HTML report into `playwright-report` directory.
 
 ## GitHub Actions example
 
-GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. 
+GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options.
 
 The following example shows you how to configure a job to run your tests on four machines in parallel and then merge the reports into a single report. Don't forget to add `reporter: process.env.CI ? 'blob' : 'html',` to your `playwright.config.ts` file as in the example above.
 
@@ -55,7 +57,7 @@ The following example shows you how to configure a job to run your tests on four
 
 1. Then we run our Playwright tests with the `--shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}` option. This will run our test command for each shard.
 
-1. Finally we upload our blob report to the GitHub Actions Artifacts. This will make the blob report available to other jobs in the workflow. 
+1. Finally we upload our blob report to the GitHub Actions Artifacts. This will make the blob report available to other jobs in the workflow.
 
 
 
@@ -124,7 +126,7 @@ jobs:
         merge-multiple: true
 
     - name: Merge into HTML Report
-      run: npx playwright merge-reports --reporter html ./all-blob-reports 
+      run: npx playwright merge-reports --reporter html ./all-blob-reports
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v4
@@ -150,7 +152,7 @@ Supported options:
 
   Which report to produce. Can be multiple reporters separated by comma.
 
-  Example: 
+  Example:
 
   ```bash
   npx playwright merge-reports --reporter=html,github ./blob-reports
@@ -162,8 +164,8 @@ Supported options:
   additional configuration to the output reporter. This configuration file can differ from
   the one used during the creation of blob reports.
 
-  Example: 
-  
+  Example:
+
   ```bash
   npx playwright merge-reports --config=merge.config.ts ./blob-reports
   ```
