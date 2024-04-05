@@ -202,7 +202,7 @@ export const UIModeView: React.FC<{}> = ({
       return;
 
     const { config, rootSuite } = testModel;
-    const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
+    const selectedProjects = config.projects[0]?.configFile ? settings.getObject<string[] | undefined>(config.projects[0]?.configFile + ':projects', undefined) : undefined;
     const newFilter = new Map(projectFilters);
     for (const projectName of newFilter.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))

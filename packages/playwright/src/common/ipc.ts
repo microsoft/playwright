@@ -129,7 +129,7 @@ export type EnvProducedPayload = [string, string | null][];
 
 export function serializeConfig(config: FullConfigInternal, passCompilationCache: boolean): SerializedConfig {
   const result: SerializedConfig = {
-    location: { configDir: config.configDir, resolvedConfigFile: config.config.configFile },
+    location: { configDir: config.configDir, resolvedConfigFile: config.config.projects[0]?.configFile },
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };

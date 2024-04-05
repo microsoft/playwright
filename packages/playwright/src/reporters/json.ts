@@ -231,8 +231,8 @@ class JSONReporter extends EmptyReporter {
 async function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   if (outputFile) {
-    assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
-    outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
+    assert(config.projects[0]?.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
+    outputFile = config.projects[0]?.configFile ? path.resolve(path.dirname(config.projects[0]?.configFile), outputFile) : outputFile;
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     await fs.promises.writeFile(outputFile, reportString);
   } else {

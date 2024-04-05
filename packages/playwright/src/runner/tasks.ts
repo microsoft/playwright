@@ -63,7 +63,7 @@ export class TestRun {
 }
 
 export function createTaskRunner(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
-  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.projects[0].globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }));
   addRunTasks(taskRunner, config);
@@ -109,14 +109,14 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
 }
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: ReporterV2, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
-  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.projects[0].globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
 }
 
 export function createTaskRunnerForListFiles(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
-  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.projects[0].globalTimeout);
   taskRunner.addTask('load tests', createListFilesTask());
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
@@ -283,7 +283,7 @@ function createPhasesTask(): Task<TestRun> {
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;
-            const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
+            const testGroups = createTestGroups(projectSuite, project.project.workers);
             phase.projects.push({ project, projectSuite, testGroups });
             testGroupsInPhase += testGroups.length;
           }

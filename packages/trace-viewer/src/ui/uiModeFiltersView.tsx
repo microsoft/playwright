@@ -80,7 +80,7 @@ export const FiltersView: React.FC<{
                 const copy = new Map(projectFilters);
                 copy.set(projectName, !copy.get(projectName));
                 setProjectFilters(copy);
-                const configFile = testModel?.config?.configFile;
+                const configFile = testModel?.config?.projects[0]?.configFile;
                 if (configFile)
                   settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
               }}/>

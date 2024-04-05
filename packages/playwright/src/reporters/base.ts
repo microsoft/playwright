@@ -153,7 +153,7 @@ export class BaseReporter implements ReporterV2 {
   }
 
   protected generateStartingMessage() {
-    const jobs = this.config.metadata.actualWorkers ?? this.config.workers;
+    const jobs = this.config.metadata.actualWorkers ?? this.config.projects[0].workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     if (!this.totalTestCount)
       return '';
@@ -195,7 +195,7 @@ export class BaseReporter implements ReporterV2 {
     if (expected)
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
     if (this.result.status === 'timedout')
-      tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
+      tokens.push(colors.red(`  Timed out waiting ${this.config.projects[0].globalTimeout / 1000}s for the entire test run`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
       tokens.push(colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 

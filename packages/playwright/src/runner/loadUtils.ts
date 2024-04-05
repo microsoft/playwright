@@ -169,7 +169,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0) {
-      const configFilePath = config.config.configFile ? path.relative(config.config.rootDir, config.config.configFile) : undefined;
+      const configFilePath = config.config.projects[0]?.configFile ? path.relative(config.config.rootDir, config.config.projects[0]?.configFile) : undefined;
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, config.configCLIOverrides.forbidOnly, configFilePath));
     }
   }

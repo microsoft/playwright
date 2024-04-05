@@ -55,8 +55,8 @@ class JUnitReporter extends EmptyReporter {
     this.timestamp = new Date();
     this.startTime = monotonicTime();
     if (this.outputFile) {
-      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
-      this.resolvedOutputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
+      assert(this.config.projects[0]?.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
+      this.resolvedOutputFile = this.config.projects[0]?.configFile ? path.resolve(path.dirname(this.config.projects[0]?.configFile), this.outputFile) : this.outputFile;
     }
   }
 
