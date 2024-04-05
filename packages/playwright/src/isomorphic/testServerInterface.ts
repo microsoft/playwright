@@ -64,6 +64,8 @@ export interface TestServerInterface {
     status: reporterTypes.FullResult['status']
   }>;
 
+  clearCache(params: {}): Promise<void>;
+
   listFiles(params: {
     projects?: string[];
   }): Promise<{

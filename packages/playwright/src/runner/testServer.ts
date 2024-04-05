@@ -38,6 +38,7 @@ import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { serializeError } from '../util';
+import { cacheDir } from '../transform/compilationCache';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -208,6 +209,12 @@ class TestServerDispatcher implements TestServerInterface {
       reporter.onError(serializeError(e));
       return { status: 'failed', report };
     }
+  }
+
+  async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
+    const { config } = await this._loadConfig(this._configFile);
+    if (config)
+      await clearCacheAndLogToConsole(config);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
@@ -491,4 +498,24 @@ export async function resolveCtDirs(config: FullConfigInternal) {
     outDir,
     templateDir
   };
+}
+
+export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
+  const override = (config.config as any)['@playwright/test']?.['cli']?.['clear-cache'];
+  if (override) {
+    await override(config);
+    return;
+  }
+  await removeFolderAndLogToConsole(cacheDir);
+}
+
+export async function removeFolderAndLogToConsole(folder: string) {
+  try {
+    if (!fs.existsSync(folder))
+      return;
+    // eslint-disable-next-line no-console
+    console.log(`Removing ${await fs.promises.realpath(folder)}`);
+    await fs.promises.rm(folder, { recursive: true, force: true });
+  } catch {
+  }
 }
