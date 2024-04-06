@@ -105,7 +105,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
+export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions & { resolvedConfigFile?: string }) {
   const params = new URLSearchParams();
   for (const traceUrl of traceUrls)
     params.append('trace', traceUrl);
@@ -115,6 +115,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('isServer', '');
   if (isUnderTest())
     params.append('isUnderTest', 'true');
+  if (options.resolvedConfigFile)
+    params.append('resolvedConfigFile', path.resolve(options.resolvedConfigFile));
   for (const arg of options.args || [])
     params.append('arg', arg);
   if (options.grep)

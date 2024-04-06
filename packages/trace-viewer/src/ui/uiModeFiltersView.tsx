@@ -20,7 +20,6 @@ import '@web/third_party/vscode/codicon.css';
 import { settings } from '@web/uiUtils';
 import React from 'react';
 import './uiModeFiltersView.css';
-import type { TestModel } from './uiModeModel';
 
 export const FiltersView: React.FC<{
   filterText: string;
@@ -29,9 +28,9 @@ export const FiltersView: React.FC<{
   setStatusFilters: (filters: Map<string, boolean>) => void;
   projectFilters: Map<string, boolean>;
   setProjectFilters: (filters: Map<string, boolean>) => void;
-  testModel: TestModel | undefined,
+  resolvedConfigFile: string | undefined,
   runTests: () => void;
-}> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, testModel, runTests }) => {
+}> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, resolvedConfigFile, runTests }) => {
   const [expanded, setExpanded] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
@@ -80,9 +79,8 @@ export const FiltersView: React.FC<{
                 const copy = new Map(projectFilters);
                 copy.set(projectName, !copy.get(projectName));
                 setProjectFilters(copy);
-                const configFile = testModel?.config?.configFile;
-                if (configFile)
-                  settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
+                if (resolvedConfigFile)
+                  settings.setObject(resolvedConfigFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
               }}/>
               <div>{projectName || 'untitled'}</div>
             </label>

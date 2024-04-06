@@ -53,6 +53,7 @@ const guid = searchParams.get('ws');
 const wsURL = new URL(`../${guid}`, window.location.toString());
 wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
+  resolvedConfigFile: searchParams.get('resolvedConfigFile') || undefined,
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
   grepInvert: searchParams.get('grepInvert') || undefined,
@@ -201,8 +202,8 @@ export const UIModeView: React.FC<{}> = ({
     if (!testModel)
       return;
 
-    const { config, rootSuite } = testModel;
-    const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
+    const { rootSuite } = testModel;
+    const selectedProjects = queryParams.resolvedConfigFile ? settings.getObject<string[] | undefined>(queryParams.resolvedConfigFile + ':projects', undefined) : undefined;
     const newFilter = new Map(projectFilters);
     for (const projectName of newFilter.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
@@ -411,7 +412,7 @@ export const UIModeView: React.FC<{}> = ({
           setStatusFilters={setStatusFilters}
           projectFilters={projectFilters}
           setProjectFilters={setProjectFilters}
-          testModel={testModel}
+          resolvedConfigFile={queryParams.resolvedConfigFile}
           runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
