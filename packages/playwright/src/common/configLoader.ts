@@ -286,7 +286,16 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-export function resolveConfigFile(configFileOrDirectory: string): string | undefined {
+export function resolveConfigLocation(configFile: string | undefined): ConfigLocation {
+  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
+  return {
+    resolvedConfigFile,
+    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory,
+  };
+}
+
+function resolveConfigFile(configFileOrDirectory: string): string | undefined {
   const resolveConfig = (configFile: string) => {
     if (fs.existsSync(configFile))
       return configFile;
@@ -309,22 +318,15 @@ export function resolveConfigFile(configFileOrDirectory: string): string | undef
       return configFile;
     // If there is no config, assume this as a root testing directory.
     return undefined;
-  } else {
-    // When passed a file, it must be a config file.
-    const configFile = resolveConfig(configFileOrDirectory);
-    return configFile!;
   }
+  // When passed a file, it must be a config file.
+  return configFileOrDirectory!;
 }
 
 export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
-  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+  const location = resolveConfigLocation(configFile);
+  if (restartWithExperimentalTsEsm(location.resolvedConfigFile))
     return null;
-  const location: ConfigLocation = {
-    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory,
-    resolvedConfigFile,
-  };
   return await loadConfig(location, overrides, ignoreDeps);
 }
 
