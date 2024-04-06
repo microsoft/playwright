@@ -140,6 +140,40 @@ test('test.describe.serial should work with retry', async ({ runInlineTest }) =>
   ]);
 });
 
+test('test.describe.serial should work with retry when it fails in different places', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.serial('serial suite', () => {
+        test('test1', async ({}, testInfo) => {
+          console.log('\\n%%test1');
+          expect(testInfo.retry).toEqual(0)
+        });
+        test('test2', async ({}, testInfo) => {
+          console.log('\\n%%test2');
+          expect(testInfo.retry).toEqual(1)
+        });
+        test('test3', async ({}) => {
+          console.log('\\n%%test3');
+        });
+        test('test4', async ({}) => {
+          console.log('\\n%%test4');
+        });
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(2);
+  expect(result.outputLines).toEqual([
+    'test1',
+    'test2',
+    'test1',
+  ]);
+});
+
 test('test.describe.serial should work with retry and beforeAll failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
