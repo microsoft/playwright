@@ -290,7 +290,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       return 'skipped';
 
     const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    const skipped = results.filter(result => result.status === 'skipped');
+    const skipped = results.filter(result => result.status === 'skipped' && result.status !== this.expectedStatus);
     const passed = results.filter(result => result.status === 'passed');
     if (!failures.length) // all passed
       return 'expected';
