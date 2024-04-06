@@ -409,7 +409,8 @@ class TestServerDispatcher implements TestServerInterface {
 }
 
 export async function runUIMode(configFile: string | undefined, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  return await innerRunTestServer(configFile, options, async (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => {
+  const configLocation = resolveConfigLocation(configFile);
+  return await innerRunTestServer(configLocation, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser(server.urlPrefix());
@@ -426,16 +427,16 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
 }
 
 export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  return await innerRunTestServer(configFile, options, async server => {
+  const configLocation = resolveConfigLocation(configFile);
+  return await innerRunTestServer(configLocation, options, async server => {
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix().replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configFile: string | undefined, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+async function innerRunTestServer(configLocation: ConfigLocation, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   if (restartWithExperimentalTsEsm(undefined, true))
     return 'restarted';
-  const configLocation = resolveConfigLocation(configFile);
   const testServer = new TestServer(configLocation);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
