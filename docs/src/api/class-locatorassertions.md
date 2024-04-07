@@ -217,6 +217,12 @@ Expected substring or RegExp or a list of those.
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
+### option: LocatorAssertions.NotToContainText.ignoreOrder
+* since: v1.44
+- `ignoreOrder` <[boolean]>
+
+Weather to ignore the order of the elements when comparing the text. This option is only available when the expected value is an array.
+
 ### option: LocatorAssertions.NotToContainText.useInnerText
 * since: v1.18
 - `useInnerText` <[boolean]>
@@ -357,6 +363,12 @@ Expected string or RegExp or a list of those.
 - `ignoreCase` <[boolean]>
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
+### option: LocatorAssertions.NotToHaveText.ignoreOrder
+* since: v1.44
+- `ignoreOrder` <[boolean]>
+
+Weather to ignore the order of the elements when comparing the text. This option is only available when the expected value is an array.
 
 ### option: LocatorAssertions.NotToHaveText.useInnerText
 * since: v1.18
@@ -1095,6 +1107,12 @@ Expected substring or RegExp or a list of those.
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
+### option: LocatorAssertions.toContainText.ignoreOrder
+* since: v1.44
+- `ignoreOrder` <[boolean]>
+
+Weather to ignore the order of the elements when comparing the text. This option is only available when the expected value is an array.
+
 ### option: LocatorAssertions.toContainText.useInnerText
 * since: v1.18
 - `useInnerText` <[boolean]>
@@ -1774,6 +1792,12 @@ Expected string or RegExp or a list of those.
 - `ignoreCase` <[boolean]>
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
+### option: LocatorAssertions.toHaveText.ignoreOrder
+* since: v1.44
+- `ignoreOrder` <[boolean]>
+
+Weather to ignore the order of the elements when comparing the text. This option is only available when the expected value is an array.
 
 ### option: LocatorAssertions.toHaveText.useInnerText
 * since: v1.18

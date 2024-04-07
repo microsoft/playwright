@@ -1660,6 +1660,7 @@ scheme.FrameExpectParams = tObject({
   expectedNumber: tOptional(tNumber),
   expectedValue: tOptional(tType('SerializedArgument')),
   useInnerText: tOptional(tBoolean),
+  ignoreOrder: tOptional(tBoolean),
   isNot: tBoolean,
   timeout: tOptional(tNumber),
 });

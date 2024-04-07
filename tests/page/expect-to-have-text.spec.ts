@@ -234,6 +234,19 @@ test.describe('toHaveText with array', () => {
     const error = await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo'], { timeout: 1000 }).catch(e => e);
     expect(error.message).toContain('locator resolved to 1 element');
   });
+
+  test('ignoreOrder should work with strings', async ({ page }) => {
+    await page.setContent('<div>Text 1</div><div>Text 2</div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveText(['Text 2', 'Text 1'], { ignoreOrder: true });
+  });
+
+  test('ignoreOrder should work with regex', async ({ page }) => {
+    await page.setContent('<div>Text 1</div><div>Text 2</div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveText([/Text 2/, /Text 1/], { ignoreOrder: true });
+    await expect(expect(locator).toHaveText([/Text 2/, /Text 1/, /Text 43/], { ignoreOrder: true, timeout: 10 })).rejects.toThrow('Timed out 10ms waiting for');
+  });
 });
 
 test.describe('toContainText with array', () => {
@@ -250,5 +263,17 @@ test.describe('toContainText with array', () => {
     const locator = page.locator('div');
     const error = await expect(locator).toContainText(['Text 2'], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('-   "Text 2"');
+  });
+
+  test('ignoreOrder should work with strings', async ({ page }) => {
+    await page.setContent('<div>Text 1</div><div>Text 2</div><div>Text 3</div>');
+    const locator = page.locator('div');
+    await expect(locator).toContainText(['ext 2', 'ext 1'], { ignoreOrder: true });
+  });
+
+  test('ignoreOrder should work with regex', async ({ page }) => {
+    await page.setContent('<div>Text 1</div><div>Text 2</div><div>Text 3</div>');
+    const locator = page.locator('div');
+    await expect(locator).toContainText([/ext 2/, /ext 1/], { ignoreOrder: true });
   });
 });

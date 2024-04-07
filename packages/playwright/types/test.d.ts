@@ -6870,6 +6870,12 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * Weather to ignore the order of the elements when comparing the text. This option is only available when the
+     * expected value is an array.
+     */
+    ignoreOrder?: boolean;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -7281,6 +7287,12 @@ interface LocatorAssertions {
      * expression flag if specified.
      */
     ignoreCase?: boolean;
+
+    /**
+     * Weather to ignore the order of the elements when comparing the text. This option is only available when the
+     * expected value is an array.
+     */
+    ignoreOrder?: boolean;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.

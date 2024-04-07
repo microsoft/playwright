@@ -1268,13 +1268,26 @@ export class InjectedScript {
 
       // Each matcher should get a "received" that matches it, in order.
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-      let mIndex = 0, rIndex = 0;
-      while (mIndex < matchers.length && rIndex < received.length) {
-        if (matchers[mIndex].matches(received[rIndex]))
-          ++mIndex;
-        ++rIndex;
+      if (options.ignoreOrder) {
+        const mReceivedIndexes = new Array<boolean>(received.length).fill(false);
+        let mIndex = 0;
+        while (mIndex < matchers.length) {
+          for (let rIndex = 0; rIndex < received.length && mReceivedIndexes[mIndex]; rIndex++) {
+            if (matchers[mIndex].matches(received[rIndex]))
+              mReceivedIndexes[rIndex] = true;
+          }
+          mIndex++;
+        }
+        return { received, matches: mIndex === matchers.length };
+      } else {
+        let mIndex = 0, rIndex = 0;
+        while (mIndex < matchers.length && rIndex < received.length) {
+          if (matchers[mIndex].matches(received[rIndex]))
+            ++mIndex;
+          ++rIndex;
+        }
+        return { received, matches: mIndex === matchers.length };
       }
-      return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }

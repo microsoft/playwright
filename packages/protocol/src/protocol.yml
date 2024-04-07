@@ -2257,6 +2257,7 @@ Frame:
         expectedNumber: number?
         expectedValue: SerializedArgument?
         useInnerText: boolean?
+        ignoreOrder: boolean?
         isNot: boolean
         timeout: number?
       returns:

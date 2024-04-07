@@ -159,12 +159,12 @@ export function toContainText(
   this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, ignoreOrder?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
+      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, ignoreOrder: options.ignoreOrder, timeout });
     }, expected, { ...options, contains: true });
   } else {
     return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
@@ -270,12 +270,12 @@ export function toHaveText(
   this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, ignoreOrder?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = toExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, ignoreOrder: options.ignoreOrder, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
