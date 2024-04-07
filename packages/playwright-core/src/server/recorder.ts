@@ -494,7 +494,7 @@ class ContextRecorder extends EventEmitter {
   private async _onPage(page: Page) {
     // First page is called page, others are called popup1, popup2, etc.
     const frame = page.mainFrame();
-    page.on('close', () => {
+    page.on(Page.Events.Close, () => {
       this._generator.addAction({
         frame: this._describeMainFrame(page),
         committed: true,
@@ -673,26 +673,28 @@ class ContextRecorder extends EventEmitter {
   }
 
   private _onFrameNavigated(frame: Frame, page: Page) {
+    if (frame._page.mainFrame() !== frame)
+      return;
     const pageAlias = this._pageAliases.get(page);
-    this._generator.signal(pageAlias!, frame, { name: 'navigation', url: frame.url() });
+    this._generator.signal(pageAlias!, { name: 'navigation', url: frame.url() });
   }
 
   private _onPopup(page: Page, popup: Page) {
     const pageAlias = this._pageAliases.get(page)!;
     const popupAlias = this._pageAliases.get(popup)!;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'popup', popupAlias });
+    this._generator.signal(pageAlias, { name: 'popup', popupAlias });
   }
 
   private _onDownload(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
     ++this._lastDownloadOrdinal;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: this._lastDownloadOrdinal ? String(this._lastDownloadOrdinal) : '' });
+    this._generator.signal(pageAlias, { name: 'download', downloadAlias: this._lastDownloadOrdinal ? String(this._lastDownloadOrdinal) : '' });
   }
 
   private _onDialog(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
     ++this._lastDialogOrdinal;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: this._lastDialogOrdinal ? String(this._lastDialogOrdinal) : '' });
+    this._generator.signal(pageAlias, { name: 'dialog', dialogAlias: this._lastDialogOrdinal ? String(this._lastDialogOrdinal) : '' });
   }
 }
 

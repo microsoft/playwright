@@ -16,7 +16,6 @@
 
 import { EventEmitter } from 'events';
 import type { BrowserContextOptions, LaunchOptions } from '../../..';
-import type { Frame } from '../frames';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import type { Action, Signal, FrameDescription } from './recorderActions';
 
@@ -121,7 +120,7 @@ export class CodeGenerator extends EventEmitter {
       action.committed = true;
   }
 
-  signal(pageAlias: string, frame: Frame, signal: Signal) {
+  signal(pageAlias: string, signal: Signal) {
     if (!this._enabled)
       return;
 
@@ -141,7 +140,7 @@ export class CodeGenerator extends EventEmitter {
       return;
     }
 
-    if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
+    if (signal.name === 'navigation') {
       this.addAction({
         frame: {
           pageAlias,
@@ -150,7 +149,7 @@ export class CodeGenerator extends EventEmitter {
         committed: true,
         action: {
           name: 'navigate',
-          url: frame.url(),
+          url: signal.url,
           signals: [],
         },
       });
