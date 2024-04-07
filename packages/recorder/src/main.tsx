@@ -19,6 +19,24 @@ import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';
 
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+
+  window.dispatch = async function _onDispatch(data: any) {
+    await chrome.runtime.sendMessage(data);
+  };
+
+  chrome.runtime.onMessage.addListener((msg: any) => {
+    switch (msg.method) {
+      case 'setPaused': window.playwrightSetPaused(msg.paused); break;
+      case 'setMode': window.playwrightSetMode(msg.mode); break;
+      case 'setSources': window.playwrightSetSources(msg.sources); break;
+      case 'updateCallLogs': window.playwrightUpdateLogs(msg.callLogs); break;
+      case 'setSelector': window.playwrightSetSelector(msg.selector, msg.userGesture); break;
+      case 'setFileIfNeeded': window.playwrightSetFileIfNeeded(msg.file); break;
+    }
+  });
+}
+
 export const Main: React.FC = ({
 }) => {
   const [sources, setSources] = React.useState<Source[]>([]);

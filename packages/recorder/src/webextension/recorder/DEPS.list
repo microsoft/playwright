@@ -1,0 +1,7 @@
+[*]
+../
+../../recorderTypes
+@web/**
+@isomorphic/**
+../../../../playwright-core/src/server/recorder/**
+../../../../playwright-core/src/utils/**

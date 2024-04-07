@@ -19,6 +19,8 @@
     "paths": {
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["../protocol/src/*"],
+      "@recorder/*": ["./src/*"],
+      "@trace/*": ["../trace/src/*"],
       "@web/*": ["../web/src/*"],
     }
   },

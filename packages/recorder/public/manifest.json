@@ -1,0 +1,25 @@
+{
+  "name": "Playwright",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "icons": {
+    "16": "icon-16x16.png",
+    "32": "icon-32x32.png",
+    "48": "icon-48x48.png",
+    "128": "icon-192x192.png"
+  },
+  "background": {
+    "service_worker": "webextension/background.js",
+    "type": "module",
+    "scripts": ["webextension/background.js"]
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon-16x16.png",
+      "32": "icon-32x32.png"
+    },
+    "default_title": "Record"
+  },
+  "permissions": ["tabs", "scripting", "webNavigation"],
+  "host_permissions": ["<all_urls>"]
+}

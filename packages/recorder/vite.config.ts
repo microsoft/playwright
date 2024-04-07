@@ -27,7 +27,10 @@ export default defineConfig({
     alias: {
       '@isomorphic': path.resolve(__dirname, '../playwright-core/src/utils/isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
+      '@recorder/*': path.resolve(__dirname, './src'),
+      '@trace': path.resolve(__dirname, '../trace/src'),
       '@web': path.resolve(__dirname, '../web/src'),
+      'events': path.resolve(__dirname, '../../node_modules/events'),
     },
   },
   build: {
@@ -36,6 +39,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].js',
+        assetFileNames: '[name].[ext]',
+      },
+      input: {
+        'index': path.resolve(__dirname, 'index.html'),
+        'webextension/background': path.resolve(__dirname, 'src/webextension/background.ts'),
       },
     },
   }

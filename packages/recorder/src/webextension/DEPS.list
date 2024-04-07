@@ -1,0 +1,4 @@
+[*]
+@web/**
+@isomorphic/**
+recorder/
