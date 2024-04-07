@@ -208,9 +208,11 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
+  private _performActions: boolean;
 
-  constructor(recorder: Recorder) {
+  constructor(recorder: Recorder, performActions: boolean) {
     this._recorder = recorder;
+    this._performActions = performActions;
   }
 
   cursor() {
@@ -261,21 +263,21 @@ class RecordActionTool implements RecorderTool {
   onPointerDown(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (this._performActions && !this._performingAction)
       consumeEvent(event);
   }
 
   onPointerUp(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (this._performActions && !this._performingAction)
       consumeEvent(event);
   }
 
   onMouseDown(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (this._performActions && !this._performingAction)
       consumeEvent(event);
     this._activeModel = this._hoveredModel;
   }
@@ -283,7 +285,7 @@ class RecordActionTool implements RecorderTool {
   onMouseUp(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (this._performActions && !this._performingAction)
       consumeEvent(event);
   }
 
@@ -398,7 +400,7 @@ class RecordActionTool implements RecorderTool {
       return;
 
     // Only allow programmatic keyups, ignore user input.
-    if (!this._expectProgrammaticKeyUp) {
+    if (this._performActions && !this._expectProgrammaticKeyUp) {
       consumeEvent(event);
       return;
     }
@@ -439,25 +441,33 @@ class RecordActionTool implements RecorderTool {
     if (this._performingAction)
       return true;
     // Consume as the first thing.
-    consumeEvent(event);
+    if (this._performActions)
+      consumeEvent(event);
     return false;
   }
 
   private _consumedDueToNoModel(event: Event, model: HighlightModel | null): boolean {
     if (model)
       return false;
-    consumeEvent(event);
+    if (this._performActions)
+      consumeEvent(event);
     return true;
   }
 
   private _consumedDueWrongTarget(event: Event): boolean {
     if (this._activeModel && this._activeModel.elements[0] === this._recorder.deepEventTarget(event))
       return false;
-    consumeEvent(event);
+    if (this._performActions)
+      consumeEvent(event);
     return true;
   }
 
   private async _performAction(action: actions.Action) {
+    if (!this._performActions) {
+      await this._recorder.delegate.recordAction?.(action);
+      return;
+    }
+
     this._hoveredElement = null;
     this._hoveredModel = null;
     this._activeModel = null;
@@ -947,7 +957,8 @@ export class Recorder {
   readonly document: Document;
   delegate: RecorderDelegate = {};
 
-  constructor(injectedScript: InjectedScript) {
+  constructor(injectedScript: InjectedScript, performActions?: boolean) {
+    performActions = performActions === undefined || performActions === null ? true : performActions;
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
     this.highlight = injectedScript.createHighlight();
@@ -955,7 +966,7 @@ export class Recorder {
       'none': new NoneTool(),
       'standby': new NoneTool(),
       'inspecting': new InspectTool(this, false),
-      'recording': new RecordActionTool(this),
+      'recording': new RecordActionTool(this, performActions),
       'recording-inspecting': new InspectTool(this, false),
       'assertingText': new TextAssertionTool(this, 'text'),
       'assertingVisibility': new InspectTool(this, true),
@@ -1292,8 +1303,8 @@ export class PollingRecorder implements RecorderDelegate {
   private _embedder: Embedder;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
 
-  constructor(injectedScript: InjectedScript) {
-    this._recorder = new Recorder(injectedScript);
+  constructor(injectedScript: InjectedScript, performActions?: boolean) {
+    this._recorder = new Recorder(injectedScript, performActions);
     this._embedder = injectedScript.window as any;
 
     injectedScript.onGlobalListenersRemoved.add(() => this._recorder.installListeners());
