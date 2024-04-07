@@ -18,9 +18,9 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
   const lines = text.split('\n');
   const maxLength = Math.max(...lines.map(line => line.length));
   return [
-    '╔' + '═'.repeat(maxLength + padding * 2) + '╗',
-    ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
-    '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
+    '═'.repeat(maxLength + padding * 2),
+    ...lines.map(line => ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding)),
+    '═'.repeat(maxLength + padding * 2),
   ].join('\n');
 }
 
