@@ -872,7 +872,9 @@ export class Registry {
       downloadHostEnv = 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST';
     else if (descriptor.name.startsWith('webkit'))
       downloadHostEnv = 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST';
-
+    else if (descriptor.name.startsWith('ffmpeg'))
+      downloadHostEnv = 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST';
+    
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
     if (customHostOverride)
       downloadURLs = [`${customHostOverride}/${downloadPath}`];
