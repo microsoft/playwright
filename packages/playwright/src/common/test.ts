@@ -296,7 +296,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       return 'expected';
     if (failures.length === results.length) // all failed
       return 'unexpected';
-    if (failures.length && skipped.length && !passed.length) // some failed, none succedded and the rest where skipped
+    if (failures.length && skipped.length && !passed.length) // some failed, none succeeded and the rest were skipped
       return 'unexpected';
     return 'flaky'; // mixed bag
   }
