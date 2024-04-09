@@ -17,17 +17,19 @@
 import { browserTest, expect } from '../config/browserTest';
 import type { BrowserContext, BrowserContextOptions } from '@playwright/test';
 
-const test = browserTest.extend<{ reusedContext: (options?: BrowserContextOptions) => Promise<BrowserContext> }>({
-  reusedContext: async ({ browserType, browser }, use) => {
+const test = browserTest.extend<{}, { reusedContext: (options?: BrowserContextOptions) => Promise<BrowserContext> }>({
+  reusedContext: [async ({ browserType, browser }, use) => {
+    let context;
     await use(async (options: BrowserContextOptions = {}) => {
       const defaultContextOptions = (browserType as any)._defaultContextOptions;
-      const context = await (browser as any)._newContextForReuse({
+      context = await (browser as any)._newContextForReuse({
         ...defaultContextOptions,
         ...options,
       });
       return context;
     });
-  },
+    await context.close();
+  }, { scope: 'worker' }],
 });
 
 test('should re-add binding after reset', async ({ reusedContext }) => {
