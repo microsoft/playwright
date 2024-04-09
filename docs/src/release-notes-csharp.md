@@ -4,6 +4,50 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.43
+
+### New APIs
+
+- Method [`method: BrowserContext.clearCookies`] now supports filters to remove only some cookies.
+
+  ```csharp
+  // Clear all cookies.
+  await Context.ClearCookiesAsync();
+  // New: clear cookies with a particular name.
+  await Context.ClearCookiesAsync(new() { Name = "session-id" });
+  // New: clear cookies for a particular domain.
+  await Context.ClearCookiesAsync(new() { Domain = "my-origin.com" });
+  ```
+
+- New property [`method: Locator.contentFrame`] converts a [Locator] object to a [FrameLocator]. This can be useful when you have a [Locator] object obtained somewhere, and later on would like to interact with the content inside the frame.
+
+  ```csharp
+  var locator = Page.Locator("iframe[name='embedded']");
+  // ...
+  var frameLocator = locator.ContentFrame;
+  await frameLocator.GetByRole(AriaRole.Button).ClickAsync();
+  ```
+
+- New property [`method: FrameLocator.owner`] converts a [FrameLocator] object to a [Locator]. This can be useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
+
+  ```csharp
+  var frameLocator = page.FrameLocator("iframe[name='embedded']");
+  // ...
+  var locator = frameLocator.Owner;
+  await Expect(locator).ToBeVisibleAsync();
+  ```
+
+### Browser Versions
+
+* Chromium 124.0.6367.8
+* Mozilla Firefox 124.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 123
+* Microsoft Edge 123
+
 ## Version 1.42
 
 ### New Locator Handler
