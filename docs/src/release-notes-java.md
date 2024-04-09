@@ -4,6 +4,50 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.43
+
+### New APIs
+
+- Method [`method: BrowserContext.clearCookies`] now supports filters to remove only some cookies.
+
+  ```java
+  // Clear all cookies.
+  context.clearCookies();
+  // New: clear cookies with a particular name.
+  context.clearCookies(new BrowserContext.ClearCookiesOptions().setName("session-id"));
+  // New: clear cookies for a particular domain.
+  context.clearCookies(new BrowserContext.ClearCookiesOptions().setDomain("my-origin.com"));
+  ```
+
+- New method [`method: Locator.contentFrame`] converts a [Locator] object to a [FrameLocator]. This can be useful when you have a [Locator] object obtained somewhere, and later on would like to interact with the content inside the frame.
+
+  ```java
+  Locator locator = page.locator("iframe[name='embedded']");
+  // ...
+  FrameLocator frameLocator = locator.contentFrame();
+  frameLocator.getByRole(AriaRole.BUTTON).click();
+  ```
+
+- New method [`method: FrameLocator.owner`] converts a [FrameLocator] object to a [Locator]. This can be useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
+
+  ```java
+  FrameLocator frameLocator = page.frameLocator("iframe[name='embedded']");
+  // ...
+  Locator locator = frameLocator.owner();
+  assertThat(locator).isVisible();
+  ```
+
+### Browser Versions
+
+* Chromium 124.0.6367.8
+* Mozilla Firefox 124.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 123
+* Microsoft Edge 123
+
 ## Version 1.42
 
 ### Experimental JUnit integration

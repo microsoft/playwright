@@ -4,6 +4,52 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.43
+
+### New APIs
+
+- Method [`method: BrowserContext.clearCookies`] now supports filters to remove only some cookies.
+
+  ```python
+  # Clear all cookies.
+  context.clear_cookies()
+  # New: clear cookies with a particular name.
+  context.clear_cookies(name="session-id")
+  # New: clear cookies for a particular domain.
+  context.clear_cookies(domain="my-origin.com")
+  ```
+
+- New method [`method: Locator.contentFrame`] converts a [Locator] object to a [FrameLocator]. This can be useful when you have a [Locator] object obtained somewhere, and later on would like to interact with the content inside the frame.
+
+  ```python
+  locator = page.locator("iframe[name='embedded']")
+  # ...
+  frame_locator = locator.content_frame
+  frame_locator.getByRole("button").click()
+  ```
+
+- New method [`method: FrameLocator.owner`] converts a [FrameLocator] object to a [Locator]. This can be useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
+
+  ```python
+  frame_locator = page.frame_locator("iframe[name='embedded']")
+  # ...
+  locator = frame_locator.owner
+  expect(locator).to_be_visible()
+  ```
+
+- Conda builds are now published for macOS-arm64 and Linux-arm64.
+
+### Browser Versions
+
+* Chromium 124.0.6367.8
+* Mozilla Firefox 124.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 123
+* Microsoft Edge 123
+
 ## Version 1.42
 
 ### New Locator Handler
