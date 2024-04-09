@@ -305,7 +305,7 @@ await context.StorageStateAsync(new()
 // Create a new context with the saved storage state.
 var context = await browser.NewContextAsync(new()
 {
-    StorageStatePath = "../../../state.json"
+    StorageStatePath = "../../../playwright/.auth/state.json"
 });
 ```
 
