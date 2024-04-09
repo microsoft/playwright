@@ -31,9 +31,9 @@ toc_max_heading_level: 2
 - New method [`method: FrameLocator.owner`] converts a [FrameLocator] object to a [Locator]. This can be useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
 
   ```java
-  FrameLocator frameLocator = page.frameLocator("iframe[name='embedded']")
+  FrameLocator frameLocator = page.frameLocator("iframe[name='embedded']");
   // ...
-  Locator locator = frameLocator.owner()
+  Locator locator = frameLocator.owner();
   assertThat(locator).isVisible();
   ```
 
