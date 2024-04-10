@@ -18,8 +18,9 @@
 
 // @ts-check
 const toKebabCase = require('lodash/kebabCase.js')
+const Documentation = require('./documentation');
 
-const createMarkdownLink = (languagePath, member, text) => {
+function createMarkdownLink(languagePath, member, text) {
   const className = toKebabCase(member.clazz.name);
   const memberName = toKebabCase(member.name);
   let hash = null;
@@ -32,17 +33,17 @@ const createMarkdownLink = (languagePath, member, text) => {
 
 /**
  * @param {string} languagePath
- * @param {import('../doclint/documentation').Class} clazz
+ * @param {Documentation.Class} clazz
  * @returns {string}
  */
-const createClassMarkdownLink = (languagePath, clazz) => {
+function createClassMarkdownLink(languagePath, clazz) {
   return `[${clazz.name}](https://playwright.dev${languagePath}/docs/api/class-${clazz.name.toLowerCase()})`;
 };
 
 /**
  * @param {string} language 
  * @param {OutputType} outputType
- * @returns {import('../doclint/documentation').Renderer}
+ * @returns {Documentation.Renderer}
  */
 function docsLinkRendererForLanguage(language, outputType) {
   const languagePath = languageToRelativeDocsPath(language);
@@ -110,7 +111,7 @@ function assertionArgument(className) {
 }
 
 /**
- * @param {import('../doclint/documentation').Member[]} args
+ * @param {Documentation.Member[]} args
  */
 function renderJSSignature(args) {
   const tokens = [];
