@@ -123,9 +123,10 @@ export class TeleSuiteUpdater {
   }
 
   processListReport(report: any[]) {
-    this._receiver.reset();
+    this._receiver.isListing = true;
     for (const message of report)
       this._receiver.dispatch(message);
+    this._receiver.isListing = false;
   }
 
   processTestReportEvent(message: any) {
