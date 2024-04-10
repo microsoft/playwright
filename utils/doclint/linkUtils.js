@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/** @typedef {'Types'|'ReleaseNotesMd'} OutputType */
+
 // @ts-check
 const toKebabCase = require('lodash/kebabCase.js')
 
@@ -28,18 +31,33 @@ const createMarkdownLink = (languagePath, member, text) => {
 };
 
 /**
+ * @param {string} languagePath
+ * @param {import('../doclint/documentation').Class} clazz
+ * @returns {string}
+ */
+const createClassMarkdownLink = (languagePath, clazz) => {
+  return `[${clazz.name}](https://playwright.dev${languagePath}/docs/api/class-${clazz.name.toLowerCase()})`;
+};
+
+/**
  * @param {string} language 
+ * @param {OutputType} outputType
  * @returns {import('../doclint/documentation').Renderer}
  */
-function docsLinkRendererForLanguage(language) {
+function docsLinkRendererForLanguage(language, outputType) {
   const languagePath = languageToRelativeDocsPath(language);
   return ({ clazz, member, param, option }) => {
     if (param)
       return `\`${param}\``;
     if (option)
       return `\`${option}\``;
-    if (clazz)
-      return `{@link ${clazz.name}}`;
+    if (clazz) {
+      if (outputType === 'Types')
+        return `{@link ${clazz.name}}`;
+      if (outputType === 'ReleaseNotesMd')
+        return createClassMarkdownLink(languagePath, clazz);
+      throw new Error(`Unexpected output type ${outputType}`);
+    }
     if (!member || !member.clazz)
       throw new Error('Internal error');
     const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';

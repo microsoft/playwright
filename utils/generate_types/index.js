@@ -81,7 +81,7 @@ class TypesGenerator {
    * @returns {Promise<string>}
    */
   async generateTypes(overridesFile) {
-    this.documentation.setLinkRenderer(docsLinkRendererForLanguage('js'));
+    this.documentation.setLinkRenderer(docsLinkRendererForLanguage('js', 'Types'));
     this.documentation.setCodeGroupsTransformer('js', tabs => tabs.filter(tab => tab.value === 'ts').map(tab => tab.spec));
     this.documentation.generateSourceCodeComments();
 
