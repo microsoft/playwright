@@ -647,7 +647,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   const output = result.output;
   expect(output).toContain(`expect(locator).toHaveText(expected)`);
   expect(output).toContain('Expected string: "Text"');
-  expect(output).toContain('Received string: ""');
+  expect(output).toContain('Received: <element(s) not found>');
   expect(output).toContain('waiting for locator(\'no-such-thing\')');
 });
 

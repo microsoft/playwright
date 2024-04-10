@@ -158,7 +158,7 @@ test.describe('not.toHaveText', () => {
     await page.setContent('<div>hello</div>');
     const error = await expect(page.locator('span')).not.toHaveText('hello', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('Expected string: not "hello"');
-    expect(stripAnsi(error.message)).toContain('Received string: ""');
+    expect(stripAnsi(error.message)).toContain('Received: <element(s) not found>');
     expect(stripAnsi(error.message)).toContain('waiting for locator(\'span\')');
   });
 });

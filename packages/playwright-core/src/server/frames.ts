@@ -1420,7 +1420,7 @@ export class Frame extends SdkObject {
         const injected = await context.injectedScript();
         progress.throwIfAborted();
 
-        const { log, matches, received, missingRecevied } = await injected.evaluate(async (injected, { info, options, callId }) => {
+        const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
           const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
           const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
           let log = '';
@@ -1432,16 +1432,16 @@ export class Frame extends SdkObject {
             log = `  locator resolved to ${injected.previewNode(elements[0])}`;
           if (callId)
             injected.markTargetElements(new Set(elements), callId);
-          return { log, ...(await injected.expect(elements[0], options, elements)) };
+          return { log, ...await injected.expect(elements[0], options, elements) };
         }, { info, options, callId: metadata.id });
 
         if (log)
           progress.log(log);
         // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
-        if (matches === options.isNot && !missingRecevied) {
-          lastIntermediateResult.received = received;
+        if (matches === options.isNot) {
+          lastIntermediateResult.received = missingReceived ? '<element(s) not found>' : received;
           lastIntermediateResult.isSet = true;
-          if (!Array.isArray(received))
+          if (!missingReceived && !Array.isArray(received))
             progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
         }
         if (!oneShot && matches === options.isNot) {

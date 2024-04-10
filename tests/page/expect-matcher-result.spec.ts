@@ -86,7 +86,7 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
 
 Locator: locator('#node2')
 Expected: visible
-Received: hidden
+Received: <element(s) not found>
 Call log`);
 
   }
