@@ -33,7 +33,8 @@ it('should print no-locator-resolved error when locator matcher did not resolve 
     () => expectWithShortLivingTimeout(myLocator).toHaveJSProperty('abc', 'abc'), // Equal matcher
     () => expectWithShortLivingTimeout(myLocator).not.toHaveText('abc'),          // Text matcher - pass / string
     () => expectWithShortLivingTimeout(myLocator).not.toHaveText(/abc/),          // Text matcher - pass / RegExp
-    () => expectWithShortLivingTimeout(myLocator).toContainText('abc'),           // Text matcher - fail
+    () => expectWithShortLivingTimeout(myLocator).toContainText('abc'),           // Text matcher - fail / string
+    () => expectWithShortLivingTimeout(myLocator).toContainText(/abc/),           // Text matcher - fail / RegExp
   ];
   for (const matcher of locatorMatchers) {
     await it.step(matcher.toString(), async () => {
