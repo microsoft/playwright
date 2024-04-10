@@ -130,6 +130,7 @@ type TeleReporterReceiverOptions = {
 };
 
 export class TeleReporterReceiver {
+  public isListing = false;
   private _rootSuite: TeleSuite;
   private _options: TeleReporterReceiverOptions;
   private _reporter: Partial<ReporterV2>;
@@ -141,12 +142,6 @@ export class TeleReporterReceiver {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
-  }
-
-  reset() {
-    this._rootSuite.suites = [];
-    this._rootSuite.tests = [];
-    this._tests.clear();
   }
 
   dispatch(message: JsonEvent): Promise<void> | void {
@@ -209,6 +204,28 @@ export class TeleReporterReceiver {
     // Always update project in watch mode.
     projectSuite._project = this._parseProject(project);
     this._mergeSuitesInto(project.suites, projectSuite);
+
+    // Remove deleted tests when listing. Empty suites will be auto-filtered
+    // in the UI layer.
+    if (this.isListing) {
+      const testIds = new Set<string>();
+      const collectIds = (suite: JsonSuite) => {
+        suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
+        suite.suites.forEach(collectIds);
+      };
+      project.suites.forEach(collectIds);
+
+      const filterTests = (suite: TeleSuite) => {
+        suite.tests = suite.tests.filter(t => {
+          if (testIds.has(t.id))
+            return true;
+          this._tests.delete(t.id);
+          return false;
+        });
+        suite.suites.forEach(filterTests);
+      };
+      filterTests(projectSuite);
+    }
   }
 
   private _onBegin() {
