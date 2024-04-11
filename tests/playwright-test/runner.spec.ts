@@ -774,3 +774,47 @@ test('unhandled exception in test.fail should restart worker and continue', asyn
   expect(result.failed).toBe(0);
   expect(result.outputLines).toEqual(['bad running worker=0', 'good running worker=1']);
 });
+
+test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        globalTimeout: 2000,
+        fullyParallel: true,
+        reporter: './reporter'
+      }
+    `,
+    'reporter.ts': `
+      export default class MyReporter {
+        onTestEnd(test) {
+          console.log('MyReporter.onTestEnd', test.title);
+        }
+        onEnd(status) {
+          console.log('MyReporter.onEnd');
+        }
+        async onExit() {
+          console.log('MyReporter.onExit');
+        }
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('first', async ({ }) => {
+        await new Promise(() => {});
+      });
+      test('second', async ({ }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  const endIndex = result.output.indexOf('MyReporter.onEnd');
+  expect(endIndex).not.toBe(-1);
+  const firstIndex = result.output.indexOf('MyReporter.onTestEnd first');
+  expect(firstIndex).not.toBe(-1);
+  expect(firstIndex).toBeLessThan(endIndex);
+  const secondIndex = result.output.indexOf('MyReporter.onTestEnd second');
+  expect(secondIndex).not.toBe(-1);
+  expect(secondIndex).toBeLessThan(endIndex);
+});
