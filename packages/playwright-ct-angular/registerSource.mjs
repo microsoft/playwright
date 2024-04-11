@@ -22,7 +22,6 @@
  * @typedef {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | TemplateInfo} ComponentInfo
  */
 
-import '@angular/compiler';
 import 'zone.js';
 import {
   Component as defineComponent,
