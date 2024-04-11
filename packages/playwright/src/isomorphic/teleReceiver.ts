@@ -69,6 +69,7 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
+  annotations?: { type: string, description?: string }[];
 };
 
 export type JsonTestEnd = {
@@ -366,6 +367,7 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
+    test.annotations = payload.annotations ?? [];
     return test;
   }
 
