@@ -40,6 +40,8 @@ getTestBed().initTestEnvironment(
 );
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  __pwAssertIsNotJsx(component);
+
   for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ hooksConfig, TestBed });
 
@@ -69,6 +71,8 @@ window.playwrightUnmount = async rootElement => {
  * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions} component
  */
 window.playwrightUpdate = async (rootElement, component) => {
+  __pwAssertIsNotJsx(component);
+
   const fixture = __pwFixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
@@ -165,6 +169,10 @@ function __pwUpdateEvents(fixture, events = {}) {
   __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
 }
 
+function __pwAssertIsNotJsx(component) {
+  if (component.__pw_type === 'jsx')
+    throw new Error('JSX mount notation is not supported');
+}
 
 /**
  * @param {ComponentInfo} component
