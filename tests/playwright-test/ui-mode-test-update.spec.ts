@@ -129,6 +129,36 @@ test('should pick new / deleted tests', async ({ runUITest, writeFiles, deleteFi
   `);
 });
 
+test('should not loose run information after execution if test wrote into testDir', async ({ runUITest, writeFiles, deleteFile }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30300' });
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {
+        fs.writeFileSync(path.join(test.info().project.testDir, 'something.txt'), 'hi');
+      });
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+  `);
+  await page.getByTitle('passes').click();
+  await page.getByTitle('Run all').click();
+  await page.waitForTimeout(5_000);
+  await expect(page.getByText('Did not run')).toBeHidden();
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+  ]);
+});
+
 test('should pick new / deleted nested tests', async ({ runUITest, writeFiles, deleteFile }) => {
   const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page)).toContain(`
