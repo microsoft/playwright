@@ -1752,3 +1752,46 @@ test('open blob-1.42', async ({ runInlineTest, mergeReports }) => {
  > webkit > example.spec.ts > test 6
  > webkit > example.spec.ts > describe 1 > test 5`);
 });
+
+test('preserve static annotations when tests did not run', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30260' });
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'setup', testMatch: 'setup.js' },
+          { name: 'tests', testMatch: /.*test.js/, dependencies: ['setup'] },
+        ]
+      };
+    `,
+    'setup.js': `
+      import { test, expect } from '@playwright/test';
+      test('setup', { annotation: [{ type: "sample", description: "uno" }] }, async ({}) => {
+        expect(1).toBe(2);
+      });
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('first', { annotation: [{ type: "sample", description: "uno" }] }, async ({}) => {});
+      test.skip('second', { annotation: [{ type: "sample", description: "dos" }] }, async ({}) => {});
+    `
+  };
+  await runInlineTest(files);
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+  // Check first annotation.
+  {
+    await page.getByRole('link', { name: 'first' }).click();
+    await expect(page.getByText('sample: uno')).toBeVisible();
+    await page.goBack();
+  }
+  // Check second annotation.
+  {
+    await page.getByRole('link', { name: 'second' }).click();
+    await expect(page.getByText('sample: dos')).toBeVisible();
+    await page.goBack();
+  }
+});
