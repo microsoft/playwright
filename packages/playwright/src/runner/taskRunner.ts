@@ -107,7 +107,7 @@ export class TaskRunner<Context> {
     cancelPromise?.resolve();
     const cleanup = async () => {
       // Upon hitting deadline we add extra 30s to actually perform cleanup, otherwise
-      // the task exits immediately because of the same deadline and we may continue 
+      // the task exits immediately because of the same deadline and we may continue
       // while the test workers are still running.
       const extraTime = timeoutWatcher.timedOut() ? 30_000 : 0;
       const { status } = await teardownRunner.runDeferCleanup(context, deadline + extraTime);
