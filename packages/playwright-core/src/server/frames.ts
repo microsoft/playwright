@@ -1692,17 +1692,6 @@ export class Frame extends SdkObject {
         if (db.name)
           indexedDB.deleteDatabase(db.name!);
       }
-
-      // Clean StorageManager
-      const root = await navigator.storage.getDirectory();
-      const entries = await (root as any).entries();
-      // Manual loop instead of for await because in Firefox's utility context instanceof AsyncIterable is not working.
-      let entry = await entries.next();
-      while (!entry.done) {
-        const [name] = entry.value;
-        await root.removeEntry(name, { recursive: true });
-        entry = await entries.next();
-      }
     }, { ls: newStorage?.localStorage }).catch(() => {});
   }
 
