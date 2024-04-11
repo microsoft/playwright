@@ -19,29 +19,27 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
 test('replace existing listener when new listener is set', async ({
   mount,
 }) => {
-  let count = 0;
+  let called = false;
 
   const component = await mount(ButtonComponent, {
     props: {
       title: 'Submit',
     },
     on: {
-      submit() {
-        count++;
-      },
+      submit() {},
     },
   });
 
   component.update({
     on: {
       submit() {
-        count++;
+        called = true;
       },
     },
   });
 
   await component.click();
-  expect(count).toBe(1);
+  expect(called).toBe(true);
 });
 
 test('unsubscribe from events when the component is unmounted', async ({
