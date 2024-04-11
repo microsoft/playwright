@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { test, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/experimental-ct-core');
+const { defineConfig: originalDefineConfig, devices, expect, test } = require('@playwright/experimental-ct-core');
 const path = require('path');
 
 const defineConfig = (config, ...configs) => {
@@ -29,4 +29,4 @@ const defineConfig = (config, ...configs) => {
   }, ...configs);
 };
 
-module.exports = { test, expect, devices, defineConfig };
+module.exports = { defineConfig, devices, expect, test };
