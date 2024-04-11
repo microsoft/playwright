@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-import type {
-  Locator,
-  PlaywrightTestArgs,
-  PlaywrightTestOptions,
-  PlaywrightWorkerArgs,
-  PlaywrightWorkerOptions,
-  TestType,
-} from '@playwright/test';
+import type { Locator } from 'playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { TestType } from '@playwright/experimental-ct-core';
 import type { Provider, Type } from '@angular/core';
 
-export type { PlaywrightTestConfig } from '@playwright/experimental-ct-core';
-
-type ComponentEvents = Record<string, Function>;
+export type ComponentEvents = Record<string, Function>;
 
 export interface MountOptions<HooksConfig extends JsonObject, Component> {
   props?: Partial<Component> | Record<string, unknown>, // TODO: filter props and handle signals
@@ -40,8 +32,9 @@ export interface MountTemplateOptions<HooksConfig extends JsonObject, Component>
   imports?: Type<unknown>[];
 }
 
-interface MountResult<Component> extends Locator {
+export interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
+
   update(options: {
     props?: Partial<Component>,
     on?: Partial<ComponentEvents>,
@@ -53,19 +46,14 @@ export interface ComponentFixtures {
     template: string,
     options?: MountTemplateOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
+
   mount<HooksConfig extends JsonObject, Component = unknown>(
     component: Type<Component>,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
 }
 
-export const test: TestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions
->;
+export const test: TestType<ComponentFixtures>;
 
-export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
-export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
-export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
-
-export { expect, devices } from '@playwright/test';
+export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
+export { expect, devices } from 'playwright/test';
