@@ -76,15 +76,15 @@ export class BrowserContext extends EventEmitter {
     eventsHelper.removeEventListeners(this._listeners);
   }
 
-  private _onMessage({ bindingName, args }: any, { tab, frameId }: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
+  private _onMessage({ bindingName, args }: any, { tab, frameId, url }: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
     const tabId = tab?.id;
     // frameId may be 0!
     if (!bindingName || !tabId || typeof frameId !== 'number')
       return;
-    const frame = this._pages.get(tabId)?._frames.get(frameId);
+    const frame = this._pages.get(tabId)?._frameFor(frameId);
     if (!frame)
       return;
-
+    frame._url = url;
     const func = this._bindings.get(bindingName);
     if (!func)
       throw new Error(`No binding for ${bindingName}`);

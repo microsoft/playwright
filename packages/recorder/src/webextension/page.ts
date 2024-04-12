@@ -63,7 +63,7 @@ export class Page extends EventEmitter {
     await chrome.tabs.update(this._tabId, { active: true });
   }
 
-  private _frameFor(frameId: number) {
+  _frameFor(frameId: number) {
     let frame = this._frames.get(frameId);
     if (!frame) {
       frame = new Frame(this, frameId);
