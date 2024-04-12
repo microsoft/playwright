@@ -102,6 +102,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   async dispose(): Promise<void> {
     await this._instrumentation.onWillCloseRequestContext(this);
     await this._channel.dispose();
+    this._tracing._resetStackCounter();
     this._request?._contexts.delete(this);
   }
 

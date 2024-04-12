@@ -76,10 +76,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   private async _doStopChunk(filePath: string | undefined) {
-    if (this._isTracing) {
-      this._isTracing = false;
-      this._connection.setIsTracing(false);
-    }
+    this._resetStackCounter();
 
     if (!filePath) {
       // Not interested in artifacts.
@@ -112,5 +109,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.delete();
 
     await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources });
+  }
+
+  _resetStackCounter() {
+    if (this._isTracing) {
+      this._isTracing = false;
+      this._connection.setIsTracing(false);
+    }
   }
 }
