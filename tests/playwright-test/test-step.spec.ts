@@ -1647,3 +1647,127 @@ test('should not generate dupes for named expects', async ({ runInlineTest }) =>
     },
   ]);
 });
+
+const stepIndentReporter = `
+class Reporter {
+  onBegin(config: FullConfig, suite: Suite) {
+    this.suite = suite;
+  }
+
+  printStep(step, indent) {
+    console.log(indent + step.title);
+    indent += '  ';
+    for (const child of step.steps)
+      this.printStep(child, indent);
+  }
+
+  async onEnd() {
+    const processSuite = (suite: Suite) => {
+      for (const child of suite.suites)
+        processSuite(child);
+      for (const test of suite.tests) {
+        for (const result of test.results) {
+          for (const step of result.steps) {
+            this.printStep(step, '');
+          }
+        }
+      }
+    };
+    processSuite(this.suite);
+  }
+}
+module.exports = Reporter;
+`;
+
+test('step inside expect.toPass', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
+  // test.fixme();
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {
+        await test.step('step 1', async () => {
+          let counter = 0
+          await expect(async () => {
+            await test.step('step 2, attempt: ' + counter, async () => {
+              counter++;
+              expect(counter).toBe(2);
+            });
+          }).toPass();
+          await test.step('step 3', async () => {
+            await test.step('step 4', async () => {
+              expect(1).toBe(1);
+            });
+          });
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toBe(`Before Hooks
+step 1
+  expect.toPass
+    step 2, attempt: 0
+      expect.toBe
+    step 2, attempt: 1
+      expect.toBe
+  step 3
+    step 4
+      expect.toBe
+After Hooks
+`);
+});
+
+test('library API call inside expect.toPass', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
+  test.fixme();
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({page}) => {
+        let counter = 0
+        await expect(async () => {
+          await page.goto('about:blank');
+          await test.step('inner step attempt: ' + counter, async () => {
+            counter++;
+            expect(counter).toBe(2);
+          });
+        }).toPass();
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  const output = result.output;
+  expect(output).toBe(`Before Hooks
+fixture: browser
+  browserType.launch
+fixture: context
+  browser.newContext
+fixture: page
+  browserContext.newPage
+expect.toPass
+  page.goto(about:blank)
+  inner step attempt: 0
+    expect.toBe
+  page.goto(about:blank)
+  inner step attempt: 1
+    expect.toBe
+After Hooks
+  fixture: page
+  fixture: context
+`);
+});
