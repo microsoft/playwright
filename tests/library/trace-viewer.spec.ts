@@ -1156,3 +1156,39 @@ test('should preserve noscript when javascript is disabled', async ({ browser, s
   const frame = await traceViewer.snapshotFrame('page.setContent');
   await expect(frame.getByText('javascript is disabled!')).toBeVisible();
 });
+
+test('should remove noscript by default', async ({ browser, server, showTraceViewer, browserType }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ javaScriptEnabled: undefined });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+      <noscript>Enable JavaScript to run this app.</noscript>
+      <div>Always visible</div>
+    `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.getByText('Always visible')).toBeVisible();
+  await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
+});
+
+test('should remove noscript when javaScriptEnabled is set to true', async ({ browser, server, showTraceViewer, browserType }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ javaScriptEnabled: true });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <noscript>Enable JavaScript to run this app.</noscript>
+    <div>Always visible</div>
+  `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.getByText('Always visible')).toBeVisible();
+  await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
+});
