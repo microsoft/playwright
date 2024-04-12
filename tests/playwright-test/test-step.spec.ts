@@ -1681,7 +1681,7 @@ module.exports = Reporter;
 
 test('step inside expect.toPass', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
-  // test.fixme();
+  test.fixme();
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
