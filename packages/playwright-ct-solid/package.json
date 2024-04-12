@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-solid",
-  "version": "1.43.0",
+  "version": "1.43.1",
   "description": "Playwright Component Testing for Solid",
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
     }
   },
   "dependencies": {
-    "@playwright/experimental-ct-core": "1.43.0",
+    "@playwright/experimental-ct-core": "1.43.1",
     "vite-plugin-solid": "^2.7.0"
   },
   "devDependencies": {
