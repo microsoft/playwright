@@ -36,9 +36,9 @@ function formatStack(indent, stack) {
   stack = stack.split('\\n').filter(s => s.startsWith('    at '));
   stack = stack.map(s => {
     const match =  /^(    at.* )\\(?([^ )]+)\\)?/.exec(s);
-    const location = match[2].split(':');
-    location[0] = path.basename(location[0]);
-    return '    at ' + location.join(':');
+    let location = match[2];
+    location = location.substring(location.lastIndexOf(path.sep) + 1);
+    return '    at ' + location;
   });
   return indent + stack.join('\\n' + indent);
 }
