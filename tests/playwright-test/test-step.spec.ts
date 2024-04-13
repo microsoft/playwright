@@ -28,7 +28,26 @@ function trimError(message) {
   return lines[0];
 }
 
+function formatLocation(location) {
+  return ' @ ' + path.basename(location.file) + ':' + location.line;
+}
+
+function formatStack(indent, stack) {
+  stack = stack.split('\\n').filter(s => s.startsWith('    at '));
+  stack = stack.map(s => {
+    const match = /^(    at .*)\\((.*)\\)/.exec(s);
+    const location = match[2].split(':');
+    location[0] = path.basename(location[0]);
+    return match[1] + '(' + location.join(':') + ')';
+  });
+  return indent + stack.join('\\n' + indent);
+}
+
 class Reporter {
+  printErrorLocation: boolean;
+  constructor(options) {
+    this.printErrorLocation = options.printErrorLocation;
+  }
   onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
   }
@@ -36,10 +55,14 @@ class Reporter {
   printStep(step, indent) {
     let location = '';
     if (step.location)
-      location = ' @ ' + path.basename(step.location.file) + ':' + step.location.line;
+      location = formatLocation(step.location);
     console.log(formatPrefix(step.category) + indent + step.title + location);
-    if (step.error)
-      console.log(formatPrefix(step.category) + indent + '↪ error: ' + trimError(step.error.message));
+    if (step.error) {
+      const errorLocation = this.printErrorLocation ? formatLocation(step.error.location) : '';
+      console.log(formatPrefix(step.category) + indent + '↪ error: ' + trimError(step.error.message) + errorLocation);
+      if (this.printErrorLocation)
+        console.log(formatStack(formatPrefix(step.category) + indent, step.error.stack));
+    }
     indent += '  ';
     for (const child of step.steps)
       this.printStep(child, indent);
@@ -54,8 +77,12 @@ class Reporter {
         for (const result of test.results) {
           for (const step of result.steps)
             this.printStep(step, '');
-          for (const error of result.errors)
-            console.log(formatPrefix('') + trimError(error.message));
+          for (const error of result.errors) {
+            const errorLocation = this.printErrorLocation ? formatLocation(error.location) : '';
+            console.log(formatPrefix('') + trimError(error.message) + errorLocation);
+            if (this.printErrorLocation)
+              console.log(formatStack(formatPrefix(''), error.stack));
+          }
         }
       }
     };
@@ -677,7 +704,7 @@ hook      |Worker Cleanup
 test('should step w/o box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -692,19 +719,25 @@ test('should step w/o box', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:3
-test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
+test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
+test.step |    at body (a.test.ts:4:27)
+test.step |    at fn (a.test.ts:3:26)
 expect    |  expect.toBe @ a.test.ts:4
-expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
+expect    |      at body (a.test.ts:4:27)
+expect    |      at fn (a.test.ts:3:26)
 hook      |After Hooks
 hook      |Worker Cleanup
-          |Error: expect(received).toBe(expected) // Object.is equality
+          |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
+          |    at body (a.test.ts:4:27)
+          |    at fn (a.test.ts:3:26)
 `);
 });
 
 test('should step w/ box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -722,19 +755,22 @@ test('should step w/ box', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
-test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
+test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+test.step |    at fn (a.test.ts:8:21)
 expect    |  expect.toBe @ a.test.ts:5
-expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+expect    |      at fn (a.test.ts:8:21)
 hook      |After Hooks
 hook      |Worker Cleanup
-          |Error: expect(received).toBe(expected) // Object.is equality
+          |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+          |    at fn (a.test.ts:8:21)
 `);
 });
 
 test('should soft step w/ box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -752,12 +788,15 @@ test('should soft step w/ box', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
-test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality
+test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+test.step |    at fn (a.test.ts:8:21)
 expect    |  expect.soft.toBe @ a.test.ts:5
-expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+expect    |      at fn (a.test.ts:8:21)
 hook      |After Hooks
 hook      |Worker Cleanup
-          |Error: expect(received).toBe(expected) // Object.is equality
+          |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
+          |    at fn (a.test.ts:8:21)
 `);
 });
 
