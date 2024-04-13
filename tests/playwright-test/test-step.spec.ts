@@ -35,10 +35,10 @@ function formatLocation(location) {
 function formatStack(indent, stack) {
   stack = stack.split('\\n').filter(s => s.startsWith('    at '));
   stack = stack.map(s => {
-    const match = /^(    at .*)\\((.*)\\)/.exec(s);
+    const match =  /^(    at.* )\\(?([^ )]+)\\)?/.exec(s);
     const location = match[2].split(':');
     location[0] = path.basename(location[0]);
-    return match[1] + '(' + location.join(':') + ')';
+    return '    at ' + location.join(':');
   });
   return indent + stack.join('\\n' + indent);
 }
@@ -720,17 +720,17 @@ test('should step w/o box', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:3
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
-test.step |    at body (a.test.ts:4:27)
-test.step |    at fn (a.test.ts:3:26)
+test.step |    at a.test.ts:4:27
+test.step |    at a.test.ts:3:26
 expect    |  expect.toBe @ a.test.ts:4
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
-expect    |      at body (a.test.ts:4:27)
-expect    |      at fn (a.test.ts:3:26)
+expect    |      at a.test.ts:4:27
+expect    |      at a.test.ts:3:26
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
-          |    at body (a.test.ts:4:27)
-          |    at fn (a.test.ts:3:26)
+          |    at a.test.ts:4:27
+          |    at a.test.ts:3:26
 `);
 });
 
@@ -756,14 +756,14 @@ test('should step w/ box', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-test.step |    at fn (a.test.ts:8:21)
+test.step |    at a.test.ts:8:21
 expect    |  expect.toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-expect    |      at fn (a.test.ts:8:21)
+expect    |      at a.test.ts:8:21
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-          |    at fn (a.test.ts:8:21)
+          |    at a.test.ts:8:21
 `);
 });
 
@@ -789,14 +789,14 @@ test('should soft step w/ box', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-test.step |    at fn (a.test.ts:8:21)
+test.step |    at a.test.ts:8:21
 expect    |  expect.soft.toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-expect    |      at fn (a.test.ts:8:21)
+expect    |      at a.test.ts:8:21
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-          |    at fn (a.test.ts:8:21)
+          |    at a.test.ts:8:21
 `);
 });
 
