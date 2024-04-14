@@ -1057,7 +1057,7 @@ export class Recorder {
     ];
     this.highlight.install();
     this.overlay?.install();
-    this.document.adoptedStyleSheets = [...this.document.adoptedStyleSheets, this._stylesheet];
+    this.document.adoptedStyleSheets.push(this._stylesheet);
   }
 
   private _switchCurrentTool() {

@@ -75,9 +75,17 @@ export class Highlight {
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
-    const sheet = new injectedScript.window.CSSStyleSheet();
-    sheet.replaceSync(highlightCSS);
-    this._glassPaneShadow.adoptedStyleSheets = [sheet];
+    // workaround for firefox: when taking screenshots, it complains adoptedStyleSheets.push
+    // is not a function, so we fallback to style injection
+    if (typeof this._glassPaneShadow.adoptedStyleSheets.push === 'function') {
+      const sheet = new this._injectedScript.window.CSSStyleSheet();
+      sheet.replaceSync(highlightCSS);
+      this._glassPaneShadow.adoptedStyleSheets.push(sheet);
+    } else {
+      const styleElement = this._injectedScript.document.createElement('style');
+      styleElement.textContent = highlightCSS;
+      this._glassPaneShadow.appendChild(styleElement);
+    }
     this._glassPaneShadow.appendChild(this._actionPointElement);
   }
 
