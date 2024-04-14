@@ -848,6 +848,5 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     await page.goto(server.PREFIX + '/csp.html');
     const predicate = (msg: ConsoleMessage) => msg.type() === 'error' && /Content[\- ]Security[\- ]Policy/i.test(msg.text());
     await expect(page.waitForEvent('console', { predicate, timeout: 1000 })).rejects.toThrow();
-    await page.pause();
   });
 });
