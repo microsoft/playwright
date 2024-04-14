@@ -16,18 +16,15 @@
 import { Worker } from '../page';
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
-import type * as types from '../types';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import * as network from '../network';
 import { BrowserContext } from '../browserContext';
-import { headersArrayToObject } from '../../utils';
 
 export class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
   readonly _networkManager?: CRNetworkManager;
   private _session: CRSession;
-  private _extraHTTPHeaders: types.HeadersArray | null = null;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
@@ -40,11 +37,11 @@ export class CRServiceWorker extends Worker {
     });
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
-      this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
       this.updateRequestInterception();
-      this.updateExtraHTTPHeaders(true);
-      this.updateHttpCredentials(true);
-      this.updateOffline(true);
+      this.updateExtraHTTPHeaders();
+      this.updateHttpCredentials();
+      this.updateOffline();
+      this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
     }
 
     session.send('Runtime.enable', {}).catch(e => { });
@@ -61,41 +58,28 @@ export class CRServiceWorker extends Worker {
     super.didClose();
   }
 
-  async updateOffline(initial: boolean): Promise<void> {
+  async updateOffline(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-
-    const offline = !!this._browserContext._options.offline;
-    if (!initial || offline)
-      await this._networkManager?.setOffline(offline);
+    await this._networkManager?.setOffline(!!this._browserContext._options.offline).catch(() => {});
   }
 
-  async updateHttpCredentials(initial: boolean): Promise<void> {
+  async updateHttpCredentials(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-
-    const credentials = this._browserContext._options.httpCredentials || null;
-    if (!initial || credentials)
-      await this._networkManager?.authenticate(credentials);
+    await this._networkManager?.authenticate(this._browserContext._options.httpCredentials || null).catch(() => {});
   }
 
-  async updateExtraHTTPHeaders(initial: boolean): Promise<void> {
+  async updateExtraHTTPHeaders(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-
-    const headers = network.mergeHeaders([
-      this._browserContext._options.extraHTTPHeaders,
-      this._extraHTTPHeaders,
-    ]);
-    if (!initial || headers.length)
-      await this._session.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
+    await this._networkManager?.setExtraHTTPHeaders(this._browserContext._options.extraHTTPHeaders || []).catch(() => {});
   }
 
-  updateRequestInterception(): Promise<void> {
-    if (!this._networkManager || !this._isNetworkInspectionEnabled())
-      return Promise.resolve();
-
-    return this._networkManager.setRequestInterception(this.needsRequestInterception()).catch(e => { });
+  async updateRequestInterception(): Promise<void> {
+    if (!this._isNetworkInspectionEnabled())
+      return;
+    await this._networkManager?.setRequestInterception(this.needsRequestInterception()).catch(() => {});
   }
 
   needsRequestInterception(): boolean {
