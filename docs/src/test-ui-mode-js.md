@@ -7,7 +7,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
-UI Mode let's you explore, run and debug tests with a time travel experience complete with watch mode. All test files are loaded into the testing sidebar where you can expand each file and describe block to individually run, view, watch and debug each test. Filter tests by **text** or **@tag** or by **passed**, **failed** and **skipped** tests as well as by [**projects**](./test-projects) as set in your `playwright.config` file. See a full trace of your tests and hover back and forward over each action to see what was happening during each step and pop out the DOM snapshot to a separate window for a better debugging experience.
+UI Mode lets you explore, run and debug tests with a time travel experience complete with watch mode. All test files are loaded into the testing sidebar where you can expand each file and describe block to individually run, view, watch and debug each test. Filter tests by **text** or **@tag** or by **passed**, **failed** and **skipped** tests as well as by [**projects**](./test-projects) as set in your `playwright.config` file. See a full trace of your tests and hover back and forward over each action to see what was happening during each step and pop out the DOM snapshot to a separate window for a better debugging experience.
 
 <LiteYouTube
     id="d0u6XhXknzU"
