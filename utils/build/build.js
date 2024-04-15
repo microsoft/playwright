@@ -226,6 +226,13 @@ steps.push({
   shell: true,
 });
 
+// Build injected icons.
+steps.push({
+  command: 'node',
+  args: ['utils/generate_clip_paths.js'],
+  shell: true,
+});
+
 // Build injected scripts.
 steps.push({
   command: 'node',

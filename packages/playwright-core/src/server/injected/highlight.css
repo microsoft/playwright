@@ -130,7 +130,7 @@ x-pw-tool-gripper > x-div {
   width: 16px;
   height: 16px;
   margin: 6px 4px;
-  clip-path: url(#x-pw-gripper-icon);
+  clip-path: url(#icon-gripper);
   background-color: #555555;
 }
 
@@ -197,40 +197,40 @@ x-pw-tool-item.accept > x-div {
 
 x-pw-tool-item.record > x-div {
   /* codicon: circle-large-filled */
-  clip-path: url(#x-pw-record-icon);
+  clip-path: url(#icon-circle-large-filled);
 }
 
 x-pw-tool-item.pick-locator > x-div {
   /* codicon: inspect */
-  clip-path: url(#x-pw-pick-locator-icon);
+  clip-path: url(#icon-inspect);
 }
 
 x-pw-tool-item.text > x-div {
   /* codicon: whole-word */
-  clip-path: url(#x-pw-text-icon);
+  clip-path: url(#icon-whole-word);
 }
 
 x-pw-tool-item.visibility > x-div {
   /* codicon: eye */
-  clip-path: url(#x-pw-visibility-icon);
+  clip-path: url(#icon-eye);
 }
 
 x-pw-tool-item.value > x-div {
   /* codicon: symbol-constant */
-  clip-path: url(#x-pw-value-icon);
+  clip-path: url(#icon-symbol-constant);
 }
 
 x-pw-tool-item.accept > x-div {
-  clip-path: url(#x-pw-accept-icon);
+  clip-path: url(#icon-check);
 }
 
 x-pw-tool-item.cancel > x-div {
-  clip-path: url(#x-pw-cancel-icon);
+  clip-path: url(#icon-close);
 }
 
 x-pw-tool-item.succeeded > x-div {
   /* codicon: pass */
-  clip-path: url(#x-pw-succeeded-icon);
+  clip-path: url(#icon-pass);
   background-color: #388a34 !important;
 }
 
