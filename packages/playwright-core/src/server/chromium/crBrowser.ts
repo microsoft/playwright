@@ -459,7 +459,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateExtraHTTPHeaders(false);
+      await (sw as CRServiceWorker).updateExtraHTTPHeaders();
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
@@ -474,7 +474,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateOffline(false);
+      await (sw as CRServiceWorker).updateOffline();
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
@@ -482,7 +482,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateHttpCredentials(false);
+      await (sw as CRServiceWorker).updateHttpCredentials();
   }
 
   async doAddInitScript(source: string) {
