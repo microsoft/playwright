@@ -350,26 +350,26 @@ it('should be able to send third party cookies via an iframe', async ({ browser,
   }
 });
 
-it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows }) => {
+it('should support requestStorageAccess', async ({ browser, httpsServer, channel, browserName, isLinux, isMac }) => {
+  const page = await browser.newPage({ ignoreHTTPSErrors: true });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
   it.skip(channel === 'firefox-beta', 'hasStorageAccess returns true, but no cookie is sent');
-
-  server.setRoute('/set-cookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', 'name=value; Path=/');
+  httpsServer.setRoute('/set-cookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'name=value; Path=/; SameSite=None; Secure');
     res.end();
   });
   // Navigate once to the domain as top level.
-  await page.goto(server.CROSS_PROCESS_PREFIX + '/set-cookie.html');
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX + '/empty.html'}"></iframe>`);
+  await page.goto(httpsServer.CROSS_PROCESS_PREFIX + '/set-cookie.html');
+  await page.goto(httpsServer.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${httpsServer.CROSS_PROCESS_PREFIX + '/empty.html'}"></iframe>`);
 
   const frame = page.frames()[1];
   if (browserName === 'firefox') {
     expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
     {
       const [serverRequest] = await Promise.all([
-        server.waitForRequest('/title.html'),
+        httpsServer.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
       expect(serverRequest.headers.cookie).toBe('name=value');
@@ -381,7 +381,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
     {
       const [serverRequest] = await Promise.all([
-        server.waitForRequest('/title.html'),
+        httpsServer.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
       if (!isMac && browserName === 'webkit')
@@ -393,12 +393,13 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
     expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
     {
       const [serverRequest] = await Promise.all([
-        server.waitForRequest('/title.html'),
+        httpsServer.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
       expect(serverRequest.headers.cookie).toBe('name=value');
     }
   }
+  await page.close();
 });
 
 it('should parse cookie with large Max-Age correctly', async ({ server, page, defaultSameSiteCookieValue, browserName, platform }) => {
