@@ -187,9 +187,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
       const apiZone: ApiZone = { apiName, frames, isInternal, reported: false, csi, callCookie, wallTime };
-      const result = await zones.run<ApiZone, Promise<R>>('apiZone', apiZone, async () => {
-        return await func(apiZone);
-      });
+      const result = await zones.run('apiZone', apiZone, async () => await func(apiZone));
       csi?.onApiCallEnd(callCookie);
       logApiCall(logger, `<= ${apiName} succeeded`, isInternal);
       return result;

@@ -284,9 +284,12 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       try {
-        const expectZone: ExpectZone | null = matcherName !== 'toPass' ? { title, wallTime } : null;
         const callback = () => matcher.call(target, ...args);
-        const result = expectZone ? zones.run<ExpectZone, any>('expectZone', expectZone, callback) : callback();
+        // toPass and poll matchers can contain other steps, expects and API calls,
+        // so they behave like a retriable step.
+        const result = (matcherName === 'toPass' || this._info.isPoll) ?
+          zones.run('stepZone', step, callback) :
+          zones.run<ExpectZone, any>('expectZone', { title, wallTime }, callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

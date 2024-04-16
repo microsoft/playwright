@@ -21,18 +21,18 @@ export type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
 class ZoneManager {
   private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone<unknown>|undefined>();
 
-  run<T, R>(type: ZoneType, data: T, func: (data: T) => R): R {
+  run<T, R>(type: ZoneType, data: T, func: () => R): R {
     const previous = this._asyncLocalStorage.getStore();
     const zone = new Zone(previous, type, data);
-    return this._asyncLocalStorage.run(zone, () => func(data));
+    return this._asyncLocalStorage.run(zone, func);
   }
 
-  zoneData<T>(type: ZoneType): T | null {
+  zoneData<T>(type: ZoneType): T | undefined {
     for (let zone = this._asyncLocalStorage.getStore(); zone; zone = zone.previous) {
       if (zone.type === type)
         return zone.data as T;
     }
-    return null;
+    return undefined;
   }
 
   exitZones<R>(func: () => R): R {
