@@ -18,7 +18,7 @@ import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
-import { getComparator, sanitizeForFilePath, zones } from 'playwright-core/lib/utils';
+import { getComparator, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import {
   addSuffixToFilePath,
   trimLongString, callLogText,
@@ -367,19 +367,7 @@ export async function toHaveScreenshot(
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
-  return await zones.preserve(async () => {
-    // Loading from filesystem resets zones.
-    const style = await loadScreenshotStyles(helper.options.stylePath);
-    return toHaveScreenshotContinuation.call(this, helper, page, locator, style);
-  });
-}
-
-async function toHaveScreenshotContinuation(
-  this: ExpectMatcherContext,
-  helper: SnapshotHelper,
-  page: PageEx,
-  locator: Locator | undefined,
-  style?: string) {
+  const style = await loadScreenshotStyles(helper.options.stylePath);
   const expectScreenshotOptions: ExpectScreenshotOptions = {
     locator,
     animations: helper.options.animations ?? 'disabled',

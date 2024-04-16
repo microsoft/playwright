@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import type { ExpectZone } from '../utils/stackTrace';
-import { captureRawStack, captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
+import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
 import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -161,12 +161,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
     const logger = this._logger;
-    const stack = captureRawStack();
-    const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
+    const apiZone = zones.zoneData<ApiZone>('apiZone');
     if (apiZone)
       return await func(apiZone);
 
-    const stackTrace = captureLibraryStackTrace(stack);
+    const stackTrace = captureLibraryStackTrace();
     let apiName: string | undefined = stackTrace.apiName;
     const frames: channels.StackFrame[] = stackTrace.frames;
 
@@ -175,7 +174,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       apiName = undefined;
 
     // Enclosing zone could have provided the apiName and wallTime.
-    const expectZone = zones.zoneData<ExpectZone>('expectZone', stack);
+    const expectZone = zones.zoneData<ExpectZone>('expectZone');
     const wallTime = expectZone ? expectZone.wallTime : Date.now();
     if (!isInternal && expectZone)
       apiName = expectZone.title;

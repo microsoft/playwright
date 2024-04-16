@@ -48,8 +48,8 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(rawStack?: RawStack): { frames: StackFrame[], apiName: string } {
-  const stack = rawStack || captureRawStack();
+export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
+  const stack = captureRawStack();
 
   const isTesting = isUnderTest();
   type ParsedFrame = {
