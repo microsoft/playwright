@@ -368,15 +368,6 @@ export async function toHaveScreenshot(
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
-  return toHaveScreenshotContinuation.call(this, helper, page, locator, style);
-}
-
-async function toHaveScreenshotContinuation(
-  this: ExpectMatcherContext,
-  helper: SnapshotHelper,
-  page: PageEx,
-  locator: Locator | undefined,
-  style?: string) {
   const expectScreenshotOptions: ExpectScreenshotOptions = {
     locator,
     animations: helper.options.animations ?? 'disabled',

@@ -55,13 +55,11 @@ class ZoneManager {
 class Zone<T> {
   readonly type: ZoneType;
   readonly data: T;
-  readonly wallTime: number;
   readonly previous: Zone<unknown> | undefined;
 
   constructor(previous: Zone<unknown> | undefined, type: ZoneType, data: T) {
     this.type = type;
     this.data = data;
-    this.wallTime = Date.now();
     this.previous = previous;
   }
 }
