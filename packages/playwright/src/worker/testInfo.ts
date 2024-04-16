@@ -252,7 +252,7 @@ export class TestInfoImpl implements TestInfo {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
       parentStep = this._findLastStageStep();
     } else {
-      parentStep = zones.zoneData<TestStepInternal>('stepZone') || undefined;
+      parentStep = zones.zoneData<TestStepInternal>('stepZone');
       if (!parentStep && data.category !== 'test.step') {
         // API steps (but not test.step calls) can be nested by time, instead of by stack.
         // However, do not nest chains of route.continue by checking the title.

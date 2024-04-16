@@ -846,7 +846,6 @@ fixture   |  fixture: context
 
 test('step inside expect.toPass', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
-  test.fixme();
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
@@ -883,7 +882,7 @@ expect    |  expect.toPass @ a.test.ts:11
 test.step |    step 2, attempt: 0 @ a.test.ts:7
 test.step |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |      expect.toBe @ a.test.ts:9
-expect    |        ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+expect    |      ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 test.step |    step 2, attempt: 1 @ a.test.ts:7
 expect    |      expect.toBe @ a.test.ts:9
 test.step |  step 3 @ a.test.ts:12
@@ -895,7 +894,6 @@ hook      |After Hooks
 
 test('library API call inside expect.toPass', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
-  test.fixme();
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
@@ -936,6 +934,55 @@ expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is eq
 pw:api    |  page.goto(about:blank) @ a.test.ts:6
 test.step |  inner step attempt: 1 @ a.test.ts:7
 expect    |    expect.toBe @ a.test.ts:9
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
+test('library API call inside expect.poll', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({page}) => {
+        let counter = 0
+        const a = [];
+        await expect.poll(async () => {
+          await page.goto('about:blank');
+          await test.step('inner step attempt: ' + counter, async () => {
+            counter++;
+            expect(1).toBe(1);
+          });
+          a.push(1);
+          return a;
+        }).toHaveLength(2);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+expect    |expect.poll.toHaveLength @ a.test.ts:14
+pw:api    |  page.goto(about:blank) @ a.test.ts:7
+test.step |  inner step attempt: 0 @ a.test.ts:8
+expect    |    expect.toBe @ a.test.ts:10
+pw:api    |  page.goto(about:blank) @ a.test.ts:7
+test.step |  inner step attempt: 1 @ a.test.ts:8
+expect    |    expect.toBe @ a.test.ts:10
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
