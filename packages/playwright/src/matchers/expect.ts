@@ -257,8 +257,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
-      const rawStack = captureRawStack();
-      const stackFrames = filteredStackTrace(rawStack);
+      const stackFrames = filteredStackTrace(captureRawStack());
 
       // Enclose toPass in a step to maintain async stacks, toPass matcher is always async.
       const stepInfo = {
@@ -287,7 +286,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       try {
         const expectZone: ExpectZone | null = matcherName !== 'toPass' ? { title, wallTime } : null;
         const callback = () => matcher.call(target, ...args);
-        const result = expectZone ? zones.run<ExpectZone, any>('expectZone', expectZone, callback) : zones.preserve(callback);
+        const result = expectZone ? zones.run<ExpectZone, any>('expectZone', expectZone, callback) : callback();
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

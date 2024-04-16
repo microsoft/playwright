@@ -52,6 +52,15 @@ class Reporter {
     this.suite = suite;
   }
 
+  // For easier debugging.
+  onStdOut(data) {
+    process.stdout.write(data.toString());
+  }
+  // For easier debugging.
+  onStdErr(data) {
+    process.stderr.write(data.toString());
+  }
+
   printStep(step, indent) {
     let location = '';
     if (step.location)
@@ -867,7 +876,6 @@ test('step inside expect.toPass', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  console.log(result.output);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |step 1 @ a.test.ts:4
