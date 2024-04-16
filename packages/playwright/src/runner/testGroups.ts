@@ -175,8 +175,6 @@ export function filterForShardFromTimingFile(timingFile: JSONReport, shard: { to
   const shardsMapping = mapTestDetailsToShards(testDetails, shard);
   const testIds = shardsMapping[shard.current - 1].map(shardDetails => shardDetails.id);
   const recordedTests = testGroups.filter(group => testIds.includes(group.tests[0].id));
-  // console.log(shardsMapping);
-  // console.log(testDetails.length);
   const result = new Set<TestGroup>();
 
   recordedTests.forEach(group => result.add(group));
@@ -256,10 +254,6 @@ function mapTestDetailsToShards(testDetails: testDetails[], shard: {total: numbe
     let minIndex = sums.indexOf(Math.min(...sums));
     result[minIndex].push(testDetailsObj);
     sums[minIndex] += testDetailsObj.duration;
-  }
-
-  for (let i = 0; i < shard.total; i++) {
-    console.log(`Total duration for array ${i + 1}: ${sums[i]}`);
   }
 
   return result;
