@@ -988,3 +988,52 @@ fixture   |  fixture: page
 fixture   |  fixture: context
 `);
 });
+
+test('web assertion inside expect.poll', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30322' });
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>foo</div>');
+        let counter = 0
+        await expect.poll(async () => {
+          await expect(page.locator('div')).toHaveText('foo');
+          ++counter;
+          await test.step('iteration ' + counter, async () => {
+            await expect(page.locator('div')).toBeVisible();
+          });
+          return counter;
+        }).toBe(2);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+pw:api    |page.setContent @ a.test.ts:4
+expect    |expect.poll.toBe @ a.test.ts:13
+expect    |  expect.toHaveText @ a.test.ts:7
+test.step |  iteration 1 @ a.test.ts:9
+expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toHaveText @ a.test.ts:7
+test.step |  iteration 2 @ a.test.ts:9
+expect    |    expect.toBeVisible @ a.test.ts:10
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
