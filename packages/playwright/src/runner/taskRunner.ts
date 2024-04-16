@@ -105,9 +105,14 @@ export class TaskRunner<Context> {
       status = 'failed';
     }
     cancelPromise?.resolve();
-    // Note that upon hitting deadline, we "run cleanup", but it exits immediately
-    // because of the same deadline. Essentially, we're not performing any cleanup.
-    const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
+    const cleanup = async () => {
+      // Upon hitting deadline we add extra 30s to actually perform cleanup, otherwise
+      // the task exits immediately because of the same deadline and we may continue
+      // while the test workers are still running.
+      const extraTime = timeoutWatcher.timedOut() ? 30_000 : 0;
+      const { status } = await teardownRunner.runDeferCleanup(context, deadline + extraTime);
+      return status;
+    };
     return { status, cleanup };
   }
 }
