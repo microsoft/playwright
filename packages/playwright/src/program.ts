@@ -189,6 +189,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
+  config.cliTimingFile = opts.timingFile || undefined;
 
   const runner = new Runner(config);
   let status: FullResult['status'];
@@ -336,6 +337,7 @@ const testOptions: [string, string][] = [
   ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
   ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`],
   ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
+  ['--timing-file <file>', `Load JSON report to use as timing file for shard balancing`],
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--list', `Collect all the tests and report them, but do not run`],

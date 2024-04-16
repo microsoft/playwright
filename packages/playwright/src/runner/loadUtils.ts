@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
+import type { FullConfig, JSONReport, Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
@@ -27,10 +27,11 @@ import { buildProjectsClosure, collectFilesForProject, filterProjects } from './
 import type { TestRun } from './tasks';
 import { requireOrImport } from '../transform/transform';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
-import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
+import { createTestGroups, filterForShard, filterForShardFromTimingFile, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
+import { readFileSync } from 'fs';
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
@@ -182,7 +183,14 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
     // Shard test groups.
-    const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
+    let testGroupsInThisShard: Set<TestGroup>;
+    if (config.cliTimingFile) {
+      const timingFile: JSONReport = JSON.parse(readFileSync(config.cliTimingFile, 'utf8'));
+      testGroupsInThisShard = filterForShardFromTimingFile(timingFile, config.config.shard, testGroups);
+    } else {
+      testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
+    }
+
     const testsInThisShard = new Set<TestCase>();
     for (const group of testGroupsInThisShard) {
       for (const test of group.tests)
