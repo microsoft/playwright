@@ -208,6 +208,7 @@ export class Electron extends SdkObject {
           progress.log(message);
           browserLogsCollector.log(message);
         },
+        shell: true,
         stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [artifactsDir],
