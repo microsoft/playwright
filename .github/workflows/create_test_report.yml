@@ -9,6 +9,8 @@ jobs:
     permissions:
       pull-requests: write
       checks: write
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
@@ -16,7 +18,12 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
-
+    - name: "Azure OIDC Login"
+      uses: azure/login@v1
+      with:
+        client-id: ${{ vars.CFS_CLIENT_ID }}
+        tenant-id: ${{ vars.CFS_TENANT_ID }}
+        subscription-id: ${{ vars.CFS_SUBSCRIPTION_ID }}
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -41,10 +48,7 @@ jobs:
         azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
       env:
-        AZCOPY_AUTO_LOGIN_TYPE: SPN
-        AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
-        AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
-        AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
+        AZCOPY_AUTO_LOGIN_TYPE: AZCLI
 
     - name: Read pull request number
       uses: ./.github/actions/download-artifact
