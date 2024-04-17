@@ -186,7 +186,13 @@ module.exports = [
       '<input type="text" id="tb1"></div>' +
       '<label for="tb1">My form input</label>',
     target: '#target',
-    accessibleText: 'My form input',
+    // accessibleText: 'My form input',
+    // All browsers and the spec (kind of) agree that input inside the target element should
+    // use it's value as an "embedded control", rather than a label.
+    // From the spec:
+    //   If traversal of the current node is due to recursion and the current node
+    //   is an embedded control, ignore aria-label and skip to rule Embedded Control.
+    accessibleText: '',
   },
 
   {
