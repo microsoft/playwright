@@ -433,7 +433,10 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   const labelledBy = getAriaLabelledByElements(element);
 
-  // step 2b.
+  // step 2b. LabelledBy:
+  // Otherwise, if the current node has an aria-labelledby attribute that contains
+  // at least one valid IDREF, and the current node is not already part of an ongoing
+  // aria-labelledby or aria-describedby traversal, process its IDREFs in the order they occur...
   if (!options.embeddedInLabelledBy) {
     const accessibleName = (labelledBy || []).map(ref => getElementAccessibleNameInternal(ref, {
       ...options,
@@ -448,9 +451,15 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   const role = getAriaRole(element) || '';
 
-  // step 2c.
-  // TODO: should we check embeddedInLabel here?
-  if (!!options.embeddedInLabel || !!options.embeddedInLabelledBy) {
+  // step 2c:
+  //   if the current node is a control embedded within the label (e.g. any element directly referenced by aria-labelledby) for another widget...
+  //
+  // also step 2d "skip to rule Embedded Control" section:
+  //   If traversal of the current node is due to recursion and the current node is an embedded control...
+  // Note this is not strictly by the spec, because spec only applies this logic when "aria-label" is present.
+  // However, browsers and and wpt test name_heading-combobox-focusable-alternative-manual.html follow this behavior,
+  // and there is an issue filed for this: https://github.com/w3c/accname/issues/64
+  if (!!options.embeddedInLabel || !!options.embeddedInLabelledBy || options.embeddedInTargetElement === 'descendant') {
     const isOwnLabel = [...(element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || []].includes(element as any);
     const isOwnLabelledBy = (labelledBy || []).includes(element);
     if (!isOwnLabel && !isOwnLabelledBy) {
@@ -470,6 +479,12 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
         } else {
           const listbox = role === 'combobox' ? queryInAriaOwned(element, '*').find(e => getAriaRole(e) === 'listbox') : element;
           selectedOptions = listbox ? queryInAriaOwned(listbox, '[aria-selected="true"]').filter(e => getAriaRole(e) === 'option') : [];
+        }
+        if (!selectedOptions.length && element.tagName === 'INPUT') {
+          // SPEC DIFFERENCE:
+          // This fallback is not explicitly mentioned in the spec, but all browsers and
+          // wpt test name_heading-combobox-focusable-alternative-manual.html do this.
+          return (element as HTMLInputElement).value;
         }
         return selectedOptions.map(option => getElementAccessibleNameInternal(option, childOptions)).join(' ');
       }

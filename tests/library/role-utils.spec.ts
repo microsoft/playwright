@@ -36,8 +36,6 @@ const ranges = [
 for (let range = 0; range <= ranges.length; range++) {
   test('wpt accname #' + range, async ({ page, asset, server, browserName }) => {
     const skipped = [
-      // Spec clearly says to only use control's value when embedded in a label (step 2C).
-      'name_heading-combobox-focusable-alternative-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
       'name_test_case_659-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
@@ -307,6 +305,8 @@ test('display:contents should be visible when contents are visible', async ({ pa
 });
 
 test('label/labelled-by aria-hidden with descendants', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29796' });
+
   await page.setContent(`
     <body>
       <div id="case1">
@@ -324,6 +324,51 @@ test('label/labelled-by aria-hidden with descendants', async ({ page }) => {
   });
   expect.soft(await getNameAndRole(page, '#case1 button')).toEqual({ role: 'button', name: 'Label1' });
   expect.soft(await getNameAndRole(page, '#case2 button')).toEqual({ role: 'button', name: 'Label2' });
+});
+
+test('own aria-label concatenated with aria-labelledby', async ({ page }) => {
+  // This is taken from https://w3c.github.io/accname/#example-5-0
+
+  await page.setContent(`
+    <h1>Files</h1>
+    <ul>
+      <li>
+        <a id="file_row1" href="./files/Documentation.pdf">Documentation.pdf</a>
+        <span role="button" tabindex="0" id="del_row1" aria-label="Delete" aria-labelledby="del_row1 file_row1"></span>
+      </li>
+      <li>
+        <a id="file_row2" href="./files/HolidayLetter.pdf">HolidayLetter.pdf</a>
+        <span role="button" tabindex="0" id="del_row2" aria-label="Delete" aria-labelledby="del_row2 file_row2"></span>
+      </li>
+    </ul>
+  `);
+  expect.soft(await getNameAndRole(page, '#del_row1')).toEqual({ role: 'button', name: 'Delete Documentation.pdf' });
+  expect.soft(await getNameAndRole(page, '#del_row2')).toEqual({ role: 'button', name: 'Delete HolidayLetter.pdf' });
+});
+
+test('control embedded in a label', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28848' });
+
+  await page.setContent(`
+    <label for="flash">
+      <input type="checkbox" id="flash">
+      Flash the screen <span tabindex="0" role="textbox" aria-label="number of times" contenteditable>5</span> times.
+    </label>
+  `);
+  expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'checkbox', name: 'Flash the screen 5 times.' });
+  expect.soft(await getNameAndRole(page, 'span')).toEqual({ role: 'textbox', name: 'number of times' });
+  expect.soft(await getNameAndRole(page, 'label')).toEqual({ role: null, name: '' });
+});
+
+test('control embedded in a target element', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28848' });
+
+  await page.setContent(`
+    <h1>
+      <input type="text" value="Foo bar">
+    </h1>
+  `);
+  expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
 });
 
 function toArray(x: any): any[] {
