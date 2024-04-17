@@ -15,6 +15,7 @@
  */
 
 import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
+import type { TeleTestResult } from '@testIsomorphic/teleReceiver';
 import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
@@ -27,7 +28,7 @@ export type TeleSuiteUpdaterOptions = {
 };
 
 export class TeleSuiteUpdater {
-  rootSuite: reporterTypes.Suite | undefined;
+  rootSuite: TeleSuite | undefined;
   config: reporterTypes.FullConfig | undefined;
   readonly loadErrors: reporterTypes.TestError[] = [];
   readonly progress: Progress = {
@@ -76,7 +77,7 @@ export class TeleSuiteUpdater {
 
       onBegin: (suite: reporterTypes.Suite) => {
         if (!this.rootSuite)
-          this.rootSuite = suite;
+          this.rootSuite = suite as TeleSuite;
         this.progress.total = this._lastRunTestCount;
         this.progress.passed = 0;
         this.progress.failed = 0;
@@ -123,10 +124,13 @@ export class TeleSuiteUpdater {
   }
 
   processListReport(report: any[]) {
-    this._receiver.isListing = true;
+    // Save test results and reset all projects.
+    const results = this.rootSuite && TestResultsSnapshot.saveResults(this.rootSuite);
+    this._receiver.reset();
     for (const message of report)
       this._receiver.dispatch(message);
-    this._receiver.isListing = false;
+    // After recreating all projects restore previous results.
+    results?.restore(this.rootSuite!)
   }
 
   processTestReportEvent(message: any) {
@@ -143,5 +147,38 @@ export class TeleSuiteUpdater {
       loadErrors: this.loadErrors,
       progress: this.progress,
     };
+  }
+}
+
+class TestResultsSnapshot {
+  private _testIdToResults = new Map<string, TeleTestResult[]>();
+
+  static saveResults(rootSuite: TeleSuite) {
+    const snapshot = new TestResultsSnapshot();
+    snapshot._saveForSuite(rootSuite);
+    return snapshot;
+  }
+
+  private _saveForSuite(suite: TeleSuite) {
+    for (const entry of suite.entries()) {
+      if (entry.type === 'test') {
+        if (entry.results.length)
+          this._testIdToResults.set(entry.id, entry.results);
+      } else {
+        this._saveForSuite(entry);
+      }
+    }
+  }
+
+  restore(suite: TeleSuite) {
+    for (const entry of suite.entries()) {
+      if (entry.type === 'test') {
+        const results = this._testIdToResults.get(entry.id);
+        if (results)
+          entry.results = results;
+      } else {
+        this.restore(entry);
+      }
+    }
   }
 }

@@ -48,6 +48,60 @@ test('should list tests', async ({ runUITest }) => {
   `);
 });
 
+test('should list all tests from projects with clashing names', async ({ runUITest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30396' });
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+
+      export default defineConfig({
+        projects: [
+          {
+            name: 'proj-uno',
+            testDir: './foo',
+          },
+          {
+            name: 'proj-dos',
+            testDir: './foo',
+          },
+          {
+            name: 'proj-uno',
+            testDir: './bar',
+          },
+          {
+            name: 'proj-dos',
+            testDir: './bar',
+          },
+        ]
+      });
+    `,
+    'foo/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('one', () => {});
+      test('two', () => {});
+    `,
+    'bar/b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('three', () => {});
+      test('four', () => {});
+    `,
+  });
+  await page.getByTestId('test-tree').getByText('b.test.ts').click();
+  await page.keyboard.press('ArrowRight');
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ bar
+      ▼ ◯ b.test.ts
+          ◯ three
+          ◯ four
+    ▼ ◯ foo
+      ▼ ◯ a.test.ts <=
+          ◯ one
+          ◯ two
+  `);
+});
+
 test('should traverse up/down', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
   await page.getByText('a.test.ts').click();
