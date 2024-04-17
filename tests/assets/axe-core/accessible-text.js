@@ -73,10 +73,7 @@ module.exports = [
       '<label for="t1">HTML Label</label>' +
       '<input type="text" id="t1" aria-labelledby="t1label">',
     target: '#t1',
-    // accessibleText: 'This is a hidden secret',
-    // Note: axe-core insists on child nodes being used as visible, although
-    // spec 2A says "directly referenced by aria-labelledby".
-    accessibleText: 'This is a',
+    accessibleText: 'This is a hidden secret',
   },
 
   {

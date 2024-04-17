@@ -306,6 +306,26 @@ test('display:contents should be visible when contents are visible', async ({ pa
   await expect(page.getByRole('button')).toHaveCount(1);
 });
 
+test('label/labelled-by aria-hidden with descendants', async ({ page }) => {
+  await page.setContent(`
+    <body>
+      <div id="case1">
+        <button aria-labelledby="label1" type="button"></button>
+        <tool-tip id="label1" for="button-preview" popover="manual" aria-hidden="true" role="tooltip">Label1</tool-tip>
+      </div>
+      <div id="case2">
+        <label for="button2" aria-hidden="true"><div id="label2">Label2</div></label>
+        <button id="button2" type="button"></button>
+      </div>
+    </body>
+  `);
+  await page.$$eval('#label1, #label2', els => {
+    els.forEach(el => el.attachShadow({ mode: 'open' }).appendChild(document.createElement('slot')));
+  });
+  expect.soft(await getNameAndRole(page, '#case1 button')).toEqual({ role: 'button', name: 'Label1' });
+  expect.soft(await getNameAndRole(page, '#case2 button')).toEqual({ role: 'button', name: 'Label2' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
