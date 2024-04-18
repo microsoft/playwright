@@ -521,6 +521,11 @@ export class TeleTestCase implements reporterTypes.TestCase {
     this._resultsMap.clear();
   }
 
+  _restoreResults(snapshot: Map<string, TeleTestResult>) {
+    this.results = [...snapshot.values()];
+    this._resultsMap = snapshot;
+  }
+
   _createTestResult(id: string): TeleTestResult {
     const result = new TeleTestResult(this.results.length);
     this.results.push(result);

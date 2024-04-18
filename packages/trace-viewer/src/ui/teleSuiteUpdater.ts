@@ -42,6 +42,7 @@ export class TeleSuiteUpdater {
   private _lastRunReceiver: TeleReporterReceiver | undefined;
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
+  private _testResultsSnapshot: TestResultsSnapshot | undefined;
 
   constructor(options: TeleSuiteUpdaterOptions) {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
@@ -78,15 +79,18 @@ export class TeleSuiteUpdater {
       onBegin: (suite: reporterTypes.Suite) => {
         if (!this.rootSuite)
           this.rootSuite = suite as TeleSuite;
+        // As soon as new test tree is built add previous results.
+        this._testResultsSnapshot?.restore(this.rootSuite);
+        this._testResultsSnapshot = undefined;
         this.progress.total = this._lastRunTestCount;
         this.progress.passed = 0;
         this.progress.failed = 0;
         this.progress.skipped = 0;
-        // Do not call this._options.onUpdate(); here, as we want to wait
-        // for the test results to be restored in list mode.
+        this._options.onUpdate(true);
       },
 
       onEnd: () => {
+        this._options.onUpdate(true);
       },
 
       onTestBegin: (test: reporterTypes.TestCase, testResult: reporterTypes.TestResult) => {
@@ -124,14 +128,12 @@ export class TeleSuiteUpdater {
   }
 
   processListReport(report: any[]) {
-    // Save test results and reset all projects.
-    const results = this.rootSuite && TestResultsSnapshot.saveResults(this.rootSuite);
+    // Save test results and reset all projects, the results will be restored after
+    // new project structure is built.
+    this._testResultsSnapshot = this.rootSuite && TestResultsSnapshot.saveResults(this.rootSuite);
     this._receiver.reset();
     for (const message of report)
       this._receiver.dispatch(message);
-    // After recreating all projects restore previous results.
-    results?.restore(this.rootSuite!);
-    this._options.onUpdate(true);
   }
 
   processTestReportEvent(message: any) {
@@ -152,7 +154,7 @@ export class TeleSuiteUpdater {
 }
 
 class TestResultsSnapshot {
-  private _testIdToResults = new Map<string, TeleTestResult[]>();
+  private _testIdToResults = new Map<string,  Map<string, TeleTestResult>>();
 
   static saveResults(rootSuite: TeleSuite) {
     const snapshot = new TestResultsSnapshot();
@@ -163,8 +165,8 @@ class TestResultsSnapshot {
   private _saveForSuite(suite: TeleSuite) {
     for (const entry of suite.entries()) {
       if (entry.type === 'test') {
-        if (entry.results.length)
-          this._testIdToResults.set(entry.id, entry.results);
+        if (entry._resultsMap.size)
+          this._testIdToResults.set(entry.id, entry._resultsMap);
       } else {
         this._saveForSuite(entry);
       }
@@ -176,7 +178,7 @@ class TestResultsSnapshot {
       if (entry.type === 'test') {
         const results = this._testIdToResults.get(entry.id);
         if (results)
-          entry.results = results;
+          entry._restoreResults(results);
       } else {
         this.restore(entry);
       }
