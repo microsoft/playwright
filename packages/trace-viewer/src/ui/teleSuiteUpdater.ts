@@ -15,7 +15,7 @@
  */
 
 import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
-import type { TeleTestResult } from '@testIsomorphic/teleReceiver';
+import type { TeleTestCase, TeleTestResult } from '@testIsomorphic/teleReceiver';
 import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
@@ -158,30 +158,18 @@ class TestResultsSnapshot {
 
   static saveResults(rootSuite: TeleSuite) {
     const snapshot = new TestResultsSnapshot();
-    snapshot._saveForSuite(rootSuite);
+    (rootSuite.allTests() as TeleTestCase[]).forEach(test => {
+      if (test._resultsMap.size)
+        snapshot._testIdToResults.set(test.id, test._resultsMap);
+    });
     return snapshot;
   }
 
-  private _saveForSuite(suite: TeleSuite) {
-    for (const entry of suite.entries()) {
-      if (entry.type === 'test') {
-        if (entry._resultsMap.size)
-          this._testIdToResults.set(entry.id, entry._resultsMap);
-      } else {
-        this._saveForSuite(entry);
-      }
-    }
-  }
-
   restore(suite: TeleSuite) {
-    for (const entry of suite.entries()) {
-      if (entry.type === 'test') {
-        const results = this._testIdToResults.get(entry.id);
-        if (results)
-          entry._restoreResults(results);
-      } else {
-        this.restore(entry);
-      }
-    }
+    (suite.allTests() as TeleTestCase[]).forEach(test => {
+      const results = this._testIdToResults.get(test.id);
+      if (results)
+        test._restoreResults(results);
+    });
   }
 }
