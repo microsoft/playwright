@@ -52,7 +52,6 @@ jobs:
     - name: build & publish driver
       env:
         AZ_UPLOAD_FOLDER: driver/next
-        AZ_ACCOUNT_KEY: ${{ secrets.AZ_ACCOUNT_KEY }}
         AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}
       run: |
         utils/build/build-playwright-driver.sh
