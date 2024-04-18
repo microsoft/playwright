@@ -130,7 +130,7 @@ export class TeleSuiteUpdater {
     for (const message of report)
       this._receiver.dispatch(message);
     // After recreating all projects restore previous results.
-    results?.restore(this.rootSuite!)
+    results?.restore(this.rootSuite!);
   }
 
   processTestReportEvent(message: any) {
