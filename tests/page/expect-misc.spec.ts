@@ -419,3 +419,15 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
   expect(error.message).not.toContain('locator resolved to');
   expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
 });
+
+test('toHaveAccessibleName', async ({ page }) => {
+  await page.setContent(`
+    <div role="button" aria-label="Hello"></div>
+  `);
+  await expect(page.locator('div')).toHaveAccessibleName('Hello');
+  await expect(page.locator('div')).not.toHaveAccessibleName('hello');
+  await expect(page.locator('div')).toHaveAccessibleName('hello', { ignoreCase: true });
+  await expect(page.locator('div')).toHaveAccessibleName(/ell\w/);
+  await expect(page.locator('div')).not.toHaveAccessibleName(/hello/);
+  await expect(page.locator('div')).toHaveAccessibleName(/hello/, { ignoreCase: true });
+});

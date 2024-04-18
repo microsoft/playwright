@@ -1223,6 +1223,8 @@ export class InjectedScript {
         received = element.id;
       } else if (expression === 'to.have.text') {
         received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
+      } else if (expression === 'to.have.accessible.name') {
+        received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.title') {
         received = this.document.title;
       } else if (expression === 'to.have.url') {

@@ -846,6 +846,11 @@ Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestC
 
 Time to retry the assertion for in milliseconds. Defaults to `5000`.
 
+## assertions-ignore-case
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ## assertions-max-diff-pixels
 * langs: js
 - `maxDiffPixels` <[int]>
