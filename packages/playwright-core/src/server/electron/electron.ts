@@ -208,7 +208,9 @@ export class Electron extends SdkObject {
           progress.log(message);
           browserLogsCollector.log(message);
         },
-        shell: true,
+        // On Windows in order to run .cmd files, shell: true is required.
+        // https://github.com/nodejs/node/issues/52554
+        shell: process.platform === 'win32',
         stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [artifactsDir],
