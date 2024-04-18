@@ -146,6 +146,11 @@ export class TeleReporterReceiver {
     this._reporter = reporter;
   }
 
+  reset() {
+    this._rootSuite._entries = [];
+    this._tests.clear();
+  }
+
   dispatch(message: JsonEvent): Promise<void> | void {
     const { method, params } = message;
     if (method === 'onConfigure') {
@@ -206,35 +211,6 @@ export class TeleReporterReceiver {
     projectSuite._project = this._parseProject(project);
     for (const suite of project.suites)
       this._mergeSuiteInto(suite, projectSuite);
-
-    // Remove deleted tests when listing. Empty suites will be auto-filtered
-    // in the UI layer.
-    if (this.isListing) {
-      const testIds = new Set<string>();
-      const collectIds = (suite: JsonSuite) => {
-        suite.entries.forEach(entry => {
-          if ('testId' in entry)
-            testIds.add(entry.testId);
-          else
-            collectIds(entry);
-        });
-      };
-      project.suites.forEach(collectIds);
-
-      const filterTests = (suite: TeleSuite) => {
-        suite._entries = suite._entries.filter(entry => {
-          if (entry.type === 'test') {
-            if (testIds.has(entry.id))
-              return true;
-            this._tests.delete(entry.id);
-            return false;
-          }
-          filterTests(entry);
-          return true;
-        });
-      };
-      filterTests(projectSuite);
-    }
   }
 
   private _onBegin() {
@@ -545,6 +521,11 @@ export class TeleTestCase implements reporterTypes.TestCase {
     this._resultsMap.clear();
   }
 
+  _restoreResults(snapshot: Map<string, TeleTestResult>) {
+    this.results = [...snapshot.values()];
+    this._resultsMap = snapshot;
+  }
+
   _createTestResult(id: string): TeleTestResult {
     const result = new TeleTestResult(this.results.length);
     this.results.push(result);
@@ -585,7 +566,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   }
 }
 
-class TeleTestResult implements reporterTypes.TestResult {
+export class TeleTestResult implements reporterTypes.TestResult {
   retry: reporterTypes.TestResult['retry'];
   parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
   workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
