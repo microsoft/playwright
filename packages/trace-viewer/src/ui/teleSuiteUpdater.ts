@@ -82,11 +82,11 @@ export class TeleSuiteUpdater {
         this.progress.passed = 0;
         this.progress.failed = 0;
         this.progress.skipped = 0;
-        this._options.onUpdate(true);
+        // Do not call this._options.onUpdate(); here, as we want to wait
+        // for the test results to be restored in list mode.
       },
 
       onEnd: () => {
-        this._options.onUpdate(true);
       },
 
       onTestBegin: (test: reporterTypes.TestCase, testResult: reporterTypes.TestResult) => {
@@ -131,6 +131,7 @@ export class TeleSuiteUpdater {
       this._receiver.dispatch(message);
     // After recreating all projects restore previous results.
     results?.restore(this.rootSuite!);
+    this._options.onUpdate(true);
   }
 
   processTestReportEvent(message: any) {
