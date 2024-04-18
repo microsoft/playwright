@@ -42,7 +42,7 @@ export class TeleSuiteUpdater {
   private _lastRunReceiver: TeleReporterReceiver | undefined;
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
-  private _testResultsSnapshot: TestResultsSnapshot | undefined;
+  private _testResultsSnapshot: Map<string,  Map<string, TeleTestResult>> | undefined;
 
   constructor(options: TeleSuiteUpdaterOptions) {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
@@ -80,8 +80,14 @@ export class TeleSuiteUpdater {
         if (!this.rootSuite)
           this.rootSuite = suite as TeleSuite;
         // As soon as new test tree is built add previous results.
-        this._testResultsSnapshot?.restore(this.rootSuite);
-        this._testResultsSnapshot = undefined;
+        if (this._testResultsSnapshot) {
+          (this.rootSuite.allTests() as TeleTestCase[]).forEach(test => {
+            const results = this._testResultsSnapshot!.get(test.id);
+            if (results)
+              test._restoreResults(results);
+          });
+          this._testResultsSnapshot = undefined;
+        }
         this.progress.total = this._lastRunTestCount;
         this.progress.passed = 0;
         this.progress.failed = 0;
@@ -130,7 +136,8 @@ export class TeleSuiteUpdater {
   processListReport(report: any[]) {
     // Save test results and reset all projects, the results will be restored after
     // new project structure is built.
-    this._testResultsSnapshot = this.rootSuite && TestResultsSnapshot.saveResults(this.rootSuite);
+    if (this.rootSuite)
+      this._testResultsSnapshot = new Map((this.rootSuite.allTests() as TeleTestCase[]).map(test => [test.id, test._resultsMap]));
     this._receiver.reset();
     for (const message of report)
       this._receiver.dispatch(message);
@@ -150,26 +157,5 @@ export class TeleSuiteUpdater {
       loadErrors: this.loadErrors,
       progress: this.progress,
     };
-  }
-}
-
-class TestResultsSnapshot {
-  private _testIdToResults = new Map<string,  Map<string, TeleTestResult>>();
-
-  static saveResults(rootSuite: TeleSuite) {
-    const snapshot = new TestResultsSnapshot();
-    (rootSuite.allTests() as TeleTestCase[]).forEach(test => {
-      if (test._resultsMap.size)
-        snapshot._testIdToResults.set(test.id, test._resultsMap);
-    });
-    return snapshot;
-  }
-
-  restore(suite: TeleSuite) {
-    (suite.allTests() as TeleTestCase[]).forEach(test => {
-      const results = this._testIdToResults.get(test.id);
-      if (results)
-        test._restoreResults(results);
-    });
   }
 }
