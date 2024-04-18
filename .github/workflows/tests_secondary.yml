@@ -65,6 +65,10 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
+    # https://github.com/actions/runner-images/issues/9330
+    - name: Allow microphone access to all apps (macOS 14)
+      if: ${{ matrix.os == 'macos-14' }}
+      run: sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
@@ -165,6 +169,10 @@ jobs:
     env:
       PWTEST_BOT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     steps:
+    # https://github.com/actions/runner-images/issues/9330
+    - name: Allow microphone access to all apps (macOS 14)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
