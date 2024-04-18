@@ -211,11 +211,8 @@ The opposite of [`method: LocatorAssertions.toContainText`].
 
 Expected substring or RegExp or a list of those.
 
-### option: LocatorAssertions.NotToContainText.ignoreCase
+### option: LocatorAssertions.NotToContainText.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.23
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.NotToContainText.useInnerText
 * since: v1.18
@@ -225,6 +222,26 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 ### option: LocatorAssertions.NotToContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+
+## async method: LocatorAssertions.NotToHaveAccessibleName
+* since: v1.44
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveAccessibleName`].
+
+### param: LocatorAssertions.NotToHaveAccessibleName.name
+* since: v1.44
+- `name` <[string]|[RegExp]>
+
+Expected accessible name.
+
+### option: LocatorAssertions.NotToHaveAccessibleName.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.44
+
+### option: LocatorAssertions.NotToHaveAccessibleName.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
 
 ## async method: LocatorAssertions.NotToHaveAttribute
 * since: v1.20
@@ -244,11 +261,8 @@ Attribute name.
 
 Expected attribute value.
 
-### option: LocatorAssertions.NotToHaveAttribute.ignoreCase
+### option: LocatorAssertions.NotToHaveAttribute.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.40
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -352,11 +366,8 @@ The opposite of [`method: LocatorAssertions.toHaveText`].
 
 Expected string or RegExp or a list of those.
 
-### option: LocatorAssertions.NotToHaveText.ignoreCase
+### option: LocatorAssertions.NotToHaveText.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.23
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.NotToHaveText.useInnerText
 * since: v1.18
@@ -1089,11 +1100,8 @@ Expected substring or RegExp or a list of those.
 
 Expected substring or RegExp or a list of those.
 
-### option: LocatorAssertions.toContainText.ignoreCase
+### option: LocatorAssertions.toContainText.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.23
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.toContainText.useInnerText
 * since: v1.18
@@ -1106,6 +1114,57 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 ### option: LocatorAssertions.toContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+
+## async method: LocatorAssertions.toHaveAccessibleName
+* since: v1.44
+* langs:
+  - alias-java: hasAccessibleName
+
+Ensures the [Locator] points to an element with a given [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+**Usage**
+
+```js
+const locator = page.getByTestId('save-button');
+await expect(locator).toHaveAccessibleName('Save to disk');
+```
+
+```java
+Locator locator = page.getByTestId("save-button");
+assertThat(locator).hasAccessibleName("Save to disk");
+```
+
+```python async
+locator = page.get_by_test_id("save-button")
+await expect(locator).to_have_accessible_name("Save to disk")
+```
+
+```python sync
+locator = page.get_by_test_id("save-button")
+expect(locator).to_have_accessible_name("Save to disk")
+```
+
+```csharp
+var locator = Page.GetByTestId("save-button");
+await Expect(locator).toHaveAccessibleNameAsync("Save to disk");
+```
+
+### param: LocatorAssertions.toHaveAccessibleName.name
+* since: v1.44
+- `name` <[string]|[RegExp]>
+
+Expected accessible name.
+
+### option: LocatorAssertions.toHaveAccessibleName.timeout = %%-js-assertions-timeout-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveAccessibleName.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveAccessibleName.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.44
+
 
 ## async method: LocatorAssertions.toHaveAttribute
 * since: v1.20
@@ -1162,11 +1221,8 @@ Expected attribute value.
 ### option: LocatorAssertions.toHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
-### option: LocatorAssertions.toHaveAttribute.ignoreCase
+### option: LocatorAssertions.toHaveAttribute.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.40
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ## async method: LocatorAssertions.toHaveAttribute#2
 * since: v1.39
@@ -1769,11 +1825,8 @@ Expected string or RegExp or a list of those.
 
 Expected string or RegExp or a list of those.
 
-### option: LocatorAssertions.toHaveText.ignoreCase
+### option: LocatorAssertions.toHaveText.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.23
-- `ignoreCase` <[boolean]>
-
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.toHaveText.useInnerText
 * since: v1.18

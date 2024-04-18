@@ -174,6 +174,18 @@ export function toContainText(
   }
 }
 
+export function toHaveAccessibleName(
+  this: ExpectMatcherContext,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveAttribute(
   this: ExpectMatcherContext,
   locator: LocatorEx,
