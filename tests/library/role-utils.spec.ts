@@ -371,6 +371,17 @@ test('control embedded in a target element', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
 });
 
+test('svg role=presentation', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26809' });
+
+  await page.setContent(`
+		<img src="http://example.com/image.png" alt="Code is Poetry." />
+		<svg viewBox="0 0 100 100" width="16" height="16" xmlns="http://www.w3.org/2000/svg" role="presentation" focusable="false"><circle cx="50" cy="50" r="50"></circle></svg>
+  `);
+  expect.soft(await getNameAndRole(page, 'img')).toEqual({ role: 'img', name: 'Code is Poetry.' });
+  expect.soft(await getNameAndRole(page, 'svg')).toEqual({ role: 'presentation', name: '' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }

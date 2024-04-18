@@ -24,32 +24,60 @@ function hasExplicitAccessibleName(e: Element) {
 const kAncestorPreventingLandmark = 'article:not([role]), aside:not([role]), main:not([role]), nav:not([role]), section:not([role]), [role=article], [role=complementary], [role=main], [role=navigation], [role=region]';
 
 // https://www.w3.org/TR/wai-aria-1.2/#global_states
-const kGlobalAriaAttributes = [
-  'aria-atomic',
-  'aria-busy',
-  'aria-controls',
-  'aria-current',
-  'aria-describedby',
-  'aria-details',
-  'aria-disabled',
-  'aria-dropeffect',
-  'aria-errormessage',
-  'aria-flowto',
-  'aria-grabbed',
-  'aria-haspopup',
-  'aria-hidden',
-  'aria-invalid',
-  'aria-keyshortcuts',
-  'aria-label',
-  'aria-labelledby',
-  'aria-live',
-  'aria-owns',
-  'aria-relevant',
-  'aria-roledescription',
-];
+const kGlobalAriaAttributes = new Map<string, Set<string> | undefined>([
+  ['aria-atomic', undefined],
+  ['aria-busy', undefined],
+  ['aria-controls', undefined],
+  ['aria-current', undefined],
+  ['aria-describedby', undefined],
+  ['aria-details', undefined],
+  // Global use deprecated in ARIA 1.2
+  // ['aria-disabled', undefined],
+  ['aria-dropeffect', undefined],
+  // Global use deprecated in ARIA 1.2
+  // ['aria-errormessage', undefined],
+  ['aria-flowto', undefined],
+  ['aria-grabbed', undefined],
+  // Global use deprecated in ARIA 1.2
+  // ['aria-haspopup', undefined],
+  ['aria-hidden', undefined],
+  // Global use deprecated in ARIA 1.2
+  // ['aria-invalid', undefined],
+  ['aria-keyshortcuts', undefined],
+  ['aria-label', new Set(['caption', 'code', 'deletion', 'emphasis', 'generic', 'insertion', 'paragraph', 'presentation', 'strong', 'subscript', 'superscript'])],
+  ['aria-labelledby', new Set(['caption', 'code', 'deletion', 'emphasis', 'generic', 'insertion', 'paragraph', 'presentation', 'strong', 'subscript', 'superscript'])],
+  ['aria-live', undefined],
+  ['aria-owns', undefined],
+  ['aria-relevant', undefined],
+  ['aria-roledescription', new Set(['generic'])],
+]);
 
-function hasGlobalAriaAttribute(e: Element) {
-  return kGlobalAriaAttributes.some(a => e.hasAttribute(a));
+function hasGlobalAriaAttribute(element: Element, forRole?: string | null) {
+  return [...kGlobalAriaAttributes].some(([attr, prohibited]) => {
+    return !prohibited?.has(forRole || '') && element.hasAttribute(attr);
+  });
+}
+
+function hasTabIndex(element: Element) {
+  return !Number.isNaN(Number(String(element.getAttribute('tabindex'))));
+}
+
+function isFocusable(element: Element) {
+  // TODO:
+  // - "inert" attribute makes the whole substree not focusable
+  // - when dialog is open on the page - everything but the dialog is not focusable
+  return !isNativelyDisabled(element) && (isNativelyFocusable(element) || hasTabIndex(element));
+}
+
+function isNativelyFocusable(element: Element) {
+  const tagName = element.tagName.toUpperCase();
+  if (['BUTTON', 'DETAILS', 'SELECT', 'SUMMARY', 'TEXTAREA'].includes(tagName))
+    return true;
+  if (tagName === 'A' || tagName === 'AREA')
+    return element.hasAttribute('href');
+  if (tagName === 'INPUT')
+    return !(element as HTMLInputElement).hidden;
+  return false;
 }
 
 // https://w3c.github.io/html-aam/#html-element-role-mappings
@@ -87,7 +115,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
   'HEADER': (e: Element) => closestCrossShadow(e, kAncestorPreventingLandmark) ? null : 'banner',
   'HR': () => 'separator',
   'HTML': () => 'document',
-  'IMG': (e: Element) => (e.getAttribute('alt') === '') && !hasGlobalAriaAttribute(e) && Number.isNaN(Number(String(e.getAttribute('tabindex')))) ? 'presentation' : 'img',
+  'IMG': (e: Element) => (e.getAttribute('alt') === '') && !hasGlobalAriaAttribute(e) && !hasTabIndex(e) ? 'presentation' : 'img',
   'INPUT': (e: Element) => {
     const type = (e as HTMLInputElement).type.toLowerCase();
     if (type === 'search')
@@ -185,7 +213,7 @@ function getImplicitAriaRole(element: Element): string | null {
     if (!parents || !parent || !parents.includes(parent.tagName))
       break;
     const parentExplicitRole = getExplicitAriaRole(parent);
-    if ((parentExplicitRole === 'none' || parentExplicitRole === 'presentation') && !hasPresentationConflictResolution(parent))
+    if ((parentExplicitRole === 'none' || parentExplicitRole === 'presentation') && !hasPresentationConflictResolution(parent, parentExplicitRole))
       return parentExplicitRole;
     ancestor = parent;
   }
@@ -212,18 +240,20 @@ function getExplicitAriaRole(element: Element): string | null {
   return roles.find(role => validRoles.includes(role)) || null;
 }
 
-function hasPresentationConflictResolution(element: Element) {
+function hasPresentationConflictResolution(element: Element, role: string | null) {
   // https://www.w3.org/TR/wai-aria-1.2/#conflict_resolution_presentation_none
-  // TODO: this should include "|| focusable" check.
-  return !hasGlobalAriaAttribute(element);
+  return hasGlobalAriaAttribute(element, role) || isFocusable(element);
 }
 
 export function getAriaRole(element: Element): string | null {
   const explicitRole = getExplicitAriaRole(element);
   if (!explicitRole)
     return getImplicitAriaRole(element);
-  if ((explicitRole === 'none' || explicitRole === 'presentation') && hasPresentationConflictResolution(element))
-    return getImplicitAriaRole(element);
+  if (explicitRole === 'none' || explicitRole === 'presentation') {
+    const implicitRole = getImplicitAriaRole(element);
+    if (hasPresentationConflictResolution(element, implicitRole))
+      return implicitRole;
+  }
   return explicitRole;
 }
 
@@ -824,12 +854,14 @@ export function getAriaLevel(element: Element): number {
 export const kAriaDisabledRoles = ['application', 'button', 'composite', 'gridcell', 'group', 'input', 'link', 'menuitem', 'scrollbar', 'separator', 'tab', 'checkbox', 'columnheader', 'combobox', 'grid', 'listbox', 'menu', 'menubar', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'radiogroup', 'row', 'rowheader', 'searchbox', 'select', 'slider', 'spinbutton', 'switch', 'tablist', 'textbox', 'toolbar', 'tree', 'treegrid', 'treeitem'];
 export function getAriaDisabled(element: Element): boolean {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-disabled
-  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   // Note that aria-disabled applies to all descendants, so we look up the hierarchy.
+  return isNativelyDisabled(element) || hasExplicitAriaDisabled(element);
+}
+
+function isNativelyDisabled(element: Element) {
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.tagName);
-  if (isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element)))
-    return true;
-  return hasExplicitAriaDisabled(element);
+  return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element));
 }
 
 function belongsToDisabledFieldSet(element: Element | null): boolean {
