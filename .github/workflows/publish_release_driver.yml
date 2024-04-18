@@ -15,6 +15,7 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     if: github.repository == 'microsoft/playwright'
+    environment: Release
     steps:
     - uses: actions/checkout@v4
     - name: Azure Login
