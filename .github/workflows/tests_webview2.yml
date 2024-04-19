@@ -22,7 +22,7 @@ env:
 jobs:
   test_webview2:
     name: WebView2
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-2022
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed

@@ -26,7 +26,7 @@ permissions:
 jobs:
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -67,7 +67,7 @@ jobs:
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -107,7 +107,7 @@ jobs:
 
   test_win:
     name: "Windows"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -151,7 +151,7 @@ jobs:
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -191,7 +191,7 @@ jobs:
 
   headed_tests:
     name: "headed ${{ matrix.browser }} (${{ matrix.os }})"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -234,7 +234,7 @@ jobs:
 
   transport_linux:
     name: "Transport"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -275,7 +275,7 @@ jobs:
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -322,7 +322,7 @@ jobs:
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "chrome-stable-linux"
@@ -358,7 +358,7 @@ jobs:
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "chrome-stable-windows"
@@ -395,7 +395,7 @@ jobs:
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "chrome-stable-mac"
@@ -431,7 +431,7 @@ jobs:
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     env:
       PWTEST_CHANNEL: chromium-tip-of-tree
@@ -473,7 +473,7 @@ jobs:
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     env:
       PWTEST_CHANNEL: chromium-tip-of-tree
@@ -515,7 +515,7 @@ jobs:
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "firefox-beta-linux"
@@ -551,7 +551,7 @@ jobs:
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "firefox-beta-windows"
@@ -588,7 +588,7 @@ jobs:
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "firefox-beta-mac"
@@ -624,7 +624,7 @@ jobs:
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "edge-stable-mac"
@@ -660,7 +660,7 @@ jobs:
 
   edge_stable_win:
     name: "Edge Stable (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "edge-stable-windows"
@@ -697,7 +697,7 @@ jobs:
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "edge-stable-linux"
@@ -733,7 +733,7 @@ jobs:
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "edge-beta-mac"
@@ -769,7 +769,7 @@ jobs:
 
   edge_beta_win:
     name: "Edge Beta (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "edge-beta-windows"
@@ -806,7 +806,7 @@ jobs:
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "edge-beta-linux"
@@ -842,7 +842,7 @@ jobs:
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "edge-dev-mac"
@@ -878,7 +878,7 @@ jobs:
 
   edge_dev_win:
     name: "Edge Dev (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "edge-dev-windows"
@@ -915,7 +915,7 @@ jobs:
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "edge-dev-linux"
@@ -951,7 +951,7 @@ jobs:
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
     env:
       PWTEST_BOT_NAME: "chrome-beta-linux"
@@ -987,7 +987,7 @@ jobs:
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
     env:
       PWTEST_BOT_NAME: "chrome-beta-windows"
@@ -1024,7 +1024,7 @@ jobs:
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
     env:
       PWTEST_BOT_NAME: "chrome-beta-mac"
@@ -1073,7 +1073,7 @@ jobs:
 
   test_linux_chromium_headless_new:
     name: Linux Chromium Headless New
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-latest
     env:
       PWTEST_BOT_NAME: "headless-new"

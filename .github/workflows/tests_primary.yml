@@ -27,7 +27,7 @@ env:
 jobs:
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -79,7 +79,7 @@ jobs:
 
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -124,7 +124,7 @@ jobs:
 
   test_test_runner:
     name: Test Runner
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -259,7 +259,7 @@ jobs:
 
   test_package_installations:
     name: "Installation Test ${{ matrix.os }}"
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:

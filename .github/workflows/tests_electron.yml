@@ -21,7 +21,7 @@ env:
 jobs:
   test_electron:
     name: ${{ matrix.os }}
-    environment: allow-uploading-flakiness-results
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
