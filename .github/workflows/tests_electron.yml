@@ -21,6 +21,7 @@ env:
 jobs:
   test_electron:
     name: ${{ matrix.os }}
+    environment: allow-uploading-flakiness-results
     strategy:
       fail-fast: false
       matrix:
