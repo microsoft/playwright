@@ -1257,6 +1257,10 @@ export module Protocol {
        */
       desynchronized?: boolean;
       /**
+       * 2D
+       */
+      willReadFrequently?: boolean;
+      /**
        * WebGL, WebGL2
        */
       depth?: boolean;
