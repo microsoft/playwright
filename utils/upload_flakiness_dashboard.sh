@@ -84,7 +84,7 @@ gzip "${REPORT_NAME}"
 
 AZ_STORAGE_ACCOUNT="folioflakinessdashboard"
 
-az storage blob upload --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
+az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 
 UTC_DATE=$(cat <<EOF | node
   const date = new Date();
@@ -92,5 +92,5 @@ UTC_DATE=$(cat <<EOF | node
 EOF
 )
 
-az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
+az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
 rm -rf "${REPORT_NAME}.gz"
