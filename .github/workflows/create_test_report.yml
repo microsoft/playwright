@@ -18,12 +18,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -41,6 +35,13 @@ jobs:
         npx playwright merge-reports --config .github/workflows/merge.config.ts ./all-blob-reports
       env:
         NODE_OPTIONS: --max-old-space-size=4096
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
 
     - name: Upload HTML report to Azure
       run: |

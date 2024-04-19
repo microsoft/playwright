@@ -18,12 +18,6 @@ jobs:
     environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
     - uses: actions/checkout@v4
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - uses: actions/setup-node@v4
       with:
         node-version: 18
@@ -32,6 +26,12 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - run: utils/build/upload-playwright-driver.sh
       env:
         AZ_UPLOAD_FOLDER: driver
