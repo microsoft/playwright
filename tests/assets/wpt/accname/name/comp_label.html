@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Label</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<h1>AccName: Label Tests</h1>
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_label">#comp_label</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<!-- https://www.w3.org/TR/wai-aria/#namefromauthor -->
+
+<!-- Embedded controls tested in ./comp_embedded_control.html -->
+
+<h2>Elements with roles that support aria-label use</h2>
+<!-- https://www.w3.org/TR/wai-aria/#namefromauthor -->
+
+<div role="alert" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with alert role" class="ex">x</div>
+<div role="alertdialog" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with alertdialog role" class="ex">x</div>
+<div role="application" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with application role" class="ex">x</div>
+<div role="article" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with article role" class="ex">x</div>
+<div role="associationlist" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with associationlist role" class="ex">x</div>
+<div role="associationlistitemkey" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with associationlistitemkey role" class="ex">x</div>
+<div role="associationlistitemvalue" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with associationlistitemvalue role" class="ex">x</div>
+<div role="banner" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with banner role" class="ex">x</div>
+<div role="blockquote" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with blockquote role" class="ex">x</div>
+<div role="button" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with button role" class="ex">x</div>
+<div role="cell" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with cell role" class="ex">x</div>
+<div role="checkbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with checkbox role" class="ex">x</div>
+<div role="columnheader" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with columnheader role" class="ex">x</div>
+<div role="combobox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with combobox role" class="ex">x</div>
+<div role="complementary" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with complementary role" class="ex">x</div>
+<div role="contentinfo" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with contentinfo role" class="ex">x</div>
+<div role="dialog" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with dialog role" class="ex">x</div>
+<div role="directory" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with directory role" class="ex">x</div>
+<div role="document" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with document role" class="ex">x</div>
+<div role="feed" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with feed role" class="ex">x</div>
+<div role="figure" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with figure role" class="ex">x</div>
+<div role="form" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with form role" class="ex">x</div>
+<div role="grid" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with grid role" class="ex">x</div>
+<div role="gridcell" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with gridcell role" class="ex">x</div>
+<div role="group" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with group role" class="ex">x</div>
+<div role="heading" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with heading role" class="ex">x</div>
+<div role="img" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with img role" class="ex">x</div>
+<div role="link" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with link role" class="ex">x</div>
+<div role="list" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with list role" class="ex">x</div>
+<div role="listbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with listbox role" class="ex">x</div>
+<div role="listitem" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with listitem role" class="ex">x</div>
+<div role="log" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with log role" class="ex">x</div>
+<div role="main" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with main role" class="ex">x</div>
+<div role="marquee" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with marquee role" class="ex">x</div>
+<div role="math" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with math role" class="ex">x</div>
+<div role="menu" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with menu role" class="ex">x</div>
+<div role="menubar" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with menubar role" class="ex">x</div>
+<div role="menuitem" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with menuitem role" class="ex">x</div>
+<div role="menuitemcheckbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with menuitemcheckbox role" class="ex">x</div>
+<div role="menuitemradio" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with menuitemradio role" class="ex">x</div>
+<div role="meter" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with meter role" class="ex">x</div>
+<div role="navigation" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with navigation role" class="ex">x</div>
+<div role="note" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with note role" class="ex">x</div>
+<div role="option" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with option role" class="ex">x</div>
+<div role="progressbar" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with progressbar role" class="ex">x</div>
+<div role="radio" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with radio role" class="ex">x</div>
+<div role="radiogroup" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with radiogroup role" class="ex">x</div>
+<div role="region" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with region role" class="ex">x</div>
+<div role="row" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with row role" class="ex">x</div>
+<div role="rowgroup" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with rowgroup role" class="ex">x</div>
+<div role="rowheader" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with rowheader role" class="ex">x</div>
+<div role="scrollbar" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with scrollbar role" class="ex">x</div>
+<div role="search" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with search role" class="ex">x</div>
+<div role="searchbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with searchbox role" class="ex">x</div>
+<div role="separator" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with separator role" class="ex">x</div>
+<div role="slider" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with slider role" class="ex">x</div>
+<div role="spinbutton" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with spinbutton role" class="ex">x</div>
+<div role="status" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with status role" class="ex">x</div>
+<div role="switch" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with switch role" class="ex">x</div>
+<div role="tab" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with tab role" class="ex">x</div>
+<div role="table" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with table role" class="ex">x</div>
+<div role="tablist" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with tablist role" class="ex">x</div>
+<div role="tabpanel" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with tabpanel role" class="ex">x</div>
+<div role="textbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with textbox role" class="ex">x</div>
+<div role="timer" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with timer role" class="ex">x</div>
+<div role="toolbar" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with toolbar role" class="ex">x</div>
+<div role="tooltip" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with tooltip role" class="ex">x</div>
+<div role="tree" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with tree role" class="ex">x</div>
+<div role="treegrid" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with treegrid role" class="ex">x</div>
+<div role="treeitem" aria-label="label" data-expectedlabel="label" data-testname="label valid on div with treeitem role" class="ex">x</div>
+
+<h2>HTML elements that support aria-label</h2>
+<!-- aria-label permitted on "all elements of the base markup" with exceptions: https://w3c.github.io/aria/#aria-label -->
+
+<a href="" aria-label="label" data-expectedlabel="label" data-testname="label valid on link element" class="ex">x</a>
+<article aria-label="label" data-expectedlabel="label" data-testname="label valid on article element" class="ex">x</article>
+<aside aria-label="label" data-expectedlabel="label" data-testname="label valid on aside element" class="ex">x</aside>
+<blockquote aria-label="label" data-expectedlabel="label" data-testname="label valid on blockquote element" class="ex">x</blockquote>
+<button aria-label="label" data-expectedlabel="label" data-testname="label valid on button element" class="ex">x</button>
+<dd aria-label="label" data-expectedlabel="label" data-testname="label valid on dd element" class="ex">x</dd>
+<dl aria-label="label" data-expectedlabel="label" data-testname="label valid on dl element" class="ex">x</dl>
+<dt aria-label="label" data-expectedlabel="label" data-testname="label valid on dt element" class="ex">x</dt>
+<footer aria-label="label" data-expectedlabel="label" data-testname="label valid on footer element" class="ex">x</footer>
+<fieldset aria-label="label" data-expectedlabel="label" data-testname="label valid on fieldset element" class="ex">x</fieldset>
+<figure aria-label="label" data-expectedlabel="label" data-testname="label valid on figure element" class="ex">x</figure>
+<form action="" aria-label="label" data-expectedlabel="label" data-testname="label valid on form element" class="ex">x</form>
+<header aria-label="label" data-expectedlabel="label" data-testname="label valid on header element" class="ex">x</header>
+<h1 aria-label="label" data-expectedlabel="label" data-testname="label valid on h1 element" class="ex">x</h1>
+<h2 aria-label="label" data-expectedlabel="label" data-testname="label valid on h2 element" class="ex">x</h2>
+<h3 aria-label="label" data-expectedlabel="label" data-testname="label valid on h3 element" class="ex">x</h3>
+<h4 aria-label="label" data-expectedlabel="label" data-testname="label valid on h4 element" class="ex">x</h4>
+<h5 aria-label="label" data-expectedlabel="label" data-testname="label valid on h5 element" class="ex">x</h5>
+<h6 aria-label="label" data-expectedlabel="label" data-testname="label valid on h6 element" class="ex">x</h6>
+<hr aria-label="label" data-expectedlabel="label" data-testname="label valid on hr element" class="ex" />
+<img alt="" aria-label="label" data-expectedlabel="label" data-testname="label valid on img element" class="ex" />
+<input type="checkbox" aria-label="label" data-expectedlabel="label" data-testname="label valid on input type checkbox element" class="ex"/>
+<input type="radio" aria-label="label" data-expectedlabel="label" data-testname="label valid on input type radio element" class="ex" />
+<input type="search" aria-label="label" data-expectedlabel="label" data-testname="label valid on input type search element" class="ex" />
+<input type="text" aria-label="label" data-expectedlabel="label" data-testname="label valid on input type text element" class="ex" />
+<li aria-label="label" data-expectedlabel="label" data-testname="label valid on listitem element" class="ex">x</li>
+<main aria-label="label" data-expectedlabel="label" data-testname="label valid on main element" class="ex">x</main>
+<math aria-label="label" data-expectedlabel="label" data-testname="label valid on math element" class="ex">x</math>
+<meter aria-label="label" data-expectedlabel="label" data-testname="label valid on meter element" class="ex">x</meter>
+<nav aria-label="label" data-expectedlabel="label" data-testname="label valid on nav element" class="ex">x</nav>
+<ol aria-label="label" data-expectedlabel="label" data-testname="label valid on list (ordered) element" class="ex">x</ol>
+<section aria-label="label" data-expectedlabel="label" data-testname="label valid on section element" class="ex">x</section>
+<select aria-label="label" data-expectedlabel="label" data-testname="label valid on select element" class="ex">x</select>
+<select>
+  <option aria-label="label" value="foo" data-expectedlabel="label" data-testname="label valid on option element" class="ex">x</option>
+</select>
+<table aria-label="label" data-expectedlabel="label" data-testname="label valid on table element" class="ex">
+  <thead aria-label="label" data-expectedlabel="label" data-testname="label valid on thead element" class="ex">
+    <tr>
+      <th scope="col" aria-label="label" data-expectedlabel="label" data-testname="label valid on th element with the scope of col" class="ex">x</th>
+      <th scope="row" aria-label="label" data-expectedlabel="label" data-testname="label valid on th (scope row) element" class="ex">x</th>
+    </tr>
+  </thead>
+  <tbody aria-label="label" data-expectedlabel="label" data-testname="label valid on tbody element" class="ex">
+    <tr aria-label="label" data-expectedlabel="label" data-testname="label valid on tr element" class="ex">
+      <td aria-label="label" data-expectedlabel="label" data-testname="label valid on td element" class="ex">x</td>
+      <td>x</td>
+    </tr>
+  </tbody>
+    <tfoot aria-label="label" data-expectedlabel="label" data-testname="label valid on tfoot element" class="ex">
+      <tr>
+        <td>x</td>
+        <td>x</td>
+      </tr>
+    </tfoot>
+</table>
+<textarea aria-label="label" data-expectedlabel="label" data-testname="label valid on textarea element" class="ex">x</textarea>
+<ul aria-label="label" data-expectedlabel="label" data-testname="label valid on list (unordered) element" class="ex">x</ul>
+
+<h2>Name computation precedence tests</h2>
+<!-- Name computation: https://w3c.github.io/accname/#computation-steps -->
+
+<!-- Step 2A: Hidden Not Referenced supercedes 2D: AriaLabel, also see wpt/accname/name/comp_hidden_not_referenced.html -->
+<button aria-labelledby="span1" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (display:none) supercedes aria-label" class="ex">
+  <span id="span1" style="display:none;">
+    <span id="span2" style="display:none;">label</span>
+  </span>
+x
+</button>
+
+<button aria-labelledby="span3" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (visibility:hidden) supercedes aria-label" class="ex">
+  <span id="span3" style="visibility:hidden;">
+    <span id="span4" style="visibility:hidden;">label</span>
+  </span>
+  x
+</button>
+
+<button aria-labelledby="span5" aria-label="foo" data-expectedlabel="foo" data-testname="button's hidden referenced name (visibility:hidden) with hidden aria-labelledby traversal falls back to aria-label" class="ex">
+  <span id="span5">
+    <span id="span6" style="visibility:hidden;">label</span>
+  </span>
+  x
+</button>
+
+<span style="display: none">
+<button data-expectedlabel="" data-testname="Hidden button's label should be the empty string" class="ex">
+x
+</button>
+</span>
+
+<!-- Step 2B: LabelledBy supercedes 2D: AriaLabel, also see wpt/accname/name/comp_labelledby.html -->
+<a href="#" aria-labelledby="span7" aria-label="foo" data-expectedlabel="label" data-testname="link's aria-labelledby name supercedes aria-label" class="ex">x</a>
+<span id="span7">label</span>
+
+<!-- Step 2C: Embedded Control labelling supercedes 2D: AriaLabel, see wpt/accname/name/comp_embedded_control.html -->
+
+<!-- Step 2E: Host Language Label is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_host_language_label.html -->
+<img alt="alt" aria-label="foo" data-expectedlabel="foo" data-testname="img's aria-label supercedes alt attribute" class="ex" />
+
+<svg aria-label="foo" data-expectedlabel="foo" data-testname="svg's aria-label supercedes title tag" class="ex">
+  <circle cx="5" cy="5" r="4">
+    <title>circle</title>
+  </circle>
+</svg>
+
+<label for="input1">label</label>
+<input type="text" id="input1" aria-label="foo" data-expectedlabel="foo" data-testname="input with label for association is superceded by aria-label" class="ex" />
+
+<!-- Step 2F: Name From Content is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_name_from_content.html -->
+<button aria-label="label" data-expectedlabel="label" data-testname="button name from contents is superceded by aria-label" class="ex">x</button>
+
+<!-- Step 2G: Text Node is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_text_node.html -->
+<h1 aria-label="label" data-expectedlabel="label" data-testname="h1 text is superceded by aria-label" class="ex">x</h1>
+
+<!-- Step 2H: Recursive Name from Content, see wpt/accname/name/comp_name_from_content.html  -->
+
+<!-- Step 2I: Tooltip is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_tooltip.html -->
+<button aria-label="label" title="foo" data-expectedlabel="label" data-testname="button with title is superceded by aria-label" class="ex">x</button>
+
+<h2>Empty/whitespace aria-label tests</h2>
+<!--
+- AccName computation links to the following definition of "Whitespace": https://infra.spec.whatwg.org/#ascii-whitespace
+- Generally, if the current node has an aria-label attribute whose value is not the empty string (including when trimmed of whitespace), return the value of aria-label.
+
+Note: PR for computedLabel whitespace trimming in aria-utils.js: https://github.com/web-platform-tests/wpt/pull/42407/files#diff-6870d82f11ff11cf7c7b544756cecfdac2046acbfe2fbb0640e6d415fbf99916
+
+-->
+
+<textarea aria-label="label  " data-expectedlabel="label" data-testname="textarea's name with trailing whitespace in aria-label is valid" class="ex">x</textarea>
+<a href="#" aria-label="     label" data-expectedlabel="label" data-testname="link's name with leading whitespace in aria-label is valid" class="ex">x</a>
+<button aria-label="⠀" data-expectedlabel="⠀" data-testname="button with blank braille pattern has name as such (not treated as whitespace per Unicode standard)" class="ex">my button</button>
+<div role="alert" aria-label="
+alert message" data-expectedlabel="alert message" data-testname="div with role alert and carriage return in aria-label is valid" class="ex">x</div>
+<a href="#" aria-label="  label" data-expectedlabel="label" data-testname="link's name with tab in aria-label is valid" class="ex">x</a>
+<button aria-label="label" data-expectedlabel="label" data-testname="button with leading form feed control character in aria-label is valid" class="ex">my button</button>
+<nav aria-label="label&nbsp;" data-expectedlabel="label&nbsp;" data-testname="nav with trailing nbsp char aria-label is valid (nbsp is preserved in name)" class="ex">x</nav>
+<button aria-label="&nbsp;label" data-expectedlabel="&nbsp;label" data-testname="button with leading nbsp char in aria-label is valid (and uses aria-label)" class="ex">my button</button>
+
+<button aria-label="" data-testname="button with empty aria-label does not use aria-label as name" data-expectedlabel="my button" class="ex">my button</button>
+<textarea aria-label="  " title="title" data-testname="textarea with tab character as aria-label does not use aria-label as name" data-expectedlabel="title" class="ex">textarea contents</textarea>
+<button aria-label="
+" data-testname="button with carriage return as aria-label does not use aria-label as name" data-expectedlabel="my button" class="ex">my button</button>
+<button aria-label="      " data-testname="button with space characters as aria-label does not use aria-label as name" data-expectedlabel="my button" class="ex">my button</button>
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

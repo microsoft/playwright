@@ -71,7 +71,7 @@ function isFocusable(element: Element) {
 
 function isNativelyFocusable(element: Element) {
   const tagName = element.tagName.toUpperCase();
-  if (['BUTTON', 'DETAILS', 'SELECT', 'SUMMARY', 'TEXTAREA'].includes(tagName))
+  if (['BUTTON', 'DETAILS', 'SELECT', 'TEXTAREA'].includes(tagName))
     return true;
   if (tagName === 'A' || tagName === 'AREA')
     return element.hasAttribute('href');
@@ -81,6 +81,7 @@ function isNativelyFocusable(element: Element) {
 }
 
 // https://w3c.github.io/html-aam/#html-element-role-mappings
+// https://www.w3.org/TR/html-aria/#docconformance
 const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null } = {
   'A': (e: Element) => {
     return e.hasAttribute('href') ? 'link' : null;
@@ -115,7 +116,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
   'HEADER': (e: Element) => closestCrossShadow(e, kAncestorPreventingLandmark) ? null : 'banner',
   'HR': () => 'separator',
   'HTML': () => 'document',
-  'IMG': (e: Element) => (e.getAttribute('alt') === '') && !hasGlobalAriaAttribute(e) && !hasTabIndex(e) ? 'presentation' : 'img',
+  'IMG': (e: Element) => (e.getAttribute('alt') === '') && !e.getAttribute('title') && !hasGlobalAriaAttribute(e) && !hasTabIndex(e) ? 'presentation' : 'img',
   'INPUT': (e: Element) => {
     const type = (e as HTMLInputElement).type.toLowerCase();
     if (type === 'search')
@@ -338,9 +339,15 @@ function getIdRefs(element: Element, ref: string | null): Element[] {
   }
 }
 
-function normalizeAccessbileName(s: string): string {
+function trimFlatString(s: string): string {
   // "Flat string" at https://w3c.github.io/accname/#terminology
-  return s.replace(/\r\n/g, '\n').replace(/\u00A0/g, ' ').replace(/\s\s+/g, ' ').trim();
+  return s.trim();
+}
+
+function asFlatString(s: string): string {
+  // "Flat string" at https://w3c.github.io/accname/#terminology
+  // Note that non-breaking spaces are preserved.
+  return s.split('\u00A0').map(chunk => chunk.replace(/\r\n/g, '\n').replace(/\s\s*/g, ' ')).join('\u00A0').trim();
 }
 
 function queryInAriaOwned(element: Element, selector: string): Element[] {
@@ -416,9 +423,10 @@ export function getElementAccessibleName(element: Element, includeHidden: boolea
 
     if (!elementProhibitsNaming) {
       // step 2.
-      accessibleName = normalizeAccessbileName(getElementAccessibleNameInternal(element, {
+      accessibleName = asFlatString(getTextAlternativeInternal(element, {
         includeHidden,
         visitedElements: new Set(),
+        embeddedInDescribedBy: undefined,
         embeddedInLabelledBy: undefined,
         embeddedInLabel: undefined,
         embeddedInNativeTextAlternative: undefined,
@@ -431,16 +439,53 @@ export function getElementAccessibleName(element: Element, includeHidden: boolea
   return accessibleName;
 }
 
+export function getElementAccessibleDescription(element: Element, includeHidden: boolean): string {
+  const cache = (includeHidden ? cacheAccessibleDescriptionHidden : cacheAccessibleDescription);
+  let accessibleDescription = cache?.get(element);
+
+  if (accessibleDescription === undefined) {
+    // https://w3c.github.io/accname/#mapping_additional_nd_description
+    // https://www.w3.org/TR/html-aam-1.0/#accdesc-computation
+    accessibleDescription = '';
+
+    if (element.hasAttribute('aria-describedby')) {
+      // precedence 1
+      const describedBy = getIdRefs(element, element.getAttribute('aria-describedby'));
+      accessibleDescription = asFlatString(describedBy.map(ref => getTextAlternativeInternal(ref, {
+        includeHidden,
+        visitedElements: new Set(),
+        embeddedInLabelledBy: undefined,
+        embeddedInLabel: undefined,
+        embeddedInNativeTextAlternative: undefined,
+        embeddedInTargetElement: 'none',
+        embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
+      })).join(' '));
+    } else if (element.hasAttribute('aria-description')) {
+      // precedence 2
+      accessibleDescription = asFlatString(element.getAttribute('aria-description') || '');
+    } else {
+      // TODO: handle precedence 3 - html-aam-specific cases like table>caption.
+      // https://www.w3.org/TR/html-aam-1.0/#accdesc-computation
+      // precedence 4
+      accessibleDescription = asFlatString(element.getAttribute('title') || '');
+    }
+
+    cache?.set(element, accessibleDescription);
+  }
+  return accessibleDescription;
+}
+
 type AccessibleNameOptions = {
   includeHidden: boolean,
   visitedElements: Set<Element>,
+  embeddedInDescribedBy: { element: Element, hidden: boolean } | undefined,
   embeddedInLabelledBy: { element: Element, hidden: boolean } | undefined,
   embeddedInLabel: { element: Element, hidden: boolean } | undefined,
   embeddedInNativeTextAlternative: { element: Element, hidden: boolean } | undefined,
   embeddedInTargetElement: 'none' | 'self' | 'descendant',
 };
 
-function getElementAccessibleNameInternal(element: Element, options: AccessibleNameOptions): string {
+function getTextAlternativeInternal(element: Element, options: AccessibleNameOptions): string {
   if (options.visitedElements.has(element))
     return '';
 
@@ -454,6 +499,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   // Nor part of a native host language text alternative element (e.g. label in HTML) or attribute traversal, where the root of that traversal was hidden.
   if (!options.includeHidden &&
       !options.embeddedInLabelledBy?.hidden &&
+      !options.embeddedInDescribedBy?.hidden &&
       !options?.embeddedInNativeTextAlternative?.hidden &&
       !options?.embeddedInLabel?.hidden &&
       isElementHiddenForAria(element)) {
@@ -468,9 +514,10 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   // at least one valid IDREF, and the current node is not already part of an ongoing
   // aria-labelledby or aria-describedby traversal, process its IDREFs in the order they occur...
   if (!options.embeddedInLabelledBy) {
-    const accessibleName = (labelledBy || []).map(ref => getElementAccessibleNameInternal(ref, {
+    const accessibleName = (labelledBy || []).map(ref => getTextAlternativeInternal(ref, {
       ...options,
       embeddedInLabelledBy: { element: ref, hidden: isElementHiddenForAria(ref) },
+      embeddedInDescribedBy: undefined,
       embeddedInTargetElement: 'none',
       embeddedInLabel: undefined,
       embeddedInNativeTextAlternative: undefined,
@@ -516,7 +563,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
           // wpt test name_heading-combobox-focusable-alternative-manual.html do this.
           return (element as HTMLInputElement).value;
         }
-        return selectedOptions.map(option => getElementAccessibleNameInternal(option, childOptions)).join(' ');
+        return selectedOptions.map(option => getTextAlternativeInternal(option, childOptions)).join(' ');
       }
       if (['progressbar', 'scrollbar', 'slider', 'spinbutton', 'meter'].includes(role)) {
         options.visitedElements.add(element);
@@ -536,7 +583,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   // step 2d.
   const ariaLabel = element.getAttribute('aria-label') || '';
-  if (ariaLabel.trim()) {
+  if (trimFlatString(ariaLabel)) {
     options.visitedElements.add(element);
     return ariaLabel;
   }
@@ -552,7 +599,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].includes((element as HTMLInputElement).type)) {
       options.visitedElements.add(element);
       const value = (element as HTMLInputElement).value || '';
-      if (value.trim())
+      if (trimFlatString(value))
         return value;
       if ((element as HTMLInputElement).type === 'submit')
         return 'Submit';
@@ -572,10 +619,10 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       if (labels.length && !options.embeddedInLabelledBy)
         return getAccessibleNameFromAssociatedLabels(labels, options);
       const alt = element.getAttribute('alt') || '';
-      if (alt.trim())
+      if (trimFlatString(alt))
         return alt;
       const title = element.getAttribute('title') || '';
-      if (title.trim())
+      if (trimFlatString(title))
         return title;
       // SPEC DIFFERENCE.
       // Spec says return localized "Submit Query", but browsers and axe-core insist on "Sumbit".
@@ -624,7 +671,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName === 'LEGEND') {
-          return getElementAccessibleNameInternal(child, {
+          return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
           });
@@ -639,7 +686,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName === 'FIGCAPTION') {
-          return getElementAccessibleNameInternal(child, {
+          return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
           });
@@ -656,7 +703,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (element.tagName === 'IMG') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
-      if (alt.trim())
+      if (trimFlatString(alt))
         return alt;
       const title = element.getAttribute('title') || '';
       return title;
@@ -667,7 +714,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName === 'CAPTION') {
-          return getElementAccessibleNameInternal(child, {
+          return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
           });
@@ -687,7 +734,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (element.tagName === 'AREA') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
-      if (alt.trim())
+      if (trimFlatString(alt))
         return alt;
       const title = element.getAttribute('title') || '';
       return title;
@@ -698,7 +745,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName.toUpperCase() === 'TITLE' && (child as SVGElement).ownerSVGElement) {
-          return getElementAccessibleNameInternal(child, {
+          return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInLabelledBy: { element: child, hidden: isElementHiddenForAria(child) },
           });
@@ -707,17 +754,21 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
     if ((element as SVGElement).ownerSVGElement && element.tagName.toUpperCase() === 'A') {
       const title = element.getAttribute('xlink:title') || '';
-      if (title.trim()) {
+      if (trimFlatString(title)) {
         options.visitedElements.add(element);
         return title;
       }
     }
   }
 
+  // See https://w3c.github.io/html-aam/#summary-element-accessible-name-computation for "summary"-specific check.
+  const shouldNameFromContentForSummary = element.tagName === 'SUMMARY' && !['presentation', 'none'].includes(role);
+
   // step 2f + step 2h.
   if (allowsNameFromContent(role, options.embeddedInTargetElement === 'descendant') ||
-      !!options.embeddedInLabelledBy || !!options.embeddedInLabel ||
-      !!options.embeddedInNativeTextAlternative) {
+      shouldNameFromContentForSummary ||
+      !!options.embeddedInLabelledBy || !!options.embeddedInDescribedBy ||
+      !!options.embeddedInLabel || !!options.embeddedInNativeTextAlternative) {
     options.visitedElements.add(element);
     const tokens: string[] = [];
     const visit = (node: Node, skipSlotted: boolean) => {
@@ -725,7 +776,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
         return;
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
         const display = getElementComputedStyle(node as Element)?.display || 'inline';
-        let token = getElementAccessibleNameInternal(node as Element, childOptions);
+        let token = getTextAlternativeInternal(node as Element, childOptions);
         // SPEC DIFFERENCE.
         // Spec says "append the result to the accumulated text", assuming "with space".
         // However, multiple tests insist that inline elements do not add a space.
@@ -755,7 +806,11 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
     tokens.push(getPseudoContent(element, '::after'));
     const accessibleName = tokens.join('');
-    if (accessibleName.trim())
+    // Spec says "Return the accumulated text if it is not the empty string". However, that is not really
+    // compatible with the real browser behavior and wpt tests, where an element with empty contents will fallback to the title.
+    // So we follow the spec everywhere except for the target element itself. This can probably be improved.
+    const maybeTrimmedAccessibleName = options.embeddedInTargetElement === 'self' ? trimFlatString(accessibleName) : accessibleName;
+    if (maybeTrimmedAccessibleName)
       return accessibleName;
   }
 
@@ -763,7 +818,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   if (!['presentation', 'none'].includes(role) || element.tagName === 'IFRAME') {
     options.visitedElements.add(element);
     const title = element.getAttribute('title') || '';
-    if (title.trim())
+    if (trimFlatString(title))
       return title;
   }
 
@@ -888,17 +943,20 @@ function hasExplicitAriaDisabled(element: Element | undefined): boolean {
 }
 
 function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions) {
-  return [...labels].map(label => getElementAccessibleNameInternal(label, {
+  return [...labels].map(label => getTextAlternativeInternal(label, {
     ...options,
     embeddedInLabel: { element: label, hidden: isElementHiddenForAria(label) },
     embeddedInNativeTextAlternative: undefined,
     embeddedInLabelledBy: undefined,
+    embeddedInDescribedBy: undefined,
     embeddedInTargetElement: 'none',
   })).filter(accessibleName => !!accessibleName).join(' ');
 }
 
 let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
+let cacheAccessibleDescription: Map<Element, string> | undefined;
+let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
@@ -908,6 +966,8 @@ export function beginAriaCaches() {
   ++cachesCounter;
   cacheAccessibleName ??= new Map();
   cacheAccessibleNameHidden ??= new Map();
+  cacheAccessibleDescription ??= new Map();
+  cacheAccessibleDescriptionHidden ??= new Map();
   cacheIsHidden ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
@@ -917,6 +977,8 @@ export function endAriaCaches() {
   if (!--cachesCounter) {
     cacheAccessibleName = undefined;
     cacheAccessibleNameHidden = undefined;
+    cacheAccessibleDescription = undefined;
+    cacheAccessibleDescriptionHidden = undefined;
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
