@@ -22,12 +22,6 @@ jobs:
     environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
     - uses: actions/checkout@v4
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - uses: actions/setup-node@v4
       with:
         node-version: 18
@@ -56,6 +50,12 @@ jobs:
         utils/publish_all_packages.sh --beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - name: build & publish driver
       env:
         AZ_UPLOAD_FOLDER: driver/next
