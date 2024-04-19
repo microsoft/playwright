@@ -1,0 +1,37 @@
+<!doctype html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/resources/testdriver.js"></script>
+<script src="/resources/testdriver-vendor.js"></script>
+<script src="/resources/testdriver-actions.js"></script>
+<script src="/wai-aria/scripts/aria-utils.js"></script>
+
+ <p>Tests the basic shadow DOM portions of the AccName <em>Name Computation</em> algorithm, coming in <a href="https://github.com/w3c/accname/pull/167">ARIA #167</a>.</p>
+
+<label id="label1">
+  <div id="host1"></div>
+</label>
+<button id="labelled1"
+        class="labelled"
+        type="button"
+        aria-labelledby="label1"
+        data-expectedlabel="foo"
+        data-testname="aria-labelledby reference to element with text content inside shadow DOM"></button>
+
+<label id="label2">
+  <div id="host2"></div>
+</label>
+<button id="labelled2"
+        class="labelled"
+        type="button"
+        aria-labelledby="label2"
+        data-expectedlabel="bar"
+        data-testname="aria-labelledby reference to element with aria-label inside shadow DOM"></button>
+<script>
+
+document.getElementById('host1').attachShadow({ mode: 'open' }).innerHTML = 'foo';
+document.getElementById('host2').attachShadow({ mode: 'open' }).innerHTML = '<div aria-label="bar"></div>';
+
+AriaUtils.verifyLabelsBySelector('.labelled');
+
+</script>

@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -1283,6 +1283,10 @@ export class InjectedScript {
 
   getElementAccessibleName(element: Element, includeHidden?: boolean): string {
     return getElementAccessibleName(element, !!includeHidden);
+  }
+
+  getElementAccessibleDescription(element: Element, includeHidden?: boolean): string {
+    return getElementAccessibleDescription(element, !!includeHidden);
   }
 
   getAriaRole(element: Element) {

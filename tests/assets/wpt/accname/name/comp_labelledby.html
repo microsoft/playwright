@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Labelledby</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_labelledby">#comp_labelledby</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<!--
+
+  Some overlap with other aria-labelledby tests in:
+  - /accname/name/comp_label.html (aria-labelledby / aria-label fallback, etc.)
+  - /accname/name/comp_name_from_content.html
+  - /accname/name/shadowdom/*
+
+-->
+
+<div role="group" aria-labelledby="h" class="ex" data-expectedlabel="first heading" data-testname="div group explicitly labelledby heading">
+  <h2 id="h">first heading</h2>
+  <p>text inside div group</p>
+</div>
+
+<div role="group" aria-label="self label" id="g2" aria-labelledby="g2 h2" class="ex" data-expectedlabel="self label + first heading" data-testname="div group explicitly labelledby self and heading">
+  <h2 id="h2">+ first heading</h2>
+  <p>text inside div group</p>
+</div>
+
+<nav aria-labelledby="s1 s2 s3 s4" class="ex" data-expectedlabel="verify spaces between foreach" data-testname="nav with verified spaces appended between each of IDREFS">
+  <span id="s1">verify</span><span id="s2">spaces</span><span>FAIL IF INCLUDED</span><span id="s3">between</span><span id="s4">foreach</span>
+</nav>
+
+<!--
+
+  BLOCKED on https://github.com/w3c/accname/issues/209
+
+  Once that's resolved, it may be worthwhile to add a new ./comp_labelledby_recursion.html file,
+  so that the implementation diffs rolling in don't penalize this Interop 2024 test.
+
+  All remaining cases of https://w3c.github.io/accname/#comp_labelledby
+  - comp_labelledby_reset
+  - comp_labelledby_foreach
+  - comp_labelledby_set_current
+  - comp_labelledby_recursion
+  - comp_labelledby_append
+  - comp_labelledby_return
+
+-->
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

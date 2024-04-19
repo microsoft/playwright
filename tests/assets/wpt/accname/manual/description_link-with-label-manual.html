@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Description link-with-label</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "San Francisco"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "San Francisco"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "San Francisco"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Description",
+                  "is",
+                  "San Francisco"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Description link-with-label"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Description link-with-label.</p>
+    <a id="test" href="#" aria-label="California" title="San Francisco" >United States</a>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

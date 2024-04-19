@@ -29,6 +29,7 @@ async function getNameAndRole(page: Page, selector: string) {
 }
 
 const ranges = [
+  'name_1.0_combobox-focusable-alternative-manual.html',
   'name_test_case_539-manual.html',
   'name_test_case_721-manual.html',
 ];
@@ -40,6 +41,8 @@ for (let range = 0; range <= ranges.length; range++) {
       'name_test_case_659-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
       'name_test_case_660-manual.html',
+      // Spec says role=combobox should use selected options, not a title attribute.
+      'description_1.0_combobox-focusable-manual.html',
     ];
     if (browserName === 'firefox') {
       // This test contains the following style:
@@ -59,16 +62,16 @@ for (let range = 0; range <= ranges.length; range++) {
             if (!step.test.ATK)
               continue;
             for (const atk of step.test.ATK) {
-              if (atk[0] !== 'property' || atk[1] !== 'name' || atk[2] !== 'is' || typeof atk[3] !== 'string')
+              if (atk[0] !== 'property' || (atk[1] !== 'name' && atk[1] !== 'description') || atk[2] !== 'is' || typeof atk[3] !== 'string')
                 continue;
-              self.steps.push({ selector: '#' + step.element, name: atk[3] });
+              self.steps.push({ selector: '#' + step.element, property: atk[1], value: atk[3] });
             }
           }
         }
       };
     });
 
-    const testDir = asset('wpt/accname');
+    const testDir = asset('wpt/accname/manual');
     const testFiles = fs.readdirSync(testDir, { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => e.name);
     for (const testFile of testFiles) {
       if (skipped.includes(testFile))
@@ -77,7 +80,7 @@ for (let range = 0; range <= ranges.length; range++) {
       if (!included)
         continue;
       await test.step(testFile, async () => {
-        await page.goto(server.PREFIX + `/wpt/accname/` + testFile);
+        await page.goto(server.PREFIX + `/wpt/accname/manual/` + testFile);
         // Use $eval to force injected script.
         const result = await page.$eval('body', () => {
           const result = [];
@@ -85,8 +88,9 @@ for (let range = 0; range <= ranges.length; range++) {
             const element = document.querySelector(step.selector);
             if (!element)
               throw new Error(`Unable to resolve "${step.selector}"`);
-            const received = (window as any).__injectedScript.getElementAccessibleName(element);
-            result.push({ selector: step.selector, expected: step.name, received });
+            const injected = (window as any).__injectedScript;
+            const received = step.property === 'name' ? injected.getElementAccessibleName(element) : injected.getElementAccessibleDescription(element);
+            result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;
         });
@@ -96,6 +100,70 @@ for (let range = 0; range <= ranges.length; range++) {
     }
   });
 }
+
+test('wpt accname non-manual', async ({ page, asset, server }) => {
+  await page.addInitScript(() => {
+    const self = window as any;
+    self.AriaUtils = {};
+    self.AriaUtils.verifyLabelsBySelector = selector => self.__selector = selector;
+  });
+
+  const failing = [
+    // Chromium thinks it should use "3" from the span, but Safari does not. Spec is unclear.
+    'checkbox label with embedded combobox (span)',
+    'checkbox label with embedded combobox (div)',
+
+    // We do not allow nested visible elements inside parent invisible. Chromium does, but Safari does not. Spec is unclear.
+    'heading with name from content, containing element that is visibility:hidden with nested content that is visibility:visible',
+
+    // TODO: dd/dt elements have roles that prohibit naming. However, both Chromium and Safari still support naming.
+    'label valid on dd element',
+    'label valid on dt element',
+
+    // TODO: support Alternative Text syntax in ::before and ::after.
+    'button name from fallback content with ::before and ::after',
+    'heading name from fallback content with ::before and ::after',
+    'link name from fallback content with ::before and ::after',
+    'button name from fallback content mixing attr() and strings with ::before and ::after',
+    'heading name from fallback content mixing attr() and strings with ::before and ::after',
+    'link name from fallback content mixing attr() and strings with ::before and ::after',
+
+    // TODO: recursive bugs
+    'heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby',
+    'heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby',
+    'button\'s hidden referenced name (visibility:hidden) with hidden aria-labelledby traversal falls back to aria-label',
+
+    // TODO: preserve "tab" character and non-breaking-spaces from "aria-label" attribute
+    'link with text node, with tab char',
+    'nav with trailing nbsp char aria-label is valid (nbsp is preserved in name)',
+    'button with leading nbsp char in aria-label is valid (and uses aria-label)',
+  ];
+
+  const testDir = asset('wpt/accname/name');
+  const testFiles = fs.readdirSync(testDir, { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => `/wpt/accname/name/` + e.name);
+  testFiles.push(...fs.readdirSync(testDir + '/shadowdom', { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => `/wpt/accname/name/shadowdom` + e.name));
+  for (const testFile of testFiles) {
+    await test.step(testFile, async () => {
+      await page.goto(server.PREFIX + testFile);
+      // Use $eval to force injected script.
+      const result = await page.$eval('body', () => {
+        const result = [];
+        for (const element of document.querySelectorAll((window as any).__selector)) {
+          const injected = (window as any).__injectedScript;
+          const title = element.getAttribute('data-testname');
+          const expected = element.getAttribute('data-expectedlabel');
+          const received = injected.getElementAccessibleName(element);
+          result.push({ title, expected, received });
+        }
+        return result;
+      });
+      for (const { title, expected, received } of result) {
+        if (!failing.includes(title))
+          expect.soft(received, `${testFile}: ${title}`).toBe(expected);
+      }
+    });
+  }
+});
 
 test('axe-core implicit-role', async ({ page, asset, server }) => {
   await page.goto(server.EMPTY_PAGE);

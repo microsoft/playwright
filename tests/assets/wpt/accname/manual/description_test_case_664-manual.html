@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Description test case 664</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "foo"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "foo"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "foo"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Description",
+                  "is",
+                  "foo"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Description test case 664"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Description test case 664.</p>
+    <div>
+    <img id="test" aria-describedby="ID1" src="test.png">
+  </div>
+  <div id="ID1">foo</div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>
