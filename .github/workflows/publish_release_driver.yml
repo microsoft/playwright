@@ -11,11 +11,11 @@ jobs:
   publish-driver-release:
     name: "publish playwright driver to CDN"
     runs-on: ubuntu-20.04
-    permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
-      contents: read    # This is required for actions/checkout to succeed
     if: github.repository == 'microsoft/playwright'
-    environment: Release
+    permissions:
+      id-token: write  # This is required for OIDC login (azure/login) to succeed
+      contents: read   # This is required for actions/checkout to succeed
+    environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
     - uses: actions/checkout@v4
     - name: Azure Login
@@ -35,4 +35,3 @@ jobs:
     - run: utils/build/upload-playwright-driver.sh
       env:
         AZ_UPLOAD_FOLDER: driver
-        AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}

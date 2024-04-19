@@ -82,7 +82,9 @@ node -e "${EMBED_METADATA_SCRIPT}" "$1" > "${REPORT_NAME}"
 
 gzip "${REPORT_NAME}"
 
-az storage blob upload --account-name folioflakinessdashboard -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
+AZ_STORAGE_ACCOUNT="folioflakinessdashboard"
+
+az storage blob upload --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 
 UTC_DATE=$(cat <<EOF | node
   const date = new Date();
