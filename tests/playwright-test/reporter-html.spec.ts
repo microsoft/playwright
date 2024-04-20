@@ -762,14 +762,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await page.getByRole('link', { name: 'passing' }).click();
 
       const expectedAttachments = [
-        ['screenshot', 'screenshot.png', 'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png'],
+        ['screenshot', 'screenshot.png', 'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png'],
         ['some-pdf', 'some-pdf.pdf', '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf'],
         ['madeup-contentType', 'madeup-contentType.dat', '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat'],
         ['screenshot-that-already-has-an-extension-with-madeup.png', 'screenshot-that-already-has-an-extension-with-madeup.png', '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png'],
         ['screenshot-that-already-has-an-extension-with-correct-contentType.png', 'screenshot-that-already-has-an-extension-with-correct-contentType.png', '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png'],
         ['example.ext with spaces', 'example.ext with spaces', 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces'],
       ];
-
       for (const [visibleAttachmentName, downloadFileName, sha1] of expectedAttachments) {
         await test.step(`should download ${visibleAttachmentName}`, async () => {
           const downloadPromise = page.waitForEvent('download');
@@ -782,7 +781,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
       expect(new Set(files)).toEqual(new Set([
-        'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png', // screenshot
+        'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png', // screenshot
         '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf', // some-pdf
         '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat', // madeup-contentType
         '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png', // screenshot-that-already-has-an-extension-with-madeup.png
