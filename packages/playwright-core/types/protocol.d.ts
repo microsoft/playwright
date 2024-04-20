@@ -525,6 +525,15 @@ percentage [0 - 100] for scroll driven animations
        */
       animation: Animation;
     }
+    /**
+     * Event for animation that has been updated.
+     */
+    export type animationUpdatedPayload = {
+      /**
+       * Animation that was updated.
+       */
+      animation: Animation;
+    }
     
     /**
      * Disables animation domain notifications.
@@ -917,7 +926,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"DisabledInSettings"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"DisabledInSettings"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByButtonMode";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -3441,7 +3450,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new";
+    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-markers"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new";
     /**
      * Shadow root type.
      */
@@ -5973,10 +5982,30 @@ is turned-off.
       /**
        * If set, the posture of a foldable device. If not set the posture is set
 to continuous.
+Deprecated, use Emulation.setDevicePostureOverride.
        */
       devicePosture?: DevicePosture;
     }
     export type setDeviceMetricsOverrideReturnValue = {
+    }
+    /**
+     * Start reporting the given posture value to the Device Posture API.
+This override can also be set in setDeviceMetricsOverride().
+     */
+    export type setDevicePostureOverrideParameters = {
+      posture: DevicePosture;
+    }
+    export type setDevicePostureOverrideReturnValue = {
+    }
+    /**
+     * Clears a device posture override set with either setDeviceMetricsOverride()
+or setDevicePostureOverride() and starts using posture information from the
+platform again.
+Does nothing if no override is set.
+     */
+    export type clearDevicePostureOverrideParameters = {
+    }
+    export type clearDevicePostureOverrideReturnValue = {
     }
     export type setScrollbarsHiddenParameters = {
       /**
@@ -8352,6 +8381,10 @@ records.
        */
       fromPrefetchCache?: boolean;
       /**
+       * Specifies that the request was served from the prefetch cache.
+       */
+      fromEarlyHints?: boolean;
+      /**
        * Information about how Service Worker Static Router was used.
        */
       serviceWorkerRouterInfo?: ServiceWorkerRouterInfo;
@@ -8614,6 +8647,10 @@ corresponding reason. A cookie could only have at most one exemption reason.
        * The reason the cookie was exempted.
        */
       exemptionReason: CookieExemptionReason;
+      /**
+       * The string representing this individual cookie as it would appear in the header.
+       */
+      cookieLine: string;
       /**
        * The cookie object representing the cookie.
        */
@@ -9536,6 +9573,21 @@ Only sent when partitioned cookies are enabled.
 the response with the corresponding reason.
        */
       exemptedCookies?: ExemptedSetCookieWithReason[];
+    }
+    /**
+     * Fired when 103 Early Hints headers is received in addition to the common response.
+Not every responseReceived event will have an responseReceivedEarlyHints fired.
+Only one responseReceivedEarlyHints may be fired for eached responseReceived event.
+     */
+    export type responseReceivedEarlyHintsPayload = {
+      /**
+       * Request identifier. Used to match this information to another responseReceived event.
+       */
+      requestId: RequestId;
+      /**
+       * Raw response headers as they were received over the wire.
+       */
+      headers: Headers;
     }
     /**
      * Fired exactly once for each Trust Token operation. Depending on
@@ -11573,6 +11625,125 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        */
       eager?: boolean;
     }
+    export interface FileFilter {
+      name?: string;
+      accepts?: string[];
+    }
+    export interface FileHandler {
+      action: string;
+      name: string;
+      icons?: ImageResource[];
+      /**
+       * Mimic a map, name is the key, accepts is the value.
+       */
+      accepts?: FileFilter[];
+      /**
+       * Won't repeat the enums, using string for easy comparison. Same as the
+other enums below.
+       */
+      launchType: string;
+    }
+    /**
+     * The image definition used in both icon and screenshot.
+     */
+    export interface ImageResource {
+      /**
+       * The src field in the definition, but changing to url in favor of
+consistency.
+       */
+      url: string;
+      sizes?: string;
+      type?: string;
+    }
+    export interface LaunchHandler {
+      clientMode: string;
+    }
+    export interface ProtocolHandler {
+      protocol: string;
+      url: string;
+    }
+    export interface RelatedApplication {
+      id?: string;
+      url: string;
+    }
+    export interface ScopeExtension {
+      /**
+       * Instead of using tuple, this field always returns the serialized string
+for easy understanding and comparison.
+       */
+      origin: string;
+      hasOriginWildcard: boolean;
+    }
+    export interface Screenshot {
+      image: ImageResource;
+      formFactor: string;
+      label?: string;
+    }
+    export interface ShareTarget {
+      action: string;
+      method: string;
+      enctype: string;
+      /**
+       * Embed the ShareTargetParams
+       */
+      title?: string;
+      text?: string;
+      url?: string;
+      files?: FileFilter[];
+    }
+    export interface Shortcut {
+      name: string;
+      url: string;
+    }
+    export interface WebAppManifest {
+      backgroundColor?: string;
+      /**
+       * The extra description provided by the manifest.
+       */
+      description?: string;
+      dir?: string;
+      display?: string;
+      /**
+       * The overrided display mode controlled by the user.
+       */
+      displayOverrides?: string[];
+      /**
+       * The handlers to open files.
+       */
+      fileHandlers?: FileHandler[];
+      icons?: ImageResource[];
+      id?: string;
+      lang?: string;
+      /**
+       * TODO(crbug.com/1231886): This field is non-standard and part of a Chrome
+experiment. See:
+https://github.com/WICG/web-app-launch/blob/main/launch_handler.md
+       */
+      launchHandler?: LaunchHandler;
+      name?: string;
+      orientation?: string;
+      preferRelatedApplications?: boolean;
+      /**
+       * The handlers to open protocols.
+       */
+      protocolHandlers?: ProtocolHandler[];
+      relatedApplications?: RelatedApplication[];
+      scope?: string;
+      /**
+       * Non-standard, see
+https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-explainer.md
+       */
+      scopeExtensions?: ScopeExtension[];
+      /**
+       * The screenshots used by chromium.
+       */
+      screenshots?: Screenshot[];
+      shareTarget?: ShareTarget;
+      shortName?: string;
+      shortcuts?: Shortcut[];
+      startUrl?: string;
+      themeColor?: string;
+    }
     /**
      * Enum of possible auto-response for permission / prompt dialogs.
      */
@@ -12158,7 +12329,15 @@ option, use with caution.
     }
     export type enableReturnValue = {
     }
+    /**
+     * Gets the processed manifest for this current document.
+  This API always waits for the manifest to be loaded.
+  If manifestId is provided, and it does not match the manifest of the
+    current document, this API errors out.
+  If there isn’t a loaded page, this API errors out immediately.
+     */
     export type getAppManifestParameters = {
+      manifestId?: string;
     }
     export type getAppManifestReturnValue = {
       /**
@@ -12171,9 +12350,10 @@ option, use with caution.
        */
       data?: string;
       /**
-       * Parsed manifest properties
+       * Parsed manifest properties. Deprecated, use manifest instead.
        */
       parsed?: AppManifestParsedProperties;
+      manifest: WebAppManifest;
     }
     export type getInstallabilityErrorsParameters = {
     }
@@ -13778,7 +13958,7 @@ int
       debugKey?: UnsignedInt64AsBase10;
       triggerDataMatching: AttributionReportingTriggerDataMatching;
     }
-    export type AttributionReportingSourceRegistrationResult = "success"|"internalError"|"insufficientSourceCapacity"|"insufficientUniqueDestinationCapacity"|"excessiveReportingOrigins"|"prohibitedByBrowserPolicy"|"successNoised"|"destinationReportingLimitReached"|"destinationGlobalLimitReached"|"destinationBothLimitsReached"|"reportingOriginsPerSiteLimitReached"|"exceedsMaxChannelCapacity";
+    export type AttributionReportingSourceRegistrationResult = "success"|"internalError"|"insufficientSourceCapacity"|"insufficientUniqueDestinationCapacity"|"excessiveReportingOrigins"|"prohibitedByBrowserPolicy"|"successNoised"|"destinationReportingLimitReached"|"destinationGlobalLimitReached"|"destinationBothLimitsReached"|"reportingOriginsPerSiteLimitReached"|"exceedsMaxChannelCapacity"|"exceedsMaxTriggerStateCardinality";
     export type AttributionReportingSourceRegistrationTimeConfig = "include"|"exclude";
     export interface AttributionReportingAggregatableValueDictEntry {
       key: string;
@@ -14399,6 +14579,18 @@ interestGroupAuctionNetworkRequestCreated.
       enable: boolean;
     }
     export type setAttributionReportingTrackingReturnValue = {
+    }
+    /**
+     * Sends all pending Attribution Reports immediately, regardless of their
+scheduled report time.
+     */
+    export type sendPendingAttributionReportsParameters = {
+    }
+    export type sendPendingAttributionReportsReturnValue = {
+      /**
+       * The number of reports that were sent.
+       */
+      numSent: number;
     }
     /**
      * Returns the effective Related Website Sets in use by this profile for the browser
@@ -16688,6 +16880,46 @@ a dialog even if one was recently dismissed by the user.
     export type resetCooldownParameters = {
     }
     export type resetCooldownReturnValue = {
+    }
+  }
+  
+  /**
+   * This domain allows interacting with the browser to control PWAs.
+   */
+  export module PWA {
+    /**
+     * The following types are the replica of
+https://crsrc.org/c/chrome/browser/web_applications/proto/web_app_os_integration_state.proto;drc=9910d3be894c8f142c977ba1023f30a656bc13fc;l=67
+     */
+    export interface FileHandlerAccept {
+      /**
+       * New name of the mimetype according to
+https://www.iana.org/assignments/media-types/media-types.xhtml
+       */
+      mediaType: string;
+      fileExtensions: string[];
+    }
+    export interface FileHandler {
+      action: string;
+      accepts: FileHandlerAccept[];
+      displayName: string;
+    }
+    
+    
+    /**
+     * Returns the following OS state for the given manifest id.
+     */
+    export type getOsAppStateParameters = {
+      /**
+       * The id from the webapp's manifest file, commonly it's the url of the
+site installing the webapp. See
+https://web.dev/learn/pwa/web-app-manifest.
+       */
+      manifestId: string;
+    }
+    export type getOsAppStateReturnValue = {
+      badgeCount: number;
+      fileHandlers: FileHandler[];
     }
   }
   
@@ -19329,6 +19561,7 @@ Error was thrown.
     "Animation.animationCanceled": Animation.animationCanceledPayload;
     "Animation.animationCreated": Animation.animationCreatedPayload;
     "Animation.animationStarted": Animation.animationStartedPayload;
+    "Animation.animationUpdated": Animation.animationUpdatedPayload;
     "Audits.issueAdded": Audits.issueAddedPayload;
     "Autofill.addressFormFilled": Autofill.addressFormFilledPayload;
     "BackgroundService.recordingStateChanged": BackgroundService.recordingStateChangedPayload;
@@ -19392,6 +19625,7 @@ Error was thrown.
     "Network.webTransportClosed": Network.webTransportClosedPayload;
     "Network.requestWillBeSentExtraInfo": Network.requestWillBeSentExtraInfoPayload;
     "Network.responseReceivedExtraInfo": Network.responseReceivedExtraInfoPayload;
+    "Network.responseReceivedEarlyHints": Network.responseReceivedEarlyHintsPayload;
     "Network.trustTokenOperationDone": Network.trustTokenOperationDonePayload;
     "Network.subresourceWebBundleMetadataReceived": Network.subresourceWebBundleMetadataReceivedPayload;
     "Network.subresourceWebBundleMetadataError": Network.subresourceWebBundleMetadataErrorPayload;
@@ -19694,6 +19928,8 @@ Error was thrown.
     "Emulation.setCPUThrottlingRate": Emulation.setCPUThrottlingRateParameters;
     "Emulation.setDefaultBackgroundColorOverride": Emulation.setDefaultBackgroundColorOverrideParameters;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideParameters;
+    "Emulation.setDevicePostureOverride": Emulation.setDevicePostureOverrideParameters;
+    "Emulation.clearDevicePostureOverride": Emulation.clearDevicePostureOverrideParameters;
     "Emulation.setScrollbarsHidden": Emulation.setScrollbarsHiddenParameters;
     "Emulation.setDocumentCookieDisabled": Emulation.setDocumentCookieDisabledParameters;
     "Emulation.setEmitTouchEventsForMouse": Emulation.setEmitTouchEventsForMouseParameters;
@@ -19950,6 +20186,7 @@ Error was thrown.
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsParameters;
     "Storage.setAttributionReportingLocalTestingMode": Storage.setAttributionReportingLocalTestingModeParameters;
     "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingParameters;
+    "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsParameters;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
@@ -20018,6 +20255,7 @@ Error was thrown.
     "FedCm.openUrl": FedCm.openUrlParameters;
     "FedCm.dismissDialog": FedCm.dismissDialogParameters;
     "FedCm.resetCooldown": FedCm.resetCooldownParameters;
+    "PWA.getOsAppState": PWA.getOsAppStateParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.disable": Console.disableParameters;
     "Console.enable": Console.enableParameters;
@@ -20278,6 +20516,8 @@ Error was thrown.
     "Emulation.setCPUThrottlingRate": Emulation.setCPUThrottlingRateReturnValue;
     "Emulation.setDefaultBackgroundColorOverride": Emulation.setDefaultBackgroundColorOverrideReturnValue;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideReturnValue;
+    "Emulation.setDevicePostureOverride": Emulation.setDevicePostureOverrideReturnValue;
+    "Emulation.clearDevicePostureOverride": Emulation.clearDevicePostureOverrideReturnValue;
     "Emulation.setScrollbarsHidden": Emulation.setScrollbarsHiddenReturnValue;
     "Emulation.setDocumentCookieDisabled": Emulation.setDocumentCookieDisabledReturnValue;
     "Emulation.setEmitTouchEventsForMouse": Emulation.setEmitTouchEventsForMouseReturnValue;
@@ -20534,6 +20774,7 @@ Error was thrown.
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsReturnValue;
     "Storage.setAttributionReportingLocalTestingMode": Storage.setAttributionReportingLocalTestingModeReturnValue;
     "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingReturnValue;
+    "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsReturnValue;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
@@ -20602,6 +20843,7 @@ Error was thrown.
     "FedCm.openUrl": FedCm.openUrlReturnValue;
     "FedCm.dismissDialog": FedCm.dismissDialogReturnValue;
     "FedCm.resetCooldown": FedCm.resetCooldownReturnValue;
+    "PWA.getOsAppState": PWA.getOsAppStateReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.enable": Console.enableReturnValue;
