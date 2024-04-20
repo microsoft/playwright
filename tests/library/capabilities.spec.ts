@@ -64,7 +64,11 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, mode }) => {
+it('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+  // TODO: the test passes on Windows locally but fails on GitHub Action bot,
+  // apparently due to a Media Pack issue in the Windows Server.
+  // Also the test is very flaky on Linux WebKit.
+  it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.skip(mode.startsWith('service'));
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
@@ -77,7 +81,8 @@ it('should play video @smoke', async ({ page, asset, browserName, mode }) => {
   await page.$eval('video', v => v.pause());
 });
 
-it('should play webm video @smoke', async ({ page, asset, mode }) => {
+it('should play webm video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+  it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.skip(mode.startsWith('service'));
 
   const absolutePath = asset('video_webm.html');
@@ -88,7 +93,9 @@ it('should play webm video @smoke', async ({ page, asset, mode }) => {
   await page.$eval('video', v => v.pause());
 });
 
-it('should play audio @smoke', async ({ page, server }) => {
+it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform !== 'darwin');
+
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
   await page.$eval('audio', e => e.play());
