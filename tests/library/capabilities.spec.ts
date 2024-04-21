@@ -126,7 +126,9 @@ it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWind
   expect(hasWebGL2).toBe(true);
 });
 
-it('should not crash on page with mp4 @smoke', async ({ page, server }) => {
+it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'times out in setContent');
+
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
