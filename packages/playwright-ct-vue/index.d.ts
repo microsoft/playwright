@@ -15,7 +15,7 @@
  */
 
 import type { Locator } from 'playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { RegisterHooksConfig } from './hooks';
 import type { TestType } from '@playwright/experimental-ct-core';
 
 type ComponentSlot = string | string[];
@@ -29,14 +29,14 @@ type ComponentProps<T> =
 	T extends (props: infer P, ...args: any) => any ? P :
 	{};
 
-export interface MountOptions<HooksConfig extends JsonObject, Component> {
+export interface MountOptions<Component, HooksConfig extends RegisterHooksConfig> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
-export interface MountOptionsJsx<HooksConfig extends JsonObject> {
+export interface MountOptionsJsx<HooksConfig extends RegisterHooksConfig> {
   hooksConfig?: HooksConfig;
 }
 
@@ -55,13 +55,13 @@ export interface MountResultJsx extends Locator {
 }
 
 export const test: TestType<{
-  mount<HooksConfig extends JsonObject>(
+  mount<HooksConfig extends RegisterHooksConfig>(
     component: JSX.Element,
     options: MountOptionsJsx<HooksConfig>
   ): Promise<MountResultJsx>;
-  mount<HooksConfig extends JsonObject, Component = unknown>(
+  mount<Component = unknown, HooksConfig extends RegisterHooksConfig>(
     component: Component,
-    options?: MountOptions<HooksConfig, Component>
+    options?: MountOptions<Component, HooksConfig>
   ): Promise<MountResult<Component>>;
 }>;
 
