@@ -545,3 +545,30 @@ test('should allow import from shared file', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should allow import from node modules', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'node_modules/test-module/index.js': `
+      export function Component() {
+        return "hello playwright";
+      };
+    `,
+    'node_modules/test-module/package.json': `{
+      "name": "test-module",
+      "main": "./index.js"
+    }`,
+    'src/component.spec.tsx': `
+      import { expect, test } from '@playwright/experimental-ct-react';
+      import { Component } from 'test-module';
+      test('component renders', async ({ mount }) => {
+        const component = await mount(<Component />);
+        await expect(component).toContainText("hello playwright")
+      })`
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
