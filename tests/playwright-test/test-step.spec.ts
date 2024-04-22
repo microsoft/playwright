@@ -23,11 +23,6 @@ function formatPrefix(str) {
   return str.padEnd(10, ' ') + '|';
 }
 
-function trimError(message) {
-  const lines = message.split('\\n');
-  return lines[0];
-}
-
 function formatLocation(location) {
   return ' @ ' + path.basename(location.file) + ':' + location.line;
 }
@@ -45,9 +40,20 @@ function formatStack(indent, stack) {
 
 class Reporter {
   printErrorLocation: boolean;
+  skipErrorMessage: boolean;
+
   constructor(options) {
     this.printErrorLocation = options.printErrorLocation;
+    this.skipErrorMessage = options.skipErrorMessage;
   }
+
+  trimError(message) {
+    if (this.skipErrorMessage)
+      return '<error message>';
+    const lines = message.split('\\n');
+    return lines[0];
+  }
+
   onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
   }
@@ -68,7 +74,7 @@ class Reporter {
     console.log(formatPrefix(step.category) + indent + step.title + location);
     if (step.error) {
       const errorLocation = this.printErrorLocation ? formatLocation(step.error.location) : '';
-      console.log(formatPrefix(step.category) + indent + '↪ error: ' + trimError(step.error.message) + errorLocation);
+      console.log(formatPrefix(step.category) + indent + '↪ error: ' + this.trimError(step.error.message) + errorLocation);
       if (this.printErrorLocation)
         console.log(formatStack(formatPrefix(step.category) + indent, step.error.stack));
     }
@@ -88,7 +94,7 @@ class Reporter {
             this.printStep(step, '');
           for (const error of result.errors) {
             const errorLocation = this.printErrorLocation ? formatLocation(error.location) : '';
-            console.log(formatPrefix('') + trimError(error.message) + errorLocation);
+            console.log(formatPrefix('') + this.trimError(error.message) + errorLocation);
             if (this.printErrorLocation)
               console.log(formatStack(formatPrefix(''), error.stack));
           }
@@ -1032,6 +1038,202 @@ expect    |    expect.toBeVisible @ a.test.ts:10
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
+test('should report expect steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({}) => {
+        expect(true).toBeTruthy();
+        expect(false).toBeTruthy();
+      });
+      test('pass', async ({}) => {
+        expect(false).not.toBeTruthy();
+      });
+      test('async', async ({ page }) => {
+        await expect(page).not.toHaveTitle('False');
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+expect    |expect.toBeTruthy @ a.test.ts:4
+expect    |expect.toBeTruthy @ a.test.ts:5
+expect    |↪ error: Error: expect(received).toBeTruthy()
+hook      |After Hooks
+hook      |Worker Cleanup
+          |Error: expect(received).toBeTruthy()
+hook      |Before Hooks
+expect    |expect.not.toBeTruthy @ a.test.ts:8
+hook      |After Hooks
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+expect    |expect.not.toHaveTitle @ a.test.ts:11
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
+test('should report api steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { skipErrorMessage: true }]] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page, request }) => {
+        await Promise.all([
+          page.waitForNavigation(),
+          page.goto('data:text/html,<button></button>'),
+        ]);
+        await page.click('button');
+        await page.getByRole('button').click();
+        await page.request.get('http://localhost2').catch(() => {});
+        await request.get('http://localhost2').catch(() => {});
+      });
+
+      test.describe('suite', () => {
+        let myPage;
+        test.beforeAll(async ({ browser }) => {
+          myPage = await browser.newPage();
+          await myPage.setContent('<button></button>');
+        });
+
+        test('pass1', async () => {
+          await myPage.click('button');
+        });
+        test('pass2', async () => {
+          await myPage.click('button');
+        });
+
+        test.afterAll(async () => {
+          await myPage.close();
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+hook      |  beforeAll hook @ a.test.ts:16
+pw:api    |    browser.newPage @ a.test.ts:17
+pw:api    |    page.setContent @ a.test.ts:18
+pw:api    |page.click(button) @ a.test.ts:22
+hook      |After Hooks
+hook      |Before Hooks
+pw:api    |page.click(button) @ a.test.ts:25
+hook      |After Hooks
+hook      |  afterAll hook @ a.test.ts:28
+pw:api    |    page.close @ a.test.ts:29
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+fixture   |  fixture: request
+pw:api    |    apiRequest.newContext
+pw:api    |page.waitForNavigation @ a.test.ts:5
+pw:api    |  page.goto(data:text/html,<button></button>) @ a.test.ts:6
+pw:api    |page.click(button) @ a.test.ts:8
+pw:api    |locator.getByRole('button').click @ a.test.ts:9
+pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:10
+pw:api    |↪ error: <error message>
+pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:11
+pw:api    |↪ error: <error message>
+hook      |After Hooks
+fixture   |  fixture: request
+pw:api    |    apiRequestContext.dispose
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
+test('should report api step failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.setContent('<button></button>');
+        await page.click('input', { timeout: 1 });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+pw:api    |page.setContent @ a.test.ts:4
+pw:api    |page.click(input) @ a.test.ts:5
+pw:api    |↪ error: TimeoutError: page.click: Timeout 1ms exceeded.
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+hook      |Worker Cleanup
+fixture   |  fixture: browser
+          |TimeoutError: page.click: Timeout 1ms exceeded.
+`);
+});
+
+test('should show nice stacks for locators', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<button></button>');
+        const locator = page.locator('button');
+        await locator.evaluate(e => e.innerText);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain('Internal error');
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+pw:api    |page.setContent @ a.test.ts:4
+pw:api    |locator.evaluate(button) @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
