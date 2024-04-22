@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -99,7 +99,7 @@ export class TaskRunner<Context> {
     if (sigintWatcher.hadSignal() || cancelPromise?.isDone()) {
       status = 'interrupted';
     } else if (timeoutWatcher.timedOut()) {
-      this._reporter.onError?.({ message: `Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run` });
+      this._reporter.onError?.({ message: colors.red(`Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run`) });
       status = 'timedout';
     } else if (this._hasErrors) {
       status = 'failed';
