@@ -36,7 +36,6 @@ export class Dispatcher {
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
 
-  private _allTests: TestCase[] = [];
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
@@ -159,7 +158,6 @@ export class Dispatcher {
   async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
     this._extraEnvByProjectId = extraEnvByProjectId;
     this._queue = testGroups;
-    this._allTests = testGroups.map(g => g.tests).flat();
     for (const group of testGroups)
       this._updateCounterForWorkerHash(group.workerHash, +1);
     this._isStopped = false;
