@@ -6884,6 +6884,33 @@ interface LocatorAssertions {
 
   /**
    * Ensures the {@link Locator} points to an element with a given
+   * [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('save-button');
+   * await expect(locator).toHaveAccessibleDescription('Save results to disk');
+   * ```
+   *
+   * @param description Expected accessible description.
+   * @param options
+   */
+  toHaveAccessibleDescription(description: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the {@link Locator} points to an element with a given
    * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
    * **Usage**
