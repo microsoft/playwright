@@ -302,7 +302,7 @@ export function toMatchSnapshot(
   if (received instanceof Promise)
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
 
-  if (testInfo._configInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
 
   const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
@@ -357,7 +357,7 @@ export async function toHaveScreenshot(
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
-  if (testInfo._configInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toHaveScreenshot', expected: nameOrOptions };
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');

@@ -281,6 +281,41 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
+   * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
+   * expect(page).toHaveScreenshot()`.
+   *
+   * **Usage**
+   *
+   * The following example will only perform screenshot assertions on Chromium.
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       ignoreSnapshots: true,
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       ignoreSnapshots: true,
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  ignoreSnapshots?: boolean;
+
+  /**
    * Metadata that will be put directly to the test report serialized as JSON.
    */
   metadata?: Metadata;

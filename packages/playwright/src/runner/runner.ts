@@ -23,7 +23,6 @@ import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
@@ -85,15 +84,6 @@ export class Runner {
 
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
-
-    if (!listOnly && config.ignoreSnapshots) {
-      reporter.onStdOut(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
 
     const taskStatus = await taskRunner.run(testRun, deadline);
     let status: FullResult['status'] = testRun.failureTracker.result();
