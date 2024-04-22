@@ -44,7 +44,6 @@ export class FullConfigInternal {
   readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
-  readonly ignoreSnapshots: boolean;
   readonly preserveOutputDir: boolean;
   readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
@@ -71,7 +70,6 @@ export class FullConfigInternal {
     this.configCLIOverrides = configCLIOverrides;
     this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, userConfig.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
     this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
-    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, userConfig.ignoreSnapshots, false);
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
@@ -164,6 +162,7 @@ export class FullProjectInternal {
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string;
+  readonly ignoreSnapshots: boolean;
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
@@ -200,6 +199,7 @@ export class FullProjectInternal {
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));
     }
     this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
+    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots,  projectConfig.ignoreSnapshots, config.ignoreSnapshots, false);
   }
 }
 

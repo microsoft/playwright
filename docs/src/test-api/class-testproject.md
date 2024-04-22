@@ -135,6 +135,39 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
+## property: TestProject.ignoreSnapshots
+* since: v1.44
+- type: ?<[boolean]>
+
+Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
+
+**Usage**
+
+The following example will only perform screenshot assertions on Chromium.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+    },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+      ignoreSnapshots: true,
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      ignoreSnapshots: true,
+    },
+  ],
+});
+```
+
 ## property: TestProject.metadata
 * since: v1.10
 - type: ?<[Metadata]>

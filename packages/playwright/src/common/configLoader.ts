@@ -214,11 +214,6 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
   }
 
-  if ('ignoreSnapshots' in config && config.ignoreSnapshots !== undefined) {
-    if (typeof config.ignoreSnapshots !== 'boolean')
-      throw errorWithFile(file, `config.ignoreSnapshots must be a boolean`);
-  }
-
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
     if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
@@ -283,6 +278,11 @@ function validateProject(file: string, project: Project, title: string) {
   if ('use' in project && project.use !== undefined) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
+  }
+
+  if ('ignoreSnapshots' in project && project.ignoreSnapshots !== undefined) {
+    if (typeof project.ignoreSnapshots !== 'boolean')
+      throw errorWithFile(file, `${title}.ignoreSnapshots must be a boolean`);
   }
 }
 
