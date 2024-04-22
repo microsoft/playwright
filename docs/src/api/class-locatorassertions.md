@@ -224,6 +224,25 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 * since: v1.18
 
 
+## async method: LocatorAssertions.NotToHaveAccessibleDescription
+* since: v1.44
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveAccessibleDescription`].
+
+### param: LocatorAssertions.NotToHaveAccessibleDescription.name
+* since: v1.44
+- `name` <[string]|[RegExp]>
+
+Expected accessible name.
+
+### option: LocatorAssertions.NotToHaveAccessibleDescription.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.44
+
+### option: LocatorAssertions.NotToHaveAccessibleDescription.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
+
 ## async method: LocatorAssertions.NotToHaveAccessibleName
 * since: v1.44
 * langs: python
@@ -1114,6 +1133,56 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 ### option: LocatorAssertions.toContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+
+## async method: LocatorAssertions.toHaveAccessibleDescription
+* since: v1.44
+* langs:
+  - alias-java: hasAccessibleDescription
+
+Ensures the [Locator] points to an element with a given [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+
+**Usage**
+
+```js
+const locator = page.getByTestId('save-button');
+await expect(locator).toHaveAccessibleDescription('Save results to disk');
+```
+
+```java
+Locator locator = page.getByTestId("save-button");
+assertThat(locator).hasAccessibleDescription("Save results to disk");
+```
+
+```python async
+locator = page.get_by_test_id("save-button")
+await expect(locator).to_have_accessible_description("Save results to disk")
+```
+
+```python sync
+locator = page.get_by_test_id("save-button")
+expect(locator).to_have_accessible_description("Save results to disk")
+```
+
+```csharp
+var locator = Page.GetByTestId("save-button");
+await Expect(locator).toHaveAccessibleDescriptionAsync("Save results to disk");
+```
+
+### param: LocatorAssertions.toHaveAccessibleDescription.description
+* since: v1.44
+- `description` <[string]|[RegExp]>
+
+Expected accessible description.
+
+### option: LocatorAssertions.toHaveAccessibleDescription.timeout = %%-js-assertions-timeout-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveAccessibleDescription.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveAccessibleDescription.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.44
 
 
 ## async method: LocatorAssertions.toHaveAccessibleName
