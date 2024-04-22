@@ -188,7 +188,6 @@ browserTest('should focus with more than one page/context', async ({ contextFact
 });
 
 browserTest('should not fire blur events when interacting with more than one page/context', async ({ contextFactory, browserName }) => {
-  it.fixme(browserName === 'firefox', 'Firefox issues blur events for tabs');
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30399' });
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();

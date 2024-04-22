@@ -123,6 +123,8 @@ it('should wait for stable position', async ({ page, server, browserName, platfo
     button.style.transition = 'margin 10000ms linear 0s';
     button.style.marginLeft = '20000px';
   });
+  // rafraf for Firefox to kick in the animation.
+  await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
   let done = false;
   const promise = button.waitForElementState('stable').then(() => done = true);
   await giveItAChanceToResolve(page);

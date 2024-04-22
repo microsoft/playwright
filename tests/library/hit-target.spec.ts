@@ -265,7 +265,7 @@ it('should not click an element overlaying iframe with the target', async ({ pag
   `);
 
   const target = page.frameLocator('iframe').frameLocator('iframe').locator('text=inner');
-  const error = await target.click({ timeout: 1000 }).catch(e => e);
+  const error = await target.click({ timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window._clicked')).toBe(undefined);
   expect(error.message).toContain(`<div onclick="window.top._clicked=5">PINK OVERLAY</div> intercepts pointer events`);
 
