@@ -194,8 +194,6 @@ export class BaseReporter implements ReporterV2 {
       tokens.push(colors.yellow(`  ${didNotRun} did not run`));
     if (expected)
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
-    if (this.result.status === 'timedout')
-      tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
       tokens.push(colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 
@@ -250,7 +248,6 @@ export class BaseReporter implements ReporterV2 {
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
-    this._printMaxFailuresReached();
     this._printSummary(summaryMessage);
   }
 
@@ -270,14 +267,6 @@ export class BaseReporter implements ReporterV2 {
     });
     if (slowTests.length)
       console.log(colors.yellow('  Consider splitting slow test files to speed up parallel execution'));
-  }
-
-  private _printMaxFailuresReached() {
-    if (!this.config.maxFailures)
-      return;
-    if (this._failureCount < this.config.maxFailures)
-      return;
-    console.log(colors.yellow(`Testing stopped early after ${this.config.maxFailures} maximum allowed failures.`));
   }
 
   private _printSummary(summary: string) {

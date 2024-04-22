@@ -26,6 +26,7 @@ import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { FailureTracker } from './failureTracker';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -540,9 +541,13 @@ class JobDispatcher {
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
     this._reporter.onTestEnd(test, result);
+    const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
     this._failureTracker.onTestEnd(test, result);
-    if (this._failureTracker.hasReachedMaxFailures())
+    if (this._failureTracker.hasReachedMaxFailures()) {
       this._stopCallback();
+      if (!hadMaxFailures)
+        this._reporter.onError({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
+    }
   }
 }
 
