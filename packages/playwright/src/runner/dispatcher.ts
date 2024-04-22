@@ -543,7 +543,7 @@ class JobDispatcher {
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
     this._reporter.onTestEnd(test, result);
-    const hadMaxFailures = this._failureTracker.hasReachedMaxFailures()
+    const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
     this._failureTracker.onTestEnd(test, result);
     if (this._failureTracker.hasReachedMaxFailures()) {
       this._stopCallback();
