@@ -986,6 +986,8 @@ it('should support multipart/form-data and keep the order', async function({ con
 
 it('should support repeating names in multipart/form-data', async function({ context, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
+  const nodeVersion = +process.versions.node.split('.')[0];
+  it.skip(nodeVersion < 18, 'FormData is not available in Node.js < 18');
   const postBodyPromise = new Promise<string>(resolve => {
     server.setRoute('/empty.html', async (req, res) => {
       resolve((await req.postBody).toString('utf-8'));
