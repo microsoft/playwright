@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { BlobServiceClient } = require("@azure/storage-blob");
+// @ts-check
+const { DefaultAzureCredential } = require('@azure/identity');
+const { BlobServiceClient } = require('@azure/storage-blob');
+const defaultAzureCredential = new DefaultAzureCredential();
 const zlib = require('zlib');
 const util = require('util');
 
 const gzipAsync = util.promisify(zlib.gzip);
 const gunzipAsync = util.promisify(zlib.gunzip);
 
-const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AzureWebJobsStorage);
+const AZURE_STORAGE_ACCOUNT = 'folioflakinessdashboard';
+
+const blobServiceClient = new BlobServiceClient(
+  `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`,
+  defaultAzureCredential
+);
 
 function flattenSpecs(suite, result = [], titlePaths = []) {
   if (suite.suites) {
