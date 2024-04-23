@@ -90,7 +90,7 @@
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.3.0",
-    "formidable": "^2.1.1",
+    "formidable": "^3.2.4",
     "license-checker": "^25.0.1",
     "mime": "^3.0.0",
     "node-stream-zip": "^1.15.0",
