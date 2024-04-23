@@ -232,7 +232,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.passed).toBe(1);
       expect(result.interrupted).toBe(1);
       expect(result.didNotRun).toBe(1);
-      expect(result.output).toContain('Timed out waiting 1s for the test suite to run');
+      expect(result.output).toContain('Timed out waiting 3s for the test suite to run');
     });
 
     test('should not print slow parallel tests', async ({ runInlineTest }) => {
