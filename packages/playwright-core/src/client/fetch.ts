@@ -187,7 +187,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         formData = objectToArray(options.form);
       } else if (options.multipart) {
         multipartData = [];
-        if (options.multipart instanceof FormData) {
+        if (globalThis.FormData && options.multipart instanceof FormData) {
           const form = options.multipart;
           for (const [name, value] of form.entries()) {
             if (isString(value)) {
