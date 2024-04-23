@@ -710,7 +710,7 @@ export interface TestCase {
   expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
-   * Test ID that is computed based on the test file name, test title and project name. Test ID is unique within
+   * A test ID that is computed based on the test file name, test title and project name. The ID is unique within
    * Playwright session.
    */
   id: string;

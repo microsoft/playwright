@@ -34,7 +34,7 @@ See also [`property: TestResult.status`] for the actual status.
 * since: v1.25
 - type: <[string]>
 
-Test ID that is computed based on the test file name, test title and project name. Test ID is unique within Playwright session.
+A test ID that is computed based on the test file name, test title and project name. The ID is unique within Playwright session.
 
 ## property: TestCase.location
 * since: v1.10
