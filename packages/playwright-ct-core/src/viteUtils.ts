@@ -183,7 +183,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
-    const importPath = resolveHook(value.filename, value.importSource);
+    const importPath = resolveHook(value.filename, value.importSource) || value.importSource;
     lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
