@@ -15,7 +15,7 @@ page.request().post("http://localhost/submit", RequestOptions.create().setForm(f
 ```
 
 ## method: FormData.append
-* since: v1.43
+* since: v1.44
 - returns: <[FormData]>
 
 Appends a new value onto an existing key inside a FormData object, or adds the key if it
@@ -23,7 +23,7 @@ does not already exist. File values can be passed either as `Path` or as `FilePa
 Multiple fields with the same name can be added.
 
 The difference between [`method: FormData.set`] and [`method: FormData.append`] is that if the specified key already exists,
-set() will overwrite all existing values with the new one, whereas append() will append
+[`method: FormData.set`] will overwrite all existing values with the new one, whereas [`method: FormData.append`] will append
 the new value onto the end of the existing set of values.
 
 ```java
@@ -61,13 +61,13 @@ await Page.APIRequest.PostAsync("https://localhost/submit", new() { Multipart = 
 ```
 
 ### param: FormData.append.name
-* since: v1.43
+* since: v1.44
 - `name` <[string]>
 
 Field name.
 
 ### param: FormData.append.value
-* since: v1.43
+* since: v1.44
 - `value` <[string]|[boolean]|[int]|[Path]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
@@ -76,7 +76,7 @@ Field name.
 Field value.
 
 ### param: FormData.append.value
-* since: v1.43
+* since: v1.44
 * langs: csharp
 - `value` <[string]|[boolean]|[int]|[Object]>
   - `name` <[string]> File name
