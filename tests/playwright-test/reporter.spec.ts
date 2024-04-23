@@ -14,27 +14,106 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
-import fs from 'fs';
+import { test, expect } from './playwright-test-fixtures';
 
 const smallReporterJS = `
+const path = require('path');
+
+function formatLocation(location) {
+  if (!location)
+    return ' @ <no location>';
+  return ' @ ' + path.basename(location.file) + ':' + location.line;
+}
+
+function formatTitle(test) {
+  let titlePath = test.titlePath();
+  if (!titlePath[0])
+    [, ...titlePath] = titlePath;
+  return titlePath.join(' > ');
+}
+
+const asciiRegex = new RegExp('[\\\\u001B\\\\u009B][[\\\\]()#;?]*(?:(?:(?:[a-zA-Z\\\\d]*(?:;[-a-zA-Z\\\\d\\\\/#&.:=?%@~_]*)*)?\\\\u0007)|(?:(?:\\\\d{1,4}(?:;\\\\d{0,4})*)?[\\\\dA-PR-TZcf-ntqry=><~]))', 'g');
+function stripAnsi(str) {
+  return str.replace(asciiRegex, '');
+}
+
 class Reporter {
+  constructor(options) {
+    this.options = options;
+  }
+
+  trimError(message) {
+    if (this.options.skipErrorMessage)
+      return '<error message>';
+    const lines = message.split('\\n');
+    return lines[0].trimEnd();
+  }
+
+  printErrors(errors, prefix) {
+    for (const error of errors) {
+      const errorLocation = this.options.skipErrorLocation ? '' : formatLocation(error.location);
+      console.log((prefix || '  error: ') + this.trimError(error.message) + errorLocation);
+      if (this.options.printErrorSnippet && error.snippet) {
+        const lines = ['======', ...error.snippet.split('\\n'), '======'];
+        console.log(lines.map(line => stripAnsi('  ' + line).trimEnd()).join('\\n'));
+      }
+    }
+  }
+
+  printsToStdio() {
+    return true;
+  }
+
   onBegin(config, suite) {
-    console.log('\\n%%begin');
+    console.log(); // for nicer expectations
+    console.log('onBegin: ' + suite.allTests().length + ' tests total');
+    if (this.options.onBegin)
+      console.log('  options.onBegin=' + this.options.onBegin);
   }
-  onTestBegin(test) {}
-  onStdOut() {}
-  onStdErr() {}
-  onTestEnd(test, result) {}
-  onTimeout() {}
+
+  onTestBegin(test, result) {
+    console.log('onTestBegin: ' + formatTitle(test) + '; retry #' + result.retry);
+  }
+
+  onTestEnd(test, result) {
+    console.log('onTestEnd: ' + formatTitle(test) + '; retry #' + result.retry);
+    this.printErrors(result.errors);
+  }
+
+  onStepBegin(test, result, step) {
+  }
+
+  onStepEnd(test, result, step) {
+    if (this.options.printSteps) {
+      console.log('onStepEnd: ' + step.title);
+      if (step.error)
+        this.printErrors([step.error]);
+    }
+  }
+
+  // For easier debugging.
+  onStdOut(data) {
+    process.stdout.write(data.toString());
+  }
+
+  // For easier debugging.
+  onStdErr(data) {
+    process.stderr.write(data.toString());
+  }
+
   onError(error) {
-    console.log('\\n%%got error: ' + error.message);
+    this.printErrors([error], 'onError: ');
   }
-  onEnd() {
-    console.log('\\n%%end');
+
+  async onEnd() {
+    await new Promise(f => setTimeout(f, 500));
+    console.log('onEnd');
+    if (this.options.onEnd)
+      console.log('  options.onEnd=' + this.options.onEnd);
   }
-  onExit() {
-    console.log('\\n%%exit');
+
+  async onExit() {
+    console.log('onExit');
   }
 }
 module.exports = Reporter;
@@ -46,52 +125,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
     test('should work with custom reporter', async ({ runInlineTest }) => {
       const result = await runInlineTest({
-        'reporter.ts': `
-          class Reporter {
-            constructor(options) {
-              this.options = options;
-            }
-            onBegin(config, suite) {
-              console.log('\\n%%reporter-begin-' + this.options.begin + '%%');
-              console.log('\\n%%version-' + config.version);
-            }
-            onTestBegin(test) {
-              const projectName = test.titlePath()[1];
-              console.log('\\n%%reporter-testbegin-' + test.title + '-' + projectName + '%%');
-              const suite = test.parent;
-              if (!suite.tests.includes(test))
-                console.log('\\n%%error-inconsistent-parent');
-              if (test.parent.project().name !== projectName)
-                console.log('\\n%%error-inconsistent-project-name');
-            }
-            onStdOut() {
-              console.log('\\n%%reporter-stdout%%');
-            }
-            onStdErr() {
-              console.log('\\n%%reporter-stderr%%');
-            }
-            onTestEnd(test, result) {
-              console.log('\\n%%reporter-testend-' + test.title + '-' + test.titlePath()[1] + '%%');
-              if (!result.startTime)
-                console.log('\\n%%error-no-start-time');
-            }
-            onTimeout() {
-              console.log('\\n%%reporter-timeout%%');
-            }
-            onError() {
-              console.log('\\n%%reporter-error%%');
-            }
-            async onEnd() {
-              await new Promise(f => setTimeout(f, 500));
-              console.log('\\n%%reporter-end-' + this.options.end + '%%');
-            }
-          }
-          export default Reporter;
-        `,
+        'reporter.ts': smallReporterJS,
         'playwright.config.ts': `
           module.exports = {
             reporter: [
-              [ './reporter.ts', { begin: 'begin', end: 'end' } ]
+              [ './reporter.ts', { onBegin: 'begin-data', onEnd: 'end-data' } ]
             ],
             projects: [
               { name: 'foo', repeatEach: 2 },
@@ -113,23 +151,25 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: '', workers: 1 });
 
       expect(result.exitCode).toBe(0);
-      expect(result.outputLines).toEqual([
-        'reporter-begin-begin%%',
-        'version-' + require('../../packages/playwright/package.json').version,
-        'reporter-testbegin-is run-foo%%',
-        'reporter-stdout%%',
-        'reporter-stderr%%',
-        'reporter-testend-is run-foo%%',
-        'reporter-testbegin-is run-foo%%',
-        'reporter-stdout%%',
-        'reporter-stderr%%',
-        'reporter-testend-is run-foo%%',
-        'reporter-testbegin-is run-bar%%',
-        'reporter-stdout%%',
-        'reporter-stderr%%',
-        'reporter-testend-is run-bar%%',
-        'reporter-end-end%%',
-      ]);
+      expect(result.output).toBe(`
+onBegin: 3 tests total
+  options.onBegin=begin-data
+onTestBegin: foo > a.test.ts > is run; retry #0
+log
+error
+onTestEnd: foo > a.test.ts > is run; retry #0
+onTestBegin: foo > a.test.ts > is run; retry #0
+log
+error
+onTestEnd: foo > a.test.ts > is run; retry #0
+onTestBegin: bar > a.test.ts > is run; retry #0
+log
+error
+onTestEnd: bar > a.test.ts > is run; retry #0
+onEnd
+  options.onEnd=end-data
+onExit
+`);
     });
 
     test('should work without a file extension', async ({ runInlineTest }) => {
@@ -148,11 +188,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: '', workers: 1 });
 
       expect(result.exitCode).toBe(0);
-      expect(result.outputLines).toEqual([
-        'begin',
-        'end',
-        'exit',
-      ]);
+      expect(result.output).toBe(`
+onBegin: 1 tests total
+onTestBegin:  > a.test.ts > pass; retry #0
+onTestEnd:  > a.test.ts > pass; retry #0
+onEnd
+onExit
+`);
     });
 
     test('should report onEnd after global teardown', async ({ runInlineTest }) => {
@@ -178,12 +220,15 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: '', workers: 1 });
 
       expect(result.exitCode).toBe(0);
-      expect(result.outputLines).toEqual([
-        'begin',
-        'global teardown',
-        'end',
-        'exit',
-      ]);
+      expect(result.output).toBe(`
+onBegin: 1 tests total
+onTestBegin:  > a.test.ts > pass; retry #0
+onTestEnd:  > a.test.ts > pass; retry #0
+
+%%global teardown
+onEnd
+onExit
+`);
     });
 
     test('should load reporter from node_modules', async ({ runInlineTest }) => {
@@ -202,11 +247,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: '', workers: 1 });
 
       expect(result.exitCode).toBe(0);
-      expect(result.outputLines).toEqual([
-        'begin',
-        'end',
-        'exit',
-      ]);
+      expect(result.output).toBe(`
+onBegin: 1 tests total
+onTestBegin:  > a.test.ts > pass; retry #0
+onTestEnd:  > a.test.ts > pass; retry #0
+onEnd
+onExit
+`);
     });
 
     test('should not have internal error when steps are finished after timeout', async ({ runInlineTest }) => {
@@ -247,7 +294,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { 'reporter': '', 'forbid-only': true });
 
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain(`%%got error: Error: item focused with '.only' is not allowed due to the '--forbid-only' CLI flag: \"a.test.ts pass\"`);
+      expect(result.output).toBe(`
+onBegin: 0 tests total
+onError: Error: item focused with '.only' is not allowed due to the '--forbid-only' CLI flag: "a.test.ts pass" @ a.test.ts:3
+onEnd
+onExit
+`);
     });
 
     test('should report no-tests error to reporter', async ({ runInlineTest }) => {
@@ -261,7 +313,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { 'reporter': '' });
 
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain(`%%got error: Error: No tests found`);
+      expect(result.output).toBe(`
+onBegin: 0 tests total
+onError: Error: No tests found @ <no location>
+onEnd
+onExit
+`);
     });
 
     test('should report require error to reporter', async ({ runInlineTest }) => {
@@ -278,7 +335,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { 'reporter': '' });
 
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain(`%%got error: Error: Oh my!`);
+      expect(result.output).toBe(`
+onBegin: 0 tests total
+onError: Error: Oh my! @ a.spec.js:2
+onError: Error: No tests found @ <no location>
+onEnd
+onExit
+`);
     });
 
     test('should report global setup error to reporter', async ({ runInlineTest }) => {
@@ -302,7 +365,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { 'reporter': '' });
 
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain(`%%got error: Error: Oh my!`);
+      expect(result.output).toBe(`
+onBegin: 0 tests total
+onError: Error: Oh my! @ globalSetup.ts:3
+onEnd
+onExit
+`);
     });
 
     test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {
@@ -404,32 +472,9 @@ var import_test = __toModule(require("@playwright/test"));
     });
 
     test('test and step error should have code snippet', async ({ runInlineTest }) => {
-      const testErrorFile = test.info().outputPath('testError.txt');
-      const stepErrorFile = test.info().outputPath('stepError.txt');
       const result = await runInlineTest({
-        'reporter.ts': `
-        import fs from 'fs';
-        class Reporter {
-          onStepEnd(test, result, step) {
-            console.log('\\n%%onStepEnd: ' + step.error?.snippet?.length);
-            if (step.error?.snippet)
-              fs.writeFileSync('${stepErrorFile.replace(/\\/g, '\\\\')}', step.error?.snippet);
-          }
-          onTestEnd(test, result) {
-            console.log('\\n%%onTestEnd: ' + result.error?.snippet?.length);
-            if (result.error)
-              fs.writeFileSync('${testErrorFile.replace(/\\/g, '\\\\')}', result.error?.snippet);
-          }
-          onError(error) {
-            console.log('\\n%%onError: ' + error.snippet?.length);
-          }
-        }
-        module.exports = Reporter;`,
-        'playwright.config.ts': `
-          module.exports = {
-            reporter: './reporter',
-          };
-        `,
+        'reporter.ts': smallReporterJS,
+        'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printSteps: true, printErrorSnippet: true }]] };`,
         'a.spec.js': `
           const { test, expect } = require('@playwright/test');
           test('test', async () => {
@@ -439,56 +484,76 @@ var import_test = __toModule(require("@playwright/test"));
           });
         `,
       }, { 'reporter': '', 'workers': 1 });
-
-      expect(result.output).toContain('onTestEnd: 550');
-      expect(result.output).toContain('onStepEnd: 550');
-      expect(stripAnsi(fs.readFileSync(testErrorFile, 'utf8'))).toBe(`  3 |           test('test', async () => {
-  4 |             await test.step('step', async () => {
-> 5 |               expect(1).toBe(2);
-    |                         ^
-  6 |             });
-  7 |           });
-  8 |         `);
-      expect(stripAnsi(fs.readFileSync(stepErrorFile, 'utf8'))).toBe(`  3 |           test('test', async () => {
-  4 |             await test.step('step', async () => {
-> 5 |               expect(1).toBe(2);
-    |                         ^
-  6 |             });
-  7 |           });
-  8 |         `);
+      expect(result.output).toBe(`
+onBegin: 1 tests total
+onTestBegin:  > a.spec.js > test; retry #0
+onStepEnd: Before Hooks
+onStepEnd: expect.toBe
+  error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
+  ======
+    3 |           test('test', async () => {
+    4 |             await test.step('step', async () => {
+  > 5 |               expect(1).toBe(2);
+      |                         ^
+    6 |             });
+    7 |           });
+    8 |
+  ======
+onStepEnd: step
+  error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
+  ======
+    3 |           test('test', async () => {
+    4 |             await test.step('step', async () => {
+  > 5 |               expect(1).toBe(2);
+      |                         ^
+    6 |             });
+    7 |           });
+    8 |
+  ======
+onStepEnd: After Hooks
+onStepEnd: Worker Cleanup
+onTestEnd:  > a.spec.js > test; retry #0
+  error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.js:5
+  ======
+    3 |           test('test', async () => {
+    4 |             await test.step('step', async () => {
+  > 5 |               expect(1).toBe(2);
+      |                         ^
+    6 |             });
+    7 |           });
+    8 |
+  ======
+onEnd
+onExit
+`);
     });
 
     test('onError should have code snippet', async ({ runInlineTest }) => {
-      const errorFile = test.info().outputPath('error.txt');
       const result = await runInlineTest({
-        'reporter.ts': `
-        import fs from 'fs';
-        class Reporter {
-          onError(error) {
-            console.log('\\n%%onError: ' + error.snippet?.length);
-            fs.writeFileSync('${errorFile.replace(/\\/g, '\\\\')}', error.snippet);
-          }
-        }
-        module.exports = Reporter;`,
-        'playwright.config.ts': `
-          module.exports = {
-            reporter: './reporter',
-          };
-        `,
+        'reporter.ts': smallReporterJS,
+        'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printSteps: true, printErrorSnippet: true }]] };`,
         'a.spec.js': `
           const { test, expect } = require('@playwright/test');
           throw new Error('test');
         `,
       }, { 'reporter': '', 'workers': 1 });
 
-      expect(result.output).toContain('onError: 412');
-      expect(stripAnsi(fs.readFileSync(errorFile, 'utf8'))).toBe(`   at a.spec.js:3
+      expect(result.output).toBe(`
+onBegin: 0 tests total
+onError: Error: test @ a.spec.js:3
+  ======
+     at a.spec.js:3
 
-  1 |
-  2 |           const { test, expect } = require('@playwright/test');
-> 3 |           throw new Error('test');
-    |                 ^
-  4 |         `);
+    1 |
+    2 |           const { test, expect } = require('@playwright/test');
+  > 3 |           throw new Error('test');
+      |                 ^
+    4 |
+  ======
+onError: Error: No tests found @ <no location>
+onEnd
+onExit
+`);
     });
   });
 }
