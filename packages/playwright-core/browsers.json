@@ -9,7 +9,7 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1213",
+      "revision": "1214",
       "installByDefault": false,
       "browserVersion": "126.0.6425.0"
     },
