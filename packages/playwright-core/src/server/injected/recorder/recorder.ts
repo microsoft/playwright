@@ -20,6 +20,7 @@ import type { Point } from '../../../common/types';
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { ElementText } from '../selectorUtils';
 import type { Highlight, HighlightOptions } from '../highlight';
+import clipPaths from './clipPaths';
 
 interface RecorderDelegate {
   performAction?(action: actions.Action): Promise<void>;
@@ -767,9 +768,9 @@ class Overlay {
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
-    const document = this._recorder.injectedScript.document;
+    const document = this._recorder.document;
     this._overlayElement = document.createElement('x-pw-overlay');
-
+    this._overlayElement.appendChild(createSvgElement(this._recorder.document, clipPaths));
     const toolsListElement = document.createElement('x-pw-tools-list');
     this._overlayElement.appendChild(toolsListElement);
 
@@ -777,34 +778,34 @@ class Overlay {
     this._dragHandle.appendChild(document.createElement('x-div'));
     toolsListElement.appendChild(this._dragHandle);
 
-    this._recordToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._recordToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._recordToggle.title = 'Record';
     this._recordToggle.classList.add('record');
-    this._recordToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._recordToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._recordToggle);
 
-    this._pickLocatorToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._pickLocatorToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._pickLocatorToggle.title = 'Pick locator';
     this._pickLocatorToggle.classList.add('pick-locator');
-    this._pickLocatorToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._pickLocatorToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._pickLocatorToggle);
 
-    this._assertVisibilityToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertVisibilityToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertVisibilityToggle.title = 'Assert visibility';
     this._assertVisibilityToggle.classList.add('visibility');
-    this._assertVisibilityToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._assertVisibilityToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._assertVisibilityToggle);
 
-    this._assertTextToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertTextToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertTextToggle.title = 'Assert text';
     this._assertTextToggle.classList.add('text');
-    this._assertTextToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._assertTextToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._assertTextToggle);
 
-    this._assertValuesToggle = this._recorder.injectedScript.document.createElement('x-pw-tool-item');
+    this._assertValuesToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertValuesToggle.title = 'Assert value';
     this._assertValuesToggle.classList.add('value');
-    this._assertValuesToggle.appendChild(this._recorder.injectedScript.document.createElement('x-div'));
+    this._assertValuesToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._assertValuesToggle);
 
     this._updateVisualPosition();
@@ -942,7 +943,7 @@ export class Recorder {
   private _actionSelectorModel: HighlightModel | null = null;
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
-  private _styleElement: HTMLStyleElement;
+  private _stylesheet: CSSStyleSheet;
   state: UIState = { mode: 'none', testIdAttributeName: 'data-testid', language: 'javascript', overlay: { offsetX: 0 } };
   readonly document: Document;
   delegate: RecorderDelegate = {};
@@ -966,11 +967,11 @@ export class Recorder {
       this.overlay = new Overlay(this);
       this.overlay.setUIState(this.state);
     }
-    this._styleElement = this.document.createElement('style');
-    this._styleElement.textContent = `
+    this._stylesheet = new injectedScript.window.CSSStyleSheet();
+    this._stylesheet.replaceSync(`
       body[data-pw-cursor=pointer] *, body[data-pw-cursor=pointer] *::after { cursor: pointer !important; }
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
-    `;
+    `);
     this.installListeners();
 
     if (injectedScript.isUnderTest)
@@ -999,7 +1000,7 @@ export class Recorder {
     ];
     this.highlight.install();
     this.overlay?.install();
-    this.injectedScript.document.head.appendChild(this._styleElement);
+    this.document.adoptedStyleSheets.push(this._stylesheet);
   }
 
   private _switchCurrentTool() {
@@ -1275,6 +1276,27 @@ function querySelector(injectedScript: InjectedScript, selector: string, ownerDo
       elements: [],
     };
   }
+}
+
+export type SvgJson = {
+  // for instance, <g> elements are not supported in clipPaths
+  tagName: 'svg' | 'defs' | 'clipPath' | 'path';
+  attrs?: Record<string, string>;
+  children?: SvgJson[];
+};
+
+function createSvgElement(doc: Document, { tagName, attrs, children }: SvgJson): SVGElement {
+  const elem = doc.createElementNS('http://www.w3.org/2000/svg', tagName);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs))
+      elem.setAttribute(k, v);
+  }
+  if (children) {
+    for (const c of children)
+      elem.appendChild(createSvgElement(doc, c));
+  }
+
+  return elem;
 }
 
 interface Embedder {
