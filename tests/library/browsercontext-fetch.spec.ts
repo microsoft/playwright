@@ -998,9 +998,9 @@ it('should support repeating names in multipart/form-data', async function({ con
   const formData = new FormData();
   formData.set('name', 'John');
   formData.append('name', 'Doe');
-  formData.append('file', new buffer.File(['var x = 10;\r\n;console.log(x);'], 'f1.js', { type: 'text/javascript' }));
-  formData.append('file', new buffer.File(['hello'], 'f2.txt', { type: 'text/plain' }), 'custom_f2.txt');
-  formData.append('file', new buffer.Blob(['boo'], { type: 'text/plain' }));
+  formData.append('file', new (buffer as any).File(['var x = 10;\r\n;console.log(x);'], 'f1.js', { type: 'text/javascript' }));
+  formData.append('file', new (buffer as any).File(['hello'], 'f2.txt', { type: 'text/plain' }), 'custom_f2.txt');
+  formData.append('file', new (buffer as any).Blob(['boo'], { type: 'text/plain' }));
   const [postBody, response] = await Promise.all([
     postBodyPromise,
     context.request.post(server.EMPTY_PAGE, {
