@@ -214,7 +214,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = {
-            globalTimeout: 1000,
+            globalTimeout: 3000,
           };
         `,
         'dir/a.test.js': `
