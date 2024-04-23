@@ -405,7 +405,7 @@ An instance of [FormData] can be created via [`method: APIRequestContext.createF
 
 ## js-python-fetch-option-multipart
 * langs: js, python
-- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+- `multipart` <[FormData]|[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
