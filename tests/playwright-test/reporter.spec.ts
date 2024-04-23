@@ -76,7 +76,8 @@ class Reporter {
   }
 
   onTestEnd(test, result) {
-    console.log('onTestEnd: ' + formatTitle(test) + '; retry #' + result.retry);
+    const status = this.options.printTestStatus ? '[' + result.status + '] ' : '';
+    console.log('onTestEnd: ' + status + formatTitle(test) + '; retry #' + result.retry);
     this.printErrors(result.errors);
   }
 
@@ -675,4 +676,40 @@ test('should report annotations from test declaration', async ({ runInlineTest }
     `title=skip-foo-suite, annotations=foo,skip`,
     `title=fixme-bar-suite, annotations=bar,fixme`,
   ]);
+});
+
+test('tests skipped in serial mode receive onTestBegin/onTestEnd', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28321' });
+
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printTestStatus: true }]] };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test.describe.configure({ mode: 'serial', retries: 1 });
+
+      test('test1', () => {
+        expect(test.info().retry).toBe(1);
+      });
+
+      test('test2', () => {
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toBe(`
+onBegin: 2 tests total
+onTestBegin:  > a.spec.ts > test1; retry #0
+onTestEnd: [failed]  > a.spec.ts > test1; retry #0
+  error: Error: expect(received).toBe(expected) // Object.is equality @ a.spec.ts:7
+onTestBegin:  > a.spec.ts > test2; retry #0
+onTestEnd: [skipped]  > a.spec.ts > test2; retry #0
+onTestBegin:  > a.spec.ts > test1; retry #1
+onTestEnd: [passed]  > a.spec.ts > test1; retry #1
+onTestBegin:  > a.spec.ts > test2; retry #1
+onTestEnd: [passed]  > a.spec.ts > test2; retry #1
+onEnd
+onExit
+`);
 });
