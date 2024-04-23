@@ -1970,6 +1970,10 @@ Waits for the required load state to be reached.
 This returns when the frame reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
 
+:::note
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
+:::
+
 **Usage**
 
 ```js

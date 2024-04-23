@@ -4601,6 +4601,9 @@ export interface Page {
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
    *
+   * **NOTE** Most of the time, this method is not needed because Playwright
+   * [auto-waits before every action](https://playwright.dev/docs/actionability).
+   *
    * **Usage**
    *
    * ```js
@@ -7398,6 +7401,9 @@ export interface Frame {
    * This returns when the frame reaches a required load state, `load` by default. The navigation must have been
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
+   *
+   * **NOTE** Most of the time, this method is not needed because Playwright
+   * [auto-waits before every action](https://playwright.dev/docs/actionability).
    *
    * **Usage**
    *
