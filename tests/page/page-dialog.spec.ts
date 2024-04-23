@@ -43,9 +43,7 @@ it('should allow accepting prompts @smoke', async ({ page, isElectron }) => {
 it('should dismiss the prompt', async ({ page, isElectron }) => {
   it.skip(isElectron, 'prompt() is not a thing in electron');
 
-  page.on('dialog', dialog => {
-    void dialog.dismiss();
-  });
+  page.on('dialog', dialog => dialog.dismiss());
   const result = await page.evaluate(() => prompt('question?'));
   expect(result).toBe(null);
 });

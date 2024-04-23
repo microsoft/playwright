@@ -921,6 +921,10 @@ playwright.chromium.launch().then(async browser => {
       .removeListener('close', listener)
       .off('close', listener);
   }
+  {
+    const page: playwright.Page = {} as any;
+    page.on('dialog', dialog => dialog.accept());
+  }
 });
 
 // waitForResponse callback predicate
