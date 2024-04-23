@@ -86,6 +86,32 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.metadata-view')).not.toBeVisible();
     });
 
+    test('should allow navigating to testId=test.id', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ page }) => {
+            console.log('TESTID=' + test.info().testId);
+            await expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=passes');
+      await page.locator('text=stdout').click();
+      await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
+      const idString = await page.locator('.attachment-body').textContent();
+      const testId = idString.match(/TESTID=(.*)/)[1];
+      expect(page.url()).toContain('testId=' + testId);
+
+      // Expect test to be opened.
+      await page.reload();
+      await page.locator('text=stdout').click();
+      await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
+    });
 
     test('should not throw when PW_TEST_HTML_REPORT_OPEN value is invalid', async ({ runInlineTest, page, showReport }, testInfo) => {
       const invalidOption = 'invalid-option';
