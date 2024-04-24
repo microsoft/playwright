@@ -35,7 +35,9 @@ type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
- * multiple configurations. For example, consider running tests against multiple browsers.
+ * multiple configurations. For example, consider running tests against multiple browsers. This type describes format
+ * of a project in the configuration file, to access resolved configuration parameters at run time use {@link
+ * FullProject}.
  *
  * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
@@ -626,11 +628,13 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<Tes
 }
 
 /**
- * Runtime representation of the test project configuration that can be accessed in the tests via
+ * Runtime representation of the test project configuration. It is accessible in the tests via
  * [testInfo.project](https://playwright.dev/docs/api/class-testinfo#test-info-project) and
- * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project).
+ * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project) and is passed to the
+ * test reporters. To see the format of the project in the Playwright configuration file please see {@link
+ * TestProject} instead.
  */
-export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
    */
@@ -711,7 +715,8 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
  * or `testDir`. These options are described in the {@link TestConfig} object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
+ * [configuration file](https://playwright.dev/docs/test-configuration). This type describes format of the configuration file, to access
+ * resolved configuration parameters at run time use {@link FullConfig}.
  *
  * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level {@link
@@ -1055,7 +1060,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function that takes a [`TestConfig`] argument.
+   * function that takes a {@link FullConfig} argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
@@ -1667,15 +1672,15 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestA
 export type Metadata = { [key: string]: any };
 
 /**
- * Resolved configuration available via
- * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config) and
- * [workerInfo.config](https://playwright.dev/docs/api/class-workerinfo#worker-info-config).
+ * Resolved configuration which is accessible via
+ * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config) and is passed to the test
+ * reporters. To see the format of Playwright configuration file, please see {@link TestConfig} instead.
  */
-export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * List of resolved projects.
    */
-  projects: ProjectInWorker<TestArgs, WorkerArgs>[];
+  projects: FullProject<TestArgs, WorkerArgs>[];
   /**
    * See [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
    */
@@ -1685,7 +1690,7 @@ export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer: TestConfigWebServer | null;
   /**
-   * Path to the configuration file (if any) used to run the tests.
+   * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */
   configFile?: string;
 
@@ -1759,6 +1764,9 @@ export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
     threshold: number;
   };
 
+  /**
+   * Base directory for all relative paths used in the reporters.
+   */
   rootDir: string;
 
   /**
@@ -8129,7 +8137,7 @@ export interface TestInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: ConfigInWorker;
+  config: FullConfig;
 
   /**
    * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
@@ -8205,7 +8213,7 @@ export interface TestInfo {
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: ProjectInWorker;
+  project: FullProject;
 
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each`
