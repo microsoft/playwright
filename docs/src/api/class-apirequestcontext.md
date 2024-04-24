@@ -159,7 +159,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.form = %%-csharp-fetch-option-form-%%
 * since: v1.17
 
-### option: APIRequestContext.delete.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.delete.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.17
+
+### option: APIRequestContext.delete.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.17
 
 ### option: APIRequestContext.delete.multipart = %%-csharp-fetch-option-multipart-%%
@@ -324,7 +327,10 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.form = %%-csharp-fetch-option-form-%%
 * since: v1.16
 
-### option: APIRequestContext.fetch.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.fetch.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.16
+
+### option: APIRequestContext.fetch.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.16
 
 ### option: APIRequestContext.fetch.multipart = %%-csharp-fetch-option-multipart-%%
@@ -410,7 +416,10 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 ### option: APIRequestContext.get.form = %%-csharp-fetch-option-form-%%
 * since: v1.26
 
-### option: APIRequestContext.get.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.get.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.26
+
+### option: APIRequestContext.get.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.26
 
 ### option: APIRequestContext.get.multipart = %%-csharp-fetch-option-multipart-%%
@@ -460,7 +469,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.form = %%-csharp-fetch-option-form-%%
 * since: v1.26
 
-### option: APIRequestContext.head.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.head.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.26
+
+### option: APIRequestContext.head.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.26
 
 ### option: APIRequestContext.head.multipart = %%-csharp-fetch-option-multipart-%%
@@ -510,7 +522,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.patch.form = %%-csharp-fetch-option-form-%%
 * since: v1.16
 
-### option: APIRequestContext.patch.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.patch.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.16
+
+### option: APIRequestContext.patch.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.16
 
 ### option: APIRequestContext.patch.multipart = %%-csharp-fetch-option-multipart-%%
@@ -566,7 +581,7 @@ api_request_context.post("https://example.com/api/createBook", data=data)
 
 ```csharp
 var data = new Dictionary<string, object>() {
-  { "firstNam", "John" },
+  { "firstName", "John" },
   { "lastName", "Doe" }
 };
 await request.PostAsync("https://example.com/api/createBook", new() { DataObject = data });
@@ -690,7 +705,10 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 ### option: APIRequestContext.post.form = %%-csharp-fetch-option-form-%%
 * since: v1.16
 
-### option: APIRequestContext.post.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.post.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.16
+
+### option: APIRequestContext.post.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.16
 
 ### option: APIRequestContext.post.multipart = %%-csharp-fetch-option-multipart-%%
@@ -740,7 +758,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.put.form = %%-csharp-fetch-option-form-%%
 * since: v1.16
 
-### option: APIRequestContext.put.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.put.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.16
+
+### option: APIRequestContext.put.multipart = %%-python-fetch-option-multipart-%%
 * since: v1.16
 
 ### option: APIRequestContext.put.multipart = %%-csharp-fetch-option-multipart-%%

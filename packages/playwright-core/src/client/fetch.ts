@@ -187,18 +187,24 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         formData = objectToArray(options.form);
       } else if (options.multipart) {
         multipartData = [];
-        // Convert file-like values to ServerFilePayload structs.
-        for (const [name, value] of Object.entries(options.multipart)) {
-          if (isFilePayload(value)) {
-            const payload = value as FilePayload;
-            if (!Buffer.isBuffer(payload.buffer))
-              throw new Error(`Unexpected buffer type of 'data.${name}'`);
-            multipartData.push({ name, file: filePayloadToJson(payload) });
-          } else if (value instanceof fs.ReadStream) {
-            multipartData.push({ name, file: await readStreamToJson(value as fs.ReadStream) });
-          } else {
-            multipartData.push({ name, value: String(value) });
+        if (globalThis.FormData && options.multipart instanceof FormData) {
+          const form = options.multipart;
+          for (const [name, value] of form.entries()) {
+            if (isString(value)) {
+              multipartData.push({ name, value });
+            } else {
+              const file: ServerFilePayload = {
+                name: value.name,
+                mimeType: value.type,
+                buffer: Buffer.from(await value.arrayBuffer()),
+              };
+              multipartData.push({ name, file });
+            }
           }
+        } else {
+          // Convert file-like values to ServerFilePayload structs.
+          for (const [name, value] of Object.entries(options.multipart))
+            multipartData.push(await toFormField(name, value));
         }
       }
       if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
@@ -232,6 +238,19 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
     }
     return state;
+  }
+}
+
+async function toFormField(name: string, value: string|number|boolean|fs.ReadStream|FilePayload): Promise<channels.FormField> {
+  if (isFilePayload(value)) {
+    const payload = value as FilePayload;
+    if (!Buffer.isBuffer(payload.buffer))
+      throw new Error(`Unexpected buffer type of 'data.${name}'`);
+    return { name, file: filePayloadToJson(payload) };
+  } else if (value instanceof fs.ReadStream) {
+    return { name, file: await readStreamToJson(value as fs.ReadStream) };
+  } else {
+    return { name, value: String(value) };
   }
 }
 
