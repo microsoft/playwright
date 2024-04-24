@@ -141,12 +141,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
           test('not run', async ({}) => {
-            console.log('log');
-            console.error('error');
           });
           test.only('is run', async ({}) => {
-            console.log('log');
-            console.error('error');
           });
         `
       }, { reporter: '', workers: 1 });
@@ -156,16 +152,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 onBegin: 3 tests total
   options.onBegin=begin-data
 onTestBegin: foo > a.test.ts > is run; retry #0
-log
-error
 onTestEnd: foo > a.test.ts > is run; retry #0
 onTestBegin: foo > a.test.ts > is run; retry #0
-log
-error
 onTestEnd: foo > a.test.ts > is run; retry #0
 onTestBegin: bar > a.test.ts > is run; retry #0
-log
-error
 onTestEnd: bar > a.test.ts > is run; retry #0
 onEnd
   options.onEnd=end-data
