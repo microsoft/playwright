@@ -2,11 +2,10 @@
   "name": "flakiness-dashboard",
   "version": "",
   "description": "",
-  "scripts": {
-    "test": "echo \"No tests yet...\""
-  },
+  "main": "processing/index.js",
   "author": "",
   "dependencies": {
-    "@azure/storage-blob": "^12.16.0"
+    "@azure/identity": "^4.1.0",
+    "@azure/storage-blob": "^12.17.0"
   }
 }
