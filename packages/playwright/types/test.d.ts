@@ -434,16 +434,22 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    * The list of supported tokens:
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
+   *   - Value: `foo/bar/baz`
+   * - `{ext}` - snapshot extension (with dots)
+   *   - Value: `.png`
+   * - `{platform}` - The value of `process.platform`.
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
+   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{testDir}` - Project's
    *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
    *     config)
-   * - `{snapshotDir}` - Project's
-   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
-   * - `{platform}` - The value of `process.platform`.
-   * - `{projectName}` - Project's file-system-sanitized name, if any.
-   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
@@ -452,12 +458,6 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
    *   - Value: `suite-test-should-work`
-   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
-   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
-   *   snapshot name.
-   *   - Value: `foo/bar/baz`
-   * - `{ext}` - snapshot extension (with dots)
-   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
@@ -935,24 +935,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toHaveScreenshot?: {
       /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
-       */
-      maxDiffPixels?: number;
-
-      /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
-       */
-      maxDiffPixelRatio?: number;
-
-      /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
@@ -965,6 +947,17 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
       caret?: "hide"|"initial";
 
       /**
+       * An acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"css"`.
        */
@@ -974,6 +967,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * See `style` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        */
       stylePath?: string|Array<string>;
+
+      /**
+       * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
     };
 
     /**
@@ -983,22 +983,22 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toMatchSnapshot?: {
       /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
+       * An acceptable amount of pixels that could be different, unset by default.
        */
       maxDiffPixels?: number;
 
       /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
        * default.
        */
       maxDiffPixelRatio?: number;
+
+      /**
+       * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
     };
 
     /**
@@ -1006,14 +1006,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toPass?: {
       /**
-       * timeout for toPass method in milliseconds.
-       */
-      timeout?: number;
-
-      /**
-       * probe intervals for toPass method in milliseconds.
+       * Probe intervals for toPass method in milliseconds.
        */
       intervals?: Array<number>;
+
+      /**
+       * Timeout for toPass method in milliseconds.
+       */
+      timeout?: number;
     };
   };
 
@@ -1398,14 +1398,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   shard?: null|{
     /**
-     * The total number of shards.
-     */
-    total: number;
-
-    /**
      * The index of the shard to execute, one-based.
      */
     current: number;
+
+    /**
+     * The total number of shards.
+     */
+    total: number;
   };
 
   /**
@@ -1484,16 +1484,22 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    * The list of supported tokens:
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
+   *   - Value: `foo/bar/baz`
+   * - `{ext}` - snapshot extension (with dots)
+   *   - Value: `.png`
+   * - `{platform}` - The value of `process.platform`.
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
+   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{testDir}` - Project's
    *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
    *     config)
-   * - `{snapshotDir}` - Project's
-   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
-   * - `{platform}` - The value of `process.platform`.
-   * - `{projectName}` - Project's file-system-sanitized name, if any.
-   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
@@ -1502,12 +1508,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
    *   - Value: `suite-test-should-work`
-   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
-   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
-   *   snapshot name.
-   *   - Value: `foo/bar/baz`
-   * - `{ext}` - snapshot extension (with dots)
-   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
@@ -8401,17 +8401,14 @@ interface TestConfigWebServer {
   command: string;
 
   /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
-   * or `url` should be specified.
+   * Current working directory of the spawned process, defaults to the directory of the configuration file.
    */
-  port?: number;
+  cwd?: string;
 
   /**
-   * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
-   * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
-   * checked. Either `port` or `url` should be specified.
+   * Environment variables to set for the command, `process.env` by default.
    */
-  url?: string;
+  env?: { [key: string]: string; };
 
   /**
    * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
@@ -8419,9 +8416,10 @@ interface TestConfigWebServer {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
+   * or `url` should be specified.
    */
-  timeout?: number;
+  port?: number;
 
   /**
    * If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that
@@ -8443,13 +8441,15 @@ interface TestConfigWebServer {
   stderr?: "pipe"|"ignore";
 
   /**
-   * Current working directory of the spawned process, defaults to the directory of the configuration file.
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
-  cwd?: string;
+  timeout?: number;
 
   /**
-   * Environment variables to set for the command, `process.env` by default.
+   * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
+   * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
+   * checked. Either `port` or `url` should be specified.
    */
-  env?: { [key: string]: string; };
+  url?: string;
 }
 
