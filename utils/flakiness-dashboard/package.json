@@ -2,6 +2,7 @@
   "name": "flakiness-dashboard",
   "version": "",
   "description": "",
+  "main": "processing/index.js",
   "author": "",
   "dependencies": {
     "@azure/identity": "^4.1.0",
