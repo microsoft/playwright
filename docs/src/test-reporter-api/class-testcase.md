@@ -112,4 +112,4 @@ Returns a list of titles from the root down to this test.
 * since: v1.44
 - returns: <[TestCaseType]<"test">>
 
-Returns type of the test.
+Returns "test". Useful for detecting test cases in [`method: Suite.entries`].

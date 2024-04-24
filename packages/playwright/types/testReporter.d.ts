@@ -578,7 +578,7 @@ export interface Suite {
 
   /**
    * Test cases and suites defined directly in this suite. The elements are returned in their declaration order. You can
-   * discriminate between different entry types using
+   * differentiate between various entry types by using
    * [testCase.type](https://playwright.dev/docs/api/class-testcase#test-case-type) and
    * [suite.type](https://playwright.dev/docs/api/class-suite#suite-type).
    */
@@ -770,7 +770,8 @@ export interface TestCase {
   title: string;
 
   /**
-   * Returns type of the test.
+   * Returns "test". Useful for detecting test cases in
+   * [suite.entries()](https://playwright.dev/docs/api/class-suite#suite-entries).
    */
   type: "test";
 }

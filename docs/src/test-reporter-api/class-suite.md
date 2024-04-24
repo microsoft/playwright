@@ -30,7 +30,7 @@ Returns the list of all test cases in this suite and its descendants, as opposit
 * since: v1.44
 - type: <[Array]<[TestCase]|[Suite]>>
 
-Test cases and suites defined directly in this suite. The elements are returned in their declaration order. You can discriminate between different entry types using [`property: TestCase.type`] and [`property: Suite.type`].
+Test cases and suites defined directly in this suite. The elements are returned in their declaration order. You can differentiate between various entry types by using [`property: TestCase.type`] and [`property: Suite.type`].
 
 ## property: Suite.location
 * since: v1.10
