@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, stripAnsiEscapes } from './base';
 import EmptyReporter from './empty';
 

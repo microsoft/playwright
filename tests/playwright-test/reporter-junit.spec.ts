@@ -518,7 +518,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'junit' });
       const xml = parseXML(result.output);
       const time = +xml['testsuites']['$']['time'];
-      expect(time).toBe(result.report.stats.duration/1000);
+      expect(time).toBe(result.report.stats.duration / 1000);
       expect(time).toBeGreaterThan(1);
     });
   });
