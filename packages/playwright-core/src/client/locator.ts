@@ -80,6 +80,10 @@ export class Locator implements api.Locator {
     });
   }
 
+  _equals(locator: Locator) {
+    return this._frame === locator._frame && this._selector === locator._selector;
+  }
+
   page() {
     return this._frame.page();
   }

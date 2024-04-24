@@ -168,7 +168,7 @@ export class Page extends SdkObject {
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _isServerSideOnly = false;
-  private _locatorHandlers = new Map<number, { selector: string, resolved?: ManualPromise<void> }>();
+  private _locatorHandlers = new Map<number, { selector: string, allowStayingVisible?: boolean, resolved?: ManualPromise<void> }>();
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
 
@@ -432,18 +432,24 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  registerLocatorHandler(selector: string) {
+  registerLocatorHandler(selector: string, allowStayingVisible: boolean | undefined) {
     const uid = ++this._lastLocatorHandlerUid;
-    this._locatorHandlers.set(uid, { selector });
+    this._locatorHandlers.set(uid, { selector, allowStayingVisible });
     return uid;
   }
 
-  resolveLocatorHandler(uid: number) {
+  resolveLocatorHandler(uid: number, remove: boolean | undefined) {
     const handler = this._locatorHandlers.get(uid);
+    if (remove)
+      this._locatorHandlers.delete(uid);
     if (handler) {
       handler.resolved?.resolve();
       handler.resolved = undefined;
     }
+  }
+
+  unregisterLocatorHandler(uid: number) {
+    this._locatorHandlers.delete(uid);
   }
 
   async performLocatorHandlersCheckpoint(progress: Progress) {
@@ -460,7 +466,12 @@ export class Page extends SdkObject {
       if (handler.resolved) {
         ++this._locatorHandlerRunningCounter;
         progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
-        await this.openScope.race(handler.resolved).finally(() => --this._locatorHandlerRunningCounter);
+        const promise = handler.resolved.then(async () => {
+          progress.throwIfAborted();
+          if (!handler.allowStayingVisible)
+            await this.mainFrame().waitForSelectorInternal(progress, handler.selector, { state: 'hidden' });
+        });
+        await this.openScope.race(promise).finally(() => --this._locatorHandlerRunningCounter);
         // Avoid side-effects after long-running operation.
         progress.throwIfAborted();
         progress.log(`  interception handler has finished, continuing`);

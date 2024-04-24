@@ -50,9 +50,16 @@
       }, false);
 
       close.addEventListener('click', () => {
-        interstitial.classList.remove('visible');
-        target.classList.remove('hidden');
-        target.classList.remove('removed');
+        const closeInterstitial = () => {
+          interstitial.classList.remove('visible');
+          target.classList.remove('hidden');
+          target.classList.remove('removed');
+        };
+
+        if (interstitial.classList.contains('timeout'))
+          setTimeout(closeInterstitial, 3000);
+        else
+          closeInterstitial();
       });
 
       let timesToShow = 0;
@@ -65,9 +72,11 @@
           if (!timesToShow && event !== 'none')
             target.removeEventListener(event, listener, capture === 'capture');
         };
-        if (event === 'hide') {
+        if (event === 'hide' || event === 'timeout') {
           target.classList.add('hidden');
           listener();
+          if (event === 'timeout')
+            interstitial.classList.add('timeout');
         } else if (event === 'remove') {
           target.classList.add('removed');
           listener();

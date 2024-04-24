@@ -1802,12 +1802,14 @@ export interface Page {
    * Things to keep in mind:
    * - When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as
    *   a part of your normal test flow, instead of using
-   *   [page.addLocatorHandler(locator, handler)](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   *   [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
    * - Playwright checks for the overlay every time before executing or retrying an action that requires an
    *   [actionability check](https://playwright.dev/docs/actionability), or before performing an auto-waiting assertion check. When overlay
    *   is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the
    *   handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't
    *   perform any actions, the handler will not be triggered.
+   * - After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible
+   *   anymore. You can opt-out of this behavior with `allowStayingVisible`.
    * - The execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
    *   If your handler takes too long, it might cause timeouts.
    * - You can register multiple handlers. However, only a single handler will be running at a time. Make sure the
@@ -1857,24 +1859,47 @@ export interface Page {
    * ```
    *
    * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
-   * so the handler is called before every actionability check:
+   * so the handler is called before every actionability check. It is important to specify `allowStayingVisible`,
+   * because the handler does not hide the `<body>` element.
    *
    * ```js
    * // Setup the handler.
    * await page.addLocatorHandler(page.locator('body'), async () => {
    *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-   * });
+   * }, { allowStayingVisible: true });
    *
    * // Write the test as usual.
    * await page.goto('https://example.com');
    * await page.getByRole('button', { name: 'Start here' }).click();
    * ```
    *
+   * Handler takes the original locator as an argument. You can also automatically remove the handler after a number of
+   * invocations by setting `times`:
+   *
+   * ```js
+   * await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
+   *   await locator.click();
+   * }, { times: 1 });
+   * ```
+   *
    * @param locator Locator that triggers the handler.
    * @param handler Function that should be run once `locator` appears. This function should get rid of the element that blocks actions
    * like click.
+   * @param options
    */
-  addLocatorHandler(locator: Locator, handler: Function): Promise<void>;
+  addLocatorHandler(locator: Locator, handler: ((locator: Locator) => Promise<any>), options?: {
+    /**
+     * By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then
+     * Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of
+     * this behavior, so that overlay can stay visible after the handler has run.
+     */
+    allowStayingVisible?: boolean;
+
+    /**
+     * Specifies the maximum number of times this handler should be called. Unlimited by default.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
@@ -3653,6 +3678,18 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
+
+  /**
+   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
+   *
+   * Removes locator handler added by
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   * @param locator Locator passed to
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   * @param handler Handler passed to
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   */
+  removeLocatorHandler(locator: Locator, handler: ((locator: Locator) => Promise<any>)): Promise<void>;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.

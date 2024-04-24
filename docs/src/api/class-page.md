@@ -3155,6 +3155,7 @@ This method lets you set up a special function, called a handler, that activates
 Things to keep in mind:
 * When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as a part of your normal test flow, instead of using [`method: Page.addLocatorHandler`].
 * Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
+* After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with [`option: allowStayingVisible`].
 * The execution time of the handler counts towards the timeout of the action/assertion that executed the handler. If your handler takes too long, it might cause timeouts.
 * You can register multiple handlers. However, only a single handler will be running at a time. Make sure the actions within a handler don't depend on another handler.
 
@@ -3284,13 +3285,13 @@ await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
-An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check:
+An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check. It is important to specify [`option: allowStayingVisible`], because the handler does not hide the `<body>` element.
 
 ```js
 // Setup the handler.
 await page.addLocatorHandler(page.locator('body'), async () => {
   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-});
+}, { allowStayingVisible: true });
 
 // Write the test as usual.
 await page.goto('https://example.com');
@@ -3301,7 +3302,7 @@ await page.getByRole('button', { name: 'Start here' }).click();
 // Setup the handler.
 page.addLocatorHandler(page.locator("body")), () => {
   page.evaluate("window.removeObstructionsForTestIfNeeded()");
-});
+}, new Page.AddLocatorHandlerOptions.setAllowStayingVisible(true));
 
 // Write the test as usual.
 page.goto("https://example.com");
@@ -3312,7 +3313,7 @@ page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 # Setup the handler.
 def handler():
   page.evaluate("window.removeObstructionsForTestIfNeeded()")
-page.add_locator_handler(page.locator("body"), handler)
+page.add_locator_handler(page.locator("body"), handler, allow_staying_visible=True)
 
 # Write the test as usual.
 page.goto("https://example.com")
@@ -3323,7 +3324,7 @@ page.get_by_role("button", name="Start here").click()
 # Setup the handler.
 def handler():
   await page.evaluate("window.removeObstructionsForTestIfNeeded()")
-await page.add_locator_handler(page.locator("body"), handler)
+await page.add_locator_handler(page.locator("body"), handler, allow_staying_visible=True)
 
 # Write the test as usual.
 await page.goto("https://example.com")
@@ -3334,11 +3335,43 @@ await page.get_by_role("button", name="Start here").click()
 // Setup the handler.
 await page.AddLocatorHandlerAsync(page.Locator("body"), async () => {
   await page.EvaluateAsync("window.removeObstructionsForTestIfNeeded()");
-});
+}, new() { AllowStayingVisible = true });
 
 // Write the test as usual.
 await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+Handler takes the original locator as an argument. You can also automatically remove the handler after a number of invocations by setting [`option: times`]:
+
+```js
+await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
+  await locator.click();
+}, { times: 1 });
+```
+
+```java
+page.addLocatorHandler(page.getByLabel("Close"), locator => {
+  locator.click();
+}, new Page.AddLocatorHandlerOptions().setTimes(1));
+```
+
+```python sync
+def handler(locator):
+  locator.click()
+page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
+```
+
+```python async
+def handler(locator):
+  await locator.click()
+await page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
+```
+
+```csharp
+await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), async locator => {
+  await locator.ClickAsync();
+}, new() { Times = 1 });
 ```
 
 ### param: Page.addLocatorHandler.locator
@@ -3350,23 +3383,66 @@ Locator that triggers the handler.
 ### param: Page.addLocatorHandler.handler
 * langs: js, python
 * since: v1.42
-- `handler` <[function]>
+- `handler` <[function]\([Locator]\): [Promise<any>]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
 ### param: Page.addLocatorHandler.handler
 * langs: csharp
 * since: v1.42
-- `handler` <[function](): [Promise<any>]>
+- `handler` <[function]\([Locator]\)>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
 ### param: Page.addLocatorHandler.handler
 * langs: java
 * since: v1.42
-- `handler` <[Runnable]>
+- `handler` <[function]\([Locator]\)>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+### option: Page.addLocatorHandler.times
+* since: v1.44
+- `times` <[int]>
+
+Specifies the maximum number of times this handler should be called. Unlimited by default.
+
+### option: Page.addLocatorHandler.allowStayingVisible
+* since: v1.44
+- `allowStayingVisible` <[boolean]>
+
+By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of this behavior, so that overlay can stay visible after the handler has run.
+
+
+## async method: Page.removeLocatorHandler
+* since: v1.44
+
+:::warning[Experimental]
+This method is experimental and its behavior may change in the upcoming releases.
+:::
+
+Removes locator handler added by [`method: Page.addLocatorHandler`].
+
+### param: Page.removeLocatorHandler.locator
+* since: v1.44
+- `locator` <[Locator]>
+
+Locator passed to [`method: Page.addLocatorHandler`].
+
+### param: Page.removeLocatorHandler.handler
+* langs: js, python
+* since: v1.44
+- `handler` <[function]\([Locator]\): [Promise<any>]>
+
+Handler passed to [`method: Page.addLocatorHandler`].
+
+### param: Page.addLocatorHandler.handler
+* langs: csharp, java
+* since: v1.44
+- `handler` <[function]\([Locator]\)>
+
+Handler passed to [`method: Page.addLocatorHandler`].
+
 
 ## async method: Page.reload
 * since: v1.8
