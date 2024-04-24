@@ -290,9 +290,7 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 **Usage**
 
 ```js
-page.on('dialog', dialog => {
-  dialog.accept();
-});
+page.on('dialog', dialog => dialog.accept());
 ```
 
 ```java

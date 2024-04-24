@@ -283,7 +283,7 @@ class TypesGenerator {
           parts.push(this.writeComment(comment, indent));
         else
           parts.push(this.writeComment(commentForMethod[method], indent));
-        parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
+        parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => any): this;\n`);
       }
     }
 
