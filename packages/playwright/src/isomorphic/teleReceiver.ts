@@ -494,21 +494,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
-      return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    if (!failures.length) // all passed
-      return 'expected';
-    if (failures.length === results.length) // all failed
-      return 'unexpected';
-    return 'flaky'; // mixed bag
+    return computeTestCaseOutcome(this);
   }
 
   ok(): boolean {
@@ -642,4 +628,48 @@ export function parseRegexPatterns(patterns: JsonPattern[]): (string | RegExp)[]
       return p.s;
     return new RegExp(p.r!.source, p.r!.flags);
   });
+}
+
+export function computeTestCaseOutcome(test: reporterTypes.TestCase) {
+  let skipped = 0;
+  let didNotRun = 0;
+  let expected = 0;
+  let interrupted = 0;
+  let unexpected = 0;
+  for (const result of test.results) {
+    if (result.status === 'interrupted') {
+      ++interrupted; // eslint-disable-line @typescript-eslint/no-unused-vars
+    } else if (result.status === 'skipped' && test.expectedStatus === 'skipped') {
+      // Only tests "expected to be skipped" are skipped. These were specifically
+      // marked with test.skip or test.fixme.
+      ++skipped;
+    } else if (result.status === 'skipped') {
+      // Tests that were expected to run, but were skipped are "did not run".
+      // This happens when:
+      // - testing finished early;
+      // - test failure prevented other tests in the serial suite to run;
+      // - probably more cases!
+      ++didNotRun; // eslint-disable-line @typescript-eslint/no-unused-vars
+    } else if (result.status === test.expectedStatus) {
+      // Either passed and expected to pass, or failed and expected to fail.
+      ++expected;
+    } else {
+      ++unexpected;
+    }
+  }
+
+  // Tests that were "skipped as expected" are considered equal to "expected" below,
+  // because that's the expected outcome.
+  //
+  // However, we specifically differentiate the case of "only skipped"
+  // and show it as "skipped" in all reporters.
+  //
+  // More exotic cases like "failed on first run and skipped on retry" are flaky.
+  if (expected === 0 && unexpected === 0)
+    return 'skipped';  // all results were skipped or interrupted
+  if (unexpected === 0)
+    return 'expected';  // no failures, just expected+skipped
+  if (expected === 0 && skipped === 0)
+    return 'unexpected';  // only failures
+  return 'flaky';  // expected+unexpected or skipped+unexpected
 }
