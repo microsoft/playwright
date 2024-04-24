@@ -8367,7 +8367,7 @@ export interface WorkerInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: ConfigInWorker;
+  config: FullConfig;
 
   /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
@@ -8382,7 +8382,7 @@ export interface WorkerInfo {
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: ProjectInWorker;
+  project: FullProject;
 
   /**
    * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
