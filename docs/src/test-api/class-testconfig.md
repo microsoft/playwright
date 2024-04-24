@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](../test-configuration.md).
+Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](../test-configuration.md). This type describes format of the configuration file, to access resolved configuration parameters at run time use [FullConfig].
 
 Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to [`property: TestConfig.projects`], but top-level [TestConfig] can also define base options shared between all projects.
 
@@ -112,7 +112,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[string]>
 
-Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
+Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [FullConfig] argument.
 
 Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 

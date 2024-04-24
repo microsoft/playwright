@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus, ProjectInWorker, ConfigInWorker } from '../../types/test';
+import type { TestInfoError, TestInfo, TestStatus, FullProject } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Location } from '../../types/testReporter';
+import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
@@ -81,8 +81,8 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: ProjectInWorker;
-  readonly config: ConfigInWorker;
+  readonly project: FullProject;
+  readonly config: FullConfig;
   readonly title: string;
   readonly titlePath: string[];
   readonly file: string;
