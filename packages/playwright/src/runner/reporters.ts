@@ -90,6 +90,7 @@ function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'me
     configDir: config.configDir,
     _mode: mode,
     _isTestServer: isTestServer,
+    _commandHash: config.commandHash,
   };
 }
 

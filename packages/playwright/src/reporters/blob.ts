@@ -30,6 +30,7 @@ type BlobReporterOptions = {
   configDir: string;
   outputDir?: string;
   fileName?: string;
+  _commandHash: string;
 };
 
 export const currentBlobReportVersion = 2;
@@ -112,6 +113,8 @@ export class BlobReporter extends TeleReporterEmitter {
     if (this._options.fileName)
       return this._options.fileName;
     let reportName = 'report';
+    if (this._options._commandHash)
+      reportName += '-' + this._options._commandHash;
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName = `${reportName}-${paddedNumber}`;

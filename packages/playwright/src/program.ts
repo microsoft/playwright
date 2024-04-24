@@ -20,7 +20,7 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
@@ -183,6 +183,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (!config)
     return;
 
+  config.commandHash = computeCommandHash(args, opts);
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
@@ -199,6 +200,19 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
+}
+
+function computeCommandHash(args: string[], opts: { [key: string]: any }) {
+  const command = {
+    args,
+    opts: {} as any
+  };
+  // Omit shard from the hash, shard number is added explicitely at the end of the blob report file name.
+  const keys = Object.keys(opts).filter(k => k !== 'shard');
+  if (!keys.length && !args.length)
+    return '';
+  keys.sort().forEach(key => command.opts[key] = opts[key]);
+  return calculateSha1(JSON.stringify(command)).substring(0, 7);
 }
 
 async function runTestServer(opts: { [key: string]: any }) {

@@ -48,6 +48,7 @@ export class FullConfigInternal {
   readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
+  commandHash: string = '';
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
