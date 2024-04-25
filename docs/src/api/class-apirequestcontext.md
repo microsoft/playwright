@@ -190,9 +190,11 @@ All responses returned by [`method: APIRequestContext.get`] and similar methods 
 - returns: <[APIResponse]>
 
 Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
-context cookies from the response. The method will automatically follow redirects. JSON objects can be passed directly to the request.
+context cookies from the response. The method will automatically follow redirects.
 
 **Usage**
+
+JSON objects can be passed directly to the request:
 
 ```js
 await request.fetch('https://example.com/api/createBook', {
@@ -227,28 +229,17 @@ var data = new Dictionary<string, object>() {
 await Request.FetchAsync("https://example.com/api/createBook", new() { Method = "post", DataObject = data });
 ```
 
-The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. Use [FormData] to construct request body and pass it to the request as [`option: multipart`] parameter:
 
 ```js
-// Open file as a stream and pass it to the request:
-const stream = fs.createReadStream('team.csv');
-await request.fetch('https://example.com/api/uploadTeamList', {
-  method: 'post',
-  multipart: {
-    fileField: stream
-  }
-});
-
-// Or you can pass the file content directly as an object:
-await request.fetch('https://example.com/api/uploadScript', {
-  method: 'post',
-  multipart: {
-    fileField: {
-      name: 'f.js',
-      mimeType: 'text/javascript',
-      buffer: Buffer.from('console.log(2022);')
-    }
-  }
+const form = new FormData();
+form.set('name', 'John');
+form.append('name', 'Doe');
+// Send two file fields with the same name.
+form.append('file', new File(['console.log(2024);'], 'f1.js', { type: 'text/javascript' }));
+form.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
+await request.fetch('https://example.com/api/uploadForm', {
+  multipart: form
 });
 ```
 
@@ -262,15 +253,14 @@ APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
 // Or you can pass the file content directly as FilePayload object:
 FilePayload filePayload = new FilePayload("f.js", "text/javascript",
       "console.log(2022);".getBytes(StandardCharsets.UTF_8));
-APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
+APIResponse response = request.fetch("https://example.com/api/uploadScript",
   RequestOptions.create().setMethod("post").setMultipart(
     FormData.create().set("fileField", filePayload)));
 ```
 
 ```python
 api_request_context.fetch(
-  "https://example.com/api/uploadScrip'",
-  method="post",
+  "https://example.com/api/uploadScript",  method="post",
   multipart={
     "fileField": {
       "name": "f.js",
@@ -619,26 +609,17 @@ formData.Set("body", "John Doe");
 await request.PostAsync("https://example.com/api/findBook", new() { Form = formData });
 ```
 
-The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. Use [FormData] to construct request body and pass it to the request as `multipart` parameter:
 
 ```js
-// Open file as a stream and pass it to the request:
-const stream = fs.createReadStream('team.csv');
-await request.post('https://example.com/api/uploadTeamList', {
-  multipart: {
-    fileField: stream
-  }
-});
-
-// Or you can pass the file content directly as an object:
-await request.post('https://example.com/api/uploadScript', {
-  multipart: {
-    fileField: {
-      name: 'f.js',
-      mimeType: 'text/javascript',
-      buffer: Buffer.from('console.log(2022);')
-    }
-  }
+const form = new FormData();
+form.set('name', 'John');
+form.append('name', 'Doe');
+// Send two file fields with the same name.
+form.append('file', new File(['console.log(2024);'], 'f1.js', { type: 'text/javascript' }));
+form.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
+await request.post('https://example.com/api/uploadForm', {
+  multipart: form
 });
 ```
 
@@ -650,16 +631,16 @@ APIResponse response = request.post("https://example.com/api/uploadTeamList",
     FormData.create().set("fileField", file)));
 
 // Or you can pass the file content directly as FilePayload object:
-FilePayload filePayload = new FilePayload("f.js", "text/javascript",
+FilePayload filePayload1 = new FilePayload("f1.js", "text/javascript",
       "console.log(2022);".getBytes(StandardCharsets.UTF_8));
-APIResponse response = request.post("https://example.com/api/uploadTeamList",
+APIResponse response = request.post("https://example.com/api/uploadScript",
   RequestOptions.create().setMultipart(
     FormData.create().set("fileField", filePayload)));
 ```
 
 ```python
 api_request_context.post(
-  "https://example.com/api/uploadScrip'",
+  "https://example.com/api/uploadScript'",
   multipart={
     "fileField": {
       "name": "f.js",
