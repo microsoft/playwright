@@ -22,7 +22,9 @@ test('should work', async ({ page, server }) => {
 
   let beforeCount = 0;
   let afterCount = 0;
-  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
+  const originalLocator = page.getByText('This interstitial covers the button');
+  await page.addLocatorHandler(originalLocator, async locatorArgument => {
+    expect(locatorArgument).toBe(originalLocator);
     ++beforeCount;
     await page.locator('#close').click();
     ++afterCount;
@@ -64,7 +66,7 @@ test('should work with a custom check', async ({ page, server }) => {
   await page.addLocatorHandler(page.locator('body'), async () => {
     if (await page.getByText('This interstitial covers the button').isVisible())
       await page.locator('#close').click();
-  });
+  }, { allowStayingVisible: true });
 
   for (const args of [
     ['mouseover', 2],
@@ -203,4 +205,130 @@ test('should work with toHaveScreenshot', async ({ page, server, isAndroid }) =>
   });
 
   await expect(page).toHaveScreenshot('screenshot-grid.png');
+});
+
+test('should work when owner frame detaches', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'data:text/html,<body>hello from iframe</body>';
+    document.body.append(iframe);
+
+    const target = document.createElement('button');
+    target.textContent = 'Click me';
+    target.id = 'target';
+    target.addEventListener('click', () => (window as any)._clicked = true);
+    document.body.appendChild(target);
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'close';
+    closeButton.id = 'close';
+    closeButton.addEventListener('click', () => iframe.remove());
+    document.body.appendChild(closeButton);
+  });
+
+  await page.addLocatorHandler(page.frameLocator('iframe').locator('body'), async () => {
+    await page.locator('#close').click();
+  });
+
+  await page.locator('#target').click();
+  expect(await page.$('iframe')).toBe(null);
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+test('should work with times: option', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.locator('body'), async () => {
+    ++called;
+  }, { allowStayingVisible: true, times: 2 });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('mouseover', 4);
+  });
+  const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
+  expect(called).toBe(2);
+  expect(await page.evaluate('window.clicked')).toBe(0);
+  await expect(page.locator('#interstitial')).toBeVisible();
+  expect(error.message).toContain('Timeout 3000ms exceeded');
+  expect(error.message).toContain(`<div>This interstitial covers the button</div> from <div class="visible" id="interstitial">…</div> subtree intercepts pointer events`);
+});
+
+test('should wait for hidden by default', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async button => {
+    called++;
+    await button.click();
+  });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('timeout', 1);
+  });
+  await page.locator('#target').click();
+  expect(await page.evaluate('window.clicked')).toBe(1);
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+  expect(called).toBe(1);
+});
+
+test('should work with allowStayingVisible', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async button => {
+    called++;
+    if (called === 1)
+      await button.click();
+    else
+      await page.locator('#interstitial').waitFor({ state: 'hidden' });
+  }, { allowStayingVisible: true });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('timeout', 1);
+  });
+  await page.locator('#target').click();
+  expect(await page.evaluate('window.clicked')).toBe(1);
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+  expect(called).toBe(2);
+});
+
+test('should removeLocatorHandler', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  const handler = async locator => {
+    ++called;
+    await locator.click();
+  };
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), handler);
+
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('hide', 1);
+  });
+  await page.locator('#target').click();
+  expect(called).toBe(1);
+  expect(await page.evaluate('window.clicked')).toBe(1);
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('hide', 1);
+  });
+  await page.removeLocatorHandler(page.getByRole('button', { name: 'close' }), handler);
+
+  const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
+  expect(called).toBe(1);
+  expect(await page.evaluate('window.clicked')).toBe(0);
+  await expect(page.locator('#interstitial')).toBeVisible();
+  expect(error.message).toContain('Timeout 3000ms exceeded');
 });

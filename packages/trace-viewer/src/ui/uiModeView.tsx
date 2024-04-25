@@ -172,24 +172,29 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     (async () => {
-      await testServerConnection.initialize({
-        interceptStdio: true,
-        watchTestDirs: true
-      });
-      const { status } = await testServerConnection.runGlobalSetup({});
-      if (status !== 'passed')
-        return;
-      const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
-      teleSuiteUpdater.processListReport(result.report);
+      try {
+        await testServerConnection.initialize({
+          interceptStdio: true,
+          watchTestDirs: true
+        });
+        const { status, report } = await testServerConnection.runGlobalSetup({});
+        teleSuiteUpdater.processGlobalReport(report);
+        if (status !== 'passed')
+          return;
 
-      testServerConnection.onListChanged(updateList);
-      testServerConnection.onReport(params => {
-        teleSuiteUpdater.processTestReportEvent(params);
-      });
-      setIsLoading(false);
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
+        teleSuiteUpdater.processListReport(result.report);
 
-      const { hasBrowsers } = await testServerConnection.checkBrowsers({});
-      setHasBrowsers(hasBrowsers);
+        testServerConnection.onListChanged(updateList);
+        testServerConnection.onReport(params => {
+          teleSuiteUpdater.processTestReportEvent(params);
+        });
+
+        const { hasBrowsers } = await testServerConnection.checkBrowsers({});
+        setHasBrowsers(hasBrowsers);
+      } finally {
+        setIsLoading(false);
+      }
     })();
     return () => {
       clearTimeout(throttleTimer);

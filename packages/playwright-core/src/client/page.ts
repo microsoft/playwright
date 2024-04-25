@@ -96,7 +96,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   _closeWasCalled: boolean = false;
   private _harRouters: HarRouter[] = [];
 
-  private _locatorHandlers = new Map<number, Function>();
+  private _locatorHandlers = new Map<number, { locator: Locator, handler: (locator: Locator) => any, times: number | undefined }>();
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -362,19 +362,36 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return Response.fromNullable((await this._channel.reload({ ...options, waitUntil })).response);
   }
 
-  async addLocatorHandler(locator: Locator, handler: Function): Promise<void> {
+  async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, allowStayingVisible?: boolean } = {}): Promise<void> {
     if (locator._frame !== this._mainFrame)
       throw new Error(`Locator must belong to the main frame of this page`);
-    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector });
-    this._locatorHandlers.set(uid, handler);
+    if (options.times === 0)
+      return;
+    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, allowStayingVisible: options.allowStayingVisible });
+    this._locatorHandlers.set(uid, { locator, handler, times: options.times });
   }
 
   private async _onLocatorHandlerTriggered(uid: number) {
+    let remove = false;
     try {
       const handler = this._locatorHandlers.get(uid);
-      await handler?.();
+      if (handler && handler.times !== 0) {
+        if (handler.times !== undefined)
+          handler.times--;
+        await handler.handler(handler.locator);
+      }
+      remove = handler?.times === 0;
     } finally {
-      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid }), true).catch(() => {});
+      this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), true).catch(() => {});
+    }
+  }
+
+  async removeLocatorHandler(locator: Locator, handler: (locator: Locator) => any): Promise<void> {
+    for (const [uid, data] of this._locatorHandlers) {
+      if (data.locator._equals(locator) && data.handler === handler) {
+        this._locatorHandlers.delete(uid);
+        await this._channel.unregisterLocatorHandlerNoReply({ uid }).catch(() => {});
+      }
     }
   }
 

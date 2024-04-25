@@ -7,6 +7,7 @@ node_modules/
 *.swp
 *.pyc
 .vscode
+.mono
 .idea
 yarn.lock
 /packages/playwright-core/src/generated

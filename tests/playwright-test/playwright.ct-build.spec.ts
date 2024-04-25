@@ -665,3 +665,33 @@ test('should pass undefined value as param', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should resolve components imported from node_modules', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "name": "test-project" }`,
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'node_modules/@mui/material/index.js': `
+      const TextField = () => 'input';
+      module.exports = { TextField };
+    `,
+    'node_modules/@mui/material/package.json': JSON.stringify({
+      name: '@mui/material',
+      main: './index.js',
+    }),
+
+    'src/component.spec.tsx': `
+      import { test } from '@playwright/experimental-ct-react';
+      import { TextField } from '@mui/material';
+
+      test("passes", async ({ mount }) => {
+        await mount(<TextField />);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

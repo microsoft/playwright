@@ -773,54 +773,59 @@ export class Frame extends SdkObject {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     return controller.run(async progress => {
       progress.log(`waiting for ${this._asLocator(selector)}${state === 'attached' ? '' : ' to be ' + state}`);
-      const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-        const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
-        progress.throwIfAborted();
-        if (!resolved) {
-          if (state === 'hidden' || state === 'detached')
-            return null;
-          return continuePolling;
-        }
-        const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
-          const elements = injected.querySelectorAll(info.parsed, root || document);
-          const element: Element | undefined  = elements[0];
-          const visible = element ? injected.isVisible(element) : false;
-          let log = '';
-          if (elements.length > 1) {
-            if (info.strict)
-              throw injected.strictModeViolationError(info.parsed, elements);
-            log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
-          } else if (element) {
-            log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
-          }
-          return { log, element, visible, attached: !!element };
-        }, { info: resolved.info, root: resolved.frame === this ? scope : undefined });
-        const { log, visible, attached } = await result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached }));
-        if (log)
-          progress.log(log);
-        const success = { attached, detached: !attached, visible, hidden: !visible }[state];
-        if (!success) {
-          result.dispose();
-          return continuePolling;
-        }
-        if (options.omitReturnValue) {
-          result.dispose();
-          return null;
-        }
-        const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element) : null;
-        result.dispose();
-        if (!element)
-          return null;
-        if ((options as any).__testHookBeforeAdoptNode)
-          await (options as any).__testHookBeforeAdoptNode();
-        try {
-          return await element._adoptTo(await resolved.frame._mainContext());
-        } catch (e) {
-          return continuePolling;
-        }
-      });
-      return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
+      return await this.waitForSelectorInternal(progress, selector, options, scope);
     }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async waitForSelectorInternal(progress: Progress, selector: string, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+    const { state = 'visible' } = options;
+    const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
+      const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
+      progress.throwIfAborted();
+      if (!resolved) {
+        if (state === 'hidden' || state === 'detached')
+          return null;
+        return continuePolling;
+      }
+      const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
+        const elements = injected.querySelectorAll(info.parsed, root || document);
+        const element: Element | undefined  = elements[0];
+        const visible = element ? injected.isVisible(element) : false;
+        let log = '';
+        if (elements.length > 1) {
+          if (info.strict)
+            throw injected.strictModeViolationError(info.parsed, elements);
+          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
+        } else if (element) {
+          log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
+        }
+        return { log, element, visible, attached: !!element };
+      }, { info: resolved.info, root: resolved.frame === this ? scope : undefined });
+      const { log, visible, attached } = await result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached }));
+      if (log)
+        progress.log(log);
+      const success = { attached, detached: !attached, visible, hidden: !visible }[state];
+      if (!success) {
+        result.dispose();
+        return continuePolling;
+      }
+      if (options.omitReturnValue) {
+        result.dispose();
+        return null;
+      }
+      const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element) : null;
+      result.dispose();
+      if (!element)
+        return null;
+      if ((options as any).__testHookBeforeAdoptNode)
+        await (options as any).__testHookBeforeAdoptNode();
+      try {
+        return await element._adoptTo(await resolved.frame._mainContext());
+      } catch (e) {
+        return continuePolling;
+      }
+    });
+    return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
   }
 
   async dispatchEvent(metadata: CallMetadata, selector: string, type: string, eventInit: Object = {}, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<void> {

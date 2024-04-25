@@ -124,9 +124,9 @@ export type JsonEvent = {
 };
 
 type TeleReporterReceiverOptions = {
-  mergeProjects: boolean;
-  mergeTestCases: boolean;
-  resolvePath: (rootDir: string, relativePath: string) => string;
+  mergeProjects?: boolean;
+  mergeTestCases?: boolean;
+  resolvePath?: (rootDir: string, relativePath: string) => string;
   configOverrides?: Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'reporter'>;
   clearPreviousResultsWhenTestBegins?: boolean;
 };
@@ -140,7 +140,7 @@ export class TeleReporterReceiver {
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
 
-  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
+  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
@@ -388,7 +388,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (relativePath === undefined)
       return;
-    return this._options.resolvePath(this._rootDir, relativePath);
+    return this._options.resolvePath ? this._options.resolvePath(this._rootDir, relativePath) : this._rootDir + '/' + relativePath;
   }
 }
 

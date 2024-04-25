@@ -7,8 +7,6 @@ test/assets/modernizr.js
 /packages/playwright-core/types/*
 /packages/playwright-ct-core/src/generated/*
 /index.d.ts
-utils/generate_types/overrides.d.ts
-utils/generate_types/test/test.ts
 node_modules/
 browser_patches/*/checkout/
 browser_patches/chromium/output/

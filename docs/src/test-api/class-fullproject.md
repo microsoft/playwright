@@ -2,10 +2,7 @@
 * since: v1.10
 * langs: js
 
-Runtime representation of the test project configuration that is passed
-to [Reporter]. It exposes some of the resolved fields declared in
-[TestProject]. You can get [FullProject] instance from [`property: FullConfig.projects`]
-or [`method: Suite.project`].
+Runtime representation of the test project configuration. It is accessible in the tests via [`property: TestInfo.project`] and [`property: WorkerInfo.project`] and is passed to the test reporters. To see the format of the project in the Playwright configuration file please see [TestProject] instead.
 
 ## property: FullProject.dependencies
 * since: v1.31

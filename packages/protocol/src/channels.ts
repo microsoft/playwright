@@ -1790,6 +1790,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
   registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
   resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandlerNoReply(params: PageUnregisterLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerNoReplyResult>;
   reload(params: PageReloadParams, metadata?: CallMetadata): Promise<PageReloadResult>;
   expectScreenshot(params: PageExpectScreenshotParams, metadata?: CallMetadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
@@ -1926,20 +1927,29 @@ export type PageGoForwardResult = {
 };
 export type PageRegisterLocatorHandlerParams = {
   selector: string,
+  allowStayingVisible?: boolean,
 };
 export type PageRegisterLocatorHandlerOptions = {
-
+  allowStayingVisible?: boolean,
 };
 export type PageRegisterLocatorHandlerResult = {
   uid: number,
 };
 export type PageResolveLocatorHandlerNoReplyParams = {
   uid: number,
+  remove?: boolean,
 };
 export type PageResolveLocatorHandlerNoReplyOptions = {
-
+  remove?: boolean,
 };
 export type PageResolveLocatorHandlerNoReplyResult = void;
+export type PageUnregisterLocatorHandlerNoReplyParams = {
+  uid: number,
+};
+export type PageUnregisterLocatorHandlerNoReplyOptions = {
+
+};
+export type PageUnregisterLocatorHandlerNoReplyResult = void;
 export type PageReloadParams = {
   timeout?: number,
   waitUntil?: LifecycleEvent,

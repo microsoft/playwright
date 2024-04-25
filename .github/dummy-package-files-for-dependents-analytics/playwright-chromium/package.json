@@ -1,7 +1,0 @@
-{
-    "name": "playwright-chromium",
-    "version": "1.0.0",
-    "description": "A high-level API to automate web browsers",
-    "repository": "github:Microsoft/playwright",
-    "license": "Apache-2.0"
-}
