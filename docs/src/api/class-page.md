@@ -2340,7 +2340,8 @@ Attribute name to get the value for.
 
 %%-template-locator-get-by-role-%%
 
-### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+### param: Page.getByRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.27
 
 ### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27

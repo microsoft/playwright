@@ -1173,7 +1173,8 @@ Attribute name to get the value for.
 
 %%-template-locator-get-by-role-%%
 
-### param: Locator.getByRole.role = %%-locator-get-by-role-role-%%
+### param: Locator.getByRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.27
 
 ### option: Locator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
