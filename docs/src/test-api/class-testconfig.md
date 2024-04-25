@@ -148,7 +148,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[int]>
 
-Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Note that even if global timeout is reached, Playwright will still allow up to 30 extra seconds for teardown hooks to finish. Learn more about [various timeouts](../test-timeouts.md).
+Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](../test-timeouts.md).
 
 **Usage**
 

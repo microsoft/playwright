@@ -776,6 +776,8 @@ test('unhandled exception in test.fail should restart worker and continue', asyn
 });
 
 test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30550' });
+  test.fixme();
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
