@@ -237,7 +237,7 @@ form.set('name', 'John');
 form.append('name', 'Doe');
 // Send two file fields with the same name.
 form.append('file', new File(['console.log(2024);'], 'f1.js', { type: 'text/javascript' }));
-form.append('file', new File(['hello'], 'f2.js', { type: 'text/plain' }));
+form.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
 await request.fetch('https://example.com/api/uploadForm', {
   multipart: form
 });
