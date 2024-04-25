@@ -818,3 +818,24 @@ test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest 
   expect(secondIndex).not.toBe(-1);
   expect(secondIndex).toBeLessThan(endIndex);
 });
+
+test('should run last failed tests', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
+});
