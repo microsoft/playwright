@@ -28,7 +28,7 @@ test('should render counters', async ({ mount }) => {
     skipped: 10,
     ok: false,
   }} filterText='' setFilterText={() => {}}></HeaderView>);
-  await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('100');
+  await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('90');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
   await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');

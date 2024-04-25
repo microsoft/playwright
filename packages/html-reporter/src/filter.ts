@@ -98,27 +98,7 @@ export class Filter {
   }
 
   matches(test: TestCaseSummary): boolean {
-    if (!(test as any).searchValues) {
-      let status = 'passed';
-      if (test.outcome === 'unexpected')
-        status = 'failed';
-      if (test.outcome === 'flaky')
-        status = 'flaky';
-      if (test.outcome === 'skipped')
-        status = 'skipped';
-      const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + test.tags.join(' ') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
-        project: test.projectName.toLowerCase(),
-        status: status as any,
-        file: test.location.file,
-        line: String(test.location.line),
-        column: String(test.location.column),
-        labels: test.tags.map(tag => tag.toLowerCase()),
-      };
-      (test as any).searchValues = searchValues;
-    }
-
-    const searchValues = (test as any).searchValues as SearchValues;
+    const searchValues = cacheSearchValues(test);
     if (this.project.length) {
       const matches = !!this.project.find(p => searchValues.project.includes(p));
       if (!matches)
@@ -127,6 +107,9 @@ export class Filter {
     if (this.status.length) {
       const matches = !!this.status.find(s => searchValues.status.includes(s));
       if (!matches)
+        return false;
+    } else {
+      if (searchValues.status === 'skipped')
         return false;
     }
     if (this.text.length) {
@@ -159,3 +142,29 @@ type SearchValues = {
   labels: string[];
 };
 
+const searchValuesSymbol = Symbol('searchValues');
+
+function cacheSearchValues(test: TestCaseSummary): SearchValues {
+  const cached = (test as any)[searchValuesSymbol] as SearchValues | undefined;
+  if (cached)
+    return cached;
+
+  let status: SearchValues['status'] = 'passed';
+  if (test.outcome === 'unexpected')
+    status = 'failed';
+  if (test.outcome === 'flaky')
+    status = 'flaky';
+  if (test.outcome === 'skipped')
+    status = 'skipped';
+  const searchValues: SearchValues = {
+    text: (status + ' ' + test.projectName + ' ' + test.tags.join(' ') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
+    project: test.projectName.toLowerCase(),
+    status,
+    file: test.location.file,
+    line: String(test.location.line),
+    column: String(test.location.column),
+    labels: test.tags.map(tag => tag.toLowerCase()),
+  };
+  (test as any)[searchValuesSymbol] = searchValues;
+  return searchValues;
+}
