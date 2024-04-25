@@ -229,7 +229,7 @@ var data = new Dictionary<string, object>() {
 await Request.FetchAsync("https://example.com/api/createBook", new() { Method = "post", DataObject = data });
 ```
 
-The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. Use [FormData] to construct request body and pass it to the request as `multipart` parameter:
+The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. Use [FormData] to construct request body and pass it to the request as [`option: multipart`] parameter:
 
 ```js
 const form = new FormData();
