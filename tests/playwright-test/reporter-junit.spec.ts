@@ -505,5 +505,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
       });
     });
+
+    test('testsuites time is test run wall time', async ({ runInlineTest }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30518' });
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            await new Promise(f => setTimeout(f, 1000));
+          });
+        `
+      }, { reporter: 'junit' });
+      const xml = parseXML(result.output);
+      const time = +xml['testsuites']['$']['time'];
+      expect(time).toBe(result.report.stats.duration / 1000);
+      expect(time).toBeGreaterThan(1);
+    });
   });
 }
