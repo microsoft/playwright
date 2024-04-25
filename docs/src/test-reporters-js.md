@@ -215,7 +215,7 @@ Blob reports contain all the details about the test run and can be used later to
 npx playwright test --reporter=blob
 ```
 
-By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name is `report.zip` or `report-<shard_number>.zip` when [sharding](./test-sharding.md) is used. Both output directory and report file name can be overridden in the configuration file:
+By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project` and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. Both output directory and report file name can be overridden in the configuration file. Report file name can also be passed as `'PLAYWRIGHT_BLOB_FILE_NAME'` environment variable.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
