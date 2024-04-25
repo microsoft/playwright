@@ -1227,6 +1227,8 @@ export class InjectedScript {
         received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.description') {
         received = getElementAccessibleDescription(element, false /* includeHidden */);
+      } else if (expression === 'to.have.role') {
+        received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
         received = this.document.title;
       } else if (expression === 'to.have.url') {

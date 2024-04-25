@@ -21,7 +21,7 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
@@ -287,6 +287,20 @@ export function toHaveJSProperty(
 ) {
   return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async (isNot, timeout) => {
     return await locator._expect('to.have.property', { expressionArg: name, expectedValue: expected, isNot, timeout });
+  }, expected, options);
+}
+
+export function toHaveRole(
+  this: ExpectMatcherContext,
+  locator: LocatorEx,
+  expected: string,
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  if (!isString(expected))
+    throw new Error(`"role" argument in toHaveRole must be a string`);
+  return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect('to.have.role', { expectedText, isNot, timeout });
   }, expected, options);
 }
 

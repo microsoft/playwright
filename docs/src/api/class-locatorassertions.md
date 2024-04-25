@@ -373,6 +373,23 @@ Property value.
 ### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+
+## async method: LocatorAssertions.NotToHaveRole
+* since: v1.44
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveRole`].
+
+### param: LocatorAssertions.NotToHaveRole.name
+* since: v1.44
+- `name` <[string]|[RegExp]>
+
+Expected accessible name.
+
+### option: LocatorAssertions.NotToHaveRole.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
+
 ## async method: LocatorAssertions.NotToHaveText
 * since: v1.20
 * langs: python
@@ -1628,6 +1645,53 @@ Property value.
 
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+
+## async method: LocatorAssertions.toHaveRole
+* since: v1.44
+* langs:
+  - alias-java: hasRole
+
+Ensures the [Locator] points to an element with a given [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles).
+
+Note that role is matched as a string, disregarding the ARIA role hierarchy. For example, asserting  a superclass role `"checkbox"` on an element with a subclass role `"switch"` will fail.
+
+**Usage**
+
+```js
+const locator = page.getByTestId('save-button');
+await expect(locator).toHaveRole('button');
+```
+
+```java
+Locator locator = page.getByTestId("save-button");
+assertThat(locator).hasRole(AriaRole.BUTTON);
+```
+
+```python async
+locator = page.get_by_test_id("save-button")
+await expect(locator).to_have_role("button")
+```
+
+```python sync
+locator = page.get_by_test_id("save-button")
+expect(locator).to_have_role("button")
+```
+
+```csharp
+var locator = Page.GetByTestId("save-button");
+await Expect(locator).ToHaveRoleAsync(AriaRole.Button);
+```
+
+### param: LocatorAssertions.toHaveRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveRole.timeout = %%-js-assertions-timeout-%%
+* since: v1.44
+
+### option: LocatorAssertions.toHaveRole.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.44
+
 
 ## async method: LocatorAssertions.toHaveScreenshot#1
 * since: v1.23

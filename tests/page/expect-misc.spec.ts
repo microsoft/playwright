@@ -443,3 +443,16 @@ test('toHaveAccessibleDescription', async ({ page }) => {
   await expect(page.locator('div')).not.toHaveAccessibleDescription(/hello/);
   await expect(page.locator('div')).toHaveAccessibleDescription(/hello/, { ignoreCase: true });
 });
+
+test('toHaveRole', async ({ page }) => {
+  await page.setContent(`<div role="button">Button!</div>`);
+  await expect(page.locator('div')).toHaveRole('button');
+  await expect(page.locator('div')).not.toHaveRole('checkbox');
+  try {
+    // @ts-expect-error
+    await expect(page.locator('div')).toHaveRole(/button|checkbox/);
+    expect(1, 'Must throw when given a regular expression').toBe(2);
+  } catch (error) {
+    expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
+  }
+});
