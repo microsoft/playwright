@@ -47,7 +47,7 @@ test('test.describe.serial should work', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.didNotRun).toBe(2);
   expect(result.outputLines).toEqual([
     'test1',
     'test2',
@@ -87,7 +87,7 @@ test('test.describe.serial should work in describe', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.didNotRun).toBe(2);
   expect(result.outputLines).toEqual([
     'test1',
     'test2',
@@ -128,7 +128,7 @@ test('test.describe.serial should work with retry', async ({ runInlineTest }) =>
   expect(result.passed).toBe(2);
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'test1',
     'test2',
@@ -272,7 +272,7 @@ test('test.describe.serial should work with test.fail', async ({ runInlineTest }
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'zero',
     'one',
@@ -393,4 +393,56 @@ test('test.describe.serial should work with fullyParallel', async ({ runInlineTe
     'one',
     'two',
   ]);
+});
+
+test('serial fail + skip is failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'serial', retries: 1 });
+      test.describe.serial('serial suite', () => {
+        test('one', async () => {
+          expect(test.info().retry).toBe(0);
+        });
+        test('two', async () => {
+          expect(1).toBe(2);
+        });
+        test('three', async () => {
+        });
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.interrupted).toBe(0);
+  expect(result.didNotRun).toBe(1);
+});
+
+test('serial skip + fail is failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'serial', retries: 1 });
+      test.describe.serial('serial suite', () => {
+        test('one', async () => {
+          expect(test.info().retry).toBe(1);
+        });
+        test('two', async () => {
+          expect(1).toBe(2);
+        });
+        test('three', async () => {
+        });
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.interrupted).toBe(0);
+  expect(result.didNotRun).toBe(1);
 });

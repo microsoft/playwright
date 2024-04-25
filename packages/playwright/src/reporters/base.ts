@@ -216,7 +216,7 @@ export class BaseReporter implements ReporterV2 {
             if (test.results.some(result => !!result.error))
               interruptedToPrint.push(test);
             interrupted.push(test);
-          } else if (!test.results.length) {
+          } else if (!test.results.length || test.expectedStatus !== 'skipped') {
             ++didNotRun;
           } else {
             ++skipped;

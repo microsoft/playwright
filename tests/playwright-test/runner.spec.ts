@@ -103,7 +103,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
       test('fails', () => {});
-      test('skipped', () => {});
+      test('does not run', () => {});
       // Infect subprocesses to immediately exit when spawning a worker.
       process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js').replace(/\\/g, '\\\\'))}';
     `
@@ -111,7 +111,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
