@@ -115,11 +115,7 @@ export class TeleSuiteUpdater {
         this._options.onUpdate();
       },
 
-      onError: (error: reporterTypes.TestError) => {
-        this.loadErrors.push(error);
-        this._options.onError?.(error);
-        this._options.onUpdate();
-      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error),
 
       printsToStdio: () => {
         return false;
@@ -131,6 +127,17 @@ export class TeleSuiteUpdater {
       onStepBegin: () => {},
       onStepEnd: () => {},
     };
+  }
+
+  processGlobalReport(report: any[]) {
+    const receiver = new TeleReporterReceiver({
+      onConfigure: (c: reporterTypes.FullConfig) => {
+        this.config = c;
+      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error)
+    });
+    for (const message of report)
+      receiver.dispatch(message);
   }
 
   processListReport(report: any[]) {
@@ -148,6 +155,12 @@ export class TeleSuiteUpdater {
     // before we use it.
     this._lastRunReceiver?.dispatch(message)?.catch(() => {});
     this._receiver.dispatch(message)?.catch(() => {});
+  }
+
+  private _handleOnError(error: reporterTypes.TestError) {
+    this.loadErrors.push(error);
+    this._options.onError?.(error);
+    this._options.onUpdate();
   }
 
   asModel(): TestModel {

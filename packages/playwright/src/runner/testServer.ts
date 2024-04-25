@@ -39,6 +39,7 @@ import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playw
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { serializeError } from '../util';
 import { cacheDir } from '../transform/compilationCache';
+import { baseFullConfig } from '../isomorphic/teleReceiver';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -147,7 +148,10 @@ class TestServerDispatcher implements TestServerInterface {
     const { reporter, report } = await this._collectingReporter();
     const { config, error } = await this._loadConfig();
     if (!config) {
+      // Produce dummy config when it has an error.
+      reporter.onConfigure(baseFullConfig);
       reporter.onError(error!);
+      await reporter.onExit();
       return { status: 'failed', report };
     }
 
