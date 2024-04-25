@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
@@ -93,6 +94,8 @@ export class Runner {
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
 
+    await writeLastRunInfo(testRun, status);
+
     await reporter.onExit();
 
     // Calling process.exit() might truncate large stdout/stderr output.
@@ -143,4 +146,26 @@ export class Runner {
       return await override(resolvedFiles, this._config, result.suite);
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
+}
+
+export type LastRunInfo = {
+  status: FullResult['status'];
+  failedTests: string[];
+};
+
+async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
+  await fs.promises.mkdir(testRun.config.globalOutputDir, { recursive: true });
+  const lastRunReportFile = path.join(testRun.config.globalOutputDir, 'last-run.json');
+  const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
+  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
+  await fs.promises.writeFile(lastRunReportFile, lastRunReport);
+}
+
+export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
+  const lastRunReportFile = path.join(config.globalOutputDir, 'last-run.json');
+  try {
+    return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
+  } catch (e) {
+  }
+  return { status: 'passed', failedTests: [] };
 }
