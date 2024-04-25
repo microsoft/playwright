@@ -66,7 +66,7 @@ test('should work with a custom check', async ({ page, server }) => {
   await page.addLocatorHandler(page.locator('body'), async () => {
     if (await page.getByText('This interstitial covers the button').isVisible())
       await page.locator('#close').click();
-  }, { allowStayingVisible: true });
+  }, { noWaitAfter: true });
 
   for (const args of [
     ['mouseover', 2],
@@ -243,7 +243,7 @@ test('should work with times: option', async ({ page, server }) => {
   let called = 0;
   await page.addLocatorHandler(page.locator('body'), async () => {
     ++called;
-  }, { allowStayingVisible: true, times: 2 });
+  }, { noWaitAfter: true, times: 2 });
 
   await page.locator('#aside').hover();
   await page.evaluate(() => {
@@ -278,7 +278,27 @@ test('should wait for hidden by default', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should work with allowStayingVisible', async ({ page, server }) => {
+test('should wait for hidden by default 2', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async button => {
+    called++;
+  });
+
+  await page.locator('#aside').hover();
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('hide', 1);
+  });
+  const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
+  expect(await page.evaluate('window.clicked')).toBe(0);
+  await expect(page.locator('#interstitial')).toBeVisible();
+  expect(called).toBe(1);
+  expect(error.message).toContain(`locator handler has finished, waiting for getByRole('button', { name: 'close' }) to be hidden`);
+});
+
+test('should work with noWaitAfter', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -288,7 +308,7 @@ test('should work with allowStayingVisible', async ({ page, server }) => {
       await button.click();
     else
       await page.locator('#interstitial').waitFor({ state: 'hidden' });
-  }, { allowStayingVisible: true });
+  }, { noWaitAfter: true });
 
   await page.locator('#aside').hover();
   await page.evaluate(() => {
@@ -305,11 +325,10 @@ test('should removeLocatorHandler', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
-  const handler = async locator => {
+  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async locator => {
     ++called;
     await locator.click();
-  };
-  await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), handler);
+  });
 
   await page.evaluate(() => {
     (window as any).clicked = 0;
@@ -324,7 +343,7 @@ test('should removeLocatorHandler', async ({ page, server }) => {
     (window as any).clicked = 0;
     (window as any).setupAnnoyingInterstitial('hide', 1);
   });
-  await page.removeLocatorHandler(page.getByRole('button', { name: 'close' }), handler);
+  await page.removeLocatorHandler(page.getByRole('button', { name: 'close' }));
 
   const error = await page.locator('#target').click({ timeout: 3000 }).catch(e => e);
   expect(called).toBe(1);

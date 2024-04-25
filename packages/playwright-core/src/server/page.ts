@@ -168,7 +168,7 @@ export class Page extends SdkObject {
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _isServerSideOnly = false;
-  private _locatorHandlers = new Map<number, { selector: string, allowStayingVisible?: boolean, resolved?: ManualPromise<void> }>();
+  private _locatorHandlers = new Map<number, { selector: string, noWaitAfter?: boolean, resolved?: ManualPromise<void> }>();
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
 
@@ -432,9 +432,9 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  registerLocatorHandler(selector: string, allowStayingVisible: boolean | undefined) {
+  registerLocatorHandler(selector: string, noWaitAfter: boolean | undefined) {
     const uid = ++this._lastLocatorHandlerUid;
-    this._locatorHandlers.set(uid, { selector, allowStayingVisible });
+    this._locatorHandlers.set(uid, { selector, noWaitAfter });
     return uid;
   }
 
@@ -468,8 +468,12 @@ export class Page extends SdkObject {
         progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
         const promise = handler.resolved.then(async () => {
           progress.throwIfAborted();
-          if (!handler.allowStayingVisible)
+          if (!handler.noWaitAfter) {
+            progress.log(`  locator handler has finished, waiting for ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)} to be hidden`);
             await this.mainFrame().waitForSelectorInternal(progress, handler.selector, { state: 'hidden' });
+          } else {
+            progress.log(`  locator handler has finished`);
+          }
         });
         await this.openScope.race(promise).finally(() => --this._locatorHandlerRunningCounter);
         // Avoid side-effects after long-running operation.

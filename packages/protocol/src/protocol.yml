@@ -1350,7 +1350,7 @@ Page:
     registerLocatorHandler:
       parameters:
         selector: string
-        allowStayingVisible: boolean?
+        noWaitAfter: boolean?
       returns:
         uid: number
 
@@ -1359,7 +1359,7 @@ Page:
         uid: number
         remove: boolean?
 
-    unregisterLocatorHandlerNoReply:
+    unregisterLocatorHandler:
       parameters:
         uid: number
 

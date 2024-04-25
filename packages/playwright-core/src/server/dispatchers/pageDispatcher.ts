@@ -138,7 +138,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, metadata: CallMetadata): Promise<channels.PageRegisterLocatorHandlerResult> {
-    const uid = this._page.registerLocatorHandler(params.selector, params.allowStayingVisible);
+    const uid = this._page.registerLocatorHandler(params.selector, params.noWaitAfter);
     return { uid };
   }
 
@@ -146,7 +146,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._page.resolveLocatorHandler(params.uid, params.remove);
   }
 
-  async unregisterLocatorHandlerNoReply(params: channels.PageUnregisterLocatorHandlerNoReplyParams, metadata: CallMetadata): Promise<void> {
+  async unregisterLocatorHandler(params: channels.PageUnregisterLocatorHandlerParams, metadata: CallMetadata): Promise<void> {
     this._page.unregisterLocatorHandler(params.uid);
   }
 

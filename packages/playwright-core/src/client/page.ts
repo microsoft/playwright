@@ -362,12 +362,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return Response.fromNullable((await this._channel.reload({ ...options, waitUntil })).response);
   }
 
-  async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, allowStayingVisible?: boolean } = {}): Promise<void> {
+  async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, noWaitAfter?: boolean } = {}): Promise<void> {
     if (locator._frame !== this._mainFrame)
       throw new Error(`Locator must belong to the main frame of this page`);
     if (options.times === 0)
       return;
-    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, allowStayingVisible: options.allowStayingVisible });
+    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, noWaitAfter: options.noWaitAfter });
     this._locatorHandlers.set(uid, { locator, handler, times: options.times });
   }
 
@@ -386,11 +386,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
   }
 
-  async removeLocatorHandler(locator: Locator, handler: (locator: Locator) => any): Promise<void> {
+  async removeLocatorHandler(locator: Locator): Promise<void> {
     for (const [uid, data] of this._locatorHandlers) {
-      if (data.locator._equals(locator) && data.handler === handler) {
+      if (data.locator._equals(locator)) {
         this._locatorHandlers.delete(uid);
-        await this._channel.unregisterLocatorHandlerNoReply({ uid }).catch(() => {});
+        await this._channel.unregisterLocatorHandler({ uid }).catch(() => {});
       }
     }
   }

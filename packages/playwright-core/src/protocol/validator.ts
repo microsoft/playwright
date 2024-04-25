@@ -1046,7 +1046,7 @@ scheme.PageGoForwardResult = tObject({
 });
 scheme.PageRegisterLocatorHandlerParams = tObject({
   selector: tString,
-  allowStayingVisible: tOptional(tBoolean),
+  noWaitAfter: tOptional(tBoolean),
 });
 scheme.PageRegisterLocatorHandlerResult = tObject({
   uid: tNumber,
@@ -1056,10 +1056,10 @@ scheme.PageResolveLocatorHandlerNoReplyParams = tObject({
   remove: tOptional(tBoolean),
 });
 scheme.PageResolveLocatorHandlerNoReplyResult = tOptional(tObject({}));
-scheme.PageUnregisterLocatorHandlerNoReplyParams = tObject({
+scheme.PageUnregisterLocatorHandlerParams = tObject({
   uid: tNumber,
 });
-scheme.PageUnregisterLocatorHandlerNoReplyResult = tOptional(tObject({}));
+scheme.PageUnregisterLocatorHandlerResult = tOptional(tObject({}));
 scheme.PageReloadParams = tObject({
   timeout: tOptional(tNumber),
   waitUntil: tOptional(tType('LifecycleEvent')),

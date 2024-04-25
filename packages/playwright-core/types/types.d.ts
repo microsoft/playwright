@@ -1790,8 +1790,6 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
-   *
    * When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to
    * automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making
    * them tricky to handle in automated tests.
@@ -1809,7 +1807,7 @@ export interface Page {
    *   handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't
    *   perform any actions, the handler will not be triggered.
    * - After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible
-   *   anymore. You can opt-out of this behavior with `allowStayingVisible`.
+   *   anymore. You can opt-out of this behavior with `noWaitAfter`.
    * - The execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
    *   If your handler takes too long, it might cause timeouts.
    * - You can register multiple handlers. However, only a single handler will be running at a time. Make sure the
@@ -1859,14 +1857,14 @@ export interface Page {
    * ```
    *
    * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
-   * so the handler is called before every actionability check. It is important to specify `allowStayingVisible`,
-   * because the handler does not hide the `<body>` element.
+   * so the handler is called before every actionability check. It is important to specify `noWaitAfter`, because the
+   * handler does not hide the `<body>` element.
    *
    * ```js
    * // Setup the handler.
    * await page.addLocatorHandler(page.locator('body'), async () => {
    *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-   * }, { allowStayingVisible: true });
+   * }, { noWaitAfter: true });
    *
    * // Write the test as usual.
    * await page.goto('https://example.com');
@@ -1893,7 +1891,7 @@ export interface Page {
      * Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of
      * this behavior, so that overlay can stay visible after the handler has run.
      */
-    allowStayingVisible?: boolean;
+    noWaitAfter?: boolean;
 
     /**
      * Specifies the maximum number of times this handler should be called. Unlimited by default.
@@ -3680,16 +3678,13 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
-   *
-   * Removes locator handler added by
-   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   * Removes all locator handlers added by
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler)
+   * for a specific locator.
    * @param locator Locator passed to
    * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
-   * @param handler Handler passed to
-   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
    */
-  removeLocatorHandler(locator: Locator, handler: ((locator: Locator) => Promise<any>)): Promise<void>;
+  removeLocatorHandler(locator: Locator): Promise<void>;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
