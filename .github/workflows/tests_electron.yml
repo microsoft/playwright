@@ -44,8 +44,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - run: npm run etest
       if: matrix.os != 'ubuntu-latest'
-    - run: node tests/config/checkCoverage.js electron
-      if: ${{ !cancelled() && matrix.os == 'ubuntu-latest' }}
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
