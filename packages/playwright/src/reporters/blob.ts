@@ -111,6 +111,8 @@ export class BlobReporter extends TeleReporterEmitter {
   private _computeReportName(config: FullConfig) {
     if (this._options.fileName)
       return this._options.fileName;
+    if (process.env.PLAYWRIGHT_BLOB_FILE_NAME)
+      return process.env.PLAYWRIGHT_BLOB_FILE_NAME;
     let reportName = 'report';
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
