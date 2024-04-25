@@ -260,7 +260,7 @@ APIResponse response = request.fetch("https://example.com/api/uploadScript",
 
 ```python
 api_request_context.fetch(
-  "https://example.com/api/uploadScript'",  method="post",
+  "https://example.com/api/uploadScript",  method="post",
   multipart={
     "fileField": {
       "name": "f.js",
