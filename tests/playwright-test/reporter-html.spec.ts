@@ -69,7 +69,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       await showReport();
 
-      await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
+      await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('3');
       await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
       await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
       await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -78,7 +78,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toBeVisible();
       await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toBeVisible();
       await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
-      await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
+      await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).not.toBeVisible();
 
       await expect(page.getByTestId('overall-duration'), 'should contain humanized total time with at most 1 decimal place').toContainText(/^Total time: \d+(\.\d)?(ms|s|m)$/);
       await expect(page.getByTestId('project-name'), 'should contain project name').toContainText('project-name');
@@ -690,17 +690,17 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
-          test('skipped test', async ({ page }) => {
-            test.skip(true, 'I am not interested in this test');
+          test('annotated test', async ({ page }) => {
+            test.info().annotations.push({ type: 'issue', description: 'I am not interested in this test' });
           });
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
-      expect(result.skipped).toBe(1);
+      expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=skipped test');
-      await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+      await page.click('text=annotated test');
+      await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
     });
 
     test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
@@ -1230,20 +1230,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'webkit',
           'regression',
           'flaky',
-        ]);
-        await expect(page.locator('.test-file-test', { has: page.getByText('@regression skipped', { exact: true }) }).locator('.label')).toHaveText([
-          'chromium',
-          'regression',
-          'foo',
-          'bar',
-          'firefox',
-          'regression',
-          'foo',
-          'bar',
-          'webkit',
-          'regression',
-          'foo',
-          'bar',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',

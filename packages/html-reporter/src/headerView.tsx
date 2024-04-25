@@ -66,7 +66,7 @@ const StatsNavView: React.FC<{
 }> = ({ stats }) => {
   return <nav>
     <Link className='subnav-item' href='#?'>
-      All <span className='d-inline counter'>{stats.total}</span>
+      All <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
     <Link className='subnav-item' href='#?q=s:passed'>
       Passed <span className='d-inline counter'>{stats.expected}</span>

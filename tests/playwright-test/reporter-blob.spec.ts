@@ -216,16 +216,16 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('13');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('6');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('3');
 
   await expect(page.locator('.test-file-test .test-file-title')).toHaveText([
-    'failing 1', 'flaky 1', 'math 1', 'skipped 1',
-    'failing 2', 'math 2', 'skipped 2',
-    'flaky 2', 'math 3', 'skipped 3',
+    'failing 1', 'flaky 1', 'math 1',
+    'failing 2', 'math 2',
+    'flaky 2', 'math 3',
     'login once', 'login once', 'login once',
   ]);
 
@@ -284,7 +284,7 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
     expect(exitCode).toBe(0);
     expect(fs.existsSync(test.info().outputPath('report.json'))).toBe(true);
     await showReport();
-    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('7');
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('5');
     await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
     await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
     await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -340,7 +340,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('6');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -912,7 +912,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('3');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
@@ -1391,7 +1391,7 @@ test('should merge blob reports with same name', async ({ runInlineTest, mergeRe
   const { exitCode } = await mergeReports(allReportsDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
   await showReport();
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('14');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
@@ -1782,6 +1782,10 @@ test('preserve static annotations when tests did not run', async ({ runInlineTes
   const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
   await showReport();
+
+  // Show skipped tests.
+  await page.getByText('Skipped').click();
+
   // Check first annotation.
   {
     await page.getByRole('link', { name: 'first' }).click();
