@@ -1790,7 +1790,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
   registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
   resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
-  unregisterLocatorHandlerNoReply(params: PageUnregisterLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerResult>;
   reload(params: PageReloadParams, metadata?: CallMetadata): Promise<PageReloadResult>;
   expectScreenshot(params: PageExpectScreenshotParams, metadata?: CallMetadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
@@ -1927,10 +1927,10 @@ export type PageGoForwardResult = {
 };
 export type PageRegisterLocatorHandlerParams = {
   selector: string,
-  allowStayingVisible?: boolean,
+  noWaitAfter?: boolean,
 };
 export type PageRegisterLocatorHandlerOptions = {
-  allowStayingVisible?: boolean,
+  noWaitAfter?: boolean,
 };
 export type PageRegisterLocatorHandlerResult = {
   uid: number,
@@ -1943,13 +1943,13 @@ export type PageResolveLocatorHandlerNoReplyOptions = {
   remove?: boolean,
 };
 export type PageResolveLocatorHandlerNoReplyResult = void;
-export type PageUnregisterLocatorHandlerNoReplyParams = {
+export type PageUnregisterLocatorHandlerParams = {
   uid: number,
 };
-export type PageUnregisterLocatorHandlerNoReplyOptions = {
+export type PageUnregisterLocatorHandlerOptions = {
 
 };
-export type PageUnregisterLocatorHandlerNoReplyResult = void;
+export type PageUnregisterLocatorHandlerResult = void;
 export type PageReloadParams = {
   timeout?: number,
   waitUntil?: LifecycleEvent,
