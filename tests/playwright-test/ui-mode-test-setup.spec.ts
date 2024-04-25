@@ -84,6 +84,17 @@ test('should teardown on sigint', async ({ runUITest, nodeVersion }) => {
   ]);
 });
 
+test('should show errors in config', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig, devices } from '@playwright/test';
+      throw new Error("URL is empty")
+    `,
+  });
+  await page.getByText('playwright.config.ts').click();
+  await expect(page.getByText('Error: URL is empty')).toBeInViewport();
+});
+
 const testsWithSetup = {
   'playwright.config.ts': `
     import { defineConfig } from '@playwright/test';
