@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
@@ -30,6 +30,7 @@ type BlobReporterOptions = {
   configDir: string;
   outputDir?: string;
   fileName?: string;
+  _commandHash: string;
 };
 
 export const currentBlobReportVersion = 2;
@@ -114,6 +115,8 @@ export class BlobReporter extends TeleReporterEmitter {
     if (process.env.PLAYWRIGHT_BLOB_FILE_NAME)
       return process.env.PLAYWRIGHT_BLOB_FILE_NAME;
     let reportName = 'report';
+    if (this._options._commandHash)
+      reportName += '-' + sanitizeForFilePath(this._options._commandHash);
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName = `${reportName}-${paddedNumber}`;

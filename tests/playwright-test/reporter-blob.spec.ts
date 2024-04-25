@@ -1826,3 +1826,35 @@ test('preserve static annotations when tests did not run', async ({ runInlineTes
     await page.goBack();
   }
 });
+
+test('project filter in report name', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+          { name: 'b%/\\ar' },
+          { name: 'baz' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  const reportDir = test.info().outputPath('blob-report');
+
+  {
+    await runInlineTest(files, { shard: `2/2`, project: 'foo' });
+    const reportFiles = await fs.promises.readdir(reportDir);
+    expect(reportFiles.sort()).toEqual(['report-foo-2.zip']);
+  }
+  {
+    await runInlineTest(files, { shard: `1/2`, project: 'foo,b*r', grep: 'smoke' });
+    const reportFiles = await fs.promises.readdir(reportDir);
+    expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
+  }
+});
