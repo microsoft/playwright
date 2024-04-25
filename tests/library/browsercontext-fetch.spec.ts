@@ -23,7 +23,6 @@ import zlib from 'zlib';
 import { contextTest as it, expect } from '../config/browserTest';
 import { suppressCertificateWarning } from '../config/utils';
 import { kTargetClosedErrorMessage } from 'tests/config/errors';
-import * as buffer from 'buffer';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -987,7 +986,7 @@ it('should support multipart/form-data and keep the order', async function({ con
 it('should support repeating names in multipart/form-data', async function({ context, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
   const nodeVersion = +process.versions.node.split('.')[0];
-  it.skip(nodeVersion < 18, 'FormData is not available in Node.js < 18');
+  it.skip(nodeVersion < 20, 'File is not available in Node.js < 20. FormData is not available in Node.js < 18');
   const postBodyPromise = new Promise<string>(resolve => {
     server.setRoute('/empty.html', async (req, res) => {
       resolve((await req.postBody).toString('utf-8'));
@@ -1000,9 +999,9 @@ it('should support repeating names in multipart/form-data', async function({ con
   const formData = new FormData();
   formData.set('name', 'John');
   formData.append('name', 'Doe');
-  formData.append('file', new (buffer as any).File(['var x = 10;\r\n;console.log(x);'], 'f1.js', { type: 'text/javascript' }));
-  formData.append('file', new (buffer as any).File(['hello'], 'f2.txt', { type: 'text/plain' }), 'custom_f2.txt');
-  formData.append('file', new (buffer as any).Blob(['boo'], { type: 'text/plain' }));
+  formData.append('file', new File(['var x = 10;\r\n;console.log(x);'], 'f1.js', { type: 'text/javascript' }));
+  formData.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }), 'custom_f2.txt');
+  formData.append('file', new Blob(['boo'], { type: 'text/plain' }));
   const [postBody, response] = await Promise.all([
     postBodyPromise,
     context.request.post(server.EMPTY_PAGE, {
