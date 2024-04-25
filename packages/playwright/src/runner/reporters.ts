@@ -96,7 +96,7 @@ function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'me
 }
 
 function computeCommandHash(config: FullConfigInternal) {
-  let parts = [];
+  const parts = [];
   // Include project names for readability.
   if (config.cliProjectFilter)
     parts.push(...config.cliProjectFilter);
