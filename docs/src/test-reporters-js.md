@@ -215,15 +215,23 @@ Blob reports contain all the details about the test run and can be used later to
 npx playwright test --reporter=blob
 ```
 
-By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project` and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. Both output directory and report file name can be overridden in the configuration file. Report file name can also be passed as `'PLAYWRIGHT_BLOB_FILE_NAME'` environment variable.
+By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project` and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. The output file name can be overridden in the configuration file or pass as `'PLAYWRIGHT_BLOB_OUTPUT_FILE'` environment variable.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['blob', { outputDir: 'my-report', fileName: `report-${os.platform()}.zip` }]],
+  reporter: [['blob', { outputFile: `./blob-report/report-${os.platform()}.zip` }]],
 });
 ```
+
+Blob report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_BLOB_OUTPUT_DIR` | `outputDir` | Directory to save the output. Existing content is deleted before writing the new report. | `blob-report`
+| `PLAYWRIGHT_BLOB_OUTPUT_NAME` | `fileName` | Report file name. | `report-<project>-<hash>-<shard_number>.zip`
+| `PLAYWRIGHT_BLOB_OUTPUT_FILE` | `outputFile` | Full path for the output. If defined, `outputDir` and `fileName` will be ignored. | `undefined`
 
 ### JSON reporter
 
