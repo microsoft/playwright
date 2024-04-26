@@ -33,36 +33,16 @@ jobs:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
-    env:
-      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-*
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-*
+        bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
@@ -73,40 +53,16 @@ jobs:
         os: [macos-12, macos-13, macos-14]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
-    env:
-      PWTEST_BOT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     steps:
-    # https://github.com/actions/runner-images/issues/9330
-    - name: Allow microphone access to all apps (macOS 14)
-      if: ${{ matrix.os == 'macos-14' }}
-      run: sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- --project=${{ matrix.browser }}-*
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-*
+        bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_win:
     name: "Windows"
@@ -116,41 +72,16 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "${{ matrix.browser }}-windows-latest"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- --project=${{ matrix.browser }}-* --workers=1
-      if: matrix.browser == 'firefox'
-      shell: bash
-    - run: npm run test -- --project=${{ matrix.browser }}-*
-      if: matrix.browser != 'firefox'
-      shell: bash
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-* ${{ matrix.browser == 'firefox' && '--workers 1' || '' }}
+        bot-name: "${{ matrix.browser }}-windows-latest"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -167,30 +98,16 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node_version }}
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
-    - run: npm run itest
-      if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
-      if: matrix.os == 'ubuntu-latest'
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+    - uses: ./.github/actions/run-test
       with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
+        node-version: ${{ matrix.node_version }}
+        command: npm run itest
+        bot-name: "package-installations-${{ matrix.os }}-node${{ matrix.node_version }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   headed_tests:
     name: "headed ${{ matrix.browser }} (${{ matrix.os }})"
@@ -201,43 +118,16 @@ jobs:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-20.04, ubuntu-22.04, macos-14, windows-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      PWTEST_BOT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     steps:
-    # https://github.com/actions/runner-images/issues/9330
-    - name: Allow microphone access to all apps (macOS 14)
-      if: ${{ matrix.os == 'macos-14' }}
-      run: sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-* --headed
-      if: ${{ !cancelled() && startsWith(matrix.os, 'ubuntu-') }}
-    - run: npm run test -- --project=${{ matrix.browser }}-* --headed
-      if: ${{ !cancelled() && !startsWith(matrix.os, 'ubuntu-') }}
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-* --headed
+        bot-name: "${{ matrix.browser }}-headed-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   transport_linux:
     name: "Transport"
@@ -247,38 +137,18 @@ jobs:
       matrix:
         mode: [driver, service]
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "${{ matrix.mode }}"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: chromium
+        command: npm run ctest
+        bot-name: "${{ matrix.mode }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_MODE: ${{ matrix.mode }}
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -293,777 +163,367 @@ jobs:
           - browser: chromium
             channel: chromium-tip-of-tree
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "tracing-${{ matrix.channel || matrix.browser }}"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium ${{ matrix.channel }}
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}-*
+        browsers-to-install: ${{ matrix.browser }} chromium ${{ matrix.channel }}
+        command: npm run test -- --project=${{ matrix.browser }}-*
+        bot-name: "tracing-${{ matrix.channel || matrix.browser }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "chrome-stable-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: chrome
+        command: npm run ctest
+        bot-name: "chrome-stable-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "chrome-stable-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome
-    - run: npm run ctest
-      shell: bash
+        browsers-to-install: chrome
+        command: npm run ctest
+        bot-name: "chrome-stable-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "chrome-stable-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome
-    - run: npm run ctest
+        browsers-to-install: chrome
+        command: npm run ctest
+        bot-name: "chrome-stable-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
-    env:
-      PWTEST_CHANNEL: chromium-tip-of-tree
-      PWTEST_BOT_NAME: "tip-of-tree-${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, macos-12, windows-latest]
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
+        browsers-to-install: chromium-tip-of-tree
+        command: npm run ctest
+        bot-name: "tip-of-tree-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium-tip-of-tree
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
-      if: matrix.os == 'ubuntu-20.04'
-    - run: npm run ctest
-      if: matrix.os != 'ubuntu-20.04'
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        PWTEST_CHANNEL: chromium-tip-of-tree
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
-    env:
-      PWTEST_CHANNEL: chromium-tip-of-tree
-      PWTEST_BOT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
+        browsers-to-install: chromium-tip-of-tree
+        command: npm run ctest -- --headed
+        bot-name: "tip-of-tree-headed-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium-tip-of-tree
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- --headed
-      if: matrix.os == 'ubuntu-latest'
-    - run: npm run ctest -- --headed
-      if: matrix.os != 'ubuntu-latest'
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        PWTEST_CHANNEL: chromium-tip-of-tree
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "firefox-beta-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps firefox-beta chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
+        browsers-to-install: firefox-beta chromium
+        command: npm run ftest
+        bot-name: "firefox-beta-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "firefox-beta-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps firefox-beta chromium
-    - run: npm run ftest -- --workers=1
-      shell: bash
+        browsers-to-install: firefox-beta chromium
+        command: npm run ftest -- --workers=1
+        bot-name: "firefox-beta-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "firefox-beta-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps firefox-beta chromium
-    - run: npm run ftest
+        browsers-to-install: firefox-beta chromium
+        command: npm run ftest
+        bot-name: "firefox-beta-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "edge-stable-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge
-    - run: npm run ctest
+        browsers-to-install: msedge
+        command: npm run ctest
+        bot-name: "edge-stable-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_win:
     name: "Edge Stable (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "edge-stable-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge
-    - run: npm run ctest
-      shell: bash
+        browsers-to-install: msedge
+        command: npm run ctest
+        bot-name: "edge-stable-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "edge-stable-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: msedge
+        command: npm run ctest
+        bot-name: "edge-stable-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "edge-beta-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-beta
-    - run: npm run ctest
+        browsers-to-install: msedge-beta
+        command: npm run ctest
+        bot-name: "edge-beta-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_win:
     name: "Edge Beta (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "edge-beta-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-beta
-    - run: npm run ctest
-      shell: bash
+        browsers-to-install: msedge-beta
+        command: npm run ctest
+        bot-name: "edge-beta-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "edge-beta-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-beta
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: msedge-beta
+        command: npm run ctest
+        bot-name: "edge-beta-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "edge-dev-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-dev
-    - run: npm run ctest
+        browsers-to-install: msedge-dev
+        command: npm run ctest
+        bot-name: "edge-dev-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-dev
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_win:
     name: "Edge Dev (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "edge-dev-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-dev
-    - run: npm run ctest
-      shell: bash
+        browsers-to-install: msedge-dev
+        command: npm run ctest
+        bot-name: "edge-dev-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-dev
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "edge-dev-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps msedge-dev
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: msedge-dev
+        command: npm run ctest
+        bot-name: "edge-dev-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: msedge-dev
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-20.04
-    env:
-      PWTEST_BOT_NAME: "chrome-beta-linux"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome-beta
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+        browsers-to-install: chrome-beta
+        command: npm run ctest
+        bot-name: "chrome-beta-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-latest
-    env:
-      PWTEST_BOT_NAME: "chrome-beta-windows"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome-beta
-    - run: npm run ctest
-      shell: bash
+        browsers-to-install: chrome-beta
+        command: npm run ctest
+        bot-name: "chrome-beta-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: macos-latest
-    env:
-      PWTEST_BOT_NAME: "chrome-beta-mac"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chrome-beta
-    - run: npm run ctest
+        browsers-to-install: chrome-beta
+        command: npm run ctest
+        bot-name: "chrome-beta-mac"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chrome-beta
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
 
   build-playwright-driver:
     name: "build-playwright-driver"
@@ -1082,35 +542,15 @@ jobs:
     name: Linux Chromium Headless New
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-latest
-    env:
-      PWTEST_BOT_NAME: "headless-new"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium-*
+        browsers-to-install: chromium
+        command: npm run ctest
+        bot-name: "headless-new"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
-    - name: Upload blob report
-      if: ${{ !cancelled() }}
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
