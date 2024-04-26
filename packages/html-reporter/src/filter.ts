@@ -168,3 +168,24 @@ function cacheSearchValues(test: TestCaseSummary): SearchValues {
   (test as any)[searchValuesSymbol] = searchValues;
   return searchValues;
 }
+
+export function filterWithToken(tokens: string[], token: string, append: boolean): string {
+  if (append) {
+    if (!tokens.includes(token))
+      return '#?q=' + [...tokens, token].join(' ').trim();
+    return '#?q=' + tokens.filter(t => t !== token).join(' ').trim();
+  }
+
+  // if metaKey or ctrlKey is not pressed, replace existing token with new token
+  let prefix: 's:' | 'p:' | '@';
+  if (token.startsWith('s:'))
+    prefix = 's:';
+  if (token.startsWith('p:'))
+    prefix = 'p:';
+  if (token.startsWith('@'))
+    prefix = '@';
+
+  const newTokens = tokens.filter(t => !t.startsWith(prefix));
+  newTokens.push(token);
+  return '#?q=' + newTokens.join(' ').trim();
+}
