@@ -21,6 +21,5 @@
       "*": ["_"],
     }
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.spec.*/*", "tests/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

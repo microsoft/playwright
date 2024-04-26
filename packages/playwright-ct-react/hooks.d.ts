@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+export interface RegisterHooksConfig {}
 
-export declare function beforeMount<HooksConfig extends JsonObject>(
+export declare function beforeMount<HooksConfig = RegisterHooksConfig>(
   callback: (params: { hooksConfig?: HooksConfig; App: () => JSX.Element }) => Promise<void | JSX.Element>
 ): void;
-export declare function afterMount<HooksConfig extends JsonObject>(
+export declare function afterMount<HooksConfig = RegisterHooksConfig>(
   callback: (params: { hooksConfig?: HooksConfig }) => Promise<void>
 ): void;

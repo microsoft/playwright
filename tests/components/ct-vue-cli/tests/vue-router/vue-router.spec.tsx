@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
 import App from '@/App.vue';
-import type { HooksConfig } from '../../playwright';
 
 test('navigate to a page by clicking a link', async ({ page, mount }) => {
-  const component = await mount<HooksConfig>(<App />, {
+  const component = await mount(<App />, {
     hooksConfig: { routing: true },
   });
   await expect(component.getByRole('main')).toHaveText('Login');

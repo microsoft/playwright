@@ -1,13 +1,13 @@
 import '../src/assets/index.css';
 import { beforeMount, afterMount } from '@playwright/experimental-ct-svelte/hooks';
 
-export type HooksConfig = {
-  context?: string;
-  route?: string;
+declare module '@playwright/experimental-ct-svelte/hooks' {
+  interface RegisterHooksConfig {
+    context?: string;
+  }
 }
 
-beforeMount<HooksConfig>(async ({ hooksConfig, App }) => {
-  console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
+beforeMount(async ({ hooksConfig, App }) => {
   return new App({
     context: new Map([
       ['context-key', hooksConfig?.context]
@@ -15,6 +15,6 @@ beforeMount<HooksConfig>(async ({ hooksConfig, App }) => {
   });
 });
 
-afterMount<HooksConfig>(async () => {
+afterMount(async () => {
   console.log(`After mount`);
 });

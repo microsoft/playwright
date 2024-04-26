@@ -1,20 +1,22 @@
 import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
 import { router } from '../src/router';
-import Button from '../src/components/Button.vue';
 import '../src/assets/index.css';
 
-export type HooksConfig = {
-  route?: string;
-  routing?: boolean;
+declare module '@playwright/experimental-ct-vue/hooks' {
+  interface RegisterHooksConfig {
+    routing?: boolean;
+    components?: Record<string, any>;
+  }
 }
 
-beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
+beforeMount(async ({ app, hooksConfig }) => {
   if (hooksConfig?.routing)
     app.use(router as any);
-  app.component('Button', Button);
-  console.log(`Before mount: ${JSON.stringify(hooksConfig)}, app: ${!!app}`);
+
+  for (const [name, component] of Object.entries(hooksConfig?.components || {}))
+    app.component(name, component);
 });
 
-afterMount<HooksConfig>(async ({ instance }) => {
+afterMount(async ({ instance }) => {
   console.log(`After mount el: ${instance.$el.constructor.name}`);
 });

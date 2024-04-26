@@ -29,7 +29,7 @@ type ComponentProps<T> =
 	T extends (props: infer P, ...args: any) => any ? P :
 	{};
 
-export interface MountOptions<Component, HooksConfig extends RegisterHooksConfig> {
+export interface MountOptions<HooksConfig extends RegisterHooksConfig, Component> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
@@ -59,9 +59,9 @@ export const test: TestType<{
     component: JSX.Element,
     options: MountOptionsJsx<HooksConfig>
   ): Promise<MountResultJsx>;
-  mount<Component = unknown, HooksConfig extends RegisterHooksConfig>(
+  mount<HooksConfig extends RegisterHooksConfig, Component = unknown>(
     component: Component,
-    options?: MountOptions<Component, HooksConfig>
+    options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
 }>;
 

@@ -15,15 +15,15 @@
  */
 
 import type { Locator } from 'playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
 import type { TestType } from '@playwright/experimental-ct-core';
+import type { RegisterHooksConfig } from './hooks';
 
 type ComponentSlot = string | string[];
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
 type ComponentEvents = Record<string, Function>;
 
-export interface MountOptions<HooksConfig extends JsonObject, Component extends SvelteComponent> {
+export interface MountOptions<HooksConfig extends RegisterHooksConfig, Component extends SvelteComponent> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
@@ -39,7 +39,7 @@ export interface MountResult<Component extends SvelteComponent> extends Locator 
 }
 
 export const test: TestType<{
-  mount<HooksConfig extends JsonObject, Component extends SvelteComponent = SvelteComponent>(
+  mount<HooksConfig extends RegisterHooksConfig, Component extends SvelteComponent = SvelteComponent>(
     component: new (...args: any[]) => Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;

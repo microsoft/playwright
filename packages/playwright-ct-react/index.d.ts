@@ -15,10 +15,10 @@
  */
 
 import type { Locator } from 'playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { TestType } from '@playwright/experimental-ct-core';
+import type { RegisterHooksConfig } from './hooks';
 
-export interface MountOptions<HooksConfig extends JsonObject> {
+export interface MountOptions<HooksConfig extends RegisterHooksConfig> {
   hooksConfig?: HooksConfig;
 }
 
@@ -28,7 +28,7 @@ export interface MountResult extends Locator {
 }
 
 export const test: TestType<{
-  mount<HooksConfig extends JsonObject>(
+  mount<HooksConfig extends RegisterHooksConfig>(
     component: JSX.Element,
     options?: MountOptions<HooksConfig>
   ): Promise<MountResult>;

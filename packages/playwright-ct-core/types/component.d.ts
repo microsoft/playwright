@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-export interface RegisterHooksConfig {
-
-};
-
 export type JsxComponent = {
   __pw_type: 'jsx',
   type: any,
@@ -46,15 +42,15 @@ declare global {
     playwrightMount(component: Component, rootElement: Element, hooksConfig?: any): Promise<void>;
     playwrightUnmount(rootElement: Element): Promise<void>;
     playwrightUpdate(rootElement: Element, component: Component): Promise<void>;
-    __pw_hooks_before_mount?: (<HooksConfig extends RegisterHooksConfig = RegisterHooksConfig>(
+    __pw_hooks_before_mount?: (<HooksConfig>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<any>)[];
-    __pw_hooks_after_mount?: (<HooksConfig extends RegisterHooksConfig = RegisterHooksConfig>(
+    __pw_hooks_after_mount?: (<HooksConfig>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<void>)[];
     // Can't start with __pw due to core reuse bindings logic for __pw*.
-    __ctDispatchFunction: (ordinal: number, args: any[]) => void;
-    __pwUnwrapObject: (value: any) => Promise<any>;
-    __pwTransformObject: (value: any, mapping: (v: any) => { result: any } | undefined) => any;
+    __ctDispatchFunction(ordinal: number, args: any[]): void;
+    __pwUnwrapObject(value: any): Promise<any>;
+    __pwTransformObject(value: any, mapping: (v: any) => { result: any } | undefined): any;
   }
 }
