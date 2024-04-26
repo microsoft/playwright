@@ -261,7 +261,7 @@ export const UIModeView: React.FC<{}> = ({
       {
         for (const test of testModel.rootSuite?.allTests() || []) {
           if (testIds.has(test.id)) {
-            (test as TeleTestCase)._clearResults();
+            test.results = [];
             const result = (test as TeleTestCase)._createTestResult('pending');
             (result as any)[statusEx] = 'scheduled';
           }
@@ -289,7 +289,7 @@ export const UIModeView: React.FC<{}> = ({
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
-          (test as TeleTestCase)._clearResults();
+          test.results = [];
       }
       setTestModel({ ...testModel });
       setRunningState(undefined);
