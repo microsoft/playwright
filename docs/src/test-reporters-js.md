@@ -221,7 +221,7 @@ By default, the report is written into the `blob-report` directory in the packag
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['blob', { outputFile: `blob-report/report-${os.platform()}.zip` }]],
+  reporter: [['blob', { outputFile: `./blob-report/report-${os.platform()}.zip` }]],
 });
 ```
 
