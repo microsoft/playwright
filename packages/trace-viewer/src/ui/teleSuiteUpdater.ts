@@ -15,7 +15,6 @@
  */
 
 import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
-import type { TeleTestCase, TeleTestResult } from '@testIsomorphic/teleReceiver';
 import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
@@ -42,7 +41,7 @@ export class TeleSuiteUpdater {
   private _lastRunReceiver: TeleReporterReceiver | undefined;
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
-  private _testResultsSnapshot: Map<string,  Map<string, TeleTestResult>> | undefined;
+  private _testResultsSnapshot: Map<string, reporterTypes.TestResult[]> | undefined;
 
   constructor(options: TeleSuiteUpdaterOptions) {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
@@ -79,13 +78,11 @@ export class TeleSuiteUpdater {
       onBegin: (suite: reporterTypes.Suite) => {
         if (!this.rootSuite)
           this.rootSuite = suite as TeleSuite;
-        // As soon as new test tree is built add previous results.
+        // As soon as new test tree is built add previous results, before calling onUpdate
+        // to avoid flashing empty results in the UI.
         if (this._testResultsSnapshot) {
-          (this.rootSuite.allTests() as TeleTestCase[]).forEach(test => {
-            const results = this._testResultsSnapshot!.get(test.id);
-            if (results)
-              test._restoreResults(results);
-          });
+          for (const test of this.rootSuite.allTests())
+            test.results = this._testResultsSnapshot?.get(test.id) || test.results;
           this._testResultsSnapshot = undefined;
         }
         this.progress.total = this._lastRunTestCount;
@@ -143,8 +140,8 @@ export class TeleSuiteUpdater {
   processListReport(report: any[]) {
     // Save test results and reset all projects, the results will be restored after
     // new project structure is built.
-    if (this.rootSuite)
-      this._testResultsSnapshot = new Map((this.rootSuite.allTests() as TeleTestCase[]).map(test => [test.id, test._resultsMap]));
+    const tests = this.rootSuite?.allTests() || [];
+    this._testResultsSnapshot = new Map(tests.map(test => [test.id, test.results]));
     this._receiver.reset();
     for (const message of report)
       this._receiver.dispatch(message);

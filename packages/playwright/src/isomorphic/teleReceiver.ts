@@ -220,7 +220,7 @@ export class TeleReporterReceiver {
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
     if (this._options.clearPreviousResultsWhenTestBegins)
-      test._clearResults();
+      test.results = [];
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
@@ -234,7 +234,7 @@ export class TeleReporterReceiver {
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
     test.annotations = testEndPayload.annotations;
-    const result = test._resultsMap.get(payload.id)!;
+    const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
     result.errors = payload.errors;
@@ -247,7 +247,7 @@ export class TeleReporterReceiver {
 
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
     const test = this._tests.get(testId)!;
-    const result = test._resultsMap.get(resultId)!;
+    const result = test.results.find(r => r._id === resultId)!;
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
@@ -262,7 +262,7 @@ export class TeleReporterReceiver {
 
   private _onStepEnd(testId: string, resultId: string, payload: JsonTestStepEnd) {
     const test = this._tests.get(testId)!;
-    const result = test._resultsMap.get(resultId)!;
+    const result = test.results.find(r => r._id === resultId)!;
     const step = result._stepMap.get(payload.id)!;
     step.duration = payload.duration;
     step.error = payload.error;
@@ -276,7 +276,7 @@ export class TeleReporterReceiver {
   private _onStdIO(type: JsonStdIOType, testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
     const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
-    const result = test && resultId ? test._resultsMap.get(resultId) : undefined;
+    const result = test && resultId ? test.results.find(r => r._id === resultId) : undefined;
     if (type === 'stdout') {
       result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
@@ -478,8 +478,6 @@ export class TeleTestCase implements reporterTypes.TestCase {
   repeatEachIndex = 0;
   id: string;
 
-  _resultsMap = new Map<string, TeleTestResult>();
-
   constructor(id: string, title: string, location: reporterTypes.Location, repeatEachIndex: number) {
     this.id = id;
     this.title = title;
@@ -502,20 +500,9 @@ export class TeleTestCase implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  _clearResults() {
-    this.results = [];
-    this._resultsMap.clear();
-  }
-
-  _restoreResults(snapshot: Map<string, TeleTestResult>) {
-    this.results = [...snapshot.values()];
-    this._resultsMap = snapshot;
-  }
-
   _createTestResult(id: string): TeleTestResult {
-    const result = new TeleTestResult(this.results.length);
+    const result = new TeleTestResult(this.results.length, id);
     this.results.push(result);
-    this._resultsMap.set(id, result);
     return result;
   }
 }
@@ -566,11 +553,13 @@ export class TeleTestResult implements reporterTypes.TestResult {
   error: reporterTypes.TestResult['error'];
 
   _stepMap: Map<string, reporterTypes.TestStep> = new Map();
+  _id: string;
 
   private _startTime: number = 0;
 
-  constructor(retry: number) {
+  constructor(retry: number, id: string) {
     this.retry = retry;
+    this._id = id;
   }
 
   setStartTimeNumber(startTime: number) {
