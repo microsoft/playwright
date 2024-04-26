@@ -2064,9 +2064,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -2179,9 +2180,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -3069,9 +3071,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -3591,7 +3594,8 @@ export interface Page {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -4183,9 +4187,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -5759,9 +5764,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -5846,9 +5852,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -6539,9 +6546,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -6897,7 +6905,8 @@ export interface Frame {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -7229,9 +7238,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -9838,9 +9848,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -9917,9 +9928,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -10078,9 +10090,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -10224,7 +10237,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -10635,9 +10649,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -11283,9 +11298,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -11395,9 +11411,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -12068,9 +12085,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -12437,7 +12455,8 @@ export interface Locator {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -12864,9 +12883,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -18316,7 +18336,8 @@ export interface Keyboard {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -18365,7 +18386,8 @@ export interface Keyboard {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *

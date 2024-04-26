@@ -183,7 +183,7 @@ export class Page extends SdkObject {
     this._delegate = delegate;
     this._browserContext = browserContext;
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
-    this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
+    this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
