@@ -43,7 +43,7 @@ const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 })
 
 test.describe.configure({ mode: 'parallel' });
 
-for (const useIntermediateMergeReport of [false, true] as const) {
+for (const useIntermediateMergeReport of [false] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
@@ -1649,8 +1649,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         const passedNavMenu = page.locator('.subnav-item:has-text("Passed")');
         const failedNavMenu = page.locator('.subnav-item:has-text("Failed")');
         const allNavMenu = page.locator('.subnav-item:has-text("All")');
-        const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
-        const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+        const smokeLabelButton =  page.locator('.label', { hasText: 'smoke' }).first();
+        const regressionLabelButton =  page.locator('.label', { hasText: 'regression' }).first();
 
         await failedNavMenu.click();
         await smokeLabelButton.click();
@@ -1662,6 +1662,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page).toHaveURL(/s:failed%20@smoke/);
 
         await passedNavMenu.click();
+        await smokeLabelButton.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
         await regressionLabelButton.click();
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);

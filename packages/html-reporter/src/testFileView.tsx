@@ -18,7 +18,7 @@ import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
-import type { Filter } from './filter';
+import { filterWithToken, type Filter } from './filter';
 import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
@@ -94,23 +94,9 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
   const onClickHandle = (e: React.MouseEvent, label: string) => {
     e.preventDefault();
     const searchParams = new URLSearchParams(window.location.hash.slice(1));
-    let q = searchParams.get('q')?.toString() || '';
-
-    // If metaKey or ctrlKey is pressed, add tag to search query without replacing existing tags.
-    // If metaKey or ctrlKey is pressed and tag is already in search query, remove tag from search query.
-    if (e.metaKey || e.ctrlKey) {
-      if (!q.includes(label))
-        q = `${q} ${label}`.trim();
-      else
-        q = q.split(' ').filter(t => t !== label).join(' ').trim();
-    } else {
-      // if metaKey or ctrlKey is not pressed, replace existing tags with new tag
-      if (!q.includes('@'))
-        q = `${q} ${label}`.trim();
-      else
-        q = (q.split(' ').filter(t => !t.startsWith('@')).join(' ').trim() + ` ${label}`).trim();
-    }
-    navigate(q ? `#?q=${q}` : '#');
+    const q = searchParams.get('q')?.toString() || '';
+    const tokens = q.split(' ');
+    navigate(filterWithToken(tokens, label, e.metaKey || e.ctrlKey));
   };
 
   return labels.length > 0 ? (
