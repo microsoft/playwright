@@ -154,18 +154,26 @@ export type LastRunInfo = {
 };
 
 async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
-  await fs.promises.mkdir(testRun.config.globalOutputDir, { recursive: true });
-  const lastRunReportFile = path.join(testRun.config.globalOutputDir, 'last-run.json');
+  const [project] = filterProjects(testRun.config.projects, testRun.config.cliProjectFilter);
+  if (!project)
+    return;
+  const outputDir = project.project.outputDir;
+  await fs.promises.mkdir(outputDir, { recursive: true });
+  const lastRunReportFile = path.join(outputDir, '.last-run.json');
   const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
   const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
   await fs.promises.writeFile(lastRunReportFile, lastRunReport);
 }
 
 export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
-  const lastRunReportFile = path.join(config.globalOutputDir, 'last-run.json');
+  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  if (!project)
+    return { status: 'passed', failedTests: [] };
+  const outputDir = project.project.outputDir;
   try {
+    const lastRunReportFile = path.join(outputDir, '.last-run.json');
     return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
-  } catch (e) {
+  } catch {
   }
   return { status: 'passed', failedTests: [] };
 }
