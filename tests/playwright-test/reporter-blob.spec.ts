@@ -1198,7 +1198,31 @@ test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
 
-test('support PLAYWRIGHT_BLOB_FILE_NAME environment variable', async ({ runInlineTest, mergeReports }) => {
+test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
+  const files = (fileSuffix: string) => ({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: 'should-be-ignored', outputFile: 'my-reports/report-${fileSuffix}.zip' }]],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  });
+
+  await runInlineTest(files('one'));
+  await runInlineTest(files('two'));
+
+  const reportDir = test.info().outputPath('my-reports');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+});
+
+test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInlineTest, mergeReports }) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
@@ -1218,9 +1242,9 @@ test('support PLAYWRIGHT_BLOB_FILE_NAME environment variable', async ({ runInlin
     `,
   };
 
-  await runInlineTest(files, { shard: `1/2` }, { PLAYWRIGHT_BLOB_FILE_NAME: 'report-one.zip' });
-  await runInlineTest(files, { shard: `2/2` }, { PLAYWRIGHT_BLOB_FILE_NAME: 'report-two.zip', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
-  const reportDir = test.info().outputPath('blob-report');
+  await runInlineTest(files, { shard: `1/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: 'subdir/report-one.zip' });
+  await runInlineTest(files, { shard: `2/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: test.info().outputPath('subdir/report-two.zip') });
+  const reportDir = test.info().outputPath('subdir');
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
