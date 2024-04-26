@@ -225,6 +225,14 @@ export default defineConfig({
 });
 ```
 
+Blob report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_BLOB_OUTPUT_DIR` | `outputDir` | Directory to save the output. Existing content is deleted before writing the new report. | `blob-report`
+| `PLAYWRIGHT_BLOB_OUTPUT_NAME` | `fileName` | File name for the output. | `report-<hash>-<shard_number>.zip`
+| `PLAYWRIGHT_BLOB_OUTPUT_FILE` | `outputFile` | Full path for the output. If defined, `outputDir` and `fileName` will be overridden | `undefined`
+
 ### JSON reporter
 
 JSON reporter produces an object with all information about the test run.

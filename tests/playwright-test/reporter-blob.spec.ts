@@ -1198,7 +1198,57 @@ test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
 
+test('support PLAYWRIGHT_BLOB_OUTPUT_DIR env variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_DIR: 'my/dir' });
+
+  const reportDir = test.info().outputPath('my', 'dir');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report.zip']);
+});
+
+test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-one.zip' });
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-two.zip', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+});
+
 test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = (fileSuffix: string) => ({
     'playwright.config.ts': `
       module.exports = {
@@ -1223,6 +1273,7 @@ test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
 });
 
 test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = {
     'playwright.config.ts': `
       module.exports = {

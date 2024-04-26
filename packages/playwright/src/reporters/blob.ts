@@ -112,8 +112,8 @@ export class BlobReporter extends TeleReporterEmitter {
       outputFile = path.resolve(this._options.configDir, this._options.outputFile);
     // Explicit `outputFile` overrides `outputDir` and `fileName` options.
     if (!outputFile) {
-      const reportName = this._options.fileName || this._defaultReportName(this._config);
-      const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir);
+      const reportName = this._options.fileName || process.env[`PLAYWRIGHT_BLOB_OUTPUT_NAME`] || this._defaultReportName(this._config);
+      const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir ?? reportOutputDirFromEnv());
       if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
         await removeFolders([outputDir]);
       outputFile = path.resolve(outputDir, reportName);
@@ -148,6 +148,12 @@ export class BlobReporter extends TeleReporterEmitter {
       };
     });
   }
+}
+
+function reportOutputDirFromEnv(): string | undefined {
+  if (process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`]);
+  return undefined;
 }
 
 function reportOutputFileFromEnv(): string | undefined {
