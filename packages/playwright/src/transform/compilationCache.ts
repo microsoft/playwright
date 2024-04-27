@@ -126,23 +126,35 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   const dataPath = cachePath + '.data';
-  try {
-    const cachedCode = fs.readFileSync(codePath, 'utf8');
-    const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
-    return { cachedCode, serializedCache };
-  } catch {
+  const markerFile = codePath + '-marker';
+  if (fs.existsSync(markerFile)) {
+    try {
+      const cachedCode = fs.readFileSync(codePath, 'utf8');
+      const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+      return { cachedCode, serializedCache };
+    } catch {
+    }
   }
 
   return {
     addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
         return {};
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      if (map)
-        fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
-      if (data.size)
-        fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
-      fs.writeFileSync(codePath, code, 'utf8');
+      try {
+        fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+        if (map)
+          fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
+        if (data.size)
+          fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), { encoding: 'utf8', flag: 'wx' });
+        fs.writeFileSync(codePath, code, 'utf8');
+        fs.closeSync(fs.openSync(markerFile, 'wx'));
+      }
+      catch (error) {
+        if (error.code === 'EEXIST') {
+        } else {
+            throw error;
+        }
+      }
       const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
       return { serializedCache };
     }
