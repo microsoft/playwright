@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-import type * as actions from '../../../../playwright-core/src/server/recorder/recorderActions';
+import type * as actions from 'playwright-core/lib/server/recorder/recorderActions';
 import type * as channels from '@protocol/channels';
-import { JavaLanguageGenerator } from '../../../../playwright-core/src/server/recorder/java';
-import { JavaScriptLanguageGenerator } from '../../../../playwright-core/src/server/recorder/javascript';
-import { JsonlLanguageGenerator } from '../../../../playwright-core/src/server/recorder/jsonl';
-import { CSharpLanguageGenerator } from '../../../../playwright-core/src/server/recorder/csharp';
-import { PythonLanguageGenerator } from '../../../../playwright-core/src/server/recorder/python';
+import { JavaLanguageGenerator } from 'playwright-core/lib/server/recorder/java';
+import { JavaScriptLanguageGenerator } from 'playwright-core/lib/server/recorder/javascript';
+import { JsonlLanguageGenerator } from 'playwright-core/lib/server/recorder/jsonl';
+import { CSharpLanguageGenerator } from 'playwright-core/lib/server/recorder/csharp';
+import { PythonLanguageGenerator } from 'playwright-core/lib/server/recorder/python';
 import type { EventData, Mode, OverlayState, Source, UIState } from '../../recorderTypes';
 import { EventEmitter } from 'events';
 import { raceAgainstDeadline, monotonicTime } from '../utils';
-import type { Language, LanguageGenerator } from '../../../../playwright-core/src/server/recorder/language';
+import type { Language, LanguageGenerator } from 'playwright-core/lib/server/recorder/language';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
-import { eventsHelper, type RegisteredListener } from '../../../../playwright-core/src/utils/eventsHelper';
-import type { IRecorderApp } from '../../../../playwright-core/src/server/recorder/recorderApp';
+import { eventsHelper, type RegisteredListener } from 'playwright-core/lib/utils/eventsHelper';
+import type { IRecorderApp } from 'playwright-core/lib/server/recorder/recorderApp';
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Frame } from '../frame';
-import { CodeGenerator } from '../../../../playwright-core/src/server/recorder/codeGenerator';
-import type { ActionInContext } from '../../../../playwright-core/src/server/recorder/codeGenerator';
+import { CodeGenerator } from 'playwright-core/lib/server/recorder/codeGenerator';
+import type { ActionInContext } from 'playwright-core/lib/server/recorder/codeGenerator';
 import { EmptyRecorderApp } from './recorderApp';
 
 type BindingSource = { frame: Frame, page: Page };

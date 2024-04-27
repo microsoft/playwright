@@ -16,7 +16,7 @@
 
 import type { CallLog, Mode, Source } from '../../recorderTypes';
 import { EventEmitter } from 'events';
-import type { IRecorderApp } from '../../../../playwright-core/src/server/recorder/recorderApp';
+import type { IRecorderApp } from 'playwright-core/lib/server/recorder/recorderApp';
 import type { Recorder } from './recorder';
 
 export type RecorderMessage =

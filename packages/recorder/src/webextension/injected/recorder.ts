@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { InjectedScript } from '../../../../playwright-core/src/server/injected/injectedScript';
-import { PollingRecorder } from '../../../../playwright-core/src/server/injected/recorder/recorder';
+import { InjectedScript } from 'playwright-core/lib/server/injected/injectedScript';
+import { PollingRecorder } from 'playwright-core/lib/server/injected/recorder/recorder';
 
 const wnd = window as any;
 

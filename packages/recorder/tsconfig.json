@@ -18,6 +18,7 @@
     "useUnknownInCatchVariables": false,
     "paths": {
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
+      "playwright-core/lib/*": ["../playwright-core/src/*"],
       "@protocol/*": ["../protocol/src/*"],
       "@recorder/*": ["./src/*"],
       "@trace/*": ["../trace/src/*"],
