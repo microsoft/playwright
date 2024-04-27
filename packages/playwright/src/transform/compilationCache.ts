@@ -148,11 +148,10 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
           fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), { encoding: 'utf8', flag: 'wx' });
         fs.writeFileSync(codePath, code, 'utf8');
         fs.closeSync(fs.openSync(markerFile, 'wx'));
-      }
-      catch (error) {
+      } catch (error) {
         if (error.code === 'EEXIST') {
         } else {
-            throw error;
+          throw error;
         }
       }
       const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
