@@ -382,6 +382,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       }
       remove = handler?.times === 0;
     } finally {
+      if (remove)
+        this._locatorHandlers.delete(uid);
       this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), true).catch(() => {});
     }
   }
