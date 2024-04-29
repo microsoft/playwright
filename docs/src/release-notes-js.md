@@ -6,6 +6,53 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.44
+
+### New APIs
+
+**Accessibility assertions**
+
+- [`expect(locator).toHaveAccessibleName()`](./api/class-locatorassertions#locator-assertions-to-have-accessible-name)
+- [`expect(locator).toHaveAccessibleDescription()`](./api/class-locatorassertions#locator-assertions-to-have-accessible-description)
+- [`expect(locator).toHaveRole()`](./api/class-locatorassertions#locator-assertions-to-have-role)
+
+**Assertion options**
+
+- `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.inervals` option [globally](./api/class-testconfig#test-config-expect) or in [project config](./api/class-testproject#test-project-expect)
+- `expect(page).toHaveURL(url)` now supports `ignoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+
+**Library**
+
+- New options `times` and `noWaitAfter` in [`method: Page.addLocatorHandler`].
+- New [`method: Page.removeLocatorHandler`] method for removing previously added locator handlers.
+- The handler in [`method: Page.addLocatorHandler`] now accepts the locator as argument.
+- [`multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()` now accepts [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) and supports repeating fields with same name.
+
+**Config options**
+
+- [`property: TestProject.ignoreSnapshots`](./api/class-testproject#test-project-ignore-snapshots) allows to configure  per project whether to skip screenshot expctations.
+
+**Reporter API**
+
+- New method [`method: Suite.entries`] returns child test suites and test cases in their declaration order. [`property: Suite.type`] and [`property: TestCase.type`] can be used to tell apart test cases and suites in thr list.
+- [Blob](./test-reporters#blob-reporter) reporter now allows overriding report file path with a single option `outputFile`. The same option can also be specified as `PLAYWRIGHT_BLOB_OUTPUT_FILE` environment variable that might be more convenient on CI/CD.
+- [JUnit](./test-reporters#junit-reporter) reporter now supports `includeProjectInTestName` option.
+
+**Command line**
+
+- `--last-failed` CLI option to for running only tests that failed in the previous run.
+
+### Browser Versions
+
+* Chromium 125.0.6422.14
+* Mozilla Firefox 125.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 124
+* Microsoft Edge 124
+
 ## Version 1.43
 
 ### New APIs
