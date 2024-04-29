@@ -146,7 +146,7 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
           fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
         if (data.size)
           fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), { encoding: 'utf8', flag: 'wx' });
-        fs.writeFileSync(codePath, code, 'utf8');
+        fs.writeFileSync(codePath, code, { encoding: 'utf8', flag: 'wx' });
         fs.closeSync(fs.openSync(markerFile, 'wx'));
       } catch (error) {
         if (error.code === 'EEXIST') {
