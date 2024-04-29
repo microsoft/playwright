@@ -21,6 +21,8 @@ const ALL_PERMISSIONS = [
   'desktop-notification',
 ];
 
+let globalTabAndWindowActivationChain = Promise.resolve();
+
 class DownloadInterceptor {
   constructor(registry) {
     this._registry = registry
@@ -384,7 +386,7 @@ class PageTarget {
     const tabBrowser = ownerWindow.gBrowser;
     // Serialize all tab-switching commands per tabbed browser
     // to disallow concurrent tab switching.
-    const result = (tabBrowser.__serializedChain ?? Promise.resolve()).then(async () => {
+    const result = globalTabAndWindowActivationChain.then(async () => {
       this._window.focus();
       if (tabBrowser.selectedTab !== this._tab) {
         const promise = helper.awaitEvent(ownerWindow, 'TabSwitchDone');
@@ -399,7 +401,7 @@ class PageTarget {
         notificationsPopup?.style.removeProperty('pointer-events');
       }
     });
-    tabBrowser.__serializedChain = result.catch(error => { /* swallow errors to keep chain running */ });
+    globalTabAndWindowActivationChain = result.catch(error => { /* swallow errors to keep chain running */ });
     return result;
   }
 
