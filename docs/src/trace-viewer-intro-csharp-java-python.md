@@ -194,11 +194,11 @@ public class ExampleTest : PageTest
 </TabItem>
 </Tabs>
 
-This will record the trace and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
+This will record a zip file for each trace, eg. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
 
 ## Opening the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located.
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your trace's zip file is located. Once opened you can click on each action or use the timeline to see the state of the page before and after each action. You can also inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
 ```bash java
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
@@ -212,8 +212,6 @@ playwright show-trace trace.zip
 pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-traces/PlaywrightTests.ExampleTest.GetStartedLink.zip
 ```
 
-View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
-
 ######
 * langs: python, java
 
@@ -222,7 +220,7 @@ View traces of your test by clicking through each action or hovering using the t
 ######
 * langs: csharp
 
-![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/3baf2dcf-46f9-4dd7-8fcc-91c880e10a2e)
+![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c)
 
 To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 

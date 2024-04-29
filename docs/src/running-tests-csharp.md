@@ -24,9 +24,45 @@ Use the following command to run all tests.
 dotnet test
 ```
 
-### Run tests on different browsers
+### Run your tests in headed mode
 
-To specify which browser you would like to run your tests on, use the `Playwright.BrowserName=` flag followed by the name of the browser.
+Use the following command to run your tests in headed mode opening a browser window for each test.
+
+```bash tab=bash-bash lang=csharp
+HEADED=1 dotnet test
+```
+
+```batch tab=bash-batch lang=csharp
+set HEADED=1
+dotnet test
+```
+
+```powershell tab=bash-powershell lang=csharp
+$env:HEADED="1"
+dotnet test
+```
+
+### Run tests on different browsers: Browser env
+
+Specify which browser you would like to run your tests on via the `BROWSER` environment variable.
+
+```bash tab=bash-bash lang=csharp
+BROWSER=webkit dotnet test
+```
+
+```batch tab=bash-batch lang=csharp
+set BROWSER=webkit
+dotnet test
+```
+
+```powershell tab=bash-powershell lang=csharp
+$env:BROWSER="webkit"
+dotnet test
+```
+
+### Run tests on different browsers: launch configuration
+
+Specify which browser you would like to run your tests on by adjusting the launch configuration options:
 
 ```bash
 dotnet test -- Playwright.BrowserName=webkit

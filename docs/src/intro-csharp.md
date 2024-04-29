@@ -71,9 +71,29 @@ dotnet build
 
 1. Install required browsers. This example uses `net8.0`, if you are using a different version of .NET you will need to adjust the command and change `net8.0` to your version.
 
+<Tabs
+  groupId="test-runners"
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
 ```bash
 pwsh bin/Debug/net8.0/playwright.ps1 install
 ```
+
+</TabItem>
+<TabItem value="mstest">
+
+```bash
+pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
+```
+
+</TabItem>
+</Tabs>
 
 If `pwsh` is not available, you will have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
 
@@ -170,34 +190,13 @@ public class ExampleTest : PageTest
 
 ## Running the Example Tests
 
-By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./test-runners.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
-
-<Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
-}>
-<TabItem value="nunit">
+By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./running-tests.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 ```bash
 dotnet test
 ```
 
-</TabItem>
-<TabItem value="mstest">
-
-```bash
-dotnet test
-```
-
-</TabItem>
-</Tabs>
-
-
-See our doc on [Test Runners](./test-runners.md) to learn more about running tests in headed mode, running multiple tests, running specific configurations etc.
+See our doc on [Running and Debugging Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific configurations etc.
 
 ## System requirements
 

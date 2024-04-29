@@ -403,19 +403,34 @@ Once you have your [GitHub actions workflow](#setting-up-github-actions) setup t
 
 Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed.
 
-![opening the workflow](https://github.com/microsoft/playwright/assets/13063165/154940e7-2f01-4c70-9522-be97bc391698)
+######
+* langs: js, python, java
+
+![opening the workflow](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+
+######
+* langs: csharp
+
+![opening the workflow](https://github.com/microsoft/playwright/assets/13063165/71793c09-0815-4faa-866b-85684a1f87e5)
 
 On Pull Requests you can also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
 
 <img width="645" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
 
+
 ## Viewing Test Logs
 
 Clicking on the workflow run will show you the all the actions that GitHub performed and clicking on **Run Playwright tests** will show the error messages, what was expected and what was received as well as the call log.
 
-<img width="839" alt="Viewing Test Logs" src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png"/>
+######
+* langs: js, python, java
 
-![viewing the test logs](https://github.com/microsoft/playwright/assets/13063165/3afa21b9-3b51-43a3-a227-daab966e2aba)
+![Viewing Test Logs](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+
+######
+* langs: csharp
+
+![viewing the test logs](https://github.com/microsoft/playwright/assets/13063165/ba2d8d7b-ffce-42de-95e0-bcb35c421975)
 
 
 ## HTML Report
@@ -452,20 +467,21 @@ Once you have served the report using `npx playwright show-report`, click on the
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
 
 ## Viewing the Trace
-* langs: python, java, csharp
+* langs: python, java
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
-######
-* langs: python, java
-
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/6d5885dc-d511-4c20-b728-040a7ef6cea4)
 
+## Viewing the Trace
+* langs: csharp
+
+You can commit your traces folder so that they are available on CI. We recommend only recording traces for failing tests. You can check if a test passed or failed in the teardown. Once your traces have been uploaded to CI, they can then be downloaded and opened using [trace.playwright.dev](https://trace.playwright.dev), which is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
 ######
 * langs: csharp
 
-![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/0c9f7b7a-b4ba-4938-86df-30cee9280249)
+![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/84150084-5019-470a-8449-b61d206bfbb0)
 
 ## Publishing report on the web
 * langs: js
