@@ -44,7 +44,7 @@ await page.addLocatorHandler(locator, async overlay => {
 }, { times: 3, noWaitAfter: true });
 // Run your tests that can be interrupted by the overlay.
 // ...
-page.removeLocatorHandler(locator);
+await page.removeLocatorHandler(locator);
 ```
 
 **Miscellaneous options**
