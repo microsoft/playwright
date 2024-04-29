@@ -9,10 +9,8 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
 
 **You will learn**
 
-- [How to run tests from the command line](/running-tests.md#command-line)
+- [How to run tests](/running-tests)
 - [How to debug tests](/running-tests.md#debugging-tests)
-- [How to open the HTML test reporter](/running-tests.md#test-reports)
-
 
 ## Running tests
 
