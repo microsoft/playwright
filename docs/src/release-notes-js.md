@@ -78,40 +78,7 @@ page.removeLocatorHandler(locator);
   $ npx playwright test
 
   Running 103 tests using 5 workers
-  1) [chromium] › my-test.spec.ts:8:5 › two ────────────────────────────────────────────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: 2
-    Received: 1
-
-       8 | test('two', async ({ page }) => {
-       9 |   await page.goto('https://playwright.dev/');
-    > 10 |   expect(1).toBe(2);
-         |             ^
-      11 | });
-      12 |
-      13 | test('three', async ({ page }) => {
-
-        at /Users/yurys/sandbox/pwtest/tests/my-test.spec.ts:10:13
-
-  2) [chromium] › my-test.spec.ts:13:5 › three ─────────────────────────────────────────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: 3
-    Received: 1
-
-      13 | test('three', async ({ page }) => {
-      14 |   await page.goto('https://playwright.dev/');
-    > 15 |   expect(1).toBe(3);
-         |             ^
-      16 | });
-      17 |
-      18 | for (let i = 0; i < 100; i++) {
-
-        at /Users/yurys/sandbox/pwtest/tests/my-test.spec.ts:15:13
-
+  ...
   2 failed
     [chromium] › my-test.spec.ts:8:5 › two ─────────────────────────────────────────────────────────
     [chromium] › my-test.spec.ts:13:5 › three ──────────────────────────────────────────────────────
