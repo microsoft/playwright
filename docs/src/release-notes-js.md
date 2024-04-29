@@ -119,7 +119,7 @@ page.removeLocatorHandler(locator);
   ```
 
   Now fix the failing tests and run Playwright again with `--last-failed` option:
-  ```js
+  ```sh
   $ npx playwright test --last-failed
 
   Running 2 tests using 2 workers
