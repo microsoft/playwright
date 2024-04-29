@@ -182,4 +182,7 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       modifiers: toModifiersMask(modifiers),
     });
   }
+  async swipe(options: {x: number, y: number, xDistance: number, yDistance: number, speed?: number, stps?: number}) {
+    throw new Error('emulate swipe is not supported in WebKit');
+  }
 }

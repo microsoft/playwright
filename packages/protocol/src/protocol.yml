@@ -1549,6 +1549,18 @@ Page:
         slowMo: true
         snapshot: true
 
+    touchscreenSwipe:
+      parameters:
+        x: number
+        y: number
+        xDistance: number
+        yDistance: number
+        speed: number?
+        steps: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?

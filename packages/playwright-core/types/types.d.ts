@@ -19469,6 +19469,29 @@ export interface Selectors {
  */
 export interface Touchscreen {
   /**
+   * Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
+   * @param x X coordinate of the start of the gesture in CSS pixels.
+   * @param y Y coordinate of the start of the gesture in CSS pixels.
+   * @param xDistance The distance to scroll along the X axis (positive to scroll left).
+   * @param yDistance The distance to scroll along the Y axis (positive to scroll up).
+   * @param options
+   */
+  swipe(x: number, y: number, xDistance: number, yDistance: number, options?: {
+    /**
+     * Swipe speed in pixels per second. Defaults to `800`.
+     *
+     * **NOTE** `Touchscreen.swipe.speed` Note the final scrolling distance may be affected by the swipe speed, which is
+     * the `fling` gesture.
+     */
+    speed?: number;
+
+    /**
+     * The number of `touchmove` events be sent. Defaults to `1`.
+     */
+    steps?: number;
+  }): Promise<void>;
+
+  /**
    * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
    *
    * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) the method will throw

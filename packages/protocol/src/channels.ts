@@ -1808,6 +1808,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseClick(params: PageMouseClickParams, metadata?: CallMetadata): Promise<PageMouseClickResult>;
   mouseWheel(params: PageMouseWheelParams, metadata?: CallMetadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
+  touchscreenSwipe(params: PageTouchscreenSwipeParams, metadata?: CallMetadata): Promise<PageTouchscreenSwipeResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
   startJSCoverage(params: PageStartJSCoverageParams, metadata?: CallMetadata): Promise<PageStartJSCoverageResult>;
@@ -2175,6 +2176,19 @@ export type PageTouchscreenTapOptions = {
 
 };
 export type PageTouchscreenTapResult = void;
+export type PageTouchscreenSwipeParams = {
+  x: number,
+  y: number,
+  xDistance: number,
+  yDistance: number,
+  speed?: number,
+  steps?: number,
+};
+export type PageTouchscreenSwipeOptions = {
+  speed?: number,
+  steps?: number,
+};
+export type PageTouchscreenSwipeResult = void;
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,

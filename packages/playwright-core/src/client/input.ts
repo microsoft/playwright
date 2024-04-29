@@ -89,4 +89,8 @@ export class Touchscreen implements api.Touchscreen {
   async tap(x: number, y: number) {
     await this._page._channel.touchscreenTap({ x, y });
   }
+
+  async swipe(x: number, y: number, xDistance: number, yDistance: number, options: channels.PageTouchscreenSwipeOptions = {}) {
+    await this._page._channel.touchscreenSwipe({ x, y, xDistance, yDistance, ...options, });
+  }
 }

@@ -179,4 +179,34 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       }),
     ]);
   }
+
+  async swipe(options: {x: number, y: number, xDistance: number, yDistance: number, speed?: number, steps?: number}) {
+    const { x, y, xDistance, yDistance, speed = 800, steps = 1 } = options;
+    await this._client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{
+        x, y
+      }]
+    });
+    const xDistanceStepLength = xDistance / steps;
+    const yDistanceStepLength = yDistance / steps;
+    for (let ii = 0; ii < steps; ii++) {
+      await this._client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{
+          x: x + xDistanceStepLength * ii,
+          y: y + yDistanceStepLength * ii
+        }]
+      });
+      await new Promise(f => setTimeout(f, Math.max(xDistanceStepLength, yDistanceStepLength) / speed * 1000));
+    }
+    await this._client.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: x + xDistance, y: y + yDistance }]
+    });
+    await this._client.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [{ x: x + xDistance, y: y + yDistance }]
+    });
+  }
 }

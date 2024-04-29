@@ -298,6 +298,7 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
 
 export interface RawTouchscreen {
   tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>): Promise<void>;
+  swipe(options: {x: number, y: number, xDistance: number, yDistance: number, xOverscroll?: number, yOverscroll?: number, preventFling?: boolean, speed?: number, repeatCount?: number, repeatDelayMs?: number}): Promise<void>;
 }
 
 export class Touchscreen {
@@ -316,4 +317,10 @@ export class Touchscreen {
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
   }
+  async swipe(options: {x: number, y: number, xDistance: number, yDistance: number, xOverscroll?: number, yOverscroll?: number, preventFling?: boolean, speed?: number, repeatCount?: number, repeatDelayMs?: number}, metadata?: CallMetadata) {
+    if (metadata)
+      metadata.point = { x: options.x, y: options.y };
+    await this._raw.swipe({ ...options });
+  }
+
 }
