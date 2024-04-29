@@ -56,7 +56,7 @@ page.removeLocatorHandler(locator);
   formData.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
   context.request.post('https://example.com/uploadFiles', {
     multipart: formData
-  })
+  });
   ```
 
 - `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.inervals` option globally in [`property: TestConfig.expect`] or per project in [`property: TestProject.expect`].
@@ -117,13 +117,7 @@ page.removeLocatorHandler(locator);
     [chromium] › my-test.spec.ts:13:5 › three ──────────────────────────────────────────────────────
   101 passed (30.0s)
   ```
-  Fix the only failing tests and re
-  ```sh
-  $ npx playwright test --last-failed
 
-  Running 1 test using 1 worker
-    1 passed (1.0s)
-  ```
   Now fix the failing tests and run Playwright again with `--last-failed` option:
   ```js
   $ npx playwright test --last-failed
