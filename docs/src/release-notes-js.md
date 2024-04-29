@@ -6,6 +6,104 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.44
+
+### New APIs
+
+**Accessibility assertions**
+
+- [`method: LocatorAssertions.toHaveAccessibleName`] checks if the element has the specified accessible name:
+  ```js
+  const locator = page.getByRole('button');
+  await expect(locator).toHaveAccessibleName('Submit');
+  ```
+
+- [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
+  ```js
+  const locator = page.getByRole('button');
+  await expect(locator).toHaveAccessibleName('Upload the photo');
+  ```
+
+- [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
+  ```js
+  const locator = page.getByTestId('save-button');
+  await expect(locator).toHaveRole('button');
+  ```
+
+**Locator handler**
+
+- After executing the handler added with [`method: Page.addLocatorHandler`], Playwright will now wait until the overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with the new `noWaitAfter` option.
+- You can use new `times` option in [`method: Page.addLocatorHandler`] to specify maximum number of times the handler should be run.
+- The handler in [`method: Page.addLocatorHandler`] now accepts the locator as argument.
+- New [`method: Page.removeLocatorHandler`] method for removing previously added locator handlers.
+
+```js
+const locator = page.getByText('This interstitial covers the button');
+await page.addLocatorHandler(locator, async overlay => {
+  await overlay.locator('#close').click();
+}, { times: 3, noWaitAfter: true });
+// Run your tests that can be interrupted by the overlay.
+// ...
+await page.removeLocatorHandler(locator);
+```
+
+**Miscellaneous options**
+
+- [`multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()` now accepts [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) and supports repeating fields with the same name.
+  ```js
+  const formData = new FormData();
+  formData.append('file', new File(['let x = 2024;'], 'f1.js', { type: 'text/javascript' }));
+  formData.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
+  context.request.post('https://example.com/uploadFiles', {
+    multipart: formData
+  });
+  ```
+
+- `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.inervals` option globally in [`property: TestConfig.expect`] or per project in [`property: TestProject.expect`].
+- `expect(page).toHaveURL(url)` now supports `ignoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+- [`property: TestProject.ignoreSnapshots`](./api/class-testproject#test-project-ignore-snapshots) allows to configure  per project whether to skip screenshot expectations.
+
+**Reporter API**
+
+- New method [`method: Suite.entries`] returns child test suites and test cases in their declaration order. [`property: Suite.type`] and [`property: TestCase.type`] can be used to tell apart test cases and suites in the list.
+- [Blob](./test-reporters#blob-reporter) reporter now allows overriding report file path with a single option `outputFile`. The same option can also be specified as `PLAYWRIGHT_BLOB_OUTPUT_FILE` environment variable that might be more convenient on CI/CD.
+- [JUnit](./test-reporters#junit-reporter) reporter now supports `includeProjectInTestName` option.
+
+**Command line**
+
+- `--last-failed` CLI option to for running only tests that failed in the previous run.
+
+  First run all tests:
+  ```sh
+  $ npx playwright test
+
+  Running 103 tests using 5 workers
+  ...
+  2 failed
+    [chromium] › my-test.spec.ts:8:5 › two ─────────────────────────────────────────────────────────
+    [chromium] › my-test.spec.ts:13:5 › three ──────────────────────────────────────────────────────
+  101 passed (30.0s)
+  ```
+
+  Now fix the failing tests and run Playwright again with `--last-failed` option:
+  ```sh
+  $ npx playwright test --last-failed
+
+  Running 2 tests using 2 workers
+    2 passed (1.2s)
+  ```
+
+### Browser Versions
+
+* Chromium 125.0.6422.14
+* Mozilla Firefox 125.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 124
+* Microsoft Edge 124
+
 ## Version 1.43
 
 ### New APIs
