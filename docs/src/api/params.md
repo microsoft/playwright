@@ -97,10 +97,11 @@ A point to use relative to the top-left corner of element padding box. If not sp
 element.
 
 ## input-modifiers
-- `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"Meta"|"Shift">>>
+- `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>>
 
 Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
-modifiers back. If not specified, currently pressed modifiers are used.
+modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to "Control" on Windows
+and Linux and to "Meta" on macOS.
 
 ## input-button
 - `button` <[MouseButton]<"left"|"right"|"middle">>

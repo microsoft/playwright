@@ -105,10 +105,11 @@ export type ProxySettings = {
 };
 
 export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
+export type SmartKeyboardModifier = KeyboardModifier |  'ControlOrMeta';
 export type MouseButton = 'left' | 'right' | 'middle';
 
 export type PointerActionOptions = {
-  modifiers?: KeyboardModifier[];
+  modifiers?: SmartKeyboardModifier[];
   position?: Point;
 };
 

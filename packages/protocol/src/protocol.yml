@@ -1791,6 +1791,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -1842,6 +1843,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -1956,6 +1958,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2164,6 +2167,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2442,6 +2446,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2475,6 +2480,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2532,6 +2538,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2718,6 +2725,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
