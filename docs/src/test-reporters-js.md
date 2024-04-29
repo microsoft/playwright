@@ -304,7 +304,7 @@ JUnit report supports following configuration options and environment variables:
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_JUNIT_OUTPUT_NAME` | `outputFile` | Report file path. | JUnit report is printed to stdout.
-|  | `stripANSIControlSequences` | Wether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
+|  | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
 |  | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
