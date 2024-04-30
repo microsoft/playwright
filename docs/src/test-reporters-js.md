@@ -267,7 +267,7 @@ JSON report supports following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
-| `PLAYWRIGHT_JSON_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is not specified. | Config directory or `cwd`.
+| `PLAYWRIGHT_JSON_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `cwd` or config directory.
 | `PLAYWRIGHT_JSON_OUTPUT_NAME` | `outputFile` | Full path for the output. | JSON report is printed to stdout.
 | `PLAYWRIGHT_JSON_OUTPUT_FILE` | `outputFile` | Full path for the output. If defined, `PLAYWRIGHT_JSON_OUTPUT_DIR` and `PLAYWRIGHT_JSON_OUTPUT_NAME` will be ignored. | JSON report is printed to stdout.
 
