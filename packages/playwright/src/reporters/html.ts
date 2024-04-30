@@ -86,12 +86,11 @@ class HtmlReporter extends EmptyReporter {
     this._open = open;
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
+    const normalizePath = (path: string) => path.replace(/\\/g, '/').replace(/([^/])$/, '$1/');
+    const reportOutputFolderNormalized = normalizePath(outputFolder);
     for (const project of this.config.projects) {
-      if (
-        outputFolder.startsWith(project.outputDir.replace(/\/?$/, '/')) ||
-        project.outputDir.startsWith(outputFolder.replace(/\/?$/, '/')) ||
-        outputFolder === project.outputDir
-      ) {
+      const outputDirNormalized = normalizePath(project.outputDir);
+      if (outputDirNormalized.startsWith(reportOutputFolderNormalized) || reportOutputFolderNormalized.startsWith(outputDirNormalized)) {
         const key = outputFolder + '|' + project.outputDir;
         if (reportedWarnings.has(key))
           continue;
