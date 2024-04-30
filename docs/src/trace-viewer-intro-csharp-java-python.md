@@ -123,8 +123,6 @@ public class Tests : PageTest
     [TearDown]
     public async Task TearDown()
     {
-        // This will produce e.g.:
-        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.Tests.Test1.zip
         await Context.Tracing.StopAsync(new()
         {
             Path = Path.Combine(
@@ -151,7 +149,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.MSTest;
 
-namespace PlaywrightTestsMSTest;
+namespace PlaywrightTests;
 
 [TestClass]
 public class ExampleTest : PageTest
@@ -161,7 +159,7 @@ public class ExampleTest : PageTest
     {
          await Context.Tracing.StartAsync(new()
         {
-            Title = TestContext.TestName,
+            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.
             Screenshots = true,
             Snapshots = true,
             Sources = true
@@ -171,14 +169,12 @@ public class ExampleTest : PageTest
     [TestCleanup]
     public async Task TestCleanup()
     {
-        // This will produce e.g.:
-        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.ExampleTest.GetStartedLink.zip
         await Context.Tracing.StopAsync(new()
         {
             Path = Path.Combine(
                 Environment.CurrentDirectory,
                 "playwright-traces",
-                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
+                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
             )
         });
     }
@@ -194,7 +190,7 @@ public class ExampleTest : PageTest
 </TabItem>
 </Tabs>
 
-This will record a zip file for each trace, eg. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
+This will record a zip file for each test, e.g. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
 
 ## Opening the trace
 

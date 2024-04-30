@@ -66,8 +66,6 @@ Specify which browser you would like to run your tests on by adjusting the launc
 dotnet test -- Playwright.BrowserName=webkit
 ```
 
-To specify multiple browsers to run your tests on, use the `--project` flag multiple times followed by the name of each browser.
-
 To run your test on multiple browsers or configurations, you need to invoke the `dotnet test` command multiple times. There you can then either specify the `BROWSER` environment variable or set the `Playwright.BrowserName` via the runsettings file:
 
 ```bash

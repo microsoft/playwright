@@ -71,29 +71,9 @@ dotnet build
 
 1. Install required browsers. This example uses `net8.0`, if you are using a different version of .NET you will need to adjust the command and change `net8.0` to your version.
 
-<Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
-}>
-<TabItem value="nunit">
-
 ```bash
 pwsh bin/Debug/net8.0/playwright.ps1 install
 ```
-
-</TabItem>
-<TabItem value="mstest">
-
-```bash
-pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
-```
-
-</TabItem>
-</Tabs>
 
 If `pwsh` is not available, you will have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
 
