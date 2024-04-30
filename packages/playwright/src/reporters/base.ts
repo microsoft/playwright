@@ -557,9 +557,11 @@ function resolveFromEnv(name: string): string | undefined {
 
 export function resolveOutputFile(reporterName: string, options: { configDir: string, outputFile?: string }): string|undefined {
   const name = reporterName.toUpperCase();
-  let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
-  if (!outputFile && options.outputFile)
+  let outputFile;
+  if (options.outputFile)
     outputFile = path.resolve(options.configDir, options.outputFile);
+  if (!outputFile)
+    outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`)
   // Explicit `outputFile` overrides `outputDir` and `fileName` options.
   if (!outputFile) {
     const outputName = process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`];
