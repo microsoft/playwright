@@ -87,7 +87,11 @@ class HtmlReporter extends EmptyReporter {
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
-      if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
+      if (
+        outputFolder.startsWith(project.outputDir.replace(/\/?$/, '/')) ||
+        project.outputDir.startsWith(outputFolder.replace(/\/?$/, '/')) ||
+        outputFolder === project.outputDir
+      ) {
         const key = outputFolder + '|' + project.outputDir;
         if (reportedWarnings.has(key))
           continue;
