@@ -547,3 +547,26 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
 function belongsToNodeModules(file: string) {
   return file.includes(`${path.sep}node_modules${path.sep}`);
 }
+
+function resolveFromEnv(name: string): string | undefined {
+  const value = process.env[name];
+  if (value)
+    return path.resolve(process.cwd(), value);
+  return undefined;
+}
+
+export function resolveOutputFile(reporterName: string, options: { configDir: string, outputFile?: string }): string|undefined {
+  const name = reporterName.toUpperCase();
+  let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
+  if (!outputFile && options.outputFile)
+    outputFile = path.resolve(options.configDir, options.outputFile);
+  // Explicit `outputFile` overrides `outputDir` and `fileName` options.
+  if (!outputFile) {
+    const outputName = process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`];
+    if (outputName) {
+      const outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`) ?? process.cwd();
+      outputFile = path.resolve(outputDir, outputName);
+    }
+  }
+  return outputFile;
+}
