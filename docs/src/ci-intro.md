@@ -476,7 +476,7 @@ Once you have served the report using `npx playwright show-report`, click on the
 ## Viewing the Trace
 * langs: csharp
 
-You can commit your traces folder so that they are available on CI. We recommend only recording traces for failing tests. You can check if a test passed or failed in the teardown. Once your traces have been uploaded to CI, they can then be downloaded and opened using [trace.playwright.dev](https://trace.playwright.dev), which is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
+You can upload Traces which get created on your CI like GitHub Actions as artifacts. This requires [starting and stopping the trace](./trace-viewer-intro#recording-a-trace). We recommend only recording traces for failing tests. Once your traces have been uploaded to CI, they can then be downloaded and opened using [trace.playwright.dev](https://trace.playwright.dev), which is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
 ######
 * langs: csharp
