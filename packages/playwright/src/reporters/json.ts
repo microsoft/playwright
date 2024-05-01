@@ -17,24 +17,29 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
-import { formatError, prepareErrorStack } from './base';
-import { MultiMap, assert, toPosixPath } from 'playwright-core/lib/utils';
+import { formatError, prepareErrorStack, resolveOutputFile } from './base';
+import { MultiMap, toPosixPath } from 'playwright-core/lib/utils';
 import { getProjectId } from '../common/config';
 import EmptyReporter from './empty';
+
+type JSONOptions = {
+  outputFile?: string,
+  configDir: string,
+};
 
 class JSONReporter extends EmptyReporter {
   config!: FullConfig;
   suite!: Suite;
   private _errors: TestError[] = [];
-  private _outputFile: string | undefined;
+  private _resolvedOutputFile: string | undefined;
 
-  constructor(options: { outputFile?: string } = {}) {
+  constructor(options: JSONOptions) {
     super();
-    this._outputFile = options.outputFile || reportOutputNameFromEnv();
+    this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
   }
 
   override printsToStdio() {
-    return !this._outputFile;
+    return !this._resolvedOutputFile;
   }
 
   override onConfigure(config: FullConfig) {
@@ -50,7 +55,7 @@ class JSONReporter extends EmptyReporter {
   }
 
   override async onEnd(result: FullResult) {
-    await outputReport(this._serializeReport(result), this.config, this._outputFile);
+    await outputReport(this._serializeReport(result), this._resolvedOutputFile);
   }
 
   private _serializeReport(result: FullResult): JSONReport {
@@ -228,13 +233,11 @@ class JSONReporter extends EmptyReporter {
   }
 }
 
-async function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
+async function outputReport(report: JSONReport, resolvedOutputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
-  if (outputFile) {
-    assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
-    outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
-    await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
-    await fs.promises.writeFile(outputFile, reportString);
+  if (resolvedOutputFile) {
+    await fs.promises.mkdir(path.dirname(resolvedOutputFile), { recursive: true });
+    await fs.promises.writeFile(resolvedOutputFile, reportString);
   } else {
     console.log(reportString);
   }
@@ -248,12 +251,6 @@ function stdioEntry(s: string | Buffer): any {
 
 function removePrivateFields(config: FullConfig): FullConfig {
   return Object.fromEntries(Object.entries(config).filter(([name, value]) => !name.startsWith('_'))) as FullConfig;
-}
-
-function reportOutputNameFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`]);
-  return undefined;
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {

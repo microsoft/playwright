@@ -1292,12 +1292,18 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInl
       test('math 1 @smoke', async ({}) => {});
     `,
   };
+  const defaultDir = test.info().outputPath('blob-report');
+  fs.mkdirSync(defaultDir, { recursive: true });
+  const file = path.join(defaultDir, 'some.file');
+  fs.writeFileSync(file, 'content');
 
   await runInlineTest(files, { shard: `1/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: 'subdir/report-one.zip' });
   await runInlineTest(files, { shard: `2/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: test.info().outputPath('subdir/report-two.zip') });
   const reportDir = test.info().outputPath('subdir');
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+
+  expect(fs.existsSync(file), 'Default directory should not be cleaned up if output file is specified.').toBe(true);
 });
 
 test('keep projects with same name different bot name separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
