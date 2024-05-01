@@ -45,7 +45,7 @@ class JUnitReporter extends EmptyReporter {
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.includeProjectInTestName = options.includeProjectInTestName || false;
     this.configDir = options.configDir;
-    this.resolvedOutputFile = resolveOutputFile('JUNIT', options);
+    this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
 
   override printsToStdio() {

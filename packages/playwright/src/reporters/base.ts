@@ -19,6 +19,7 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
+import { resolveReporterOutputPath } from '../util';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
@@ -555,20 +556,36 @@ function resolveFromEnv(name: string): string | undefined {
   return undefined;
 }
 
-export function resolveOutputFile(reporterName: string, options: { configDir: string, outputFile?: string }): string|undefined {
+export function resolveOutputFile(reporterName: string, options: {
+    configDir: string,
+    outputDir?: string,
+    fileName?: string,
+    outputFile?: string,
+    default?: {
+      fileName: string,
+      outputDir: string,
+    }
+  }):  { outputFile: string, outputDir?: string } |undefined {
   const name = reporterName.toUpperCase();
   let outputFile;
   if (options.outputFile)
     outputFile = path.resolve(options.configDir, options.outputFile);
   if (!outputFile)
     outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`)
-  // Explicit `outputFile` overrides `outputDir` and `fileName` options.
+
+  let outputDir;
+  if (options.outputDir)
+    outputDir = path.resolve(options.configDir, options.outputDir);
+  if (!outputDir)
+    outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`);
+  if (!outputDir && options.default)
+    outputDir = resolveReporterOutputPath(options.default.outputDir, options.configDir, undefined);
+
   if (!outputFile) {
-    const outputName = process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`];
-    if (outputName) {
-      const outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`) ?? process.cwd();
-      outputFile = path.resolve(outputDir, outputName);
-    }
+    let reportName = options.fileName ?? process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.default?.fileName;
+    if (!reportName)
+      return undefined;
+    outputFile = path.resolve(outputDir ?? process.cwd(), reportName);
   }
-  return outputFile;
+  return { outputFile, outputDir };
 }

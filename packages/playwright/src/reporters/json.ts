@@ -35,7 +35,7 @@ class JSONReporter extends EmptyReporter {
 
   constructor(options: JSONOptions) {
     super();
-    this._resolvedOutputFile = resolveOutputFile('JSON', options);
+    this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
   }
 
   override printsToStdio() {
