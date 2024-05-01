@@ -556,6 +556,8 @@ function resolveFromEnv(name: string): string | undefined {
   return undefined;
 }
 
+// In addition to `outputFile` the function returns `outputDir` which should
+// be cleaned up if present by some reporters contract.
 export function resolveOutputFile(reporterName: string, options: {
     configDir: string,
     outputDir?: string,
@@ -572,6 +574,9 @@ export function resolveOutputFile(reporterName: string, options: {
     outputFile = path.resolve(options.configDir, options.outputFile);
   if (!outputFile)
     outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
+  // Return early to avoid deleting outputDir.
+  if (outputFile)
+    return { outputFile };
 
   let outputDir;
   if (options.outputDir)
