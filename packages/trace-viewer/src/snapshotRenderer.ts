@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+
+function isNodeNameAttributesChildNodesSnapshot(n: NodeSnapshot): n is NodeNameAttributesChildNodesSnapshot {
+  return Array.isArray(n) && typeof n[0] === 'string';
+}
+
+function isSubtreeReferenceSnapshot(n: NodeSnapshot): n is SubtreeReferenceSnapshot {
+  return Array.isArray(n) && Array.isArray(n[0]);
+}
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
@@ -54,7 +62,7 @@ export class SnapshotRenderer {
       }
 
       if (!(n as any)._string) {
-        if (Array.isArray(n[0])) {
+        if (isSubtreeReferenceSnapshot(n)) {
           // Node reference.
           const referenceIndex = snapshotIndex - n[0][0];
           if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
@@ -63,12 +71,13 @@ export class SnapshotRenderer {
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
               (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
           }
-        } else if (typeof n[0] === 'string') {
+        } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
+          const [name, nodeAttrs, ...children] = n;
           // Element node.
           // Note that <noscript> will not be rendered by default in the trace viewer, because
           // JS is enabled. So rename it to <x-noscript>.
-          const nodeName = n[0] === 'NOSCRIPT' ? 'X-NOSCRIPT' : n[0];
-          const attrs = Object.entries(n[1] || {});
+          const nodeName = name === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
+          const attrs = Object.entries(nodeAttrs || {});
           const builder: string[] = [];
           builder.push('<', nodeName);
           const kCurrentSrcAttribute = '__playwright_current_src__';
@@ -101,8 +110,8 @@ export class SnapshotRenderer {
             builder.push(' ', attrName, '="', escapeAttribute(attrValue), '"');
           }
           builder.push('>');
-          for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex, nodeName, attrs));
+          for (const child of children)
+            builder.push(visit(child, snapshotIndex, nodeName, attrs));
           if (!autoClosing.has(nodeName))
             builder.push('</', nodeName, '>');
           (n as any)._string = builder.join('');
@@ -200,9 +209,10 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
     const visit = (n: NodeSnapshot) => {
       if (typeof n === 'string') {
         nodes.push(n);
-      } else if (typeof n[0] === 'string') {
-        for (let i = 2; i < n.length; i++)
-          visit(n[i]);
+      } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
+        const [,, ...children] = n;
+        for (const child of children)
+          visit(child);
         nodes.push(n);
       }
     };

@@ -18,18 +18,18 @@ import type { Entry as HAREntry } from './har';
 
 export type ResourceSnapshot = HAREntry;
 
-export type NodeSnapshot =
-  // Text node.
-  string |
-  // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
-  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
-  [ [number, number] ] |
-  // Just node name.
-  [ string ] |
-  // Node name, attributes, child nodes.
-  // Unfortunately, we cannot make this type definition recursive, therefore "any".
-  [ string, { [attr: string]: string }, ...any ];
+// Text node.
+export type TextNodeSnapshot = string;
+// Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+// Only nodes that are not references are counted, starting from zero, using post-order traversal.
+export type SubtreeReferenceSnapshot = [ [number, number] ];
+// Node name, and optional attributes and child nodes.
+export type NodeNameAttributesChildNodesSnapshot = [ string ] | [ string, Record<string, string>, ...NodeSnapshot[] ];
 
+export type NodeSnapshot =
+  TextNodeSnapshot |
+  SubtreeReferenceSnapshot |
+  NodeNameAttributesChildNodesSnapshot;
 
 export type ResourceOverride = {
   url: string,
