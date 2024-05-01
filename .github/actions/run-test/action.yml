@@ -1,0 +1,87 @@
+name: 'Run browser tests'
+description: 'Run browser tests'
+inputs:
+  command:
+    description: 'Command to run tests'
+    required: true
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '18'
+  browsers-to-install:
+    description: 'Browser to install. Default is all browsers.'
+    required: false
+    default: ''
+  bot-name:
+    description: 'Bot name'
+    required: true
+  shell:
+    description: 'Shell to use'
+    required: false
+    default: 'bash'
+  flakiness-client-id:
+    description: 'Azure Flakiness Dashboard Client ID'
+    required: false
+  flakiness-tenant-id:
+    description: 'Azure Flakiness Dashboard Tenant ID'
+    required: false
+  flakiness-subscription-id:
+    description: 'Azure Flakiness Dashboard Subscription ID'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+    # https://github.com/actions/runner-images/issues/9330
+    - name: Allow microphone access to all apps (macOS 14)
+      shell: bash
+      run: |
+        if [[ "$(uname)" == "Darwin" && "$(sw_vers -productVersion | cut -d. -f1)" == "14" ]]; then
+          echo "Allowing microphone access to all apps"
+          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
+        fi
+    - run: npm ci
+      shell: bash
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    - run: npm run build
+      shell: bash
+    - run: npx playwright install --with-deps ${{ inputs.browsers-to-install }}
+      shell: bash
+    - name: Run tests
+      if: inputs.shell == 'bash'
+      run: |
+        if [[ "$(uname)" == "Linux" ]]; then
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- ${{ inputs.command }}
+        else
+          ${{ inputs.command }}
+        fi
+      shell: bash
+      env:
+        PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+    - name: Run tests
+      if: inputs.shell != 'bash'
+      run: ${{ inputs.command }}
+      shell: ${{ inputs.shell }}
+      env:
+        PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+    - name: Azure Login
+      uses: azure/login@v2
+      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      with:
+        client-id: ${{ inputs.flakiness-client-id }}
+        tenant-id: ${{ inputs.flakiness-tenant-id }}
+        subscription-id: ${{ inputs.flakiness-subscription-id }}
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: ${{ !cancelled() }}
+      shell: bash
+    - name: Upload blob report
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: blob-report
+        job_name: ${{ inputs.bot-name }}
