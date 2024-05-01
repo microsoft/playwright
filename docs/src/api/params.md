@@ -571,6 +571,7 @@ Whether to emulate network being offline. Defaults to `false`. Learn more about 
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
+  - `sendImmediately` ?<[boolean]> Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent from the browser.
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
