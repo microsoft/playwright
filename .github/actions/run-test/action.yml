@@ -44,14 +44,14 @@ runs:
           sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
         fi
     - run: npm ci
-      shell: bash
+      shell: ${{ inputs.shell }}
       env:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     - run: npm run build
-      shell: bash
+      shell: ${{ inputs.shell }}
     - run: npx playwright install --with-deps ${{ inputs.browsers-to-install }}
-      shell: bash
+      shell: ${{ inputs.shell }}
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
