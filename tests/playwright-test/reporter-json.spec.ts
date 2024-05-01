@@ -288,4 +288,42 @@ test.describe('report location', () => {
     expect(result.passed).toBe(1);
     expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.json'))).toBe(true);
   });
+
+  test('support PLAYWRIGHT_JSON_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        import { test, expect } from '@playwright/test';
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'json' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_JSON_OUTPUT_FILE': '../my-report.json' }, {
+      cwd: 'foo/bar/baz/tests',
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.json'))).toBe(true);
+  });
+
+  test('support PLAYWRIGHT_JSON_OUTPUT_DIR and PLAYWRIGHT_JSON_OUTPUT_NAME', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'tests/a.spec.js': `
+        import { test, expect } from '@playwright/test';
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'json' }, { 'PLAYWRIGHT_JSON_OUTPUT_DIR': 'foo/bar', 'PLAYWRIGHT_JSON_OUTPUT_NAME': 'baz/my-report.json' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.json'))).toBe(true);
+  });
 });

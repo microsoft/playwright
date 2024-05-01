@@ -24,7 +24,7 @@ import type { FullConfig, FullResult, TestResult } from '../../types/testReporte
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
 import { yazl } from 'playwright-core/lib/zipBundle';
-import { resolveReporterOutputPath } from '../util';
+import { resolveOutputFile } from './base';
 
 type BlobReporterOptions = {
   configDir: string;
@@ -107,17 +107,15 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   private async _prepareOutputFile() {
-    let outputFile = reportOutputFileFromEnv();
-    if (!outputFile && this._options.outputFile)
-      outputFile = path.resolve(this._options.configDir, this._options.outputFile);
-    // Explicit `outputFile` overrides `outputDir` and `fileName` options.
-    if (!outputFile) {
-      const reportName = this._options.fileName || process.env[`PLAYWRIGHT_BLOB_OUTPUT_NAME`] || this._defaultReportName(this._config);
-      const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir ?? reportOutputDirFromEnv());
-      if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
-        await removeFolders([outputDir]);
-      outputFile = path.resolve(outputDir, reportName);
-    }
+    const { outputFile, outputDir } = resolveOutputFile('BLOB', {
+      ...this._options,
+      default: {
+        fileName: this._defaultReportName(this._config),
+        outputDir: 'blob-report',
+      }
+    })!;
+    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
+      await removeFolders([outputDir!]);
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     return outputFile;
   }
@@ -148,16 +146,4 @@ export class BlobReporter extends TeleReporterEmitter {
       };
     });
   }
-}
-
-function reportOutputDirFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`]);
-  return undefined;
-}
-
-function reportOutputFileFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_BLOB_OUTPUT_FILE`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_BLOB_OUTPUT_FILE`]);
-  return undefined;
 }

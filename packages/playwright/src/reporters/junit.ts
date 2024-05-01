@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { formatFailure, stripAnsiEscapes } from './base';
+import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
 import EmptyReporter from './empty';
 
 type JUnitOptions = {
@@ -25,7 +25,7 @@ type JUnitOptions = {
   stripANSIControlSequences?: boolean,
   includeProjectInTestName?: boolean,
 
-  configDir?: string,
+  configDir: string,
 };
 
 class JUnitReporter extends EmptyReporter {
@@ -40,14 +40,12 @@ class JUnitReporter extends EmptyReporter {
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
 
-  constructor(options: JUnitOptions = {}) {
+  constructor(options: JUnitOptions) {
     super();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.includeProjectInTestName = options.includeProjectInTestName || false;
-    this.configDir = options.configDir || '';
-    const outputFile = options.outputFile || reportOutputNameFromEnv();
-    if (outputFile)
-      this.resolvedOutputFile = path.resolve(this.configDir, outputFile);
+    this.configDir = options.configDir;
+    this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
 
   override printsToStdio() {
@@ -259,12 +257,6 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
 
   text = text.replace(discouragedXMLCharacters, '');
   return text;
-}
-
-function reportOutputNameFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`]);
-  return undefined;
 }
 
 export default JUnitReporter;
