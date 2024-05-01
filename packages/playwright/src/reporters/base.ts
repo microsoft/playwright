@@ -571,7 +571,7 @@ export function resolveOutputFile(reporterName: string, options: {
   if (options.outputFile)
     outputFile = path.resolve(options.configDir, options.outputFile);
   if (!outputFile)
-    outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`)
+    outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
 
   let outputDir;
   if (options.outputDir)
@@ -582,7 +582,7 @@ export function resolveOutputFile(reporterName: string, options: {
     outputDir = resolveReporterOutputPath(options.default.outputDir, options.configDir, undefined);
 
   if (!outputFile) {
-    let reportName = options.fileName ?? process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.default?.fileName;
+    const reportName = options.fileName ?? process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.default?.fileName;
     if (!reportName)
       return undefined;
     outputFile = path.resolve(outputDir ?? process.cwd(), reportName);

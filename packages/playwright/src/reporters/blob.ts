@@ -24,7 +24,6 @@ import type { FullConfig, FullResult, TestResult } from '../../types/testReporte
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
 import { yazl } from 'playwright-core/lib/zipBundle';
-import { resolveReporterOutputPath } from '../util';
 import { resolveOutputFile } from './base';
 
 type BlobReporterOptions = {
@@ -147,16 +146,4 @@ export class BlobReporter extends TeleReporterEmitter {
       };
     });
   }
-}
-
-function reportOutputDirFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_BLOB_OUTPUT_DIR`]);
-  return undefined;
-}
-
-function reportOutputFileFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_BLOB_OUTPUT_FILE`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_BLOB_OUTPUT_FILE`]);
-  return undefined;
 }
