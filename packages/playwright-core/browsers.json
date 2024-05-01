@@ -20,12 +20,6 @@
       "browserVersion": "125.0.1"
     },
     {
-      "name": "firefox-asan",
-      "revision": "1449",
-      "installByDefault": false,
-      "browserVersion": "125.0.1"
-    },
-    {
       "name": "firefox-beta",
       "revision": "1449",
       "installByDefault": false,
