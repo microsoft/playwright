@@ -1094,6 +1094,26 @@ for (const useIntermediateMergeReport of [false] as const) {
       expect(output).toContain('html-report');
     });
 
+    test('it should only identify exact matches as clashing folders', async ({ runInlineTest, useIntermediateMergeReport }) => {
+      test.skip(useIntermediateMergeReport);
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { outputFolder: 'test-results-html' }]]
+          }
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(0);
+      const output = result.output;
+      expect(output).not.toContain('Configuration Error');
+      expect(output).toContain('test-results-html');
+    });
+
     test.describe('report location', () => {
       test('with config should create report relative to config', async ({ runInlineTest, useIntermediateMergeReport }, testInfo) => {
         test.skip(useIntermediateMergeReport);
