@@ -450,6 +450,18 @@ test('svg role=presentation', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'svg')).toEqual({ role: 'presentation', name: '' });
 });
 
+test('should work with form and tricky input names', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30616' });
+
+  await page.setContent(`
+		<form aria-label="my form">
+      <input name="tagName" value="hello" title="tagName input">
+      <input name="localName" value="hello" title="localName input">
+    </form>
+  `);
+  expect.soft(await getNameAndRole(page, 'form')).toEqual({ role: 'form', name: 'my form' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }

@@ -125,3 +125,12 @@ export function isVisibleTextNode(node: Text) {
   const rect = range.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }
+
+export function elementSafeTagName(element: Element) {
+  // Named inputs, e.g. <input name=tagName>, will be exposed as fields on the parent <form>
+  // and override its properties.
+  if (element instanceof HTMLFormElement)
+    return 'FORM';
+  // Elements from the svg namespace do not have uppercase tagName right away.
+  return element.tagName.toUpperCase();
+}
