@@ -86,11 +86,8 @@ class HtmlReporter extends EmptyReporter {
     this._open = open;
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
-    const normalizePath = (path: string) => path.replace(/\\/g, '/').replace(/([^/])$/, '$1/');
-    const reportOutputFolderNormalized = normalizePath(outputFolder);
     for (const project of this.config.projects) {
-      const outputDirNormalized = normalizePath(project.outputDir);
-      if (outputDirNormalized.startsWith(reportOutputFolderNormalized) || reportOutputFolderNormalized.startsWith(outputDirNormalized)) {
+      if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
         const key = outputFolder + '|' + project.outputDir;
         if (reportedWarnings.has(key))
           continue;
@@ -114,6 +111,11 @@ class HtmlReporter extends EmptyReporter {
       open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
+  }
+
+  _isSubdirectory(parentDir: string, dir: string): boolean {
+    const relativePath = path.relative(parentDir, dir);
+    return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
   }
 
   override onError(error: TestError): void {
