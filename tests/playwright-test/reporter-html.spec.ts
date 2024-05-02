@@ -2350,6 +2350,36 @@ for (const useIntermediateMergeReport of [false] as const) {
       await showReport();
       await expect(page.getByTestId('report-errors')).toHaveText(/Error: From teardown.*at globalTeardown.ts:3.*export default async function globalTeardown/s);
     });
+
+    test('should not render anonymous describe', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test.describe('Root describe', () => {
+              test.describe(() => {
+                test('Test passed', async ({}) => {
+                  expect(1).toBe(1);
+                });
+              });
+            });
+          `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+
+      await expect(page.locator('.test-file-test')).toHaveCount(1);
+
+      await expect(page.locator('.test-file-test').locator('a').first()).toHaveAttribute('title', 'Root describe › Test passed');
+      await expect(page.locator('.test-file-title')).toHaveText('Root describe › Test passed');
+      const testFilePathLink = page.locator('.test-file-path-link');
+      await expect(testFilePathLink).toHaveAttribute('title', 'Root describe › Test passed');
+
+      await testFilePathLink.click();
+      await expect(page.locator('.test-case-path')).toHaveText('Root describe');
+    });
   });
 }
 
