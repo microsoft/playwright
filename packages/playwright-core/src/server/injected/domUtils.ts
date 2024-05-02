@@ -84,7 +84,7 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
   // https://bugs.webkit.org/show_bug.cgi?id=264733
   // @ts-ignore
   if (Element.prototype.checkVisibility && browserNameForWorkarounds !== 'webkit') {
-    if (!element.checkVisibility({ checkOpacity: false, checkVisibilityCSS: false }))
+    if (!element.checkVisibility())
       return false;
   } else {
     // Manual workaround for WebKit that does not have checkVisibility.
