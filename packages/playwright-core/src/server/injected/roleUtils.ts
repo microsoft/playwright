@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { closestCrossShadow, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -70,7 +70,7 @@ function isFocusable(element: Element) {
 }
 
 function isNativelyFocusable(element: Element) {
-  const tagName = element.tagName.toUpperCase();
+  const tagName = elementSafeTagName(element);
   if (['BUTTON', 'DETAILS', 'SELECT', 'TEXTAREA'].includes(tagName))
     return true;
   if (tagName === 'A' || tagName === 'AREA')
@@ -124,7 +124,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
     if (['email', 'tel', 'text', 'url', ''].includes(type)) {
       // https://html.spec.whatwg.org/multipage/input.html#concept-input-list
       const list = getIdRefs(e, e.getAttribute('list'))[0];
-      return (list && list.tagName === 'DATALIST') ? 'combobox' : 'textbox';
+      return (list && elementSafeTagName(list) === 'DATALIST') ? 'combobox' : 'textbox';
     }
     if (type === 'hidden')
       return '';
@@ -201,8 +201,7 @@ const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
 };
 
 function getImplicitAriaRole(element: Element): string | null {
-  // Elements from the svg namespace do not have uppercase tagName.
-  const implicitRole = kImplicitRoleByTagName[element.tagName.toUpperCase()]?.(element) || '';
+  const implicitRole = kImplicitRoleByTagName[elementSafeTagName(element)]?.(element) || '';
   if (!implicitRole)
     return null;
   // Inherit presentation role when required.
@@ -210,8 +209,8 @@ function getImplicitAriaRole(element: Element): string | null {
   let ancestor: Element | null = element;
   while (ancestor) {
     const parent = parentElementOrShadowHost(ancestor);
-    const parents = kPresentationInheritanceParents[ancestor.tagName];
-    if (!parents || !parent || !parents.includes(parent.tagName))
+    const parents = kPresentationInheritanceParents[elementSafeTagName(ancestor)];
+    if (!parents || !parent || !parents.includes(elementSafeTagName(parent)))
       break;
     const parentExplicitRole = getExplicitAriaRole(parent);
     if ((parentExplicitRole === 'none' || parentExplicitRole === 'presentation') && !hasPresentationConflictResolution(parent, parentExplicitRole))
@@ -267,7 +266,7 @@ function getAriaBoolean(attr: string | null) {
 //   `Any descendants of elements that have the characteristic "Children Presentational: True"`
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
 export function isElementHiddenForAria(element: Element): boolean {
-  if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
+  if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(elementSafeTagName(element)))
     return true;
   const style = getElementComputedStyle(element);
   const isSlot = element.nodeName === 'SLOT';
@@ -527,6 +526,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   }
 
   const role = getAriaRole(element) || '';
+  const tagName = elementSafeTagName(element);
 
   // step 2c:
   //   if the current node is a control embedded within the label (e.g. any element directly referenced by aria-labelledby) for another widget...
@@ -542,14 +542,14 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     if (!isOwnLabel && !isOwnLabelledBy) {
       if (role === 'textbox') {
         options.visitedElements.add(element);
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA')
           return (element as HTMLInputElement | HTMLTextAreaElement).value;
         return element.textContent || '';
       }
       if (['combobox', 'listbox'].includes(role)) {
         options.visitedElements.add(element);
         let selectedOptions: Element[];
-        if (element.tagName === 'SELECT') {
+        if (tagName === 'SELECT') {
           selectedOptions = [...(element as HTMLSelectElement).selectedOptions];
           if (!selectedOptions.length && (element as HTMLSelectElement).options.length)
             selectedOptions.push((element as HTMLSelectElement).options[0]);
@@ -557,7 +557,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
           const listbox = role === 'combobox' ? queryInAriaOwned(element, '*').find(e => getAriaRole(e) === 'listbox') : element;
           selectedOptions = listbox ? queryInAriaOwned(listbox, '[aria-selected="true"]').filter(e => getAriaRole(e) === 'option') : [];
         }
-        if (!selectedOptions.length && element.tagName === 'INPUT') {
+        if (!selectedOptions.length && tagName === 'INPUT') {
           // SPEC DIFFERENCE:
           // This fallback is not explicitly mentioned in the spec, but all browsers and
           // wpt test name_heading-combobox-focusable-alternative-manual.html do this.
@@ -596,7 +596,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // Spec says to ignore this when aria-labelledby is defined.
     // WebKit follows the spec, while Chromium and Firefox do not.
     // We align with Chromium and Firefox here.
-    if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].includes((element as HTMLInputElement).type)) {
+    if (tagName === 'INPUT' && ['button', 'submit', 'reset'].includes((element as HTMLInputElement).type)) {
       options.visitedElements.add(element);
       const value = (element as HTMLInputElement).value || '';
       if (trimFlatString(value))
@@ -613,7 +613,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     //
     // SPEC DIFFERENCE.
     // Spec says to ignore this when aria-labelledby is defined, but all browsers take it into account.
-    if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'image') {
+    if (tagName === 'INPUT' && (element as HTMLInputElement).type === 'image') {
       options.visitedElements.add(element);
       const labels = (element as HTMLInputElement).labels || [];
       if (labels.length && !options.embeddedInLabelledBy)
@@ -630,7 +630,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#button-element-accessible-name-computation
-    if (!labelledBy && element.tagName === 'BUTTON') {
+    if (!labelledBy && tagName === 'BUTTON') {
       options.visitedElements.add(element);
       const labels = (element as HTMLButtonElement).labels || [];
       if (labels.length)
@@ -639,7 +639,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#output-element-accessible-name-computation
-    if (!labelledBy && element.tagName === 'OUTPUT') {
+    if (!labelledBy && tagName === 'OUTPUT') {
       options.visitedElements.add(element);
       const labels = (element as HTMLOutputElement).labels || [];
       if (labels.length)
@@ -652,13 +652,13 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // For "other form elements", we count select and any other input.
     //
     // Note: WebKit does not follow the spec and uses placeholder when aria-labelledby is present.
-    if (!labelledBy && (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.tagName === 'INPUT')) {
+    if (!labelledBy && (tagName === 'TEXTAREA' || tagName === 'SELECT' || tagName === 'INPUT')) {
       options.visitedElements.add(element);
       const labels = (element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || [];
       if (labels.length)
         return getAccessibleNameFromAssociatedLabels(labels, options);
 
-      const usePlaceholder = (element.tagName === 'INPUT' && ['text', 'password', 'search', 'tel', 'email', 'url'].includes((element as HTMLInputElement).type)) || element.tagName === 'TEXTAREA';
+      const usePlaceholder = (tagName === 'INPUT' && ['text', 'password', 'search', 'tel', 'email', 'url'].includes((element as HTMLInputElement).type)) || tagName === 'TEXTAREA';
       const placeholder = element.getAttribute('placeholder') || '';
       const title = element.getAttribute('title') || '';
       if (!usePlaceholder || title)
@@ -667,10 +667,10 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#fieldset-and-legend-elements
-    if (!labelledBy && element.tagName === 'FIELDSET') {
+    if (!labelledBy && tagName === 'FIELDSET') {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName === 'LEGEND') {
+        if (elementSafeTagName(child) === 'LEGEND') {
           return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
@@ -682,10 +682,10 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#figure-and-figcaption-elements
-    if (!labelledBy && element.tagName === 'FIGURE') {
+    if (!labelledBy && tagName === 'FIGURE') {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName === 'FIGCAPTION') {
+        if (elementSafeTagName(child) === 'FIGCAPTION') {
           return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
@@ -700,7 +700,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     //
     // SPEC DIFFERENCE.
     // Spec says to ignore this when aria-labelledby is defined, but all browsers take it into account.
-    if (element.tagName === 'IMG') {
+    if (tagName === 'IMG') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
       if (trimFlatString(alt))
@@ -710,10 +710,10 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#table-element
-    if (element.tagName === 'TABLE') {
+    if (tagName === 'TABLE') {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName === 'CAPTION') {
+        if (elementSafeTagName(child) === 'CAPTION') {
           return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInNativeTextAlternative: { element: child, hidden: isElementHiddenForAria(child) },
@@ -731,7 +731,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://w3c.github.io/html-aam/#area-element
-    if (element.tagName === 'AREA') {
+    if (tagName === 'AREA') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
       if (trimFlatString(alt))
@@ -741,10 +741,10 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     }
 
     // https://www.w3.org/TR/svg-aam-1.0/#mapping_additional_nd
-    if (element.tagName.toUpperCase() === 'SVG' || (element as SVGElement).ownerSVGElement) {
+    if (tagName === 'SVG' || (element as SVGElement).ownerSVGElement) {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName.toUpperCase() === 'TITLE' && (child as SVGElement).ownerSVGElement) {
+        if (elementSafeTagName(child) === 'TITLE' && (child as SVGElement).ownerSVGElement) {
           return getTextAlternativeInternal(child, {
             ...childOptions,
             embeddedInLabelledBy: { element: child, hidden: isElementHiddenForAria(child) },
@@ -752,7 +752,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
         }
       }
     }
-    if ((element as SVGElement).ownerSVGElement && element.tagName.toUpperCase() === 'A') {
+    if ((element as SVGElement).ownerSVGElement && tagName === 'A') {
       const title = element.getAttribute('xlink:title') || '';
       if (trimFlatString(title)) {
         options.visitedElements.add(element);
@@ -762,7 +762,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   }
 
   // See https://w3c.github.io/html-aam/#summary-element-accessible-name-computation for "summary"-specific check.
-  const shouldNameFromContentForSummary = element.tagName === 'SUMMARY' && !['presentation', 'none'].includes(role);
+  const shouldNameFromContentForSummary = tagName === 'SUMMARY' && !['presentation', 'none'].includes(role);
 
   // step 2f + step 2h.
   if (allowsNameFromContent(role, options.embeddedInTargetElement === 'descendant') ||
@@ -815,7 +815,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   }
 
   // step 2i.
-  if (!['presentation', 'none'].includes(role) || element.tagName === 'IFRAME') {
+  if (!['presentation', 'none'].includes(role) || tagName === 'IFRAME') {
     options.visitedElements.add(element);
     const title = element.getAttribute('title') || '';
     if (trimFlatString(title))
@@ -830,7 +830,7 @@ export const kAriaSelectedRoles = ['gridcell', 'option', 'row', 'tab', 'rowheade
 export function getAriaSelected(element: Element): boolean {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-selected
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  if (element.tagName === 'OPTION')
+  if (elementSafeTagName(element) === 'OPTION')
     return (element as HTMLOptionElement).selected;
   if (kAriaSelectedRoles.includes(getAriaRole(element) || ''))
     return getAriaBoolean(element.getAttribute('aria-selected')) === true;
@@ -843,11 +843,12 @@ export function getAriaChecked(element: Element): boolean | 'mixed' {
   return result === 'error' ? false : result;
 }
 export function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 'error' {
+  const tagName = elementSafeTagName(element);
   // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  if (allowMixed && element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
+  if (allowMixed && tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
     return 'mixed';
-  if (element.tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
+  if (tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
     return (element as HTMLInputElement).checked;
   if (kAriaCheckedRoles.includes(getAriaRole(element) || '')) {
     const checked = element.getAttribute('aria-checked');
@@ -877,7 +878,7 @@ export const kAriaExpandedRoles = ['application', 'button', 'checkbox', 'combobo
 export function getAriaExpanded(element: Element): boolean | 'none' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-expanded
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  if (element.tagName === 'DETAILS')
+  if (elementSafeTagName(element) === 'DETAILS')
     return (element as HTMLDetailsElement).open;
   if (kAriaExpandedRoles.includes(getAriaRole(element) || '')) {
     const expanded = element.getAttribute('aria-expanded');
@@ -894,7 +895,7 @@ export const kAriaLevelRoles = ['heading', 'listitem', 'row', 'treeitem'];
 export function getAriaLevel(element: Element): number {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-level
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  const native = { 'H1': 1, 'H2': 2, 'H3': 3, 'H4': 4, 'H5': 5, 'H6': 6 }[element.tagName];
+  const native = { 'H1': 1, 'H2': 2, 'H3': 3, 'H4': 4, 'H5': 5, 'H6': 6 }[elementSafeTagName(element)];
   if (native)
     return native;
   if (kAriaLevelRoles.includes(getAriaRole(element) || '')) {
@@ -922,7 +923,7 @@ function isNativelyDisabled(element: Element) {
 function belongsToDisabledFieldSet(element: Element | null): boolean {
   if (!element)
     return false;
-  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
+  if (elementSafeTagName(element) === 'FIELDSET' && element.hasAttribute('disabled'))
     return true;
   // fieldset does not work across shadow boundaries.
   return belongsToDisabledFieldSet(element.parentElement);
