@@ -359,7 +359,7 @@ class HtmlBuilder {
   private _createTestEntry(test: TestCasePublic, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
-    path = path.slice(1);
+    path = path.slice(1).filter(path => path.length > 0);
     const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
