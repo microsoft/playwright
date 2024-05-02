@@ -58,6 +58,7 @@ export type Credentials = {
   username: string;
   password: string;
   origin?: string;
+  sendImmediately?: boolean;
 };
 
 export type Geolocation = {

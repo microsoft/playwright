@@ -13376,6 +13376,13 @@ export interface BrowserType<Unused = {}> {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -14892,6 +14899,13 @@ export interface AndroidDevice {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -15616,6 +15630,13 @@ export interface APIRequest {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -16760,6 +16781,13 @@ export interface Browser extends EventEmitter {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -17647,6 +17675,13 @@ export interface Electron {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -20307,6 +20342,13 @@ export interface HTTPCredentials {
    * Restrain sending http credentials on specific origin (scheme://host:port).
    */
   origin?: string;
+
+  /**
+   * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+   * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+   * from the browser.
+   */
+  sendImmediately?: boolean;
 }
 
 export interface Geolocation {

@@ -454,6 +454,7 @@ ContextOptions:
         username: string
         password: string
         origin: string?
+        sendImmediately: boolean?
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -671,6 +672,7 @@ Playwright:
             username: string
             password: string
             origin: string?
+            sendImmediately: boolean?
         proxy:
           type: object?
           properties:
