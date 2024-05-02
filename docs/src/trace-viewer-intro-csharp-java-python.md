@@ -10,7 +10,6 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 **You will learn**
 
 - How to record a trace
-- How to open the HTML report
 - How to open the trace viewer
 
 ## Recording a trace
@@ -124,8 +123,6 @@ public class Tests : PageTest
     [TearDown]
     public async Task TearDown()
     {
-        // This will produce e.g.:
-        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.Tests.Test1.zip
         await Context.Tracing.StopAsync(new()
         {
             Path = Path.Combine(
@@ -152,17 +149,17 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.MSTest;
 
-namespace PlaywrightTestsMSTest;
+namespace PlaywrightTests;
 
 [TestClass]
-public class UnitTest1 : PageTest
+public class ExampleTest : PageTest
 {
     [TestInitialize]
     public async Task TestInitialize()
     {
          await Context.Tracing.StartAsync(new()
         {
-            Title = TestContext.TestName,
+            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.
             Screenshots = true,
             Snapshots = true,
             Sources = true
@@ -172,20 +169,18 @@ public class UnitTest1 : PageTest
     [TestCleanup]
     public async Task TestCleanup()
     {
-        // This will produce e.g.:
-        // bin/Debug/net8.0/playwright-traces/PlaywrightTests.UnitTest1.zip
         await Context.Tracing.StopAsync(new()
         {
             Path = Path.Combine(
                 Environment.CurrentDirectory,
                 "playwright-traces",
-                $"{TestContext.FullyQualifiedTestClassName}.zip"
+                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
             )
         });
     }
 
     [TestMethod]
-    public async Task TestYourOnlineShop()
+    public async Task GetStartedLink()
     {
         // ...
     }
@@ -195,11 +190,11 @@ public class UnitTest1 : PageTest
 </TabItem>
 </Tabs>
 
-This will record the trace and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
+This will record a zip file for each test, e.g. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
 
 ## Opening the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the `test-results` directory followed by the test name and then `trace.zip`.
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your trace's zip file is located. Once opened you can click on each action or use the timeline to see the state of the page before and after each action. You can also inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
 ```bash java
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
@@ -210,13 +205,18 @@ playwright show-trace trace.zip
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
+pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-traces/PlaywrightTests.ExampleTest.GetStartedLink.zip
 ```
-## Viewing the trace
 
-View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
+######
+* langs: python, java
 
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
+
+######
+* langs: csharp
+
+![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c)
 
 To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 

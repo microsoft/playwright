@@ -5,107 +5,18 @@ title: "Test Runners"
 
 ## Introduction
 
-While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience
-it works best with the built-in .NET test runner, and using NUnit as the test framework. NUnit is
-also what we use internally for [our tests](https://github.com/microsoft/playwright-dotnet/tree/main/src/Playwright.Tests).
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience it works best with the built-in .NET test runner, and using NUnit as the test framework. NUnit is also what we use internally for [our tests](https://github.com/microsoft/playwright-dotnet/tree/main/src/Playwright.Tests).
 
 Playwright and Browser instances can be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
 isolated between the tests.
 
-<!-- TOC -->
 
 ## NUnit
 
 Playwright provides base classes to write tests with NUnit via the [`Microsoft.Playwright.NUnit`](https://www.nuget.org/packages/Microsoft.Playwright.NUnit) package.
 
-
-### Creating an NUnit project
-
-```bash
-# Create a new project
-dotnet new nunit -n PlaywrightTests
-cd PlaywrightTests
-
-# Add the required reference
-dotnet add package Microsoft.Playwright.NUnit
-dotnet build
-
-# Install the required browsers and operating system dependencies
-pwsh bin/Debug/netX/playwright.ps1 install --with-deps
-```
-
-Modify the UnitTest1.cs:
-
-```csharp
-using Microsoft.Playwright.NUnit;
-
-namespace PlaywrightTests;
-
-[Parallelizable(ParallelScope.Self)]
-[TestFixture]
-public class MyTest : PageTest
-{
-    [Test]
-    public async Task ShouldHaveTheCorrectSlogan()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
-    }
-
-    [Test]
-    public async Task ShouldHaveTheCorrectTitle()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        var title = Page.Locator(".navbar__inner .navbar__title");
-        await Expect(title).ToHaveTextAsync("Playwright");
-    }
-}
-```
-
-Run your tests against Chromium
-
-```bash
-dotnet test
-```
-
-Run your tests against WebKit
-
-```bash tab=bash-bash lang=csharp
-BROWSER=webkit dotnet test
-```
-
-```batch tab=bash-batch lang=csharp
-set BROWSER=webkit
-dotnet test
-```
-
-```powershell tab=bash-powershell lang=csharp
-$env:BROWSER="webkit"
-dotnet test
-```
-
-Run your tests with GUI
-
-```bash tab=bash-bash lang=csharp
-HEADED=1 dotnet test
-```
-
-```batch tab=bash-batch lang=csharp
-set HEADED=1
-dotnet test
-```
-
-```powershell tab=bash-powershell lang=csharp
-$env:HEADED="1"
-dotnet test
-```
-
-You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=nunit):
-
-```bash
-dotnet test --filter "Name~Slogan"
-```
+Check out the [installation guide](./intro.md) to get started.
 
 ### Running NUnit tests in Parallel
 
@@ -113,6 +24,10 @@ By default NUnit will run all test files in parallel, while running tests inside
 Only `ParallelScope.Self` is supported.
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
+
+```bash
+dotnet test -- NUnit.NumberOfTestWorkers=5
+```
 
 ### Customizing [BrowserContext] options
 
@@ -223,91 +138,7 @@ There are a few base classes available to you in `Microsoft.Playwright.NUnit` na
 
 Playwright provides base classes to write tests with MSTest via the [`Microsoft.Playwright.MSTest`](https://www.nuget.org/packages/Microsoft.Playwright.MSTest) package.
 
-### Creating an MSTest project
-
-```bash
-# Create a new project
-dotnet new mstest -n PlaywrightTests
-cd PlaywrightTests
-
-# Add the required reference
-dotnet add package Microsoft.Playwright.MSTest
-dotnet build
-
-# Install the required browsers and operating system dependencies
-pwsh bin/Debug/netX/playwright.ps1 install --with-deps
-```
-
-Modify the UnitTest1.cs:
-
-```csharp
-using Microsoft.Playwright.MSTest;
-
-namespace PlaywrightTests;
-
-[TestClass]
-public class UnitTest1: PageTest
-{
-    [TestMethod]
-    public async Task ShouldHaveTheCorrectSlogan()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
-    }
-
-    [TestMethod]
-    public async Task ShouldHaveTheCorrectTitle()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        var title = Page.Locator(".navbar__inner .navbar__title");
-        await Expect(title).ToHaveTextAsync("Playwright");
-    }
-}
-```
-
-Run your tests against Chromium
-
-```bash
-dotnet test
-```
-
-Run your tests against WebKit
-
-```bash tab=bash-bash lang=csharp
-BROWSER=webkit dotnet test
-```
-
-```batch tab=bash-batch lang=csharp
-set BROWSER=webkit
-dotnet test
-```
-
-```powershell tab=bash-powershell lang=csharp
-$env:BROWSER="webkit"
-dotnet test
-```
-
-Run your tests with GUI
-
-```bash tab=bash-bash lang=csharp
-HEADED=1 dotnet test
-```
-
-```batch tab=bash-batch lang=csharp
-set HEADED=1
-dotnet test
-```
-
-```powershell tab=bash-powershell lang=csharp
-$env:HEADED="1"
-dotnet test
-```
-
-You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest):
-
-```bash
-dotnet test --filter "Name~Slogan"
-```
+Check out the [installation guide](./intro.md) to get started.
 
 ### Running MSTest tests in Parallel
 
@@ -331,7 +162,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace PlaywrightTests;
 
 [TestClass]
-public class UnitTest1 : PageTest
+public class ExampleTest : PageTest
 {
     [TestMethod]
     public async Task TestWithCustomContextOptions()
