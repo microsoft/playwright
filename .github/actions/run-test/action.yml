@@ -35,14 +35,7 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-    # https://github.com/actions/runner-images/issues/9330
-    - name: Allow microphone access to all apps (macOS 14)
-      shell: bash
-      run: |
-        if [[ "$(uname)" == "Darwin" && "$(sw_vers -productVersion | cut -d. -f1)" == "14" ]]; then
-          echo "Allowing microphone access to all apps"
-          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
-        fi
+    - uses: ./.github/actions/enable-microphone-access
     - run: npm ci
       shell: bash
       env:
