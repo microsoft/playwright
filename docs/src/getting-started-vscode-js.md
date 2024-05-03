@@ -139,7 +139,7 @@ To learn more about the trace viewer see our [Trace Viewer guide](./trace-viewer
 CodeGen will auto generate your tests for you as you perform actions in the browser and is a great way to quickly get started. The viewport for the browser window is set to a specific width and height. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
 
 <LiteYouTube
-    id="LM4yqrOzmFE"
+    id="5XIZPqKkdBA"
     title="Generating Playwright tests in VS Code"
 />
 
