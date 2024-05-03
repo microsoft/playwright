@@ -23,3 +23,10 @@ test('unmount twice throws an error', async ({ mount }) => {
   await component.unmount();
   await expect(component.unmount()).rejects.toThrowError('Component was not mounted');
 });
+
+test('mount then unmount then mount', async ({ mount }) => {
+  let component = await mount(<Button title="Submit" />);
+  await component.unmount();
+  component = await mount(<Button title="Save" />);
+  await expect(component).toContainText('Save');
+});
