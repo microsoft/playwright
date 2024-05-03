@@ -34,7 +34,6 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
-      if: matrix.os != 'windows-latest'
     - run: npm run stest contexts -- --project=chromium
       if: ${{ !cancelled() }}
     - run: npm run stest browsers -- --project=chromium
