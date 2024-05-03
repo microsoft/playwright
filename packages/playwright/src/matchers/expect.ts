@@ -295,7 +295,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         // so they behave like a retriable step.
         const result = (matcherName === 'toPass' || this._info.isPoll) ?
           zones.run('stepZone', step, callback) :
-          zones.run<ExpectZone, any>('expectZone', { title, wallTime }, callback);
+          zones.run<ExpectZone, any>('expectZone', { title, wallTime, stepId: step.stepId }, callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

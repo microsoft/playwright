@@ -215,9 +215,19 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   const libraryContexts = contexts.filter(context => context.origin === 'library');
   const testRunnerContexts = contexts.filter(context => context.origin === 'testRunner');
 
+  // Library actions are replaced with corresponding test runner steps. Matching with
+  // the test runner steps enables us to find parent steps.
+  // - In the newer versions the actions are matched by explicit step id stored in the
+  //   library context actions.
+  // - In the older versions the step id is not stored and the match is perfomed based on
+  //   action name and wallTime.
+  const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
+
   for (const context of libraryContexts) {
-    for (const action of context.actions)
-      map.set(`${action.apiName}@${action.wallTime}`, { ...action, context });
+    for (const action of context.actions) {
+      const key = matchByStepId ? action.stepId! : `${action.apiName}@${action.wallTime}`;
+      map.set(key, { ...action, context });
+    }
   }
 
   // Protocol call aka library contexts have startTime/endTime as server-side times.
@@ -231,7 +241,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const key = `${action.apiName}@${action.wallTime}`;
+      const key = matchByStepId ? action.callId : `${action.apiName}@${action.wallTime}`;
       const existing = map.get(key);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);

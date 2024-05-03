@@ -582,6 +582,38 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
 
+    test('trace should not hang when showing parallel api requests', async ({ runInlineTest, page, server, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { use: { trace: 'on' } };
+        `,
+        'a.test.js': `
+          import { test, expect, request } from '@playwright/test';
+          test('log two contexts', async function({ }) {
+            const api1 = await request.newContext();
+            const api2 = await request.newContext();
+            await Promise.all([
+              api1.get('${server.EMPTY_PAGE}'),
+              api1.get('${server.CROSS_PROCESS_PREFIX}/empty.html'),
+              api2.get('${server.EMPTY_PAGE}'),
+              api2.get('${server.CROSS_PROCESS_PREFIX}/empty.html'),
+            ]);
+          });
+        `,
+      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'View trace' }).click();
+
+      // Trace viewer should not hang here when displaying parallal requests.
+      await expect(page.getByTestId('actions-tree')).toContainText('apiRequestContext.get');
+      await page.getByText('apiRequestContext.get').nth(2).click();
+      await page.getByText('apiRequestContext.get').nth(1).click();
+      await page.getByText('apiRequestContext.get').nth(0).click();
+    });
+
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.js': `

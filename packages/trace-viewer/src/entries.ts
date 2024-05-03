@@ -72,6 +72,6 @@ export function createEmptyContext(): ContextEntry {
     events: [],
     errors: [],
     stdio: [],
-    hasSource: false
+    hasSource: false,
   };
 }

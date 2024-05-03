@@ -150,6 +150,7 @@ export type Metadata = {
   apiName?: string,
   internal?: boolean,
   wallTime?: number,
+  stepId?: string,
 };
 
 export type ClientSideCallMetadata = {

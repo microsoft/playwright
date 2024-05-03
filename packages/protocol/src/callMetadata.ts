@@ -34,6 +34,8 @@ export type CallMetadata = {
   isServerSide?: boolean;
   // Client wall time.
   wallTime: number;
+  // Test runner step id.
+  stepId?: string;
   location?: { file: string, line?: number, column?: number };
   log: string[];
   error?: SerializedError;

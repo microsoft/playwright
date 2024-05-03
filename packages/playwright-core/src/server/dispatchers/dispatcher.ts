@@ -290,6 +290,7 @@ export class DispatcherConnection {
       location: validMetadata.location,
       apiName: validMetadata.apiName,
       internal: validMetadata.internal,
+      stepId: validMetadata.stepId,
       objectId: sdkObject?.guid,
       pageId: sdkObject?.attribution?.page?.guid,
       frameId: sdkObject?.attribution?.frame?.guid,

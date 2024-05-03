@@ -33,7 +33,7 @@ export interface TestStepInternal {
   complete(result: { error?: Error, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
-  category: 'hook' | 'fixture' | 'test.step' | string;
+  category: 'hook' | 'fixture' | 'test.step' | 'expect' | string;
   wallTime: number;
   location?: Location;
   boxedStack?: StackFrame[];
