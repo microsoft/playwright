@@ -157,15 +157,15 @@
 <h2>Name computation precedence tests</h2>
 <!-- Name computation: https://w3c.github.io/accname/#computation-steps -->
 
-<!-- Step 2A: Hidden Not Referenced supercedes 2D: AriaLabel, also see wpt/accname/name/comp_hidden_not_referenced.html -->
-<button aria-labelledby="span1" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (display:none) supercedes aria-label" class="ex">
+<!-- Step 2A: Hidden Not Referenced supersedes 2D: AriaLabel, also see wpt/accname/name/comp_hidden_not_referenced.html -->
+<button aria-labelledby="span1" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (display:none) supersedes aria-label" class="ex">
   <span id="span1" style="display:none;">
     <span id="span2" style="display:none;">label</span>
   </span>
 x
 </button>
 
-<button aria-labelledby="span3" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (visibility:hidden) supercedes aria-label" class="ex">
+<button aria-labelledby="span3" aria-label="foo" data-expectedlabel="label" data-testname="button's hidden referenced name (visibility:hidden) supersedes aria-label" class="ex">
   <span id="span3" style="visibility:hidden;">
     <span id="span4" style="visibility:hidden;">label</span>
   </span>
@@ -185,34 +185,34 @@ x
 </button>
 </span>
 
-<!-- Step 2B: LabelledBy supercedes 2D: AriaLabel, also see wpt/accname/name/comp_labelledby.html -->
-<a href="#" aria-labelledby="span7" aria-label="foo" data-expectedlabel="label" data-testname="link's aria-labelledby name supercedes aria-label" class="ex">x</a>
+<!-- Step 2B: LabelledBy supersedes 2D: AriaLabel, also see wpt/accname/name/comp_labelledby.html -->
+<a href="#" aria-labelledby="span7" aria-label="foo" data-expectedlabel="label" data-testname="link's aria-labelledby name supersedes aria-label" class="ex">x</a>
 <span id="span7">label</span>
 
-<!-- Step 2C: Embedded Control labelling supercedes 2D: AriaLabel, see wpt/accname/name/comp_embedded_control.html -->
+<!-- Step 2C: Embedded Control labelling supersedes 2D: AriaLabel, see wpt/accname/name/comp_embedded_control.html -->
 
-<!-- Step 2E: Host Language Label is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_host_language_label.html -->
-<img alt="alt" aria-label="foo" data-expectedlabel="foo" data-testname="img's aria-label supercedes alt attribute" class="ex" />
+<!-- Step 2E: Host Language Label is superseded by 2D: AriaLabel, also see wpt/accname/name/comp_host_language_label.html -->
+<img alt="alt" aria-label="foo" data-expectedlabel="foo" data-testname="img's aria-label supersedes alt attribute" class="ex" />
 
-<svg aria-label="foo" data-expectedlabel="foo" data-testname="svg's aria-label supercedes title tag" class="ex">
+<svg aria-label="foo" data-expectedlabel="foo" data-testname="svg's aria-label supersedes title tag" class="ex">
   <circle cx="5" cy="5" r="4">
     <title>circle</title>
   </circle>
 </svg>
 
 <label for="input1">label</label>
-<input type="text" id="input1" aria-label="foo" data-expectedlabel="foo" data-testname="input with label for association is superceded by aria-label" class="ex" />
+<input type="text" id="input1" aria-label="foo" data-expectedlabel="foo" data-testname="input with label for association is superseded by aria-label" class="ex" />
 
-<!-- Step 2F: Name From Content is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_name_from_content.html -->
-<button aria-label="label" data-expectedlabel="label" data-testname="button name from contents is superceded by aria-label" class="ex">x</button>
+<!-- Step 2F: Name From Content is superseded by 2D: AriaLabel, also see wpt/accname/name/comp_name_from_content.html -->
+<button aria-label="label" data-expectedlabel="label" data-testname="button name from contents is superseded by aria-label" class="ex">x</button>
 
-<!-- Step 2G: Text Node is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_text_node.html -->
-<h1 aria-label="label" data-expectedlabel="label" data-testname="h1 text is superceded by aria-label" class="ex">x</h1>
+<!-- Step 2G: Text Node is superseded by 2D: AriaLabel, also see wpt/accname/name/comp_text_node.html -->
+<h1 aria-label="label" data-expectedlabel="label" data-testname="h1 text is superseded by aria-label" class="ex">x</h1>
 
 <!-- Step 2H: Recursive Name from Content, see wpt/accname/name/comp_name_from_content.html  -->
 
-<!-- Step 2I: Tooltip is superceded by 2D: AriaLabel, also see wpt/accname/name/comp_tooltip.html -->
-<button aria-label="label" title="foo" data-expectedlabel="label" data-testname="button with title is superceded by aria-label" class="ex">x</button>
+<!-- Step 2I: Tooltip is superseded by 2D: AriaLabel, also see wpt/accname/name/comp_tooltip.html -->
+<button aria-label="label" title="foo" data-expectedlabel="label" data-testname="button with title is superseded by aria-label" class="ex">x</button>
 
 <h2>Empty/whitespace aria-label tests</h2>
 <!--

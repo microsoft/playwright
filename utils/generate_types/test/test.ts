@@ -321,13 +321,13 @@ playwright.chromium.launch().then(async browser => {
   console.log(await resultHandle.jsonValue());
   await resultHandle.dispose();
 
-  // evaluteHandle with two different return types (JSHandle)
+  // evaluateHandle with two different return types (JSHandle)
   {
     const handle = await page.evaluateHandle(() => '' as string | number);
     const result = await handle.evaluate(value => value);
     const assertion: AssertType<string | number, typeof result> = true;
   }
-  // evaluteHandle with two different return types (ElementHandle)
+  // evaluateHandle with two different return types (ElementHandle)
   {
     const handle = await page.evaluateHandle(() => '' as any as HTMLInputElement | HTMLTextAreaElement);
     await handle.evaluate(element => element.value);

@@ -981,7 +981,7 @@ it('should click in a transformed iframe', async ({ page }) => {
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should click a button that is overlayed by a permission popup', async ({ page, server }) => {
+it('should click a button that is overlaid by a permission popup', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23280' });
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.EMPTY_PAGE);

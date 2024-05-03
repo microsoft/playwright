@@ -4233,7 +4233,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Alternatively, you can delcare a hook **with a title**.
+   * Alternatively, you can declare a hook **with a title**.
    *
    * ```js
    * // example.spec.ts
@@ -4283,7 +4283,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Alternatively, you can delcare a hook **with a title**.
+   * Alternatively, you can declare a hook **with a title**.
    *
    * ```js
    * // example.spec.ts

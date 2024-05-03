@@ -349,7 +349,7 @@ export class DispatcherConnection {
         }
       }
       response.error = serializeError(e);
-      // The command handler could have set error in the metada, do not reset it if there was no exception.
+      // The command handler could have set error in the metadata, do not reset it if there was no exception.
       callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();

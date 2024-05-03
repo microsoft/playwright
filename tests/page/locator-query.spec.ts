@@ -218,7 +218,7 @@ it('should support locator.or', async ({ page }) => {
   await expect(page.locator('div').or(page.locator('span'))).toHaveCount(2);
   await expect(page.locator('div').or(page.locator('span'))).toHaveText(['hello', 'world']);
   await expect(page.locator('span').or(page.locator('article')).or(page.locator('div'))).toHaveText(['hello', 'world']);
-  await expect(page.locator('article').or(page.locator('someting'))).toHaveCount(0);
+  await expect(page.locator('article').or(page.locator('something'))).toHaveCount(0);
   await expect(page.locator('article').or(page.locator('div'))).toHaveText('hello');
   await expect(page.locator('article').or(page.locator('span'))).toHaveText('world');
   await expect(page.locator('div').or(page.locator('article'))).toHaveText('hello');

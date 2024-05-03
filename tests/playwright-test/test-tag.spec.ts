@@ -162,7 +162,7 @@ test('should be included in testInfo', async ({ runInlineTest }, testInfo) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should be included in testInfo if comming from describe', async ({ runInlineTest }, testInfo) => {
+test('should be included in testInfo if coming from describe', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
     import { test, expect } from '@playwright/test';

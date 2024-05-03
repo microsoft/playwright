@@ -462,7 +462,7 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.active).toBe('#checkbox');
   });
 
-  test('should check input with chaning id', async ({ page, openRecorder }) => {
+  test('should check input with chaining id', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name = 'updated'"></input>`);
     await Promise.all([

@@ -183,7 +183,7 @@ export const test = baseTest.extend<{}, { dbUserName: string }>({
   dbUserName: [async ({ }, use) => {
     // Use workerIndex as a unique identifier for each worker.
     const userName = `user-${test.info().workerIndex}`;
-    // Inialize user in the database.
+    // Initialize user in the database.
     await createUserInTestDatabase(userName);
     await use(userName);
     // Clean up after the tests are done.

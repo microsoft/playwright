@@ -106,7 +106,7 @@ function initialize(browsingContext, docShell, actor) {
     },
 
     ensurePermissions() {
-      // noop, just a rountrip.
+      // noop, just a roundtrip.
     },
 
     hasFailedToOverrideTimezone() {

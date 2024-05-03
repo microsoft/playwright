@@ -232,28 +232,28 @@
   </a>
 </h3>
 
-<!-- cross-referencial edge case-->
+<!-- cross-referential edge case-->
 <h1>heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby</h1>
 <h3 data-expectedlabel="image link" data-testname="heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby" class="ex">
   <a href="#" aria-labelledby="nested_image_label3">
     <span class="note" id="crossref_link">link</span><!-- this text is skipped the first time around because of aria-labelledby on parent element -->
   </a>
-  <!-- but it's picked up again in inverse order b/c of cross-referencial aria-labelledby edge case -->
+  <!-- but it's picked up again in inverse order b/c of cross-referential aria-labelledby edge case -->
   <img id="nested_image_label_3" alt="image" aria-labelledby="crossref_link" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
 </h3>
 
-<!-- self-referencial edge case-->
+<!-- self-referential edge case-->
 <h1>heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby</h1>
 <h3 data-expectedlabel="image link" data-testname="heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby" class="ex">
   <a href="#" aria-labelledby="nested_image_label4">
     <span class="note" id="crossref_link2">link</span><!-- this text is skipped the first time around because of aria-labelledby on parent element -->
   </a>
-  <!-- but it's picked up again (after the self-referencial image alt) in inverse order b/c of cross-referencial aria-labelledby edge case -->
+  <!-- but it's picked up again (after the self-referential image alt) in inverse order b/c of cross-referential aria-labelledby edge case -->
   <img id="nested_image_label4" alt="image" aria-labelledby="nested_image_label4 crossref_link2" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
 </h3>
 
 
-<!-- Note: The following test is out of line with the spec, but matching two out of three implementations at the time of writing, and spec changes are expeected. -->
+<!-- Note: The following test is out of line with the spec, but matching two out of three implementations at the time of writing, and spec changes are expected. -->
 <!-- See details in https://github.com/w3c/accname/issues/205 -->
 <!-- Final spec resolution will be addressed in AccName Whitespace Project: https://github.com/w3c/accname/projects/1#card-42288231 -->
 <h1>simple w/ for each child (w/o spaces and display:inline)</h1>

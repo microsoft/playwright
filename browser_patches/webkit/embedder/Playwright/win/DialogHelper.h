@@ -33,11 +33,11 @@ class Dialog {
 public:
     bool run(HINSTANCE hInst, HWND hwnd, int dialogId)
     {
-        auto result = DialogBoxParam(hInst, MAKEINTRESOURCE(dialogId), hwnd, doalogProc, reinterpret_cast<LPARAM>(this));
+        auto result = DialogBoxParam(hInst, MAKEINTRESOURCE(dialogId), hwnd, dialogProc, reinterpret_cast<LPARAM>(this));
         return (result > 0);
     }
 
-    static INT_PTR CALLBACK doalogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+    static INT_PTR CALLBACK dialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     {
         if (message == WM_INITDIALOG)
             SetWindowLongPtr(hDlg, DWLP_USER, lParam);

@@ -184,9 +184,9 @@ class TypesGenerator {
   }
 
   /**
-   * @param {string} overriddes
+   * @param {string} overrides
    */
-  objectDefinitionsToString(overriddes) {
+  objectDefinitionsToString(overrides) {
     let definition;
     const parts = [];
     const internalWords = new Set(overriddes.split(/[^\w$]/g));

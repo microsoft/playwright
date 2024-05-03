@@ -139,7 +139,7 @@ async function extractAndParseReports(dir: string, shardFiles: string[], interna
         fileName = reportNames.makeUnique(fileName);
         let parsedEvents = parseCommonEvents(content);
         // Passing reviver to JSON.parse doesn't work, as the original strings
-        // keep beeing used. To work around that we traverse the parsed events
+        // keep being used. To work around that we traverse the parsed events
         // as a post-processing step.
         internalizer.traverse(parsedEvents);
         const metadata = findMetadata(parsedEvents, file);

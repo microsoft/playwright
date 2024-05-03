@@ -1248,7 +1248,7 @@ index 11ca350f483458ba11f0ee170ce38e9785e8c70f..6bb310f6e96239388b4c92bd7bdf2d69
 +      ScrollAxis(WhereToScroll::Center, WhenToScroll::IfNotFullyVisible),
 +      ScrollFlags::ScrollOverflowHidden);
 +  // If a _visual_ scroll update is pending, cancel it; otherwise, it will
-+  // clobber next scroll (e.g. subsequent window.scrollTo(0, 0) wlll break).
++  // clobber next scroll (e.g. subsequent window.scrollTo(0, 0) will break).
 +  if (presShell->GetPendingVisualScrollUpdate()) {
 +    presShell->AcknowledgePendingVisualScrollUpdate();
 +    presShell->ClearPendingVisualScrollUpdate();
@@ -2722,11 +2722,11 @@ index 4573e28470c5112f5ac2c5dd53e7a9d1ceedb943..b53b86d8e39f1de4b0d0f1a8d5d7295e
 +    nsCOMPtr<nsIFile> fileToUse;
 +    rv = interceptor->InterceptDownloadRequest(this, request, mBrowsingContext, getter_AddRefs(fileToUse), &isIntercepted);
 +    if (!NS_SUCCEEDED(rv)) {
-+      LOG(("    failed to call nsIDowloadInterceptor.interceptDownloadRequest"));
++      LOG(("    failed to call nsIDownloadInterceptor.interceptDownloadRequest"));
 +      return rv;
 +    }
 +    if (isIntercepted) {
-+      LOG(("    request interceped by nsIDowloadInterceptor"));
++      LOG(("    request interceped by nsIDownloadInterceptor"));
 +      if (fileToUse) {
 +        mTempFile = fileToUse;
 +        rv = mTempFile->GetLeafName(mTempLeafName);
@@ -2768,7 +2768,7 @@ index 4573e28470c5112f5ac2c5dd53e7a9d1ceedb943..b53b86d8e39f1de4b0d0f1a8d5d7295e
 +    if (interceptor) {
 +      nsCString noError;
 +      nsresult rv = interceptor->OnDownloadComplete(this, noError);
-+      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to call nsIDowloadInterceptor.OnDownloadComplete");
++      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to call nsIDownloadInterceptor.OnDownloadComplete");
 +      Unused << rv;
 +    }
 +  }
@@ -2785,7 +2785,7 @@ index 4573e28470c5112f5ac2c5dd53e7a9d1ceedb943..b53b86d8e39f1de4b0d0f1a8d5d7295e
 +    nsCString errorName;
 +    GetErrorName(aReason, errorName);
 +    nsresult rv = interceptor->OnDownloadComplete(this, errorName);
-+    MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed notify nsIDowloadInterceptor about cancel");
++    MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed notify nsIDownloadInterceptor about cancel");
 +    Unused << rv;
 +  }
 +
@@ -2978,7 +2978,7 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
                  : ToObjcSelectorPtr(
--                      @selector(moveToBegginingOfDocumentAndModifySelection:)),
+-                      @selector(moveToBeginningOfDocumentAndModifySelection:)),
 +                      @selector(moveToBeginningOfDocumentAndModifySelection:)),
              aCommands);
          break;

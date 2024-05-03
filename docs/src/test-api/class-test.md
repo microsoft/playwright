@@ -195,7 +195,7 @@ test('my test', async ({ page }) => {
 });
 ```
 
-Alternatively, you can delcare a hook **with a title**.
+Alternatively, you can declare a hook **with a title**.
 
 ```js title="example.spec.ts"
 test.afterEach('Status check', async ({ page }) => {

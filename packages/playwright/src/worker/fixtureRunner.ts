@@ -83,7 +83,7 @@ class Fixture {
         this.failed = true;
         return;
       }
-      // Fixture teardown is root => leafs, when we need to teardown a fixture,
+      // Fixture teardown is root => leaves, when we need to teardown a fixture,
       // it recursively tears down its usages first.
       dep._usages.add(this);
       // Don't forget to decrement all usages when fixture goes.

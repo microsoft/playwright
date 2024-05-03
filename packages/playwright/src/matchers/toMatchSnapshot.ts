@@ -130,7 +130,7 @@ class SnapshotHelper {
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
       inputPathSegments = [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension];
-      // Trim the output file paths more aggresively to avoid hitting Windows filesystem limits.
+      // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
       this.outputBaseName = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength)) + '.' + anonymousSnapshotExtension;
     } else {
       // We intentionally do not sanitize user-provided array of segments, but for backwards

@@ -596,7 +596,7 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
           'location': '/empty.html',
         }
       });
-      reject('fullfill didn\'t throw');
+      reject('fulfill didn\'t throw');
     } catch (e) {
       fulfill(e);
     }

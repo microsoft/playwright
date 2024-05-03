@@ -28,7 +28,7 @@ const fs = require('fs');
         recordVideo: { dir: __dirname, size: {width: 320, height: 240} },
       });
       await context.newPage();
-      // Wait fo 1 second to actually record something.
+      // Wait for 1 second to actually record something.
       await new Promise(x => setTimeout(x, 1000));
       await context.close();
       await browser.close();
