@@ -9,8 +9,8 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
 
 **You will learn**
 
-- [How to run tests](/running-tests)
-- [How to debug tests](/running-tests.md#debugging-tests)
+- [How to run tests](#running-tests)
+- [How to debug tests](#debugging-tests)
 
 ## Running tests
 
