@@ -18,13 +18,24 @@ Playwright Test can now test your components.
 
 Here is what a typical component test looks like:
 
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+<TabItem value="react">
+
 ```js
-test('event should work', async ({ mount }) => {
+test('trigger event upon button click', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
   const component = await mount(
-    <Button title="Submit" onClick={() => { clicked = true }}></Button>
+    <Button title="Submit" onClick={() => { clicked = true }} />
   );
 
   // As with any Playwright test, assert locator text.
@@ -37,6 +48,88 @@ test('event should work', async ({ mount }) => {
   expect(clicked).toBeTruthy();
 });
 ```
+
+</TabItem>
+
+<TabItem value="solid">
+
+```js
+test('trigger event upon button click', async ({ mount }) => {
+  let clicked = false;
+
+  // Mount a component. Returns locator pointing to the component.
+  const component = await mount(
+    <Button title="Submit" onClick={() => { clicked = true }} />
+  );
+
+  // As with any Playwright test, assert locator text.
+  await expect(component).toContainText('Submit');
+
+  // Perform locator click. This will trigger the event.
+  await component.click();
+
+  // Assert that respective events have been fired.
+  expect(clicked).toBeTruthy();
+});
+```
+
+</TabItem>
+
+<TabItem value="svelte">
+
+```js
+test('trigger event upon button click', async ({ mount }) => {
+  let clicked = false;
+
+  // Mount a component. Returns locator pointing to the component.
+  const component = await mount(Button, {
+    props: { title: 'Submit' },
+    on: {
+      onClick() { clicked = true }
+    }
+  });
+
+  // As with any Playwright test, assert locator text.
+  await expect(component).toContainText('Submit');
+
+  // Perform locator click. This will trigger the event.
+  await component.click();
+
+  // Assert that respective events have been fired.
+  expect(clicked).toBeTruthy();
+});
+```
+
+</TabItem>
+
+<TabItem value="vue">
+
+```js
+test('trigger event upon button click', async ({ mount }) => {
+  let clicked = false;
+
+  // Mount a component. Returns locator pointing to the component.
+  const component = await mount(Button, {
+    props: { title: 'Submit' },
+    on: {
+      onClick() { clicked = true }
+    }
+  });
+
+  // As with any Playwright test, assert locator text.
+  await expect(component).toContainText('Submit');
+
+  // Perform locator click. This will trigger the event.
+  await component.click();
+
+  // Assert that respective events have been fired.
+  expect(clicked).toBeTruthy();
+});
+```
+
+</TabItem>
+
+</Tabs>
 
 ## How to get started
 
