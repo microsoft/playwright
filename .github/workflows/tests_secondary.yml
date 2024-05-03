@@ -95,6 +95,8 @@ jobs:
           node_version: 16
         - os: ubuntu-latest
           node_version: 20
+        - os: ubuntu-latno est
+          node_version: 22
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
