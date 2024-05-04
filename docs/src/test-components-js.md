@@ -597,46 +597,6 @@ export default defineConfig({
 });
 ```
 
-### How can I use router?
-
-```js title="playwright/index.tsx"
-import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
-import { BrowserRouter } from 'react-router-dom';
-import '../src/assets/index.css';
-
-export type HooksConfig = {
-  routing?: boolean;
-}
-
-beforeMount<HooksConfig>(async ({ hooksConfig, App }) => {
-  console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
-
-  if (hooksConfig?.routing)
-     return <BrowserRouter><App /></BrowserRouter>;
-});
-
-afterMount<HooksConfig>(async () => {
-  console.log(`After mount`);
-});
-```
-
-```js title="src/test.spec.tsx"
-import { test, expect } from '@playwright/experimental-ct-react';
-import App from '@/App';
-import type { HooksConfig } from '../playwright';
-
-test('navigate to a page by clicking a link', async ({ page, mount }) => {
-  const component = await mount<HooksConfig>(<App />, {
-    hooksConfig: { routing: true },
-  });
-  await expect(component.getByRole('main')).toHaveText('Login');
-  await expect(page).toHaveURL('/');
-  await component.getByRole('link', { name: 'Dashboard' }).click();
-  await expect(component.getByRole('main')).toHaveText('Dashboard');
-  await expect(page).toHaveURL('/dashboard');
-});
-```
-
 ### How can I test components that uses Pinia?
 
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
