@@ -8120,7 +8120,7 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
-
+    
     /**
      * Optional URL to provide additional context or link to an issue tracker.
      */
