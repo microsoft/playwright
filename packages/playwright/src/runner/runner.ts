@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
@@ -23,7 +24,6 @@ import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
@@ -86,15 +86,6 @@ export class Runner {
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
 
-    if (!listOnly && config.ignoreSnapshots) {
-      reporter.onStdOut(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
-
     const taskStatus = await taskRunner.run(testRun, deadline);
     let status: FullResult['status'] = testRun.failureTracker.result();
     if (status === 'passed' && taskStatus !== 'passed')
@@ -102,6 +93,8 @@ export class Runner {
     const modifiedResult = await reporter.onEnd({ status });
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
+
+    await writeLastRunInfo(testRun, status);
 
     await reporter.onExit();
 
@@ -153,4 +146,34 @@ export class Runner {
       return await override(resolvedFiles, this._config, result.suite);
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
+}
+
+export type LastRunInfo = {
+  status: FullResult['status'];
+  failedTests: string[];
+};
+
+async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
+  const [project] = filterProjects(testRun.config.projects, testRun.config.cliProjectFilter);
+  if (!project)
+    return;
+  const outputDir = project.project.outputDir;
+  await fs.promises.mkdir(outputDir, { recursive: true });
+  const lastRunReportFile = path.join(outputDir, '.last-run.json');
+  const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
+  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
+  await fs.promises.writeFile(lastRunReportFile, lastRunReport);
+}
+
+export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
+  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  if (!project)
+    return { status: 'passed', failedTests: [] };
+  const outputDir = project.project.outputDir;
+  try {
+    const lastRunReportFile = path.join(outputDir, '.last-run.json');
+    return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
+  } catch {
+  }
+  return { status: 'passed', failedTests: [] };
 }

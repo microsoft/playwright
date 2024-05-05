@@ -32,6 +32,7 @@ import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
 import { type ReporterV2, wrapReporterAsV2 } from '../reporters/reporterV2';
+import { calculateSha1 } from 'playwright-core/lib/utils';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean, descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
   const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
@@ -90,7 +91,25 @@ function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'me
     configDir: config.configDir,
     _mode: mode,
     _isTestServer: isTestServer,
+    _commandHash: computeCommandHash(config),
   };
+}
+
+function computeCommandHash(config: FullConfigInternal) {
+  const parts = [];
+  // Include project names for readability.
+  if (config.cliProjectFilter)
+    parts.push(...config.cliProjectFilter);
+  const command = {} as any;
+  if (config.cliArgs.length)
+    command.cliArgs = config.cliArgs;
+  if (config.cliGrep)
+    command.cliGrep = config.cliGrep;
+  if (config.cliGrepInvert)
+    command.cliGrepInvert = config.cliGrepInvert;
+  if (Object.keys(command).length)
+    parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
+  return parts.join('-');
 }
 
 class ListModeReporter extends EmptyReporter {

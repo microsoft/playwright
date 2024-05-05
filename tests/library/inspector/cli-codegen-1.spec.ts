@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './inspectorTest';
+import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -840,5 +841,12 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     await page.waitForTimeout(500);
     await page.goto(server.PREFIX + `/empty.html`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/empty.html');`);
+  });
+
+  test('should not throw csp directive violation errors', async ({ page, openRecorder, server }) => {
+    await openRecorder();
+    await page.goto(server.PREFIX + '/csp.html');
+    const predicate = (msg: ConsoleMessage) => msg.type() === 'error' && /Content[\- ]Security[\- ]Policy/i.test(msg.text());
+    await expect(page.waitForEvent('console', { predicate, timeout: 1000 })).rejects.toThrow();
   });
 });

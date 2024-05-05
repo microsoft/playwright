@@ -898,7 +898,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  on(event: 'close', listener: (page: Page) => void): this;
+  on(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -918,7 +918,7 @@ export interface Page {
    * ```
    *
    */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page
@@ -938,7 +938,7 @@ export interface Page {
    * ```
    *
    */
-  on(event: 'crash', listener: (page: Page) => void): this;
+  on(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -950,28 +950,26 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
+   * page.on('dialog', dialog => dialog.accept());
    * ```
    *
    * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  on(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  on(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when the JavaScript
    * [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
    */
-  on(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  on(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the
    * passed {@link Download} instance.
    */
-  on(event: 'download', listener: (download: Download) => void): this;
+  on(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -986,27 +984,27 @@ export interface Page {
    * ```
    *
    */
-  on(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  on(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Emitted when a frame is attached.
    */
-  on(event: 'frameattached', listener: (frame: Frame) => void): this;
+  on(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is detached.
    */
-  on(event: 'framedetached', listener: (frame: Frame) => void): this;
+  on(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is navigated to a new url.
    */
-  on(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  on(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  on(event: 'load', listener: (page: Page) => void): this;
+  on(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -1022,7 +1020,7 @@ export interface Page {
    * ```
    *
    */
-  on(event: 'pageerror', listener: (error: Error) => void): this;
+  on(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -1050,14 +1048,14 @@ export interface Page {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  on(event: 'popup', listener: (page: Page) => void): this;
+  on(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests,
    * see [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
-  on(event: 'request', listener: (request: Request) => void): this;
+  on(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
@@ -1075,130 +1073,130 @@ export interface Page {
    * will only be considered failed when the client cannot get an HTTP response from the server, e.g. due to network
    * error net::ERR_FAILED.
    */
-  on(event: 'requestfailed', listener: (request: Request) => void): this;
+  on(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
    * sequence of events is `request`, `response` and `requestfinished`.
    */
-  on(event: 'requestfinished', listener: (request: Request) => void): this;
+  on(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`.
    */
-  on(event: 'response', listener: (response: Response) => void): this;
+  on(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Emitted when {@link WebSocket} request is sent.
    */
-  on(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  on(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned
    * by the page.
    */
-  on(event: 'worker', listener: (worker: Worker) => void): this;
+  on(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: (page: Page) => void): this;
+  once(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'crash', listener: (page: Page) => void): this;
+  once(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  once(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  once(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'download', listener: (download: Download) => void): this;
+  once(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  once(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'frameattached', listener: (frame: Frame) => void): this;
+  once(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'framedetached', listener: (frame: Frame) => void): this;
+  once(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  once(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'load', listener: (page: Page) => void): this;
+  once(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'pageerror', listener: (error: Error) => void): this;
+  once(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'popup', listener: (page: Page) => void): this;
+  once(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'request', listener: (request: Request) => void): this;
+  once(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'requestfailed', listener: (request: Request) => void): this;
+  once(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'requestfinished', listener: (request: Request) => void): this;
+  once(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'response', listener: (response: Response) => void): this;
+  once(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  once(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'worker', listener: (worker: Worker) => void): this;
+  once(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when the page closes.
    */
-  addListener(event: 'close', listener: (page: Page) => void): this;
+  addListener(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -1218,7 +1216,7 @@ export interface Page {
    * ```
    *
    */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page
@@ -1238,7 +1236,7 @@ export interface Page {
    * ```
    *
    */
-  addListener(event: 'crash', listener: (page: Page) => void): this;
+  addListener(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -1250,28 +1248,26 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
+   * page.on('dialog', dialog => dialog.accept());
    * ```
    *
    * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  addListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when the JavaScript
    * [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
    */
-  addListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  addListener(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the
    * passed {@link Download} instance.
    */
-  addListener(event: 'download', listener: (download: Download) => void): this;
+  addListener(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -1286,27 +1282,27 @@ export interface Page {
    * ```
    *
    */
-  addListener(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  addListener(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Emitted when a frame is attached.
    */
-  addListener(event: 'frameattached', listener: (frame: Frame) => void): this;
+  addListener(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is detached.
    */
-  addListener(event: 'framedetached', listener: (frame: Frame) => void): this;
+  addListener(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is navigated to a new url.
    */
-  addListener(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  addListener(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  addListener(event: 'load', listener: (page: Page) => void): this;
+  addListener(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -1322,7 +1318,7 @@ export interface Page {
    * ```
    *
    */
-  addListener(event: 'pageerror', listener: (error: Error) => void): this;
+  addListener(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -1350,14 +1346,14 @@ export interface Page {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  addListener(event: 'popup', listener: (page: Page) => void): this;
+  addListener(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests,
    * see [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
-  addListener(event: 'request', listener: (request: Request) => void): this;
+  addListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
@@ -1375,225 +1371,225 @@ export interface Page {
    * will only be considered failed when the client cannot get an HTTP response from the server, e.g. due to network
    * error net::ERR_FAILED.
    */
-  addListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  addListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
    * sequence of events is `request`, `response` and `requestfinished`.
    */
-  addListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  addListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`.
    */
-  addListener(event: 'response', listener: (response: Response) => void): this;
+  addListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Emitted when {@link WebSocket} request is sent.
    */
-  addListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  addListener(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned
    * by the page.
    */
-  addListener(event: 'worker', listener: (worker: Worker) => void): this;
+  addListener(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: (page: Page) => void): this;
+  removeListener(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'crash', listener: (page: Page) => void): this;
+  removeListener(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  removeListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  removeListener(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'download', listener: (download: Download) => void): this;
+  removeListener(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  removeListener(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'frameattached', listener: (frame: Frame) => void): this;
+  removeListener(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'framedetached', listener: (frame: Frame) => void): this;
+  removeListener(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  removeListener(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'load', listener: (page: Page) => void): this;
+  removeListener(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'pageerror', listener: (error: Error) => void): this;
+  removeListener(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'popup', listener: (page: Page) => void): this;
+  removeListener(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'request', listener: (request: Request) => void): this;
+  removeListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  removeListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  removeListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'response', listener: (response: Response) => void): this;
+  removeListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  removeListener(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'worker', listener: (worker: Worker) => void): this;
+  removeListener(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: (page: Page) => void): this;
+  off(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'crash', listener: (page: Page) => void): this;
+  off(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  off(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  off(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'download', listener: (download: Download) => void): this;
+  off(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  off(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'frameattached', listener: (frame: Frame) => void): this;
+  off(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'framedetached', listener: (frame: Frame) => void): this;
+  off(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  off(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'load', listener: (page: Page) => void): this;
+  off(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'pageerror', listener: (error: Error) => void): this;
+  off(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'popup', listener: (page: Page) => void): this;
+  off(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'request', listener: (request: Request) => void): this;
+  off(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'requestfailed', listener: (request: Request) => void): this;
+  off(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'requestfinished', listener: (request: Request) => void): this;
+  off(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'response', listener: (response: Response) => void): this;
+  off(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  off(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'worker', listener: (worker: Worker) => void): this;
+  off(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when the page closes.
    */
-  prependListener(event: 'close', listener: (page: Page) => void): this;
+  prependListener(event: 'close', listener: (page: Page) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -1613,7 +1609,7 @@ export interface Page {
    * ```
    *
    */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page
@@ -1633,7 +1629,7 @@ export interface Page {
    * ```
    *
    */
-  prependListener(event: 'crash', listener: (page: Page) => void): this;
+  prependListener(event: 'crash', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -1645,28 +1641,26 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
+   * page.on('dialog', dialog => dialog.accept());
    * ```
    *
    * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  prependListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when the JavaScript
    * [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
    */
-  prependListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
+  prependListener(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the
    * passed {@link Download} instance.
    */
-  prependListener(event: 'download', listener: (download: Download) => void): this;
+  prependListener(event: 'download', listener: (download: Download) => any): this;
 
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -1681,27 +1675,27 @@ export interface Page {
    * ```
    *
    */
-  prependListener(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+  prependListener(event: 'filechooser', listener: (fileChooser: FileChooser) => any): this;
 
   /**
    * Emitted when a frame is attached.
    */
-  prependListener(event: 'frameattached', listener: (frame: Frame) => void): this;
+  prependListener(event: 'frameattached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is detached.
    */
-  prependListener(event: 'framedetached', listener: (frame: Frame) => void): this;
+  prependListener(event: 'framedetached', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when a frame is navigated to a new url.
    */
-  prependListener(event: 'framenavigated', listener: (frame: Frame) => void): this;
+  prependListener(event: 'framenavigated', listener: (frame: Frame) => any): this;
 
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  prependListener(event: 'load', listener: (page: Page) => void): this;
+  prependListener(event: 'load', listener: (page: Page) => any): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -1717,7 +1711,7 @@ export interface Page {
    * ```
    *
    */
-  prependListener(event: 'pageerror', listener: (error: Error) => void): this;
+  prependListener(event: 'pageerror', listener: (error: Error) => any): this;
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -1745,14 +1739,14 @@ export interface Page {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  prependListener(event: 'popup', listener: (page: Page) => void): this;
+  prependListener(event: 'popup', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests,
    * see [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
-  prependListener(event: 'request', listener: (request: Request) => void): this;
+  prependListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
@@ -1770,34 +1764,32 @@ export interface Page {
    * will only be considered failed when the client cannot get an HTTP response from the server, e.g. due to network
    * error net::ERR_FAILED.
    */
-  prependListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  prependListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
    * sequence of events is `request`, `response` and `requestfinished`.
    */
-  prependListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  prependListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`.
    */
-  prependListener(event: 'response', listener: (response: Response) => void): this;
+  prependListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Emitted when {@link WebSocket} request is sent.
    */
-  prependListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+  prependListener(event: 'websocket', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned
    * by the page.
    */
-  prependListener(event: 'worker', listener: (worker: Worker) => void): this;
+  prependListener(event: 'worker', listener: (worker: Worker) => any): this;
 
   /**
-   * **NOTE** This method is experimental and its behavior may change in the upcoming releases.
-   *
    * When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to
    * automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making
    * them tricky to handle in automated tests.
@@ -1808,12 +1800,14 @@ export interface Page {
    * Things to keep in mind:
    * - When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as
    *   a part of your normal test flow, instead of using
-   *   [page.addLocatorHandler(locator, handler)](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   *   [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
    * - Playwright checks for the overlay every time before executing or retrying an action that requires an
    *   [actionability check](https://playwright.dev/docs/actionability), or before performing an auto-waiting assertion check. When overlay
    *   is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the
    *   handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't
    *   perform any actions, the handler will not be triggered.
+   * - After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible
+   *   anymore. You can opt-out of this behavior with `noWaitAfter`.
    * - The execution time of the handler counts towards the timeout of the action/assertion that executed the handler.
    *   If your handler takes too long, it might cause timeouts.
    * - You can register multiple handlers. However, only a single handler will be running at a time. Make sure the
@@ -1863,24 +1857,47 @@ export interface Page {
    * ```
    *
    * An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible,
-   * so the handler is called before every actionability check:
+   * so the handler is called before every actionability check. It is important to specify `noWaitAfter`, because the
+   * handler does not hide the `<body>` element.
    *
    * ```js
    * // Setup the handler.
    * await page.addLocatorHandler(page.locator('body'), async () => {
    *   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-   * });
+   * }, { noWaitAfter: true });
    *
    * // Write the test as usual.
    * await page.goto('https://example.com');
    * await page.getByRole('button', { name: 'Start here' }).click();
    * ```
    *
+   * Handler takes the original locator as an argument. You can also automatically remove the handler after a number of
+   * invocations by setting `times`:
+   *
+   * ```js
+   * await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
+   *   await locator.click();
+   * }, { times: 1 });
+   * ```
+   *
    * @param locator Locator that triggers the handler.
    * @param handler Function that should be run once `locator` appears. This function should get rid of the element that blocks actions
    * like click.
+   * @param options
    */
-  addLocatorHandler(locator: Locator, handler: Function): Promise<void>;
+  addLocatorHandler(locator: Locator, handler: ((locator: Locator) => Promise<any>), options?: {
+    /**
+     * By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then
+     * Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of
+     * this behavior, so that overlay can stay visible after the handler has run.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Specifies the maximum number of times this handler should be called. Unlimited by default.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
@@ -2047,9 +2064,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -2162,9 +2180,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -3052,9 +3071,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -3574,7 +3594,8 @@ export interface Page {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -3659,6 +3680,15 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
+
+  /**
+   * Removes all locator handlers added by
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler)
+   * for a specific locator.
+   * @param locator Locator passed to
+   * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
+   */
+  removeLocatorHandler(locator: Locator): Promise<void>;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -4157,9 +4187,10 @@ export interface Page {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -4443,9 +4474,7 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
+   * page.on('dialog', dialog => dialog.accept());
    * ```
    *
    * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
@@ -4600,6 +4629,9 @@ export interface Page {
    * This resolves when the page reaches a required load state, `load` by default. The navigation must have been
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
+   *
+   * **NOTE** Most of the time, this method is not needed because Playwright
+   * [auto-waits before every action](https://playwright.dev/docs/actionability).
    *
    * **Usage**
    *
@@ -5732,9 +5764,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -5819,9 +5852,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -6512,9 +6546,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -6870,7 +6905,8 @@ export interface Frame {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -7202,9 +7238,10 @@ export interface Frame {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -7398,6 +7435,9 @@ export interface Frame {
    * This returns when the frame reaches a required load state, `load` by default. The navigation must have been
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
+   *
+   * **NOTE** Most of the time, this method is not needed because Playwright
+   * [auto-waits before every action](https://playwright.dev/docs/actionability).
    *
    * **Usage**
    *
@@ -7710,7 +7750,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  on(event: 'backgroundpage', listener: (page: Page) => void): this;
+  on(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -7718,7 +7758,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  on(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -7739,7 +7779,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -7760,7 +7800,7 @@ export interface BrowserContext {
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  on(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  on(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7788,7 +7828,7 @@ export interface BrowserContext {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  on(event: 'page', listener: (page: Page) => void): this;
+  on(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7799,7 +7839,7 @@ export interface BrowserContext {
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
-  on(event: 'request', listener: (request: Request) => void): this;
+  on(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page,
@@ -7811,7 +7851,7 @@ export interface BrowserContext {
    * event and not with
    * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request-failed).
    */
-  on(event: 'requestfailed', listener: (request: Request) => void): this;
+  on(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -7819,82 +7859,82 @@ export interface BrowserContext {
    * particular page, use
    * [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished).
    */
-  on(event: 'requestfinished', listener: (request: Request) => void): this;
+  on(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
    * [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response).
    */
-  on(event: 'response', listener: (response: Response) => void): this;
+  on(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
    */
-  on(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  on(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
    * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  on(event: 'weberror', listener: (webError: WebError) => void): this;
+  on(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'backgroundpage', listener: (page: Page) => void): this;
+  once(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  once(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  once(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'page', listener: (page: Page) => void): this;
+  once(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'request', listener: (request: Request) => void): this;
+  once(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'requestfailed', listener: (request: Request) => void): this;
+  once(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'requestfinished', listener: (request: Request) => void): this;
+  once(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'response', listener: (response: Response) => void): this;
+  once(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  once(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'weberror', listener: (webError: WebError) => void): this;
+  once(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * **NOTE** Only works with Chromium browser's persistent context.
@@ -7906,7 +7946,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  addListener(event: 'backgroundpage', listener: (page: Page) => void): this;
+  addListener(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -7914,7 +7954,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  addListener(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -7935,7 +7975,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -7956,7 +7996,7 @@ export interface BrowserContext {
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  addListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7984,7 +8024,7 @@ export interface BrowserContext {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  addListener(event: 'page', listener: (page: Page) => void): this;
+  addListener(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7995,7 +8035,7 @@ export interface BrowserContext {
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
-  addListener(event: 'request', listener: (request: Request) => void): this;
+  addListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page,
@@ -8007,7 +8047,7 @@ export interface BrowserContext {
    * event and not with
    * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request-failed).
    */
-  addListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  addListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -8015,137 +8055,137 @@ export interface BrowserContext {
    * particular page, use
    * [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished).
    */
-  addListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  addListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
    * [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response).
    */
-  addListener(event: 'response', listener: (response: Response) => void): this;
+  addListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
    */
-  addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  addListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
    * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  addListener(event: 'weberror', listener: (webError: WebError) => void): this;
+  addListener(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
+  removeListener(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  removeListener(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  removeListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'page', listener: (page: Page) => void): this;
+  removeListener(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'request', listener: (request: Request) => void): this;
+  removeListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  removeListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  removeListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'response', listener: (response: Response) => void): this;
+  removeListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  removeListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'weberror', listener: (webError: WebError) => void): this;
+  removeListener(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'backgroundpage', listener: (page: Page) => void): this;
+  off(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  off(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  off(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'page', listener: (page: Page) => void): this;
+  off(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'request', listener: (request: Request) => void): this;
+  off(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'requestfailed', listener: (request: Request) => void): this;
+  off(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'requestfinished', listener: (request: Request) => void): this;
+  off(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'response', listener: (response: Response) => void): this;
+  off(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  off(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'weberror', listener: (webError: WebError) => void): this;
+  off(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * **NOTE** Only works with Chromium browser's persistent context.
@@ -8157,7 +8197,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  prependListener(event: 'backgroundpage', listener: (page: Page) => void): this;
+  prependListener(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -8165,7 +8205,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+  prependListener(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
@@ -8186,7 +8226,7 @@ export interface BrowserContext {
    * ```
    *
    */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -8207,7 +8247,7 @@ export interface BrowserContext {
    * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
    * listeners are present, all dialogs are automatically dismissed.
    */
-  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+  prependListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -8235,7 +8275,7 @@ export interface BrowserContext {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
-  prependListener(event: 'page', listener: (page: Page) => void): this;
+  prependListener(event: 'page', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -8246,7 +8286,7 @@ export interface BrowserContext {
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
-  prependListener(event: 'request', listener: (request: Request) => void): this;
+  prependListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page,
@@ -8258,7 +8298,7 @@ export interface BrowserContext {
    * event and not with
    * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request-failed).
    */
-  prependListener(event: 'requestfailed', listener: (request: Request) => void): this;
+  prependListener(event: 'requestfailed', listener: (request: Request) => any): this;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -8266,27 +8306,27 @@ export interface BrowserContext {
    * particular page, use
    * [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished).
    */
-  prependListener(event: 'requestfinished', listener: (request: Request) => void): this;
+  prependListener(event: 'requestfinished', listener: (request: Request) => any): this;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
    * events is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
    * [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response).
    */
-  prependListener(event: 'response', listener: (response: Response) => void): this;
+  prependListener(event: 'response', listener: (response: Response) => any): this;
 
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
    */
-  prependListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+  prependListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
    * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  prependListener(event: 'weberror', listener: (webError: WebError) => void): this;
+  prependListener(event: 'weberror', listener: (webError: WebError) => any): this;
 
   /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies
@@ -9048,34 +9088,34 @@ export interface Worker {
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
-  on(event: 'close', listener: (worker: Worker) => void): this;
+  on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: (worker: Worker) => void): this;
+  once(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
-  addListener(event: 'close', listener: (worker: Worker) => void): this;
+  addListener(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: (worker: Worker) => void): this;
+  removeListener(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: (worker: Worker) => void): this;
+  off(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
-  prependListener(event: 'close', listener: (worker: Worker) => void): this;
+  prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
   url(): string;
 }
@@ -9808,9 +9848,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -9887,9 +9928,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -10048,9 +10090,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -10194,7 +10237,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -10605,9 +10649,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -11253,9 +11298,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -11365,9 +11411,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -12038,9 +12085,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -12407,7 +12455,8 @@ export interface Locator {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -12834,9 +12883,10 @@ export interface Locator {
 
     /**
      * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
-     * current modifiers back. If not specified, currently pressed modifiers are used.
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
      */
-    modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
 
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
@@ -13326,6 +13376,13 @@ export interface BrowserType<Unused = {}> {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -14054,7 +14111,7 @@ export interface ElectronApplication {
   /**
    * This event is issued when the application process has been terminated.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
@@ -14075,33 +14132,33 @@ export interface ElectronApplication {
    * ```
    *
    */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
    * can be used for Playwright automation.
    */
-  on(event: 'window', listener: (page: Page) => void): this;
+  on(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: () => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'window', listener: (page: Page) => void): this;
+  once(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * This event is issued when the application process has been terminated.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
@@ -14122,48 +14179,48 @@ export interface ElectronApplication {
    * ```
    *
    */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
    * can be used for Playwright automation.
    */
-  addListener(event: 'window', listener: (page: Page) => void): this;
+  addListener(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'window', listener: (page: Page) => void): this;
+  removeListener(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'window', listener: (page: Page) => void): this;
+  off(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * This event is issued when the application process has been terminated.
    */
-  prependListener(event: 'close', listener: () => void): this;
+  prependListener(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when JavaScript within the Electron main process calls one of console API methods, e.g. `console.log` or
@@ -14184,13 +14241,13 @@ export interface ElectronApplication {
    * ```
    *
    */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a {@link Page} that
    * can be used for Playwright automation.
    */
-  prependListener(event: 'window', listener: (page: Page) => void): this;
+  prependListener(event: 'window', listener: (page: Page) => any): this;
 
   /**
    * Returns the BrowserWindow object that corresponds to the given Playwright page.
@@ -14593,62 +14650,62 @@ export interface AndroidDevice {
   /**
    * Emitted when the device connection gets closed.
    */
-  on(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  on(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Emitted when a new WebView instance is detected.
    */
-  on(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  on(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  once(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  once(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Emitted when the device connection gets closed.
    */
-  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Emitted when a new WebView instance is detected.
    */
-  addListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  addListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  off(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  off(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Emitted when the device connection gets closed.
    */
-  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
 
   /**
    * Emitted when a new WebView instance is detected.
    */
-  prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+  prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
 
   /**
    * Disconnects from the device.
@@ -14842,6 +14899,13 @@ export interface AndroidDevice {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -15400,62 +15464,62 @@ export interface AndroidSocket {
   /**
    * Emitted when the socket is closed.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when data is available to read from the socket.
    */
-  on(event: 'data', listener: (buffer: Buffer) => void): this;
+  on(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: () => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'data', listener: (buffer: Buffer) => void): this;
+  once(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Emitted when the socket is closed.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when data is available to read from the socket.
    */
-  addListener(event: 'data', listener: (buffer: Buffer) => void): this;
+  addListener(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'data', listener: (buffer: Buffer) => void): this;
+  removeListener(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'data', listener: (buffer: Buffer) => void): this;
+  off(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Emitted when the socket is closed.
    */
-  prependListener(event: 'close', listener: () => void): this;
+  prependListener(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when data is available to read from the socket.
    */
-  prependListener(event: 'data', listener: (buffer: Buffer) => void): this;
+  prependListener(event: 'data', listener: (buffer: Buffer) => any): this;
 
   /**
    * Closes the socket.
@@ -15479,32 +15543,32 @@ export interface AndroidWebView {
   /**
    * Emitted when the WebView is closed.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: () => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when the WebView is closed.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when the WebView is closed.
    */
-  prependListener(event: 'close', listener: () => void): this;
+  prependListener(event: 'close', listener: () => any): this;
 
   /**
    * Connects to the WebView and returns a regular Playwright {@link Page} to interact with.
@@ -15566,6 +15630,13 @@ export interface APIRequest {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -15736,7 +15807,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -15775,10 +15846,11 @@ export interface APIRequestContext {
 
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and
-   * update context cookies from the response. The method will automatically follow redirects. JSON objects can be
-   * passed directly to the request.
+   * update context cookies from the response. The method will automatically follow redirects.
    *
    * **Usage**
+   *
+   * JSON objects can be passed directly to the request:
    *
    * ```js
    * await request.fetch('https://example.com/api/createBook', {
@@ -15790,29 +15862,18 @@ export interface APIRequestContext {
    * });
    * ```
    *
-   * The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data`
-   * encoding. You can achieve that with Playwright API like this:
+   * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
+   * encoding. Use [FormData] to construct request body and pass it to the request as `multipart` parameter:
    *
    * ```js
-   * // Open file as a stream and pass it to the request:
-   * const stream = fs.createReadStream('team.csv');
-   * await request.fetch('https://example.com/api/uploadTeamList', {
-   *   method: 'post',
-   *   multipart: {
-   *     fileField: stream
-   *   }
-   * });
-   *
-   * // Or you can pass the file content directly as an object:
-   * await request.fetch('https://example.com/api/uploadScript', {
-   *   method: 'post',
-   *   multipart: {
-   *     fileField: {
-   *       name: 'f.js',
-   *       mimeType: 'text/javascript',
-   *       buffer: Buffer.from('console.log(2022);')
-   *     }
-   *   }
+   * const form = new FormData();
+   * form.set('name', 'John');
+   * form.append('name', 'Doe');
+   * // Send two file fields with the same name.
+   * form.append('file', new File(['console.log(2024);'], 'f1.js', { type: 'text/javascript' }));
+   * form.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
+   * await request.fetch('https://example.com/api/uploadForm', {
+   *   multipart: form
    * });
    * ```
    *
@@ -15870,7 +15931,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -15964,7 +16025,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -16044,7 +16105,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -16124,7 +16185,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -16184,26 +16245,17 @@ export interface APIRequestContext {
    * ```
    *
    * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
-   * encoding. You can achieve that with Playwright API like this:
+   * encoding. Use [FormData] to construct request body and pass it to the request as `multipart` parameter:
    *
    * ```js
-   * // Open file as a stream and pass it to the request:
-   * const stream = fs.createReadStream('team.csv');
-   * await request.post('https://example.com/api/uploadTeamList', {
-   *   multipart: {
-   *     fileField: stream
-   *   }
-   * });
-   *
-   * // Or you can pass the file content directly as an object:
-   * await request.post('https://example.com/api/uploadScript', {
-   *   multipart: {
-   *     fileField: {
-   *       name: 'f.js',
-   *       mimeType: 'text/javascript',
-   *       buffer: Buffer.from('console.log(2022);')
-   *     }
-   *   }
+   * const form = new FormData();
+   * form.set('name', 'John');
+   * form.append('name', 'Doe');
+   * // Send two file fields with the same name.
+   * form.append('file', new File(['console.log(2024);'], 'f1.js', { type: 'text/javascript' }));
+   * form.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }));
+   * await request.post('https://example.com/api/uploadForm', {
+   *   multipart: form
    * });
    * ```
    *
@@ -16255,7 +16307,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -16335,7 +16387,7 @@ export interface APIRequestContext {
      * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
      * name, mime-type and its content.
      */
-    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+    multipart?: FormData|{ [key: string]: string|number|boolean|ReadStream|{
       /**
        * File name
        */
@@ -16508,12 +16560,12 @@ export interface Browser extends EventEmitter {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  on(event: 'disconnected', listener: (browser: Browser) => void): this;
+  on(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'disconnected', listener: (browser: Browser) => void): this;
+  once(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
@@ -16521,17 +16573,17 @@ export interface Browser extends EventEmitter {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  addListener(event: 'disconnected', listener: (browser: Browser) => void): this;
+  addListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'disconnected', listener: (browser: Browser) => void): this;
+  removeListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'disconnected', listener: (browser: Browser) => void): this;
+  off(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
@@ -16539,7 +16591,7 @@ export interface Browser extends EventEmitter {
    * - Browser application is closed or crashed.
    * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
-  prependListener(event: 'disconnected', listener: (browser: Browser) => void): this;
+  prependListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
@@ -16729,6 +16781,13 @@ export interface Browser extends EventEmitter {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -17083,32 +17142,32 @@ export interface BrowserServer {
   /**
    * Emitted when the browser server closes.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: () => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: () => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: () => any): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  prependListener(event: 'close', listener: () => void): this;
+  prependListener(event: 'close', listener: () => any): this;
 
   /**
    * Closes the browser gracefully and makes sure the process is terminated.
@@ -17616,6 +17675,13 @@ export interface Electron {
        * Restrain sending http credentials on specific origin (scheme://host:port).
        */
       origin?: string;
+
+      /**
+       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+       * from the browser.
+       */
+      sendImmediately?: boolean;
     };
 
     /**
@@ -18305,7 +18371,8 @@ export interface Keyboard {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -18354,7 +18421,8 @@ export interface Keyboard {
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * etc.
    *
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+   * `ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
    *
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    *
@@ -19665,7 +19733,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  on(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  on(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Fired when the websocket receives a frame.
@@ -19675,7 +19743,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket sends a frame.
@@ -19685,17 +19753,17 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket has an error.
    */
-  on(event: 'socketerror', listener: (string: string) => void): this;
+  on(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  once(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -19705,7 +19773,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -19715,17 +19783,17 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'socketerror', listener: (string: string) => void): this;
+  once(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Fired when the websocket closes.
    */
-  addListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  addListener(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Fired when the websocket receives a frame.
@@ -19735,7 +19803,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket sends a frame.
@@ -19745,17 +19813,17 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket has an error.
    */
-  addListener(event: 'socketerror', listener: (string: string) => void): this;
+  addListener(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  removeListener(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -19765,7 +19833,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -19775,17 +19843,17 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'socketerror', listener: (string: string) => void): this;
+  removeListener(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  off(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -19795,7 +19863,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -19805,17 +19873,17 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'socketerror', listener: (string: string) => void): this;
+  off(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Fired when the websocket closes.
    */
-  prependListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
+  prependListener(event: 'close', listener: (webSocket: WebSocket) => any): this;
 
   /**
    * Fired when the websocket receives a frame.
@@ -19825,7 +19893,7 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket sends a frame.
@@ -19835,12 +19903,12 @@ export interface WebSocket {
      * frame payload
      */
     payload: string|Buffer;
-  }) => void): this;
+  }) => any): this;
 
   /**
    * Fired when the websocket has an error.
    */
-  prependListener(event: 'socketerror', listener: (string: string) => void): this;
+  prependListener(event: 'socketerror', listener: (string: string) => any): this;
 
   /**
    * Indicates that the web socket has been closed.
@@ -20274,6 +20342,13 @@ export interface HTTPCredentials {
    * Restrain sending http credentials on specific origin (scheme://host:port).
    */
   origin?: string;
+
+  /**
+   * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+   * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
+   * from the browser.
+   */
+  sendImmediately?: boolean;
 }
 
 export interface Geolocation {

@@ -44,11 +44,9 @@ export class Keyboard {
   private _pressedModifiers = new Set<types.KeyboardModifier>();
   private _pressedKeys = new Set<string>();
   private _raw: RawKeyboard;
-  private _page: Page;
 
-  constructor(raw: RawKeyboard, page: Page) {
+  constructor(raw: RawKeyboard) {
     this._raw = raw;
-    this._page = page;
   }
 
   async down(key: string) {
@@ -61,7 +59,8 @@ export class Keyboard {
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
   }
 
-  private _keyDescriptionForString(keyString: string): KeyDescription {
+  private _keyDescriptionForString(str: string): KeyDescription {
+    const keyString = resolveSmartModifierString(str);
     let description = usKeyboardLayout.get(keyString);
     assert(description, `Unknown key: "${keyString}"`);
     const shift = this._pressedModifiers.has('Shift');
@@ -126,7 +125,8 @@ export class Keyboard {
       await this.up(tokens[i]);
   }
 
-  async _ensureModifiers(modifiers: types.KeyboardModifier[]): Promise<types.KeyboardModifier[]> {
+  async ensureModifiers(mm: types.SmartKeyboardModifier[]): Promise<types.KeyboardModifier[]> {
+    const modifiers = mm.map(resolveSmartModifier);
     for (const modifier of modifiers) {
       if (!kModifiers.includes(modifier))
         throw new Error('Unknown modifier ' + modifier);
@@ -146,6 +146,16 @@ export class Keyboard {
   _modifiers(): Set<types.KeyboardModifier> {
     return this._pressedModifiers;
   }
+}
+
+export function resolveSmartModifierString(key: string): string {
+  if (key === 'ControlOrMeta')
+    return process.platform === 'darwin' ? 'Meta' : 'Control';
+  return key;
+}
+
+export function resolveSmartModifier(m: types.SmartKeyboardModifier): types.KeyboardModifier {
+  return resolveSmartModifierString(m) as types.KeyboardModifier;
 }
 
 export interface RawMouse {

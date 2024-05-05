@@ -17,7 +17,7 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type ReporterDescription =
+export type ReporterDescription = Readonly<
   ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
   ['line'] |
@@ -27,7 +27,8 @@ export type ReporterDescription =
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string }] |
   ['null'] |
-  [string] | [string, any];
+  [string] | [string, any]
+>;
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
@@ -38,7 +39,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
 }
 
-export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
 
@@ -56,8 +57,8 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestA
 
 export type Metadata = { [key: string]: any };
 
-export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
-  projects: ProjectInWorker<TestArgs, WorkerArgs>[];
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+  projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
   webServer: TestConfigWebServer | null;
 }

@@ -19,7 +19,7 @@
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { Runner } from './runner/runner';
+import { Runner, readLastRunInfo } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
@@ -183,6 +183,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (!config)
     return;
 
+  if (opts.lastFailed) {
+    const lastRunInfo = await readLastRunInfo(config);
+    config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+  }
+
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
@@ -338,6 +343,7 @@ const testOptions: [string, string][] = [
   ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
+  ['--last-failed', `Only re-run the failures`],
   ['--list', `Collect all the tests and report them, but do not run`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],

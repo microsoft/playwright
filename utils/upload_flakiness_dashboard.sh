@@ -21,9 +21,6 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0) <report.json>"
   echo
   echo "Upload report to the flakiness dashboard."
-  echo
-  echo "NOTE: the following env variables are required:"
-  echo "  FLAKINESS_CONNECTION_STRING     connection for the azure blob storage to upload report"
   exit 0
 fi
 
@@ -35,13 +32,6 @@ fi
 if [[ "${GITHUB_REF}" != "refs/heads/main" && "${GITHUB_REF}" != 'refs/heads/release-'* ]]; then
   echo "NOTE: skipping dashboard uploading from Playwright branches"
   exit 0
-fi
-
-if [[ -z "${FLAKINESS_CONNECTION_STRING}" ]]; then
-  echo "ERROR: \$FLAKINESS_CONNECTION_STRING environment variable is missing."
-  echo "       'Azure Account Name' and 'Azure Account Key' secrets are required"
-  echo "       to upload flakiness results to Azure blob storage."
-  exit 1
 fi
 
 if [[ $# == 0 ]]; then
@@ -92,7 +82,9 @@ node -e "${EMBED_METADATA_SCRIPT}" "$1" > "${REPORT_NAME}"
 
 gzip "${REPORT_NAME}"
 
-az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
+AZ_STORAGE_ACCOUNT="folioflakinessdashboard"
+
+az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 
 UTC_DATE=$(cat <<EOF | node
   const date = new Date();
@@ -100,5 +92,5 @@ UTC_DATE=$(cat <<EOF | node
 EOF
 )
 
-az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
+az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
 rm -rf "${REPORT_NAME}.gz"

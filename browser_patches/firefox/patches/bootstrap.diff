@@ -2475,7 +2475,7 @@ index 6dfd07d6b676a99993408921de8dea9d561f201d..e3c6794363cd6336effbeac83a179f37
    readonly attribute boolean securityCheckDisabled;
  };
 diff --git a/services/settings/Utils.sys.mjs b/services/settings/Utils.sys.mjs
-index 73c83e526be1a3a252f995d0718e3975d50bffa7..4b05141c8ab8b084d977341127f36ea6d226aa9a 100644
+index 73c83e526be1a3a252f995d0718e3975d50bffa7..db5977c54221e19e107a8325a0834302c2e84546 100644
 --- a/services/settings/Utils.sys.mjs
 +++ b/services/settings/Utils.sys.mjs
 @@ -95,7 +95,7 @@ function _isUndefined(value) {
@@ -2487,6 +2487,16 @@ index 73c83e526be1a3a252f995d0718e3975d50bffa7..4b05141c8ab8b084d977341127f36ea6
        ? lazy.gServerURL
        : AppConstants.REMOTE_SETTINGS_SERVER_URL;
    },
+@@ -108,6 +108,9 @@ export var Utils = {
+   log,
+ 
+   get shouldSkipRemoteActivityDueToTests() {
++    // Playwright does not set Cu.isInAutomation, hence we just return true
++    // here in order to disable the remote activity.
++    return true;
+     return (
+       (lazy.isRunningTests || Cu.isInAutomation) &&
+       this.SERVER_URL == "data:,#remote-settings-dummy/v1"
 diff --git a/servo/components/style/gecko/media_features.rs b/servo/components/style/gecko/media_features.rs
 index c9ad30b28b069a122cf01c5e97b83dc68ef022ff..f32dbcfe26fe2f6b8a0d066d6dfd208f1afc510d 100644
 --- a/servo/components/style/gecko/media_features.rs
@@ -2925,7 +2935,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce8050630a1aa 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -528,6 +528,13 @@
+@@ -528,6 +528,13 @@ void NativeKeyBindings::GetEditCommandsForTests(
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2939,7 +2949,7 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -550,6 +557,13 @@
+@@ -550,6 +557,13 @@ void NativeKeyBindings::GetEditCommandsForTests(
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2953,7 +2963,7 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -572,6 +586,10 @@
+@@ -572,6 +586,10 @@ void NativeKeyBindings::GetEditCommandsForTests(
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2964,7 +2974,7 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -582,7 +600,7 @@
+@@ -582,7 +600,7 @@ void NativeKeyBindings::GetEditCommandsForTests(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
                  : ToObjcSelectorPtr(
@@ -2973,7 +2983,7 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
              aCommands);
          break;
        }
-@@ -609,6 +627,10 @@
+@@ -609,6 +627,10 @@ void NativeKeyBindings::GetEditCommandsForTests(
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {
@@ -2984,31 +2994,6 @@ index e4bdf715e2fb899e97a5bfeb2e147127460d6047..3554f919480278b7353617481c7ce805
          break;
        }
        if (aEvent.IsMeta()) {
-diff --git a/widget/cocoa/nsCocoaUtils.mm b/widget/cocoa/nsCocoaUtils.mm
-index f3a760476290953df2179fa44bd68dd171d291ab..6cd3f8178d260904905372c1afc7ecbcc568fbc8 100644
---- a/widget/cocoa/nsCocoaUtils.mm
-+++ b/widget/cocoa/nsCocoaUtils.mm
-@@ -267,14 +267,17 @@ static float MenuBarScreenHeight() {
-     return nullptr;
-   }
- 
--  nsCOMPtr<nsIWidget> hiddenWindowWidget;
-+  nsCOMPtr<nsIWidget> mainWindowWidget;
-   if (NS_FAILED(baseHiddenWindow->GetMainWidget(
--          getter_AddRefs(hiddenWindowWidget)))) {
-+          getter_AddRefs(mainWindowWidget)))) {
-     NS_WARNING("Couldn't get nsIWidget from hidden window (nsIBaseWindow)");
-     return nullptr;
-   }
- 
--  return hiddenWindowWidget;
-+  // In the case of headless mode, it's a HeadlessWidget while the callee expects a nsCocoaWindow
-+  if (gfxPlatform::IsHeadless())
-+    return nullptr;
-+  return mainWindowWidget;
- }
- 
- BOOL nsCocoaUtils::WasLaunchedAtLogin() {
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
 index bb4ee9175e66dc40de1871a7f91368fe309494a3..747625e3869882300bfbc18b184db5151dd90c1a 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp

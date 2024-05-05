@@ -208,6 +208,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retries: test.retries,
       tags: test.tags,
       repeatEachIndex: test.repeatEachIndex,
+      annotations: test.annotations,
     };
   }
 

@@ -54,4 +54,6 @@ export const chromiumSwitches = [
   '--export-tagged-pdf',
   // https://chromium-review.googlesource.com/c/chromium/src/+/4853540
   '--disable-search-engine-choice-screen',
+  // https://issues.chromium.org/41491762
+  '--unsafely-disable-devtools-self-xss-warnings',
 ];

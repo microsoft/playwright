@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Name From Content</title>
+  <meta charset="utf-8">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+  <style type="text/css">
+
+     /*
+
+      Since the AccName spec is in flux about whitespace joiners, and the implementations don't match,
+      normalize the whitespace (with extra leading/trailing) space.
+
+      No point in having the same in-flux spec change cause failures the remaining unrelated tests.
+
+      See more here:
+      https://github.com/w3c/accname/issues/205
+      https://github.com/w3c/accname/projects/1#card-42288231
+
+    */
+
+    .simple-before::before {
+      content: " before "; /* [sic] leading and trailing space */
+      margin:0 0.1em;
+    }
+    .simple-after::after {
+      content: " after "; /* [sic] leading and trailing space */
+      margin:0 0.1em;
+    }
+    .no-space::before, .no-space::after {
+      content: "nospace"; /* [sic] Unlike the others, NO extra leading/trailing space here. */
+    }
+    .simple-before:dir(rtl)::before {
+      content: " من قبل "; /* [sic] leading and trailing space */
+    }
+    .simple-after:dir(rtl)::after {
+      content: " بعد "; /* [sic] leading and trailing space */
+    }
+    .fallback-before::before {
+      content: " before "; /* [sic] leading and trailing space */
+      content: " before " / " alt-before "; /* Override the previous line for engines that support the Alternative Text syntax. */
+    }
+    .fallback-after::after {
+      content: " after "; /* [sic] leading and trailing space */
+      content: " after " / " alt-after "; /* Override the previous line for engines that support the Alternative Text syntax. */
+    }
+    .fallback-before-empty::before {
+      content: "before"  / "";
+    }
+    .fallback-before-image-empty::before {
+      content: "before " url(/images/blue.png) / "";
+    }
+    .fallback-before-mixed::before {
+      content: " before "; /* [sic] leading and trailing space */
+      content: " before " / " start " attr(data-alt-text-before) " end "; /* Override the previous line for engines that support the Alternative Text syntax. */
+    }
+    .fallback-after-mixed::after {
+      content: " after "; /* [sic] leading and trailing space */
+      content: " after " / " start " attr(data-alt-text-after) " end "; /* Override the previous line for engines that support the Alternative Text syntax. */
+    }
+    .block > span {
+      display: block;
+      margin: 0 0.1em;
+    }
+    .iblock > span {
+      display: inline-block;
+      margin: 0 0.1em;
+    }
+
+  </style>
+</head>
+<body>
+
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_name_from_content">#comp_name_from_content</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<p>This series of tests exercises the button, heading, and link elements, because each have different characteristics worthy of testing in each of the name computation algorithm scenarios:</p>
+<ul>
+  <li>button is a leaf node with sub-level elements presentational.</li>
+  <li>heading is block level, and can contain sub-level interactives like links.</li>
+  <li>link (a[href]) is an interactive inline element that can include non-presentational descendants.</li>
+</ul>
+
+<h1>ARIA roles, inline</h1>
+<span tabindex="0" role="button" data-expectedlabel="label" data-testname="aria button name from content, inline" class="ex">label</span><br>
+<span tabindex="0" role="heading" data-expectedlabel="label" data-testname="aria heading name from content, inline" class="ex">label</span><br>
+<span tabindex="0" role="link" data-expectedlabel="label" data-testname="aria link name from content, inline" class="ex">label</span><br>
+<br>
+
+<h1>ARIA roles, block</h1>
+<div tabindex="0" role="button" data-expectedlabel="label" data-testname="aria button name from content, block" class="ex">label</div>
+<div tabindex="0" role="heading" data-expectedlabel="label" data-testname="aria heading name from content, block" class="ex">label</div>
+<div tabindex="0" role="link" data-expectedlabel="label" data-testname="aria link name from content, block" class="ex">label</div>
+<br>
+
+<h1>simple</h1>
+<button data-expectedlabel="label" data-testname="button name from content" class="ex">label</button><br>
+<h3 data-expectedlabel="label" data-testname="heading name from content" class="ex">label</h3>
+<a href="#" data-expectedlabel="label" data-testname="link name from content" class="ex">label</a><br>
+<br>
+
+<h1>simple with ::before</h1>
+<button data-expectedlabel="before label" data-testname="button name from content with ::before" class="ex simple-before">label</button><br>
+<h3 data-expectedlabel="before label" data-testname="heading name from content with ::before" class="ex simple-before">label</h3>
+<a href="#" data-expectedlabel="before label" data-testname="link name from content with ::before" class="ex simple-before">label</a><br>
+<br>
+
+<h1>simple with ::after</h1>
+<button data-expectedlabel="label after" data-testname="button name from content with ::after" class="ex simple-after">label</button><br>
+<h3 data-expectedlabel="label after" data-testname="heading name from content with ::after" class="ex simple-after">label</h3>
+<a href="#" data-expectedlabel="label after" data-testname="link name from content with ::after" class="ex simple-after">label</a><br>
+<br>
+
+<h1>simple with ::before and ::after</h1>
+<button data-expectedlabel="before label after" data-testname="button name from content with ::before and ::after" class="ex simple-before simple-after">label</button><br>
+<h3 data-expectedlabel="before label after" data-testname="heading name from content with ::before and ::after" class="ex simple-before simple-after">label</h3>
+<a href="#" data-expectedlabel="before label after" data-testname="link name from content with ::before and ::after" class="ex simple-before simple-after">label</a><br>
+<br>
+
+<h1>no space joiners ::before and ::after</h1>
+<button data-expectedlabel="nospacelabelnospace" data-testname="button name from content no space joiners ::before and ::after" class="ex no-space">label</button><br>
+<h3 data-expectedlabel="nospacelabelnospace" data-testname="heading name from content no space joiners ::before and ::after" class="ex no-space">label</h3>
+<a href="#" data-expectedlabel="nospacelabelnospace" data-testname="link name from content no space joiners ::before and ::after" class="ex no-space">label</a><br>
+<br>
+
+<h1>Arabic right-to-left (RTL) with ::before and ::after</h1>
+<div dir="rtl" lang="ar">
+  <button data-expectedlabel="من قبل اسم بعد" data-testname="button name from content with ::before and ::after in rtl" class="ex simple-before simple-after">اسم</button><br>
+  <h3 data-expectedlabel="من قبل اسم بعد" data-testname="heading name from content with ::before and ::after in rtl" class="ex simple-before simple-after">اسم</h3>
+  <a href="#" data-expectedlabel="من قبل اسم بعد" data-testname="link name from content with ::before and ::after in rtl" class="ex simple-before simple-after">اسم</a><br>
+</div>
+<br>
+
+<h1><a href="https://drafts.csswg.org/css-content/#alt">Alternative Text for  CSS content (previously `alt:`)</a> in pseudo-elements</h1>
+<p>rendered text should be "before label after"</p>
+<p>accessibility label should be "alt-before label alt-after"</p>
+<button data-expectedlabel="alt-before label alt-after" data-testname="button name from fallback content with ::before and ::after" class="ex fallback-before fallback-after">label</button><br>
+<h3 data-expectedlabel="alt-before label alt-after" data-testname="heading name from fallback content with ::before and ::after" class="ex fallback-before fallback-after">label</h3>
+<a href="#" data-expectedlabel="alt-before label alt-after" data-testname="link name from fallback content with ::before and ::after" class="ex fallback-before fallback-after">label</a><br>
+<br>
+
+<h1><a href="https://drafts.csswg.org/css-content/#alt">Mixed Alternative Text (attr() and strings) for  CSS content (previously `alt:`)</a> in pseudo-elements</h1>
+<p>rendered text should be "before label after"</p>
+<p>accessibility label should be "start alt-before end label start alt-after end"</p>
+<button data-alt-text-before="alt-before" data-alt-text-after="alt-after" data-expectedlabel="start alt-before end label start alt-after end" data-testname="button name from fallback content mixing attr() and strings with ::before and ::after" class="ex fallback-before-mixed fallback-after-mixed">label</button><br>
+<h3 data-alt-text-before="alt-before" data-alt-text-after="alt-after" data-expectedlabel="start alt-before end label start alt-after end" data-testname="heading name from fallback content mixing attr() and strings with ::before and ::after" class="ex fallback-before-mixed fallback-after-mixed">label</h3>
+<a href="#" data-alt-text-before="alt-before" data-alt-text-after="alt-after" data-expectedlabel="start alt-before end label start alt-after end" data-testname="link name from fallback content mixing attr() and strings with ::before and ::after" class="ex fallback-before-mixed fallback-after-mixed">label</a><br>
+<br>
+
+<h1>Empty alternative text for CSS content in pseudo-elements when applied to primitive appearance form controls</h1>
+<p><input data-expectedlabel="" data-testname="primitive radio input with ::before containing empty alternative text" class="ex fallback-before-empty" type=radio style=appearance:none>
+<p><input data-expectedlabel="" data-testname="primitive radio input with ::before containing empty alternative text for an image" class="ex fallback-before-image-empty" type=radio style=appearance:none>
+
+<h1>simple w/ for each child</h1>
+<button data-expectedlabel="one two three" data-testname="button name from content for each child" class="ex"><span>one</span> <span>two</span> <span>three</span></button><br>
+<h3 data-expectedlabel="one two three" data-testname="heading name from content for each child" class="ex"><span>one</span> <span>two</span> <span>three</span></h3>
+<a href="#" data-expectedlabel="one two three" data-testname="link name from content for each child" class="ex"><span>one</span> <span>two</span> <span>three</span></a><br>
+<br>
+
+<h1>simple for each child with image</h1>
+<button data-expectedlabel="one two three" data-testname="button name from content for each child including image" class="ex"><span>one</span> <img alt="two" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="> <span>three</span></button><br>
+<h3 data-expectedlabel="one two three" data-testname="heading name from content for each child including image" class="ex"><span>one</span> <img alt="two" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="> <span>three</span></h3>
+<a href="#" data-expectedlabel="one two three" data-testname="link name from content for each child including image" class="ex"><span>one</span> <img alt="two" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="> <span>three</span></a><br>
+<br>
+
+
+<h1>simple for each child with extra nesting containing image</h1>
+<button data-expectedlabel="one two three four" data-testname="button name from content for each child including nested image" class="ex"><span>one</span> <span>two <img alt="three" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></span> <span>four</span></button><br>
+<h3 data-expectedlabel="one two three four" data-testname="heading name from content for each child including nested image" class="ex"><span>one</span> <span>two <img alt="three" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></span> <span>four</span></h3>
+<a href="#" data-expectedlabel="one two three four" data-testname="link name from content for each child including nested image" class="ex"><span>one</span> <span>two <img alt="three" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></span> <span>four</span></a><br>
+<br>
+
+<h1>heading with nested button with nested image</h1>
+<h3 data-expectedlabel="heading button image button heading" data-testname="heading name from content for each child including nested button with nested image" class="ex">
+  heading
+  <button>
+    button
+    <img alt="image" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+    button
+  </button>
+  heading
+</h3>
+
+<h1>heading with nested link with nested image</h1>
+<h3 data-expectedlabel="heading link image link heading" data-testname="heading name from content for each child including nested link with nested image" class="ex">
+  heading
+  <a href="#">
+    link
+    <img alt="image" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+    link
+  </a>
+  heading
+</h3>
+
+<h1>heading with nested link with nested image using aria-label</h1>
+<h3 data-expectedlabel="heading link aria-label heading" data-testname="heading name from content for each child including nested link using aria-label with nested image" class="ex">
+  heading
+  <a href="#" aria-label="link aria-label"><!-- should skip the other link text -->
+    ignored link text
+    <img id="nested_image_label_1" alt="ignored image alt" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+    ignored link text
+  </a>
+  heading
+</h3>
+
+<h1>heading with nested link with nested image using aria-labelledby</h1>
+<h3 data-expectedlabel="heading image heading" data-testname="heading name from content for each child including nested link using aria-labelledby with nested image" class="ex">
+  heading
+  <a href="#" aria-labelledby="nested_image_label1"><!-- should skip the other link text -->
+    ignored link text
+    <img id="nested_image_label1" alt="image" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+    ignored link text
+  </a>
+  heading
+</h3>
+
+<h1>heading with two nested links referencing image using aria-labelledby</h1>
+<h3 data-expectedlabel="image link2 link3" data-testname="heading name from content for each child including two nested links using aria-labelledby with nested image" class="ex">
+  <a href="#" aria-labelledby="nested_image_label2">
+    link1<!-- this text is skipped because of aria-labelledby -->
+  </a>
+  <a href="#" data-expectedlabel="link2 image link3" data-testname="link name from content for each child including nested image (referenced elsewhere via labelledby)" class="ex">
+    link2
+    <img id="nested_image_label2" alt="image" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+    <!-- image skipped in this link (when computing heading text) because it was already referenced by the first link within this heading label recursion cycle. -->
+    <!-- but image not skipped when computing the text of the link itself since it has not been referenced in that context -->
+    link3
+  </a>
+</h3>
+
+<!-- cross-referencial edge case-->
+<h1>heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby</h1>
+<h3 data-expectedlabel="image link" data-testname="heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby" class="ex">
+  <a href="#" aria-labelledby="nested_image_label3">
+    <span class="note" id="crossref_link">link</span><!-- this text is skipped the first time around because of aria-labelledby on parent element -->
+  </a>
+  <!-- but it's picked up again in inverse order b/c of cross-referencial aria-labelledby edge case -->
+  <img id="nested_image_label_3" alt="image" aria-labelledby="crossref_link" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+</h3>
+
+<!-- self-referencial edge case-->
+<h1>heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby</h1>
+<h3 data-expectedlabel="image link" data-testname="heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby" class="ex">
+  <a href="#" aria-labelledby="nested_image_label4">
+    <span class="note" id="crossref_link2">link</span><!-- this text is skipped the first time around because of aria-labelledby on parent element -->
+  </a>
+  <!-- but it's picked up again (after the self-referencial image alt) in inverse order b/c of cross-referencial aria-labelledby edge case -->
+  <img id="nested_image_label4" alt="image" aria-labelledby="nested_image_label4 crossref_link2" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+</h3>
+
+
+<!-- Note: The following test is out of line with the spec, but matching two out of three implementations at the time of writing, and spec changes are expeected. -->
+<!-- See details in https://github.com/w3c/accname/issues/205 -->
+<!-- Final spec resolution will be addressed in AccName Whitespace Project: https://github.com/w3c/accname/projects/1#card-42288231 -->
+<h1>simple w/ for each child (w/o spaces and display:inline)</h1>
+<button data-expectedlabel="onetwothree" data-testname="button name from content for each child (no space, inline)" class="ex"><span>one</span><span>two</span><span>three</span></button><br>
+<h3 data-expectedlabel="onetwothree" data-testname="heading name from content for each child (no space, inline)" class="ex"><span>one</span><span>two</span><span>three</span></h3>
+<a href="#" data-expectedlabel="onetwothree" data-testname="link name from content for each child (no space, inline)" class="ex"><span>one</span><span>two</span><span>three</span></a><br>
+<br>
+
+<h1>simple w/ for each child (w/o spaces and display:block)</h1>
+<button data-expectedlabel="one two three" data-testname="button name from content for each child (no space, display:block)" class="ex block"><span>one</span><span>two</span><span>three</span></button><br>
+<h3 data-expectedlabel="one two three" data-testname="heading name from content for each child (no space, display:block)" class="ex block"><span>one</span><span>two</span><span>three</span></h3>
+<a href="#" data-expectedlabel="one two three" data-testname="link name from content for each child (no space, display:block)" class="ex block"><span>one</span><span>two</span><span>three</span></a><br>
+<br>
+
+<h1>simple w/ for each child (w/o spaces and display:inline block)</h1>
+<button data-expectedlabel="one two three" data-testname="button name from content for each child (no space, display:inline-block)" class="ex iblock"><span>one</span><span>two</span><span>three</span></button><br>
+<h3 data-expectedlabel="one two three" data-testname="heading name from content for each child (no space, display:inline-block)" class="ex iblock"><span>one</span><span>two</span><span>three</span></h3>
+<a href="#" data-expectedlabel="one two three" data-testname="link name from content for each child (no space, display:inline-block)" class="ex iblock"><span>one</span><span>two</span><span>three</span></a><br>
+<br>
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

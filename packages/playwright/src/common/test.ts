@@ -20,6 +20,7 @@ import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
 import type { Location, FullProject } from '../../types/testReporter';
+import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
 
 class Base {
   title: string;
@@ -280,21 +281,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
-      return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    if (!failures.length) // all passed
-      return 'expected';
-    if (failures.length === results.length) // all failed
-      return 'unexpected';
-    return 'flaky'; // mixed bag
+    return computeTestCaseOutcome(this);
   }
 
   ok(): boolean {

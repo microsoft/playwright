@@ -21,7 +21,6 @@ import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, 
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { TestModeName } from '../config/testMode';
-import type { CoverageWorkerOptions } from '../config/coverageFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
@@ -79,7 +78,7 @@ if (mode === 'service2') {
   };
 }
 
-const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
+const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,
   expect: {
@@ -124,7 +123,6 @@ for (const browserName of browserNames) {
           devtools
         },
         trace: trace ? 'on' : undefined,
-        coverageName: browserName,
       },
       metadata: {
         platform: process.platform,

@@ -296,15 +296,16 @@ context = browser.new_context(storage_state="state.json")
 
 ```csharp
 // Save storage state into the file.
+// Tests are executed in <TestProject>\bin\Debug\netX.0\ therefore relative path is used to reference playwright/.auth created in project root
 await context.StorageStateAsync(new()
 {
-    Path = "state.json"
+    Path = "../../../playwright/.auth/state.json"
 });
 
 // Create a new context with the saved storage state.
 var context = await browser.NewContextAsync(new()
 {
-    StorageStatePath = "state.json"
+    StorageStatePath = "../../../playwright/.auth/state.json"
 });
 ```
 

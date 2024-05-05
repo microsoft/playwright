@@ -244,18 +244,15 @@ export function dependenciesForTestFile(filename: string): Set<string> {
   return result;
 }
 
-// These two are only used in the dev mode, they are specifically excluding
+// This is only used in the dev mode, specifically excluding
 // files from packages/playwright*. In production mode, node_modules covers
 // that.
 const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
-const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
   if (file.startsWith(kPlaywrightInternalPrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
-    return true;
-  if (file.startsWith(kPlaywrightCoveragePrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
     return true;
   return false;
 }

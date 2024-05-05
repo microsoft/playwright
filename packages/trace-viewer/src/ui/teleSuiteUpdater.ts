@@ -27,7 +27,7 @@ export type TeleSuiteUpdaterOptions = {
 };
 
 export class TeleSuiteUpdater {
-  rootSuite: reporterTypes.Suite | undefined;
+  rootSuite: TeleSuite | undefined;
   config: reporterTypes.FullConfig | undefined;
   readonly loadErrors: reporterTypes.TestError[] = [];
   readonly progress: Progress = {
@@ -41,6 +41,7 @@ export class TeleSuiteUpdater {
   private _lastRunReceiver: TeleReporterReceiver | undefined;
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
+  private _testResultsSnapshot: Map<string, reporterTypes.TestResult[]> | undefined;
 
   constructor(options: TeleSuiteUpdaterOptions) {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
@@ -76,7 +77,14 @@ export class TeleSuiteUpdater {
 
       onBegin: (suite: reporterTypes.Suite) => {
         if (!this.rootSuite)
-          this.rootSuite = suite;
+          this.rootSuite = suite as TeleSuite;
+        // As soon as new test tree is built add previous results, before calling onUpdate
+        // to avoid flashing empty results in the UI.
+        if (this._testResultsSnapshot) {
+          for (const test of this.rootSuite.allTests())
+            test.results = this._testResultsSnapshot?.get(test.id) || test.results;
+          this._testResultsSnapshot = undefined;
+        }
         this.progress.total = this._lastRunTestCount;
         this.progress.passed = 0;
         this.progress.failed = 0;
@@ -104,11 +112,7 @@ export class TeleSuiteUpdater {
         this._options.onUpdate();
       },
 
-      onError: (error: reporterTypes.TestError) => {
-        this.loadErrors.push(error);
-        this._options.onError?.(error);
-        this._options.onUpdate();
-      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error),
 
       printsToStdio: () => {
         return false;
@@ -122,7 +126,22 @@ export class TeleSuiteUpdater {
     };
   }
 
+  processGlobalReport(report: any[]) {
+    const receiver = new TeleReporterReceiver({
+      onConfigure: (c: reporterTypes.FullConfig) => {
+        this.config = c;
+      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error)
+    });
+    for (const message of report)
+      receiver.dispatch(message);
+  }
+
   processListReport(report: any[]) {
+    // Save test results and reset all projects, the results will be restored after
+    // new project structure is built.
+    const tests = this.rootSuite?.allTests() || [];
+    this._testResultsSnapshot = new Map(tests.map(test => [test.id, test.results]));
     this._receiver.reset();
     for (const message of report)
       this._receiver.dispatch(message);
@@ -133,6 +152,12 @@ export class TeleSuiteUpdater {
     // before we use it.
     this._lastRunReceiver?.dispatch(message)?.catch(() => {});
     this._receiver.dispatch(message)?.catch(() => {});
+  }
+
+  private _handleOnError(error: reporterTypes.TestError) {
+    this.loadErrors.push(error);
+    this._options.onError?.(error);
+    this._options.onUpdate();
   }
 
   asModel(): TestModel {

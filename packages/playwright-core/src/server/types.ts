@@ -58,6 +58,7 @@ export type Credentials = {
   username: string;
   password: string;
   origin?: string;
+  sendImmediately?: boolean;
 };
 
 export type Geolocation = {
@@ -105,10 +106,11 @@ export type ProxySettings = {
 };
 
 export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
+export type SmartKeyboardModifier = KeyboardModifier |  'ControlOrMeta';
 export type MouseButton = 'left' | 'right' | 'middle';
 
 export type PointerActionOptions = {
-  modifiers?: KeyboardModifier[];
+  modifiers?: SmartKeyboardModifier[];
   position?: Point;
 };
 

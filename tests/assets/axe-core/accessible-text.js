@@ -73,10 +73,7 @@ module.exports = [
       '<label for="t1">HTML Label</label>' +
       '<input type="text" id="t1" aria-labelledby="t1label">',
     target: '#t1',
-    // accessibleText: 'This is a hidden secret',
-    // Note: axe-core insists on child nodes being used as visible, although
-    // spec 2A says "directly referenced by aria-labelledby".
-    accessibleText: 'This is a',
+    accessibleText: 'This is a hidden secret',
   },
 
   {
@@ -189,7 +186,13 @@ module.exports = [
       '<input type="text" id="tb1"></div>' +
       '<label for="tb1">My form input</label>',
     target: '#target',
-    accessibleText: 'My form input',
+    // accessibleText: 'My form input',
+    // All browsers and the spec (kind of) agree that input inside the target element should
+    // use it's value as an "embedded control", rather than a label.
+    // From the spec:
+    //   If traversal of the current node is due to recursion and the current node
+    //   is an embedded control, ignore aria-label and skip to rule Embedded Control.
+    accessibleText: '',
   },
 
   {

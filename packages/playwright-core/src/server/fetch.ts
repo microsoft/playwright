@@ -158,6 +158,10 @@ export abstract class APIRequestContext extends SdkObject {
         requestUrl.searchParams.set(name, value);
     }
 
+    const credentials = this._getHttpCredentials(requestUrl);
+    if (credentials?.sendImmediately)
+      setBasicAuthorizationHeader(headers, credentials);
+
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
@@ -355,9 +359,7 @@ export abstract class APIRequestContext extends SdkObject {
           const auth = response.headers['www-authenticate'];
           const credentials = this._getHttpCredentials(url);
           if (auth?.trim().startsWith('Basic') && credentials) {
-            const { username, password } = credentials;
-            const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
-            setHeader(options.headers, 'authorization', `Basic ${encoded}`);
+            setBasicAuthorizationHeader(options.headers, credentials);
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, url, options, postData));
             request.destroy();
@@ -729,4 +731,10 @@ function shouldBypassProxy(url: URL, bypass?: string): boolean {
   });
   const domain = '.' + url.hostname;
   return domains.some(d => domain.endsWith(d));
+}
+
+function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HTTPCredentials) {
+  const { username, password } = credentials;
+  const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+  setHeader(headers, 'authorization', `Basic ${encoded}`);
 }

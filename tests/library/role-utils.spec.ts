@@ -29,6 +29,7 @@ async function getNameAndRole(page: Page, selector: string) {
 }
 
 const ranges = [
+  'name_1.0_combobox-focusable-alternative-manual.html',
   'name_test_case_539-manual.html',
   'name_test_case_721-manual.html',
 ];
@@ -36,12 +37,12 @@ const ranges = [
 for (let range = 0; range <= ranges.length; range++) {
   test('wpt accname #' + range, async ({ page, asset, server, browserName }) => {
     const skipped = [
-      // Spec clearly says to only use control's value when embedded in a label (step 2C).
-      'name_heading-combobox-focusable-alternative-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
       'name_test_case_659-manual.html',
       // This test expects ::before + title + ::after, which is neither 2F nor 2I.
       'name_test_case_660-manual.html',
+      // Spec says role=combobox should use selected options, not a title attribute.
+      'description_1.0_combobox-focusable-manual.html',
     ];
     if (browserName === 'firefox') {
       // This test contains the following style:
@@ -61,16 +62,16 @@ for (let range = 0; range <= ranges.length; range++) {
             if (!step.test.ATK)
               continue;
             for (const atk of step.test.ATK) {
-              if (atk[0] !== 'property' || atk[1] !== 'name' || atk[2] !== 'is' || typeof atk[3] !== 'string')
+              if (atk[0] !== 'property' || (atk[1] !== 'name' && atk[1] !== 'description') || atk[2] !== 'is' || typeof atk[3] !== 'string')
                 continue;
-              self.steps.push({ selector: '#' + step.element, name: atk[3] });
+              self.steps.push({ selector: '#' + step.element, property: atk[1], value: atk[3] });
             }
           }
         }
       };
     });
 
-    const testDir = asset('wpt/accname');
+    const testDir = asset('wpt/accname/manual');
     const testFiles = fs.readdirSync(testDir, { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => e.name);
     for (const testFile of testFiles) {
       if (skipped.includes(testFile))
@@ -79,7 +80,7 @@ for (let range = 0; range <= ranges.length; range++) {
       if (!included)
         continue;
       await test.step(testFile, async () => {
-        await page.goto(server.PREFIX + `/wpt/accname/` + testFile);
+        await page.goto(server.PREFIX + `/wpt/accname/manual/` + testFile);
         // Use $eval to force injected script.
         const result = await page.$eval('body', () => {
           const result = [];
@@ -87,8 +88,9 @@ for (let range = 0; range <= ranges.length; range++) {
             const element = document.querySelector(step.selector);
             if (!element)
               throw new Error(`Unable to resolve "${step.selector}"`);
-            const received = (window as any).__injectedScript.getElementAccessibleName(element);
-            result.push({ selector: step.selector, expected: step.name, received });
+            const injected = (window as any).__injectedScript;
+            const received = step.property === 'name' ? injected.getElementAccessibleName(element) : injected.getElementAccessibleDescription(element);
+            result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;
         });
@@ -98,6 +100,70 @@ for (let range = 0; range <= ranges.length; range++) {
     }
   });
 }
+
+test('wpt accname non-manual', async ({ page, asset, server }) => {
+  await page.addInitScript(() => {
+    const self = window as any;
+    self.AriaUtils = {};
+    self.AriaUtils.verifyLabelsBySelector = selector => self.__selector = selector;
+  });
+
+  const failing = [
+    // Chromium thinks it should use "3" from the span, but Safari does not. Spec is unclear.
+    'checkbox label with embedded combobox (span)',
+    'checkbox label with embedded combobox (div)',
+
+    // We do not allow nested visible elements inside parent invisible. Chromium does, but Safari does not. Spec is unclear.
+    'heading with name from content, containing element that is visibility:hidden with nested content that is visibility:visible',
+
+    // TODO: dd/dt elements have roles that prohibit naming. However, both Chromium and Safari still support naming.
+    'label valid on dd element',
+    'label valid on dt element',
+
+    // TODO: support Alternative Text syntax in ::before and ::after.
+    'button name from fallback content with ::before and ::after',
+    'heading name from fallback content with ::before and ::after',
+    'link name from fallback content with ::before and ::after',
+    'button name from fallback content mixing attr() and strings with ::before and ::after',
+    'heading name from fallback content mixing attr() and strings with ::before and ::after',
+    'link name from fallback content mixing attr() and strings with ::before and ::after',
+
+    // TODO: recursive bugs
+    'heading with link referencing image using aria-labelledby, that in turn references text element via aria-labelledby',
+    'heading with link referencing image using aria-labelledby, that in turn references itself and another element via aria-labelledby',
+    'button\'s hidden referenced name (visibility:hidden) with hidden aria-labelledby traversal falls back to aria-label',
+
+    // TODO: preserve "tab" character and non-breaking-spaces from "aria-label" attribute
+    'link with text node, with tab char',
+    'nav with trailing nbsp char aria-label is valid (nbsp is preserved in name)',
+    'button with leading nbsp char in aria-label is valid (and uses aria-label)',
+  ];
+
+  const testDir = asset('wpt/accname/name');
+  const testFiles = fs.readdirSync(testDir, { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => `/wpt/accname/name/` + e.name);
+  testFiles.push(...fs.readdirSync(testDir + '/shadowdom', { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => `/wpt/accname/name/shadowdom` + e.name));
+  for (const testFile of testFiles) {
+    await test.step(testFile, async () => {
+      await page.goto(server.PREFIX + testFile);
+      // Use $eval to force injected script.
+      const result = await page.$eval('body', () => {
+        const result = [];
+        for (const element of document.querySelectorAll((window as any).__selector)) {
+          const injected = (window as any).__injectedScript;
+          const title = element.getAttribute('data-testname');
+          const expected = element.getAttribute('data-expectedlabel');
+          const received = injected.getElementAccessibleName(element);
+          result.push({ title, expected, received });
+        }
+        return result;
+      });
+      for (const { title, expected, received } of result) {
+        if (!failing.includes(title))
+          expect.soft(received, `${testFile}: ${title}`).toBe(expected);
+      }
+    });
+  }
+});
 
 test('axe-core implicit-role', async ({ page, asset, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -304,6 +370,96 @@ test('display:contents should be visible when contents are visible', async ({ pa
     <button style='display: contents;'>yo</button>
   `);
   await expect(page.getByRole('button')).toHaveCount(1);
+});
+
+test('label/labelled-by aria-hidden with descendants', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29796' });
+
+  await page.setContent(`
+    <body>
+      <div id="case1">
+        <button aria-labelledby="label1" type="button"></button>
+        <tool-tip id="label1" for="button-preview" popover="manual" aria-hidden="true" role="tooltip">Label1</tool-tip>
+      </div>
+      <div id="case2">
+        <label for="button2" aria-hidden="true"><div id="label2">Label2</div></label>
+        <button id="button2" type="button"></button>
+      </div>
+    </body>
+  `);
+  await page.$$eval('#label1, #label2', els => {
+    els.forEach(el => el.attachShadow({ mode: 'open' }).appendChild(document.createElement('slot')));
+  });
+  expect.soft(await getNameAndRole(page, '#case1 button')).toEqual({ role: 'button', name: 'Label1' });
+  expect.soft(await getNameAndRole(page, '#case2 button')).toEqual({ role: 'button', name: 'Label2' });
+});
+
+test('own aria-label concatenated with aria-labelledby', async ({ page }) => {
+  // This is taken from https://w3c.github.io/accname/#example-5-0
+
+  await page.setContent(`
+    <h1>Files</h1>
+    <ul>
+      <li>
+        <a id="file_row1" href="./files/Documentation.pdf">Documentation.pdf</a>
+        <span role="button" tabindex="0" id="del_row1" aria-label="Delete" aria-labelledby="del_row1 file_row1"></span>
+      </li>
+      <li>
+        <a id="file_row2" href="./files/HolidayLetter.pdf">HolidayLetter.pdf</a>
+        <span role="button" tabindex="0" id="del_row2" aria-label="Delete" aria-labelledby="del_row2 file_row2"></span>
+      </li>
+    </ul>
+  `);
+  expect.soft(await getNameAndRole(page, '#del_row1')).toEqual({ role: 'button', name: 'Delete Documentation.pdf' });
+  expect.soft(await getNameAndRole(page, '#del_row2')).toEqual({ role: 'button', name: 'Delete HolidayLetter.pdf' });
+});
+
+test('control embedded in a label', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28848' });
+
+  await page.setContent(`
+    <label for="flash">
+      <input type="checkbox" id="flash">
+      Flash the screen <span tabindex="0" role="textbox" aria-label="number of times" contenteditable>5</span> times.
+    </label>
+  `);
+  expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'checkbox', name: 'Flash the screen 5 times.' });
+  expect.soft(await getNameAndRole(page, 'span')).toEqual({ role: 'textbox', name: 'number of times' });
+  expect.soft(await getNameAndRole(page, 'label')).toEqual({ role: null, name: '' });
+});
+
+test('control embedded in a target element', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28848' });
+
+  await page.setContent(`
+    <h1>
+      <input type="text" value="Foo bar">
+    </h1>
+  `);
+  expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
+});
+
+test('svg role=presentation', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26809' });
+
+  await page.setContent(`
+		<img src="http://example.com/image.png" alt="Code is Poetry." />
+		<svg viewBox="0 0 100 100" width="16" height="16" xmlns="http://www.w3.org/2000/svg" role="presentation" focusable="false"><circle cx="50" cy="50" r="50"></circle></svg>
+  `);
+  expect.soft(await getNameAndRole(page, 'img')).toEqual({ role: 'img', name: 'Code is Poetry.' });
+  expect.soft(await getNameAndRole(page, 'svg')).toEqual({ role: 'presentation', name: '' });
+});
+
+test('should work with form and tricky input names', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30616' });
+
+  await page.setContent(`
+		<form aria-label="my form">
+      <input name="tagName" value="hello" title="tagName input">
+      <input name="localName" value="hello" title="localName input">
+    </form>
+  `);
+  expect.soft(await getNameAndRole(page, 'form')).toEqual({ role: 'form', name: 'my form' });
 });
 
 function toArray(x: any): any[] {

@@ -32,12 +32,15 @@ import {
   toBeOK,
   toBeVisible,
   toContainText,
+  toHaveAccessibleDescription,
+  toHaveAccessibleName,
   toHaveAttribute,
   toHaveClass,
   toHaveCount,
   toHaveCSS,
   toHaveId,
   toHaveJSProperty,
+  toHaveRole,
   toHaveText,
   toHaveTitle,
   toHaveURL,
@@ -185,12 +188,15 @@ const customAsyncMatchers = {
   toBeOK,
   toBeVisible,
   toContainText,
+  toHaveAccessibleDescription,
+  toHaveAccessibleName,
   toHaveAttribute,
   toHaveClass,
   toHaveCount,
   toHaveCSS,
   toHaveId,
   toHaveJSProperty,
+  toHaveRole,
   toHaveText,
   toHaveTitle,
   toHaveURL,
@@ -257,8 +263,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
-      const rawStack = captureRawStack();
-      const stackFrames = filteredStackTrace(rawStack);
+      const stackFrames = filteredStackTrace(captureRawStack());
 
       // Enclose toPass in a step to maintain async stacks, toPass matcher is always async.
       const stepInfo = {
@@ -285,9 +290,12 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       try {
-        const expectZone: ExpectZone | null = matcherName !== 'toPass' ? { title, wallTime } : null;
         const callback = () => matcher.call(target, ...args);
-        const result = expectZone ? zones.run<ExpectZone, any>('expectZone', expectZone, callback) : zones.preserve(callback);
+        // toPass and poll matchers can contain other steps, expects and API calls,
+        // so they behave like a retriable step.
+        const result = (matcherName === 'toPass' || this._info.isPoll) ?
+          zones.run('stepZone', step, callback) :
+          zones.run<ExpectZone, any>('expectZone', { title, wallTime }, callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

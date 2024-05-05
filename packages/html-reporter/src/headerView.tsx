@@ -22,6 +22,7 @@ import './headerView.css';
 import * as icons from './icons';
 import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
+import { filterWithToken } from './filter';
 
 export const HeaderView: React.FC<React.PropsWithChildren<{
   stats: Stats,
@@ -64,20 +65,23 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
+  const searchParams = new URLSearchParams(window.location.hash.slice(1));
+  const q = searchParams.get('q')?.toString() || '';
+  const tokens = q.split(' ');
   return <nav>
     <Link className='subnav-item' href='#?'>
-      All <span className='d-inline counter'>{stats.total}</span>
+      All <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
-    <Link className='subnav-item' href='#?q=s:passed'>
+    <Link className='subnav-item' click={filterWithToken(tokens, 's:passed', false)} ctrlClick={filterWithToken(tokens, 's:passed', true)}>
       Passed <span className='d-inline counter'>{stats.expected}</span>
     </Link>
-    <Link className='subnav-item' href='#?q=s:failed'>
+    <Link className='subnav-item' click={filterWithToken(tokens, 's:failed', false)} ctrlClick={filterWithToken(tokens, 's:failed', true)}>
       {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
     </Link>
-    <Link className='subnav-item' href='#?q=s:flaky'>
+    <Link className='subnav-item' click={filterWithToken(tokens, 's:flaky', false)} ctrlClick={filterWithToken(tokens, 's:flaky', true)}>
       {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
     </Link>
-    <Link className='subnav-item' href='#?q=s:skipped'>
+    <Link className='subnav-item' click={filterWithToken(tokens, 's:skipped', false)} ctrlClick={filterWithToken(tokens, 's:skipped', true)}>
       Skipped <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
   </nav>;

@@ -143,7 +143,8 @@ handle new pages opened by `target="_blank"` links.
 const pagePromise = context.waitForEvent('page');
 await page.getByText('open new tab').click();
 const newPage = await pagePromise;
-await newPage.waitForLoadState();
+// Interact with the new page normally.
+await newPage.getByRole('button').click();
 console.log(await newPage.title());
 ```
 
@@ -152,7 +153,8 @@ console.log(await newPage.title());
 Page newPage = context.waitForPage(() -> {
   page.getByText("open new tab").click(); // Opens a new tab
 });
-newPage.waitForLoadState();
+// Interact with the new page normally
+newPage.getByRole(AriaRole.BUTTON).click();
 System.out.println(newPage.title());
 ```
 
@@ -162,7 +164,8 @@ async with context.expect_page() as new_page_info:
     await page.get_by_text("open new tab").click() # Opens a new tab
 new_page = await new_page_info.value
 
-await new_page.wait_for_load_state()
+# Interact with the new page normally
+await new_page.get_by_role("button").click()
 print(await new_page.title())
 ```
 
@@ -172,7 +175,8 @@ with context.expect_page() as new_page_info:
     page.get_by_text("open new tab").click() # Opens a new tab
 new_page = new_page_info.value
 
-new_page.wait_for_load_state()
+# Interact with the new page normally
+new_page.get_by_role("button").click()
 print(new_page.title())
 ```
 
@@ -182,7 +186,8 @@ var newPage = await context.RunAndWaitForPageAsync(async () =>
 {
     await page.GetByText("open new tab").ClickAsync();
 });
-await newPage.WaitForLoadStateAsync();
+// Interact with the new page normally
+await newPage.GetByRole(AriaRole.Button).ClickAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```
 
@@ -242,8 +247,8 @@ This event is emitted in addition to the `browserContext.on('page')` event, but 
 const popupPromise = page.waitForEvent('popup');
 await page.getByText('open the popup').click();
 const popup = await popupPromise;
-// Wait for the popup to load.
-await popup.waitForLoadState();
+// Interact with the new popup normally.
+await popup.getByRole('button').click();
 console.log(await popup.title());
 ```
 
@@ -252,7 +257,8 @@ console.log(await popup.title());
 Page popup = page.waitForPopup(() -> {
   page.getByText("open the popup").click();
 });
-popup.waitForLoadState();
+// Interact with the popup normally
+popup.getByRole(AriaRole.BUTTON).click();
 System.out.println(popup.title());
 ```
 
@@ -262,7 +268,8 @@ async with page.expect_popup() as popup_info:
     await page.get_by_text("open the popup").click()
 popup = await popup_info.value
 
-await popup.wait_for_load_state()
+# Interact with the popup normally
+await popup.get_by_role("button").click()
 print(await popup.title())
 ```
 
@@ -272,7 +279,8 @@ with page.expect_popup() as popup_info:
     page.get_by_text("open the popup").click()
 popup = popup_info.value
 
-popup.wait_for_load_state()
+# Interact with the popup normally
+popup.get_by_role("button").click()
 print(popup.title())
 ```
 
@@ -282,7 +290,8 @@ var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.GetByText("open the popup").ClickAsync();
 });
-await popup.WaitForLoadStateAsync();
+// Interact with the popup normally
+await popup.GetByRole(AriaRole.Button).ClickAsync();
 Console.WriteLine(await popup.TitleAsync());
 ```
 

@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Description title-same-element</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "Description"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "Description"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "Description"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Description",
+                  "is",
+                  "Description"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Description title-same-element"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Description title-same-element.</p>
+    <div><input aria-label="Name" id="test" title="Title" aria-describedby="ID1" type="text"></div>
+  <div id="ID1">Description</div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

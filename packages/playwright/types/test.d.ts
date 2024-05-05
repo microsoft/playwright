@@ -18,7 +18,7 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type ReporterDescription =
+export type ReporterDescription = Readonly<
   ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
   ['line'] |
@@ -28,13 +28,16 @@ export type ReporterDescription =
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string }] |
   ['null'] |
-  [string] | [string, any];
+  [string] | [string, any]
+>;
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
- * multiple configurations. For example, consider running tests against multiple browsers.
+ * multiple configurations. For example, consider running tests against multiple browsers. This type describes format
+ * of a project in the configuration file, to access resolved configuration parameters at run time use {@link
+ * FullProject}.
  *
  * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
@@ -280,6 +283,41 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
+   * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
+   * expect(page).toHaveScreenshot()`.
+   *
+   * **Usage**
+   *
+   * The following example will only perform screenshot assertions on Chromium.
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       ignoreSnapshots: true,
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       ignoreSnapshots: true,
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  ignoreSnapshots?: boolean;
+
+  /**
    * Metadata that will be put directly to the test report serialized as JSON.
    */
   metadata?: Metadata;
@@ -396,16 +434,22 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    * The list of supported tokens:
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
+   *   - Value: `foo/bar/baz`
+   * - `{ext}` - snapshot extension (with dots)
+   *   - Value: `.png`
+   * - `{platform}` - The value of `process.platform`.
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
+   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{testDir}` - Project's
    *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
    *     config)
-   * - `{snapshotDir}` - Project's
-   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
-   * - `{platform}` - The value of `process.platform`.
-   * - `{projectName}` - Project's file-system-sanitized name, if any.
-   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
@@ -414,12 +458,6 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
    *   - Value: `suite-test-should-work`
-   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
-   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
-   *   snapshot name.
-   *   - Value: `foo/bar/baz`
-   * - `{ext}` - snapshot extension (with dots)
-   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
@@ -590,11 +628,13 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<Tes
 }
 
 /**
- * Runtime representation of the test project configuration that can be accessed in the tests via
+ * Runtime representation of the test project configuration. It is accessible in the tests via
  * [testInfo.project](https://playwright.dev/docs/api/class-testinfo#test-info-project) and
- * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project).
+ * [workerInfo.project](https://playwright.dev/docs/api/class-workerinfo#worker-info-project) and is passed to the
+ * test reporters. To see the format of the project in the Playwright configuration file please see {@link
+ * TestProject} instead.
  */
-export interface ProjectInWorker<TestArgs = {}, WorkerArgs = {}> {
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
    */
@@ -675,7 +715,8 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
  * or `testDir`. These options are described in the {@link TestConfig} object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
+ * [configuration file](https://playwright.dev/docs/test-configuration). This type describes format of the configuration file, to access
+ * resolved configuration parameters at run time use {@link FullConfig}.
  *
  * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level {@link
@@ -894,24 +935,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toHaveScreenshot?: {
       /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
-       */
-      maxDiffPixels?: number;
-
-      /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
-       */
-      maxDiffPixelRatio?: number;
-
-      /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
@@ -924,6 +947,17 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
       caret?: "hide"|"initial";
 
       /**
+       * An acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `"css"`.
        */
@@ -933,6 +967,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * See `style` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        */
       stylePath?: string|Array<string>;
+
+      /**
+       * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
     };
 
     /**
@@ -942,22 +983,22 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toMatchSnapshot?: {
       /**
-       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
-       * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-       */
-      threshold?: number;
-
-      /**
-       * an acceptable amount of pixels that could be different, unset by default.
+       * An acceptable amount of pixels that could be different, unset by default.
        */
       maxDiffPixels?: number;
 
       /**
-       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
+       * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
        * default.
        */
       maxDiffPixelRatio?: number;
+
+      /**
+       * An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+       */
+      threshold?: number;
     };
 
     /**
@@ -965,14 +1006,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toPass?: {
       /**
-       * timeout for toPass method in milliseconds.
-       */
-      timeout?: number;
-
-      /**
-       * probe intervals for toPass method in milliseconds.
+       * Probe intervals for toPass method in milliseconds.
        */
       intervals?: Array<number>;
+
+      /**
+       * Timeout for toPass method in milliseconds.
+       */
+      timeout?: number;
     };
   };
 
@@ -1019,7 +1060,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function that takes a [`TestConfig`] argument.
+   * function that takes a {@link FullConfig} argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
@@ -1356,14 +1397,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   shard?: null|{
     /**
-     * The total number of shards.
-     */
-    total: number;
-
-    /**
      * The index of the shard to execute, one-based.
      */
     current: number;
+
+    /**
+     * The total number of shards.
+     */
+    total: number;
   };
 
   /**
@@ -1442,16 +1483,22 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    * The list of supported tokens:
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
+   *   - Value: `foo/bar/baz`
+   * - `{ext}` - snapshot extension (with dots)
+   *   - Value: `.png`
+   * - `{platform}` - The value of `process.platform`.
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
+   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{testDir}` - Project's
    *   [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with
    *     config)
-   * - `{snapshotDir}` - Project's
-   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
-   * - `{platform}` - The value of `process.platform`.
-   * - `{projectName}` - Project's file-system-sanitized name, if any.
-   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
@@ -1460,12 +1507,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
    *   - Value: `suite-test-should-work`
-   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
-   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
-   *   snapshot name.
-   *   - Value: `foo/bar/baz`
-   * - `{ext}` - snapshot extension (with dots)
-   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
@@ -1630,15 +1671,15 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestA
 export type Metadata = { [key: string]: any };
 
 /**
- * Resolved configuration available via
- * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config) and
- * [workerInfo.config](https://playwright.dev/docs/api/class-workerinfo#worker-info-config).
+ * Resolved configuration which is accessible via
+ * [testInfo.config](https://playwright.dev/docs/api/class-testinfo#test-info-config) and is passed to the test
+ * reporters. To see the format of Playwright configuration file, please see {@link TestConfig} instead.
  */
-export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * List of resolved projects.
    */
-  projects: ProjectInWorker<TestArgs, WorkerArgs>[];
+  projects: FullProject<TestArgs, WorkerArgs>[];
   /**
    * See [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
    */
@@ -1648,7 +1689,7 @@ export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer: TestConfigWebServer | null;
   /**
-   * Path to the configuration file (if any) used to run the tests.
+   * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */
   configFile?: string;
 
@@ -1722,6 +1763,9 @@ export interface ConfigInWorker<TestArgs = {}, WorkerArgs = {}> {
     threshold: number;
   };
 
+  /**
+   * Base directory for all relative paths used in the reporters.
+   */
   rootDir: string;
 
   /**
@@ -6881,6 +6925,60 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the {@link Locator} points to an element with a given
+   * [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('save-button');
+   * await expect(locator).toHaveAccessibleDescription('Save results to disk');
+   * ```
+   *
+   * @param description Expected accessible description.
+   * @param options
+   */
+  toHaveAccessibleDescription(description: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the {@link Locator} points to an element with a given
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('save-button');
+   * await expect(locator).toHaveAccessibleName('Save to disk');
+   * ```
+   *
+   * @param name Expected accessible name.
+   * @param options
+   */
+  toHaveAccessibleName(name: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the {@link Locator} points to an element with given attribute.
    *
    * **Usage**
@@ -7037,6 +7135,30 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveJSProperty(name: string, value: any, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the {@link Locator} points to an element with a given
+   * [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles).
+   *
+   * Note that role is matched as a string, disregarding the ARIA role hierarchy. For example, asserting  a superclass
+   * role `"checkbox"` on an element with a subclass role `"switch"` will fail.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('save-button');
+   * await expect(locator).toHaveRole('button');
+   * ```
+   *
+   * @param role Required aria role.
+   * @param options
+   */
+  toHaveRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -8043,7 +8165,7 @@ export interface TestInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: ConfigInWorker;
+  config: FullConfig;
 
   /**
    * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
@@ -8119,7 +8241,7 @@ export interface TestInfo {
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: ProjectInWorker;
+  project: FullProject;
 
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each`
@@ -8273,7 +8395,7 @@ export interface WorkerInfo {
   /**
    * Processed configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  config: ConfigInWorker;
+  config: FullConfig;
 
   /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
@@ -8288,7 +8410,7 @@ export interface WorkerInfo {
   /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
-  project: ProjectInWorker;
+  project: FullProject;
 
   /**
    * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
@@ -8307,17 +8429,14 @@ interface TestConfigWebServer {
   command: string;
 
   /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
-   * or `url` should be specified.
+   * Current working directory of the spawned process, defaults to the directory of the configuration file.
    */
-  port?: number;
+  cwd?: string;
 
   /**
-   * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
-   * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
-   * checked. Either `port` or `url` should be specified.
+   * Environment variables to set for the command, `process.env` by default.
    */
-  url?: string;
+  env?: { [key: string]: string; };
 
   /**
    * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
@@ -8325,9 +8444,10 @@ interface TestConfigWebServer {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
+   * or `url` should be specified.
    */
-  timeout?: number;
+  port?: number;
 
   /**
    * If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that
@@ -8349,13 +8469,15 @@ interface TestConfigWebServer {
   stderr?: "pipe"|"ignore";
 
   /**
-   * Current working directory of the spawned process, defaults to the directory of the configuration file.
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
-  cwd?: string;
+  timeout?: number;
 
   /**
-   * Environment variables to set for the command, `process.env` by default.
+   * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
+   * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
+   * checked. Either `port` or `url` should be specified.
    */
-  env?: { [key: string]: string; };
+  url?: string;
 }
 

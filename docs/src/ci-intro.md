@@ -148,7 +148,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
     - run: dotnet build
@@ -266,7 +266,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
       - run: dotnet build
@@ -370,7 +370,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
     - run: dotnet build
@@ -388,23 +388,49 @@ jobs:
 
 Once you have your [GitHub actions workflow](#setting-up-github-actions) setup then all you need to do is [Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) or push your code to an existing repository. Follow the instructions on GitHub and don't forget to [initialize a git repository](https://github.com/git-guides/git-init) using the `git init` command so you can [add](https://github.com/git-guides/git-add), [commit](https://github.com/git-guides/git-commit) and [push](https://github.com/git-guides/git-push) your code.
 
+######
+* langs: js, java, python
+
 <img width="861" alt="Create a Repo and Push to GitHub" src="https://user-images.githubusercontent.com/13063165/183423254-d2735278-a2ab-4d63-bb99-48d8e5e447bc.png"/>
+
+
+######
+* langs: csharp
+
+![dotnet repo on github](https://github.com/microsoft/playwright/assets/13063165/4f1b4cc3-b850-4d60-a99e-24057eaf91ad)
 
 ## Opening the Workflows
 
 Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed.
 
-<img width="847" alt="Opening the Workflows" src="https://user-images.githubusercontent.com/13063165/183423584-2ea18038-cd49-4daa-a20c-2205352f0933.png"/>
+######
+* langs: js, python, java
+
+![opening the workflow](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+
+######
+* langs: csharp
+
+![opening the workflow](https://github.com/microsoft/playwright/assets/13063165/71793c09-0815-4faa-866b-85684a1f87e5)
 
 On Pull Requests you can also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
 
 <img width="645" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
 
+
 ## Viewing Test Logs
 
 Clicking on the workflow run will show you the all the actions that GitHub performed and clicking on **Run Playwright tests** will show the error messages, what was expected and what was received as well as the call log.
 
-<img width="839" alt="Viewing Test Logs" src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png"/>
+######
+* langs: js, python, java
+
+![Viewing Test Logs](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+
+######
+* langs: csharp
+
+![viewing the test logs](https://github.com/microsoft/playwright/assets/13063165/ba2d8d7b-ffce-42de-95e0-bcb35c421975)
 
 
 ## HTML Report
@@ -441,11 +467,21 @@ Once you have served the report using `npx playwright show-report`, click on the
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
 
 ## Viewing the Trace
-* langs: python, java, csharp
+* langs: python, java
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/6d5885dc-d511-4c20-b728-040a7ef6cea4)
+
+## Viewing the Trace
+* langs: csharp
+
+You can upload Traces which get created on your CI like GitHub Actions as artifacts. This requires [starting and stopping the trace](./trace-viewer-intro#recording-a-trace). We recommend only recording traces for failing tests. Once your traces have been uploaded to CI, they can then be downloaded and opened using [trace.playwright.dev](https://trace.playwright.dev), which is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
+
+######
+* langs: csharp
+
+![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/84150084-5019-470a-8449-b61d206bfbb0)
 
 ## Publishing report on the web
 * langs: js

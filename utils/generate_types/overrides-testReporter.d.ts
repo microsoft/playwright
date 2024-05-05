@@ -14,20 +14,8 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, ConfigInWorker } from './test';
-export type { TestStatus } from './test';
-
-type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
-
-export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  projects: FullProject<TestArgs, WorkerArgs>[];
-  reporter: ReporterDescription[];
-  webServer: ConfigInWorker['webServer'];
-}
-
-export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
-  use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-}
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject } from './test';
+export type { FullConfig, FullProject, TestStatus } from './test';
 
 /**
  * Result of the full test run.

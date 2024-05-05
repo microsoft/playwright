@@ -69,6 +69,7 @@ export type JsonTestCase = {
   retries: number;
   tags?: string[];
   repeatEachIndex: number;
+  annotations?: { type: string, description?: string }[];
 };
 
 export type JsonTestEnd = {
@@ -123,14 +124,15 @@ export type JsonEvent = {
 };
 
 type TeleReporterReceiverOptions = {
-  mergeProjects: boolean;
-  mergeTestCases: boolean;
-  resolvePath: (rootDir: string, relativePath: string) => string;
+  mergeProjects?: boolean;
+  mergeTestCases?: boolean;
+  resolvePath?: (rootDir: string, relativePath: string) => string;
   configOverrides?: Pick<reporterTypes.FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'reporter'>;
   clearPreviousResultsWhenTestBegins?: boolean;
 };
 
 export class TeleReporterReceiver {
+  public isListing = false;
   private _rootSuite: TeleSuite;
   private _options: TeleReporterReceiverOptions;
   private _reporter: Partial<ReporterV2>;
@@ -138,7 +140,7 @@ export class TeleReporterReceiver {
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
 
-  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions) {
+  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
@@ -218,7 +220,7 @@ export class TeleReporterReceiver {
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
     if (this._options.clearPreviousResultsWhenTestBegins)
-      test._clearResults();
+      test.results = [];
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
@@ -232,7 +234,7 @@ export class TeleReporterReceiver {
     test.timeout = testEndPayload.timeout;
     test.expectedStatus = testEndPayload.expectedStatus;
     test.annotations = testEndPayload.annotations;
-    const result = test._resultsMap.get(payload.id)!;
+    const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
     result.errors = payload.errors;
@@ -245,7 +247,7 @@ export class TeleReporterReceiver {
 
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
     const test = this._tests.get(testId)!;
-    const result = test._resultsMap.get(resultId)!;
+    const result = test.results.find(r => r._id === resultId)!;
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
@@ -260,7 +262,7 @@ export class TeleReporterReceiver {
 
   private _onStepEnd(testId: string, resultId: string, payload: JsonTestStepEnd) {
     const test = this._tests.get(testId)!;
-    const result = test._resultsMap.get(resultId)!;
+    const result = test.results.find(r => r._id === resultId)!;
     const step = result._stepMap.get(payload.id)!;
     step.duration = payload.duration;
     step.error = payload.error;
@@ -274,7 +276,7 @@ export class TeleReporterReceiver {
   private _onStdIO(type: JsonStdIOType, testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
     const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
-    const result = test && resultId ? test._resultsMap.get(resultId) : undefined;
+    const result = test && resultId ? test.results.find(r => r._id === resultId) : undefined;
     if (type === 'stdout') {
       result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
@@ -366,6 +368,7 @@ export class TeleReporterReceiver {
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
     test.tags = payload.tags ?? [];
+    test.annotations = payload.annotations ?? [];
     return test;
   }
 
@@ -385,7 +388,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (relativePath === undefined)
       return;
-    return this._options.resolvePath(this._rootDir, relativePath);
+    return this._options.resolvePath ? this._options.resolvePath(this._rootDir, relativePath) : this._rootDir + '/' + relativePath;
   }
 }
 
@@ -475,8 +478,6 @@ export class TeleTestCase implements reporterTypes.TestCase {
   repeatEachIndex = 0;
   id: string;
 
-  _resultsMap = new Map<string, TeleTestResult>();
-
   constructor(id: string, title: string, location: reporterTypes.Location, repeatEachIndex: number) {
     this.id = id;
     this.title = title;
@@ -491,21 +492,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
-      return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    if (!failures.length) // all passed
-      return 'expected';
-    if (failures.length === results.length) // all failed
-      return 'unexpected';
-    return 'flaky'; // mixed bag
+    return computeTestCaseOutcome(this);
   }
 
   ok(): boolean {
@@ -513,15 +500,9 @@ export class TeleTestCase implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  _clearResults() {
-    this.results = [];
-    this._resultsMap.clear();
-  }
-
   _createTestResult(id: string): TeleTestResult {
-    const result = new TeleTestResult(this.results.length);
+    const result = new TeleTestResult(this.results.length, id);
     this.results.push(result);
-    this._resultsMap.set(id, result);
     return result;
   }
 }
@@ -558,7 +539,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   }
 }
 
-class TeleTestResult implements reporterTypes.TestResult {
+export class TeleTestResult implements reporterTypes.TestResult {
   retry: reporterTypes.TestResult['retry'];
   parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
   workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
@@ -572,11 +553,13 @@ class TeleTestResult implements reporterTypes.TestResult {
   error: reporterTypes.TestResult['error'];
 
   _stepMap: Map<string, reporterTypes.TestStep> = new Map();
+  _id: string;
 
   private _startTime: number = 0;
 
-  constructor(retry: number) {
+  constructor(retry: number, id: string) {
     this.retry = retry;
+    this._id = id;
   }
 
   setStartTimeNumber(startTime: number) {
@@ -634,4 +617,48 @@ export function parseRegexPatterns(patterns: JsonPattern[]): (string | RegExp)[]
       return p.s;
     return new RegExp(p.r!.source, p.r!.flags);
   });
+}
+
+export function computeTestCaseOutcome(test: reporterTypes.TestCase) {
+  let skipped = 0;
+  let didNotRun = 0;
+  let expected = 0;
+  let interrupted = 0;
+  let unexpected = 0;
+  for (const result of test.results) {
+    if (result.status === 'interrupted') {
+      ++interrupted; // eslint-disable-line @typescript-eslint/no-unused-vars
+    } else if (result.status === 'skipped' && test.expectedStatus === 'skipped') {
+      // Only tests "expected to be skipped" are skipped. These were specifically
+      // marked with test.skip or test.fixme.
+      ++skipped;
+    } else if (result.status === 'skipped') {
+      // Tests that were expected to run, but were skipped are "did not run".
+      // This happens when:
+      // - testing finished early;
+      // - test failure prevented other tests in the serial suite to run;
+      // - probably more cases!
+      ++didNotRun; // eslint-disable-line @typescript-eslint/no-unused-vars
+    } else if (result.status === test.expectedStatus) {
+      // Either passed and expected to pass, or failed and expected to fail.
+      ++expected;
+    } else {
+      ++unexpected;
+    }
+  }
+
+  // Tests that were "skipped as expected" are considered equal to "expected" below,
+  // because that's the expected outcome.
+  //
+  // However, we specifically differentiate the case of "only skipped"
+  // and show it as "skipped" in all reporters.
+  //
+  // More exotic cases like "failed on first run and skipped on retry" are flaky.
+  if (expected === 0 && unexpected === 0)
+    return 'skipped';  // all results were skipped or interrupted
+  if (unexpected === 0)
+    return 'expected';  // no failures, just expected+skipped
+  if (expected === 0 && skipped === 0)
+    return 'unexpected';  // only failures
+  return 'flaky';  // expected+unexpected or skipped+unexpected
 }

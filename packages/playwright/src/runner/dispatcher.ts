@@ -26,6 +26,7 @@ import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { FailureTracker } from './failureTracker';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -36,7 +37,6 @@ export class Dispatcher {
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
 
-  private _allTests: TestCase[] = [];
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
@@ -159,7 +159,6 @@ export class Dispatcher {
   async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
     this._extraEnvByProjectId = extraEnvByProjectId;
     this._queue = testGroups;
-    this._allTests = testGroups.map(g => g.tests).flat();
     for (const group of testGroups)
       this._updateCounterForWorkerHash(group.workerHash, +1);
     this._isStopped = false;
@@ -542,9 +541,13 @@ class JobDispatcher {
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
     this._reporter.onTestEnd(test, result);
+    const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
     this._failureTracker.onTestEnd(test, result);
-    if (this._failureTracker.hasReachedMaxFailures())
+    if (this._failureTracker.hasReachedMaxFailures()) {
       this._stopCallback();
+      if (!hadMaxFailures)
+        this._reporter.onError({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
+    }
   }
 }
 

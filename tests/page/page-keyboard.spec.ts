@@ -318,10 +318,9 @@ it('should handle selectAll', async ({ page, server, isMac }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.type('some text');
-  const modifier = isMac ? 'Meta' : 'Control';
-  await page.keyboard.down(modifier);
+  await page.keyboard.down('ControlOrMeta');
   await page.keyboard.press('a');
-  await page.keyboard.up(modifier);
+  await page.keyboard.up('ControlOrMeta');
   await page.keyboard.press('Backspace');
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
 });
@@ -346,10 +345,9 @@ it('should be able to prevent selectAll', async ({ page, server, isMac }) => {
         event.preventDefault();
     }, false);
   });
-  const modifier = isMac ? 'Meta' : 'Control';
-  await page.keyboard.down(modifier);
+  await page.keyboard.down('ControlOrMeta');
   await page.keyboard.press('a');
-  await page.keyboard.up(modifier);
+  await page.keyboard.up('ControlOrMeta');
   await page.keyboard.press('Backspace');
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
@@ -469,39 +467,36 @@ it('should dispatch a click event on a button when Enter gets pressed', async ({
   expect((await actual.jsonValue()).clicked).toBe(true);
 });
 
-it('should support simple copy-pasting', async ({ page, isMac, browserName }) => {
-  const modifier = isMac ? 'Meta' : 'Control';
+it('should support simple copy-pasting', async ({ page }) => {
   await page.setContent(`<div contenteditable>123</div>`);
   await page.focus('div');
-  await page.keyboard.press(`${modifier}+KeyA`);
-  await page.keyboard.press(`${modifier}+KeyC`);
-  await page.keyboard.press(`${modifier}+KeyV`);
-  await page.keyboard.press(`${modifier}+KeyV`);
+  await page.keyboard.press(`ControlOrMeta+KeyA`);
+  await page.keyboard.press(`ControlOrMeta+KeyC`);
+  await page.keyboard.press(`ControlOrMeta+KeyV`);
+  await page.keyboard.press(`ControlOrMeta+KeyV`);
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
-it('should support simple cut-pasting', async ({ page, isMac }) => {
-  const modifier = isMac ? 'Meta' : 'Control';
+it('should support simple cut-pasting', async ({ page }) => {
   await page.setContent(`<div contenteditable>123</div>`);
   await page.focus('div');
-  await page.keyboard.press(`${modifier}+KeyA`);
-  await page.keyboard.press(`${modifier}+KeyX`);
-  await page.keyboard.press(`${modifier}+KeyV`);
-  await page.keyboard.press(`${modifier}+KeyV`);
+  await page.keyboard.press(`ControlOrMeta+KeyA`);
+  await page.keyboard.press(`ControlOrMeta+KeyX`);
+  await page.keyboard.press(`ControlOrMeta+KeyV`);
+  await page.keyboard.press(`ControlOrMeta+KeyV`);
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
-it('should support undo-redo', async ({ page, isMac, browserName, isLinux }) => {
+it('should support undo-redo', async ({ page, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/12000');
-  const modifier = isMac ? 'Meta' : 'Control';
   await page.setContent(`<div contenteditable></div>`);
   const div = page.locator('div');
   await expect(div).toHaveText('');
   await div.type('123');
   await expect(div).toHaveText('123');
-  await page.keyboard.press(`${modifier}+KeyZ`);
+  await page.keyboard.press(`ControlOrMeta+KeyZ`);
   await expect(div).toHaveText('');
-  await page.keyboard.press(`Shift+${modifier}+KeyZ`);
+  await page.keyboard.press(`Shift+ControlOrMeta+KeyZ`);
   await expect(div).toHaveText('123');
 });
 

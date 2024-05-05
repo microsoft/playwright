@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus, ProjectInWorker, ConfigInWorker } from '../../types/test';
+import type { TestInfoError, TestInfo, TestStatus, FullProject } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Location } from '../../types/testReporter';
+import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
@@ -81,8 +81,8 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: ProjectInWorker;
-  readonly config: ConfigInWorker;
+  readonly project: FullProject;
+  readonly config: FullConfig;
   readonly title: string;
   readonly titlePath: string[];
   readonly file: string;
@@ -246,14 +246,13 @@ export class TestInfoImpl implements TestInfo {
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
-    const rawStack = captureRawStack();
 
     let parentStep: TestStepInternal | undefined;
     if (data.isStage) {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
       parentStep = this._findLastStageStep();
     } else {
-      parentStep = zones.zoneData<TestStepInternal>('stepZone', rawStack!) || undefined;
+      parentStep = zones.zoneData<TestStepInternal>('stepZone');
       if (!parentStep && data.category !== 'test.step') {
         // API steps (but not test.step calls) can be nested by time, instead of by stack.
         // However, do not nest chains of route.continue by checking the title.
@@ -265,7 +264,7 @@ export class TestInfoImpl implements TestInfo {
       }
     }
 
-    const filteredStack = filteredStackTrace(rawStack);
+    const filteredStack = filteredStackTrace(captureRawStack());
     data.boxedStack = parentStep?.boxedStack;
     if (!data.boxedStack && data.box) {
       data.boxedStack = filteredStack.slice(1);

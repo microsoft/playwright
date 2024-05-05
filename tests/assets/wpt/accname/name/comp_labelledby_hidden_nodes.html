@@ -1,0 +1,245 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Labelledby & Hidden Nodes</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<p>Tests hidden node name computation as part of the <a href="https://w3c.github.io/accname/#comp_labelledby">#comp_labelledby</a> portion of the AccName <em>Name Computation</em> algorithm.</p>
+
+<!--
+
+  These tests verify browser conformance with the following note as part of accName computation Step 2B:
+
+  "The result of LabelledBy Recursion in combination with Hidden Not Referenced means
+  that user agents MUST include all nodes in the subtree as part of
+  the accessible name or accessible description, when the node referenced
+  by aria-labelledby or aria-describedby is hidden."
+
+-->
+
+<h2>Testing with <code>display:none</code></h2>
+
+    <button aria-labelledby="a11" data-expectedlabel="foo bar" data-testname="button with aria-labelledby using display:none hidden span (with nested span)" class="ex">x</button>
+    <span id="a11" style="display: none;">
+        foo
+        <span id="a12">bar</span>
+    </span>
+
+    <button aria-labelledby="a21" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using display:none hidden span (with nested spans, depth 2)" class="ex">x</button>
+    <span id="a21" style="display: none;">
+        foo
+        <span id="a22">
+            bar
+            <span id="a23">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="a31" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without display:none (with nested display:none spans, depth 2)" class="ex">x</button>
+    <span id="a31">
+        foo
+        <span id="a32" style="display: none;">
+            bar
+            <span id="a33">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="a41" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using display:none hidden span (with nested sibling spans)" class="ex">x</button>
+    <span id="a41" style="display: none;">
+        foo
+        <span id="a42">bar</span>
+        <span id="a43">baz</span>
+    </span>
+
+    <button aria-labelledby="a51" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without display:none (with nested display:none sibling spans)" class="ex">x</button>
+    <span id="a51">
+        foo
+        <span id="a52" style="display: none;">bar</span>
+        <span id="a53" style="display: none;">baz</span>
+    </span>
+
+    <button aria-labelledby="a61" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using span with display:none (with nested display:inline sibling spans)" class="ex">x</button>
+    <span id="a61" style="display: none;">
+        foo
+        <span id="a62" style="display: inline;">bar</span>
+        <span id="a63" style="display: inline;">baz</span>
+    </span>
+
+<h2>Testing with <code>visibility:hidden</code></h2>
+
+    <button aria-labelledby="b11" data-expectedlabel="foo bar" data-testname="button with aria-labelledby using visibility:hidden span (with nested span)" class="ex">x</button>
+    <span id="b11" style="visibility: hidden;">
+        foo
+        <span id="b12">bar</span>
+    </span>
+
+    <button aria-labelledby="b21" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using visibility:hidden span (with nested spans, depth 2)" class="ex">x</button>
+    <span id="b21" style="visibility: hidden;">
+        foo
+        <span id="b22">
+            bar
+            <span id="b23">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="b31" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without visibility:hidden (with nested visibility:hidden spans, depth 2)" class="ex">x</button>
+    <span id="b31">
+        foo
+        <span id="b32" style="visibility: hidden;">
+            bar
+            <span id="b33">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="b41" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using visibility:hidden hidden span (with nested sibling spans)" class="ex">x</button>
+    <span id="b41" style="visibility: hidden;">
+        foo
+        <span id="b42">bar</span>
+        <span id="b43">baz</span>
+    </span>
+
+    <button aria-labelledby="b51" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without visibility:hidden (with nested visibility:hidden sibling spans)" class="ex">x</button>
+    <span id="b51">
+        foo
+        <span id="b52" style="visibility: hidden;">bar</span>
+        <span id="b53" style="visibility: hidden;">baz</span>
+    </span>
+
+    <button aria-labelledby="b61" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using span with visibility:hidden (with nested visibility:visible sibling spans)" class="ex">x</button>
+    <span id="b61" style="visibility: hidden;">
+        foo
+        <span id="b62" style="visibility: visible;">bar</span>
+        <span id="b63" style="visibility: visible;">baz</span>
+    </span>
+
+<h2>Testing with <code>visibility:collapse</code></h2>
+
+    <button aria-labelledby="c11" data-expectedlabel="foo bar" data-testname="button with aria-labelledby using visibility:collapse span (with nested span)" class="ex">x</button>
+    <span id="c11" style="visibility: collapse;">
+        foo
+        <span id="c12">bar</span>
+    </span>
+
+    <button aria-labelledby="c21" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using visibility:collapse span (with nested spans, depth 2)" class="ex">x</button>
+    <span id="c21" style="visibility: collapse;">
+        foo
+        <span id="c22">
+            bar
+            <span id="c23">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="c31" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using span without visibility:collapse (with nested visibility:visible spans, depth 2)" class="ex">x</button>
+    <span id="c31">
+        foo
+        <span id="c32" style="visibility: visible;">
+            bar
+            <span id="c33" style="visibility: visible;">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="c41" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using visibility:collapse span (with nested sibling spans)" class="ex">x</button>
+    <span id="c41" style="visibility: collapse;">
+        foo
+        <span id="c42">bar</span>
+        <span id="c43">baz</span>
+    </span>
+
+    <button aria-labelledby="c51" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without visibility:collapse (with nested visibility:collapse sibling spans)" class="ex">x</button>
+    <span id="c51">
+        foo
+        <span id="c52" style="visibility: collapse;">bar</span>
+        <span id="c53" style="visibility: collapse;">baz</span>
+    </span>
+
+    <button aria-labelledby="c61" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using span with visibility:collapse (with nested visible sibling spans)" class="ex">x</button>
+    <span id="c61" style="visibility: collapse;">
+        foo
+        <span id="c62" style="visibility: visible;">bar</span>
+        <span id="c63" style="visibility: visible;">baz</span>
+    </span>
+
+<h2>Testing with <code>aria-hidden</code></h2>
+
+    <button aria-labelledby="d11" data-expectedlabel="foo bar" data-testname="button with aria-labelledby using aria-hidden span (with nested span)" class="ex">x</button>
+    <span id="d11" aria-hidden="true">
+        foo
+        <span id="d12">bar</span>
+    </span>
+
+    <button aria-labelledby="d21" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using aria-hidden span (with nested spans, depth 2)" class="ex">x</button>
+    <span id="d21" aria-hidden="true">
+        foo
+        <span id="d22">
+            bar
+            <span id="d23">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="d31" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without aria-hidden (with nested aria-hidden spans, depth 2)" class="ex">x</button>
+    <span id="d31">
+        foo
+        <span id="d32" aria-hidden="true">
+            bar
+            <span id="d33">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="d41" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using aria-hidden hidden span (with nested sibling spans)" class="ex">x</button>
+    <span id="d41" aria-hidden="true">
+        foo
+        <span id="d42">bar</span>
+        <span id="d43">baz</span>
+    </span>
+
+<h2>Testing with <code>hidden</code> attribute</h2>
+
+    <button aria-labelledby="e11" data-expectedlabel="foo bar" data-testname="button with aria-labelledby using HTML5 hidden span (with nested span)" class="ex">x</button>
+    <span id="e11" hidden>
+        foo
+        <span id="e12">bar</span>
+    </span>
+
+    <button aria-labelledby="e21" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using HTML5 hidden span (with nested spans, depth 2)" class="ex">x</button>
+    <span id="e21" hidden>
+        foo
+        <span id="e22">
+            bar
+            <span id="e23">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="e31" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without HTML5 hidden (with nested HTML5 hidden spans, depth 2)" class="ex">x</button>
+    <span id="e31">
+        foo
+        <span id="e32" hidden>
+            bar
+            <span id="e33">baz</span>
+        </span>
+    </span>
+
+    <button aria-labelledby="e41" data-expectedlabel="foo bar baz" data-testname="button with aria-labelledby using HTML5 hidden span (with nested hidden sibling spans)" class="ex">x</button>
+    <span id="e41" hidden>
+        foo
+        <span id="e42">bar</span>
+        <span id="e43">baz</span>
+    </span>
+
+    <button aria-labelledby="e51" data-expectedlabel="foo" data-testname="button with aria-labelledby using span without HTML5 hidden (with nested hidden sibling spans)" class="ex">x</button>
+    <span id="e51">
+        foo
+        <span id="e52" hidden>bar</span>
+        <span id="e53" hidden>baz</span>
+    </span>
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

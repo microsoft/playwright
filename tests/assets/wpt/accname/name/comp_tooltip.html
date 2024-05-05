@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Tooltip</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_tooltip">#comp_tooltip</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<a href="#" title="title" data-expectedlabel="title" data-testname="link with img with tooltip label" class="ex"><img alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></a>
+<a href="#" title="title" data-expectedlabel="title" data-testname="link with text with tooltip label and no contents" class="ex"></a>
+<a href="#" title="title" data-expectedlabel="contents" data-testname="link with text with tooltip label and contents" class="ex">contents</a>
+<div title="title" role="group" data-expectedlabel="title" data-testname="div with text with tooltip label" class="ex">contents</div><!-- Note: group role disallows nameFrom:contents -->
+<img title="title" data-expectedlabel="title" data-testname="img with tooltip label without alt" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+<img title="title" data-expectedlabel="title" alt="" data-testname="img with tooltip label with empty alt" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+<img title="title" data-expectedlabel="alt" alt="alt" data-testname="img with tooltip label with alt" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+<img data-expectedlabel="alt" alt="alt" data-testname="img with tooltip label without title" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+
+<select title="title" data-expectedlabel="title" data-testname="select with tooltip label" class="ex">
+  <option value="" disabled selected>select options</option>
+  <option value="1">option 1</option>
+  <option value="2">option 2</option>
+  <option value="3">option 3</option>
+</select>
+
+
+<!-- TODO: Move these: https://github.com/web-platform-tests/interop-accessibility/issues/78 -->
+<button title="title" data-expectedlabel="contents" data-testname="button with tooltip label" class="ex">contents</button>
+<input type="checkbox" title="title" data-expectedlabel="title" data-testname="checkbox input with tooltip label" class="ex">
+<input type="radio" title="title" data-expectedlabel="title" data-testname="radio input with tooltip label" class="ex">
+
+<!-- TODO: Move these: https://github.com/web-platform-tests/interop-accessibility/issues/78 -->
+<!-- https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation -->
+<input type="text" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="text input with placeholder and tooltip label" class="ex">
+<input type="password" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="password input with placeholder and tooltip label" class="ex">
+<input type="number" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="number input with placeholder and tooltip label" class="ex">
+<input type="search" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="search input with placeholder and tooltip label" class="ex">
+<input type="tel" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="tel input with placeholder and tooltip label" class="ex">
+<input type="email" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="email input with placeholder and tooltip label" class="ex">
+<input type="url" title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="url input with placeholder and tooltip label" class="ex">
+<textarea title="title" data-expectedlabel="title" placeholder="placeholder" data-testname="textarea with placeholder and tooltip label" class="ex"></textarea>
+
+<!-- TODO: Move these: https://github.com/web-platform-tests/interop-accessibility/issues/78 -->
+<!-- https://w3c.github.io/html-aam/#text-level-element-accessible-name-computation -->
+<abbr title="Web Platform Tests" data-expectedlabel="Web Platform Tests" data-testname="abbr with tooltip label" class="ex">WPT</abbr>
+<kbd title="Control + Option" data-expectedlabel="Control + Option" data-testname="kbd with tooltip label" class="ex">CTRL + OPT</kbd>
+
+<!-- TODO: Move these: https://github.com/web-platform-tests/interop-accessibility/issues/78 -->
+<!-- https://w3c.github.io/html-aam/#summary-element-accessible-name-computation -->
+<details>
+  <summary title="title" data-expectedlabel="contents" data-testname="summary with tooltip label and contents" class="ex">contents</summary>
+  details
+</details>
+
+<!-- TODO: Move these: https://github.com/web-platform-tests/interop-accessibility/issues/78 -->
+<!-- https://w3c.github.io/html-aam/#iframe-element-accessible-name-computation -->
+<iframe title="title" data-expectedlabel="title" data-testname="iframe with tooltip label" width="20px" height="20px" class="ex"></iframe>
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

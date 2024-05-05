@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Host Language Label</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<h1>AccName: Host Language Label Tests</h1>
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_host_language_label">#comp_host_language_label</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<h2>HTML input with value, alt, etc.</h2>
+<input type="button" value="button label" data-expectedlabel="button label" data-testname="html: input[type=button]" class="ex">
+<input type="image" alt="image input label" data-expectedlabel="image input label" data-testname="html: input[type=image]" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+<input type="reset" value="reset label" data-expectedlabel="reset label" data-testname="html: input[type=reset]" class="ex">
+<input type="submit" value="submit label" data-expectedlabel="submit label" data-testname="html: input[type=submit]" class="ex">
+
+
+<h2>HTML input label/for</h2>
+<!-- above: input[type=button] -->
+<label for="cb">checkbox label</label><input id="cb" type="checkbox" data-expectedlabel="checkbox label" data-testname="html: label[for] input[type=checkbox]" class="ex"><br>
+<label for="co">color label</label><input id="co" type="color" data-expectedlabel="color label" data-testname="html: label[for] input[type=color]" class="ex"><br>
+<label for="da">date label</label><input id="da" type="date" data-expectedlabel="date label" data-testname="html: label[for] input[type=date]" class="ex"><br>
+<label for="dtl">datetime-local label</label><input id="dtl" type="date" data-expectedlabel="datetime-local label" data-testname="html: label[for] input[type=datetime-local]" class="ex"><br>
+<label for="em">email label</label><input id="em" type="email" data-expectedlabel="email label" data-testname="html: label[for] input[type=email]" class="ex"><br>
+
+<!-- todo: results for input[type=file] currently differ in all engines -->
+<!--
+<label for="fi">file label</label><input id="fi" type="file" data-expectedlabel="file label" data-testname="html: label[for] input[type=file]" class="ex"><br>
+-->
+
+<!-- skipped: input[type=hidden] for/id n/a -->
+<!-- above: input[type=image] -->
+<label for="mo">month label</label><input id="mo" type="month" data-expectedlabel="month label" data-testname="html: label[for] input[type=month]" class="ex"><br>
+<label for="n">number label</label><input id="n" type="number" data-expectedlabel="number label" data-testname="html: label[for] input[type=number]" class="ex"><br>
+<label for="pw">password label</label><input id="pw" type="password" data-expectedlabel="password label" data-testname="html: label[for] input[type=password]" class="ex"><br>
+<label for="ra">radio label</label><input id="ra" type="radio" data-expectedlabel="radio label" data-testname="html: label[for] input[type=radio]" class="ex"><br>
+<label for="rng">range label</label><input id="rng" type="range" data-expectedlabel="range label" data-testname="html: label[for] input[type=range]" class="ex"><br>
+<!-- input[type=reset] above -->
+<label for="search">search label</label><input id="search" type="search" data-expectedlabel="search label" data-testname="html: label[for] input[type=search]" class="ex"><br>
+<!-- input[type=submit] above -->
+<label for="tel">tel label</label><input id="tel" type="tel" data-expectedlabel="tel label" data-testname="html: label[for] input[type=tel]" class="ex"><br>
+<label for="t">textfield label</label><input id="t" type="text" data-expectedlabel="textfield label" data-testname="html: label[for] input[type=text]" class="ex"><br>
+<label for="time">time label</label><input id="time" type="time" data-expectedlabel="time label" data-testname="html: label[for] input[type=time]" class="ex"><br>
+<label for="url">url label</label><input id="url" type="url" data-expectedlabel="url label" data-testname="html: label[for] input[type=url]" class="ex"><br>
+<label for="week">week label</label><input id="week" type="week" data-expectedlabel="week label" data-testname="html: label[for] input[type=week]" class="ex"><br>
+
+
+<h2>HTML input label encapsulation</h2>
+<!-- above: input[type=button] -->
+<label><input type="checkbox" data-expectedlabel="checkbox label" data-testname="html: label input[type=checkbox] encapsulation" class="ex">checkbox label</label><br>
+<label><input type="color" data-expectedlabel="color label" data-testname="html: label input[type=color] encapsulation" class="ex">color label</label><br>
+<label><input type="date" data-expectedlabel="date label" data-testname="html: label input[type=date] encapsulation" class="ex">date label</label><br>
+<label><input type="datetime-local" data-expectedlabel="datetime-local label" data-testname="html: label input[type=datetime-local] encapsulation" class="ex">datetime-local label</label><br>
+<label><input type="email" data-expectedlabel="email label" data-testname="html: label input[type=email] encapsulation" class="ex">email label</label><br>
+
+<!-- todo: results for input[type=file] currently differ in all engines -->
+<!--
+<label><input type="file" data-expectedlabel="file label" data-testname="html: label input[type=file] encapsulation" class="ex">file label</label><br>
+-->
+
+<!-- skipped: input[type=hidden] n/a -->
+<!-- above: input[type=image] -->
+<label><input type="month" data-expectedlabel="month label" data-testname="html: label input[type=month] encapsulation" class="ex">month label</label><br>
+<label><input type="number" data-expectedlabel="number label" data-testname="html: label input[type=number] encapsulation" class="ex">number label</label><br>
+<label><input type="password" data-expectedlabel="password label" data-testname="html: label input[type=password] encapsulation" class="ex">password label</label><br>
+<label><input type="radio" data-expectedlabel="radio label" data-testname="html: label input[type=radio] encapsulation" class="ex">radio label</label><br>
+<label><input type="range" data-expectedlabel="range label" data-testname="html: label input[type=range] encapsulation" class="ex">range label</label><br>
+<!-- above: input[type=reset] -->
+<label><input type="search" data-expectedlabel="search label" data-testname="html: label input[type=search] encapsulation" class="ex">search label</label><br>
+<!-- above: input[type=submit] -->
+<label><input type="tel" data-expectedlabel="tel label" data-testname="html: label input[type=tel] encapsulation" class="ex">tel label</label><br>
+<label><input type="text" data-expectedlabel="textfield label" data-testname="html: label[for] input[type=text] encapsulation" class="ex">textfield label</label><br>
+<label><input type="time" data-expectedlabel="time label" data-testname="html: label input[type=time] encapsulation" class="ex">time label</label><br>
+<label><input type="url" data-expectedlabel="url label" data-testname="html: label input[type=url] encapsulation" class="ex">url label</label><br>
+<label><input type="week" data-expectedlabel="week label" data-testname="html: label input[type=week] encapsulation" class="ex">week label</label><br>
+
+
+<!-- skipped: skip textarea for v1 since all engines fail in different ways. need to verify label/textarea is expected. -->
+<!--
+<h2>HTML textarea</h2>
+<label for="ta">textarea label</label><textarea data-expectedlabel="textarea label" data-testname="html: label[for] textarea" class="ex"></textarea><br>
+<label for="ta">textarea label<textarea data-expectedlabel="textarea label" data-testname="html: textarea encapsulation" class="ex"></textarea></label><br>
+-->
+
+
+<h2>HTML select</h2>
+<!-- todo: select for/id -->
+<label for="select">select label</label>
+<select id="select" data-expectedlabel="select label" data-testname="html: select for/id" class="ex">
+  <option>foo</option>
+</select>
+<br>
+<!-- select encapsulation -->
+<label>
+  select label
+  <select data-expectedlabel="select label" data-testname="html: select encapsulation" class="ex">
+    <option>foo</option>
+  </select>
+</label><br>
+<!-- todo: select labeled by selected option. All engines currently fail in different ways. Not sure which is correct. -->
+<!--
+<select data-expectedlabel="select label" data-testname="html: select w/selected option" class="ex">
+  <option>foo</option>
+  <option selected>select label</option>
+  <option>bar</option>
+</select>
+<br>
+-->
+
+
+<h2>HTML img/picture</h2>
+<!-- skipped: img:not([alt]) -->
+<!-- skipped: img[alt=""] -->
+<img alt="image label" data-expectedlabel="image label" data-testname="html: img[alt] (non-empty)" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+<picture>
+  <source srcset="#">
+  <img alt="picture label" data-expectedlabel="picture label" data-testname="html: picture > img[alt] (non-empty)" class="ex" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+</picture>
+<!-- elsewhere: image map area alt -> ./fragile/area-alt.html -->
+
+
+<h2>HTML fieldset/legend</h2>
+<fieldset data-expectedlabel="fieldset legend label" data-testname="html: fieldset > legend" class="ex">
+  <legend>fieldset legend label</legend>
+  <input type="text"><br>
+</fieldset>
+
+
+<h2>HTML table/caption</h2>
+<table data-expectedlabel="table caption label" data-testname="html: table > caption" class="ex">
+  <caption>table caption label</caption>
+  <tr><th>a</th><th>b</th><th>c</th></tr>
+  <tr><th>1</th><td>2</td><td>3</td></tr>
+</table>
+
+
+<!-- SVG: -> /svg-aam/name/ -->
+
+
+<!-- todo: Ruby? -->
+<!-- todo: MathML? -->
+<!-- todo: does HTML input[placeholder="foo"] count as a host language labeling mechanism? -->
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

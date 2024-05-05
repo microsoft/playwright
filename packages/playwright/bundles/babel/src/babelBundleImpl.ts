@@ -87,7 +87,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       })
     ]);
   } else {
-    plugins.push([require('@babel/plugin-syntax-import-assertions')]);
+    plugins.push([require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }]);
   }
 
   return {

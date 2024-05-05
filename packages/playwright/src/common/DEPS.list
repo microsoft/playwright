@@ -2,6 +2,7 @@
 ../util.ts
 ../utilsBundle.ts
 ../transform
+../isomorphic/teleReceiver.ts
 
 [testType.ts]
 ../matchers/expect.ts

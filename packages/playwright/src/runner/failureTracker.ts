@@ -40,8 +40,7 @@ export class FailureTracker {
   }
 
   hasReachedMaxFailures() {
-    const maxFailures = this._config.config.maxFailures;
-    return maxFailures > 0 && this._failureCount >= maxFailures;
+    return this.maxFailures() > 0 && this._failureCount >= this.maxFailures();
   }
 
   hasWorkerErrors() {
@@ -50,5 +49,9 @@ export class FailureTracker {
 
   result(): 'failed' | 'passed' {
     return this._hasWorkerErrors || this.hasReachedMaxFailures() || this._rootSuite?.allTests().some(test => !test.ok()) ? 'failed' : 'passed';
+  }
+
+  maxFailures() {
+    return this._config.config.maxFailures;
   }
 }

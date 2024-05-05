@@ -215,15 +215,23 @@ Blob reports contain all the details about the test run and can be used later to
 npx playwright test --reporter=blob
 ```
 
-By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name is `report.zip` or `report-<shard_number>.zip` when [sharding](./test-sharding.md) is used. Both output directory and report file name can be overridden in the configuration file:
+By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project` and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. The output file name can be overridden in the configuration file or pass as `'PLAYWRIGHT_BLOB_OUTPUT_FILE'` environment variable.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['blob', { outputDir: 'my-report', fileName: `report-${os.platform()}.zip` }]],
+  reporter: [['blob', { outputFile: `./blob-report/report-${os.platform()}.zip` }]],
 });
 ```
+
+Blob report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_BLOB_OUTPUT_DIR` | `outputDir` | Directory to save the output. Existing content is deleted before writing the new report. | `blob-report`
+| `PLAYWRIGHT_BLOB_OUTPUT_NAME` | `fileName` | Report file name. | `report-<project>-<hash>-<shard_number>.zip`
+| `PLAYWRIGHT_BLOB_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `outputDir` and `fileName` will be ignored. | `undefined`
 
 ### JSON reporter
 
@@ -255,6 +263,14 @@ export default defineConfig({
 });
 ```
 
+JSON report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_JSON_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `cwd` or config directory.
+| `PLAYWRIGHT_JSON_OUTPUT_NAME` | `outputFile` | Base file name for the output, relative to the output dir. | JSON report is printed to the stdout.
+| `PLAYWRIGHT_JSON_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JSON_OUTPUT_DIR` and `PLAYWRIGHT_JSON_OUTPUT_NAME` will be ignored. | JSON report is printed to the stdout.
+
 ### JUnit reporter
 
 JUnit reporter produces a JUnit-style xml report.
@@ -284,6 +300,18 @@ export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
 });
 ```
+
+JUnit report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_JUNIT_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is not specified. | `cwd` or config directory.
+| `PLAYWRIGHT_JUNIT_OUTPUT_NAME` | `outputFile` | Base file name for the output, relative to the output dir. | JUnit report is printed to the stdout.
+| `PLAYWRIGHT_JUNIT_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME` will be ignored. | JUnit report is printed to the stdout.
+|  | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
+|  | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
+| `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
+| `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 
 ### GitHub Actions annotations
 
@@ -355,6 +383,7 @@ npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 * [Argos Visual Testing](https://argos-ci.com/docs/playwright)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
 * [GitHub Actions Reporter](https://www.npmjs.com/package/@estruyf/github-actions-reporter)
+* [GitHub Pull Request Comment](https://github.com/marketplace/actions/playwright-report-comment)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)

@@ -6,7 +6,7 @@
 
 ## property: WorkerInfo.config
 * since: v1.10
-- type: <[ConfigInWorker]>
+- type: <[FullConfig]>
 
 Processed configuration from the [configuration file](../test-configuration.md).
 
@@ -22,7 +22,7 @@ Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [paralleli
 
 ## property: WorkerInfo.project
 * since: v1.10
-- type: <[ProjectInWorker]>
+- type: <[FullProject]>
 
 Processed project configuration from the [configuration file](../test-configuration.md).
 

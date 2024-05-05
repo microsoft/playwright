@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -1098,7 +1098,7 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingRecevied?: boolean }> {
+  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
@@ -1119,7 +1119,7 @@ export class InjectedScript {
       if (options.isNot && options.expression === 'to.be.in.viewport')
         return { matches: false };
       // When none of the above applies, expect does not match.
-      return { matches: options.isNot, missingRecevied: true };
+      return { matches: options.isNot, missingReceived: true };
     }
     return await this.expectSingleElement(element, options);
   }
@@ -1223,6 +1223,12 @@ export class InjectedScript {
         received = element.id;
       } else if (expression === 'to.have.text') {
         received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
+      } else if (expression === 'to.have.accessible.name') {
+        received = getElementAccessibleName(element, false /* includeHidden */);
+      } else if (expression === 'to.have.accessible.description') {
+        received = getElementAccessibleDescription(element, false /* includeHidden */);
+      } else if (expression === 'to.have.role') {
+        received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
         received = this.document.title;
       } else if (expression === 'to.have.url') {
@@ -1281,6 +1287,10 @@ export class InjectedScript {
 
   getElementAccessibleName(element: Element, includeHidden?: boolean): string {
     return getElementAccessibleName(element, !!includeHidden);
+  }
+
+  getElementAccessibleDescription(element: Element, includeHidden?: boolean): string {
+    return getElementAccessibleDescription(element, !!includeHidden);
   }
 
   getAriaRole(element: Element) {

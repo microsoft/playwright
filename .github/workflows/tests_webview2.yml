@@ -17,13 +17,16 @@ on:
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
-  FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
   test_webview2:
     name: WebView2
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-2022
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -45,6 +48,13 @@ jobs:
         Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'setup.exe'
         Start-Process -FilePath setup.exe -Verb RunAs -Wait
     - run: npm run webview2test
+    - name: Azure Login
+      uses: azure/login@v2
+      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      with:
+        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: ${{ !cancelled() }}
       shell: bash

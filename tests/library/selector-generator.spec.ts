@@ -301,11 +301,17 @@ it.describe('selector generator', () => {
       expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"i]');
     });
     it('name', async ({ page }) => {
-      await page.setContent(`<input role="presentation" aria-hidden="false" name="foobar" type="date"/>`);
+      await page.setContent(`
+        <input aria-hidden="false" name="foobar" type="date"/>
+        <div role="textbox"/>content</div>
+      `);
       expect(await generate(page, 'input')).toBe('input[name="foobar"]');
     });
     it('type', async ({ page }) => {
-      await page.setContent(`<input role="presentation" aria-hidden="false" type="checkbox"/>`);
+      await page.setContent(`
+        <input aria-hidden="false" type="checkbox"/>
+        <div role="checkbox"/>content</div>
+      `);
       expect(await generate(page, 'input')).toBe('input[type="checkbox"]');
     });
   });
@@ -398,7 +404,7 @@ it.describe('selector generator', () => {
   });
 
   it('should work without CSS.escape', async ({ page }) => {
-    await page.setContent(`<button role="presentation" aria-hidden="false"></button>`);
+    await page.setContent(`<button aria-hidden="false"></button><div role="button"></div>`);
     await page.$eval('button', button => {
       delete window.CSS.escape;
       button.setAttribute('name', '-tricky\u0001name');

@@ -69,13 +69,13 @@ dotnet add package Microsoft.Playwright.MSTest
 dotnet build
 ```
 
-4. Install required browsers by replacing `netX` with the actual output folder name, e.g. `net8.0`:
+1. Install required browsers. This example uses `net8.0`, if you are using a different version of .NET you will need to adjust the command and change `net8.0` to your version.
 
 ```bash
-pwsh bin/Debug/netX/playwright.ps1 install
+pwsh bin/Debug/net8.0/playwright.ps1 install
 ```
 
-If `pwsh` is not available, you have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
+If `pwsh` is not available, you will have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
 
 ## Add Example Tests
 
@@ -102,28 +102,28 @@ namespace PlaywrightTests;
 
 [Parallelizable(ParallelScope.Self)]
 [TestFixture]
-public class Tests : PageTest
+public class ExampleTest : PageTest
 {
     [Test]
-    public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
+    public async Task HasTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
 
         // Expect a title "to contain" a substring.
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
 
-        // create a locator
-        var getStarted = Page.GetByRole(AriaRole.Link, new() { Name = "Get started" });
-
-        // Expect an attribute "to be strictly equal" to the value.
-        await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
+    [Test]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
 
         // Click the get started link.
-        await getStarted.ClickAsync();
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
 
-        // Expects the URL to contain intro.
-        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
-    }
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
 }
 ```
 
@@ -140,28 +140,28 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace PlaywrightTests;
 
 [TestClass]
-public class UnitTest1 : PageTest
+public class ExampleTest : PageTest
 {
     [TestMethod]
-    public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
+    public async Task HasTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
 
         // Expect a title "to contain" a substring.
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
 
-        // create a locator
-        var getStarted = Page.GetByRole(AriaRole.Link, new() { Name = "Get started" });
-
-        // Expect an attribute "to be strictly equal" to the value.
-        await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
+    [TestMethod]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
 
         // Click the get started link.
-        await getStarted.ClickAsync();
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
 
-        // Expects the URL to contain intro.
-        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
-    }
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
 }
 ```
 
@@ -170,33 +170,13 @@ public class UnitTest1 : PageTest
 
 ## Running the Example Tests
 
-By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./test-runners.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
-
-<Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
-}>
-<TabItem value="nunit">
+By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./running-tests.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 ```bash
-dotnet test -- NUnit.NumberOfTestWorkers=5
+dotnet test
 ```
 
-</TabItem>
-<TabItem value="mstest">
-
-```bash
-dotnet test -- MSTest.Parallelize.Workers=5
-```
-
-</TabItem>
-</Tabs>
-
-See our doc on [Test Runners](./test-runners.md) to learn more about running tests in headed mode, running multiple tests, running specific configurations etc.
+See our doc on [Running and Debugging Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific configurations etc.
 
 ## System requirements
 
@@ -209,7 +189,7 @@ See our doc on [Test Runners](./test-runners.md) to learn more about running tes
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Using Playwright as library](./library.md)
+- [Run tests on CI](./ci-intro.md)
+- [Learn more about the NUnit and MSTest base classes](./test-runners.md)

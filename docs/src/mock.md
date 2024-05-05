@@ -109,7 +109,7 @@ Sometimes, it is essential to make an API request, but the response needs to be 
 allow for reproducible testing. In that case, instead of mocking the request, one
 can perform the request and fulfill it with the modified response.
 
-In the example below we intercept the call to the fruit API and add a new fruit called 'playwright', to the data. We then go to the url and assert that this data is there:
+In the example below we intercept the call to the fruit API and add a new fruit called 'Loquat', to the data. We then go to the url and assert that this data is there:
 
 
 ```js

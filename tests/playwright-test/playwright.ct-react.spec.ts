@@ -250,6 +250,57 @@ test('should work with JSX in variable', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
+test('should pass "key" attribute from JSX in variable', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': `
+    `,
+
+    'src/container.jsx': `
+      import { useState } from 'react';
+      export function Container({ children }) {
+        const [index, setIndex] = useState(0);
+        return (
+          <div onClick={() => setIndex((index + 1) % children.length)}>
+            {children[index]}
+          </div>
+        );
+      }
+    `,
+
+    'src/button.jsx': `
+      import { useState } from 'react';
+      export function Button({ value }) {
+        const [state, setState] = useState(value);
+        return <button onClick={() => setState(state + 1)}>{state}</button>;
+      }
+    `,
+
+    'src/index.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      import { Container } from './container';
+
+      test('key should tear down and recreate component', async ({ mount }) => {
+        const component = await mount(
+          <Container>
+            <Button key='a' value={1} />
+            <Button key='b' value={10} />
+          </Container>
+        );
+        const button = component.getByRole('button');
+        expect(button).toHaveText("1");
+        await button.click();
+        expect(button).toHaveText("10");
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should return root locator for fragments', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightCtConfigText,

@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { monotonicTime } from 'playwright-core/lib/utils';
-import { formatFailure, stripAnsiEscapes } from './base';
+import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
 import EmptyReporter from './empty';
 
 type JUnitOptions = {
@@ -26,7 +25,7 @@ type JUnitOptions = {
   stripANSIControlSequences?: boolean,
   includeProjectInTestName?: boolean,
 
-  configDir?: string,
+  configDir: string,
 };
 
 class JUnitReporter extends EmptyReporter {
@@ -34,7 +33,6 @@ class JUnitReporter extends EmptyReporter {
   private configDir: string;
   private suite!: Suite;
   private timestamp!: Date;
-  private startTime!: number;
   private totalTests = 0;
   private totalFailures = 0;
   private totalSkipped = 0;
@@ -42,14 +40,12 @@ class JUnitReporter extends EmptyReporter {
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
 
-  constructor(options: JUnitOptions = {}) {
+  constructor(options: JUnitOptions) {
     super();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.includeProjectInTestName = options.includeProjectInTestName || false;
-    this.configDir = options.configDir || '';
-    const outputFile = options.outputFile || reportOutputNameFromEnv();
-    if (outputFile)
-      this.resolvedOutputFile = path.resolve(this.configDir, outputFile);
+    this.configDir = options.configDir;
+    this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
 
   override printsToStdio() {
@@ -63,11 +59,9 @@ class JUnitReporter extends EmptyReporter {
   override onBegin(suite: Suite) {
     this.suite = suite;
     this.timestamp = new Date();
-    this.startTime = monotonicTime();
   }
 
   override async onEnd(result: FullResult) {
-    const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
       for (const fileSuite of projectSuite.suites)
@@ -85,7 +79,7 @@ class JUnitReporter extends EmptyReporter {
         failures: self.totalFailures,
         skipped: self.totalSkipped,
         errors: 0,
-        time: duration / 1000
+        time: result.duration / 1000
       },
       children
     };
@@ -263,12 +257,6 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
 
   text = text.replace(discouragedXMLCharacters, '');
   return text;
-}
-
-function reportOutputNameFromEnv(): string | undefined {
-  if (process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`])
-    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`]);
-  return undefined;
 }
 
 export default JUnitReporter;

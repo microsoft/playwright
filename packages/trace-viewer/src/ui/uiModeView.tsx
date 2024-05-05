@@ -172,24 +172,29 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     (async () => {
-      await testServerConnection.initialize({
-        interceptStdio: true,
-        watchTestDirs: true
-      });
-      const { status } = await testServerConnection.runGlobalSetup({});
-      if (status !== 'passed')
-        return;
-      const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
-      teleSuiteUpdater.processListReport(result.report);
+      try {
+        await testServerConnection.initialize({
+          interceptStdio: true,
+          watchTestDirs: true
+        });
+        const { status, report } = await testServerConnection.runGlobalSetup({});
+        teleSuiteUpdater.processGlobalReport(report);
+        if (status !== 'passed')
+          return;
 
-      testServerConnection.onListChanged(updateList);
-      testServerConnection.onReport(params => {
-        teleSuiteUpdater.processTestReportEvent(params);
-      });
-      setIsLoading(false);
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
+        teleSuiteUpdater.processListReport(result.report);
 
-      const { hasBrowsers } = await testServerConnection.checkBrowsers({});
-      setHasBrowsers(hasBrowsers);
+        testServerConnection.onListChanged(updateList);
+        testServerConnection.onReport(params => {
+          teleSuiteUpdater.processTestReportEvent(params);
+        });
+
+        const { hasBrowsers } = await testServerConnection.checkBrowsers({});
+        setHasBrowsers(hasBrowsers);
+      } finally {
+        setIsLoading(false);
+      }
     })();
     return () => {
       clearTimeout(throttleTimer);
@@ -256,7 +261,7 @@ export const UIModeView: React.FC<{}> = ({
       {
         for (const test of testModel.rootSuite?.allTests() || []) {
           if (testIds.has(test.id)) {
-            (test as TeleTestCase)._clearResults();
+            test.results = [];
             const result = (test as TeleTestCase)._createTestResult('pending');
             (result as any)[statusEx] = 'scheduled';
           }
@@ -284,7 +289,7 @@ export const UIModeView: React.FC<{}> = ({
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
-          (test as TeleTestCase)._clearResults();
+          test.results = [];
       }
       setTestModel({ ...testModel });
       setRunningState(undefined);

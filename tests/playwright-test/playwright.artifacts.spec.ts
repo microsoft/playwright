@@ -136,6 +136,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing',
     '  test-failed-1.png',
     'artifacts-own-context-failing',
@@ -175,6 +176,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing',
     '  test-failed-1.png',
     'artifacts-own-context-failing',
@@ -209,6 +211,7 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-should-fail-and-take-fullPage-screenshots',
     '  test-failed-1.png',
   ]);
@@ -230,6 +233,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing',
     '  trace.zip',
     'artifacts-own-context-failing',
@@ -265,6 +269,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing',
     '  trace.zip',
     'artifacts-own-context-failing',
@@ -290,6 +295,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing-retry1',
     '  trace.zip',
     'artifacts-own-context-failing-retry1',
@@ -315,6 +321,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing-retry1',
     '  trace.zip',
     'artifacts-failing-retry2',
@@ -350,6 +357,7 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
     'artifacts-failing',
     '  trace.zip',
     'artifacts-own-context-failing',
