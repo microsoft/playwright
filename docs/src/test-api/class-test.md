@@ -71,7 +71,7 @@ import { test, expect } from '@playwright/test';
 test('basic test', {
   annotation: {
     type: 'issue',
-    description: 'featur tags API',
+    description: 'feature tags API',
     url: 'https://github.com/microsoft/playwright/issues/23180'
   },
 }, async ({ page }) => {
