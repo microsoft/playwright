@@ -38,7 +38,7 @@ public class Tests : PageTest
     {
         await Context.Tracing.StartAsync(new()
         {
-            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.CurrentContext.Test.Name,
+            Title = $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}",
             Screenshots = true,
             Snapshots = true,
             Sources = true
@@ -84,8 +84,7 @@ public class ExampleTest : PageTest
     {
          await Context.Tracing.StartAsync(new()
         {
-            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.
-            CurrentContext.Test.Name,
+            Title = $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}",
             Screenshots = true,
             Snapshots = true,
             Sources = true
@@ -100,7 +99,7 @@ public class ExampleTest : PageTest
             Path = Path.Combine(
                 Environment.CurrentDirectory,
                 "playwright-traces",
-                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
+                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
             )
         });
     }
