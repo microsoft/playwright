@@ -894,6 +894,7 @@ test('should display waitForLoadState even if did not wait for it', async ({ run
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.waitForLoadState('load');
+    await new Promise(f => setTimeout(f, 10));
     await page.waitForLoadState('load');
   });
   await expect(traceViewer.actionTitles).toHaveText([
