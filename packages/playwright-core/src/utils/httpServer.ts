@@ -126,7 +126,8 @@ export class HttpServer {
         this._urlPrefix = address;
       } else {
         this._port = address.port;
-        this._urlPrefix = `http://${host}:${address.port}`;
+        const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+        this._urlPrefix = `http://${resolvedHost}:${address.port}`;
       }
     }
     return this._urlPrefix;
