@@ -8,7 +8,7 @@
   },
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "main": "index.js",
   "exports": {
