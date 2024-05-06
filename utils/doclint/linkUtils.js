@@ -62,8 +62,10 @@ function docsLinkRendererForLanguage(language, outputType) {
     if (!member || !member.clazz)
       throw new Error('Internal error');
     const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
-    if (member.kind === 'method')
-      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${renderJSSignature(member.argsArray)})`);
+    if (member.kind === 'method') {
+      const args = outputType === 'ReleaseNotesMd' ? '' : renderJSSignature(member.argsArray);
+      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${args})`);
+    }
     if (member.kind === 'event')
       return createMarkdownLink(languagePath, member, `${className}on('${member.alias.toLowerCase()}')`);
     if (member.kind === 'property')
