@@ -21,7 +21,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
   ```js
   const locator = page.getByRole('button');
-  await expect(locator).toHaveAccessibleName('Upload the photo');
+  await expect(locator).toHaveAccessibleDescription('Upload a photo');
   ```
 
 - [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
