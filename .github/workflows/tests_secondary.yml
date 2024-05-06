@@ -92,8 +92,6 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          node_version: 16
-        - os: ubuntu-latest
           node_version: 20
         - os: ubuntu-latest
           node_version: 22
