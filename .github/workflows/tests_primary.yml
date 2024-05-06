@@ -36,9 +36,6 @@ jobs:
         node-version: [18]
         include:
           - os: ubuntu-22.04
-            node-version: 16
-            browser: chromium
-          - os: ubuntu-22.04
             node-version: 20
             browser: chromium
           - os: ubuntu-22.04
@@ -95,14 +92,6 @@ jobs:
         shardIndex: [1, 2]
         shardTotal: [2]
         include:
-          - os: ubuntu-latest
-            node-version: 16
-            shardIndex: 1
-            shardTotal: 2
-          - os: ubuntu-latest
-            node-version: 16
-            shardIndex: 2
-            shardTotal: 2
           - os: ubuntu-latest
             node-version: 20
             shardIndex: 1
