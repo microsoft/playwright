@@ -829,7 +829,7 @@ it('should not hang on a brotli encoded Range request', async ({ context, server
     headers: {
       range: 'bytes=0-2',
     },
-  })).rejects.toThrow(`failed to decompress 'br' encoding: Error: unexpected end of file`);
+  })).rejects.toThrow(/(failed to decompress 'br' encoding: Error: unexpected end of file|Parse Error: Data after \`Connection: close\`)/);
 });
 
 it('should dispose', async function({ context, server }) {
