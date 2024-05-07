@@ -283,7 +283,7 @@ context = browser.new_context(
 ```csharp
 await using var context = await browser.NewContextAsync(new()
 {
-    IsMobile = new IsMoble() { false }
+    IsMobile = false
 });
 ```
 
