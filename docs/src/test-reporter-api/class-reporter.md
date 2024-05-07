@@ -70,7 +70,7 @@ Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: ['./my-awesome-reporter.ts', { customOption: 'some value' }],
+  reporter: [['./my-awesome-reporter.ts', { customOption: 'some value' }]],
 });
 ```
 

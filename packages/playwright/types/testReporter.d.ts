@@ -88,7 +88,7 @@ export interface FullResult {
  * import { defineConfig } from '@playwright/test';
  *
  * export default defineConfig({
- *   reporter: ['./my-awesome-reporter.ts', { customOption: 'some value' }],
+ *   reporter: [['./my-awesome-reporter.ts', { customOption: 'some value' }]],
  * });
  * ```
  *
