@@ -20,10 +20,7 @@
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 
 import 'zone.js';
-import {
-  Component as defineComponent,
-  reflectComponentType
-} from '@angular/core';
+import { reflectComponentType } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import {
   BrowserDynamicTestingModule,
