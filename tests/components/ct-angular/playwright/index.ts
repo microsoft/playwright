@@ -1,9 +1,10 @@
-import { beforeMount, afterMount } from '@playwright/experimental-ct-angular/hooks';
-import { provideRouter } from '@angular/router';
-import { ButtonComponent } from '@/components/button.component';
+import '@/assets/styles.css';
 import { TOKEN } from '@/components/inject.component';
 import { routes } from '@/router';
-import '@/assets/styles.css';
+import { APP_INITIALIZER, inject } from '@angular/core';
+import { Router, provideRouter } from '@angular/router';
+import { afterMount, beforeMount } from '@playwright/experimental-ct-angular/hooks';
+import { BrowserPlatformLocation, PlatformLocation } from '@angular/common';
 
 export type HooksConfig = {
   routing?: boolean;
@@ -11,13 +12,20 @@ export type HooksConfig = {
 };
 
 beforeMount<HooksConfig>(async ({ hooksConfig, TestBed }) => {
-  TestBed.configureTestingModule({
-    imports: [ButtonComponent],
-  });
-
   if (hooksConfig?.routing)
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        { provide: PlatformLocation, useExisting: BrowserPlatformLocation },
+        {
+          provide: APP_INITIALIZER,
+          multi: true,
+          useFactory() {
+            const router = inject(Router);
+            return () => router.initialNavigation();
+          }
+        }
+      ],
     });
 
   if (hooksConfig?.injectToken)

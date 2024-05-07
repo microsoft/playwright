@@ -17,6 +17,8 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
+
 import 'zone.js';
 import {
   Component as defineComponent,
@@ -27,21 +29,12 @@ import {
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting,
 } from '@angular/platform-browser-dynamic/testing';
-import { Router } from '@angular/router';
 
-/** @typedef {import('@playwright/experimental-ct-core/types/component').Component} Component */
-/** @typedef {import('@playwright/experimental-ct-core/types/component').JsxComponent} JsxComponent */
-/** @typedef {import('@playwright/experimental-ct-core/types/component').ObjectComponent} ObjectComponent */
-/** @typedef {import('@angular/core').Type} FrameworkComponent */
-
-/** @type {Map<string, () => Promise<FrameworkComponent>>} */
-const __pwLoaderRegistry = new Map();
-/** @type {Map<string, FrameworkComponent>} */
-const __pwRegistry = new Map();
-/** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
-const __pwFixtureRegistry = new Map();
 /** @type {WeakMap<import('@angular/core/testing').ComponentFixture, Record<string, import('rxjs').Subscription>>} */
 const __pwOutputSubscriptionRegistry = new WeakMap();
+
+/** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
+const __pwFixtureRegistry = new Map();
 
 getTestBed().initTestEnvironment(
     BrowserDynamicTestingModule,
@@ -49,47 +42,28 @@ getTestBed().initTestEnvironment(
 );
 
 /**
- * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
+ * @param {ObjectComponent} component
  */
-export function pwRegister(components) {
-  for (const [name, value] of Object.entries(components))
-    __pwLoaderRegistry.set(name, value);
-}
+async function __pwRenderComponent(component) {
+  const componentMetadata = reflectComponentType(component.type);
+  if (!componentMetadata?.isStandalone)
+    throw new Error('Only standalone components are supported');
 
-/**
- * @param {Component} component
- * @returns {component is JsxComponent | ObjectComponent}
- */
-function isComponent(component) {
-  return !(typeof component !== 'object' || Array.isArray(component));
-}
+  TestBed.configureTestingModule({
+    imports: [component.type],
+  });
 
-/**
- * @param {Component} component
- */
-async function __pwResolveComponent(component) {
-  if (!isComponent(component))
-    return;
+  await TestBed.compileComponents();
 
-  let componentFactory = __pwLoaderRegistry.get(component.type);
-  if (!componentFactory) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwLoaderRegistry) {
-      if (component.type.endsWith(`_${name}`)) {
-        componentFactory = value;
-        break;
-      }
-    }
-  }
+  const fixture = TestBed.createComponent(component.type);
+  fixture.nativeElement.id = 'root';
 
-  if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+  __pwUpdateProps(fixture, component.props);
+  __pwUpdateEvents(fixture, component.on);
 
-  if(componentFactory)
-    __pwRegistry.set(component.type, await componentFactory())
+  fixture.autoDetectChanges();
 
-  if ('children' in component)
-    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
+  return fixture;
 }
 
 /**
@@ -97,7 +71,7 @@ async function __pwResolveComponent(component) {
  */
 function __pwUpdateProps(fixture, props = {}) {
   for (const [name, value] of Object.entries(props))
-    fixture.debugElement.children[0].context[name] = value;
+    fixture.componentRef.setInput(name, value);
 }
 
 /**
@@ -110,9 +84,9 @@ function __pwUpdateEvents(fixture, events = {}) {
     /* Unsubscribe previous listener. */
     outputSubscriptionRecord[name]?.unsubscribe();
 
-    const subscription = fixture.debugElement.children[0].componentInstance[
-      name
-    ].subscribe((event) => listener(event));
+    const subscription = fixture.componentInstance[
+        name
+    ].subscribe((/** @type {unknown} */ event) => listener(event));
 
     /* Store new subscription. */
     outputSubscriptionRecord[name] = subscription;
@@ -122,100 +96,10 @@ function __pwUpdateEvents(fixture, events = {}) {
   __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
 }
 
-function __pwUpdateSlots(Component, slots = {}, tagName) {
-  const wrapper = document.createElement(tagName);
-  for (const [key, value] of Object.entries(slots)) {
-    let slotElements;
-    if (typeof value !== 'object')
-      slotElements = [__pwCreateSlot(value)];
-
-    if (Array.isArray(value))
-      slotElements = value.map(__pwCreateSlot);
-
-    if (!slotElements)
-      throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
-
-    for (const slotElement of slotElements) {
-      if (!slotElement)
-        throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
-
-      if (key === 'default') {
-        wrapper.appendChild(slotElement);
-        continue;
-      }
-
-      if (slotElement.nodeName === '#text') {
-        throw new Error(
-            `Invalid slot with name: \`${key}\` supplied to \`mount()\`, expected \`HTMLElement\` but received \`TextNode\`.`
-        );
-      }
-
-      slotElement.setAttribute(key, '');
-      wrapper.appendChild(slotElement);
-    }
-  }
-
-  TestBed.overrideTemplate(Component, wrapper.outerHTML);
-}
-
-/**
- * @param {any} value
- * @return {?HTMLElement}
- */
-function __pwCreateSlot(value) {
-  return /** @type {?HTMLElement} */ (
-    document
-        .createRange()
-        .createContextualFragment(value)
-        .firstChild
-  );
-}
-
-/**
- * @param {Component} component
- */
-async function __pwRenderComponent(component) {
-  const Component = __pwRegistry.get(component.type);
-  if (!Component)
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
-  if (component.kind !== 'object')
+window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  if (component.__pw_type === 'jsx')
     throw new Error('JSX mount notation is not supported');
 
-  const componentMetadata = reflectComponentType(Component);
-  if (!componentMetadata?.isStandalone)
-    throw new Error('Only standalone components are supported');
-
-  const WrapperComponent = defineComponent({
-    selector: 'pw-wrapper-component',
-    template: ``,
-  })(class {});
-
-  TestBed.configureTestingModule({
-    imports: [Component],
-    declarations: [WrapperComponent]
-  });
-
-  await TestBed.compileComponents();
-
-  __pwUpdateSlots(WrapperComponent, component.options?.slots, componentMetadata.selector);
-
-  // TODO: only inject when router is provided
-  TestBed.inject(Router).initialNavigation();
-
-  const fixture = TestBed.createComponent(WrapperComponent);
-  fixture.nativeElement.id = 'root';
-
-  __pwUpdateProps(fixture, component.options?.props);
-  __pwUpdateEvents(fixture, component.options?.on);
-
-  fixture.autoDetectChanges();
-
-  return fixture;
-}
-
-window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  await __pwResolveComponent(component);
   for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ hooksConfig, TestBed });
 
@@ -229,7 +113,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
 window.playwrightUnmount = async rootElement => {
   const fixture = __pwFixtureRegistry.get(rootElement.id);
-  if (!fixture) throw new Error('Component was not mounted');
+  if (!fixture)
+    throw new Error('Component was not mounted');
 
   /* Unsubscribe from all outputs. */
   for (const subscription of Object.values(__pwOutputSubscriptionRegistry.get(fixture) ?? {}))
@@ -241,19 +126,15 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  await __pwResolveComponent(component);
-  if (component.kind === 'jsx')
+  if (component.__pw_type === 'jsx')
     throw new Error('JSX mount notation is not supported');
-
-  if (component.options?.slots)
-    throw new Error('Update slots is not supported yet');
 
   const fixture = __pwFixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
 
-  __pwUpdateProps(fixture, component.options?.props);
-  __pwUpdateEvents(fixture, component.options?.on);
+  __pwUpdateProps(fixture, component.props);
+  __pwUpdateEvents(fixture, component.on);
 
   fixture.detectChanges();
 };
