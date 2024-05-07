@@ -18,6 +18,7 @@ import type * as trace from '@trace/trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
 import type * as traceV5 from './versions/traceV5';
+import type * as traceV6 from './versions/traceV6';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -71,7 +72,7 @@ export class TraceModernizer {
     switch (event.type) {
       case 'context-options': {
         this._version = event.version;
-        contextEntry.origin = 'library';
+        contextEntry.origin = event.origin;
         contextEntry.browserName = event.browserName;
         contextEntry.channel = event.channel;
         contextEntry.title = event.title;
@@ -145,11 +146,11 @@ export class TraceModernizer {
         break;
       }
       case 'resource-snapshot':
-        this._snapshotStorage!.addResource(event.snapshot);
+        this._snapshotStorage.addResource(event.snapshot);
         contextEntry.resources.push(event.snapshot);
         break;
       case 'frame-snapshot':
-        this._snapshotStorage!.addFrameSnapshot(event.snapshot);
+        this._snapshotStorage.addFrameSnapshot(event.snapshot);
         break;
     }
     // Make sure there is a page entry for each page, even without screencast frames,
@@ -170,10 +171,14 @@ export class TraceModernizer {
     }
   }
 
+  private _processedContextCreatedEvent() {
+    return this._version !== undefined;
+  }
+
   private _modernize(event: any): trace.TraceEvent[] {
     if (this._version === undefined)
       return [event];
-    const lastVersion: trace.VERSION = 6;
+    const lastVersion: trace.VERSION = 7;
     let events = [event];
     for (let version = this._version; version < lastVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
@@ -341,8 +346,8 @@ export class TraceModernizer {
     return event;
   }
 
-  _modernize_5_to_6(events: traceV5.TraceEvent[]): trace.TraceEvent[] {
-    const result: trace.TraceEvent[] = [];
+  _modernize_5_to_6(events: traceV5.TraceEvent[]): traceV6.TraceEvent[] {
+    const result: traceV6.TraceEvent[] = [];
     for (const event of events) {
       result.push(event);
       if (event.type !== 'after' || !event.log.length)
@@ -355,6 +360,34 @@ export class TraceModernizer {
           time: -1,
         });
       }
+    }
+    return result;
+  }
+
+  _modernize_6_to_7(events: traceV6.TraceEvent[]): trace.TraceEvent[] {
+    const result: trace.TraceEvent[] = [];
+    if (!this._processedContextCreatedEvent() && events[0].type !== 'context-options') {
+      const event: trace.ContextCreatedTraceEvent = {
+        type: 'context-options',
+        origin: 'testRunner',
+        version: 7,
+        browserName: '',
+        options: {},
+        platform: process.platform,
+        wallTime: 0,
+        monotonicTimeOffset: 0,
+        sdkLanguage: 'javascript',
+      };
+      result.push(event);
+    }
+    for (const event of events) {
+      if (event.type === 'context-options') {
+        result.push({ ...event, monotonicTimeOffset: 0, origin: 'library' });
+        continue;
+      }
+      if (!this._contextEntry.monotonicTimeOffset && event.type === 'before')
+        this._contextEntry.monotonicTimeOffset = event.wallTime - event.startTime;
+      result.push(event);
     }
     return result;
   }

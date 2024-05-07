@@ -45,7 +45,7 @@ import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
 
-const version: trace.VERSION = 6;
+const version: trace.VERSION = 7;
 
 export type TracerOptions = {
   name?: string;
@@ -100,10 +100,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._contextCreatedEvent = {
       version,
       type: 'context-options',
+      origin: 'library',
       browserName: '',
       options: {},
       platform: process.platform,
       wallTime: 0,
+      monotonicTimeOffset: 0,
       sdkLanguage: context.attribution.playwright.options.sdkLanguage,
       testIdAttributeName
     };
