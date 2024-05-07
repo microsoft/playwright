@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <title>Name Comp: Embedded Control</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_embedded_control">#comp_embedded_control</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<!-- Textfield (textbox) -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded textfield" class="ex">
+  Flash the screen
+  <input value="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded textfield inside checkbox label" class="ex"> times
+</label>
+<br><br>
+
+<!-- HTML select:not([size]) element renders as menu button (on Mac) or single-row listbox (on Windows/Linux) -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded select:not([size])" class="ex">
+  Flash the screen
+  <select aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded select:not([size]) inside checkbox label" class="ex">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3" selected>3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+  </select>
+  times
+</label>
+<br><br>
+
+<!-- HTML select[size] element renders as multi-row listbox -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded select[size]" class="ex">
+  Flash the screen
+  <select size=5 aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded select[size] inside checkbox label" class="ex">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3" selected>3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+  </select>
+  times
+</label>
+<br><br>
+
+<!-- ARIA combobox examples (not interactive) -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded combobox (input[type=text])" class="ex">
+  Flash the screen
+  <input role="combobox" value="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded combobox (input[type=text]) inside checkbox label" class="ex"> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded combobox (span)" class="ex">
+  Flash the screen
+  <span role="combobox" tabindex="0" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded combobox (span) inside checkbox label" class="ex">3</span> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded combobox (div)" class="ex">
+  Flash the screen
+  <div style="display: inline-block;" role="combobox" tabindex="0" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded combobox (div) inside checkbox label" class="ex">3</div> times
+</label>
+<br><br>
+<!-- Todo: we may want another combobox example using aria-activedescendant? -->
+
+
+<!-- ARIA listbox examples (not interactive) -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded listbox>option[aria-selected=true]" class="ex">
+  Flash the screen
+  <ul role="listbox" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded listbox>option[aria-selected=true] inside checkbox label" class="ex" style="padding:0; list-style:none; border: solid 1px gray; width: 15em; display: inline-block;">
+    <li role="option" tabindex="-1" style="padding:0.2em 0.8em; list-style:none;">1</li>
+    <li role="option" tabindex="-1" style="padding:0.2em 0.8em; list-style:none;">2</li>
+    <li role="option" tabindex="0" aria-selected="true" style="padding:0.2em 0.8em; list-style:none; color: white; background-color: #555;">3</li>
+    <li role="option" tabindex="-1" style="padding:0.2em 0.8em; list-style:none;">4</li>
+    <li role="option" tabindex="-1" style="padding:0.2em 0.8em; list-style:none;">5</li>
+  </ul> times
+</label>
+<br><br>
+
+
+<!-- Ranges: HTML native and ARIA sliders and steppers (valuetext, valuenow, host language specific) -->
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded input[type=range]" class="ex">
+  Flash the screen
+  <input type ="range" min="1" max="5" value="3" step="1" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded input[type=range] inside checkbox label" class="ex"> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded input[type=number]" class="ex">
+  Flash the screen
+  <input type ="number" min="1" max="5" value="3" step="1" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded input[type=number] inside checkbox label" class="ex"> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded ARIA slider (aria-valuenow)" class="ex">
+  Flash the screen
+  <span tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded ARIA slider (aria-valuenow) inside checkbox label" class="ex">3.0</span> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded ARIA slider (aria-valuetext)" class="ex">
+  Flash the screen
+  <span tabindex="0" role="slider" aria-valuemin="1.0" aria-valuemax="5.0" aria-valuenow="3.0" aria-valuetext="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded ARIA slider (aria-valuetext) inside checkbox label" class="ex">3.0</span> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded ARIA spinbutton (aria-valuenow)" class="ex">
+  Flash the screen
+  <span tabindex="0" role="spinbutton" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded ARIA spinbutton (aria-valuenow) inside checkbox label" class="ex">3.0</span> times
+</label>
+<br><br>
+<label>
+  <input type="checkbox" data-expectedlabel="Flash the screen 3 times" data-testname="checkbox label with embedded ARIA spinbutton (aria-valuetext)" class="ex">
+  Flash the screen
+  <span tabindex="0" role="spinbutton" aria-valuemin="1.0" aria-valuemax="5.0" aria-valuenow="3.0" aria-valuetext="3" aria-label="number of times" data-expectedlabel="number of times" data-testname="label of embedded ARIA spinbutton (aria-valuetext) inside checkbox label" class="ex">3.0</span> times
+</label>
+<br><br>
+
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

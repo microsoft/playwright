@@ -214,11 +214,6 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
   }
 
-  if ('ignoreSnapshots' in config && config.ignoreSnapshots !== undefined) {
-    if (typeof config.ignoreSnapshots !== 'boolean')
-      throw errorWithFile(file, `config.ignoreSnapshots must be a boolean`);
-  }
-
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
     if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
@@ -284,9 +279,23 @@ function validateProject(file: string, project: Project, title: string) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
   }
+
+  if ('ignoreSnapshots' in project && project.ignoreSnapshots !== undefined) {
+    if (typeof project.ignoreSnapshots !== 'boolean')
+      throw errorWithFile(file, `${title}.ignoreSnapshots must be a boolean`);
+  }
 }
 
-export function resolveConfigFile(configFileOrDirectory: string): string | undefined {
+export function resolveConfigLocation(configFile: string | undefined): ConfigLocation {
+  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
+  return {
+    resolvedConfigFile,
+    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory,
+  };
+}
+
+function resolveConfigFile(configFileOrDirectory: string): string | undefined {
   const resolveConfig = (configFile: string) => {
     if (fs.existsSync(configFile))
       return configFile;
@@ -309,22 +318,15 @@ export function resolveConfigFile(configFileOrDirectory: string): string | undef
       return configFile;
     // If there is no config, assume this as a root testing directory.
     return undefined;
-  } else {
-    // When passed a file, it must be a config file.
-    const configFile = resolveConfig(configFileOrDirectory);
-    return configFile!;
   }
+  // When passed a file, it must be a config file.
+  return configFileOrDirectory!;
 }
 
 export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
-  const configFileOrDirectory = configFile ? path.resolve(process.cwd(), configFile) : process.cwd();
-  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+  const location = resolveConfigLocation(configFile);
+  if (restartWithExperimentalTsEsm(location.resolvedConfigFile))
     return null;
-  const location: ConfigLocation = {
-    configDir: resolvedConfigFile ? path.dirname(resolvedConfigFile) : configFileOrDirectory,
-    resolvedConfigFile,
-  };
   return await loadConfig(location, overrides, ignoreDeps);
 }
 
@@ -334,25 +336,33 @@ export async function loadEmptyConfigForMergeReports() {
 }
 
 export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
-  const nodeVersion = +process.versions.node.split('.')[0];
-  // New experimental loader is only supported on Node 16+.
-  if (nodeVersion < 16)
-    return false;
-  if (!configFile && !force)
-    return false;
+  // Opt-out switch.
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  // Node.js < 20
+
+  // There are two esm loader APIs:
+  // - Older API that needs a process restart. Available in Node 16, 17, and non-latest 18, 19 and 20.
+  // - Newer API that works in-process. Available in Node 21+ and latest 18, 19 and 20.
+
+  // First check whether we have already restarted with the ESM loader from the older API.
   if ((globalThis as any).__esmLoaderPortPreV20) {
     // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
   }
-  if (!force && !fileIsModule(configFile!))
-    return false;
 
-  // Node.js < 20
+  // Now check for the newer API presence.
   if (!require('node:module').register) {
+    // Older API is experimental, only supported on Node 16+.
+    const nodeVersion = +process.versions.node.split('.')[0];
+    if (nodeVersion < 16)
+      return false;
+
+    // With older API requiring a process restart, do so conditionally on the config.
+    const configIsModule = !!configFile && fileIsModule(configFile);
+    if (!force && !configIsModule)
+      return false;
+
     const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
       env: {
         ...process.env,
@@ -367,7 +377,8 @@ export function restartWithExperimentalTsEsm(configFile: string | undefined, for
     });
     return true;
   }
-  // Nodejs >= 21
+
+  // With the newer API, always enable the ESM loader, because it does not need a restart.
   registerESMLoader();
   return false;
 }

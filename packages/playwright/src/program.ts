@@ -19,7 +19,7 @@
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { Runner } from './runner/runner';
+import { Runner, readLastRunInfo } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
@@ -33,8 +33,8 @@ import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
-import { cacheDir } from './transform/compilationCache';
-import { runTestServer } from './runner/testServer';
+import * as testServer from './runner/testServer';
+import { clearCacheAndLogToConsole } from './runner/testServer';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -76,24 +76,8 @@ function addClearCacheCommand(program: Command) {
     const configInternal = await loadConfigFromFileRestartIfNeeded(opts.config);
     if (!configInternal)
       return;
-    const { config, configDir } = configInternal;
-    const override = (config as any)['@playwright/test']?.['cli']?.['clear-cache'];
-    if (override) {
-      await override(config, configDir);
-      return;
-    }
-    await removeFolder(cacheDir);
+    await clearCacheAndLogToConsole(configInternal);
   });
-}
-
-export async function removeFolder(folder: string) {
-  try {
-    if (!fs.existsSync(folder))
-      return;
-    console.log(`Removing ${await fs.promises.realpath(folder)}`);
-    await fs.promises.rm(folder, { recursive: true, force: true });
-  } catch {
-  }
 }
 
 function addFindRelatedTestFilesCommand(program: Command) {
@@ -105,12 +89,32 @@ function addFindRelatedTestFilesCommand(program: Command) {
   });
 }
 
+function addDevServerCommand(program: Command) {
+  const command = program.command('dev-server', { hidden: true });
+  command.description('start dev server');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.action(async options => {
+    const configInternal = await loadConfigFromFileRestartIfNeeded(options.config);
+    if (!configInternal)
+      return;
+    const { config } = configInternal;
+    const implementation = (config as any)['@playwright/test']?.['cli']?.['dev-server'];
+    if (implementation) {
+      await implementation(configInternal);
+    } else {
+      console.log(`DevServer is not available in the package you are using. Did you mean to use component testing?`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  });
+}
+
 function addTestServerCommand(program: Command) {
   const command = program.command('test-server', { hidden: true });
   command.description('start test server');
-  command.action(() => {
-    void runTestServer();
-  });
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
+  command.option('--host <host>', 'Host to start the server on', 'localhost');
+  command.option('--port <port>', 'Port to start the server on', '0');
+  command.action(opts => runTestServer(opts));
 }
 
 function addShowReportCommand(program: Command) {
@@ -152,9 +156,37 @@ Examples:
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
-  const config = await loadConfigFromFileRestartIfNeeded(opts.config, overridesFromOptions(opts), opts.deps === false);
+  const cliOverrides = overridesFromOptions(opts);
+
+  if (opts.ui || opts.uiHost || opts.uiPort) {
+    const status = await testServer.runUIMode(opts.config, {
+      host: opts.uiHost,
+      port: opts.uiPort ? +opts.uiPort : undefined,
+      args,
+      grep: opts.grep as string | undefined,
+      grepInvert: opts.grepInvert as string | undefined,
+      project: opts.project || undefined,
+      headed: opts.headed,
+      reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
+      workers: cliOverrides.workers,
+      timeout: cliOverrides.timeout,
+    });
+    await stopProfiling('runner');
+    if (status === 'restarted')
+      return;
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
+    return;
+  }
+
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
   if (!config)
     return;
+
+  if (opts.lastFailed) {
+    const lastRunInfo = await readLastRunInfo(config);
+    config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+  }
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
@@ -165,13 +197,21 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   const runner = new Runner(config);
   let status: FullResult['status'];
-  if (opts.ui || opts.uiHost || opts.uiPort)
-    status = await runner.uiAllTests({ host: opts.uiHost, port: opts.uiPort ? +opts.uiPort : undefined });
-  else if (process.env.PWTEST_WATCH)
+  if (process.env.PWTEST_WATCH)
     status = await runner.watchAllTests();
   else
     status = await runner.runAllTests();
   await stopProfiling('runner');
+  const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+  gracefullyProcessExitDoNotHang(exitCode);
+}
+
+async function runTestServer(opts: { [key: string]: any }) {
+  const host = opts.host || 'localhost';
+  const port = opts.port ? +opts.port : 0;
+  const status = await testServer.runTestServer(opts.config, { host, port });
+  if (status === 'restarted')
+    return;
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
@@ -303,6 +343,7 @@ const testOptions: [string, string][] = [
   ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
+  ['--last-failed', `Only re-run the failures`],
   ['--list', `Collect all the tests and report them, but do not run`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
@@ -330,4 +371,5 @@ addListFilesCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addFindRelatedTestFilesCommand(program);
+addDevServerCommand(program);
 addTestServerCommand(program);

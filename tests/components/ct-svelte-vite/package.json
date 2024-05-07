@@ -15,15 +15,9 @@
     "svelte-check": "^3.6.2",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
-    "vite": "^5.0.11"
+    "vite": "^5.2.8"
   },
   "dependencies": {
-    "svelte": "^4.2.8",
-    "svelte-navigator": "^3.2.2"
-  },
-  "overrides": {
-    "svelte-navigator": {
-      "svelte": "$svelte"
-    }
+    "svelte": "^4.2.8"
   }
 }

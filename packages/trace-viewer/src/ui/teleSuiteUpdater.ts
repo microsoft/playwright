@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-import { TeleReporterReceiver } from '@testIsomorphic/teleReceiver';
-import { pathSeparator, statusEx } from '@testIsomorphic/testTree';
+import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
+import { statusEx } from '@testIsomorphic/testTree';
 import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
 import type * as reporterTypes from 'playwright/types/testReporter';
-
-export type Progress = {
-  total: number;
-  passed: number;
-  failed: number;
-  skipped: number;
-};
+import type { Progress, TestModel } from './uiModeModel';
 
 export type TeleSuiteUpdaterOptions = {
-  onUpdate: (source: TeleSuiteUpdater, force?: boolean) => void,
-  onError?: (error: reporterTypes.TestError) => void
+  onUpdate: (force?: boolean) => void,
+  onError?: (error: reporterTypes.TestError) => void;
+  pathSeparator: string;
 };
 
 export class TeleSuiteUpdater {
-  rootSuite: reporterTypes.Suite | undefined;
+  rootSuite: TeleSuite | undefined;
   config: reporterTypes.FullConfig | undefined;
   readonly loadErrors: reporterTypes.TestError[] = [];
   readonly progress: Progress = {
@@ -46,12 +41,13 @@ export class TeleSuiteUpdater {
   private _lastRunReceiver: TeleReporterReceiver | undefined;
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
+  private _testResultsSnapshot: Map<string, reporterTypes.TestResult[]> | undefined;
 
   constructor(options: TeleSuiteUpdaterOptions) {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
       mergeProjects: true,
       mergeTestCases: true,
-      resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
+      resolvePath: (rootDir, relativePath) => rootDir + options.pathSeparator + relativePath,
       clearPreviousResultsWhenTestBegins: true,
     });
     this._options = options;
@@ -75,27 +71,34 @@ export class TeleSuiteUpdater {
         }, {
           mergeProjects: true,
           mergeTestCases: false,
-          resolvePath: (rootDir, relativePath) => rootDir + pathSeparator + relativePath,
+          resolvePath: (rootDir, relativePath) => rootDir + this._options.pathSeparator + relativePath,
         });
       },
 
       onBegin: (suite: reporterTypes.Suite) => {
         if (!this.rootSuite)
-          this.rootSuite = suite;
+          this.rootSuite = suite as TeleSuite;
+        // As soon as new test tree is built add previous results, before calling onUpdate
+        // to avoid flashing empty results in the UI.
+        if (this._testResultsSnapshot) {
+          for (const test of this.rootSuite.allTests())
+            test.results = this._testResultsSnapshot?.get(test.id) || test.results;
+          this._testResultsSnapshot = undefined;
+        }
         this.progress.total = this._lastRunTestCount;
         this.progress.passed = 0;
         this.progress.failed = 0;
         this.progress.skipped = 0;
-        this._options.onUpdate(this, true);
+        this._options.onUpdate(true);
       },
 
       onEnd: () => {
-        this._options.onUpdate(this, true);
+        this._options.onUpdate(true);
       },
 
       onTestBegin: (test: reporterTypes.TestCase, testResult: reporterTypes.TestResult) => {
         (testResult as any)[statusEx] = 'running';
-        this._options.onUpdate(this);
+        this._options.onUpdate();
       },
 
       onTestEnd: (test: reporterTypes.TestCase, testResult: reporterTypes.TestResult) => {
@@ -106,14 +109,10 @@ export class TeleSuiteUpdater {
         else
           ++this.progress.passed;
         (testResult as any)[statusEx] = testResult.status;
-        this._options.onUpdate(this);
+        this._options.onUpdate();
       },
 
-      onError: (error: reporterTypes.TestError) => {
-        this.loadErrors.push(error);
-        this._options.onError?.(error);
-        this._options.onUpdate(this);
-      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error),
 
       printsToStdio: () => {
         return false;
@@ -127,11 +126,46 @@ export class TeleSuiteUpdater {
     };
   }
 
-  dispatch(mode: 'test' | 'list', message: any) {
+  processGlobalReport(report: any[]) {
+    const receiver = new TeleReporterReceiver({
+      onConfigure: (c: reporterTypes.FullConfig) => {
+        this.config = c;
+      },
+      onError: (error: reporterTypes.TestError) => this._handleOnError(error)
+    });
+    for (const message of report)
+      receiver.dispatch(message);
+  }
+
+  processListReport(report: any[]) {
+    // Save test results and reset all projects, the results will be restored after
+    // new project structure is built.
+    const tests = this.rootSuite?.allTests() || [];
+    this._testResultsSnapshot = new Map(tests.map(test => [test.id, test.results]));
+    this._receiver.reset();
+    for (const message of report)
+      this._receiver.dispatch(message);
+  }
+
+  processTestReportEvent(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    if (mode === 'test')
-      this._lastRunReceiver?.dispatch('test', message)?.catch(() => {});
-    this._receiver.dispatch(mode, message)?.catch(() => {});
+    this._lastRunReceiver?.dispatch(message)?.catch(() => {});
+    this._receiver.dispatch(message)?.catch(() => {});
+  }
+
+  private _handleOnError(error: reporterTypes.TestError) {
+    this.loadErrors.push(error);
+    this._options.onError?.(error);
+    this._options.onUpdate();
+  }
+
+  asModel(): TestModel {
+    return {
+      rootSuite: this.rootSuite || new TeleSuite('', 'root'),
+      config: this.config!,
+      loadErrors: this.loadErrors,
+      progress: this.progress,
+    };
   }
 }

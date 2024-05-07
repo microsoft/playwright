@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import type * as channels from '@protocol/channels';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import { isSessionClosedError } from './protocolError';
@@ -448,11 +449,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
-        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+        restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
       await action(point);
       if (restoreModifiers)
-        await this._page.keyboard._ensureModifiers(restoreModifiers);
+        await this._page.keyboard.ensureModifiers(restoreModifiers);
       if (hitTargetInterceptionHandle) {
         const stopHitTargetInterception = hitTargetInterceptionHandle.evaluate(h => h.stop()).catch(e => 'done' as const).finally(() => {
           hitTargetInterceptionHandle?.dispose();
@@ -642,10 +643,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (localPaths)
+      if (localPaths) {
+        await Promise.all(localPaths.map(localPath => (
+          fs.promises.access(localPath, fs.constants.F_OK)
+        )));
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
-      else
+      } else {
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
+      }
     });
     return 'done';
   }

@@ -78,11 +78,21 @@ const TestCaseViewLoader: React.FC<{
   const testId = searchParams.get('testId');
   const anchor = (searchParams.get('anchor') || '') as 'video' | 'diff' | '';
   const run = +(searchParams.get('run') || '0');
+
+  const testIdToFileIdMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const file of report.json().files) {
+      for (const test of file.tests)
+        map.set(test.testId, file.fileId);
+    }
+    return map;
+  }, [report]);
+
   React.useEffect(() => {
     (async () => {
       if (!testId || testId === test?.testId)
         return;
-      const fileId = testId.split('-')[0];
+      const fileId = testIdToFileIdMap.get(testId);
       if (!fileId)
         return;
       const file = await report.entry(`${fileId}.json`) as TestFile;
@@ -93,7 +103,7 @@ const TestCaseViewLoader: React.FC<{
         }
       }
     })();
-  }, [test, report, testId]);
+  }, [test, report, testId, testIdToFileIdMap]);
   return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}></TestCaseView>;
 };
 

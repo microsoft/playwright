@@ -439,19 +439,26 @@ test('should support ignoreSnapshots config option', async ({ runInlineTest }) =
     'playwright.config.ts': `
       module.exports = {
         ignoreSnapshots: true,
+        projects: [
+          { name: 'p1' },
+          { name: 'p2', ignoreSnapshots: false },
+        ]
       };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
-        expect('foo').toMatchSnapshot();
-        expect('foo').not.toMatchSnapshot();
+        testInfo.snapshotSuffix = '';
+        expect(testInfo.project.name).toMatchSnapshot();
       });
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).not.toContain(`pass-1-p1.txt, writing actual.`);
+  expect(result.output).toContain(`pass-1-p2.txt, writing actual.`);
 });
 
 test('should validate workers option set to percent', async ({ runInlineTest }, testInfo) => {
@@ -640,7 +647,7 @@ test('should merge ct configs', async ({ runInlineTest }) => {
         use: { foo: 1, bar: 2 },
         grep: 'hi',
         '@playwright/test': expect.objectContaining({
-          babelPlugins: [[expect.stringContaining('tsxTransform.js')]]        
+          babelPlugins: [[expect.stringContaining('tsxTransform.js')]]
         }),
         '@playwright/experimental-ct-core': expect.objectContaining({
           registerSourceFile: expect.stringContaining('registerSource'),

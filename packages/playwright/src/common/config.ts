@@ -23,7 +23,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
-import type { FullConfig, FullProject } from '../../types/test';
+import type { FullConfig, FullProject } from '../../types/testReporter';
 import { setTransformConfig } from '../transform/transform';
 
 export type ConfigLocation = {
@@ -41,12 +41,9 @@ export const defaultTimeout = 30000;
 
 export class FullConfigInternal {
   readonly config: FullConfig;
-  readonly globalOutputDir: string;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
-  readonly ignoreSnapshots: boolean;
-  readonly preserveOutputDir: boolean;
-  readonly webServers: Exclude<FullConfig['webServer'], null>[];
+  readonly webServers: NonNullable<FullConfig['webServer']>[];
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   cliArgs: string[] = [];
@@ -64,14 +61,10 @@ export class FullConfigInternal {
 
     const { resolvedConfigFile, configDir } = location;
     const packageJsonPath = getPackageJsonPath(configDir);
-    const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
-    const throwawayArtifactsPath = packageJsonDir || process.cwd();
+    const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : process.cwd();
 
     this.configDir = configDir;
     this.configCLIOverrides = configCLIOverrides;
-    this.globalOutputDir = takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, userConfig.outputDir), throwawayArtifactsPath, path.resolve(process.cwd()));
-    this.preserveOutputDir = configCLIOverrides.preserveOutputDir || false;
-    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, userConfig.ignoreSnapshots, false);
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
@@ -130,7 +123,7 @@ export class FullConfigInternal {
     }
 
     const projectConfigs = configCLIOverrides.projects || userConfig.projects || [userConfig];
-    this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, throwawayArtifactsPath));
+    this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, packageJsonDir));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
     setTransformConfig({
@@ -164,11 +157,12 @@ export class FullProjectInternal {
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string;
+  readonly ignoreSnapshots: boolean;
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
 
-  constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
+  constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, packageJsonDir: string) {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
@@ -177,12 +171,12 @@ export class FullProjectInternal {
     this.project = {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
-      outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
+      outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(packageJsonDir, 'test-results')),
       // Note: we either apply the cli override for repeatEach or not, depending on whether the
       // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
       repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
-      metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
+      metadata: takeFirst(projectConfig.metadata, config.metadata, {}),
       name: takeFirst(projectConfig.name, config.name, ''),
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
@@ -200,6 +194,7 @@ export class FullProjectInternal {
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));
     }
     this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
+    this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots,  projectConfig.ignoreSnapshots, config.ignoreSnapshots, false);
   }
 }
 

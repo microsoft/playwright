@@ -454,6 +454,7 @@ ContextOptions:
         username: string
         password: string
         origin: string?
+        sendImmediately: boolean?
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -671,6 +672,7 @@ Playwright:
             username: string
             password: string
             origin: string?
+            sendImmediately: boolean?
         proxy:
           type: object?
           properties:
@@ -1031,15 +1033,16 @@ BrowserContext:
         source: string
 
     clearCookies:
-
-    removeCookies:
       parameters:
-        filter:
-          type: object
-          properties:
-            name: string?
-            domain: string?
-            path: string?
+        name: string?
+        nameRegexSource: string?
+        nameRegexFlags: string?
+        domain: string?
+        domainRegexSource: string?
+        domainRegexFlags: string?
+        path: string?
+        pathRegexSource: string?
+        pathRegexFlags: string?
 
     clearPermissions:
 
@@ -1349,10 +1352,16 @@ Page:
     registerLocatorHandler:
       parameters:
         selector: string
+        noWaitAfter: boolean?
       returns:
         uid: number
 
     resolveLocatorHandlerNoReply:
+      parameters:
+        uid: number
+        remove: boolean?
+
+    unregisterLocatorHandler:
       parameters:
         uid: number
 
@@ -1784,6 +1793,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -1835,6 +1845,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -1949,6 +1960,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2157,6 +2169,7 @@ Frame:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2435,6 +2448,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2468,6 +2482,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2525,6 +2540,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -2711,6 +2727,7 @@ ElementHandle:
             literals:
             - Alt
             - Control
+            - ControlOrMeta
             - Meta
             - Shift
         position: Point?
@@ -3547,4 +3564,4 @@ JsonPipe:
 
     closed:
       parameters:
-        error: SerializedError?
+        reason: string?

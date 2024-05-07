@@ -574,6 +574,7 @@ export type PlaywrightNewRequestParams = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   proxy?: {
     server: string,
@@ -597,6 +598,7 @@ export type PlaywrightNewRequestOptions = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   proxy?: {
     server: string,
@@ -953,6 +955,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1025,6 +1028,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1132,6 +1136,7 @@ export type BrowserNewContextParams = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1190,6 +1195,7 @@ export type BrowserNewContextOptions = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1251,6 +1257,7 @@ export type BrowserNewContextForReuseParams = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1309,6 +1316,7 @@ export type BrowserNewContextForReuseOptions = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1426,8 +1434,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   _type_BrowserContext: boolean;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: CallMetadata): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: CallMetadata): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params?: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
-  removeCookies(params: BrowserContextRemoveCookiesParams, metadata?: CallMetadata): Promise<BrowserContextRemoveCookiesResult>;
+  clearCookies(params: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
   clearPermissions(params?: BrowserContextClearPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextClearPermissionsResult>;
   close(params: BrowserContextCloseParams, metadata?: CallMetadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: CallMetadata): Promise<BrowserContextCookiesResult>;
@@ -1521,20 +1528,29 @@ export type BrowserContextAddInitScriptOptions = {
 
 };
 export type BrowserContextAddInitScriptResult = void;
-export type BrowserContextClearCookiesParams = {};
-export type BrowserContextClearCookiesOptions = {};
+export type BrowserContextClearCookiesParams = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
+export type BrowserContextClearCookiesOptions = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
 export type BrowserContextClearCookiesResult = void;
-export type BrowserContextRemoveCookiesParams = {
-  filter: {
-    name?: string,
-    domain?: string,
-    path?: string,
-  },
-};
-export type BrowserContextRemoveCookiesOptions = {
-
-};
-export type BrowserContextRemoveCookiesResult = void;
 export type BrowserContextClearPermissionsParams = {};
 export type BrowserContextClearPermissionsOptions = {};
 export type BrowserContextClearPermissionsResult = void;
@@ -1782,6 +1798,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
   registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
   resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerResult>;
   reload(params: PageReloadParams, metadata?: CallMetadata): Promise<PageReloadResult>;
   expectScreenshot(params: PageExpectScreenshotParams, metadata?: CallMetadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
@@ -1918,20 +1935,29 @@ export type PageGoForwardResult = {
 };
 export type PageRegisterLocatorHandlerParams = {
   selector: string,
+  noWaitAfter?: boolean,
 };
 export type PageRegisterLocatorHandlerOptions = {
-
+  noWaitAfter?: boolean,
 };
 export type PageRegisterLocatorHandlerResult = {
   uid: number,
 };
 export type PageResolveLocatorHandlerNoReplyParams = {
   uid: number,
+  remove?: boolean,
 };
 export type PageResolveLocatorHandlerNoReplyOptions = {
-
+  remove?: boolean,
 };
 export type PageResolveLocatorHandlerNoReplyResult = void;
+export type PageUnregisterLocatorHandlerParams = {
+  uid: number,
+};
+export type PageUnregisterLocatorHandlerOptions = {
+
+};
+export type PageUnregisterLocatorHandlerResult = void;
 export type PageReloadParams = {
   timeout?: number,
   waitUntil?: LifecycleEvent,
@@ -2440,7 +2466,7 @@ export type FrameClickParams = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -2452,7 +2478,7 @@ export type FrameClickOptions = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -2492,7 +2518,7 @@ export type FrameDblclickParams = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -2503,7 +2529,7 @@ export type FrameDblclickOptions = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -2615,7 +2641,7 @@ export type FrameHoverParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -2624,7 +2650,7 @@ export type FrameHoverParams = {
 export type FrameHoverOptions = {
   strict?: boolean,
   force?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -2849,7 +2875,7 @@ export type FrameTapParams = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -2858,7 +2884,7 @@ export type FrameTapOptions = {
   strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3192,7 +3218,7 @@ export type ElementHandleCheckResult = void;
 export type ElementHandleClickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -3203,7 +3229,7 @@ export type ElementHandleClickParams = {
 export type ElementHandleClickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -3220,7 +3246,7 @@ export type ElementHandleContentFrameResult = {
 export type ElementHandleDblclickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -3230,7 +3256,7 @@ export type ElementHandleDblclickParams = {
 export type ElementHandleDblclickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
@@ -3272,7 +3298,7 @@ export type ElementHandleGetAttributeResult = {
 };
 export type ElementHandleHoverParams = {
   force?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3280,7 +3306,7 @@ export type ElementHandleHoverParams = {
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3470,7 +3496,7 @@ export type ElementHandleSetInputFilesResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3478,7 +3504,7 @@ export type ElementHandleTapParams = {
 export type ElementHandleTapOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
-  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -4453,6 +4479,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -4509,6 +4536,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     username: string,
     password: string,
     origin?: string,
+    sendImmediately?: boolean,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -4666,7 +4694,7 @@ export type JsonPipeMessageEvent = {
   message: any,
 };
 export type JsonPipeClosedEvent = {
-  error?: SerializedError,
+  reason?: string,
 };
 export type JsonPipeSendParams = {
   message: any,

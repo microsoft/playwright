@@ -37,6 +37,23 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
+it('should upload a file after popup', async ({ page, server, asset, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  {
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window['__popup'] = window.open('about:blank')),
+    ]);
+    await popup.close();
+  }
+  const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
+  const input = await page.$('input');
+  await input.setInputFiles(filePath);
+  expect(await page.evaluate(e => e.files[0].name, input)).toBe('file-to-upload.txt');
+});
+
 it('should upload large file', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
@@ -86,6 +103,14 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
   expect(file1.originalFilename).toBe('200MB.zip');
   expect(file1.size).toBe(200 * 1024 * 1024);
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
+});
+
+it('should throw an error if the file does not exist', async ({ page, server, asset }) => {
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const input = await page.$('input');
+  const error = await input.setInputFiles('i actually do not exist.txt').catch(e => e);
+  expect(error.message).toContain('ENOENT: no such file or directory');
+  expect(error.message).toContain('i actually do not exist.txt');
 });
 
 it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode }, testInfo) => {

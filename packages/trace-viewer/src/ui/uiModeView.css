@@ -30,28 +30,6 @@
   color: var(--vscode-debugIcon-stopForeground);
 }
 
-.ui-mode-list-item {
-  flex: auto;
-}
-
-.ui-mode-list-item-title {
-  flex: auto;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.ui-mode-list-item-time {
-  flex: none;
-  color: var(--vscode-editorCodeLens-foreground);
-  margin: 0 4px;
-  user-select: none;
-}
-
-.list-view-entry.selected .ui-mode-list-item-time,
-.list-view-entry.highlighted .ui-mode-list-item-time {
-  display: none;
-}
-
 .ui-mode .section-title {
   display: flex;
   flex: auto;
@@ -111,10 +89,6 @@
   text-overflow: ellipsis;
 }
 
-.list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
-  display: none;
-}
-
 .ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;
@@ -124,60 +98,4 @@
   border: none;
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
-}
-
-.filters {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  margin: 2px 0;
-}
-
-.filter-list {
-  padding: 0 10px 10px 10px;
-  user-select: none;
-}
-
-.filter-title,
-.filter-summary {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
-}
-
-.filter-label {
-  color: var(--vscode-disabledForeground);
-}
-
-.filter-summary {
-  line-height: 24px;
-  margin-left: 24px;
-}
-
-.filter-summary .filter-label {
-  margin-left: 5px;
-}
-
-.filter-entry {
-  line-height: 24px;
-}
-
-.filter-entry label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.filter-entry input {
-  flex: none;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.filter-entry label div {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

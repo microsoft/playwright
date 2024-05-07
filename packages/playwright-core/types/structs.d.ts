@@ -40,6 +40,6 @@ export type Unboxed<Arg> =
 export type PageFunction0<R> = string | (() => R | Promise<R>);
 export type PageFunction<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type PageFunctionOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
-export type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
+export type SmartHandle<T> = [T] extends [Node] ? ElementHandle<T> : JSHandle<T>;
 export type ElementHandleForTag<K extends keyof HTMLElementTagNameMap> = ElementHandle<HTMLElementTagNameMap[K]>;
 export type BindingSource = { context: BrowserContext, page: Page, frame: Frame };

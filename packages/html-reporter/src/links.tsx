@@ -41,12 +41,19 @@ export const Route: React.FunctionComponent<{
 };
 
 export const Link: React.FunctionComponent<{
-  href: string,
+  href?: string,
+  click?: string,
+  ctrlClick?: string,
   className?: string,
   title?: string,
   children: any,
-}> = ({ href, className, children, title }) => {
-  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} className={`${className || ''}`} href={href} title={title}>{children}</a>;
+}> = ({ href, click, ctrlClick, className, children, title }) => {
+  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }} href={href} className={`${className || ''}`} title={title} onClick={e => {
+    if (click) {
+      e.preventDefault();
+      navigate(e.metaKey || e.ctrlKey ? ctrlClick || click : click);
+    }
+  }}>{children}</a>;
 };
 
 export const ProjectLink: React.FunctionComponent<{

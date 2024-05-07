@@ -187,6 +187,18 @@ browserTest('should focus with more than one page/context', async ({ contextFact
   expect(await page2.evaluate(() => !!window['gotFocus'])).toBe(true);
 });
 
+browserTest('should not fire blur events when interacting with more than one page/context', async ({ contextFactory, browserName }) => {
+  browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30399' });
+  const page1 = await (await contextFactory()).newPage();
+  const page2 = await (await contextFactory()).newPage();
+  await page1.setContent(`<button id="foo" onblur="window.gotBlur=true">foo</button>`);
+  await page2.setContent(`<button id="foo" onblur="window.gotBlur=true">foo</button>`);
+  await page1.click('#foo');
+  await page2.click('#foo');
+  expect(await page1.evaluate(() => !!window['gotBlur'])).toBe(false);
+  expect(await page2.evaluate(() => !!window['gotBlur'])).toBe(false);
+});
+
 browserTest('should trigger hover state concurrently', async ({ browserType, browserName }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27969' });
   browserTest.fixme(browserName === 'firefox');

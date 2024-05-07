@@ -154,6 +154,30 @@ it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   expect(credentials).toBe('user:pass');
 });
 
+it('should support HTTPCredentials.sendImmediately', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
+  const request = await playwright.request.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), sendImmediately: true }
+  });
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.get(server.EMPTY_PAGE)
+    ]);
+    expect(serverRequest.headers.authorization).toBe('Basic ' + Buffer.from('user:pass').toString('base64'));
+    expect(response.status()).toBe(200);
+  }
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.get(server.CROSS_PROCESS_PREFIX + '/empty.html')
+    ]);
+    // Not sent to another origin.
+    expect(serverRequest.headers.authorization).toBe(undefined);
+    expect(response.status()).toBe(200);
+  }
+});
+
 it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   const response = await request.get(httpsServer.EMPTY_PAGE);

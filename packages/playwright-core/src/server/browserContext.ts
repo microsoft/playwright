@@ -251,7 +251,6 @@ export abstract class BrowserContext extends SdkObject {
   abstract pages(): Page[];
   abstract newPageDelegate(): Promise<PageDelegate>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
-  abstract clearCookies(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   abstract setUserAgent(userAgent: string | undefined): Promise<void>;
@@ -259,6 +258,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract cancelDownload(uuid: string): Promise<void>;
   abstract clearCache(): Promise<void>;
   protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
+  protected abstract doClearCookies(): Promise<void>;
   protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
@@ -276,20 +276,27 @@ export abstract class BrowserContext extends SdkObject {
     return await this.doGetCookies(urls as string[]);
   }
 
-  async removeCookies(filter: {name?: string, domain?: string, path?: string}): Promise<void> {
-    if (!filter.name && !filter.domain && !filter.path)
-      throw new Error(`Either name, domain or path are required`);
-
+  async clearCookies(options: {name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp}): Promise<void> {
     const currentCookies = await this.cookies();
+    await this.doClearCookies();
 
-    const cookiesToKeep = currentCookies.filter(cookie => {
-      return !((!filter.name || filter.name === cookie.name) &&
-        (!filter.domain || filter.domain === cookie.domain) &&
-        (!filter.path || filter.path === cookie.path));
+    const matches = (cookie: channels.NetworkCookie, prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
+      if (!value)
+        return true;
+      if (value instanceof RegExp) {
+        value.lastIndex = 0;
+        return value.test(cookie[prop]);
+      }
+      return cookie[prop] === value;
+    };
+
+    const cookiesToReadd = currentCookies.filter(cookie => {
+      return !matches(cookie, 'name', options.name)
+        || !matches(cookie, 'domain', options.domain)
+        || !matches(cookie, 'path', options.path);
     });
 
-    await this.clearCookies();
-    await this.addCookies(cookiesToKeep);
+    await this.addCookies(cookiesToReadd);
   }
 
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
@@ -559,7 +566,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _resetCookies() {
-    await this.clearCookies();
+    await this.doClearCookies();
     if (this._options.storageState?.cookies)
       await this.addCookies(this._options.storageState?.cookies);
   }

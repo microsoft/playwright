@@ -103,7 +103,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
       test('fails', () => {});
-      test('skipped', () => {});
+      test('does not run', () => {});
       // Infect subprocesses to immediately exit when spawning a worker.
       process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js').replace(/\\/g, '\\\\'))}';
     `
@@ -111,7 +111,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
@@ -773,4 +773,71 @@ test('unhandled exception in test.fail should restart worker and continue', asyn
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(0);
   expect(result.outputLines).toEqual(['bad running worker=0', 'good running worker=1']);
+});
+
+test('wait for workers to finish before reporter.onEnd', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30550' });
+  test.fixme();
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        globalTimeout: 2000,
+        fullyParallel: true,
+        reporter: './reporter'
+      }
+    `,
+    'reporter.ts': `
+      export default class MyReporter {
+        onTestEnd(test) {
+          console.log('MyReporter.onTestEnd', test.title);
+        }
+        onEnd(status) {
+          console.log('MyReporter.onEnd');
+        }
+        async onExit() {
+          console.log('MyReporter.onExit');
+        }
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('first', async ({ }) => {
+        await new Promise(() => {});
+      });
+      test('second', async ({ }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  const endIndex = result.output.indexOf('MyReporter.onEnd');
+  expect(endIndex).not.toBe(-1);
+  const firstIndex = result.output.indexOf('MyReporter.onTestEnd first');
+  expect(firstIndex).not.toBe(-1);
+  expect(firstIndex).toBeLessThan(endIndex);
+  const secondIndex = result.output.indexOf('MyReporter.onTestEnd second');
+  expect(secondIndex).not.toBe(-1);
+  expect(secondIndex).toBeLessThan(endIndex);
+});
+
+test('should run last failed tests', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
 });

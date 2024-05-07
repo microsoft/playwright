@@ -16,6 +16,7 @@
 
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import fs from 'fs';
+import path from 'path';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -121,6 +122,28 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         await expect(component).toHaveText('Clashing name 2');
       });
     `,
+    'src/relative-import-different-folders/one/index.tsx': `
+      export default () => <button>Button</button>;
+    `,
+    'src/relative-import-different-folders/one/one.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import Button from '.';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+    'src/relative-import-different-folders/two/index.tsx': `
+      export default () => <button>Button</button>;
+    `,
+    'src/relative-import-different-folders/two/two.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import Button from '.';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
 
@@ -158,6 +181,14 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     id: expect.stringContaining('defaultExport'),
     importSource: expect.stringContaining('./defaultExport'),
     filename: expect.stringContaining('default-import.spec.tsx'),
+  }, {
+    id: expect.stringContaining('_one'),
+    importSource: expect.stringContaining('.'),
+    filename: expect.stringContaining(`one${path.sep}one.spec.tsx`),
+  }, {
+    id: expect.stringContaining('_two'),
+    importSource: expect.stringContaining('.'),
+    filename: expect.stringContaining(`two${path.sep}two.spec.tsx`),
   }]);
 
   for (const [, value] of Object.entries(metainfo.deps))
@@ -183,6 +214,14 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     [expect.stringContaining('button.tsx'), [
       expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('button.tsx'),
+    ]],
+    [expect.stringContaining(`one${path.sep}index.tsx`), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining(`one${path.sep}index.tsx`),
+    ]],
+    [expect.stringContaining(`two${path.sep}index.tsx`), [
+      expect.stringContaining('jsx-runtime.js'),
+      expect.stringContaining(`two${path.sep}index.tsx`),
     ]],
   ]);
 });
@@ -497,6 +536,24 @@ test('should render component via re-export', async ({ runInlineTest }, testInfo
   expect(result.passed).toBe(1);
 });
 
+test('should import json', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/some.json': `{ "some": "value" }`,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import json from './some.json';
+      test('pass', async ({}) => {
+        expect(json.some).toBe('value');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should render component exported via fixture', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightCtConfigText,
@@ -601,6 +658,36 @@ test('should pass undefined value as param', async ({ runInlineTest }) => {
       test('renders props with undefined type', async ({ mount, page }) => {
         const component = await mount(<Component value={undefined} />);
         await expect(component).toHaveText('undefined');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should resolve components imported from node_modules', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "name": "test-project" }`,
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'node_modules/@mui/material/index.js': `
+      const TextField = () => 'input';
+      module.exports = { TextField };
+    `,
+    'node_modules/@mui/material/package.json': JSON.stringify({
+      name: '@mui/material',
+      main: './index.js',
+    }),
+
+    'src/component.spec.tsx': `
+      import { test } from '@playwright/experimental-ct-react';
+      import { TextField } from '@mui/material';
+
+      test("passes", async ({ mount }) => {
+        await mount(<TextField />);
       });
     `,
   }, { workers: 1 });

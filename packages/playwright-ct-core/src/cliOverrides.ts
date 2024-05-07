@@ -15,21 +15,26 @@
  * limitations under the License.
  */
 
-import { removeFolder } from 'playwright/lib/program';
 import { affectedTestFiles, cacheDir } from 'playwright/lib/transform/compilationCache';
 import { buildBundle } from './vitePlugin';
 import { resolveDirs } from './viteUtils';
-import type { Suite } from 'playwright/lib/common/test';
-import type { FullConfig } from 'playwright/test';
+import type { Suite } from 'playwright/types/testReporter';
+import { runDevServer } from './devServer';
+import type { FullConfigInternal } from 'playwright/lib/common/config';
+import { removeFolderAndLogToConsole } from 'playwright/lib/runner/testServer';
 
-export async function clearCacheCommand(config: FullConfig, configDir: string) {
-  const dirs = await resolveDirs(configDir, config);
+export async function clearCacheCommand(config: FullConfigInternal) {
+  const dirs = await resolveDirs(config.configDir, config.config);
   if (dirs)
-    await removeFolder(dirs.outDir);
-  await removeFolder(cacheDir);
+    await removeFolderAndLogToConsole(dirs.outDir);
+  await removeFolderAndLogToConsole(cacheDir);
 }
 
-export async function findRelatedTestFilesCommand(files: string[],  config: FullConfig, configDir: string, suite: Suite) {
-  await buildBundle(config, configDir, suite);
+export async function findRelatedTestFilesCommand(files: string[],  config: FullConfigInternal, suite: Suite) {
+  await buildBundle(config.config, config.configDir, suite);
   return { testFiles: affectedTestFiles(files) };
+}
+
+export async function runDevServerCommand(config: FullConfigInternal) {
+  return await runDevServer(config);
 }

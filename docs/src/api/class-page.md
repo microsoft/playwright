@@ -290,9 +290,7 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 **Usage**
 
 ```js
-page.on('dialog', dialog => {
-  dialog.accept();
-});
+page.on('dialog', dialog => dialog.accept());
 ```
 
 ```java
@@ -448,7 +446,7 @@ Emitted when the page opens a new tab or window. This event is emitted in additi
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-done and its response has started loading in the popup.
+done and its response has started loading in the popup. If you would like to route/listen to this network request, use [`method: BrowserContext.route`] and [`event: BrowserContext.request`] respectively instead of similar methods on the [Page].
 
 ```js
 // Start waiting for popup before clicking. Note no await.
@@ -2342,7 +2340,8 @@ Attribute name to get the value for.
 
 %%-template-locator-get-by-role-%%
 
-### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+### param: Page.getByRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.27
 
 ### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
@@ -3014,7 +3013,8 @@ generate the text for. A superset of the [`param: key`] values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, `ControlOrMeta`.
+`ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
@@ -3146,17 +3146,14 @@ return value resolves to `[]`.
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
-:::warning Experimental
-This method is experimental and its behavior may change in the upcoming releases.
-:::
-
 When testing a web page, sometimes unexpected overlays like a "Sign up" dialog appear and block actions you want to automate, e.g. clicking a button. These overlays don't always show up in the same way or at the same time, making them tricky to handle in automated tests.
 
 This method lets you set up a special function, called a handler, that activates when it detects that overlay is visible. The handler's job is to remove the overlay, allowing your test to continue as if the overlay wasn't there.
 
 Things to keep in mind:
 * When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as a part of your normal test flow, instead of using [`method: Page.addLocatorHandler`].
-* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion.
+* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
+* After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with [`option: noWaitAfter`].
 * The execution time of the handler counts towards the timeout of the action/assertion that executed the handler. If your handler takes too long, it might cause timeouts.
 * You can register multiple handlers. However, only a single handler will be running at a time. Make sure the actions within a handler don't depend on another handler.
 
@@ -3286,13 +3283,13 @@ await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
-An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check:
+An example with a custom callback on every actionability check. It uses a `<body>` locator that is always visible, so the handler is called before every actionability check. It is important to specify [`option: noWaitAfter`], because the handler does not hide the `<body>` element.
 
 ```js
 // Setup the handler.
 await page.addLocatorHandler(page.locator('body'), async () => {
   await page.evaluate(() => window.removeObstructionsForTestIfNeeded());
-});
+}, { noWaitAfter: true });
 
 // Write the test as usual.
 await page.goto('https://example.com');
@@ -3303,7 +3300,7 @@ await page.getByRole('button', { name: 'Start here' }).click();
 // Setup the handler.
 page.addLocatorHandler(page.locator("body")), () => {
   page.evaluate("window.removeObstructionsForTestIfNeeded()");
-});
+}, new Page.AddLocatorHandlerOptions.setNoWaitAfter(true));
 
 // Write the test as usual.
 page.goto("https://example.com");
@@ -3314,7 +3311,7 @@ page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 # Setup the handler.
 def handler():
   page.evaluate("window.removeObstructionsForTestIfNeeded()")
-page.add_locator_handler(page.locator("body"), handler)
+page.add_locator_handler(page.locator("body"), handler, no_wait_after=True)
 
 # Write the test as usual.
 page.goto("https://example.com")
@@ -3325,7 +3322,7 @@ page.get_by_role("button", name="Start here").click()
 # Setup the handler.
 def handler():
   await page.evaluate("window.removeObstructionsForTestIfNeeded()")
-await page.add_locator_handler(page.locator("body"), handler)
+await page.add_locator_handler(page.locator("body"), handler, no_wait_after=True)
 
 # Write the test as usual.
 await page.goto("https://example.com")
@@ -3336,11 +3333,43 @@ await page.get_by_role("button", name="Start here").click()
 // Setup the handler.
 await page.AddLocatorHandlerAsync(page.Locator("body"), async () => {
   await page.EvaluateAsync("window.removeObstructionsForTestIfNeeded()");
-});
+}, new() { NoWaitAfter = true });
 
 // Write the test as usual.
 await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
+```
+
+Handler takes the original locator as an argument. You can also automatically remove the handler after a number of invocations by setting [`option: times`]:
+
+```js
+await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
+  await locator.click();
+}, { times: 1 });
+```
+
+```java
+page.addLocatorHandler(page.getByLabel("Close"), locator => {
+  locator.click();
+}, new Page.AddLocatorHandlerOptions().setTimes(1));
+```
+
+```python sync
+def handler(locator):
+  locator.click()
+page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
+```
+
+```python async
+def handler(locator):
+  await locator.click()
+await page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
+```
+
+```csharp
+await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), async locator => {
+  await locator.ClickAsync();
+}, new() { Times = 1 });
 ```
 
 ### param: Page.addLocatorHandler.locator
@@ -3352,23 +3381,48 @@ Locator that triggers the handler.
 ### param: Page.addLocatorHandler.handler
 * langs: js, python
 * since: v1.42
-- `handler` <[function]>
+- `handler` <[function]\([Locator]\): [Promise<any>]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
 ### param: Page.addLocatorHandler.handler
 * langs: csharp
 * since: v1.42
-- `handler` <[function](): [Promise<any>]>
+- `handler` <[function]\([Locator]\)>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
 ### param: Page.addLocatorHandler.handler
 * langs: java
 * since: v1.42
-- `handler` <[Runnable]>
+- `handler` <[function]\([Locator]\)>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+### option: Page.addLocatorHandler.times
+* since: v1.44
+- `times` <[int]>
+
+Specifies the maximum number of times this handler should be called. Unlimited by default.
+
+### option: Page.addLocatorHandler.noWaitAfter
+* since: v1.44
+- `noWaitAfter` <[boolean]>
+
+By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of this behavior, so that overlay can stay visible after the handler has run.
+
+
+## async method: Page.removeLocatorHandler
+* since: v1.44
+
+Removes all locator handlers added by [`method: Page.addLocatorHandler`] for a specific locator.
+
+### param: Page.removeLocatorHandler.locator
+* since: v1.44
+- `locator` <[Locator]>
+
+Locator passed to [`method: Page.addLocatorHandler`].
+
 
 ## async method: Page.reload
 * since: v1.8
@@ -3409,6 +3463,10 @@ The handler will only be called for the first url if the response is a redirect.
 
 :::note
 [`method: Page.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
+:::
+
+:::note
+[`method: Page.route`] will not intercept the first request of a popup page. Use [`method: BrowserContext.route`] instead.
 :::
 
 **Usage**
@@ -4460,6 +4518,10 @@ Returns when the required load state has been reached.
 
 This resolves when the page reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
+
+:::note
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
+:::
 
 **Usage**
 

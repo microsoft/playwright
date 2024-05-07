@@ -17,12 +17,20 @@
 import type http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { mime } from '../utilsBundle';
+import { mime, wsServer } from '../utilsBundle';
 import { assert } from './debug';
 import { createHttpServer } from './network';
 import { ManualPromise } from './manualPromise';
+import { createGuid } from './crypto';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
+
+export type Transport = {
+  sendEvent?: (method: string, params: any) => void;
+  dispatch: (method: string, params: any) => Promise<any>;
+  close?: () => void;
+  onclose: () => void;
+};
 
 export class HttpServer {
   private _server: http.Server;
@@ -30,6 +38,7 @@ export class HttpServer {
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
+  private _wsGuid: string | undefined;
 
   constructor(address: string = '') {
     this._urlPrefix = address;
@@ -68,6 +77,31 @@ export class HttpServer {
     }
   }
 
+  createWebSocket(transport: Transport, guid?: string) {
+    assert(!this._wsGuid, 'can only create one main websocket transport per server');
+    this._wsGuid = guid || createGuid();
+    const wss = new wsServer({ server: this._server, path: '/' + this._wsGuid });
+    wss.on('connection', ws => {
+      transport.sendEvent = (method, params)  => ws.send(JSON.stringify({ method, params }));
+      transport.close = () => ws.close();
+      ws.on('message', async message => {
+        const { id, method, params } = JSON.parse(String(message));
+        try {
+          const result = await transport.dispatch(method, params);
+          ws.send(JSON.stringify({ id, result }));
+        } catch (e) {
+          ws.send(JSON.stringify({ id, error: String(e) }));
+        }
+      });
+      ws.on('close', () => transport.onclose());
+      ws.on('error', () => transport.onclose());
+    });
+  }
+
+  wsGuid(): string | undefined {
+    return this._wsGuid;
+  }
+
   async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<string> {
     assert(!this._started, 'server already started');
     this._started = true;
@@ -92,7 +126,8 @@ export class HttpServer {
         this._urlPrefix = address;
       } else {
         this._port = address.port;
-        this._urlPrefix = `http://${host}:${address.port}`;
+        const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+        this._urlPrefix = `http://${resolvedHost}:${address.port}`;
       }
     }
     return this._urlPrefix;

@@ -230,9 +230,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       pipe.on('message', message => {
         transport.send(message);
       });
-      transport.onclose = () => {
+      transport.onclose = (reason?: string) => {
         socksInterceptor?.cleanup();
-        pipe.wasClosed();
+        pipe.wasClosed(reason);
       };
       pipe.on('close', () => transport.close());
       return { pipe, headers: transport.headers };

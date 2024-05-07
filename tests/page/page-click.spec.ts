@@ -455,6 +455,8 @@ it('should wait for stable position', async ({ page, server }) => {
     button.style.display = 'block';
     document.body.style.margin = '0';
   });
+  // rafraf for Firefox to kick in the animation.
+  await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
   await page.click('button');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   expect(await page.evaluate('pageX')).toBe(300);

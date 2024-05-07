@@ -1,0 +1,92 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.tag {
+  display: inline-block;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  border: 1px solid transparent;
+  border-radius: 2em;
+  background-color: #8c959f;
+  color: white;
+  margin: 0 10px;
+  flex: none;
+  font-weight: 600;
+}
+
+.tag-color-0 {
+  background-color: #ddf4ff;
+  color: #0550ae;
+  border: 1px solid #218bff;
+}
+.tag-color-1 {
+  background-color: #fff8c5;
+  color: #7d4e00;
+  border: 1px solid #bf8700;
+}
+.tag-color-2 {
+  background-color: #fbefff;
+  color: #6e40c9;
+  border: 1px solid #a475f9;
+}
+.tag-color-3 {
+  background-color: #ffeff7;
+  color: #99286e;
+  border: 1px solid #e85aad;
+}
+.tag-color-4 {
+  background-color: #FFF0EB;
+  color: #9E2F1C;
+  border: 1px solid #EA6045;
+}
+.tag-color-5 {
+  background-color: #fff1e5;
+  color: #9b4215;
+  border: 1px solid #e16f24;
+}
+
+.dark-mode .tag-color-0 {
+  background-color: #051d4d;
+  color: #80ccff;
+  border: 1px solid #218bff;
+}
+.dark-mode .tag-color-1 {
+  background-color: #3b2300;
+  color: #eac54f;
+  border: 1px solid #bf8700;
+}
+.dark-mode .tag-color-2 {
+  background-color: #271052;
+  color: #d2a8ff;
+  border: 1px solid #a475f9;
+}
+.dark-mode .tag-color-3 {
+  background-color: #42062a;
+  color: #ff9bce;
+  border: 1px solid #e85aad;
+}
+.dark-mode .tag-color-4 {
+  background-color: #460701;
+  color: #FFA28B;
+  border: 1px solid #EC6547;
+}
+.dark-mode .tag-color-5 {
+  background-color: #471700;
+  color: #ffa657;
+  border: 1px solid #e16f24;
+}

@@ -21,7 +21,7 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
@@ -174,6 +174,30 @@ export function toContainText(
   }
 }
 
+export function toHaveAccessibleDescription(
+  this: ExpectMatcherContext,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
+export function toHaveAccessibleName(
+  this: ExpectMatcherContext,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveAttribute(
   this: ExpectMatcherContext,
   locator: LocatorEx,
@@ -266,6 +290,20 @@ export function toHaveJSProperty(
   }, expected, options);
 }
 
+export function toHaveRole(
+  this: ExpectMatcherContext,
+  locator: LocatorEx,
+  expected: string,
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  if (!isString(expected))
+    throw new Error(`"role" argument in toHaveRole must be a string`);
+  return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect('to.have.role', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveText(
   this: ExpectMatcherContext,
   locator: LocatorEx,
@@ -326,13 +364,13 @@ export function toHaveURL(
   this: ExpectMatcherContext,
   page: Page,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { ignoreCase?: boolean, timeout?: number },
 ) {
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
   const locator = page.locator(':root') as LocatorEx;
   return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -369,6 +407,7 @@ export async function toPass(
 ) {
   const testInfo = currentTestInfo();
   const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
+  const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
 
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
@@ -380,7 +419,7 @@ export async function toPass(
     } catch (e) {
       return { continuePolling: !this.isNot, result: e };
     }
-  }, deadline, options.intervals || [100, 250, 500, 1000]);
+  }, deadline, intervals);
 
   if (result.timedOut) {
     const message = result.result ? [

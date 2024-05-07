@@ -220,12 +220,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.addCookies(params.cookies);
   }
 
-  async clearCookies(): Promise<void> {
-    await this._context.clearCookies();
-  }
-
-  async removeCookies(params: channels.BrowserContextRemoveCookiesParams): Promise<void> {
-    await this._context.removeCookies(params.filter);
+  async clearCookies(params: channels.BrowserContextClearCookiesParams): Promise<void> {
+    const nameRe = params.nameRegexSource !== undefined && params.nameRegexFlags !== undefined ? new RegExp(params.nameRegexSource, params.nameRegexFlags) : undefined;
+    const domainRe = params.domainRegexSource !== undefined && params.domainRegexFlags !== undefined ? new RegExp(params.domainRegexSource, params.domainRegexFlags) : undefined;
+    const pathRe = params.pathRegexSource !== undefined && params.pathRegexFlags !== undefined ? new RegExp(params.pathRegexSource, params.pathRegexFlags) : undefined;
+    await this._context.clearCookies({
+      name: nameRe || params.name,
+      domain: domainRe || params.domain,
+      path: pathRe || params.path,
+    });
   }
 
   async grantPermissions(params: channels.BrowserContextGrantPermissionsParams): Promise<void> {

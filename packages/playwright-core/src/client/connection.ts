@@ -44,7 +44,7 @@ import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
 import type { ClientInstrumentation } from './clientInstrumentation';
-import { formatCallLog, rewriteErrorMessage } from '../utils';
+import { formatCallLog, rewriteErrorMessage, zones } from '../utils';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -136,7 +136,9 @@ export class Connection extends EventEmitter {
     const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
     if (this._tracingCount && frames && type !== 'LocalUtils')
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
-    this.onmessage({ ...message, metadata });
+    // We need to exit zones before calling into the server, otherwise
+    // when we receive events from the server, we would be in an API zone.
+    zones.exitZones(() => this.onmessage({ ...message, metadata }));
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 
@@ -191,8 +193,8 @@ export class Connection extends EventEmitter {
     (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
   }
 
-  close(cause?: Error) {
-    this._closedError = new TargetClosedError(cause?.toString());
+  close(cause?: string) {
+    this._closedError = new TargetClosedError(cause);
     for (const callback of this._callbacks.values())
       callback.reject(this._closedError);
     this._callbacks.clear();

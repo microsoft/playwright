@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple configurations. For example, consider running tests against multiple browsers.
+Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple configurations. For example, consider running tests against multiple browsers. This type describes format of a project in the configuration file, to access resolved configuration parameters at run time use [FullProject].
 
 `TestProject` encapsulates configuration specific to a single project. Projects are configured in [`property: TestConfig.projects`] specified in the [configuration file](../test-configuration.md). Note that all properties of [TestProject] are available in the top-level [TestConfig], in which case they are shared between all projects.
 
@@ -104,6 +104,7 @@ export default defineConfig({
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
   - `toPass` ?<[Object]> Configuration for the [expect(value).toPass()](../test-assertions.md) method.
     - `timeout` ?<[int]> timeout for toPass method in milliseconds.
+    - `intervals` ?<[Array]<[int]>> probe intervals for toPass method in milliseconds.
 
 Configuration for the `expect` assertion library.
 
@@ -133,6 +134,39 @@ Filter to only run tests with a title matching one of the patterns. For example,
 Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option.
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
+
+## property: TestProject.ignoreSnapshots
+* since: v1.44
+- type: ?<[boolean]>
+
+Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
+
+**Usage**
+
+The following example will only perform screenshot assertions on Chromium.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+    },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+      ignoreSnapshots: true,
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      ignoreSnapshots: true,
+    },
+  ],
+});
+```
 
 ## property: TestProject.metadata
 * since: v1.10

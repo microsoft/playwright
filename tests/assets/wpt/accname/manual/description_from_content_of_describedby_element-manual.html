@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Description from content of describedby element</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "My name is Eli the weird. (QED) Where are my marbles?"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "My name is Eli the weird. (QED) Where are my marbles?"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "My name is Eli the weird. (QED) Where are my marbles?"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Description",
+                  "is",
+                  "My name is Eli the weird. (QED) Where are my marbles?"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Description from content of describedby element"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Description from content of describedby element.</p>
+    <style>
+    .hidden { display: none; }
+  </style>
+  <input id="test" type="text" aria-label="Important stuff" aria-describedby="descId" />
+  <div>
+    <div id="descId">
+      <span aria-hidden="true"><i> Hello, </i></span>
+      <span>My</span> name is
+      <div><img src="file.jpg" title="Bryan" alt="" role="presentation" /></div>
+      <span role="presentation" aria-label="Eli">
+        <span aria-label="Garaventa">Zambino</span>
+      </span>
+      <span>the weird.</span>
+      (QED)
+      <span class="hidden"><i><b>and don't you forget it.</b></i></span>
+      <table>
+        <tr>
+          <td>Where</td>
+          <td style="visibility:hidden;"><div>in</div></td>
+          <td><div style="display:none;">the world</div></td>
+          <td>are my marbles?</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

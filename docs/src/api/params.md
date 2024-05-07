@@ -97,10 +97,11 @@ A point to use relative to the top-left corner of element padding box. If not sp
 element.
 
 ## input-modifiers
-- `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"Meta"|"Shift">>>
+- `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>>
 
 Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
-modifiers back. If not specified, currently pressed modifiers are used.
+modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to "Control" on Windows
+and Linux and to "Meta" on macOS.
 
 ## input-button
 - `button` <[MouseButton]<"left"|"right"|"middle">>
@@ -403,9 +404,9 @@ unless explicitly provided.
 
 An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
 
-## js-python-fetch-option-multipart
-* langs: js, python
-- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+## js-fetch-option-multipart
+* langs: js
+- `multipart` <[FormData]|[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -415,14 +416,24 @@ this request body. If this parameter is specified `content-type` header will be 
 unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
 or as file-like object containing file name, mime-type and its content.
 
+## python-fetch-option-multipart
+* langs: python
+- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+  - `name` <[string]> File name
+  - `mimeType` <[string]> File type
+  - `buffer` <[Buffer]> File content
+
+Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
+unless explicitly provided. File values can be passed as file-like object containing file name, mime-type and its content.
+
 ## csharp-fetch-option-multipart
 * langs: csharp
 - `multipart` <[FormData]>
 
 Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
 this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
-unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
-or as file-like object containing file name, mime-type and its content.
+unless explicitly provided. File values can be passed as file-like object containing file name, mime-type and its content.
 
 An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
 
@@ -560,6 +571,7 @@ Whether to emulate network being offline. Defaults to `false`. Learn more about 
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
+  - `sendImmediately` ?<[boolean]> Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent from the browser.
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
@@ -846,6 +858,11 @@ Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestC
 
 Time to retry the assertion for in milliseconds. Defaults to `5000`.
 
+## assertions-ignore-case
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ## assertions-max-diff-pixels
 * langs: js
 - `maxDiffPixels` <[int]>
@@ -999,6 +1016,7 @@ disable timeout.
 If specified, traces are saved into this directory.
 
 ## browser-option-devtools
+* deprecated: Use [debugging tools](../debug.md) instead.
 - `devtools` <[boolean]>
 
 **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
@@ -1187,8 +1205,7 @@ Text to locate the element for.
 
 Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression. Note that exact match still trims whitespace.
 
-## locator-get-by-role-role
-* since: v1.27
+## get-by-role-to-have-role-role
 - `role` <[AriaRole]<"alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem">>
 
 Required aria role.
@@ -1715,13 +1732,17 @@ test.describe('suite', () => {
 
 The list of supported tokens:
 
-* `{testDir}` - Project's [`property: TestConfig.testDir`].
-  * Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with config)
-* `{snapshotDir}` - Project's [`property: TestConfig.snapshotDir`].
-  * Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+* `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated snapshot name.
+  * Value: `foo/bar/baz`
+* `{ext}` - snapshot extension (with dots)
+  * Value: `.png`
 * `{platform}` - The value of `process.platform`.
 * `{projectName}` - Project's file-system-sanitized name, if any.
   * Value: `''` (empty string).
+* `{snapshotDir}` - Project's [`property: TestConfig.snapshotDir`].
+  * Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+* `{testDir}` - Project's [`property: TestConfig.testDir`].
+  * Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with config)
 * `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
   * Value: `page`
 * `{testFileName}` - Test file name with extension.
@@ -1730,10 +1751,6 @@ The list of supported tokens:
   * Value: `page/page-click.spec.ts`
 * `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
   * Value: `suite-test-should-work`
-* `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated snapshot name.
-  * Value: `foo/bar/baz`
-* `{ext}` - snapshot extension (with dots)
-  * Value: `.png`
 
 Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
 

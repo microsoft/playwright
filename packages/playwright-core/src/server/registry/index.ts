@@ -96,6 +96,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'mac13': 'builds/chromium/%s/chromium-mac.zip',
     'mac13-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
+    'mac14': 'builds/chromium/%s/chromium-mac.zip',
+    'mac14-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-tip-of-tree': {
@@ -119,6 +121,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'mac13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
     'mac13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
+    'mac14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
+    'mac14-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'win64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-win64.zip',
   },
   'firefox': {
@@ -142,6 +146,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
     'mac13': 'builds/firefox/%s/firefox-mac-13.zip',
     'mac13-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
+    'mac14': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac14-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -165,30 +171,9 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'mac13': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
     'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
+    'mac14': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac14-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
-  },
-  'firefox-asan': {
-    '<unknown>': undefined,
-    'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': undefined,
-    'ubuntu22.04-x64': 'builds/firefox/%s/firefox-asan-ubuntu-22.04.zip',
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': undefined,
-    'ubuntu22.04-arm64': undefined,
-    'debian11-x64': undefined,
-    'debian11-arm64': undefined,
-    'debian12-x64': undefined,
-    'debian12-arm64': undefined,
-    'mac10.13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac10.14': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac10.15': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac11': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac11-arm64': undefined,
-    'mac12': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac12-arm64': undefined,
-    'mac13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
-    'mac13-arm64': undefined,
-    'win64': undefined,
   },
   'webkit': {
     '<unknown>': undefined,
@@ -211,6 +196,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/webkit/%s/webkit-mac-12-arm64.zip',
     'mac13': 'builds/webkit/%s/webkit-mac-13.zip',
     'mac13-arm64': 'builds/webkit/%s/webkit-mac-13-arm64.zip',
+    'mac14': 'builds/webkit/%s/webkit-mac-14.zip',
+    'mac14-arm64': 'builds/webkit/%s/webkit-mac-14-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -234,6 +221,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'mac13': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac13-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac14-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
   'android': {
@@ -257,6 +246,8 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac12-arm64': 'builds/android/%s/android.zip',
     'mac13': 'builds/android/%s/android.zip',
     'mac13-arm64': 'builds/android/%s/android.zip',
+    'mac14': 'builds/android/%s/android.zip',
+    'mac14-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
 };
@@ -345,7 +336,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'firefox-asan' | 'chromium-tip-of-tree' | 'android';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
@@ -530,24 +521,6 @@ export class Registry {
       downloadURLs: this._downloadURLs(firefox),
       browserVersion: firefox.browserVersion,
       _install: () => this._downloadExecutable(firefox, firefoxExecutable),
-      _dependencyGroup: 'firefox',
-      _isHermeticInstallation: true,
-    });
-
-    const firefoxAsan = descriptors.find(d => d.name === 'firefox-asan')!;
-    const firefoxAsanExecutable = findExecutablePath(firefoxAsan.dir, 'firefox');
-    this._executables.push({
-      type: 'browser',
-      name: 'firefox-asan',
-      browserName: 'firefox',
-      directory: firefoxAsan.dir,
-      executablePath: () => firefoxAsanExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-asan', firefoxAsanExecutable, firefoxAsan.installByDefault, sdkLanguage),
-      installType: firefoxAsan.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxAsan.dir, ['firefox'], [], ['firefox']),
-      downloadURLs: this._downloadURLs(firefoxAsan),
-      browserVersion: firefoxAsan.browserVersion,
-      _install: () => this._downloadExecutable(firefoxAsan, firefoxAsanExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });

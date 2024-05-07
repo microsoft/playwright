@@ -17,99 +17,53 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type ReporterDescription =
+export type ReporterDescription = Readonly<
   ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
   ['line'] |
   ['list'] | ['list', { printSteps?: boolean }] |
   ['github'] |
-  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
+  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', host?: string, port?: number, attachmentsBaseURL?: string }] |
   ['null'] |
-  [string] | [string, any];
+  [string] | [string, any]
+>;
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
-export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
+interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullProjectInternal instead.
+export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
+}
+
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  metadata: Metadata;
-  name: string;
-  dependencies: string[];
-  snapshotDir: string;
-  outputDir: string;
-  repeatEach: number;
-  retries: number;
-  teardown?: string;
-  testDir: string;
-  testIgnore: string | RegExp | (string | RegExp)[];
-  testMatch: string | RegExp | (string | RegExp)[];
-  timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
-// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
-interface TestConfig {
+interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
+  projects?: Project<TestArgs, WorkerArgs>[];
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  use?: UseOptions<TestArgs, WorkerArgs>;
   webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
-  projects?: Project<TestArgs, WorkerArgs>[];
-  use?: UseOptions<TestArgs, WorkerArgs>;
+export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig<TestArgs, WorkerArgs> {
 }
 
 export type Metadata = { [key: string]: any };
 
-// [internal] !!! DO NOT ADD TO THIS !!!
-// [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  forbidOnly: boolean;
-  fullyParallel: boolean;
-  globalSetup: string | null;
-  globalTeardown: string | null;
-  globalTimeout: number;
-  grep: RegExp | RegExp[];
-  grepInvert: RegExp | RegExp[] | null;
-  maxFailures: number;
-  metadata: Metadata;
-  version: string;
-  preserveOutput: 'always' | 'never' | 'failures-only';
   projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
-  reportSlowTests: { max: number, threshold: number } | null;
-  rootDir: string;
-  quiet: boolean;
-  shard: { total: number, current: number } | null;
-  updateSnapshots: 'all' | 'none' | 'missing';
-  workers: number;
   webServer: TestConfigWebServer | null;
-  configFile?: string;
-  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
-
-export interface WorkerInfo {
-  config: FullConfig;
-  project: FullProject;
-}
-
-export interface TestInfo {
-  config: FullConfig;
-  project: FullProject;
-}
 
 type TestDetailsAnnotation = {
   type: string;
@@ -409,7 +363,7 @@ export type ExpectMatcherState = {
   utils: ExpectMatcherUtils;
 };
 
-type MatcherReturnType = {
+export type MatcherReturnType = {
   message: () => string;
   pass: boolean;
   name?: string;

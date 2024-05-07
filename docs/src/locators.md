@@ -264,7 +264,7 @@ Role locators include [buttons, checkboxes, headings, links, lists, tables, and 
 
 Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
 
-:::note When to use role locators
+:::note[When to use role locators]
 We recommend prioritizing role locators to locate elements, as it is the closest way to how users and assistive technology perceive the page.
 :::
 
@@ -301,7 +301,7 @@ page.get_by_label("Password").fill("secret")
 await page.GetByLabel("Password").FillAsync("secret");
 ```
 
-:::note When to use label locators
+:::note[When to use label locators]
 Use this locator when locating form fields.
 :::
 ### Locate by placeholder
@@ -340,7 +340,7 @@ await page
     .FillAsync("playwright@microsoft.com");
 ```
 
-:::note When to use placeholder locators
+:::note[When to use placeholder locators]
 Use this locator when locating form elements that do not have labels but do have placeholder texts.
 :::
 
@@ -433,7 +433,7 @@ await Expect(Page
 Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 :::
 
-:::note When to use text locators
+:::note[When to use text locators]
 We recommend using text locators to find non interactive elements like `div`, `span`, `p`, etc. For interactive elements like `button`, `a`, `input`, etc. use [role locators](#locate-by-role).
 :::
 
@@ -471,7 +471,7 @@ page.get_by_alt_text("playwright logo").click()
 await page.GetByAltText("playwright logo").ClickAsync();
 ```
 
-:::note When to use alt locators
+:::note[When to use alt locators]
 Use this locator when your element supports alt text such as `img` and `area` elements.
 :::
 
@@ -507,7 +507,7 @@ expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 await Expect(Page.GetByTitle("Issues count")).toHaveText("25 issues");
 ```
 
-:::note When to use title locators
+:::note[When to use title locators]
 Use this locator when your element has the `title` attribute.
 :::
 
@@ -543,7 +543,7 @@ page.get_by_test_id("directions").click()
 await page.GetByTestId("directions").ClickAsync();
 ```
 
-:::note When to use testid locators
+:::note[When to use testid locators]
 You can also use test ids when you choose to use the test id methodology or when you can't locate by [role](#locate-by-role) or [text](#locate-by-text).
 :::
 
@@ -693,7 +693,7 @@ await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > di
 await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
 ```
 
-:::note When to use this
+:::note[When to use this]
 CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-test-id) using test ids.
 :::
 

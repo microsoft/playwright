@@ -15,6 +15,7 @@
  */
 
 import type { Frame } from '../frames';
+import type { SmartKeyboardModifier } from '../types';
 import type * as actions from './recorderActions';
 
 export type MouseClickOptions = Parameters<Frame['click']>[2];
@@ -36,14 +37,14 @@ export function toClickOptions(action: actions.ClickAction): { method: 'click' |
   return { method, options };
 }
 
-export function toModifiers(modifiers: number): ('Alt' | 'Control' | 'Meta' | 'Shift')[] {
-  const result: ('Alt' | 'Control' | 'Meta' | 'Shift')[] = [];
+export function toModifiers(modifiers: number): SmartKeyboardModifier[] {
+  const result: SmartKeyboardModifier[] = [];
   if (modifiers & 1)
     result.push('Alt');
   if (modifiers & 2)
-    result.push('Control');
+    result.push('ControlOrMeta');
   if (modifiers & 4)
-    result.push('Meta');
+    result.push('ControlOrMeta');
   if (modifiers & 8)
     result.push('Shift');
   return result;

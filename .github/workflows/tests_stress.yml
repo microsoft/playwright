@@ -30,29 +30,27 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: 16
+        node-version: 20
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npx playwright install firefox-asan
-      if: matrix.os != 'windows-latest'
     - run: npm run stest contexts -- --project=chromium
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest browsers -- --project=chromium
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest frames -- --project=chromium
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest contexts -- --project=webkit
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest browsers -- --project=webkit
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest frames -- --project=webkit
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest contexts -- --project=firefox
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest browsers -- --project=firefox
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest frames -- --project=firefox
-      if: always()
+      if: ${{ !cancelled() }}
     - run: npm run stest heap -- --project=chromium
-      if: always()
+      if: ${{ !cancelled() }}

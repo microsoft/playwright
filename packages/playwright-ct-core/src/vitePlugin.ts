@@ -22,8 +22,7 @@ import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'pla
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { stoppable } from 'playwright/lib/utilsBundle';
-import type { FullConfig } from 'playwright/test';
-import type { Suite } from 'playwright/types/testReporter';
+import type { FullConfig, Suite } from 'playwright/types/testReporter';
 import type { PluginContext } from 'rollup';
 import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
@@ -97,7 +96,7 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
     const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
     if (await isURLAvailable(url, true)) {
       // eslint-disable-next-line no-console
-      console.log(`Test Server is already running at ${url.toString()}, using it.\n`);
+      console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
       process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
       return null;
     }

@@ -245,6 +245,11 @@ test.describe('toHaveURL', () => {
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
     expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
   });
+
+  test('support ignoreCase', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    await expect(page).toHaveURL('DATA:teXT/HTml,<div>a</div>', { ignoreCase: true });
+  });
 });
 
 test.describe('toHaveAttribute', () => {
@@ -413,4 +418,41 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
   expect(error.message).toContain(waitingForMessage);
   expect(error.message).not.toContain('locator resolved to');
   expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
+});
+
+test('toHaveAccessibleName', async ({ page }) => {
+  await page.setContent(`
+    <div role="button" aria-label="Hello"></div>
+  `);
+  await expect(page.locator('div')).toHaveAccessibleName('Hello');
+  await expect(page.locator('div')).not.toHaveAccessibleName('hello');
+  await expect(page.locator('div')).toHaveAccessibleName('hello', { ignoreCase: true });
+  await expect(page.locator('div')).toHaveAccessibleName(/ell\w/);
+  await expect(page.locator('div')).not.toHaveAccessibleName(/hello/);
+  await expect(page.locator('div')).toHaveAccessibleName(/hello/, { ignoreCase: true });
+});
+
+test('toHaveAccessibleDescription', async ({ page }) => {
+  await page.setContent(`
+    <div role="button" aria-description="Hello"></div>
+  `);
+  await expect(page.locator('div')).toHaveAccessibleDescription('Hello');
+  await expect(page.locator('div')).not.toHaveAccessibleDescription('hello');
+  await expect(page.locator('div')).toHaveAccessibleDescription('hello', { ignoreCase: true });
+  await expect(page.locator('div')).toHaveAccessibleDescription(/ell\w/);
+  await expect(page.locator('div')).not.toHaveAccessibleDescription(/hello/);
+  await expect(page.locator('div')).toHaveAccessibleDescription(/hello/, { ignoreCase: true });
+});
+
+test('toHaveRole', async ({ page }) => {
+  await page.setContent(`<div role="button">Button!</div>`);
+  await expect(page.locator('div')).toHaveRole('button');
+  await expect(page.locator('div')).not.toHaveRole('checkbox');
+  try {
+    // @ts-expect-error
+    await expect(page.locator('div')).toHaveRole(/button|checkbox/);
+    expect(1, 'Must throw when given a regular expression').toBe(2);
+  } catch (error) {
+    expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
+  }
 });

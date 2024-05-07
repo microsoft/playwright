@@ -216,16 +216,16 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('13');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('6');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('3');
 
   await expect(page.locator('.test-file-test .test-file-title')).toHaveText([
-    'failing 1', 'flaky 1', 'math 1', 'skipped 1',
-    'failing 2', 'math 2', 'skipped 2',
-    'flaky 2', 'math 3', 'skipped 3',
+    'failing 1', 'flaky 1', 'math 1',
+    'failing 2', 'math 2',
+    'flaky 2', 'math 3',
     'login once', 'login once', 'login once',
   ]);
 
@@ -284,7 +284,7 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
     expect(exitCode).toBe(0);
     expect(fs.existsSync(test.info().outputPath('report.json'))).toBe(true);
     await showReport();
-    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('7');
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('5');
     await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
     await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
     await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -340,7 +340,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('6');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -912,7 +912,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('3');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
@@ -1198,23 +1198,61 @@ test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
 
-test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) => {
-  const files = (reportName: string) => ({
-    'echo-reporter.js': `
-      import fs from 'fs';
-
-      class EchoReporter {
-        onBegin(config, suite) {
-          const projects = suite.suites.map(s => s.project()).sort((a, b) => a.metadata.botName.localeCompare(b.metadata.botName));
-          console.log('projectNames: ' + projects.map(p => p.name));
-          console.log('botNames: ' + projects.map(p => p.metadata.botName));
-        }
-      }
-      module.exports = EchoReporter;
-    `,
+test('support PLAYWRIGHT_BLOB_OUTPUT_DIR env variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = {
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { fileName: '${reportName}.zip' }]],
+        reporter: [['blob']],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_DIR: 'my/dir' });
+
+  const reportDir = test.info().outputPath('my', 'dir');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report.zip']);
+});
+
+test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-one.zip' });
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-two.zip', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+});
+
+test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = (fileSuffix: string) => ({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: 'should-be-ignored', outputFile: 'my-reports/report-${fileSuffix}.zip' }]],
         projects: [
           { name: 'foo' },
         ]
@@ -1226,14 +1264,79 @@ test('preserve reportName on projects', async ({ runInlineTest, mergeReports }) 
     `,
   });
 
+  await runInlineTest(files('one'));
+  await runInlineTest(files('two'));
+
+  const reportDir = test.info().outputPath('my-reports');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+});
+
+test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+  const defaultDir = test.info().outputPath('blob-report');
+  fs.mkdirSync(defaultDir, { recursive: true });
+  const file = path.join(defaultDir, 'some.file');
+  fs.writeFileSync(file, 'content');
+
+  await runInlineTest(files, { shard: `1/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: 'subdir/report-one.zip' });
+  await runInlineTest(files, { shard: `2/2` }, { PLAYWRIGHT_BLOB_OUTPUT_FILE: test.info().outputPath('subdir/report-two.zip') });
+  const reportDir = test.info().outputPath('subdir');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
+
+  expect(fs.existsSync(file), 'Default directory should not be cleaned up if output file is specified.').toBe(true);
+});
+
+test('keep projects with same name different bot name separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const files = (reportName: string) => ({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { fileName: '${reportName}.zip' }]],
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => { expect('${reportName}').toBe('second'); });
+    `,
+  });
+
   await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
   await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
-  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
-  expect(output).toContain(`projectNames: foo,foo`);
-  expect(output).toContain(`botNames: first,second`);
+  await showReport();
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
+
+  await page.getByText(/test 1.*first/).getByRole('link', { name: 'test' }).click();
+  await expect(page.getByText('Errors')).toBeVisible();
+  await page.goBack();
+  await page.getByText(/test 1.*second/).getByRole('link', { name: 'test' }).click();
+  await expect(page.getByText('Errors')).not.toBeVisible();
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
@@ -1286,7 +1389,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
 
   const events = await extractReport(test.info().outputPath('blob-report', 'report.zip'), test.info().outputPath('tmp'));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
-  expect(metadataEvent.params.version).toBe(1);
+  expect(metadataEvent.params.version).toBe(2);
   expect(metadataEvent.params.userAgent).toBe(getUserAgent());
 });
 
@@ -1396,7 +1499,7 @@ test('should merge blob reports with same name', async ({ runInlineTest, mergeRe
   const { exitCode } = await mergeReports(allReportsDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
   await showReport();
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('14');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('4');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
@@ -1707,4 +1810,132 @@ test('TestSuite.project() should return owning project', async ({ runInlineTest,
   const { exitCode, output } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
   expect(exitCode).toBe(0);
   expect(output).toContain(`test project: my-project`);
+});
+
+test('open blob-1.42', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29984' });
+  await runInlineTest({
+    'echo-reporter.js': `
+      export default class EchoReporter {
+        lines = [];
+        onTestBegin(test) {
+          this.lines.push(test.titlePath().join(' > '));
+        }
+        onEnd() {
+          console.log(this.lines.join('\\n'));
+        }
+      };
+    `,
+    'merge.config.ts': `module.exports = {
+      testDir: 'mergeRoot',
+      reporter: './echo-reporter.js'
+     };`,
+  });
+
+  const blobDir = test.info().outputPath('blob-report');
+  await fs.promises.mkdir(blobDir, { recursive: true });
+  await fs.promises.copyFile(path.join(__dirname, '../assets/blob-1.42.zip'), path.join(blobDir, 'blob-1.42.zip'));
+
+  const { exitCode, output } = await mergeReports(blobDir, undefined, { additionalArgs: ['--config', 'merge.config.ts'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(` > chromium > example.spec.ts > test 0
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 3
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 4
+ > chromium > example.spec.ts > describe 1 > describe 2 > test 2
+ > chromium > example.spec.ts > describe 1 > test 1
+ > chromium > example.spec.ts > describe 1 > test 5
+ > chromium > example.spec.ts > test 6
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 2
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 3
+ > firefox > example.spec.ts > test 0
+ > firefox > example.spec.ts > describe 1 > describe 2 > test 4
+ > firefox > example.spec.ts > describe 1 > test 1
+ > firefox > example.spec.ts > test 6
+ > firefox > example.spec.ts > describe 1 > test 5
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 4
+ > webkit > example.spec.ts > test 0
+ > webkit > example.spec.ts > describe 1 > test 1
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 2
+ > webkit > example.spec.ts > describe 1 > describe 2 > test 3
+ > webkit > example.spec.ts > test 6
+ > webkit > example.spec.ts > describe 1 > test 5`);
+});
+
+test('preserve static annotations when tests did not run', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30260' });
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'setup', testMatch: 'setup.js' },
+          { name: 'tests', testMatch: /.*test.js/, dependencies: ['setup'] },
+        ]
+      };
+    `,
+    'setup.js': `
+      import { test, expect } from '@playwright/test';
+      test('setup', { annotation: [{ type: "sample", description: "uno" }] }, async ({}) => {
+        expect(1).toBe(2);
+      });
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('first', { annotation: [{ type: "sample", description: "uno" }] }, async ({}) => {});
+      test.skip('second', { annotation: [{ type: "sample", description: "dos" }] }, async ({}) => {});
+    `
+  };
+  await runInlineTest(files);
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+
+  // Show skipped tests.
+  await page.getByText('Skipped').click();
+
+  // Check first annotation.
+  {
+    await page.getByRole('link', { name: 'first' }).click();
+    await expect(page.getByText('sample: uno')).toBeVisible();
+    await page.goBack();
+  }
+  // Check second annotation.
+  {
+    await page.getByRole('link', { name: 'second' }).click();
+    await expect(page.getByText('sample: dos')).toBeVisible();
+    await page.goBack();
+  }
+});
+
+test('project filter in report name', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+          { name: 'b%/\\ar' },
+          { name: 'baz' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1 @smoke', async ({}) => {});
+    `,
+  };
+
+  const reportDir = test.info().outputPath('blob-report');
+
+  {
+    await runInlineTest(files, { shard: `2/2`, project: 'foo' });
+    const reportFiles = await fs.promises.readdir(reportDir);
+    expect(reportFiles.sort()).toEqual(['report-foo-2.zip']);
+  }
+  {
+    await runInlineTest(files, { shard: `1/2`, project: 'foo,b*r', grep: 'smoke' });
+    const reportFiles = await fs.promises.readdir(reportDir);
+    expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
+  }
 });

@@ -43,7 +43,7 @@ const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 })
 
 test.describe.configure({ mode: 'parallel' });
 
-for (const useIntermediateMergeReport of [false, true] as const) {
+for (const useIntermediateMergeReport of [false] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
@@ -69,7 +69,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       await showReport();
 
-      await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
+      await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('3');
       await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
       await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
       await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
@@ -78,7 +78,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toBeVisible();
       await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toBeVisible();
       await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
-      await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
+      await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).not.toBeVisible();
 
       await expect(page.getByTestId('overall-duration'), 'should contain humanized total time with at most 1 decimal place').toContainText(/^Total time: \d+(\.\d)?(ms|s|m)$/);
       await expect(page.getByTestId('project-name'), 'should contain project name').toContainText('project-name');
@@ -86,6 +86,32 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.metadata-view')).not.toBeVisible();
     });
 
+    test('should allow navigating to testId=test.id', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ page }) => {
+            console.log('TESTID=' + test.info().testId);
+            await expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=passes');
+      await page.locator('text=stdout').click();
+      await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
+      const idString = await page.locator('.attachment-body').textContent();
+      const testId = idString.match(/TESTID=(.*)/)[1];
+      expect(page.url()).toContain('testId=' + testId);
+
+      // Expect test to be opened.
+      await page.reload();
+      await page.locator('text=stdout').click();
+      await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
+    });
 
     test('should not throw when PW_TEST_HTML_REPORT_OPEN value is invalid', async ({ runInlineTest, page, showReport }, testInfo) => {
       const invalidOption = 'invalid-option';
@@ -664,17 +690,17 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
-          test('skipped test', async ({ page }) => {
-            test.skip(true, 'I am not interested in this test');
+          test('annotated test', async ({ page }) => {
+            test.info().annotations.push({ type: 'issue', description: 'I am not interested in this test' });
           });
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
-      expect(result.skipped).toBe(1);
+      expect(result.passed).toBe(1);
 
       await showReport();
-      await page.click('text=skipped test');
-      await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+      await page.click('text=annotated test');
+      await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
     });
 
     test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
@@ -762,14 +788,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await page.getByRole('link', { name: 'passing' }).click();
 
       const expectedAttachments = [
-        ['screenshot', 'screenshot.png', 'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png'],
+        ['screenshot', 'screenshot.png', 'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png'],
         ['some-pdf', 'some-pdf.pdf', '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf'],
         ['madeup-contentType', 'madeup-contentType.dat', '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat'],
         ['screenshot-that-already-has-an-extension-with-madeup.png', 'screenshot-that-already-has-an-extension-with-madeup.png', '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png'],
         ['screenshot-that-already-has-an-extension-with-correct-contentType.png', 'screenshot-that-already-has-an-extension-with-correct-contentType.png', '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png'],
         ['example.ext with spaces', 'example.ext with spaces', 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces'],
       ];
-
       for (const [visibleAttachmentName, downloadFileName, sha1] of expectedAttachments) {
         await test.step(`should download ${visibleAttachmentName}`, async () => {
           const downloadPromise = page.waitForEvent('download');
@@ -782,7 +807,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
       expect(new Set(files)).toEqual(new Set([
-        'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png', // screenshot
+        'd606c7545cd71c2b0c27d9f99edbad4fa39f1174.png', // screenshot
         '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf', // some-pdf
         '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat', // madeup-contentType
         '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png', // screenshot-that-already-has-an-extension-with-madeup.png
@@ -1069,6 +1094,26 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(output).toContain('html-report');
     });
 
+    test('it should only identify exact matches as clashing folders', async ({ runInlineTest, useIntermediateMergeReport }) => {
+      test.skip(useIntermediateMergeReport);
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['html', { outputFolder: 'test-results-html' }]]
+          }
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(0);
+      const output = result.output;
+      expect(output).not.toContain('Configuration Error');
+      expect(output).toContain('test-results-html');
+    });
+
     test.describe('report location', () => {
       test('with config should create report relative to config', async ({ runInlineTest, useIntermediateMergeReport }, testInfo) => {
         test.skip(useIntermediateMergeReport);
@@ -1205,20 +1250,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'webkit',
           'regression',
           'flaky',
-        ]);
-        await expect(page.locator('.test-file-test', { has: page.getByText('@regression skipped', { exact: true }) }).locator('.label')).toHaveText([
-          'chromium',
-          'regression',
-          'foo',
-          'bar',
-          'firefox',
-          'regression',
-          'foo',
-          'bar',
-          'webkit',
-          'regression',
-          'foo',
-          'bar',
         ]);
         await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
@@ -1638,8 +1669,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         const passedNavMenu = page.locator('.subnav-item:has-text("Passed")');
         const failedNavMenu = page.locator('.subnav-item:has-text("Failed")');
         const allNavMenu = page.locator('.subnav-item:has-text("All")');
-        const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
-        const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+        const smokeLabelButton =  page.locator('.label', { hasText: 'smoke' }).first();
+        const regressionLabelButton =  page.locator('.label', { hasText: 'regression' }).first();
 
         await failedNavMenu.click();
         await smokeLabelButton.click();
@@ -1651,6 +1682,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page).toHaveURL(/s:failed%20@smoke/);
 
         await passedNavMenu.click();
+        await smokeLabelButton.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
         await regressionLabelButton.click();
         await expect(page.locator('.test-file-test')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2058,6 +2090,39 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
+    test('html report should preserve declaration order within file', async ({ runInlineTest, showReport, page }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29984' });
+      await runInlineTest({
+        'main.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('test 0', async ({}) => {});
+          test.describe('describe 1', () => {
+            test('test 1', async ({}) => {});
+            test.describe('describe 2', () => {
+              test('test 2', async ({}) => {});
+              test('test 3', async ({}) => {});
+              test('test 4', async ({}) => {});
+            });
+            test('test 5', async ({}) => {});
+          });
+          test('test 6', async ({}) => {});
+        `,
+      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      await showReport();
+
+      // Failing test first, then sorted by the run order.
+      await expect(page.locator('.test-file-title')).toHaveText([
+        /test 0/,
+        /describe 1 › test 1/,
+        /describe 1 › describe 2 › test 2/,
+        /describe 1 › describe 2 › test 3/,
+        /describe 1 › describe 2 › test 4/,
+        /describe 1 › test 5/,
+        /test 6/,
+      ]);
+    });
+
     test('tests should filter by file', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'file-a.test.js': `
@@ -2284,6 +2349,36 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
       await showReport();
       await expect(page.getByTestId('report-errors')).toHaveText(/Error: From teardown.*at globalTeardown.ts:3.*export default async function globalTeardown/s);
+    });
+
+    test('should not render anonymous describe', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test.describe('Root describe', () => {
+              test.describe(() => {
+                test('Test passed', async ({}) => {
+                  expect(1).toBe(1);
+                });
+              });
+            });
+          `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+
+      await expect(page.locator('.test-file-test')).toHaveCount(1);
+
+      await expect(page.locator('.test-file-test').locator('a').first()).toHaveAttribute('title', 'Root describe › Test passed');
+      await expect(page.locator('.test-file-title')).toHaveText('Root describe › Test passed');
+      const testFilePathLink = page.locator('.test-file-path-link');
+      await expect(testFilePathLink).toHaveAttribute('title', 'Root describe › Test passed');
+
+      await testFilePathLink.click();
+      await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
   });
 }

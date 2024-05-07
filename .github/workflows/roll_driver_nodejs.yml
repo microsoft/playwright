@@ -9,6 +9,8 @@ jobs:
     name: Trigger Roll
     runs-on: ubuntu-22.04
     if: github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

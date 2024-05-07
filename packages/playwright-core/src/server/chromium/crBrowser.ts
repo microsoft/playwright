@@ -411,7 +411,7 @@ export class CRBrowserContext extends BrowserContext {
     await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
   }
 
-  async clearCookies() {
+  async doClearCookies() {
     await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId });
   }
 
@@ -459,7 +459,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateExtraHTTPHeaders(false);
+      await (sw as CRServiceWorker).updateExtraHTTPHeaders();
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
@@ -474,7 +474,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateOffline(false);
+      await (sw as CRServiceWorker).updateOffline();
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
@@ -482,7 +482,7 @@ export class CRBrowserContext extends BrowserContext {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();
     for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateHttpCredentials(false);
+      await (sw as CRServiceWorker).updateHttpCredentials();
   }
 
   async doAddInitScript(source: string) {

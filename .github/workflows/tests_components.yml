@@ -27,9 +27,9 @@ jobs:
         node-version: [18]
         include:
           - os: ubuntu-latest
-            node-version: 16
-          - os: ubuntu-latest
             node-version: 20
+          - os: ubuntu-latest
+            node-version: 22
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

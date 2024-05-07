@@ -85,3 +85,12 @@ it('should focus a button', async ({ page, server }) => {
   await button.focus();
   expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
 });
+
+it('should allow disposing twice', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29945' });
+  await page.setContent('<section>39</section>');
+  const element = await page.$('section');
+  expect(element).toBeTruthy();
+  await element.dispose();
+  await element.dispose();
+});

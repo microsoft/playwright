@@ -55,7 +55,7 @@ export interface ConnectionTransport {
   send(s: ProtocolRequest): void;
   close(): void;  // Note: calling close is expected to issue onclose at some point.
   onmessage?: (message: ProtocolResponse) => void,
-  onclose?: () => void,
+  onclose?: (reason?: string) => void,
 }
 
 export class WebSocketTransport implements ConnectionTransport {
@@ -64,7 +64,7 @@ export class WebSocketTransport implements ConnectionTransport {
   private _logUrl: string;
 
   onmessage?: (message: ProtocolResponse) => void;
-  onclose?: () => void;
+  onclose?: (reason?: string) => void;
   readonly wsEndpoint: string;
   readonly headers: HeadersArray = [];
 
@@ -175,7 +175,7 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('close', event => {
       this._progress?.log(`<ws disconnected> ${logUrl} code=${event.code} reason=${event.reason}`);
       if (this.onclose)
-        this.onclose.call(null);
+        this.onclose.call(null, event.reason);
     });
     // Prevent Error: read ECONNRESET.
     this._ws.addEventListener('error', error => this._progress?.log(`<ws error> ${logUrl} ${error.type} ${error.message}`));

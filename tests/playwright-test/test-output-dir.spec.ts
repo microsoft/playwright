@@ -413,7 +413,7 @@ test('should allow shorten long output dirs characters in the output dir', async
     `,
   });
   const outputDir = result.outputLines[0];
-  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'very-deep-and-long-file-name-that-i-want-to-be-99202--keeps-going-and-going-and-we-should-shorten-it'));
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'very-deep-and-long-file-na-99202-ng-and-we-should-shorten-it'));
 });
 
 test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {

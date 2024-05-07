@@ -68,6 +68,10 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
 
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
+  // In order to make Accessibility Insights for Web work.
+  if (event.request.url.startsWith('chrome-extension://'))
+    return fetch(event.request);
+
   const request = event.request;
   const client = await self.clients.get(event.clientId);
 
@@ -155,7 +159,7 @@ function downloadHeadersForAttachment(traceModel: TraceModel, sha1: string): Hea
   if (!attachment)
     return;
   const headers = new Headers();
-  headers.set('Content-Disposition', `attachment; filename="${attachment.name}"`);
+  headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(attachment.name)}`);
   if (attachment.contentType)
     headers.set('Content-Type', attachment.contentType);
   return headers;

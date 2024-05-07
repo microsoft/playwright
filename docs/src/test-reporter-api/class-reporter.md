@@ -70,7 +70,7 @@ Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: ['./my-awesome-reporter.ts', { customOption: 'some value' }],
+  reporter: [['./my-awesome-reporter.ts', { customOption: 'some value' }]],
 });
 ```
 
@@ -87,6 +87,15 @@ and [`method: Reporter.onError`] is called when something went wrong outside of 
 
 If your custom reporter does not print anything to the terminal, implement [`method: Reporter.printsToStdio`] and return `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter to enhance user experience.
 
+**Merged report API notes**
+
+When merging multiple [`blob`](../test-reporters#blob-reporter) reports via [`merge-reports`](../test-sharding#merge-reports-cli) CLI
+command, the same [Reporter] API is called to produce final reports and all existing reporters
+should work without any changes. There some subtle differences though which might affect some custom
+reporters.
+
+* Projects from different shards are always kept as separate [TestProject] objects. E.g. if project 'Desktop Chrome' was sharded across 5 machines then there will be 5 instances of projects with the same name in the config passed to [`method: Reporter.onBegin`].
+
 ## optional method: Reporter.onBegin
 * since: v1.10
 
@@ -94,7 +103,7 @@ Called once before running tests. All tests have been already discovered and put
 
 ### param: Reporter.onBegin.config
 * since: v1.10
-- `config` <[TestConfig]>
+- `config` <[FullConfig]>
 
 Resolved configuration.
 

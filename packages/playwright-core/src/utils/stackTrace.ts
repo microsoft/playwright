@@ -30,7 +30,6 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 }
 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
-const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 
 const internalStackPrefixes = [
   CORE_DIR,
@@ -48,8 +47,8 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(rawStack?: RawStack): { frames: StackFrame[], apiName: string } {
-  const stack = rawStack || captureRawStack();
+export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
+  const stack = captureRawStack();
 
   const isTesting = isUnderTest();
   type ParsedFrame = {
@@ -60,8 +59,6 @@ export function captureLibraryStackTrace(rawStack?: RawStack): { frames: StackFr
   let parsedFrames = stack.map(line => {
     const frame = parseStackTraceLine(line);
     if (!frame || !frame.file)
-      return null;
-    if (!process.env.PWDEBUGIMPL && isTesting && frame.file.includes(COVERAGE_PATH))
       return null;
     const isPlaywrightLibrary = frame.file.startsWith(CORE_DIR);
     const parsed: ParsedFrame = {

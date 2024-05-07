@@ -18,12 +18,15 @@ title: "Assertions"
 | [`method: LocatorAssertions.toBeInViewport`] | Element intersects viewport |
 | [`method: LocatorAssertions.toBeVisible`] | Element is visible |
 | [`method: LocatorAssertions.toContainText`] | Element contains text |
+| [`method: LocatorAssertions.toHaveAccessibleDescription`] | Element has a matching [accessible description](https://w3c.github.io/accname/#dfn-accessible-description) |
+| [`method: LocatorAssertions.toHaveAccessibleName`] | Element has a matching [accessible name](https://w3c.github.io/accname/#dfn-accessible-name) |
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
 | [`method: LocatorAssertions.toHaveClass`] | Element has a class property |
 | [`method: LocatorAssertions.toHaveCount`] | List has exact number of children |
 | [`method: LocatorAssertions.toHaveCSS`] | Element has CSS property |
 | [`method: LocatorAssertions.toHaveId`] | Element has an ID |
 | [`method: LocatorAssertions.toHaveJSProperty`] | Element has a JavaScript property |
+| [`method: LocatorAssertions.toHaveRole`] | Element has a specific [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) |
 | [`method: LocatorAssertions.toHaveText`] | Element matches text |
 | [`method: LocatorAssertions.toHaveValue`] | Input has a value |
 | [`method: LocatorAssertions.toHaveValues`] | Select has options selected |

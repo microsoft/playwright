@@ -147,6 +147,11 @@ export module Protocol {
       enabled: boolean;
     };
     export type setRequestInterceptionReturnValue = void;
+    export type setCacheDisabledParameters = {
+      browserContextId?: string;
+      cacheDisabled: boolean;
+    };
+    export type setCacheDisabledReturnValue = void;
     export type setGeolocationOverrideParameters = {
       browserContextId?: string;
       geolocation: {
@@ -1099,6 +1104,7 @@ export module Protocol {
     "Browser.setContextProxy": Browser.setContextProxyParameters;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsParameters;
     "Browser.setRequestInterception": Browser.setRequestInterceptionParameters;
+    "Browser.setCacheDisabled": Browser.setCacheDisabledParameters;
     "Browser.setGeolocationOverride": Browser.setGeolocationOverrideParameters;
     "Browser.setUserAgentOverride": Browser.setUserAgentOverrideParameters;
     "Browser.setPlatformOverride": Browser.setPlatformOverrideParameters;
@@ -1179,6 +1185,7 @@ export module Protocol {
     "Browser.setContextProxy": Browser.setContextProxyReturnValue;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsReturnValue;
     "Browser.setRequestInterception": Browser.setRequestInterceptionReturnValue;
+    "Browser.setCacheDisabled": Browser.setCacheDisabledReturnValue;
     "Browser.setGeolocationOverride": Browser.setGeolocationOverrideReturnValue;
     "Browser.setUserAgentOverride": Browser.setUserAgentOverrideReturnValue;
     "Browser.setPlatformOverride": Browser.setPlatformOverrideReturnValue;

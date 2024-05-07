@@ -1086,22 +1086,22 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   expect(outputText).toContain('4 pixels (ratio 0.01 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
-    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+    attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'to-have-screenshot-should-attach-expected-actual-diff-when-sizes-are-different-playwright-test/__screenshots__/a.spec.js/snapshot.png',
+      path: '__screenshots__/a.spec.js/snapshot.png',
     },
     {
       name: 'snapshot-actual.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-actual.png'
+      path: 'test-results/a-is-a-test/snapshot-actual.png'
     },
     {
       name: 'snapshot-diff.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-diff.png'
+      path: 'test-results/a-is-a-test/snapshot-diff.png'
     },
   ]);
 });

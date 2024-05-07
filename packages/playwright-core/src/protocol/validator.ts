@@ -332,6 +332,7 @@ scheme.PlaywrightNewRequestParams = tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
+    sendImmediately: tOptional(tBoolean),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -545,6 +546,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
+    sendImmediately: tOptional(tBoolean),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -623,6 +625,7 @@ scheme.BrowserNewContextParams = tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
+    sendImmediately: tOptional(tBoolean),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -684,6 +687,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
+    sendImmediately: tOptional(tBoolean),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -826,16 +830,18 @@ scheme.BrowserContextAddInitScriptParams = tObject({
   source: tString,
 });
 scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
-scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
-scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
-scheme.BrowserContextRemoveCookiesParams = tObject({
-  filter: tObject({
-    name: tOptional(tString),
-    domain: tOptional(tString),
-    path: tOptional(tString),
-  }),
+scheme.BrowserContextClearCookiesParams = tObject({
+  name: tOptional(tString),
+  nameRegexSource: tOptional(tString),
+  nameRegexFlags: tOptional(tString),
+  domain: tOptional(tString),
+  domainRegexSource: tOptional(tString),
+  domainRegexFlags: tOptional(tString),
+  path: tOptional(tString),
+  pathRegexSource: tOptional(tString),
+  pathRegexFlags: tOptional(tString),
 });
-scheme.BrowserContextRemoveCookiesResult = tOptional(tObject({}));
+scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
 scheme.BrowserContextCloseParams = tObject({
@@ -1044,14 +1050,20 @@ scheme.PageGoForwardResult = tObject({
 });
 scheme.PageRegisterLocatorHandlerParams = tObject({
   selector: tString,
+  noWaitAfter: tOptional(tBoolean),
 });
 scheme.PageRegisterLocatorHandlerResult = tObject({
   uid: tNumber,
 });
 scheme.PageResolveLocatorHandlerNoReplyParams = tObject({
   uid: tNumber,
+  remove: tOptional(tBoolean),
 });
 scheme.PageResolveLocatorHandlerNoReplyResult = tOptional(tObject({}));
+scheme.PageUnregisterLocatorHandlerParams = tObject({
+  uid: tNumber,
+});
+scheme.PageUnregisterLocatorHandlerResult = tOptional(tObject({}));
 scheme.PageReloadParams = tObject({
   timeout: tOptional(tNumber),
   waitUntil: tOptional(tType('LifecycleEvent')),
@@ -1334,7 +1346,7 @@ scheme.FrameClickParams = tObject({
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
@@ -1364,7 +1376,7 @@ scheme.FrameDblclickParams = tObject({
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
@@ -1442,7 +1454,7 @@ scheme.FrameHoverParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1589,7 +1601,7 @@ scheme.FrameTapParams = tObject({
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1784,7 +1796,7 @@ scheme.ElementHandleCheckResult = tOptional(tObject({}));
 scheme.ElementHandleClickParams = tObject({
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
@@ -1800,7 +1812,7 @@ scheme.ElementHandleContentFrameResult = tObject({
 scheme.ElementHandleDblclickParams = tObject({
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
@@ -1830,7 +1842,7 @@ scheme.ElementHandleGetAttributeResult = tObject({
 });
 scheme.ElementHandleHoverParams = tObject({
   force: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1954,7 +1966,7 @@ scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
 scheme.ElementHandleTapParams = tObject({
   force: tOptional(tBoolean),
   noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -2466,6 +2478,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
+    sendImmediately: tOptional(tBoolean),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -2584,7 +2597,7 @@ scheme.JsonPipeMessageEvent = tObject({
   message: tAny,
 });
 scheme.JsonPipeClosedEvent = tObject({
-  error: tOptional(tType('SerializedError')),
+  reason: tOptional(tString),
 });
 scheme.JsonPipeSendParams = tObject({
   message: tAny,

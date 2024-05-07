@@ -152,8 +152,8 @@ export class Chromium extends BrowserType {
     error.logs = [
       `Chromium sandboxing failed!`,
       `================================`,
-      `To workaround sandboxing issues, do either of the following:`,
-      `  - (preferred): Configure environment to support sandboxing: https://playwright.dev/docs/troubleshooting`,
+      `To avoid the sandboxing issue, do either of the following:`,
+      `  - (preferred): Configure your environment to support sandboxing`,
       `  - (alternative): Launch Chromium without sandbox using 'chromiumSandbox: false' option`,
       `================================`,
       ``,

@@ -337,14 +337,14 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ page, openRecorder, browserName, platform }) => {
+  test('should record open in a new tab with url', async ({ page, openRecorder, browserName }) => {
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
     const locator = await recorder.hoverOverElement('a');
     expect(locator).toBe(`getByRole('link', { name: 'link' })`);
 
-    await page.click('a', { modifiers: [platform === 'darwin' ? 'Meta' : 'Control'] });
+    await page.click('a', { modifiers: ['ControlOrMeta'] });
     const sources = await recorder.waitForOutput('JavaScript', 'page1');
 
     if (browserName !== 'firefox') {
@@ -361,7 +361,7 @@ await page1.GotoAsync("about:blank?foo");`);
       expect(sources.get('JavaScript')!.text).toContain(`
   const page1Promise = page.waitForEvent('popup');
   await page.getByRole('link', { name: 'link' }).click({
-    modifiers: ['${platform === 'darwin' ? 'Meta' : 'Control'}']
+    modifiers: ['ControlOrMeta']
   });
   const page1 = await page1Promise;`);
     }

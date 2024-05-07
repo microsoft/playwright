@@ -41,14 +41,14 @@ export class CRNetworkManager {
   private _page: Page | null;
   private _serviceWorker: CRServiceWorker | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
-  private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
+  private _requestIdToRequestWillBeSentEvent = new Map<string, { sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload }>();
   private _credentials: {origin?: string, username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
   private _offline = false;
   private _extraHTTPHeaders: types.HeadersArray = [];
-  private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
+  private _requestIdToRequestPausedEvent = new Map<string, { sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload }>();
   private _responseExtraInfoTracker = new ResponseExtraInfoTracker();
   private _sessions = new Map<CRSession, SessionInfo>();
 
@@ -195,13 +195,13 @@ export class CRNetworkManager {
       const requestId = event.requestId;
       const requestPausedEvent = this._requestIdToRequestPausedEvent.get(requestId);
       if (requestPausedEvent) {
-        this._onRequest(sessionInfo, event, requestPausedEvent);
+        this._onRequest(sessionInfo, event, requestPausedEvent.sessionInfo, requestPausedEvent.event);
         this._requestIdToRequestPausedEvent.delete(requestId);
       } else {
-        this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
+        this._requestIdToRequestWillBeSentEvent.set(event.requestId, { sessionInfo, event });
       }
     } else {
-      this._onRequest(sessionInfo, event, null);
+      this._onRequest(sessionInfo, event, undefined, undefined);
     }
   }
 
@@ -248,7 +248,7 @@ export class CRNetworkManager {
     const requestId = event.networkId;
     const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
     if (requestWillBeSentEvent) {
-      this._onRequest(sessionInfo, requestWillBeSentEvent, event);
+      this._onRequest(requestWillBeSentEvent.sessionInfo, requestWillBeSentEvent.event, sessionInfo, event);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
       const existingRequest = this._requestIdToRequest.get(requestId);
@@ -269,11 +269,11 @@ export class CRNetworkManager {
         });
         return;
       }
-      this._requestIdToRequestPausedEvent.set(requestId, event);
+      this._requestIdToRequestPausedEvent.set(requestId, { sessionInfo, event });
     }
   }
 
-  _onRequest(sessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
+  _onRequest(requestWillBeSentSessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedSessionInfo: SessionInfo | undefined, requestPausedEvent: Protocol.Fetch.requestPausedPayload | undefined) {
     if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
     let redirectedFrom: InterceptableRequest | null = null;
@@ -285,7 +285,7 @@ export class CRNetworkManager {
         redirectedFrom = request;
       }
     }
-    let frame = requestWillBeSentEvent.frameId ? this._page?._frameManager.frame(requestWillBeSentEvent.frameId) : sessionInfo.workerFrame;
+    let frame = requestWillBeSentEvent.frameId ? this._page?._frameManager.frame(requestWillBeSentEvent.frameId) : requestWillBeSentSessionInfo.workerFrame;
     // Requests from workers lack frameId, because we receive Network.requestWillBeSent
     // on the worker target. However, we receive Fetch.requestPaused on the page target,
     // and lack workerFrame there. Luckily, Fetch.requestPaused provides a frameId.
@@ -314,7 +314,7 @@ export class CRNetworkManager {
       ];
       if (requestHeaders['Access-Control-Request-Headers'])
         responseHeaders.push({ name: 'Access-Control-Allow-Headers', value: requestHeaders['Access-Control-Request-Headers'] });
-      sessionInfo.session._sendMayFail('Fetch.fulfillRequest', {
+      requestPausedSessionInfo!.session._sendMayFail('Fetch.fulfillRequest', {
         requestId: requestPausedEvent.requestId,
         responseCode: 204,
         responsePhrase: network.STATUS_TEXTS['204'],
@@ -327,7 +327,7 @@ export class CRNetworkManager {
     // Non-service-worker requests MUST have a frame—if they don't, we pretend there was no request
     if (!frame && !this._serviceWorker) {
       if (requestPausedEvent)
-        sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
+        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       return;
     }
 
@@ -337,15 +337,15 @@ export class CRNetworkManager {
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
         // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
         const headers = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
-        sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
+        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
       } else {
-        route = new RouteImpl(sessionInfo.session, requestPausedEvent.requestId);
+        route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);
       }
     }
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
     const request = new InterceptableRequest({
-      session: sessionInfo.session,
+      session: requestWillBeSentSessionInfo.session,
       context: (this._page || this._serviceWorker)!._browserContext,
       frame: frame || null,
       serviceWorker: this._serviceWorker || null,
@@ -463,7 +463,7 @@ export class CRNetworkManager {
       const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
       if (requestWillBeSentEvent) {
         this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-        this._onRequest(sessionInfo, requestWillBeSentEvent, null /* requestPausedPayload */);
+        this._onRequest(sessionInfo, requestWillBeSentEvent.event, undefined, undefined);
         request = this._requestIdToRequest.get(event.requestId);
       }
     }
@@ -508,7 +508,7 @@ export class CRNetworkManager {
         // We stop waiting for Fetch.requestPaused (it might never come), and dispatch request event
         // right away, followed by requestfailed event.
         this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-        this._onRequest(sessionInfo, requestWillBeSentEvent, null);
+        this._onRequest(sessionInfo, requestWillBeSentEvent.event, undefined, undefined);
         request = this._requestIdToRequest.get(event.requestId);
       }
     }
@@ -544,7 +544,7 @@ export class CRNetworkManager {
 class InterceptableRequest {
   readonly request: network.Request;
   readonly _requestId: string;
-  readonly _interceptionId: string | null;
+  readonly _interceptionId: string | undefined;
   readonly _documentId: string | undefined;
   readonly _timestamp: number;
   readonly _wallTime: number;
@@ -562,7 +562,7 @@ class InterceptableRequest {
     documentId?: string;
     route: RouteImpl | null;
     requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload;
-    requestPausedEvent: Protocol.Fetch.requestPausedPayload | null;
+    requestPausedEvent: Protocol.Fetch.requestPausedPayload | undefined;
     redirectedFrom: InterceptableRequest | null;
   }) {
     const { session, context, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker } = options;

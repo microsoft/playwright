@@ -16,6 +16,7 @@
 
 import { chokidar } from './utilsBundle';
 import type { FSWatcher } from 'chokidar';
+import path from 'path';
 
 export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };
 
@@ -51,7 +52,8 @@ export class Watcher {
     if (!this._watchedFiles.length)
       return;
 
-    this._fsWatcher = chokidar.watch(watchedFiles, { ignoreInitial: true, ignored: this._ignoredFolders }).on('all', async (event, file) => {
+    const ignored = [...this._ignoredFolders, (name: string) => name.includes(path.sep + 'node_modules' + path.sep)];
+    this._fsWatcher = chokidar.watch(watchedFiles, { ignoreInitial: true, ignored }).on('all', async (event, file) => {
       if (this._throttleTimer)
         clearTimeout(this._throttleTimer);
       if (this._mode === 'flat' && event !== 'add' && event !== 'change')
@@ -61,6 +63,10 @@ export class Watcher {
       this._collector.push({ event, file });
       this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
     });
+  }
+
+  async close() {
+    await this._fsWatcher?.close();
   }
 
   private _reportEventsIfAny() {

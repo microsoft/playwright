@@ -51,7 +51,8 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
-  _mode?: string;
+  _mode?: 'test' | 'list';
+  _isTestServer?: boolean;
 };
 
 class HtmlReporter extends EmptyReporter {
@@ -67,6 +68,8 @@ class HtmlReporter extends EmptyReporter {
   constructor(options: HtmlReporterOptions) {
     super();
     this._options = options;
+    if (options._mode === 'test')
+      process.env.PW_HTML_REPORT = '1';
   }
 
   override printsToStdio() {
@@ -84,7 +87,7 @@ class HtmlReporter extends EmptyReporter {
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
-      if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
+      if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
         const key = outputFolder + '|' + project.outputDir;
         if (reportedWarnings.has(key))
           continue;
@@ -110,6 +113,11 @@ class HtmlReporter extends EmptyReporter {
     };
   }
 
+  _isSubdirectory(parentDir: string, dir: string): boolean {
+    const relativePath = path.relative(parentDir, dir);
+    return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+  }
+
   override onError(error: TestError): void {
     this._topLevelErrors.push(error);
   }
@@ -125,7 +133,7 @@ class HtmlReporter extends EmptyReporter {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else if (this._options._mode === 'test') {
@@ -213,6 +221,8 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
+  private _projectToId: Map<Suite, number> = new Map();
+  private _lastProjectId = 0;
 
   constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
     this._config = config;
@@ -241,7 +251,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, [], testEntries);
+        this._processSuite(fileSuite, projectSuite.project()!.name, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -341,26 +351,25 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _processSuite(suite: Suite, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(fileId, t, projectName, newPath)));
+    suite.entries().forEach(e => {
+      if (e.type === 'test')
+        outTests.push(this._createTestEntry(e, projectName, newPath));
+      else
+        this._processSuite(e, projectName, newPath, outTests);
+    });
   }
 
-  private _createTestEntry(fileId: string, test: TestCasePublic, projectName: string, path: string[]): TestEntry {
+  private _createTestEntry(test: TestCasePublic, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
-    path = path.slice(1);
-
-    const [file, ...titles] = test.titlePath();
-    const testIdExpression = `[project=${projectName}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${test.repeatEachIndex})`;
-    const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
-
+    path = path.slice(1).filter(path => path.length > 0);
     const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
       testCase: {
-        testId,
+        testId: test.id,
         title: test.title,
         projectName,
         location,
@@ -374,7 +383,7 @@ class HtmlBuilder {
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
       },
       testCaseSummary: {
-        testId,
+        testId: test.id,
         title: test.title,
         projectName,
         location,
@@ -390,6 +399,16 @@ class HtmlBuilder {
         }),
       },
     };
+  }
+
+  private _projectId(suite: Suite): number {
+    const project = projectSuite(suite);
+    let id = this._projectToId.get(project);
+    if (!id) {
+      id = ++this._lastProjectId;
+      this._projectToId.set(project, id);
+    }
+    return id;
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
@@ -627,6 +646,12 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
+}
+
+function projectSuite(suite: Suite): Suite {
+  while (suite.parent?.parent)
+    suite = suite.parent;
+  return suite;
 }
 
 export default HtmlReporter;

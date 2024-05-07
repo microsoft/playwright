@@ -30,7 +30,7 @@ client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = await client.send("Animation.getPlaybackRate")
 print("playback rate is " + str(response["playbackRate"]))
 await client.send("Animation.setPlaybackRate", {
-    playbackRate: response["playbackRate"] / 2
+    "playbackRate": response["playbackRate"] / 2
 })
 ```
 
@@ -41,7 +41,7 @@ client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = client.send("Animation.getPlaybackRate")
 print("playback rate is " + str(response["playbackRate"]))
 client.send("Animation.setPlaybackRate", {
-    playbackRate: response["playbackRate"] / 2
+    "playbackRate": response["playbackRate"] / 2
 })
 ```
 ```csharp

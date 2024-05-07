@@ -51,7 +51,7 @@ export const FilmStrip: React.FunctionComponent<{
   const screencastFrames = model?.pages?.[pageIndex]?.screencastFrames;
   let previewImage = undefined;
   let previewSize = undefined;
-  if (previewPoint !== undefined && screencastFrames) {
+  if (previewPoint !== undefined && screencastFrames && screencastFrames.length) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
     const fitInto = {
@@ -63,12 +63,12 @@ export const FilmStrip: React.FunctionComponent<{
 
   return <div className='film-strip' ref={ref}>
     <div className='film-strip-lanes' ref={lanesRef}>{
-      model?.pages.map((page, index) => <FilmStripLane
+      model?.pages.map((page, index) => page.screencastFrames.length ? <FilmStripLane
         boundaries={boundaries}
         page={page}
         width={measure.width}
         key={index}
-      />)
+      /> : null)
     }</div>
     {previewPoint?.x !== undefined &&
       <div className='film-strip-hover' style={{

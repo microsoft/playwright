@@ -74,27 +74,12 @@ await page.FrameLocator(".result-frame").First.getByRole(AriaRole.Button).ClickA
 
 **Converting Locator to FrameLocator**
 
-If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`method: Locator.contentFrame`].
 
-```js
-const frameLocator = locator.frameLocator(':scope');
-```
+**Converting FrameLocator to Locator**
 
-```java
-Locator frameLocator = locator.frameLocator(':scope');
-```
+If you have a [FrameLocator] object it can be converted to [Locator] pointing to the same `iframe` using [`method: FrameLocator.owner`].
 
-```python async
-frameLocator = locator.frame_locator(":scope")
-```
-
-```python sync
-frameLocator = locator.frame_locator(":scope")
-```
-
-```csharp
-var frameLocator = locator.FrameLocator(":scope");
-```
 
 ## method: FrameLocator.first
 * since: v1.17
@@ -148,7 +133,8 @@ in that iframe.
 
 %%-template-locator-get-by-role-%%
 
-### param: FrameLocator.getByRole.role = %%-locator-get-by-role-role-%%
+### param: FrameLocator.getByRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.27
 
 ### option: FrameLocator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
@@ -217,3 +203,51 @@ Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects th
 ### param: FrameLocator.nth.index
 * since: v1.17
 - `index` <[int]>
+
+## method: FrameLocator.owner
+* since: v1.43
+- returns: <[Locator]>
+
+Returns a [Locator] object pointing to the same `iframe` as this frame locator.
+
+Useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
+
+For a reverse operation, use [`method: Locator.contentFrame`].
+
+**Usage**
+
+```js
+const frameLocator = page.frameLocator('iframe[name="embedded"]');
+// ...
+const locator = frameLocator.owner();
+await expect(locator).toBeVisible();
+```
+
+```java
+FrameLocator frameLocator = page.frameLocator("iframe[name=\"embedded\"]");
+// ...
+Locator locator = frameLocator.owner();
+assertThat(locator).isVisible();
+```
+
+```python async
+frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+# ...
+locator = frame_locator.owner
+await expect(locator).to_be_visible()
+```
+
+```python sync
+frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+# ...
+locator = frame_locator.owner
+expect(locator).to_be_visible()
+```
+
+```csharp
+var frameLocator = Page.FrameLocator("iframe[name=\"embedded\"]");
+// ...
+var locator = frameLocator.Owner;
+await Expect(locator).ToBeVisibleAsync();
+```
+

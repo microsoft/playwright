@@ -15,7 +15,7 @@
  */
 
 import util from 'util';
-import { serializeCompilationCache } from '../transform/compilationCache';
+import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
@@ -43,18 +43,10 @@ export type ConfigCLIOverrides = {
 export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
-  compilationCache: any;
-};
-
-export type TtyParams = {
-  rows: number | undefined;
-  columns: number | undefined;
-  colorDepth: number;
+  compilationCache?: SerializedCompilationCache;
 };
 
 export type ProcessInitParams = {
-  stdoutParams: TtyParams;
-  stderrParams: TtyParams;
   processName: string;
 };
 

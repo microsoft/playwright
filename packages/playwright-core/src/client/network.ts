@@ -58,10 +58,10 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export type RemoveNetworkCookieParam = {
-  name?: string,
-  domain?: string,
-  path?: string,
+export type ClearNetworkCookieOptions = {
+  name?: string | RegExp,
+  domain?: string | RegExp,
+  path?: string | RegExp,
 };
 
 type SerializedFallbackOverrides = {
@@ -141,7 +141,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       return null;
 
     const contentType = this.headers()['content-type'];
-    if (contentType.includes('application/x-www-form-urlencoded')) {
+    if (contentType?.includes('application/x-www-form-urlencoded')) {
       const entries: Record<string, string> = {};
       const parsed = new URLSearchParams(postData);
       for (const [k, v] of parsed.entries())

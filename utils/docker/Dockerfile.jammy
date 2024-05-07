@@ -4,6 +4,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles
 ARG DOCKER_IMAGE_NAME_TEMPLATE="mcr.microsoft.com/playwright:v%version%-jammy"
 
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # === INSTALL Node.js ===
 
 RUN apt-get update && \

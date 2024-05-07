@@ -55,6 +55,7 @@ export class Highlight {
     const document = injectedScript.document;
     this._isUnderTest = injectedScript.isUnderTest;
     this._glassPaneElement = document.createElement('x-pw-glass');
+    this._glassPaneElement.popover = 'manual';
     this._glassPaneElement.style.position = 'fixed';
     this._glassPaneElement.style.top = '0';
     this._glassPaneElement.style.right = '0';
@@ -64,6 +65,12 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
+    this._glassPaneElement.style.width = 'inherit';
+    this._glassPaneElement.style.height = 'inherit';
+    this._glassPaneElement.style.padding = '0';
+    this._glassPaneElement.style.margin = '0';
+    this._glassPaneElement.style.border = 'none';
+    this._glassPaneElement.style.overflow = 'hidden';
     for (const eventName of ['click', 'auxclick', 'dragstart', 'input', 'keydown', 'keyup', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'mouseleave', 'focus', 'scroll']) {
       this._glassPaneElement.addEventListener(eventName, e => {
         e.stopPropagation();
@@ -75,14 +82,24 @@ export class Highlight {
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
+    // workaround for firefox: when taking screenshots, it complains adoptedStyleSheets.push
+    // is not a function, so we fallback to style injection
+    if (typeof this._glassPaneShadow.adoptedStyleSheets.push === 'function') {
+      const sheet = new this._injectedScript.window.CSSStyleSheet();
+      sheet.replaceSync(highlightCSS);
+      this._glassPaneShadow.adoptedStyleSheets.push(sheet);
+    } else {
+      const styleElement = this._injectedScript.document.createElement('style');
+      styleElement.textContent = highlightCSS;
+      this._glassPaneShadow.appendChild(styleElement);
+    }
     this._glassPaneShadow.appendChild(this._actionPointElement);
-    const styleElement = document.createElement('style');
-    styleElement.textContent = highlightCSS;
-    this._glassPaneShadow.appendChild(styleElement);
   }
 
   install() {
     this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    // Popover is not supported in WebKit-macOS < 14.0
+    this._glassPaneElement.showPopover?.();
   }
 
   setLanguage(language: Language) {
@@ -99,6 +116,8 @@ export class Highlight {
   uninstall() {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
+    // Popover is not supported in WebKit-macOS < 14.0
+    this._glassPaneElement.hidePopover?.();
     this._glassPaneElement.remove();
   }
 

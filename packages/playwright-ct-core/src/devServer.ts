@@ -17,18 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 import { Watcher } from 'playwright/lib/fsWatcher';
-import { loadConfigFromFileRestartIfNeeded } from 'playwright/lib/common/configLoader';
 import { Runner } from 'playwright/lib/runner/runner';
 import type { PluginContext } from 'rollup';
 import { source as injectedSource } from './generated/indexSource';
 import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile, frameworkConfig } from './viteUtils';
 import type { ComponentRegistry } from './viteUtils';
+import type { FullConfigInternal } from 'playwright/lib/common/config';
 
-export async function runDevServer(configFile: string) {
-  const config = await loadConfigFromFileRestartIfNeeded(configFile);
-  if (!config)
-    return;
-
+export async function runDevServer(config: FullConfigInternal): Promise<() => Promise<void>> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config.config);
   const runner = new Runner(config);
   await runner.loadAllTests();
@@ -39,7 +35,7 @@ export async function runDevServer(configFile: string) {
   if (!dirs) {
     // eslint-disable-next-line no-console
     console.log(`Template file playwright/index.html is missing.`);
-    return;
+    return async () => {};
   }
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
   const viteConfig = await createConfig(dirs, config.config, frameworkPluginFactory, false);
@@ -56,7 +52,7 @@ export async function runDevServer(configFile: string) {
   await devServer.listen();
   const protocol = viteConfig.server.https ? 'https:' : 'http:';
   // eslint-disable-next-line no-console
-  console.log(`Test Server listening on ${protocol}//${viteConfig.server.host || 'localhost'}:${viteConfig.server.port}`);
+  console.log(`Dev Server listening on ${protocol}//${viteConfig.server.host || 'localhost'}:${viteConfig.server.port}`);
 
   const projectDirs = new Set<string>();
   const projectOutputs = new Set<string>();
@@ -85,4 +81,5 @@ export async function runDevServer(configFile: string) {
       devServer.moduleGraph.onFileChange(rootModule.file!);
   });
   globalWatcher.update([...projectDirs], [...projectOutputs], false);
+  return () => Promise.all([devServer.close(), globalWatcher.close()]).then(() => {});
 }

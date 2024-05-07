@@ -17,7 +17,7 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 
 ## Installing Playwright
 
-Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
+Get started by installing Playwright using npm, yarn or pnpm. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
   defaultValue="npm"

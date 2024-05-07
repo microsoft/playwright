@@ -154,8 +154,6 @@ playwright.chromium.launch().then(async browser => {
     return 'something random for no reason';
   });
 
-  await page.addLocatorHandler(page.locator(''), () => {});
-  await page.addLocatorHandler(page.locator(''), () => 42);
   await page.addLocatorHandler(page.locator(''), async () => { });
   await page.addLocatorHandler(page.locator(''), async () => 42);
   await page.addLocatorHandler(page.locator(''), () => Promise.resolve(42));
@@ -322,6 +320,20 @@ playwright.chromium.launch().then(async browser => {
   const resultHandle = await page.evaluateHandle((body: Element) => body.innerHTML, aHandle);
   console.log(await resultHandle.jsonValue());
   await resultHandle.dispose();
+
+  // evaluteHandle with two different return types (JSHandle)
+  {
+    const handle = await page.evaluateHandle(() => '' as string | number);
+    const result = await handle.evaluate(value => value);
+    const assertion: AssertType<string | number, typeof result> = true;
+  }
+  // evaluteHandle with two different return types (ElementHandle)
+  {
+    const handle = await page.evaluateHandle(() => '' as any as HTMLInputElement | HTMLTextAreaElement);
+    await handle.evaluate(element => element.value);
+    const assertion: AssertType<playwright.ElementHandle<HTMLInputElement | HTMLTextAreaElement>, typeof handle> = true;
+  }
+
 
   await browser.close();
 })();
@@ -606,7 +618,7 @@ playwright.chromium.launch().then(async browser => {
   {
     const handle = await page.waitForSelector('*');
     const value = await handle.evaluateHandle((e: HTMLInputElement, x) => e.disabled || x, 123);
-    const assertion: AssertType<playwright.JSHandle<boolean> | playwright.JSHandle<number>, typeof value> = true;
+    const assertion: AssertType<playwright.JSHandle<boolean | number>, typeof value> = true;
   }
 
   {
@@ -906,6 +918,10 @@ playwright.chromium.launch().then(async browser => {
       .once('close', listener)
       .removeListener('close', listener)
       .off('close', listener);
+  }
+  {
+    const page: playwright.Page = {} as any;
+    page.on('dialog', dialog => dialog.accept());
   }
 });
 

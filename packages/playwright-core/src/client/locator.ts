@@ -80,6 +80,10 @@ export class Locator implements api.Locator {
     });
   }
 
+  _equals(locator: Locator) {
+    return this._frame === locator._frame && this._selector === locator._selector;
+  }
+
   page() {
     return this._frame.page();
   }
@@ -190,6 +194,10 @@ export class Locator implements api.Locator {
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
     return await this._frame.$$(this._selector);
+  }
+
+  contentFrame() {
+    return new FrameLocator(this._frame, this._selector);
   }
 
   first(): Locator {
@@ -402,6 +410,10 @@ export class FrameLocator implements api.FrameLocator {
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
     return this.locator(getByRoleSelector(role, options));
+  }
+
+  owner() {
+    return new Locator(this._frame, this._frameSelector);
   }
 
   frameLocator(selector: string): FrameLocator {

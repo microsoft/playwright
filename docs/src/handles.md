@@ -52,7 +52,7 @@ var jsHandle = await page.EvaluateHandleAsync("window");
 
 ## Element Handles
 
-:::caution Discouraged
+:::warning[Discouraged]
 The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
 :::
 

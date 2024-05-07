@@ -1030,7 +1030,8 @@ Attribute name to get the value for.
 
 %%-template-locator-get-by-role-%%
 
-### param: Frame.getByRole.role = %%-locator-get-by-role-role-%%
+### param: Frame.getByRole.role = %%-get-by-role-to-have-role-role-%%
+* since: v1.27
 
 ### option: Frame.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
@@ -1393,7 +1394,8 @@ generate the text for. A superset of the [`param: key`] values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, `ControlOrMeta`.
+`ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
@@ -1969,6 +1971,10 @@ Waits for the required load state to be reached.
 
 This returns when the frame reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
+
+:::note
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
+:::
 
 **Usage**
 

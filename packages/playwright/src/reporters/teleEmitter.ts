@@ -21,6 +21,8 @@ import type * as teleReceiver from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
 
+// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
+
 export type TeleReporterEmitterOptions = {
   omitOutput?: boolean;
   omitBuffers?: boolean;
@@ -189,8 +191,11 @@ export class TeleReporterEmitter implements ReporterV2 {
     const result = {
       title: suite.title,
       location: this._relativeLocation(suite.location),
-      suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t)),
+      entries: suite.entries().map(e => {
+        if (e.type === 'test')
+          return this._serializeTest(e);
+        return this._serializeSuite(e);
+      })
     };
     return result;
   }
@@ -203,6 +208,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retries: test.retries,
       tags: test.tags,
       repeatEachIndex: test.repeatEachIndex,
+      annotations: test.annotations,
     };
   }
 

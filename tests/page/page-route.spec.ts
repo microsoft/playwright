@@ -739,7 +739,7 @@ it('should respect cors overrides', async ({ page, server, browserName, isAndroi
   }
 });
 
-it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isAndroid }) => {
+it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isAndroid, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
   it.fixme(isAndroid);
 
@@ -793,7 +793,10 @@ it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isA
     expect.soft(text1).toBe('Hello');
     expect.soft(text2).toBe('World');
     // Preflight for OPTIONS is auto-fulfilled, then OPTIONS, then GET without preflight.
-    expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
+    if (browserName === 'firefox')
+      expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
+    else
+      expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
   }
 });
 

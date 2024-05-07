@@ -14,11 +14,11 @@ Azure Functions Core Tools is not available on macOS M1 yet, so we use GitHub Co
   curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
   mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
   sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
-  apt-get update && apt-get install azure-functions-core-tools-4
+  apt-get update && apt-get install azure-functions-core-tools-4 sudo
   ```
 - Install Azure CLI:
   ```bash
-  curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+  curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
   ```
 - Login to Azure:
   ```bash

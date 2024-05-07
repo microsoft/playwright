@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Name Comp: Hidden Not Referenced</title>
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/resources/testdriver.js"></script>
+  <script src="/resources/testdriver-vendor.js"></script>
+  <script src="/resources/testdriver-actions.js"></script>
+  <script src="/wai-aria/scripts/aria-utils.js"></script>
+</head>
+<body>
+
+<p>Tests the <a href="https://w3c.github.io/accname/#comp_hidden_not_referenced">#comp_hidden_not_referenced</a> portions of the AccName <em>Name Computation</em> algorithm.</p>
+
+<button
+  class="ex"
+  data-expectedlabel="visible to all users"
+  data-testname="button containing a rendered, unreferenced element that is aria-hidden=true, an unreferenced element with the hidden host language attribute, and an unreferenced element that is unconditionally rendered"
+>
+  <span aria-hidden="true">hidden,</span>
+  <span hidden>hidden from all users,</span>
+  <span>visible to all users</span>
+</button>
+
+<button
+  class="ex"
+  data-expectedlabel="hidden but referenced,"
+  data-testname="button labelled by element that is aria-hidden=true"
+  aria-labelledby="button-label-2"
+>
+  <span aria-hidden="true" id="button-label-2">hidden but referenced,</span>
+  <span hidden>hidden from all users,</span>
+  <span>visible to all users</span>
+</button>
+
+<button
+  class="ex"
+  data-expectedlabel="hidden from all users but referenced,"
+  data-testname="button labelled by element with the hidden host language attribute"
+  aria-labelledby="button-label-3"
+>
+  <span aria-hidden="true">hidden,</span>
+  <span hidden id="button-label-3">hidden from all users but referenced,</span>
+  <span>visible to all users</span>
+</button>
+
+<a
+  class="ex"
+  data-testname="link labelled by elements with assorted visibility and a11y tree exposure"
+  data-expectedlabel="visible to all users, hidden but referenced, hidden from all users but referenced"
+  href="#"
+  aria-labelledby="link-label-1a link-label-1b link-label-1c"
+>
+  <span id="link-label-1a">
+    <span>visible to all users,</span>
+    <span aria-hidden="true">hidden,</span>
+  </span>
+  <span aria-hidden="true" id="link-label-1b">hidden but referenced,</span>
+  <span hidden id="link-label-1c">hidden from all users but referenced</span>
+</a>
+
+<h2
+  class="ex"
+  data-testname="heading with name from content, containing element that is visibility:hidden with nested content that is visibility:visible"
+  data-expectedlabel="visible to all users, un-hidden for all users"
+>
+  visible to all users,
+  <span style="visibility: hidden;">
+    hidden from all users,
+    <span style="visibility: visible;">un-hidden for all users</span>
+  </span>
+</h2>
+
+<!-- TODO: Test cases once https://github.com/w3c/aria/issues/1256 resolved: -->
+<!--       - button labelled by an element that is aria-hidden=true which contains a nested child that is aria-hidden=false -->
+<!--       - button labelled by an element that is aria-hidden=false which belongs to a parent that is aria-hidden=true -->
+<!--       - heading with name from content, containing rendered content that is aria-hidden=true with nested, rendered content that is aria-hidden=false -->
+<!--       - heading with name from content, containing element with the hidden host language attribute with nested content that is aria-hidden=false -->
+
+<!-- TODO: New test case?
+<!--       What is the expectation for a details element when it’s given an -->
+<!--       explicit role that allows name from contents (e.g., `comment`) -->
+<!--       but is also not in the open state, and therefore has contents -->
+<!--       that are both not rendered and excluded from the a11y tree. -->
+
+<script>
+AriaUtils.verifyLabelsBySelector(".ex");
+</script>
+</body>
+</html>

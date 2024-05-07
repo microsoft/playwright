@@ -64,7 +64,6 @@ await context.CloseAsync();
 
 ## event: BrowserContext.backgroundPage
 * since: v1.11
-* langs: js, python
 - argument: <[Page]>
 
 :::note
@@ -72,6 +71,12 @@ Only works with Chromium browser's persistent context.
 :::
 
 Emitted when new background page is created in the context.
+
+```java
+context.onBackgroundPage(backgroundPage -> {
+  System.out.println(backgroundPage.url());
+});
+```
 
 ```js
 const backgroundPage = await context.waitForEvent('backgroundpage');
@@ -83,6 +88,14 @@ background_page = await context.wait_for_event("backgroundpage")
 
 ```python sync
 background_page = context.wait_for_event("backgroundpage")
+```
+
+```csharp
+context.BackgroundPage += (_, backgroundPage) =>
+{
+    Console.WriteLine(backgroundPage.Url);
+};
+
 ```
 
 ## event: BrowserContext.close
@@ -205,7 +218,7 @@ also fire for popup pages. See also [`event: Page.popup`] to receive events abou
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-done and its response has started loading in the popup.
+done and its response has started loading in the popup. If you would like to route/listen to this network request, use [`method: BrowserContext.route`] and [`event: BrowserContext.request`] respectively instead of similar methods on the [Page].
 
 ```js
 const newPagePromise = context.waitForEvent('page');
@@ -441,7 +454,6 @@ Script to be evaluated in all pages in the browser context. Optional.
 
 ## method: BrowserContext.backgroundPages
 * since: v1.11
-* langs: js, python
 - returns: <[Array]<[Page]>>
 
 :::note
@@ -459,7 +471,71 @@ Returns the browser instance of the context. If it was launched as a persistent 
 ## async method: BrowserContext.clearCookies
 * since: v1.8
 
-Clears context cookies.
+Removes cookies from context. Accepts optional filter.
+
+**Usage**
+
+```js
+await context.clearCookies();
+await context.clearCookies({ name: 'session-id' });
+await context.clearCookies({ domain: 'my-origin.com' });
+await context.clearCookies({ domain: /.*my-origin\.com/ });
+await context.clearCookies({ path: '/api/v1' });
+await context.clearCookies({ name: 'session-id', domain: 'my-origin.com' });
+```
+
+
+```java
+context.clearCookies();
+context.clearCookies(new BrowserContext.ClearCookiesOptions().setName("session-id"));
+context.clearCookies(new BrowserContext.ClearCookiesOptions().setDomain("my-origin.com"));
+context.clearCookies(new BrowserContext.ClearCookiesOptions().setPath("/api/v1"));
+context.clearCookies(new BrowserContext.ClearCookiesOptions()
+                         .setName("session-id")
+                         .setDomain("my-origin.com"));
+```
+
+```python async
+await context.clear_cookies()
+await context.clear_cookies(name="session-id")
+await context.clear_cookies(domain="my-origin.com")
+await context.clear_cookies(path="/api/v1")
+await context.clear_cookies(name="session-id", domain="my-origin.com")
+```
+
+```python sync
+context.clear_cookies()
+context.clear_cookies(name="session-id")
+context.clear_cookies(domain="my-origin.com")
+context.clear_cookies(path="/api/v1")
+context.clear_cookies(name="session-id", domain="my-origin.com")
+```
+
+```csharp
+await context.ClearCookiesAsync();
+await context.ClearCookiesAsync(new() { Name = "session-id" });
+await context.ClearCookiesAsync(new() { Domain = "my-origin.com" });
+await context.ClearCookiesAsync(new() { Path = "/api/v1" });
+await context.ClearCookiesAsync(new() { Name = "session-id", Domain = "my-origin.com" });
+```
+
+### option: BrowserContext.clearCookies.name
+* since: v1.43
+- `name` <[string]|[RegExp]>
+
+Only removes cookies with the given name.
+
+### option: BrowserContext.clearCookies.domain
+* since: v1.43
+- `domain` <[string]|[RegExp]>
+
+Only removes cookies with the given domain.
+
+### option: BrowserContext.clearCookies.path
+* since: v1.43
+- `path` <[string]|[RegExp]>
+
+Only removes cookies with the given path.
 
 ## async method: BrowserContext.clearPermissions
 * since: v1.8
@@ -1012,27 +1088,6 @@ Creates a new page in the browser context.
 - returns: <[Array]<[Page]>>
 
 Returns all open pages in the context.
-
-## async method: BrowserContext.removeCookies
-* since: v1.43
-
-Removes cookies from context. At least one of the removal criteria should be provided.
-
-**Usage**
-
-```js
-await browserContext.removeCookies({ name: 'session-id' });
-await browserContext.removeCookies({ domain: 'my-origin.com' });
-await browserContext.removeCookies({ path: '/api/v1' });
-await browserContext.removeCookies({ name: 'session-id', domain: 'my-origin.com' });
-```
-
-### param: BrowserContext.removeCookies.filter
-* since: v1.43
-- `filter` <[Object]>
-  - `name` ?<[string]>
-  - `domain` ?<[string]>
-  - `path` ?<[string]>
 
 ## property: BrowserContext.request
 * since: v1.16

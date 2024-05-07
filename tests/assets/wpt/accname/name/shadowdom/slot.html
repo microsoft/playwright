@@ -1,0 +1,60 @@
+<!doctype html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/resources/testdriver.js"></script>
+<script src="/resources/testdriver-vendor.js"></script>
+<script src="/resources/testdriver-actions.js"></script>
+<script src="/wai-aria/scripts/aria-utils.js"></script>
+
+ <p>Tests the shadow DOM slots portions of the AccName <em>Name Computation</em> algorithm, coming in <a href="https://github.com/w3c/accname/pull/167">ARIA #167</a>.</p>
+
+<label id="label1">
+  <div id="host1">slotted</div>
+</label>
+<button id="labelled1"
+        class="labelled"
+        type="button"
+        aria-labelledby="label1"
+        data-expectedlabel="foo slotted bar"
+        data-testname="aria-labelledby reference to element with slotted text content"></button>
+
+<label id="label2">
+  <div id="host2"></div>
+</label>
+<button id="labelled2"
+        class="labelled"
+        type="button"
+        aria-labelledby="label2"
+        data-expectedlabel="foo default bar"
+        data-testname="aria-labelledby reference to element with default slotted text content"></button>
+
+<label id="label3">
+  <div id="host3">slotted</div>
+</label>
+<button id="labelled3"
+        class="labelled"
+        type="button"
+        aria-labelledby="label3"
+        data-expectedlabel="foo slotted bar"
+        data-testname="aria-labelledby reference to element with slotted text content and aria-label on slot"></button>
+
+<label id="label4">
+  <div id="host4"></div>
+</label>
+<button id="labelled4"
+        class="labelled"
+        type="button"
+        aria-labelledby="label4"
+        data-expectedlabel="foo default bar"
+        data-testname="aria-labelledby reference to element with default slotted text content and aria-label on slot"></button>
+
+<script>
+
+document.getElementById('host1').attachShadow({ mode: 'open' }).innerHTML = 'foo <slot></slot> bar';
+document.getElementById('host2').attachShadow({ mode: 'open' }).innerHTML = 'foo <slot>default</slot> bar';
+document.getElementById('host3').attachShadow({ mode: 'open' }).innerHTML = 'foo <slot aria-label="label"></slot> bar';
+document.getElementById('host4').attachShadow({ mode: 'open' }).innerHTML = 'foo <slot aria-label="label">default</slot> bar';
+
+AriaUtils.verifyLabelsBySelector('.labelled');
+
+</script>

@@ -29,7 +29,7 @@ playwright codegen demo.playwright.dev/todomvc
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
+pwsh bin/Debug/net8.0/playwright.ps1 codegen demo.playwright.dev/todomvc
 ```
 
 ### Recording a test

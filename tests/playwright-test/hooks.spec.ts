@@ -392,14 +392,14 @@ test('beforeAll failure should prevent the test, but not afterAll', async ({ run
       test('failed', () => {
         console.log('\\n%%test1');
       });
-      test('skipped', () => {
+      test('does not run', () => {
         console.log('\\n%%test2');
       });
     `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -492,14 +492,14 @@ test('beforeAll timeout should be reported and prevent more tests', async ({ run
       test('failed', () => {
         console.log('\\n%%test1');
       });
-      test('skipped', () => {
+      test('does not run', () => {
         console.log('\\n%%test2');
       });
     `,
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -681,14 +681,14 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
       test('failed', () => {
         console.log('\\n%%test1');
       });
-      test('skipped', () => {
+      test('does not run', () => {
         console.log('\\n%%test2');
       });
     `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -790,7 +790,7 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
         test('failed', () => {
           console.log('\\n%%test1');
         });
-        test('skipped', () => {
+        test('does not run', () => {
           console.log('\\n%%test2');
         });
       });
@@ -801,7 +801,7 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',

@@ -14,20 +14,8 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
-export type { FullConfig, TestStatus } from './test';
-
-export interface Suite {
-  project(): FullProject | undefined;
-}
-
-export interface TestCase {
-  expectedStatus: TestStatus;
-}
-
-export interface TestResult {
-  status: TestStatus;
-}
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject } from './test';
+export type { FullConfig, FullProject, TestStatus } from './test';
 
 /**
  * Result of the full test run.
@@ -54,7 +42,6 @@ export interface FullResult {
 }
 
 export interface Reporter {
-  onBegin?(config: FullConfig, suite: Suite): void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 

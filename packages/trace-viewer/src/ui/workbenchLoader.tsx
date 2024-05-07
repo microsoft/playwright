@@ -21,7 +21,7 @@ import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
-import { connect } from './wsPort';
+import { TestServerConnection } from '@testIsomorphic/testServerConnection';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -84,18 +84,16 @@ export const WorkbenchLoader: React.FunctionComponent<{
     }
 
     if (params.has('isServer')) {
-      connect({
-        onEvent(method: string, params?: any) {
-          if (method === 'loadTrace') {
-            setTraceURLs(params!.url ? [params!.url] : []);
-            setDragOver(false);
-            setProcessingErrorMessage(null);
-          }
-        },
-        onClose() {}
-      }).then(sendMessage => {
-        sendMessage('ready');
+      const guid = new URLSearchParams(window.location.search).get('ws');
+      const wsURL = new URL(`../${guid}`, window.location.toString());
+      wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+      const testServerConnection = new TestServerConnection(wsURL.toString());
+      testServerConnection.onLoadTraceRequested(async params => {
+        setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
+        setDragOver(false);
+        setProcessingErrorMessage(null);
       });
+      testServerConnection.initialize({}).catch(() => {});
     } else if (!newTraceURLs.some(url => url.startsWith('blob:'))) {
       // Don't re-use blob file URLs on page load (results in Fetch error)
       setTraceURLs(newTraceURLs);
@@ -162,7 +160,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       </div>
     </div>}
     {showFileUploadDropArea && <div className='drop-target'>
-      <div className='processing-error' aria-live='assertive'>{processingErrorMessage}</div>
+      <div className='processing-error' role='alert'>{processingErrorMessage}</div>
       <div className='title' role='heading' aria-level={1}>Drop Playwright Trace to load</div>
       <div>or</div>
       <button onClick={() => {

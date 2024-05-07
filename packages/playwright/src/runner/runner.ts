@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
@@ -23,9 +24,7 @@ import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
-import { runUIMode } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';
 import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
@@ -41,7 +40,6 @@ type ProjectConfigWithFiles = {
 
 type ConfigListFilesReport = {
   projects: ProjectConfigWithFiles[];
-  cliEntryPoint?: string;
   error?: TestError;
 };
 
@@ -57,12 +55,10 @@ export class Runner {
     this._config = config;
   }
 
-  async listTestFiles(): Promise<ConfigListFilesReport> {
-    const frameworkPackage = (this._config.config as any)['@playwright/test']?.['packageJSON'];
-    const projects = filterProjects(this._config.projects);
+  async listTestFiles(projectNames?: string[]): Promise<ConfigListFilesReport> {
+    const projects = filterProjects(this._config.projects, projectNames);
     const report: ConfigListFilesReport = {
       projects: [],
-      cliEntryPoint: frameworkPackage ? path.join(path.dirname(frameworkPackage), 'cli.js') : undefined,
     };
     for (const project of projects) {
       report.projects.push({
@@ -83,21 +79,12 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, listOnly ? 'list' : 'test')));
+    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, listOnly ? 'list' : 'test', false)));
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process', { failOnLoadErrors: true })
       : createTaskRunner(config, reporter);
 
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config.config);
-
-    if (!listOnly && config.ignoreSnapshots) {
-      reporter.onStdOut(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
 
     const taskStatus = await taskRunner.run(testRun, deadline);
     let status: FullResult['status'] = testRun.failureTracker.result();
@@ -106,6 +93,8 @@ export class Runner {
     const modifiedResult = await reporter.onEnd({ status });
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
+
+    await writeLastRunInfo(testRun, status);
 
     await reporter.onExit();
 
@@ -146,12 +135,6 @@ export class Runner {
     return await runWatchModeLoop(config);
   }
 
-  async uiAllTests(options: { host?: string, port?: number }): Promise<FullResult['status']> {
-    const config = this._config;
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    return await runUIMode(config, options);
-  }
-
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
     const result = await this.loadAllTests(mode);
     if (result.status !== 'passed' || !result.suite)
@@ -160,7 +143,37 @@ export class Runner {
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
     const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
     if (override)
-      return await override(resolvedFiles, this._config.config, this._config.configDir, result.suite);
+      return await override(resolvedFiles, this._config, result.suite);
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
+}
+
+export type LastRunInfo = {
+  status: FullResult['status'];
+  failedTests: string[];
+};
+
+async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
+  const [project] = filterProjects(testRun.config.projects, testRun.config.cliProjectFilter);
+  if (!project)
+    return;
+  const outputDir = project.project.outputDir;
+  await fs.promises.mkdir(outputDir, { recursive: true });
+  const lastRunReportFile = path.join(outputDir, '.last-run.json');
+  const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
+  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
+  await fs.promises.writeFile(lastRunReportFile, lastRunReport);
+}
+
+export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
+  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  if (!project)
+    return { status: 'passed', failedTests: [] };
+  const outputDir = project.project.outputDir;
+  try {
+    const lastRunReportFile = path.join(outputDir, '.last-run.json');
+    return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
+  } catch {
+  }
+  return { status: 'passed', failedTests: [] };
 }

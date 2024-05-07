@@ -295,7 +295,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: cc });
   }
 
-  async clearCookies() {
+  async doClearCookies() {
     await this._browser.session.send('Browser.clearCookies', { browserContextId: this._browserContextId });
   }
 
@@ -344,7 +344,12 @@ export class FFBrowserContext extends BrowserContext {
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials: httpCredentials || null });
+    let credentials = null;
+    if (httpCredentials) {
+      const { username, password, origin } = httpCredentials;
+      credentials = { username, password, origin };
+    }
+    await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials });
   }
 
   async doAddInitScript(source: string) {
@@ -366,7 +371,10 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
-    await this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
+    await Promise.all([
+      this._browser.session.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor }),
+      this._browser.session.send('Browser.setCacheDisabled', { browserContextId: this._browserContextId, cacheDisabled: !!this._requestInterceptor }),
+    ]);
   }
 
   onClosePersistent() {}
