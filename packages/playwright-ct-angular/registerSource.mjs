@@ -17,10 +17,7 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-/**
- * @typedef {{type: string} & import('./index').MountTemplateOptions} TemplateInfo
- * @typedef {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | TemplateInfo} ComponentInfo
- */
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 
 import 'zone.js';
 import {
@@ -33,13 +30,75 @@ import {
   platformBrowserDynamicTesting,
 } from '@angular/platform-browser-dynamic/testing';
 
+/** @type {WeakMap<import('@angular/core/testing').ComponentFixture, Record<string, import('rxjs').Subscription>>} */
+const __pwOutputSubscriptionRegistry = new WeakMap();
+
+/** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
+const __pwFixtureRegistry = new Map();
+
 getTestBed().initTestEnvironment(
     BrowserDynamicTestingModule,
     platformBrowserDynamicTesting(),
 );
 
+/**
+ * @param {ObjectComponent} component
+ */
+async function __pwRenderComponent(component) {
+  const componentMetadata = reflectComponentType(component.type);
+  if (!componentMetadata?.isStandalone)
+    throw new Error('Only standalone components are supported');
+
+  TestBed.configureTestingModule({
+    imports: [component.type],
+  });
+
+  await TestBed.compileComponents();
+
+  const fixture = TestBed.createComponent(component.type);
+  fixture.nativeElement.id = 'root';
+
+  __pwUpdateProps(fixture, component.props);
+  __pwUpdateEvents(fixture, component.on);
+
+  fixture.autoDetectChanges();
+
+  return fixture;
+}
+
+/**
+ * @param {import('@angular/core/testing').ComponentFixture} fixture
+ */
+function __pwUpdateProps(fixture, props = {}) {
+  for (const [name, value] of Object.entries(props))
+    fixture.componentRef.setInput(name, value);
+}
+
+/**
+ * @param {import('@angular/core/testing').ComponentFixture} fixture
+ */
+function __pwUpdateEvents(fixture, events = {}) {
+  const outputSubscriptionRecord =
+    __pwOutputSubscriptionRegistry.get(fixture) ?? {};
+  for (const [name, listener] of Object.entries(events)) {
+    /* Unsubscribe previous listener. */
+    outputSubscriptionRecord[name]?.unsubscribe();
+
+    const subscription = fixture.componentInstance[
+        name
+    ].subscribe((/** @type {unknown} */ event) => listener(event));
+
+    /* Store new subscription. */
+    outputSubscriptionRecord[name] = subscription;
+  }
+
+  /* Update output subscription registry. */
+  __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
+}
+
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  __pwAssertIsNotJsx(component);
+  if (component.__pw_type === 'jsx')
+    throw new Error('JSX mount notation is not supported');
 
   for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ hooksConfig, TestBed });
@@ -66,116 +125,16 @@ window.playwrightUnmount = async rootElement => {
   fixture.nativeElement.replaceChildren();
 };
 
-/**
- * @param {{type: import('@angular/core').Type<unknown>} & import('./index').MountOptions | {type: string} & import('./index').MountTemplateOptions} component
- */
 window.playwrightUpdate = async (rootElement, component) => {
-  __pwAssertIsNotJsx(component);
+  if (component.__pw_type === 'jsx')
+    throw new Error('JSX mount notation is not supported');
 
   const fixture = __pwFixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
 
-  __pwUpdateProps(fixture, component);
+  __pwUpdateProps(fixture, component.props);
   __pwUpdateEvents(fixture, component.on);
 
   fixture.detectChanges();
 };
-
-/** @type {WeakMap<import('@angular/core/testing').ComponentFixture, Record<string, import('rxjs').Subscription>>} */
-const __pwOutputSubscriptionRegistry = new WeakMap();
-
-/** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
-const __pwFixtureRegistry = new Map();
-
-/**
- * @param {ComponentInfo} component
- */
-async function __pwRenderComponent(component) {
-  /** @type {import('@angular/core').Type<unknown>} */
-  let componentClass;
-
-  if (__pwIsTemplate(component)) {
-    const templateInfo = /** @type {TemplateInfo} */(component);
-    componentClass = defineComponent({
-      standalone: true,
-      selector: 'pw-template-component',
-      imports: templateInfo.imports,
-      template: templateInfo.type,
-    })(class {});
-  } else {
-    componentClass = /** @type {import('@angular/core').Type<unknown>} */(component.type);
-  }
-
-  const componentMetadata = reflectComponentType(componentClass);
-  if (!componentMetadata?.isStandalone)
-    throw new Error('Only standalone components are supported');
-
-  TestBed.configureTestingModule({
-    imports: [componentClass],
-    providers: component.providers,
-  });
-
-  await TestBed.compileComponents();
-
-  const fixture = TestBed.createComponent(componentClass);
-  fixture.nativeElement.id = 'root';
-
-  __pwUpdateProps(fixture, component);
-  __pwUpdateEvents(fixture, component.on);
-
-  fixture.autoDetectChanges();
-
-  return fixture;
-}
-
-/**
- * @param {import('@angular/core/testing').ComponentFixture} fixture
- * @param {ComponentInfo} componentInfo
- */
-function __pwUpdateProps(fixture, componentInfo) {
-  if (!componentInfo.props)
-    return;
-
-  if (__pwIsTemplate(componentInfo)) {
-    Object.assign(fixture.componentInstance, componentInfo.props);
-  } else {
-    for (const [name, value] of Object.entries(componentInfo.props))
-      fixture.componentRef.setInput(name, value);
-  }
-
-}
-
-/**
- * @param {import('@angular/core/testing').ComponentFixture} fixture
- */
-function __pwUpdateEvents(fixture, events = {}) {
-  const outputSubscriptionRecord =
-    __pwOutputSubscriptionRegistry.get(fixture) ?? {};
-  for (const [name, listener] of Object.entries(events)) {
-    /* Unsubscribe previous listener. */
-    outputSubscriptionRecord[name]?.unsubscribe();
-
-    const subscription = fixture.componentInstance[
-        name
-    ].subscribe((/** @type {unknown} */ event) => listener(event));
-
-    /* Store new subscription. */
-    outputSubscriptionRecord[name] = subscription;
-  }
-
-  /* Update output subscription registry. */
-  __pwOutputSubscriptionRegistry.set(fixture, outputSubscriptionRecord);
-}
-
-function __pwAssertIsNotJsx(component) {
-  if (component.__pw_type === 'jsx')
-    throw new Error('JSX mount notation is not supported');
-}
-
-/**
- * @param {ComponentInfo} component
- */
-function __pwIsTemplate(component) {
-  return typeof component.type === 'string';
-}

@@ -17,24 +17,18 @@
 import type { Locator } from 'playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { TestType } from '@playwright/experimental-ct-core';
-import type { Provider, Type } from '@angular/core';
+import type { Type } from '@angular/core';
 
 export type ComponentEvents = Record<string, Function>;
 
 export interface MountOptions<HooksConfig extends JsonObject, Component> {
   props?: Partial<Component> | Record<string, unknown>, // TODO: filter props and handle signals
-  providers?: Provider[],
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
-export interface MountTemplateOptions<HooksConfig extends JsonObject, Component> extends MountOptions<HooksConfig, Component> {
-  imports?: Type<unknown>[];
-}
-
 export interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
-
   update(options: {
     props?: Partial<Component>,
     on?: Partial<ComponentEvents>,
@@ -42,11 +36,6 @@ export interface MountResult<Component> extends Locator {
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject, Component = unknown>(
-    template: string,
-    options?: MountTemplateOptions<HooksConfig, Component>
-  ): Promise<MountResult<Component>>;
-
   mount<HooksConfig extends JsonObject, Component = unknown>(
     component: Type<Component>,
     options?: MountOptions<HooksConfig, Component>
