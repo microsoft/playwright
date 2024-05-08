@@ -189,7 +189,7 @@ class TypesGenerator {
   objectDefinitionsToString(overrides) {
     let definition;
     const parts = [];
-    const internalWords = new Set(overriddes.split(/[^\w$]/g));
+    const internalWords = new Set(overrides.split(/[^\w$]/g));
     while ((definition = this.objectDefinitions.pop())) {
       const { name, properties } = definition;
       const shouldExport = !!exported[name];
