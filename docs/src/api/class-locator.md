@@ -1972,6 +1972,8 @@ This method waits for [actionability](../actionability.md) checks, then tries to
 completely visible as defined by
 [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
 
+See [scrolling](../input.md#scrolling) for alternative ways to scroll.
+
 ### option: Locator.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
 * since: v1.14
 
