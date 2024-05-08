@@ -160,6 +160,56 @@ function indexModel(context: ContextEntry) {
 }
 
 function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
+  const traceFileToContexts = new Map<string, ContextEntry[]>();
+  for (const context of contexts) {
+    const traceFile = context.traceUrl;
+    let list = traceFileToContexts.get(traceFile);
+    if (!list) {
+      list = [];
+      traceFileToContexts.set(traceFile, list);
+    }
+    list.push(context);
+  }
+
+  const result: ActionTraceEventInContext[] = [];
+  let traceFileId = 0;
+  for (const [, contexts] of traceFileToContexts) {
+    // Action ids are unique only within a trace file. If there are
+    // traces from more than one file we make the ids unique across the
+    // files. The code does not update snapshot ids as they are always
+    // retrieved from a particular trace file.
+    if (traceFileToContexts.size)
+      makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
+    // Align action times across runner and library contexts within each trace file.
+    const map = mergeActionsAndUpdateTimingSameTrace(contexts);
+    result.push(...map.values());
+  }
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return -1;
+    if (a1.parentId === a2.callId)
+      return 1;
+    return a1.wallTime - a2.wallTime || a1.startTime - a2.startTime;
+  });
+
+  for (let i = 1; i < result.length; ++i)
+    (result[i] as any)[prevInListSymbol] = result[i - 1];
+
+  return result;
+}
+
+function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId: number) {
+  for (const context of contexts) {
+    for (const action of context.actions) {
+      if (action.callId)
+        action.callId = `${traceFileId}:${action.callId}`;
+      if (action.parentId)
+        action.parentId = `${traceFileId}:${action.parentId}`;
+    }
+  }
+}
+
+function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   const map = new Map<string, ActionTraceEventInContext>();
 
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
@@ -219,20 +269,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
         frame.timestamp += timeDelta;
     }
   }
-
-  const result = [...map.values()];
-  result.sort((a1, a2) => {
-    if (a2.parentId === a1.callId)
-      return -1;
-    if (a1.parentId === a2.callId)
-      return 1;
-    return a1.wallTime - a2.wallTime || a1.startTime - a2.startTime;
-  });
-
-  for (let i = 1; i < result.length; ++i)
-    (result[i] as any)[prevInListSymbol] = result[i - 1];
-
-  return result;
+  return map;
 }
 
 export function buildActionTree(actions: ActionTraceEventInContext[]): { rootItem: ActionTreeItem, itemMap: Map<string, ActionTreeItem> } {

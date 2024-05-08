@@ -804,6 +804,21 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
+test('should open two trace files of the same test', async ({ context, page, request, server, showTraceViewer, asset }, testInfo) => {
+  const traceViewer = await showTraceViewer([asset('test-trace1.zip'), asset('test-trace2.zip')]);
+  // Same actions from different test runs should not be merged.
+  await expect(traceViewer.actionTitles).toHaveText([
+    'Before Hooks',
+    'page.gotohttps://playwright.dev/',
+    'expect.toBe',
+    'After Hooks',
+    'Before Hooks',
+    'page.gotohttps://playwright.dev/',
+    'expect.toBe',
+    'After Hooks',
+  ]);
+});
+
 test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
   await page.route('**/*', route => {
     void route.fulfill({
