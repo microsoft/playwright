@@ -22,7 +22,7 @@ import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { escapeWithQuotes, toSnakeCase } from '../../utils/isomorphic/stringUtils';
-const deviceDescriptors = require('../deviceDescriptorsSource.json');
+import { deviceDescriptors } from '../deviceDescriptors';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 export class PythonLanguageGenerator implements LanguageGenerator {

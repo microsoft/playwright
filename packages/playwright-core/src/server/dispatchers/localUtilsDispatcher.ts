@@ -26,7 +26,7 @@ import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
 import type * as har from '@trace/har';
-import type { HeadersArray, Devices } from '../types';
+import type { HeadersArray } from '../types';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { WebSocketTransport } from '../transport';
 import { SocksInterceptor } from '../socksInterceptor';
@@ -40,6 +40,7 @@ import type http from 'http';
 import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
 import { serializeClientSideCallMetadata } from '../../utils';
+import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -53,7 +54,6 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
-    const descriptors = require('../deviceDescriptors') as Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, localUtils, 'LocalUtils', {

@@ -540,7 +540,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         return checkAndReturn(result);
       };
 
-      const visitStyleSheet = (sheet: CSSStyleSheet) => {
+      const visitStyleSheet = (sheet: CSSStyleSheet): { equals: boolean, n: NodeSnapshot } => {
         const data = ensureCachedData(sheet);
         const oldCSSText = data.cssText;
         const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet, true /* forceText */)!;
