@@ -142,6 +142,9 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
 <TabItem value="nunit">
 
 ```csharp
+    [TearDown]
+    public async Task TearDown()
+    {
         var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error 
             || TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Failure;
 
@@ -153,12 +156,16 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
                 $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip" 
             ) : null, 
         });
+    }
 ```
 
 </TabItem>
 <TabItem value="mstest">
 
 ```csharp
+    [TestCleanup]
+    public async Task TestCleanup()
+    {
         var failed = new[] { UnitTestOutcome.Failed, UnitTestOutcome.Error, UnitTestOutcome.Timeout, UnitTestOutcome.Aborted }.Contains(TestContext.CurrentTestOutcome);
 
         await Context.Tracing.StopAsync(new() 
@@ -169,6 +176,7 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
                 $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip" 
             ) : null 
         });
+    }
 
 ```
 
