@@ -1,0 +1,25 @@
+name: Enable Microphone Access (macOS)
+description: 'Allow microphone access to all apps on macOS'
+
+runs:
+  using: composite
+  steps:
+    # https://github.com/actions/runner-images/issues/9330
+    - name: Allow microphone access to all apps
+      shell: bash
+      run: |
+        if [[ "$(uname)" != "Darwin" ]]; then
+          echo "Not macOS, exiting"
+          exit 0
+        fi
+        echo "Allowing microphone access to all apps"
+        version=$(sw_vers -productVersion | cut -d. -f1)
+        if [[ "$version" == "14" ]]; then
+          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
+        elif [[ "$version" == "12" || "$version" == "13" ]]; then
+          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR REPLACE INTO access VALUES('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159);"
+        else
+          echo "macOS version is unsupported. Version is $version, exiting"
+          exit 1
+        fi
+        echo "Successfully allowed microphone access"
