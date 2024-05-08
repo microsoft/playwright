@@ -86,112 +86,6 @@ context.tracing().stop(new Tracing.StopOptions()
 
 This will record the trace and place it into the file named `trace.zip`.
 
-## Recording a trace
-* langs: csharp
-
-Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
-
-<Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
-}>
-<TabItem value="nunit">
-
-```csharp
-namespace PlaywrightTests;
-
-[Parallelizable(ParallelScope.Self)]
-[TestFixture]
-public class Tests : PageTest
-{
-    [SetUp]
-    public async Task Setup()
-    {
-        await Context.Tracing.StartAsync(new()
-        {
-            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.CurrentContext.Test.Name,
-            Screenshots = true,
-            Snapshots = true,
-            Sources = true
-        });
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await Context.Tracing.StopAsync(new()
-        {
-            Path = Path.Combine(
-                TestContext.CurrentContext.WorkDirectory,
-                "playwright-traces",
-                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
-            )
-        });
-    }
-
-    [Test]
-    public async Task TestYourOnlineShop()
-    {
-        // ..
-    }
-}
-```
-
-</TabItem>
-<TabItem value="mstest">
-
-```csharp
-using System.Text.RegularExpressions;
-using Microsoft.Playwright;
-using Microsoft.Playwright.MSTest;
-
-namespace PlaywrightTests;
-
-[TestClass]
-public class ExampleTest : PageTest
-{
-    [TestInitialize]
-    public async Task TestInitialize()
-    {
-         await Context.Tracing.StartAsync(new()
-        {
-            Title = TestContext.CurrentContext.Test.ClassName + "." + TestContext.
-            Screenshots = true,
-            Snapshots = true,
-            Sources = true
-        });
-    }
-
-    [TestCleanup]
-    public async Task TestCleanup()
-    {
-        await Context.Tracing.StopAsync(new()
-        {
-            Path = Path.Combine(
-                Environment.CurrentDirectory,
-                "playwright-traces",
-                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
-            )
-        });
-    }
-
-    [TestMethod]
-    public async Task GetStartedLink()
-    {
-        // ...
-    }
-}
-```
-
-</TabItem>
-</Tabs>
-
-This will record a zip file for each test, e.g. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
-
 ## Opening the trace
 
 You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your trace's zip file is located. Once opened you can click on each action or use the timeline to see the state of the page before and after each action. You can also inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
@@ -204,19 +98,11 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="sh
 playwright show-trace trace.zip
 ```
 
-```bash csharp
-pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-traces/PlaywrightTests.ExampleTest.GetStartedLink.zip
-```
-
 ######
 * langs: python, java
 
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
 
-######
-* langs: csharp
-
-![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c)
 
 To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
