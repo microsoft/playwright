@@ -15,7 +15,7 @@ test('emit a submit event when the button is clicked', async ({ mount }) => {
   expect(messages).toEqual(['hello']);
 });
 
-test('emit a falltrough event when the button is double clicked', async ({ mount }) => {
+test('emit a fallthrough event when the button is double clicked', async ({ mount }) => {
   const messages = [];
   const component = await mount(Button, {
     props: {

@@ -881,7 +881,7 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
   expect(result.exitCode).toBe(1);
 });
 
-test('should suppport toHaveAttribute without optional value', async ({ runTSC }) => {
+test('should support toHaveAttribute without optional value', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
     import { test, expect as baseExpect } from '@playwright/test';
@@ -925,7 +925,7 @@ test('should support mergeExpects (TSC)', async ({ runTSC }) => {
         await expect(page).toBeAGoodPage(123);
         await expect(page).toBeABadPage('123');
         // @ts-expect-error
-        await expect(page).toBeAMedicorePage();
+        await expect(page).toBeAMediocrePage();
         // @ts-expect-error
         await expect(page).toBeABadPage(123);
         // @ts-expect-error

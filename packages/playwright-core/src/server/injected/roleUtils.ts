@@ -625,7 +625,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       if (trimFlatString(title))
         return title;
       // SPEC DIFFERENCE.
-      // Spec says return localized "Submit Query", but browsers and axe-core insist on "Sumbit".
+      // Spec says return localized "Submit Query", but browsers and axe-core insist on "Submit".
       return 'Submit';
     }
 

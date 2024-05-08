@@ -92,7 +92,7 @@ async function onrequest(
 		if (!success) return requestAuthorization(req, res);
 	} catch (_err: unknown) {
 		const err = _err as Error;
-		// an error occured during login!
+		// an error occurred during login!
 		res.writeHead(500);
 		res.end((err.stack || err.message || err) + '\n');
 		return;
@@ -403,7 +403,7 @@ async function onconnect(
 		if (!success) return requestAuthorization(req, res);
 	} catch (_err) {
 		const err = _err as Error;
-		// an error occured during login!
+		// an error occurred during login!
 		res.writeHead(500);
 		res.end((err.stack || err.message || err) + '\n');
 		return;

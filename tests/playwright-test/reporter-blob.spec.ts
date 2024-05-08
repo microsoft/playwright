@@ -641,11 +641,11 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   for (const entry of await fs.promises.readdir(htmlReportDir))
     await fs.promises.cp(path.join(htmlReportDir, entry), path.join(reportDir, entry), { recursive: true });
 
-  const oldSeveFile = server.serveFile;
+  const oldServeFile = server.serveFile;
   server.serveFile = async (req, res) => {
     const pathName = url.parse(req.url!).pathname!;
     const filePath = path.join(reportDir, pathName.substring(1));
-    return oldSeveFile.call(server, req, res, filePath);
+    return oldServeFile.call(server, req, res, filePath);
   };
 
   await page.goto(`${server.PREFIX}/index.html`);

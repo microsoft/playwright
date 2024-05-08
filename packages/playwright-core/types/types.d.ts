@@ -4390,7 +4390,7 @@ export interface Page {
    */
   unrouteAll(options?: {
     /**
-     * Specifies wether to wait for already running handlers and what to do if they throw errors:
+     * Specifies whether to wait for already running handlers and what to do if they throw errors:
      * - `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may
      *   result in unhandled error
      * - `'wait'` - wait for current handler calls (if any) to finish
@@ -8827,7 +8827,7 @@ export interface BrowserContext {
    */
   unrouteAll(options?: {
     /**
-     * Specifies wether to wait for already running handlers and what to do if they throw errors:
+     * Specifies whether to wait for already running handlers and what to do if they throw errors:
      * - `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may
      *   result in unhandled error
      * - `'wait'` - wait for current handler calls (if any) to finish
@@ -13378,7 +13378,7 @@ export interface BrowserType<Unused = {}> {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
        * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
        * from the browser.
        */
@@ -14901,7 +14901,7 @@ export interface AndroidDevice {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
        * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
        * from the browser.
        */
@@ -15632,7 +15632,7 @@ export interface APIRequest {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
        * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
        * from the browser.
        */
@@ -16783,7 +16783,7 @@ export interface Browser extends EventEmitter {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
        * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
        * from the browser.
        */
@@ -17677,7 +17677,7 @@ export interface Electron {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
        * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
        * from the browser.
        */
@@ -20344,7 +20344,7 @@ export interface HTTPCredentials {
   origin?: string;
 
   /**
-   * Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when
+   * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
    * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
    * from the browser.
    */

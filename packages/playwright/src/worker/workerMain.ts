@@ -30,7 +30,7 @@ import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySui
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import { inheritFixutreNames } from '../common/fixtures';
+import { inheritFixtureNames } from '../common/fixtures';
 import { type TimeSlot, TimeoutManagerError } from './timeoutManager';
 
 export class WorkerMain extends ProcessRunner {
@@ -490,7 +490,7 @@ export class WorkerMain extends ProcessRunner {
         const result = await modifier.fn(fixtures);
         testInfo[modifier.type](!!result, modifier.description);
       };
-      inheritFixutreNames(modifier.fn, fn);
+      inheritFixtureNames(modifier.fn, fn);
       runnables.push({
         title: `${modifier.type} modifier`,
         location: modifier.location,

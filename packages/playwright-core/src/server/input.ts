@@ -282,7 +282,7 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
         shiftedDescription.keyCode = definition.shiftKeyCode;
     }
 
-    // Map from code: Digit3 -> { ... descrption, shifted }
+    // Map from code: Digit3 -> { ... description, shifted }
     result.set(code, { ...description, shifted: shiftedDescription });
 
     // Map from aliases: Shift -> non-shiftable definition

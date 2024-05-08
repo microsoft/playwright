@@ -235,7 +235,7 @@ export function fixtureParameterNames(fn: Function | any, location: Location, on
   return fn[signatureSymbol];
 }
 
-export function inheritFixutreNames(from: Function, to: Function) {
+export function inheritFixtureNames(from: Function, to: Function) {
   (to as any)[signatureSymbol] = (from as any)[signatureSymbol];
 }
 

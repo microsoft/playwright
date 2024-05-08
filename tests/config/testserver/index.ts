@@ -26,7 +26,7 @@ import ws from 'ws';
 import zlib, { gzip } from 'zlib';
 import { createHttpServer, createHttpsServer } from '../../../packages/playwright-core/lib/utils/network';
 
-const fulfillSymbol = Symbol('fullfil callback');
+const fulfillSymbol = Symbol('fulfil callback');
 const rejectSymbol = Symbol('reject callback');
 
 const gzipAsync = util.promisify(gzip.bind(zlib));
@@ -288,8 +288,8 @@ export class TestServer {
   }
 
   waitForWebSocketConnectionRequest() {
-    return new Promise<http.IncomingMessage & { headers: http.IncomingHttpHeaders }>(fullfil => {
-      this._wsServer.once('connection', (ws, req) => fullfil(req));
+    return new Promise<http.IncomingMessage & { headers: http.IncomingHttpHeaders }>(fulfil => {
+      this._wsServer.once('connection', (ws, req) => fulfil(req));
     });
   }
 

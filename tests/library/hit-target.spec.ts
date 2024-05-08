@@ -363,7 +363,7 @@ it('should detect overlay from another shadow root', async ({ page, server }) =>
   expect(error.message).toContain(`<div id="container2"></div> intercepts pointer events`);
 });
 
-it('should detect overlayed element in a transformed iframe', async ({ page }) => {
+it('should detect overlaid element in a transformed iframe', async ({ page }) => {
   await page.setContent(`
     <style>
       body, html, iframe { margin: 0; padding: 0; border: none; }

@@ -76,7 +76,7 @@ export type NavigationEvent = {
   // Error for cross-document navigations if any. When error is present,
   // the navigation did not commit.
   error?: Error,
-  // Wether this event should be visible to the clients via the public APIs.
+  // Whether this event should be visible to the clients via the public APIs.
   isPublic?: boolean;
 };
 

@@ -571,7 +571,7 @@ Whether to emulate network being offline. Defaults to `false`. Learn more about 
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
-  - `sendImmediately` ?<[boolean]> Whether to send `Authorization` header with the first API request. By deafult, the credentials are sent only when 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent from the browser.
+  - `sendImmediately` ?<[boolean]> Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent from the browser.
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
@@ -751,7 +751,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * since: v1.41
 - `behavior` <[UnrouteBehavior]<"wait"|"ignoreErrors"|"default">>
 
-Specifies wether to wait for already running handlers and what to do if they throw errors:
+Specifies whether to wait for already running handlers and what to do if they throw errors:
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
 * `'wait'` - wait for current handler calls (if any) to finish
 * `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers after unrouting are silently caught

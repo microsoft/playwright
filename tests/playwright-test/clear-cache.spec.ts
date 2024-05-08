@@ -25,7 +25,7 @@ test('should clear cache with type:module', async ({ runCLICommand }) => {
       import { defineConfig } from '@playwright/test';
       export default defineConfig({});
     `,
-    'pacakge.json': `
+    'package.json': `
       { "type": "module" }
     `,
     'a.spec.ts': `

@@ -84,7 +84,7 @@ it('should traverse only form elements', async function({ page, browserName, pla
 
   await page.setContent(`
     <input id="input-1">
-    <button id="button">buttton</button>
+    <button id="button">button</button>
     <a href id="link">link</a>
     <input id="input-2">
   `);
