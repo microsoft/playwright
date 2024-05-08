@@ -9,7 +9,7 @@
   },
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "author": {
     "name": "Microsoft Corporation"
