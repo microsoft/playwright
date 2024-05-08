@@ -59,7 +59,7 @@ public class Tests : PageTest
     }
 
     [Test]
-    public async Task TestYourOnlineShop()
+    public async Task GetStartedLink()
     {
         // ..
     }
@@ -131,6 +131,8 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
 
 ## Run trace only on failure
 
+Setup your tests to record a trace only when the test fails:
+
 <Tabs
   groupId="test-runners"
   defaultValue="nunit"
@@ -148,25 +150,41 @@ namespace PlaywrightTests;
 [TestFixture]
 public class ExampleTest : PageTest
 {
-    // ...
+    [SetUp]
+    public async Task Setup()
+    {
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
     [TearDown]
     public async Task TearDown()
     {
         var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error 
             || TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Failure;
 
-        await Context.Tracing.StopAsync(new() 
-        { 
-            Path = failed ? Path.Combine( 
-                TestContext.CurrentContext.WorkDirectory, 
-                "playwright-traces", 
-                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip" 
-            ) : null, 
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                TestContext.CurrentContext.WorkDirectory,
+                "playwright-traces",
+                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
+            )
         });
+    }
+
+    [Test]
+    public async Task GetStartedLink()
+    {
+        // ..
     }
 }
 ```
-
 </TabItem>
 <TabItem value="mstest">
 
@@ -180,20 +198,37 @@ namespace PlaywrightTests;
 [TestClass]
 public class ExampleTest : PageTest
 {
-    // ...
+    [TestInitialize]
+    public async Task TestInitialize()
+    {
+         await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
     [TestCleanup]
     public async Task TestCleanup()
     {
         var failed = new[] { UnitTestOutcome.Failed, UnitTestOutcome.Error, UnitTestOutcome.Timeout, UnitTestOutcome.Aborted }.Contains(TestContext.CurrentTestOutcome);
 
-        await Context.Tracing.StopAsync(new() 
-        { 
-            Path = failed ? Path.Combine( 
-                Environment.CurrentDirectory, 
-                "playwright-traces", 
-                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip" 
-            ) : null 
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
+            )
         });
+    }
+
+    [TestMethod]
+    public async Task GetStartedLink()
+    {
+        // ...
     }
 }
 ```
@@ -206,4 +241,4 @@ To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 ## What's next
 
 - [Run tests on CI with GitHub Actions](/ci-intro.md)
-- [Learn more about Trace Viewer](/trace-viewer.md)
+- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
