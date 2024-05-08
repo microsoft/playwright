@@ -318,7 +318,7 @@ class PageHandler {
     const rect = new DOMRect(clip.x, clip.y, clip.width, clip.height);
 
     const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
-    // `win.devicePixelRatio` returns a non-overridden value to privileged code.
+    // `win.devicePixelRatio` returns a non-overriden value to priveleged code.
     // See https://bugzilla.mozilla.org/show_bug.cgi?id=1761032
     // See https://phabricator.services.mozilla.com/D141323
     const devicePixelRatio = browsingContext.overrideDPPX || this._pageTarget._window.devicePixelRatio;
