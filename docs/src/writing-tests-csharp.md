@@ -325,7 +325,7 @@ public class ExampleTest : PageTest
 ## What's Next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen.md)
+- [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
 - [Learn more about the NUnit and MSTest base classes](./test-runners.md)
