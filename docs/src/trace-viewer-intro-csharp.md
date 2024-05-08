@@ -142,6 +142,13 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
 <TabItem value="nunit">
 
 ```csharp
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class ExampleTest : PageTest
+{
+    // ...
     [TearDown]
     public async Task TearDown()
     {
@@ -157,12 +164,22 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
             ) : null, 
         });
     }
+}
 ```
 
 </TabItem>
 <TabItem value="mstest">
 
 ```csharp
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class ExampleTest : PageTest
+     // ...
     [TestCleanup]
     public async Task TestCleanup()
     {
@@ -177,7 +194,7 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
             ) : null 
         });
     }
-
+}
 ```
 
 </TabItem>
