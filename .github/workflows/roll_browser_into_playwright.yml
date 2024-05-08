@@ -9,6 +9,7 @@ env:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   roll:
@@ -40,7 +41,6 @@ jobs:
     - name: Create Pull Request
       uses: actions/github-script@v6
       with:
-        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |
           const response = await github.rest.pulls.create({
             owner: 'microsoft',

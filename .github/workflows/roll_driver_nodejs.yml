@@ -11,6 +11,7 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,7 +38,6 @@ jobs:
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
           script: |
             await github.rest.pulls.create({
               owner: 'microsoft',

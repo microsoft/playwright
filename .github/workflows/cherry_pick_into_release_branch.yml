@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   roll:
@@ -62,7 +63,6 @@ jobs:
     - name: Create Pull Request
       uses: actions/github-script@v6
       with:
-        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |
           const readableCommitHashesList = '${{ github.event.inputs.commit_hashes }}'.split(',').map(hash => `- ${hash}`).join('\n');
           const response = await github.rest.pulls.create({
