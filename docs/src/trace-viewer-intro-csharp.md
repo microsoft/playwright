@@ -179,7 +179,8 @@ namespace PlaywrightTests;
 
 [TestClass]
 public class ExampleTest : PageTest
-     // ...
+{
+    // ...
     [TestCleanup]
     public async Task TestCleanup()
     {
