@@ -223,9 +223,9 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
   // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
   // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
-  const delta = monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts, map);
+  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts, map);
   if (delta)
-    adjustMonotonicTime(nonPrimaryContexts, delta);
+    adjustMonotonicTime(primaryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of nonPrimaryContexts) {
@@ -254,8 +254,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   return map;
 }
 
-function adjustMonotonicTime(nonPrimaryContexts: ContextEntry[], monotonicTimeDelta: number) {
-  for (const context of nonPrimaryContexts) {
+function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: number) {
+  for (const context of contexts) {
     context.startTime += monotonicTimeDelta;
     context.endTime += monotonicTimeDelta;
     for (const action of context.actions) {
@@ -275,7 +275,7 @@ function adjustMonotonicTime(nonPrimaryContexts: ContextEntry[], monotonicTimeDe
   }
 }
 
-function monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
+function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
   // We cannot rely on wall time or monotonic time to be the in sync
   // between library and test runner contexts. So we find first action
   // that is present in both runner and library contexts and use it
@@ -288,7 +288,7 @@ function monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts: ContextEn
       const key = `${action.apiName}@${action.wallTime}`;
       const libraryAction = libraryActions.get(key);
       if (libraryAction)
-        return libraryAction.startTime - action.startTime;
+        return action.startTime - libraryAction.startTime;
     }
   }
   return 0;
