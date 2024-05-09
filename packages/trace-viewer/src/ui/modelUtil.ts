@@ -178,7 +178,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     // traces from more than one file we make the ids unique across the
     // files. The code does not update snapshot ids as they are always
     // retrieved from a particular trace file.
-    if (traceFileToContexts.size)
+    if (traceFileToContexts.size > 1)
       makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
     // Align action times across runner and library contexts within each trace file.
     const map = mergeActionsAndUpdateTimingSameTrace(contexts);
