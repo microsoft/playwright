@@ -224,7 +224,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
   // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
   const delta = monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts, map);
-  adjustMonotonicTime(nonPrimaryContexts, delta);
+  if (delta)
+    adjustMonotonicTime(nonPrimaryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of nonPrimaryContexts) {
@@ -265,6 +266,8 @@ function adjustMonotonicTime(nonPrimaryContexts: ContextEntry[], monotonicTimeDe
     }
     for (const event of context.events)
       event.time += monotonicTimeDelta;
+    for (const event of context.stdio)
+      event.timestamp += monotonicTimeDelta;
     for (const page of context.pages) {
       for (const frame of page.screencastFrames)
         frame.timestamp += monotonicTimeDelta;
