@@ -809,11 +809,11 @@ test('should open two trace files of the same test', async ({ context, page, req
   // Same actions from different test runs should not be merged.
   await expect(traceViewer.actionTitles).toHaveText([
     'Before Hooks',
+    'Before Hooks',
+    'page.gotohttps://playwright.dev/',
     'page.gotohttps://playwright.dev/',
     'expect.toBe',
     'After Hooks',
-    'Before Hooks',
-    'page.gotohttps://playwright.dev/',
     'expect.toBe',
     'After Hooks',
   ]);
