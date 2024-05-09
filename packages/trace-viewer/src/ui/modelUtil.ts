@@ -222,7 +222,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
 
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
   // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
-  // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
+  // Adjust startTime/endTime on the primary contexts to align them with the test
+  // runner steps.
   const delta = monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts, map);
   if (delta)
     adjustMonotonicTime(primaryContexts, delta);
