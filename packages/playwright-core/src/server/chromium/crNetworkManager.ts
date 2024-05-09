@@ -583,8 +583,9 @@ class InterceptableRequest {
     } = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
     const type = (requestWillBeSentEvent.type || '').toLowerCase();
     let postDataBuffer = null;
-    if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
-      postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
+    const entries = postDataEntries?.filter(entry => entry.bytes);
+    if (entries && entries.length)
+      postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
     this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
   }
