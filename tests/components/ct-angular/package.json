@@ -11,23 +11,23 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "1.0.2",
-    "@angular/animations": "17.3.1",
-    "@angular/common": "17.3.1",
-    "@angular/compiler": "17.3.1",
-    "@angular/core": "17.3.1",
-    "@angular/forms": "17.3.1",
-    "@angular/platform-browser": "17.3.1",
-    "@angular/platform-browser-dynamic": "17.3.1",
-    "@angular/router": "17.3.1",
+    "@analogjs/vite-plugin-angular": "1.3.0",
+    "@angular/animations": "17.3.8",
+    "@angular/common": "17.3.8",
+    "@angular/compiler": "17.3.8",
+    "@angular/core": "17.3.8",
+    "@angular/forms": "17.3.8",
+    "@angular/platform-browser": "17.3.8",
+    "@angular/platform-browser-dynamic": "17.3.8",
+    "@angular/router": "17.3.8",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
-    "zone.js": "0.14.4"
+    "zone.js": "0.14.5"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "17.3.2",
-    "@angular/cli": "17.3.2",
-    "@angular/compiler-cli": "17.3.1",
+    "@angular-devkit/build-angular": "17.3.7",
+    "@angular/cli": "17.3.7",
+    "@angular/compiler-cli": "17.3.8",
     "typescript": "5.4.3"
   }
 }

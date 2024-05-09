@@ -22,13 +22,13 @@ export default defineConfig({
   testDir: 'tests',
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
-  reporter: 'html',
+  reporter: process.env['CI'] ? 'html' : 'line',
   use: {
     trace: 'on-first-retry',
     ctViteConfig: {
       plugins: [angular({
         tsconfig: resolve('./tsconfig.spec.json'),
-      })],
+      }) as any], // TODO: remove any and resolve various installed conflicting Vite versions
       resolve: {
         alias: {
           '@': resolve('./src'),
