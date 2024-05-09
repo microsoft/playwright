@@ -52,6 +52,7 @@ export class FullConfigInternal {
   cliProjectFilter?: string[];
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
+  cliFailOnFlakyTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
