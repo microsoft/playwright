@@ -789,6 +789,8 @@ completely visible as defined by
 Throws when `elementHandle` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
+See [scrolling](../input.md#scrolling) for alternative ways to scroll.
+
 ### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
 * since: v1.8
 

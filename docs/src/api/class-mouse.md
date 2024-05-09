@@ -147,7 +147,7 @@ Dispatches a `mouseup` event.
 ## async method: Mouse.wheel
 * since: v1.15
 
-Dispatches a `wheel` event.
+Dispatches a `wheel` event. This method is usually used to manually scroll the page. See [scrolling](../input.md#scrolling) for alternative ways to scroll.
 
 :::note
 Wheel events may cause scrolling if they are not handled, and this method does not

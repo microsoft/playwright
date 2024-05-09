@@ -757,3 +757,106 @@ await page.Mouse.UpAsync();
 :::note
 If your page relies on the `dragover` event being dispatched, you need at least two mouse moves to trigger it in all browsers. To reliably issue the second mouse move, repeat your [`method: Mouse.move`] or [`method: Locator.hover`] twice. The sequence of operations would be: hover the drag element, mouse down, hover the drop element, hover the drop element second time, mouse up.
 :::
+
+## Scrolling
+
+Most of the time, Playwright will automatically scroll for you before doing any actions. Therefore, you do not need to scroll explicitly.
+
+```js
+// Scrolls automatically so that button is visible
+await page.getByRole('button').click();
+```
+
+```java
+// Scrolls automatically so that button is visible
+page.getByRole(AriaRole.BUTTON).click();
+```
+
+```python async
+# Scrolls automatically so that button is visible
+await page.get_by_role("button").click()
+```
+
+```python sync
+# Scrolls automatically so that button is visible
+page.get_by_role("button").click()
+```
+
+```csharp
+// Scrolls automatically so that button is visible
+await page.GetByRole(AriaRole.Button).ClickAsync();
+```
+
+However, in rare cases you might need to manually scroll. For example, you might want to force an "infinite list" to load more elements, or position the page for a specific screenshot. In such a case, the most reliable way is to find an element that you want to make visible at the bottom, and scroll it into view.
+
+```js
+// Scroll the footer into view, forcing an "infinite list" to load more content
+await page.getByText('Footer text').scrollIntoViewIfNeeded();
+```
+
+```java
+// Scroll the footer into view, forcing an "infinite list" to load more content
+page.getByText("Footer text").scrollIntoViewIfNeeded();
+```
+
+```python async
+# Scroll the footer into view, forcing an "infinite list" to load more content
+await page.get_by_text("Footer text").scroll_into_view_if_needed()
+```
+
+```python sync
+# Scroll the footer into view, forcing an "infinite list" to load more content
+page.get_by_text("Footer text").scroll_into_view_if_needed()
+```
+
+```csharp
+// Scroll the footer into view, forcing an "infinite list" to load more content
+await page.GetByText("Footer text").ScrollIntoViewIfNeededAsync();
+```
+
+If you would like to control the scrolling more precisely, use [`method: Mouse.wheel`] or [`method: Locator.evaluate`]:
+
+```js
+// Position the mouse and scroll with the mouse wheel
+await page.getByTestId('scrolling-container').hover();
+await page.mouse.wheel(0, 10);
+
+// Alternatively, programmatically scroll a specific element
+await page.getByTestId('scrolling-container').evaluate(e => e.scrollTop += 100);
+```
+
+```java
+// Position the mouse and scroll with the mouse wheel
+page.getByTestId("scrolling-container").hover();
+page.mouse.wheel(0, 10);
+
+// Alternatively, programmatically scroll a specific element
+page.getByTestId("scrolling-container").evaluate("e => e.scrollTop += 100");
+```
+
+```python async
+# Position the mouse and scroll with the mouse wheel
+await page.get_by_test_id("scrolling-container").hover()
+await page.mouse.wheel(0, 10)
+
+# Alternatively, programmatically scroll a specific element
+await page.get_by_test_id("scrolling-container").evaluate("e => e.scrollTop += 100")
+```
+
+```python sync
+# Position the mouse and scroll with the mouse wheel
+page.get_by_test_id("scrolling-container").hover()
+page.mouse.wheel(0, 10)
+
+# Alternatively, programmatically scroll a specific element
+page.get_by_test_id("scrolling-container").evaluate("e => e.scrollTop += 100")
+```
+
+```csharp
+// Position the mouse and scroll with the mouse wheel
+await page.GetByTestId("scrolling-container").HoverAsync();
+await page.Mouse.WheelAsync(0, 10);
+
+// Alternatively, programmatically scroll a specific element
+await page.GetByTestId("scrolling-container").EvaluateAsync("e => e.scrollTop += 100");
+```

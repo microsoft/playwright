@@ -10374,6 +10374,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * Throws when `elementHandle` does not point to an element
    * [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
+   *
+   * See [scrolling](https://playwright.dev/docs/input#scrolling) for alternative ways to scroll.
    * @param options
    */
   scrollIntoViewIfNeeded(options?: {
@@ -12574,6 +12576,8 @@ export interface Locator {
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then tries to scroll element into view, unless
    * it is completely visible as defined by
    * [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
+   *
+   * See [scrolling](https://playwright.dev/docs/input#scrolling) for alternative ways to scroll.
    * @param options
    */
   scrollIntoViewIfNeeded(options?: {
@@ -18649,7 +18653,8 @@ export interface Mouse {
   }): Promise<void>;
 
   /**
-   * Dispatches a `wheel` event.
+   * Dispatches a `wheel` event. This method is usually used to manually scroll the page. See
+   * [scrolling](https://playwright.dev/docs/input#scrolling) for alternative ways to scroll.
    *
    * **NOTE** Wheel events may cause scrolling if they are not handled, and this method does not wait for the scrolling
    * to finish before returning.
