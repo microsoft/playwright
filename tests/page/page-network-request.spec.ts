@@ -317,6 +317,30 @@ it('should get |undefined| with postDataJSON() when there is no post data', asyn
   expect(response.request().postDataJSON()).toBe(null);
 });
 
+it('should return multipart/form-data', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'webkit', 'File content is missing in WebKit');
+
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/post', (req, res) => res.end());
+  await page.route('**/*', route => route.continue());
+  const requestPromise = page.waitForRequest('**/post');
+  await page.evaluate(async () => {
+    const body = new FormData();
+    body.set('name1', 'value1');
+    body.set('file', new File(['file-value'], 'foo.txt'));
+    body.set('name2', 'value2');
+    body.append('name2', 'another-value2');
+    await fetch('/post', { method: 'POST', body });
+  });
+  const request = await requestPromise;
+  const contentType = await request.headerValue('Content-Type');
+  const re = /^multipart\/form-data; boundary=(.*)$/;
+  expect(contentType).toMatch(re);
+  const b = contentType.match(re)[1]!;
+  const expected = `--${b}\r\nContent-Disposition: form-data; name=\"name1\"\r\n\r\nvalue1\r\n--${b}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"foo.txt\"\r\nContent-Type: application/octet-stream\r\n\r\nfile-value\r\n--${b}\r\nContent-Disposition: form-data; name=\"name2\"\r\n\r\nvalue2\r\n--${b}\r\nContent-Disposition: form-data; name=\"name2\"\r\n\r\nanother-value2\r\n--${b}--\r\n`;
+  expect(request.postDataBuffer().toString('utf8')).toEqual(expected);
+});
+
 it('should return event source', async ({ page, server }) => {
   const SSE_MESSAGE = { foo: 'bar' };
   // 1. Setup server-sent events on server that immediately sends a message to the client.
