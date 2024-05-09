@@ -392,7 +392,7 @@ public class ExampleTest : PageTest
                 TestContext.CurrentContext.WorkDirectory,
                 "playwright-traces",
                 $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
-            )
+            ) : null, 
         });
     }
 
@@ -439,7 +439,7 @@ public class ExampleTest : PageTest
                 Environment.CurrentDirectory,
                 "playwright-traces",
                 $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
-            )
+            ) : null,
         });
     }
 
