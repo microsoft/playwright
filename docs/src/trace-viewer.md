@@ -345,9 +345,118 @@ public class UnitTest1 : PageTest
 
 This will record the trace and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
 
+
+## Run trace only on failure
+* langs: csharp
+
+Setup your tests to record a trace only when the test fails:
+
+<Tabs
+  groupId="test-runners"
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```csharp
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class ExampleTest : PageTest
+{
+    [SetUp]
+    public async Task Setup()
+    {
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error 
+            || TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Failure;
+
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = failed ? Path.Combine(
+                TestContext.CurrentContext.WorkDirectory,
+                "playwright-traces",
+                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
+            ) : null, 
+        });
+    }
+
+    [Test]
+    public async Task GetStartedLink()
+    {
+        // ..
+    }
+}
+```
+</TabItem>
+<TabItem value="mstest">
+
+```csharp
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class ExampleTest : PageTest
+{
+    [TestInitialize]
+    public async Task TestInitialize()
+    {
+         await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    [TestCleanup]
+    public async Task TestCleanup()
+    {
+        var failed = new[] { UnitTestOutcome.Failed, UnitTestOutcome.Error, UnitTestOutcome.Timeout, UnitTestOutcome.Aborted }.Contains(TestContext.CurrentTestOutcome);
+
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = failed ? Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
+            ) : null,
+        });
+    }
+
+    [TestMethod]
+    public async Task GetStartedLink()
+    {
+        // ...
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
 ## Opening the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the full path to your `trace.zip` file.
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located.
 
 ```bash js
 npx playwright show-trace path/to/trace.zip
@@ -398,5 +507,4 @@ You can also pass the URL of your uploaded trace (e.g. inside your CI) from some
 ```txt
 https://trace.playwright.dev/?trace=https://demo.playwright.dev/reports/todomvc/data/cb0fa77ebd9487a5c899f3ae65a7ffdbac681182.zip
 ```
-
 
