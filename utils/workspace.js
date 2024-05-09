@@ -86,6 +86,7 @@ class Workspace {
         return;
       hasChanges = true;
       console.warn('Updated', jsonPath);
+      console.warn(json);
       await writeJSON(jsonPath, json);
     };
 
@@ -125,7 +126,7 @@ class Workspace {
       }
       await maybeWriteJSON(pkg.packageJSONPath, pkg.packageJSON);
     }
-  
+
     // Re-run npm i to make package-lock dirty.
     child_process.execSync('npm i');
     return hasChanges;
