@@ -189,7 +189,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
       return -1;
     if (a1.parentId === a2.callId)
       return 1;
-    return a1.wallTime - a2.wallTime || a1.startTime - a2.startTime;
+    return a1.startTime - a2.startTime;
   });
 
   for (let i = 1; i < result.length; ++i)
@@ -212,38 +212,26 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
 function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   const map = new Map<string, ActionTraceEventInContext>();
 
-  // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
-  // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
-  // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
-  let offset = 0;
   const primaryContexts = contexts.filter(context => context.isPrimary);
   const nonPrimaryContexts = contexts.filter(context => !context.isPrimary);
 
   for (const context of primaryContexts) {
     for (const action of context.actions)
       map.set(`${action.apiName}@${action.wallTime}`, { ...action, context });
-    if (!offset && context.actions.length)
-      offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
 
+  // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
+  // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
+  // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
+  const delta = monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts, map);
+  adjustMonotonicTime(nonPrimaryContexts, delta);
+
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
-  const nonPrimaryTimeDelta = new Map<ContextEntry, number>();
   for (const context of nonPrimaryContexts) {
     for (const action of context.actions) {
-      if (offset) {
-        const duration = action.endTime - action.startTime;
-        if (action.startTime) {
-          const newStartTime = action.wallTime + offset;
-          nonPrimaryTimeDelta.set(context, newStartTime - action.startTime);
-          action.startTime = newStartTime;
-        }
-        if (action.endTime)
-          action.endTime = action.startTime + duration;
-      }
-
       const key = `${action.apiName}@${action.wallTime}`;
       const existing = map.get(key);
-      if (existing && existing.apiName === action.apiName) {
+      if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
         if (action.error)
           existing.error = action.error;
@@ -251,6 +239,10 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
           existing.attachments = action.attachments;
         if (action.parentId)
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
+        // For the events that are present in the test runner context, always take
+        // their time from the test runner context to preserve client side order.
+        existing.startTime = action.startTime;
+        existing.endTime = action.endTime;
         continue;
       }
       if (action.parentId)
@@ -258,18 +250,45 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
       map.set(key, { ...action, context });
     }
   }
+  return map;
+}
 
-  for (const [context, timeDelta] of nonPrimaryTimeDelta) {
-    context.startTime += timeDelta;
-    context.endTime += timeDelta;
+function adjustMonotonicTime(nonPrimaryContexts: ContextEntry[], monotonicTimeDelta: number) {
+  for (const context of nonPrimaryContexts) {
+    context.startTime += monotonicTimeDelta;
+    context.endTime += monotonicTimeDelta;
+    for (const action of context.actions) {
+      if (action.startTime)
+        action.startTime += monotonicTimeDelta;
+      if (action.endTime)
+        action.endTime += monotonicTimeDelta;
+    }
     for (const event of context.events)
-      event.time += timeDelta;
+      event.time += monotonicTimeDelta;
     for (const page of context.pages) {
       for (const frame of page.screencastFrames)
-        frame.timestamp += timeDelta;
+        frame.timestamp += monotonicTimeDelta;
     }
   }
-  return map;
+}
+
+function monotonicTimeDeltaBetweenRunnerAndLibrary(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
+  // We cannot rely on wall time or monotonic time to be the in sync
+  // between library and test runner contexts. So we find first action
+  // that is present in both runner and library contexts and use it
+  // to calculate the time delta, assuming the two events happened at the
+  // same instant.
+  for (const context of nonPrimaryContexts) {
+    for (const action of context.actions) {
+      if (!action.startTime)
+        continue;
+      const key = `${action.apiName}@${action.wallTime}`;
+      const libraryAction = libraryActions.get(key);
+      if (libraryAction)
+        return libraryAction.startTime - action.startTime;
+    }
+  }
+  return 0;
 }
 
 export function buildActionTree(actions: ActionTraceEventInContext[]): { rootItem: ActionTreeItem, itemMap: Map<string, ActionTreeItem> } {
