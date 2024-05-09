@@ -2,6 +2,7 @@
 
 !README.md
 !LICENSE
+!cli.js
 !register.d.ts
 !register.mjs
 !registerSource.mjs
