@@ -59,7 +59,7 @@ public class Tests : PageTest
     }
 
     [Test]
-    public async Task TestYourOnlineShop()
+    public async Task GetStartedLink()
     {
         // ..
     }
@@ -129,81 +129,9 @@ pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-trac
 ![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c)
 
 
-## Run trace only on failure
-
-<Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
-}>
-<TabItem value="nunit">
-
-```csharp
-namespace PlaywrightTests;
-
-[Parallelizable(ParallelScope.Self)]
-[TestFixture]
-public class ExampleTest : PageTest
-{
-    // ...
-    [TearDown]
-    public async Task TearDown()
-    {
-        var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error 
-            || TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Failure;
-
-        await Context.Tracing.StopAsync(new() 
-        { 
-            Path = failed ? Path.Combine( 
-                TestContext.CurrentContext.WorkDirectory, 
-                "playwright-traces", 
-                $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip" 
-            ) : null, 
-        });
-    }
-}
-```
-
-</TabItem>
-<TabItem value="mstest">
-
-```csharp
-using System.Text.RegularExpressions;
-using Microsoft.Playwright;
-using Microsoft.Playwright.MSTest;
-
-namespace PlaywrightTests;
-
-[TestClass]
-public class ExampleTest : PageTest
-{
-    // ...
-    [TestCleanup]
-    public async Task TestCleanup()
-    {
-        var failed = new[] { UnitTestOutcome.Failed, UnitTestOutcome.Error, UnitTestOutcome.Timeout, UnitTestOutcome.Aborted }.Contains(TestContext.CurrentTestOutcome);
-
-        await Context.Tracing.StopAsync(new() 
-        { 
-            Path = failed ? Path.Combine( 
-                Environment.CurrentDirectory, 
-                "playwright-traces", 
-                $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip" 
-            ) : null 
-        });
-    }
-}
-```
-
-</TabItem>
-</Tabs>
-
-To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
+Check out our detailed guide on [Trace Viewer](/trace-viewer.md) to learn more about the trace viewer and how to setup your tests to record a trace only when the test fails.
 
 ## What's next
 
 - [Run tests on CI with GitHub Actions](/ci-intro.md)
-- [Learn more about Trace Viewer](/trace-viewer.md)
+- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
