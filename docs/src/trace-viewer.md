@@ -388,7 +388,7 @@ public class ExampleTest : PageTest
 
         await Context.Tracing.StopAsync(new()
         {
-            Path = Path.Combine(
+            Path = failed ? Path.Combine(
                 TestContext.CurrentContext.WorkDirectory,
                 "playwright-traces",
                 $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
@@ -435,7 +435,7 @@ public class ExampleTest : PageTest
 
         await Context.Tracing.StopAsync(new()
         {
-            Path = Path.Combine(
+            Path = failed ? Path.Combine(
                 Environment.CurrentDirectory,
                 "playwright-traces",
                 $"{TestContext.FullyQualifiedTestClassName}.{TestContext.TestName}.zip"
