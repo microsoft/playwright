@@ -3243,8 +3243,6 @@ ElectronApplication:
           - console
         enabled: boolean
 
-    close:
-
   events:
     close:
     console:

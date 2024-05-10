@@ -2313,8 +2313,6 @@ scheme.ElectronApplicationUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.ElectronApplicationUpdateSubscriptionResult = tOptional(tObject({}));
-scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
-scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
 scheme.AndroidInitializer = tOptional(tObject({}));
 scheme.AndroidDevicesParams = tObject({
   host: tOptional(tString),

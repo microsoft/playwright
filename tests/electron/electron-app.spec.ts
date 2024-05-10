@@ -261,6 +261,18 @@ test('should record video', async ({ launchElectronApp }, testInfo) => {
   expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });
 
+test('should record har', async ({ launchElectronApp, server }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30747' });
+  const app = await launchElectronApp('electron-window-app.js', [], {
+    recordHar: { path: testInfo.outputPath('har.zip') }
+  });
+  const page = await app.firstWindow();
+  await page.goto(server.EMPTY_PAGE);
+  await app.close();
+  expect(fs.existsSync(testInfo.outputPath('har.zip'))).toBeTruthy();
+  expect(fs.statSync(testInfo.outputPath('har.zip')).size).toBeGreaterThan(0);
+});
+
 test('should be able to get the first window when with a delayed navigation', async ({ launchElectronApp }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17765' });
 

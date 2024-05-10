@@ -4124,7 +4124,6 @@ export interface ElectronApplicationChannel extends ElectronApplicationEventTarg
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionResult>;
   evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
   updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, metadata?: CallMetadata): Promise<ElectronApplicationUpdateSubscriptionResult>;
-  close(params?: ElectronApplicationCloseParams, metadata?: CallMetadata): Promise<ElectronApplicationCloseResult>;
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
@@ -4176,9 +4175,6 @@ export type ElectronApplicationUpdateSubscriptionOptions = {
 
 };
 export type ElectronApplicationUpdateSubscriptionResult = void;
-export type ElectronApplicationCloseParams = {};
-export type ElectronApplicationCloseOptions = {};
-export type ElectronApplicationCloseResult = void;
 
 export interface ElectronApplicationEvents {
   'close': ElectronApplicationCloseEvent;
