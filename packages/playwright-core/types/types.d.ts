@@ -4769,6 +4769,7 @@ export interface Page {
    * // Alternative way with a predicate. Note no await.
    * const responsePromise = page.waitForResponse(response =>
    *   response.url() === 'https://example.com' && response.status() === 200
+   *       && response.request().method() === 'GET'
    * );
    * await page.getByText('trigger response').click();
    * const response = await responsePromise;

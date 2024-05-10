@@ -4880,6 +4880,7 @@ const response = await responsePromise;
 // Alternative way with a predicate. Note no await.
 const responsePromise = page.waitForResponse(response =>
   response.url() === 'https://example.com' && response.status() === 200
+      && response.request().method() === 'GET'
 );
 await page.getByText('trigger response').click();
 const response = await responsePromise;
@@ -4893,7 +4894,7 @@ Response response = page.waitForResponse("https://example.com/resource", () -> {
 });
 
 // Waits for the next response matching some conditions
-Response response = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {
+Response response = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200 && "GET".equals(response.request().method()), () -> {
   // Triggers the response
   page.getByText("trigger response").click();
 });
@@ -4906,7 +4907,7 @@ response = await response_info.value
 return response.ok
 
 # or with a lambda
-async with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200) as response_info:
+async with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200 and response.request.method == "get") as response_info:
     await page.get_by_text("trigger response").click()
 response = await response_info.value
 return response.ok
@@ -4919,7 +4920,7 @@ response = response_info.value
 return response.ok
 
 # or with a lambda
-with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200) as response_info:
+with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200 and response.request.method == "get") as response_info:
     page.get_by_text("trigger response").click()
 response = response_info.value
 return response.ok
@@ -4936,7 +4937,7 @@ await page.RunAndWaitForResponseAsync(async () =>
 await page.RunAndWaitForResponseAsync(async () =>
 {
     await page.GetByText("trigger response").ClickAsync();
-}, response => response.Url == "https://example.com" && response.Status == 200);
+}, response => response.Url == "https://example.com" && response.Status == 200 && response.Request.Method == "GET");
 ```
 
 ## async method: Page.waitForResponse
