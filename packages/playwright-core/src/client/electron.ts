@@ -57,7 +57,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       tracesDir: options.tracesDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
-    app._context._setOptions(params, {});
+    app._context._setOptions(params, options);
     return app;
   }
 }
