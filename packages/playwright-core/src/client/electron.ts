@@ -57,7 +57,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       tracesDir: options.tracesDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
-    app._context._options = params;
+    app._context._setOptions(params, options);
     return app;
   }
 }
@@ -66,7 +66,6 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   readonly _context: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
-  private _isClosed = false;
 
   static from(electronApplication: channels.ElectronApplicationChannel): ElectronApplication {
     return (electronApplication as any)._object;
@@ -79,7 +78,6 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this._onPage(page);
     this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
     this._channel.on('close', () => {
-      this._isClosed = true;
       this.emit(Events.ElectronApplication.Close);
     });
     this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(event)));
@@ -118,9 +116,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async close() {
-    if (this._isClosed)
-      return;
-    await this._channel.close().catch(() => {});
+    await this._context.close().catch(() => {});
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
