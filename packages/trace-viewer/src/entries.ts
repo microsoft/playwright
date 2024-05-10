@@ -19,7 +19,7 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
 export type ContextEntry = {
-  isPrimary: boolean;
+  origin: 'testRunner'|'library';
   traceUrl: string;
   startTime: number;
   endTime: number;
@@ -55,7 +55,7 @@ export type ActionEntry = trace.ActionTraceEvent & {
 
 export function createEmptyContext(): ContextEntry {
   return {
-    isPrimary: false,
+    origin: 'testRunner',
     traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,

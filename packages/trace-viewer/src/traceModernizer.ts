@@ -71,7 +71,7 @@ export class TraceModernizer {
     switch (event.type) {
       case 'context-options': {
         this._version = event.version;
-        contextEntry.isPrimary = true;
+        contextEntry.origin = 'library';
         contextEntry.browserName = event.browserName;
         contextEntry.channel = event.channel;
         contextEntry.title = event.title;

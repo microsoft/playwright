@@ -80,16 +80,16 @@ export class MultiTraceModel {
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
-    const primaryContext = contexts.find(context => context.isPrimary);
+    const libraryContext = contexts.find(context => context.origin === 'library');
 
-    this.browserName = primaryContext?.browserName || '';
-    this.sdkLanguage = primaryContext?.sdkLanguage;
-    this.channel = primaryContext?.channel;
-    this.testIdAttributeName = primaryContext?.testIdAttributeName;
-    this.platform = primaryContext?.platform || '';
-    this.title = primaryContext?.title || '';
-    this.options = primaryContext?.options || {};
-    // Next call updates all timestamps for all events in non-primary contexts, so it must be done first.
+    this.browserName = libraryContext?.browserName || '';
+    this.sdkLanguage = libraryContext?.sdkLanguage;
+    this.channel = libraryContext?.channel;
+    this.testIdAttributeName = libraryContext?.testIdAttributeName;
+    this.platform = libraryContext?.platform || '';
+    this.title = libraryContext?.title || '';
+    this.options = libraryContext?.options || {};
+    // Next call updates all timestamps for all events in library contexts, so it must be done first.
     this.actions = mergeActionsAndUpdateTiming(contexts);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
@@ -99,7 +99,7 @@ export class MultiTraceModel {
     this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
     this.errors = ([] as trace.ErrorTraceEvent[]).concat(...contexts.map(c => c.errors));
     this.hasSource = contexts.some(c => c.hasSource);
-    this.hasStepData = contexts.some(context => !context.isPrimary);
+    this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
 
     this.events.sort((a1, a2) => a1.time - a2.time);
@@ -212,24 +212,24 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
 function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   const map = new Map<string, ActionTraceEventInContext>();
 
-  const primaryContexts = contexts.filter(context => context.isPrimary);
-  const nonPrimaryContexts = contexts.filter(context => !context.isPrimary);
+  const libraryContexts = contexts.filter(context => context.origin === 'library');
+  const testRunnerContexts = contexts.filter(context => context.origin === 'testRunner');
 
-  for (const context of primaryContexts) {
+  for (const context of libraryContexts) {
     for (const action of context.actions)
       map.set(`${action.apiName}@${action.wallTime}`, { ...action, context });
   }
 
-  // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
-  // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
-  // Adjust startTime/endTime on the primary contexts to align them with the test
+  // Protocol call aka library contexts have startTime/endTime as server-side times.
+  // Step aka test runner contexts have startTime/endTime as client-side times.
+  // Adjust startTime/endTime on the library contexts to align them with the test
   // runner steps.
-  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts, map);
+  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map);
   if (delta)
-    adjustMonotonicTime(primaryContexts, delta);
+    adjustMonotonicTime(libraryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
-  for (const context of nonPrimaryContexts) {
+  for (const context of testRunnerContexts) {
     for (const action of context.actions) {
       const key = `${action.apiName}@${action.wallTime}`;
       const existing = map.get(key);
