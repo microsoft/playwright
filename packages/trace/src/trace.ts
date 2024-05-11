@@ -62,7 +62,6 @@ export type BeforeActionTraceEvent = {
   class: string;
   method: string;
   params: Record<string, any>;
-  wallTime: number;
   stepId?: string;
   beforeSnapshot?: string;
   stack?: StackFrame[];

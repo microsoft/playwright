@@ -32,8 +32,6 @@ export type CallMetadata = {
   // Service-side is making a call to itself, this metadata does not go
   // through the dispatcher, so is always excluded from inspector / tracing.
   isServerSide?: boolean;
-  // Client wall time.
-  wallTime: number;
   // Test runner step id.
   stepId?: string;
   location?: { file: string, line?: number, column?: number };

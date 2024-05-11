@@ -225,7 +225,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
 
   for (const context of libraryContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.stepId! : `${action.apiName}@${action.wallTime}`;
+      const key = matchByStepId ? action.stepId! : `${action.apiName}@${(action as any).wallTime}`;
       map.set(key, { ...action, context });
     }
   }
@@ -234,14 +234,14 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   // Step aka test runner contexts have startTime/endTime as client-side times.
   // Adjust startTime/endTime on the library contexts to align them with the test
   // runner steps.
-  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map);
+  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map, matchByStepId);
   if (delta)
     adjustMonotonicTime(libraryContexts, delta);
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const key = matchByStepId ? action.callId : `${action.apiName}@${action.wallTime}`;
+      const key = matchByStepId ? action.callId : `${action.apiName}@${(action as any).wallTime}`;
       const existing = map.get(key);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
@@ -286,7 +286,7 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
   }
 }
 
-function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
+function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>, matchByStepId: boolean) {
   // We cannot rely on wall time or monotonic time to be the in sync
   // between library and test runner contexts. So we find first action
   // that is present in both runner and library contexts and use it
@@ -296,7 +296,7 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
-      const key = `${action.apiName}@${action.wallTime}`;
+      const key = matchByStepId ? action.stepId! : `${action.apiName}@${(action as any).wallTime}`;
       const libraryAction = libraryActions.get(key);
       if (libraryAction)
         return action.startTime - libraryAction.startTime;
