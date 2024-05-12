@@ -9,7 +9,7 @@ Playwright performs a range of actionability checks on the elements before makin
 behave as expected. It auto-waits for all the relevant checks to pass and only then performs the requested action. If the required checks do not pass within the given `timeout`, action fails with the `TimeoutError`.
 
 For example, for [`method: Locator.click`], Playwright will ensure that:
-- locator resolves to an exactly one element
+- locator resolves to exactly one element
 - element is [Visible]
 - element is [Stable], as in not animating or completed animation
 - element [Receives Events], as in not obscured by other elements
