@@ -105,7 +105,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       options: {},
       platform: process.platform,
       wallTime: 0,
-      monotonicTimeOffset: 0,
+      monotonicTime: 0,
       sdkLanguage: context.attribution.playwright.options.sdkLanguage,
       testIdAttributeName
     };

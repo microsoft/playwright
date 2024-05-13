@@ -38,7 +38,7 @@ export type ContextCreatedTraceEvent = {
   channel?: string,
   platform: string,
   wallTime: number,
-  monotonicTimeOffset: number,
+  monotonicTime: number,
   title?: string,
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,

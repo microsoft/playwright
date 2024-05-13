@@ -26,8 +26,7 @@ export type ContextEntry = {
   browserName: string;
   channel?: string;
   platform?: string;
-  wallTime?: number;
-  monotonicTimeOffset: number;
+  wallTime: number;
   sdkLanguage?: Language;
   testIdAttributeName?: string;
   title?: string;
@@ -59,7 +58,7 @@ export function createEmptyContext(): ContextEntry {
     origin: 'testRunner',
     traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
-    monotonicTimeOffset: 0,
+    wallTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,
     browserName: '',
     options: {

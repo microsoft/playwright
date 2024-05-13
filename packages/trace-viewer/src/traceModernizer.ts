@@ -78,6 +78,7 @@ export class TraceModernizer {
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
         contextEntry.wallTime = event.wallTime;
+        contextEntry.startTime = event.monotonicTime;
         contextEntry.sdkLanguage = event.sdkLanguage;
         contextEntry.options = event.options;
         contextEntry.testIdAttributeName = event.testIdAttributeName;
@@ -176,11 +177,13 @@ export class TraceModernizer {
   }
 
   private _modernize(event: any): trace.TraceEvent[] {
-    if (this._version === undefined)
+    // In trace 6->7 we also need to modernize context-options event.
+    let version = this._version || event.version;
+    if (version === undefined)
       return [event];
     const lastVersion: trace.VERSION = 7;
     let events = [event];
-    for (let version = this._version; version < lastVersion; ++version)
+    for (; version < lastVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
     return events;
   }
@@ -375,18 +378,19 @@ export class TraceModernizer {
         options: {},
         platform: process.platform,
         wallTime: 0,
-        monotonicTimeOffset: 0,
+        monotonicTime: 0,
         sdkLanguage: 'javascript',
       };
       result.push(event);
     }
     for (const event of events) {
       if (event.type === 'context-options') {
-        result.push({ ...event, monotonicTimeOffset: 0, origin: 'library' });
+        result.push({ ...event, monotonicTime: 0, origin: 'library' });
         continue;
       }
-      if (!this._contextEntry.monotonicTimeOffset && event.type === 'before')
-        this._contextEntry.monotonicTimeOffset = event.wallTime - event.startTime;
+      // Take wall time from the first event.
+      if (!this._contextEntry.wallTime && event.type === 'before')
+        this._contextEntry.wallTime = event.wallTime;
       result.push(event);
     }
     return result;
