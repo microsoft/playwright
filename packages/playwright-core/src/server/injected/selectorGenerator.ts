@@ -325,8 +325,10 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
     for (const alternative of alternatives)
       candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
-    if (text.length <= 80)
-      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(text) + '$/', score: kTextScoreRegex }]);
+    if (text.length <= 80) {
+      const re = new RegExp('^' + escapeRegExp(text) + '$');
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
+    }
   }
 
   const ariaRole = getAriaRole(element);
