@@ -176,6 +176,7 @@ function cacheSearchValues(test: TestCaseSummary): SearchValues {
     line: String(test.location.line),
     column: String(test.location.column),
     labels: test.tags.map(tag => tag.toLowerCase()),
+    annotations: test.annotations.map(a => a.type.toLowerCase() + '=' + a.description?.toLocaleLowerCase())
   };
   (test as any)[searchValuesSymbol] = searchValues;
   return searchValues;
