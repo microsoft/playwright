@@ -3388,7 +3388,7 @@ Function that should be run once [`param: locator`] appears. This function shoul
 ### param: Page.addLocatorHandler.handler
 * langs: csharp
 * since: v1.42
-- `handler` <[function]\([Locator]\)>
+- `handler` <[function]\([Locator]\): [Promise<any>]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
