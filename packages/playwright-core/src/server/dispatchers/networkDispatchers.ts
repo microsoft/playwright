@@ -198,9 +198,9 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     return this._object.storageState();
   }
 
-  async dispose(_: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
+  async dispose(params: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {
     metadata.potentiallyClosesScope = true;
-    await this._object.dispose();
+    await this._object.dispose(params);
     this._dispose();
   }
 

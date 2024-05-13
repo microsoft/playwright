@@ -309,7 +309,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   fetchLog(params: APIRequestContextFetchLogParams, metadata?: CallMetadata): Promise<APIRequestContextFetchLogResult>;
   storageState(params?: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeAPIResponseResult>;
-  dispose(params?: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
+  dispose(params: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
 }
 export type APIRequestContextFetchParams = {
   url: string,
@@ -372,8 +372,12 @@ export type APIRequestContextDisposeAPIResponseOptions = {
 
 };
 export type APIRequestContextDisposeAPIResponseResult = void;
-export type APIRequestContextDisposeParams = {};
-export type APIRequestContextDisposeOptions = {};
+export type APIRequestContextDisposeParams = {
+  reason?: string,
+};
+export type APIRequestContextDisposeOptions = {
+  reason?: string,
+};
 export type APIRequestContextDisposeResult = void;
 
 export interface APIRequestContextEvents {

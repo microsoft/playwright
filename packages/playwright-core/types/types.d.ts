@@ -15846,8 +15846,14 @@ export interface APIRequestContext {
    * and similar methods are stored in the memory, so that you can later call
    * [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body).This method discards all
    * its resources, calling any method on disposed {@link APIRequestContext} will throw an exception.
+   * @param options
    */
-  dispose(): Promise<void>;
+  dispose(options?: {
+    /**
+     * The reason to be reported to the operations interrupted by the context disposure.
+     */
+    reason?: string;
+  }): Promise<void>;
 
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and

@@ -392,7 +392,17 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   request: async ({ playwright }, use) => {
     const request = await playwright.request.newContext();
     await use(request);
-    await request.dispose();
+    const hook = (test.info() as TestInfoImpl)._currentHookType();
+    if (hook === 'beforeAll') {
+      await request.dispose({ reason: [
+        `Fixture { request } from beforeAll cannot be reused in a test.`,
+        `  - Recommended fix: use a separate { request } in the test.`,
+        `  - Alternatively, manually create APIRequestContext in beforeAll and dispose it in afterAll.`,
+        `See https://playwright.dev/docs/api-testing#sending-api-requests-from-ui-tests for more details.`,
+      ].join('\n') });
+    } else {
+      await request.dispose();
+    }
   },
 });
 
