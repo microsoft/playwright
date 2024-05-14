@@ -121,7 +121,7 @@ export abstract class APIRequestContext extends SdkObject {
 
   abstract tracing(): Tracing;
 
-  abstract dispose(): Promise<void>;
+  abstract dispose(options: { reason?: string }): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
@@ -483,7 +483,8 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return this._context.tracing;
   }
 
-  override async dispose() {
+  override async dispose(options: { reason?: string }) {
+    this._closeReason = options.reason;
     this.fetchResponses.clear();
   }
 
@@ -552,7 +553,8 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._tracing;
   }
 
-  override async dispose() {
+  override async dispose(options: { reason?: string }) {
+    this._closeReason = options.reason;
     await this._tracing.flush();
     await this._tracing.deleteTmpTracesDir();
     this._disposeImpl();

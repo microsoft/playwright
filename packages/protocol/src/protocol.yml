@@ -330,6 +330,8 @@ APIRequestContext:
         fetchUid: string
 
     dispose:
+      parameters:
+        reason: string?
 
 
 APIResponse:

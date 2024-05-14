@@ -207,7 +207,9 @@ scheme.APIRequestContextDisposeAPIResponseParams = tObject({
   fetchUid: tString,
 });
 scheme.APIRequestContextDisposeAPIResponseResult = tOptional(tObject({}));
-scheme.APIRequestContextDisposeParams = tOptional(tObject({}));
+scheme.APIRequestContextDisposeParams = tObject({
+  reason: tOptional(tString),
+});
 scheme.APIRequestContextDisposeResult = tOptional(tObject({}));
 scheme.APIResponse = tObject({
   fetchUid: tString,
