@@ -229,7 +229,7 @@ jobs:
         PWTEST_CHANNEL: chrome
 
   chromium_tot:
-    name: Chromium TOT ${{ matrix.os }}
+    name: Chromium tip-of-tree ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -250,7 +250,7 @@ jobs:
         PWTEST_CHANNEL: chromium-tip-of-tree
 
   chromium_tot_headed:
-    name: Chromium TOT headed ${{ matrix.os }}
+    name: Chromium tip-of-tree headed ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
