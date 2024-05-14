@@ -22,8 +22,8 @@ export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
-  onApiCallBegin(apiCall: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): Promise<void> | void;
-  onApiCallEnd(userData: any, error?: Error): Promise<void> | void;
+  onApiCallBegin(apiCall: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): void;
+  onApiCallEnd(userData: any, error?: Error): void;
   onDidCreateBrowserContext(context: BrowserContext): Promise<void>;
   onDidCreateRequestContext(context: APIRequestContext): Promise<void>;
   onWillPause(): void;
@@ -32,8 +32,8 @@ export interface ClientInstrumentation {
 }
 
 export interface ClientInstrumentationListener {
-  onApiCallBegin?(apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): Promise<void> | void;
-  onApiCallEnd?(userData: any, error?: Error): Promise<void> | void;
+  onApiCallBegin?(apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): void;
+  onApiCallEnd?(userData: any, error?: Error): void;
   onDidCreateBrowserContext?(context: BrowserContext): Promise<void>;
   onDidCreateRequestContext?(context: APIRequestContext): Promise<void>;
   onWillPause?(): void;
