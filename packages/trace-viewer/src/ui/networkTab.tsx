@@ -73,7 +73,7 @@ export const NetworkTab: React.FunctionComponent<{
     if (sorting)
       sort(renderedEntries, sorting);
     return { renderedEntries };
-  }, [networkModel.resources, sorting, boundaries]);
+  }, [networkModel.resources, sorting, boundaries, model]);
 
   if (!networkModel.resources.length)
     return <PlaceholderPanel text='No network calls' />;
