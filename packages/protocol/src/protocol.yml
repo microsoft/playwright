@@ -33,8 +33,8 @@ Metadata:
         column: number?
     apiName: string?
     internal: boolean?
-    # The number of milliseconds elapsed since midnight, January 1, 1970 UTC.
-    wallTime: number?
+    # Test runner step id.
+    stepId: string?
 
 ClientSideCallMetadata:
   type: object

@@ -33,8 +33,7 @@ export interface TestStepInternal {
   complete(result: { error?: Error, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
-  category: 'hook' | 'fixture' | 'test.step' | string;
-  wallTime: number;
+  category: 'hook' | 'fixture' | 'test.step' | 'expect' | string;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
@@ -322,11 +321,11 @@ export class TestInfoImpl implements TestInfo {
       parentStepId: parentStep ? parentStep.stepId : undefined,
       title: data.title,
       category: data.category,
-      wallTime: data.wallTime,
+      wallTime: Date.now(),
       location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.location ? [data.location] : []);
     return step;
   }
 
@@ -355,7 +354,7 @@ export class TestInfoImpl implements TestInfo {
       const location = stage.runnable?.location ? ` at "${formatLocation(stage.runnable.location)}"` : ``;
       debugTest(`started stage "${stage.title}"${location}`);
     }
-    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, wallTime: Date.now(), isStage: true }) : undefined;
+    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, isStage: true }) : undefined;
     this._stages.push(stage);
 
     try {
@@ -420,7 +419,6 @@ export class TestInfoImpl implements TestInfo {
     const step = this._addStep({
       title: `attach "${name}"`,
       category: 'attach',
-      wallTime: Date.now(),
     });
     this._attachmentsPush(attachment);
     this._onAttach({

@@ -22,7 +22,7 @@ export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
-  onApiCallBegin(apiCall: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): void;
+  onApiCallBegin(apiCall: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }): void;
   onApiCallEnd(userData: any, error?: Error): void;
   onDidCreateBrowserContext(context: BrowserContext): Promise<void>;
   onDidCreateRequestContext(context: APIRequestContext): Promise<void>;
@@ -32,7 +32,7 @@ export interface ClientInstrumentation {
 }
 
 export interface ClientInstrumentationListener {
-  onApiCallBegin?(apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any): void;
+  onApiCallBegin?(apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }): void;
   onApiCallEnd?(userData: any, error?: Error): void;
   onDidCreateBrowserContext?(context: BrowserContext): Promise<void>;
   onDidCreateRequestContext?(context: APIRequestContext): Promise<void>;

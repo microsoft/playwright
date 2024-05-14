@@ -259,7 +259,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
-      const wallTime = Date.now();
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
@@ -270,7 +269,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         category: 'expect',
         title: trimLongString(title, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
-        wallTime,
         infectParentStepsWithError: this._info.isSoft,
       };
 
@@ -295,7 +293,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         // so they behave like a retriable step.
         const result = (matcherName === 'toPass' || this._info.isPoll) ?
           zones.run('stepZone', step, callback) :
-          zones.run<ExpectZone, any>('expectZone', { title, wallTime }, callback);
+          zones.run<ExpectZone, any>('expectZone', { title, stepId: step.stepId }, callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

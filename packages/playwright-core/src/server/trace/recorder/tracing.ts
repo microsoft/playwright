@@ -542,7 +542,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActio
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,
-    wallTime: metadata.wallTime,
+    stepId: metadata.stepId,
     pageId: metadata.pageId,
   };
 }
