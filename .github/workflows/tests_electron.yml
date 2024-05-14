@@ -32,25 +32,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: ./.github/actions/run-test
       with:
-        node-version: 18
-    - run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run etest
-      if: matrix.os == 'ubuntu-latest'
-    - run: npm run etest
-      if: matrix.os != 'ubuntu-latest'
-    - name: Azure Login
-      uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: ${{ !cancelled() }}
-      shell: bash
+        browsers-to-install: chromium
+        command: npm run etest
+        bot-name: "electron-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
