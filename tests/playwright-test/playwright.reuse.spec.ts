@@ -85,35 +85,6 @@ test('should not reuse context with video if mode=when-possible', async ({ runIn
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
 });
 
-test('should reuse context and disable video if mode=force', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default {
-        use: { video: 'on' },
-      };
-    `,
-    'reuse.test.ts': `
-      import { test, expect } from '@playwright/test';
-      let lastContextGuid;
-
-      test('one', async ({ context, page }) => {
-        lastContextGuid = context._guid;
-        await page.waitForTimeout(2000);
-      });
-
-      test('two', async ({ context, page }) => {
-        expect(context._guid).toBe(lastContextGuid);
-        await page.waitForTimeout(2000);
-      });
-    `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'video.webm'))).toBeFalsy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
-});
-
 test('should reuse context with trace if mode=when-possible', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

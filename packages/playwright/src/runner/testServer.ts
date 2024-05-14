@@ -308,6 +308,7 @@ class TestServerDispatcher implements TestServerInterface {
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
         trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
+        video: 'off',
         headless: params.headed ? false : undefined,
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
