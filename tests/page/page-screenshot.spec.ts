@@ -221,6 +221,17 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage.png');
   });
 
+  it('should take fullPage screenshots and mask elements outside of it', async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30770' });
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshot = await page.screenshot({
+      fullPage: true,
+      mask: [page.locator('.box').nth(144)],
+    });
+    expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage-mask-outside-viewport.png');
+  });
+
   it('should restore viewport after fullPage screenshot', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
