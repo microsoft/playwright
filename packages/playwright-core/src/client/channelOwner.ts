@@ -146,7 +146,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
                 const { apiName, frames, csi, callCookie, wallTime } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], wallTime: undefined } : apiZone;
                 apiZone.reported = true;
                 if (csi && apiName)
-                  csi.onApiCallBegin(apiName, params, frames, wallTime, callCookie);
+                  // this is meant to be awaited so all async hooks can be completed before the actual command gets dispatched
+                  await csi.onApiCallBegin(apiName, params, frames, wallTime, callCookie);
                 return await this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' }), apiName, frames, wallTime);
               });
             };
@@ -188,7 +189,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       logApiCall(logger, `=> ${apiName} started`, isInternal);
       const apiZone: ApiZone = { apiName, frames, isInternal, reported: false, csi, callCookie, wallTime };
       const result = await zones.run('apiZone', apiZone, async () => await func(apiZone));
-      csi?.onApiCallEnd(callCookie);
+      await csi?.onApiCallEnd(callCookie);
       logApiCall(logger, `<= ${apiName} succeeded`, isInternal);
       return result;
     } catch (e) {
@@ -200,7 +201,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
         e.stack = e.message + stackFrames;
       else
         e.stack = '';
-      csi?.onApiCallEnd(callCookie, e);
+      await csi?.onApiCallEnd(callCookie, e);
       logApiCall(logger, `<= ${apiName} failed`, isInternal);
       throw e;
     }
