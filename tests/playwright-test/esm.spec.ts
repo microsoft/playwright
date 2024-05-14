@@ -39,9 +39,10 @@ test('should support import assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import packageJSON from './package.json' assert { type: 'json' };
+      console.log('imported value: ' + packageJSON.foo);
       export default { };
     `,
-    'package.json': JSON.stringify({ type: 'module' }),
+    'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
     'a.esm.test.ts': `
       import { test, expect } from '@playwright/test';
 
@@ -53,23 +54,28 @@ test('should support import assertions', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.stdout).toContain('imported value: bar');
 });
 
 test('should support import attributes', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import packageJSON from './package.json' with { type: 'json' };
+      console.log('imported value (config): ' + packageJSON.foo);
       export default { };
     `,
-    'package.json': JSON.stringify({ type: 'module' }),
+    'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
     'a.test.ts': `
-      import config from './config.json' with { type: 'json' };
+      import config from './package.json' with { type: 'json' };
+      console.log('imported value (test): ' + config.foo);
       import { test, expect } from '@playwright/test';
       test('pass', async () => {});
     `
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.stdout).toContain('imported value (config): bar');
+  expect(result.stdout).toContain('imported value (test): bar');
 });
 
 test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
