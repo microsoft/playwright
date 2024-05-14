@@ -388,9 +388,11 @@ export class TraceModernizer {
         result.push({ ...event, monotonicTime: 0, origin: 'library' });
         continue;
       }
-      // Take wall time from the first event.
+      // Take wall and monotonic time from the first event.
       if (!this._contextEntry.wallTime && event.type === 'before')
         this._contextEntry.wallTime = event.wallTime;
+      if (!this._contextEntry.startTime && event.type === 'before')
+        this._contextEntry.startTime = event.startTime;
       result.push(event);
     }
     return result;

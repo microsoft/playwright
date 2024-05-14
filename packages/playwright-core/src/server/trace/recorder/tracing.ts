@@ -179,7 +179,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._allocateNewTraceFile(this._state);
 
     this._fs.mkdir(path.dirname(this._state.traceFile));
-    const event: trace.TraceEvent = { ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() };
+    const event: trace.TraceEvent = {
+      ...this._contextCreatedEvent,
+      title: options.title,
+      wallTime: Date.now(),
+      monotonicTime: monotonicTime()
+    };
     this._fs.appendFile(this._state.traceFile, JSON.stringify(event) + '\n');
 
     this._context.instrumentation.addListener(this, this._context);
