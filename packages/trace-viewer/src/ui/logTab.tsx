@@ -31,8 +31,7 @@ export const LogTab: React.FunctionComponent<{
     if (!action || !action.log.length)
       return [];
     const log = action.log;
-    // TODO: store context metadata for test runner context.
-    const wallTimeOffset = (action.context.wallTime || action.context.startTime)  - action.context.startTime;
+    const wallTimeOffset = action.context.wallTime - action.context.startTime;
     const entries: { message: string, time: string }[] = [];
     for (let i = 0; i < log.length; ++i) {
       let time = '';

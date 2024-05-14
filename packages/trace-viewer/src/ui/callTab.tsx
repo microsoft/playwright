@@ -35,11 +35,8 @@ export const CallTab: React.FunctionComponent<{
   // Strip down the waitForEventInfo data, we never need it.
   delete params.info;
   const paramKeys = Object.keys(params);
-  let wallTime = null;
-  if (action.context.wallTime) {
-    const timeMillis = action.startTime + (action.context.wallTime - action.context.startTime);
-    wallTime = new Date(timeMillis).toLocaleString();
-  }
+  const timeMillis = action.startTime + (action.context.wallTime - action.context.startTime);
+  const wallTime = new Date(timeMillis).toLocaleString();
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
   return <div className='call-tab'>
