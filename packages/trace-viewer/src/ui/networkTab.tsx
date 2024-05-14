@@ -133,6 +133,8 @@ const columnWidth = (column: ColumnName) => {
     return 60;
   if (column === 'contentType')
     return 200;
+  if (column === 'contextId')
+    return 60;
   return 100;
 };
 
@@ -210,7 +212,7 @@ class ContextIdGenerator {
     let shortId = this._pagerefToShortId.get(pageref);
     if (!shortId) {
       ++this._lastPageId;
-      shortId = 'page@' + this._lastPageId;
+      shortId = 'page#' + this._lastPageId;
       this._pagerefToShortId.set(pageref, shortId);
     }
     return shortId;
@@ -223,7 +225,7 @@ class ContextIdGenerator {
     let contextId = (contextEntry as any)[ContextIdGenerator._apiRequestContextIdSymbol];
     if (!contextId) {
       ++this._lastApiRequestContextId;
-      contextId = 'api@' + this._lastApiRequestContextId;
+      contextId = 'api#' + this._lastApiRequestContextId;
       (contextEntry as any)[ContextIdGenerator._apiRequestContextIdSymbol] = contextId;
     }
     return contextId;

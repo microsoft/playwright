@@ -302,7 +302,7 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await page.getByText('pass').dblclick();
   await page.getByText('Network', { exact: true }).click();
   await expect(page.locator('span').filter({ hasText: 'Source' })).toBeVisible();
-  await expect(page.getByText('page@1')).toBeVisible();
-  await expect(page.getByText('page@2')).toBeVisible();
-  await expect(page.getByText('api@1')).toBeVisible();
+  await expect(page.getByText('page#1')).toBeVisible();
+  await expect(page.getByText('page#2')).toBeVisible();
+  await expect(page.getByText('api#1')).toBeVisible();
 });
