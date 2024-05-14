@@ -65,8 +65,12 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
-    this._glassPaneElement.style.width = 'inherit';
-    this._glassPaneElement.style.height = 'inherit';
+    const updateGlassPaneDimensions = () => {
+      this._glassPaneElement.style.width = document.documentElement.scrollWidth + 'px';
+      this._glassPaneElement.style.height = document.documentElement.scrollHeight + 'px';
+    };
+    document.addEventListener('resize', updateGlassPaneDimensions);
+    updateGlassPaneDimensions();
     this._glassPaneElement.style.padding = '0';
     this._glassPaneElement.style.margin = '0';
     this._glassPaneElement.style.border = 'none';
