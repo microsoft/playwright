@@ -26,6 +26,7 @@ else
   exit 1
 fi
 
+# Ubuntu 20.04
 FOCAL_TAGS=(
   "next"
   "next-focal"
@@ -36,6 +37,7 @@ if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
   FOCAL_TAGS+=("focal")
 fi
 
+# Ubuntu 22.04
 JAMMY_TAGS=(
   "next-jammy"
   "v${PW_VERSION}-jammy"
@@ -45,6 +47,15 @@ JAMMY_TAGS=(
 if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
   JAMMY_TAGS+=("latest")
   JAMMY_TAGS+=("jammy")
+fi
+
+NOBLE_TAGS=(
+  "next-noble"
+  "v${PW_VERSION}-noble"
+)
+
+if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
+  NOBLE_TAGS+=("noble")
 fi
 
 tag_and_push() {
@@ -83,8 +94,10 @@ publish_docker_images_with_arch_suffix() {
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
+  elif [[ "$FLAVOR" == "noble" ]]; then
+    TAGS=("${NOBLE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal' or 'jammy'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy', or 'noble'"
     exit 1
   fi
   local ARCH="$2"
@@ -109,8 +122,10 @@ publish_docker_manifest () {
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
+  elif [[ "$FLAVOR" == "noble" ]]; then
+    TAGS=("${NOBLE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal' or 'jammy'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy', or 'noble'"
     exit 1
   fi
 
@@ -129,11 +144,17 @@ publish_docker_manifest () {
   done
 }
 
+# Ubuntu 20.04
 publish_docker_images_with_arch_suffix focal amd64
 publish_docker_images_with_arch_suffix focal arm64
 publish_docker_manifest focal amd64 arm64
 
+# Ubuntu 22.04
 publish_docker_images_with_arch_suffix jammy amd64
 publish_docker_images_with_arch_suffix jammy arm64
 publish_docker_manifest jammy amd64 arm64
 
+# Ubuntu 24.04
+publish_docker_images_with_arch_suffix noble amd64
+publish_docker_images_with_arch_suffix noble arm64
+publish_docker_manifest noble amd64 arm64
