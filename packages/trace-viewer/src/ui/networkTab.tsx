@@ -24,9 +24,11 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { context, type MultiTraceModel } from './modelUtil';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
+import type { ContextEntry } from '../entries';
 
 type NetworkTabModel = {
   resources: Entry[],
+  contextIdMap: ContextIdMap,
 };
 
 type RenderedEntry = {
@@ -55,25 +57,24 @@ export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedT
     });
     return filtered;
   }, [model, selectedTime]);
-  return { resources };
+  const contextIdMap = React.useMemo(() => new ContextIdMap(model), [model]);
+  return { resources, contextIdMap };
 }
 
 export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
-  model?: MultiTraceModel,
   onEntryHovered: (entry: Entry | undefined) => void,
-}> = ({ boundaries, networkModel, model, onEntryHovered }) => {
+}> = ({ boundaries, networkModel, onEntryHovered }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
 
   const { renderedEntries } = React.useMemo(() => {
-    const generator = ContextIdGenerator.forModel(model);
-    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, generator));
+    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap));
     if (sorting)
       sort(renderedEntries, sorting);
     return { renderedEntries };
-  }, [networkModel.resources, sorting, boundaries, model]);
+  }, [networkModel.resources, networkModel.contextIdMap, sorting, boundaries]);
 
   if (!networkModel.resources.length)
     return <PlaceholderPanel text='No network calls' />;
@@ -182,23 +183,13 @@ const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell 
   return { body: '' };
 };
 
-class ContextIdGenerator {
+class ContextIdMap {
   private _pagerefToShortId = new Map<string, string>();
+  private _contextToId = new Map<ContextEntry, string>();
   private _lastPageId = 0;
   private _lastApiRequestContextId = 0;
-  private static _apiRequestContextIdSymbol = Symbol('apiRequestContextId');
-  private static _contextIdGeneratorSymbol = Symbol('contextIdGenerator');
 
-  static forModel(model?: MultiTraceModel): ContextIdGenerator {
-    if (!model)
-      return new ContextIdGenerator();
-    let generator = (model as any)[ContextIdGenerator._contextIdGeneratorSymbol];
-    if (!generator) {
-      generator = new ContextIdGenerator();
-      (model as any)[ContextIdGenerator._contextIdGeneratorSymbol] = generator;
-    }
-    return generator;
-  }
+  constructor(model: MultiTraceModel | undefined) {}
 
   contextId(resource: Entry): string {
     if (resource.pageref)
@@ -222,11 +213,11 @@ class ContextIdGenerator {
     const contextEntry = context(resource);
     if (!contextEntry)
       return '';
-    let contextId = (contextEntry as any)[ContextIdGenerator._apiRequestContextIdSymbol];
+    let contextId = this._contextToId.get(contextEntry);
     if (!contextId) {
       ++this._lastApiRequestContextId;
       contextId = 'api#' + this._lastApiRequestContextId;
-      (contextEntry as any)[ContextIdGenerator._apiRequestContextIdSymbol] = contextId;
+      this._contextToId.set(contextEntry, contextId);
     }
     return contextId;
   }
@@ -242,7 +233,7 @@ function hasMultipleContexts(renderedEntries: RenderedEntry[]): boolean {
   return false;
 }
 
-const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator: ContextIdGenerator): RenderedEntry => {
+const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator: ContextIdMap): RenderedEntry => {
   const routeStatus = formatRouteStatus(resource);
   let resourceName: string;
   try {
