@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -70,7 +70,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             });
           });
         `,
-      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' });
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
       const text = result.output;
       const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       lines.pop(); // Remove last item that contains [v] and time in ms.
@@ -105,7 +105,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           await test.step('inner 2.2', async () => {});
         });
       });`,
-      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
       const text = result.output;
       const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       lines.pop(); // Remove last item that contains [v] and time in ms.
@@ -135,7 +135,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             console.log('a'.repeat(80) + 'b'.repeat(20));
           });
         `,
-      }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + '' });
+      }, { reporter: 'list' }, { PLAYWRIGHT_FORCE_TTY: TTY_WIDTH + '' });
 
       const renderedText = simpleAnsiRenderer(result.rawOutput, TTY_WIDTH);
       if (process.platform === 'win32')
@@ -154,7 +154,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             expect(testInfo.retry).toBe(1);
           });
         `,
-      }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+      }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
       const text = result.output;
       const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/\d+(\.\d+)?m?s/, 'XXms'));
 
@@ -185,10 +185,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           test.skip('skipped very long name', async () => {
           });
         `,
-      }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: '50' });
+      }, { reporter: 'list', retries: 0 }, { PLAYWRIGHT_FORCE_TTY: '50' });
       expect(result.exitCode).toBe(1);
 
-      const lines = result.output.split('\n').slice(3, 11);
+      const lines = result.rawOutput.split('\n').map(line => line.split('\x1B[22m\x1B[1E')).flat().map(line => stripAnsi(line)).filter(line => line.trim()).slice(1, 9);
       expect(lines.every(line => line.length <= 50)).toBe(true);
 
       expect(lines[0]).toBe(`     1 …a.test.ts:3:15 › failure in very long name`);
