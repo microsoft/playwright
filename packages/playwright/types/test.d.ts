@@ -1424,7 +1424,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   shardingSeed: "string value"
+   *   shardingSeed: 'string value'
    * });
    * ```
    *
