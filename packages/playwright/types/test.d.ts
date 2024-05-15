@@ -1412,8 +1412,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. Shuffling the order of tests
    * in a deterministic way can help to distribute the load more evenly.
    *
-   * The sharding seed is a string that is used to initialize a random number generator. The configured value needs to
-   * be the same for all shards, to make sure
+   * The sharding seed is a string that is used to initialize a random number generator.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    *
