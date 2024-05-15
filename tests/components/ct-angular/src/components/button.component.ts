@@ -3,9 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 @Component({
   standalone: true,
   selector: 'app-button',
-  template: `
-  <button (click)="submit.emit('hello')">{{title}}</button>
-  `
+  templateUrl: './button.component.html',
 })
 export class ButtonComponent {
   @Input({required: true}) title!: string;
