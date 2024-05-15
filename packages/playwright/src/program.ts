@@ -194,6 +194,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
+  config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
 
   const runner = new Runner(config);
   let status: FullResult['status'];
@@ -336,6 +337,7 @@ const testOptions: [string, string][] = [
   ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
   ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
   ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
+  ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`],
   ['--forbid-only', `Fail if test.only is called (default: false)`],
   ['--fully-parallel', `Run all tests in parallel (default: false)`],
   ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
