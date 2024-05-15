@@ -161,7 +161,7 @@ export class Electron extends SdkObject {
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
       // --remote-debugging-port=0 must be the last playwright's argument, loader.ts relies on it.
-      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
+      let electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
@@ -195,6 +195,16 @@ export class Electron extends SdkObject {
         // Packaged apps might have their own command line handling.
         electronArguments.unshift('-r', require.resolve('./loader'));
       }
+      let shell = false;
+      if (process.platform === 'win32') {
+        // On Windows in order to run .cmd files, shell: true is required.
+        // https://github.com/nodejs/node/issues/52554
+        shell = true;
+        // On Windows, we need to quote the executable path due to shell: true.
+        command = `"${command}"`;
+        // On Windows, we need to quote the arguments due to shell: true.
+        electronArguments = electronArguments.map(arg => `"${arg}"`);
+      }
 
       // When debugging Playwright test that runs Electron, NODE_OPTIONS
       // will make the debugger attach to Electron's Node. But Playwright
@@ -208,9 +218,7 @@ export class Electron extends SdkObject {
           progress.log(message);
           browserLogsCollector.log(message);
         },
-        // On Windows in order to run .cmd files, shell: true is required.
-        // https://github.com/nodejs/node/issues/52554
-        shell: process.platform === 'win32',
+        shell,
         stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [artifactsDir],
