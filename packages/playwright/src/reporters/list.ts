@@ -229,8 +229,6 @@ class ListReporter extends BaseReporter {
     // Go down if needed.
     if (row !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - row}E`);
-    if (process.env.PWTEST_TTY_WIDTH)
-      process.stdout.write('\n');  // For testing.
   }
 
   private _testPrefix(index: string, statusMark: string) {
