@@ -94,6 +94,7 @@ export interface TestServerInterface {
     timeout?: number,
     reporters?: string[],
     trace?: 'on' | 'off';
+    video?: 'on' | 'off';
     projects?: string[];
     reuseContext?: boolean;
     connectWsEndpoint?: string;
