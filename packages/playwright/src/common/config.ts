@@ -86,6 +86,7 @@ export class FullConfigInternal {
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
+      shardingSeed: takeFirst(configCLIOverrides.shardingSeed, userConfig.shardingSeed, undefined),
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       version: require('../../package.json').version,
       workers: 0,

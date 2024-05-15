@@ -1408,6 +1408,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * Shuffle the order of test groups with a seed. By default tests are run in the order they are discovered, which is
+   * mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. Shuffling the order of tests
+   * in a deterministic way can help to distribute the load more evenly.
+   */
+  shardingSeed?: string
+
+  /**
    * **NOTE** Use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
    * to configure snapshot paths.
@@ -1782,6 +1789,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     current: number;
   };
+
+  /**
+   * See [testConfig.shardingSeed](https://playwright.dev/docs/api/class-testconfig#test-config-sharding-seed).
+   */
+  shardingSeed: string;
 
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).

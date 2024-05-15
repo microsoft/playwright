@@ -32,6 +32,7 @@ export type ConfigCLIOverrides = {
   reporter?: ReporterDescription[];
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
+  shardingSeed?: string;
   timeout?: number;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
