@@ -493,7 +493,7 @@ Learn more about [parallelism and sharding](../test-parallel.md) with Playwright
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  shardingSeed: "string value"
+  shardingSeed: 'string value'
 });
 ```
 
