@@ -265,7 +265,7 @@ export function toReporters(reporters: BuiltInReporter | ReporterDescription[] |
 export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'blob', 'markdown'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
 
-export type ContextReuseMode = 'none' | 'force' | 'when-possible';
+export type ContextReuseMode = 'none' | 'when-possible';
 
 function resolveScript(id: string | undefined, rootDir: string): string | undefined {
   if (!id)

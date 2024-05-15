@@ -356,8 +356,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
     if (process.env.PW_TEST_REUSE_CONTEXT)
-      mode = process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none');
-    const reuse = mode === 'force' || (mode === 'when-possible' && normalizeVideoMode(video) === 'off');
+      mode = 'when-possible';
+    const reuse = mode === 'when-possible' && normalizeVideoMode(video) === 'off';
     await use(reuse);
   }, { scope: 'worker',  _title: 'context' } as any],
 
