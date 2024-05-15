@@ -595,6 +595,7 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   rootDir: '',
   quiet: false,
   shard: null,
+  shardingSeed: null,
   updateSnapshots: 'missing',
   version: '',
   workers: 0,

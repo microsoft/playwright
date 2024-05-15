@@ -1411,8 +1411,25 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * Shuffle the order of test groups with a seed. By default tests are run in the order they are discovered, which is
    * mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. Shuffling the order of tests
    * in a deterministic way can help to distribute the load more evenly.
+   *
+   * The sharding seed is a string that is used to initialize a random number generator. The configured value needs to
+   * be the same for all shards, to make sure
+   *
+   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   shardingSeed: "string value"
+   * });
+   * ```
+   *
    */
-  shardingSeed?: string
+  shardingSeed?: string;
 
   /**
    * **NOTE** Use
@@ -1793,7 +1810,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testConfig.shardingSeed](https://playwright.dev/docs/api/class-testconfig#test-config-sharding-seed).
    */
-  shardingSeed: string;
+  shardingSeed: null|string;
 
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
