@@ -33,6 +33,7 @@ import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode } from '../utils';
+import { debug } from '../utilsBundle';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -197,6 +198,7 @@ export abstract class BrowserType extends SdkObject {
       handleSIGTERM,
       handleSIGHUP,
       log: (message: string) => {
+        debug('pw:browser')(message);
         if (waitForWSEndpoint) {
           const match = message.match(/DevTools listening on (.*)/);
           if (match)
