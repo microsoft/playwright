@@ -2,7 +2,7 @@
 * since: v1.8
 
 [ConsoleMessage] objects are dispatched by page via the [`event: Page.console`] event.
-For each console messages logged in the page there will be corresponding event in the Playwright
+For each console message logged in the page there will be corresponding event in the Playwright
 context.
 
 ```js

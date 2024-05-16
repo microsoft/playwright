@@ -17209,8 +17209,8 @@ export interface BrowserServer {
 
 /**
  * {@link ConsoleMessage} objects are dispatched by page via the
- * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console
- * messages logged in the page there will be corresponding event in the Playwright context.
+ * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console message
+ * logged in the page there will be corresponding event in the Playwright context.
  *
  * ```js
  * // Listen for all console logs
