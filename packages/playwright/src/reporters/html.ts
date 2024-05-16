@@ -182,7 +182,8 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
     return;
   }
   const server = startHtmlReportServer(folder);
-  let url = await server.start({ port, host, preferredPort: port ? undefined : 9323 });
+  await server.start({ port, host, preferredPort: port ? undefined : 9323 });
+  let url = server.urlPrefix('human-readable');
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)

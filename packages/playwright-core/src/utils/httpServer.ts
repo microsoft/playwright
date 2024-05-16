@@ -34,14 +34,14 @@ export type Transport = {
 
 export class HttpServer {
   private _server: http.Server;
-  private _urlPrefix: string;
+  private _urlPrefixPrecise: string = '';
+  private _urlPrefixHumanReadable: string = '';
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
   private _wsGuid: string | undefined;
 
-  constructor(address: string = '') {
-    this._urlPrefix = address;
+  constructor() {
     this._server = createHttpServer(this._onRequest.bind(this));
   }
 
@@ -102,7 +102,7 @@ export class HttpServer {
     return this._wsGuid;
   }
 
-  async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<string> {
+  async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<void> {
     assert(!this._started, 'server already started');
     this._started = true;
 
@@ -121,24 +121,23 @@ export class HttpServer {
 
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
-    if (!this._urlPrefix) {
-      if (typeof address === 'string') {
-        this._urlPrefix = address;
-      } else {
-        this._port = address.port;
-        const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
-        this._urlPrefix = `http://${resolvedHost}:${address.port}`;
-      }
+    if (typeof address === 'string') {
+      this._urlPrefixPrecise = address;
+      this._urlPrefixHumanReadable = address;
+    } else {
+      this._port = address.port;
+      const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+      this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
+      this._urlPrefixHumanReadable = `http://${host}:${address.port}`;
     }
-    return this._urlPrefix;
   }
 
   async stop() {
     await new Promise(cb => this._server!.close(cb));
   }
 
-  urlPrefix(): string {
-    return this._urlPrefix;
+  urlPrefix(purpose: 'human-readable' | 'precise'): string {
+    return purpose === 'human-readable' ? this._urlPrefixHumanReadable : this._urlPrefixPrecise;
   }
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {

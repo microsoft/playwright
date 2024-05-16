@@ -29,8 +29,8 @@ const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<vo
     await use(async (reportFolder?: string) => {
       reportFolder ??=  testInfo.outputPath('playwright-report');
       server = startHtmlReportServer(reportFolder) as HttpServer;
-      const location = await server.start();
-      await page.goto(location);
+      await server.start();
+      await page.goto(server.urlPrefix('precise'));
     });
     await server?.stop();
   }
