@@ -78,8 +78,9 @@ it('should work with status code 422', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should throw exception if status code is not supported', async ({ page, server, browserName }) => {
+it('should fulfill with unuassigned status codes', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30773' });
   let fulfillPromiseCallback;
   const fulfillPromise = new Promise<Error|undefined>(f => fulfillPromiseCallback = f);
   await page.route('**/data.json', route => {
@@ -89,14 +90,14 @@ it('should throw exception if status code is not supported', async ({ page, serv
     }).catch(e => e));
   });
   await page.goto(server.EMPTY_PAGE);
-  page.evaluate(url => fetch(url), server.PREFIX + '/data.json').catch(() => {});
+  const response = await page.evaluate(async url => {
+    const { status, statusText } = await fetch(url);
+    return { status, statusText };
+  }, server.PREFIX + '/data.json');
   const error = await fulfillPromise;
-  if (browserName === 'chromium') {
-    expect(error).toBeTruthy();
-    expect(error.message).toContain(' Invalid http status code or phrase');
-  } else {
-    expect(error).toBe(undefined);
-  }
+  expect(error).toBe(undefined);
+  expect(response.status).toBe(430);
+  expect(response.statusText).toBe('Unknown');
 });
 
 it('should not throw if request was cancelled by the page', async ({ page, server }) => {

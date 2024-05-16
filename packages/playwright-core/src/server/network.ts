@@ -616,7 +616,7 @@ export interface RouteDelegate {
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.
-export const STATUS_TEXTS: { [status: string]: string } = {
+const STATUS_TEXTS: { [status: string]: string } = {
   '100': 'Continue',
   '101': 'Switching Protocols',
   '102': 'Processing',
@@ -681,6 +681,10 @@ export const STATUS_TEXTS: { [status: string]: string } = {
   '510': 'Not Extended',
   '511': 'Network Authentication Required',
 };
+
+export function statusText(status: number): string {
+  return STATUS_TEXTS[String(status)] || 'Unknown';
+}
 
 export function singleHeader(name: string, value: string): HeadersArray {
   return [{ name, value }];
