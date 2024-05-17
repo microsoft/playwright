@@ -317,7 +317,7 @@ export class CRNetworkManager {
       requestPausedSessionInfo!.session._sendMayFail('Fetch.fulfillRequest', {
         requestId: requestPausedEvent.requestId,
         responseCode: 204,
-        responsePhrase: network.STATUS_TEXTS['204'],
+        responsePhrase: network.statusText(204),
         responseHeaders,
         body: '',
       });
@@ -622,7 +622,7 @@ class RouteImpl implements network.RouteDelegate {
       await this._session.send('Fetch.fulfillRequest', {
         requestId: this._interceptionId!,
         responseCode: response.status,
-        responsePhrase: network.STATUS_TEXTS[String(response.status)],
+        responsePhrase: network.statusText(response.status),
         responseHeaders,
         body,
       });
