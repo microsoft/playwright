@@ -101,7 +101,7 @@ npx playwright test
 <TabItem value="yarn">
 
 ```bash
-yarn run playwright test
+yarn playwright test
 ```
 
 </TabItem>
@@ -109,7 +109,7 @@ yarn run playwright test
 <TabItem value="pnpm">
 
 ```bash
-pnpm playwright test
+pnpm exec playwright test
 ```
 
 </TabItem>
@@ -142,7 +142,7 @@ npx playwright show-report
 <TabItem value="yarn">
 
 ```bash
-yarn run playwright show-report
+yarn playwright show-report
 ```
 
 </TabItem>
@@ -150,7 +150,7 @@ yarn run playwright show-report
 <TabItem value="pnpm">
 
 ```bash
-pnpm playwright show-report
+pnpm exec playwright show-report
 ```
 
 </TabItem>
@@ -183,7 +183,7 @@ npx playwright test --ui
 <TabItem value="yarn">
 
 ```bash
-yarn run playwright test --ui
+yarn playwright test --ui
 ```
 
 </TabItem>
@@ -191,7 +191,7 @@ yarn run playwright test --ui
 <TabItem value="pnpm">
 
 ```bash
-pnpm playwright test --ui
+pnpm exec playwright test --ui
 ```
 
 </TabItem>
@@ -228,9 +228,9 @@ npx playwright install --with-deps
 <TabItem value="yarn">
 
 ```bash
-yarn add -D @playwright/test@latest
+yarn add --dev @playwright/test@latest
 # Also download new browser binaries and their dependencies:
-yarn run playwright install --with-deps
+yarn playwright install --with-deps
 ```
 
 </TabItem>
@@ -238,9 +238,9 @@ yarn run playwright install --with-deps
 <TabItem value="pnpm">
 
 ```bash
-pnpm install -D @playwright/test@latest
+pnpm install --save-dev @playwright/test@latest
 # Also download new browser binaries and their dependencies:
-pnpm playwright install --with-deps
+pnpm exec playwright install --with-deps
 ```
 
 </TabItem>
@@ -269,7 +269,7 @@ npx playwright --version
 <TabItem value="yarn">
 
 ```bash
-yarn run playwright --version
+yarn playwright --version
 ```
 
 </TabItem>
@@ -277,7 +277,7 @@ yarn run playwright --version
 <TabItem value="pnpm">
 
 ```bash
-pnpm playwright --version
+pnpm exec playwright --version
 ```
 
 </TabItem>
