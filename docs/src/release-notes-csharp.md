@@ -48,7 +48,8 @@ await Page.RemoveLocatorHandlerAsync(locator);
 
 **Miscellaneous options**
 
-- [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()` supports now repeating fields with the same name using [`method: FormData.append`]:
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()`:
+- ```
   ```csharp
   var formData = Context.APIRequest.CreateFormData();
   formData.Append("file", new FilePayload()
