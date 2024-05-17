@@ -418,9 +418,9 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   return await innerRunTestServer(configLocation, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
-      await openTraceInBrowser(server.urlPrefix());
+      await openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {
-      const page = await openTraceViewerApp(server.urlPrefix(), 'chromium', {
+      const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
         headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
         persistentContextOptions: {
           handleSIGINT: false,
@@ -435,7 +435,7 @@ export async function runTestServer(configFile: string | undefined, options: { h
   const configLocation = resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, options, async server => {
     // eslint-disable-next-line no-console
-    console.log('Listening on ' + server.urlPrefix().replace('http:', 'ws:') + '/' + server.wsGuid());
+    console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
