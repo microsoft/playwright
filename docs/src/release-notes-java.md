@@ -47,7 +47,7 @@ page.removeLocatorHandler(locator);
 
 **Miscellaneous options**
 
-- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()`:
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`setMultipart`](./api/class-requestoptions#request-options-set-multipart) option in `RequestOptions`:
   ```java
   FormData formData = FormData.create();
   formData.append("file", new FilePayload("f1.js", "text/javascript",
