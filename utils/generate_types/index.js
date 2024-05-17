@@ -36,7 +36,6 @@ class TypesGenerator {
    *   ignoreMissing?: Set<string>,
    *   doNotExportClassNames?: Set<string>,
    *   doNotGenerate?: Set<string>,
-   *   includeExperimental?: boolean,
    * }} options
    */
   constructor(options) {
@@ -50,8 +49,6 @@ class TypesGenerator {
     this.doNotExportClassNames = options.doNotExportClassNames || new Set();
     this.doNotGenerate = options.doNotGenerate || new Set();
     this.documentation.filterForLanguage('js');
-    if (!options.includeExperimental)
-      this.documentation.filterOutExperimental();
     this.documentation.copyDocsFromSuperclasses([]);
     this.injectDisposeAsync();
   }
@@ -65,7 +62,7 @@ class TypesGenerator {
           continue;
         if (!member.async)
           continue;
-        newMember = new docs.Member('method', { langs: {}, since: '1.0', experimental: false }, '[Symbol.asyncDispose]', null, []);
+        newMember = new docs.Member('method', { langs: {}, since: '1.0' }, '[Symbol.asyncDispose]', null, []);
         newMember.async = true;
         break;
       }
@@ -98,12 +95,20 @@ class TypesGenerator {
     }, (className, methodName, overloadIndex) => {
       if (className === 'SuiteFunction' && methodName === '__call') {
         const cls = this.documentation.classes.get('Test');
+        if (!cls)
+          throw new Error(`Unknown class "Test"`);
         const method = cls.membersArray.find(m => m.alias === 'describe');
+        if (!method)
+          throw new Error(`Unknown method "Test.describe"`);
         return this.memberJSDOC(method, '  ').trimLeft();
       }
       if (className === 'TestFunction' && methodName === '__call') {
         const cls = this.documentation.classes.get('Test');
+        if (!cls)
+          throw new Error(`Unknown class "Test"`);
         const method = cls.membersArray.find(m => m.alias === '(call)');
+        if (!method)
+          throw new Error(`Unknown method "Test.(call)"`);
         return this.memberJSDOC(method, '  ').trimLeft();
       }
 
@@ -137,6 +142,8 @@ class TypesGenerator {
         .filter(cls => !handledClasses.has(cls.name));
     {
       const playwright = this.documentation.classesArray.find(c => c.name === 'Playwright');
+      if (!playwright)
+        throw new Error(`Unknown class "Playwright"`);
       playwright.membersArray = playwright.membersArray.filter(member => !['errors', 'devices'].includes(member.name));
       playwright.index();
     }
@@ -327,19 +334,20 @@ class TypesGenerator {
   hasOwnMethod(classDesc, member) {
     if (this.handledMethods.has(`${classDesc.name}.${member.alias}#${member.overloadIndex}`))
       return false;
-    while (classDesc = this.parentClass(classDesc)) {
-      if (classDesc.members.has(member.alias))
+    let parent = /** @type {docs.Class | undefined} */ (classDesc);
+    while (parent = this.parentClass(parent)) {
+      if (parent.members.has(member.alias))
         return false;
     }
     return true;
   }
 
   /**
-   * @param {docs.Class} classDesc
+   * @param {docs.Class | undefined} classDesc
    */
   parentClass(classDesc) {
-    if (!classDesc.extends)
-      return null;
+    if (!classDesc || !classDesc.extends)
+      return;
     return this.documentation.classes.get(classDesc.extends);
   }
 
@@ -427,6 +435,8 @@ class TypesGenerator {
       const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
       const shouldExport = exported[name];
       const properties = namespace[namespace.length - 1] === 'options' ? type.sortedProperties() : type.properties;
+      if (!properties)
+        throw new Error(`Object type must have properties`);
       if (!this.objectDefinitions.some(o => o.name === name))
         this.objectDefinitions.push({ name, properties });
       if (shouldExport) {
@@ -503,15 +513,13 @@ class TypesGenerator {
   ]);
 
   /**
-   * @param {boolean} includeExperimental
    * @returns {Promise<string>}
    */
-  async function generateCoreTypes(includeExperimental) {
+  async function generateCoreTypes() {
     const documentation = coreDocumentation.clone();
     const generator = new TypesGenerator({
       documentation,
       doNotGenerate: assertionClasses,
-      includeExperimental,
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
     const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
@@ -534,10 +542,9 @@ class TypesGenerator {
   }
 
   /**
-   * @param {boolean} includeExperimental
    * @returns {Promise<string>}
    */
-  async function generateTestTypes(includeExperimental) {
+  async function generateTestTypes() {
     const documentation = coreDocumentation.mergeWith(testDocumentation);
     const generator = new TypesGenerator({
       documentation,
@@ -574,16 +581,14 @@ class TypesGenerator {
         'TestFunction',
       ]),
       doNotExportClassNames: assertionClasses,
-      includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
   }
 
   /**
-   * @param {boolean} includeExperimental
    * @returns {Promise<string>}
    */
-  async function generateReporterTypes(includeExperimental) {
+  async function generateReporterTypes() {
     const documentation = coreDocumentation.mergeWith(testDocumentation).mergeWith(reporterDocumentation);
     const generator = new TypesGenerator({
       documentation,
@@ -601,7 +606,6 @@ class TypesGenerator {
         'JSONReportTestResult',
         'JSONReportTestStep',
       ]),
-      includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));
   }
@@ -629,9 +633,9 @@ class TypesGenerator {
   if (!fs.existsSync(playwrightTypesDir))
     fs.mkdirSync(playwrightTypesDir)
   writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'), false);
-  writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(false), true);
-  writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
-  writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
+  writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(), true);
+  writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(), true);
+  writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(), true);
   process.exit(0);
 })().catch(e => {
   console.error(e);
