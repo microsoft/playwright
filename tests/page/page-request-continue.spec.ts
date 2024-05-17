@@ -478,7 +478,7 @@ it('should intercept css variable with background url', async ({ page, server })
   expect(interceptedRequests).toBe(1);
 });
 
-it('continue should not change multipart/form-data body', async ({ page, server }) => {
+it('continue should not change multipart/form-data body', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/upload', (request, response) => {
@@ -515,6 +515,8 @@ it('continue should not change multipart/form-data body', async ({ page, server 
     '------'].join('\r\n');
   expect.soft((await reqBefore.postBody).toString('utf8')).toContain(fileContent);
   expect.soft((await reqAfter.postBody).toString('utf8')).toContain(fileContent);
-  expect.soft(reqBefore.headers['content-length']).toBe('208');
-  expect.soft(reqAfter.headers['content-length']).toBe('208');
+  // Firefox sends a bit longer boundary.
+  const expectedLength = browserName === 'firefox' ? '246' : '208';
+  expect.soft(reqBefore.headers['content-length']).toBe(expectedLength);
+  expect.soft(reqAfter.headers['content-length']).toBe(expectedLength);
 });
