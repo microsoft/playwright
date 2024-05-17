@@ -13,19 +13,19 @@ toc_max_heading_level: 2
 - [`method: LocatorAssertions.toHaveAccessibleName`] checks if the element has the specified accessible name:
   ```python
   locator = page.get_by_role("button")
-  await expect(locator).to_have_accessible_name("Submit")
+  expect(locator).to_have_accessible_name("Submit")
   ```
 
 - [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
   ```python
   locator = page.get_by_role("button")
-  await expect(locator).to_have_accessible_description("Upload a photo")
+  expect(locator).to_have_accessible_description("Upload a photo")
   ```
 
 - [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
   ```python
   locator = page.get_by_test_id("save-button")
-  await expect(locator).to_have_role("button")
+  expect(locator).to_have_role("button")
   ```
 
 **Locator handler**

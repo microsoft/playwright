@@ -18,7 +18,7 @@ toc_max_heading_level: 2
 
 - [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
   ```csharp
-  const locator = page.getByRole('button');
+  var locator = Page.GetByRole(AriaRole.Button);
   await Expect(locator).ToHaveAccessibleDescriptionAsync("Upload a photo");
   ```
 
@@ -48,7 +48,7 @@ await Page.RemoveLocatorHandlerAsync(locator);
 
 **Miscellaneous options**
 
-- [`multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()` supports now repeating fields with the same name using [`method: FormData.append`]:
+- [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()` supports now repeating fields with the same name using [`method: FormData.append`]:
   ```csharp
   var formData = Context.APIRequest.CreateFormData();
   formData.Append("file", new FilePayload()
