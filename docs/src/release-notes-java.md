@@ -47,7 +47,7 @@ page.removeLocatorHandler(locator);
 
 **Miscellaneous options**
 
-- [`multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()` now accepts [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) and supports repeating fields with the same name.
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()`:
   ```java
   FormData formData = FormData.create();
   formData.append("file", new FilePayload("f1.js", "text/javascript",
