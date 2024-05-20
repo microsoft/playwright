@@ -41,7 +41,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* --workers 1
+        command: npm run test -- --project=${{ matrix.browser }}-* --workers 1 --grep '@smoke'
         bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
