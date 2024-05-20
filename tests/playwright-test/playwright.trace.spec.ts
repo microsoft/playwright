@@ -1112,3 +1112,47 @@ test('trace:retain-on-first-failure should create trace if request context is di
   expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
 });
+
+test('should record trace in workerStorageState', async ({ runInlineTest, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30287' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        storageState: ({ workerStorageState }, use) => use(workerStorageState),
+        workerStorageState: [async ({ browser }, use) => {
+          const page = await browser.newPage({ storageState: undefined });
+          await page.setContent('<div>hello</div>');
+          await page.close();
+          await use(undefined);
+        }, { scope: 'worker' }],
+      })
+      test('pass', async ({ page }) => {
+        await page.goto('data:text/html,<div>hi</div>');
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: workerStorageState',
+    '    browser.newPage',
+    '    page.setContent',
+    '    page.close',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'page.goto',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});

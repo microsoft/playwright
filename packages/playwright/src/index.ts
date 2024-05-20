@@ -148,6 +148,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   contextOptions: [{}, { option: true }],
 
   _combinedContextOptions: async ({
+    // Note: we depend on _setupArtifacts here to make sure artifacts are recorded
+    // for any custom context option fixture function.
+    //
+    // For example, "once per worker" authentication guide suggests to make the `storageState` fixture
+    // dependent on a worker-scoped `workerStorageState` fixture. The latter performs some actions that
+    // should be visible in the trace.
+    _setupArtifacts,
     acceptDownloads,
     bypassCSP,
     colorScheme,
