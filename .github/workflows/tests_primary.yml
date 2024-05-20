@@ -24,6 +24,7 @@ env:
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
   DEBUG: pw:protocol, pw:browser
+  MAX_LOG_LENGTH: 999
 
 jobs:
   test_mac:
