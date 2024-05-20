@@ -23,6 +23,7 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  DEBUG: pw:protocol, pw:browser
 
 jobs:
   test_mac:
@@ -31,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14]
+        os: [macos-14, macos-12]
         browser: [firefox]
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,7 +40,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-*
+        command: npm run test -- --project=${{ matrix.browser }}-* --workers 1
         bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
