@@ -65,7 +65,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             expect(testInfo.retry).toBe(1);
           });
         `,
-      }, { reporter: 'dot,html', retries: 1 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html', retries: 1 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       await showReport();
 
@@ -95,6 +95,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(1).toBe(1);
           });
         `,
+        // Note: using PW_TEST_HTML_REPORT_OPEN to test backwards compatibility.
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
@@ -113,7 +114,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.locator('.attachment-body')).toHaveText(/TESTID=.*/);
     });
 
-    test('should not throw when PW_TEST_HTML_REPORT_OPEN value is invalid', async ({ runInlineTest, page, showReport }, testInfo) => {
+    test('should not throw when PLAYWRIGHT_HTML_OPEN value is invalid', async ({ runInlineTest, page, showReport }, testInfo) => {
       const invalidOption = 'invalid-option';
       const result = await runInlineTest({
         'playwright.config.ts': `
@@ -125,7 +126,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             expect(2).toEqual(2);
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: invalidOption });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: invalidOption });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
     });
@@ -143,7 +144,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             testInfo.attachments.push({ name: 'screenshot', path: screenshot, contentType: 'image/png' });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -169,7 +170,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(screenshot).toMatchSnapshot('expected.png');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -243,7 +244,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -278,7 +279,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect.soft(screenshot).toMatchSnapshot('expected.png');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -309,7 +310,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
           });
         `,
-      }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -344,7 +345,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(screenshot).toMatchSnapshot('expected');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -373,7 +374,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(true).toBeFalsy();
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -404,7 +405,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await page.evaluate('2 + 2');
           });
         `
-      }, {}, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -432,7 +433,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(true).toBeFalsy();
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -452,7 +453,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await expect(true).toBeFalsy();
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
 
@@ -475,7 +476,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await evaluateWrapper(page, '2 + 2');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -508,7 +509,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await page.evaluate('2 + 2');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -538,7 +539,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await page.evaluate('2 + 2');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -562,7 +563,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await request.dispose();
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -600,7 +601,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             ]);
           });
         `,
-      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -625,7 +626,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await page.evaluate('2 + 2');
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -683,7 +684,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       expect(result.passed).toBe(0);
 
@@ -726,7 +727,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             test.info().annotations.push({ type: 'issue', description: 'I am not interested in this test' });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -746,7 +747,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             test.info().annotations.push({ type: 'issue', description: '${server.EMPTY_PAGE}' });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -789,7 +790,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
 
       await showReport();
@@ -814,7 +815,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             await testInfo.attach('example.ext with spaces', { body: Buffer.from('b'), contentType: 'madeup' });
           });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
@@ -867,7 +868,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             expect('new').toMatchSnapshot('snapshot.txt');
           });
         `
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       await showReport();
       await page.click('text="is a test"');
@@ -894,7 +895,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             expect('newcommon').toMatchSnapshot('snapshot.txt');
           });
         `
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       await showReport();
       await page.click('text="is a test"');
@@ -912,7 +913,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               throw new Error('ouch');
           });
         `
-      }, { 'reporter': 'dot,html', 'repeat-each': 3 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { 'reporter': 'dot,html', 'repeat-each': 3 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(1);
       await showReport();
 
@@ -937,7 +938,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(2).toEqual(2);
           });
         `
-      }, { 'reporter': 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { 'reporter': 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       await showReport();
 
@@ -956,7 +957,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           test('sample', async ({}) => { expect(2).toBe(2); });
         `,
         'a.spec.js': `require('./inner')`
-      }, { 'reporter': 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { 'reporter': 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       await showReport();
       await expect(page.locator('text=a.spec.js')).toBeVisible();
@@ -997,7 +998,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         await execGit(['commit', '-m', 'awesome commit message']);
 
         const result = await runInlineTest(files, { reporter: 'dot,html' }, {
-          PW_TEST_HTML_REPORT_OPEN: 'never',
+          PLAYWRIGHT_HTML_OPEN: 'never',
           GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
           GITHUB_RUN_ID: 'example-run-id',
           GITHUB_SERVER_URL: 'https://playwright.dev',
@@ -1043,7 +1044,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             import { test, expect } from '@playwright/test';
             test('sample', async ({}) => { expect(2).toBe(2); });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
 
         await showReport();
 
@@ -1071,7 +1072,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             import { test, expect } from '@playwright/test';
             test('my sample test', async ({}) => { expect(2).toBe(2); });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, undefined);
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' }, undefined);
 
         await showReport();
 
@@ -1095,7 +1096,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             import { test, expect } from '@playwright/test';
             test('my sample test', async ({}) => { expect(2).toBe(2); });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         await showReport();
 
@@ -1177,7 +1178,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html,line' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+        }, { 'reporter': 'html,line' }, { PLAYWRIGHT_HTML_OPEN: 'never' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
@@ -1201,7 +1202,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html,line' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
+        }, { 'reporter': 'html,line' }, { 'PLAYWRIGHT_HTML_OPEN': 'never', 'PLAYWRIGHT_HTML_OUTPUT_DIR': '../my-report' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
@@ -1250,7 +1251,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(2);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(3);
@@ -1324,7 +1325,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(1);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(3);
@@ -1366,7 +1367,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(1);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(3);
@@ -1407,7 +1408,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(1);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(3);
@@ -1445,7 +1446,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               });
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(2);
@@ -1523,7 +1524,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               });
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(5);
@@ -1566,7 +1567,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(2);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(1);
@@ -1615,7 +1616,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               });
             }
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(7);
@@ -1689,7 +1690,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(2);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(2);
@@ -1755,7 +1756,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(2);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(2);
@@ -1804,7 +1805,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(2);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(1);
@@ -1882,7 +1883,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               expect(1).toBe(1);
             });
           `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(3);
@@ -2021,7 +2022,7 @@ for (const useIntermediateMergeReport of [false] as const) {
                 expect(1).toBe(0);
               });
             `,
-        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
         expect(result.exitCode).toBe(1);
         expect(result.passed).toBe(3);
@@ -2110,7 +2111,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             test('passes', () => {});
           }
         `,
-      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       await showReport();
 
@@ -2139,7 +2140,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           });
           test('test 6', async ({}) => {});
         `,
-      }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       await showReport();
 
@@ -2167,7 +2168,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           test('b test 1', async ({}) => {});
           test('b test 2', async ({}) => {});
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(4);
@@ -2197,7 +2198,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           test('failed title', async ({}) => { expect(1).toBe(1); });
           test('passes title', async ({}) => { expect(1).toBe(2); });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(1);
       expect(result.passed).toBe(1);
@@ -2220,7 +2221,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           test('test1', async ({}) => { expect(1).toBe(1); });
               test('test2', async ({}) => { expect(1).toBe(2); });
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(1);
       expect(result.passed).toBe(1);
@@ -2257,7 +2258,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           expect(1).toBe(1);
         });
       `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
@@ -2286,7 +2287,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           expect(1).toBe(1);
         });
       `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
@@ -2315,7 +2316,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           expect(1).toBe(1);
         });
       `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
@@ -2344,7 +2345,7 @@ for (const useIntermediateMergeReport of [false] as const) {
           expect(1).toBe(1);
         });
       `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
@@ -2374,7 +2375,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         'playwright.config.ts': `
           export default { globalTeardown: './globalTeardown.ts' };
         `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(1);
       expect(result.passed).toBe(1);
@@ -2395,7 +2396,7 @@ for (const useIntermediateMergeReport of [false] as const) {
               });
             });
           `,
-      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
