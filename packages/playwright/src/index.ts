@@ -16,15 +16,14 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
-import * as playwrightLibrary from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video, PageScreenshotOptions } from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
-import { currentTestInfo } from './common/globals';
+import { currentTestInfo, setTestLifecycleInstrumentation, type TestLifecycleInstrumentation } from './common/globals';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -45,23 +44,99 @@ if ((process as any)['__pw_initiator__']) {
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
-  _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
+  _playwrightImpl: PlaywrightWorkerArgs['playwright'];
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
 };
 
+let artifactsRecorder: ArtifactsRecorder | undefined;
+
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
-  playwright: [async ({}, use) => {
-    await use(require('playwright-core'));
+  _playwrightImpl: [({}, use) => use(require('playwright-core')), { scope: 'worker' }],
+
+  playwright: [async ({ _playwrightImpl }, use) => {
+    const instrumentation: TestLifecycleInstrumentation = {
+      onTestBegin: async () => {
+        artifactsRecorder = new ArtifactsRecorder(_playwrightImpl, tracing().artifactsDir());
+        await artifactsRecorder.willStartTest(currentTestInfo() as TestInfoImpl);
+      },
+      onTestFunctionEnd: async () => {
+        await artifactsRecorder?.didFinishTestFunction();
+      },
+      onTestEnd: async () => {
+        await artifactsRecorder?.didFinishTest();
+        artifactsRecorder = undefined;
+      },
+    };
+    setTestLifecycleInstrumentation(instrumentation);
+
+    const csiListener: ClientInstrumentationListener = {
+      onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo || apiName.includes('setTestIdAttribute'))
+          return { userObject: null };
+        const step = testInfo._addStep({
+          location: frames[0] as any,
+          category: 'pw:api',
+          title: renderApiCall(apiName, params),
+          apiName,
+          params,
+        });
+        userData.userObject = step;
+        out.stepId = step.stepId;
+      },
+      onApiCallEnd: (userData: any, error?: Error) => {
+        const step = userData.userObject;
+        step?.complete({ error });
+      },
+      onWillPause: () => {
+        currentTestInfo()?.setTimeout(0);
+      },
+      runAfterCreateBrowserContext: async (context: BrowserContext) => {
+        await artifactsRecorder?.didCreateBrowserContext(context);
+        const testInfo = currentTestInfo();
+        if (testInfo)
+          attachConnectedHeaderIfNeeded(testInfo, context.browser());
+      },
+      runAfterCreateRequestContext: async (context: APIRequestContext) => {
+        await artifactsRecorder?.didCreateRequestContext(context);
+      },
+      runBeforeCloseBrowserContext: async (context: BrowserContext) => {
+        await artifactsRecorder?.willCloseBrowserContext(context);
+      },
+      runBeforeCloseRequestContext: async (context: APIRequestContext) => {
+        await artifactsRecorder?.willCloseRequestContext(context);
+      },
+    };
+
+    const clientInstrumentation = (_playwrightImpl as any)._instrumentation as ClientInstrumentation;
+    clientInstrumentation.addListener(csiListener);
+
+    if (currentTestInfo()) {
+      // Setup of this fixture happens after the first test starts.
+      await instrumentation.onTestBegin?.();
+    }
+
+    await use(_playwrightImpl);
+
+    if (currentTestInfo()) {
+      // Teardown of this fixture might happen right before the failing test ends
+      // as a part of worker cleanup.
+      await instrumentation.onTestEnd?.();
+    }
+
+    setTestLifecycleInstrumentation(undefined);
+    clientInstrumentation.removeListener(csiListener);
   }, { scope: 'worker', _hideStep: true } as any],
+
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
@@ -220,9 +295,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   },
 
-  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute, screenshot }, use, testInfo) => {
     if (testIdAttribute)
-      playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
+      playwright.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode())
       testInfo.setTimeout(0);
@@ -234,6 +309,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
     (playwright.request as any)._defaultContextOptions.tracesDir = tracing().tracesDir();
     (playwright.request as any)._defaultContextOptions.timeout = actionTimeout || 0;
+    artifactsRecorder?.setScreenshotOption(screenshot);
     await use();
     (playwright.request as any)._defaultContextOptions = undefined;
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
@@ -242,58 +318,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._defaultContextNavigationTimeout = undefined;
     }
   }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
-
-  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
-    await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
-    const csiListener: ClientInstrumentationListener = {
-      onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
-        const testInfo = currentTestInfo();
-        if (!testInfo || apiName.includes('setTestIdAttribute'))
-          return { userObject: null };
-        const step = testInfo._addStep({
-          location: frames[0] as any,
-          category: 'pw:api',
-          title: renderApiCall(apiName, params),
-          apiName,
-          params,
-        });
-        userData.userObject = step;
-        out.stepId = step.stepId;
-      },
-      onApiCallEnd: (userData: any, error?: Error) => {
-        const step = userData.userObject;
-        step?.complete({ error });
-      },
-      onWillPause: () => {
-        currentTestInfo()?.setTimeout(0);
-      },
-      runAfterCreateBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder?.didCreateBrowserContext(context);
-        const testInfo = currentTestInfo();
-        if (testInfo)
-          attachConnectedHeaderIfNeeded(testInfo, context.browser());
-      },
-      runAfterCreateRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder?.didCreateRequestContext(context);
-      },
-      runBeforeCloseBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder?.willCloseBrowserContext(context);
-      },
-      runBeforeCloseRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder?.willCloseRequestContext(context);
-      },
-    };
-
-    const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
-    clientInstrumentation.addListener(csiListener);
-
-    await use();
-
-    clientInstrumentation.removeListener(csiListener);
-    await artifactsRecorder.didFinishTest();
-
-  }, { auto: 'all-hooks-included',  _title: 'trace recording' } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -470,8 +494,8 @@ class ArtifactsRecorder {
   private _testInfo!: TestInfoImpl;
   private _playwright: Playwright;
   private _artifactsDir: string;
-  private _screenshotMode: ScreenshotMode;
-  private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
+  private _screenshotMode: ScreenshotMode = 'off';
+  private _screenshotOptions: { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
   private _temporaryScreenshots: string[] = [];
   private _temporaryArtifacts: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
@@ -479,13 +503,16 @@ class ArtifactsRecorder {
   private _screenshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
 
-  constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: Playwright, artifactsDir: string) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    this._screenshotMode = normalizeScreenshotMode(screenshot);
-    this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._screenshottedSymbol = Symbol('screenshotted');
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
+  }
+
+  setScreenshotOption(screenshot: ScreenshotOption) {
+    this._screenshotMode = normalizeScreenshotMode(screenshot);
+    this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
   }
 
   private _createTemporaryArtifact(...name: string[]) {
@@ -496,7 +523,6 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
 
     // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
     // overwrite previous screenshots.

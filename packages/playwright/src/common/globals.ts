@@ -42,3 +42,19 @@ export function setIsWorkerProcess() {
 export function isWorkerProcess() {
   return _isWorkerProcess;
 }
+
+export interface TestLifecycleInstrumentation {
+  onTestBegin?(): Promise<void>;
+  onTestFunctionEnd?(): Promise<void>;
+  onTestEnd?(): Promise<void>;
+}
+
+let _testLifecycleInstrumentation: TestLifecycleInstrumentation | undefined;
+
+export function setTestLifecycleInstrumentation(instrumentation: TestLifecycleInstrumentation | undefined) {
+  _testLifecycleInstrumentation = instrumentation;
+}
+
+export function testLifecycleInstrumentation() {
+  return _testLifecycleInstrumentation;
+}
