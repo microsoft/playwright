@@ -103,7 +103,13 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   async dispose(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     await this._instrumentation.onWillCloseRequestContext(this);
-    await this._channel.dispose(options);
+    try {
+      await this._channel.dispose(options);
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
     this._tracing._resetStackCounter();
     this._request?._contexts.delete(this);
   }

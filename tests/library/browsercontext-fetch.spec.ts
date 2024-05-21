@@ -1255,3 +1255,8 @@ it('should not work after dispose', async ({ context, server }) => {
   await context.request.dispose();
   expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain(kTargetClosedErrorMessage);
 });
+
+it('should not work after context dispose', async ({ context, server }) => {
+  await context.close({ reason: 'Test ended.' });
+  expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain('Test ended.');
+});
