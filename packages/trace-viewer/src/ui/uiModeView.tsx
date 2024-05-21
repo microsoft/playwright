@@ -60,6 +60,7 @@ const queryParams = {
   workers: searchParams.get('workers') || undefined,
   timeout: searchParams.has('timeout') ? +searchParams.get('timeout')! : undefined,
   headed: searchParams.has('headed'),
+  outputDir: searchParams.get('outputDir') || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
 };
 
@@ -283,6 +284,7 @@ export const UIModeView: React.FC<{}> = ({
         workers: queryParams.workers,
         timeout: queryParams.timeout,
         headed: queryParams.headed,
+        outputDir: queryParams.outputDir,
         reporters: queryParams.reporters,
         trace: 'on',
       });

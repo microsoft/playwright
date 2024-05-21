@@ -92,6 +92,7 @@ export interface TestServerInterface {
     headed?: boolean;
     workers?: number | string;
     timeout?: number,
+    outputDir?: string;
     reporters?: string[],
     trace?: 'on' | 'off';
     video?: 'on' | 'off';
