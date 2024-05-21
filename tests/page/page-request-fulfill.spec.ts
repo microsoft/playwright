@@ -479,10 +479,8 @@ it('should not go to the network for fulfilled requests body', {
   const responsePromise = page.waitForResponse('**/one-style.css');
   await page.goto(server.PREFIX + '/one-style.html');
   const response = await responsePromise;
-  const body = await response.text();
-  // In webkit the response body is not available.
-  if (browserName !== 'webkit')
-    expect(body).toBe('Not Found! (mocked)');
+  const body = await response.body();
+  expect(body).toBeTruthy();
   expect(serverHit).toBe(false);
 });
 

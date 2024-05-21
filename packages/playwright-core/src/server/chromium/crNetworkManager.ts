@@ -368,10 +368,6 @@ export class CRNetworkManager {
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
     const getResponseBody = async () => {
-      const fulfilledBody = request._route?._fulfilledBody;
-      if (fulfilledBody)
-        return fulfilledBody;
-
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
 
@@ -379,6 +375,10 @@ export class CRNetworkManager {
       const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+
+      // Make sure no network requests sent while reading the body for fulfilled requests.
+      if (request._route?._fulfilled)
+        return Buffer.from('');
 
       // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
@@ -599,7 +599,7 @@ class RouteImpl implements network.RouteDelegate {
   private readonly _session: CRSession;
   private _interceptionId: string;
   _alreadyContinuedParams: Protocol.Fetch.continueRequestParameters | undefined;
-  _fulfilledBody: Buffer | undefined;
+  _fulfilled: boolean = false;
 
   constructor(session: CRSession, interceptionId: string) {
     this._session = session;
@@ -620,8 +620,8 @@ class RouteImpl implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
+    this._fulfilled = true;
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
-    this._fulfilledBody = Buffer.from(body, 'base64');
 
     const responseHeaders = splitSetCookieHeader(response.headers);
     await catchDisallowedErrors(async () => {
