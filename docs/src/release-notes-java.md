@@ -4,6 +4,72 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.44
+
+### New APIs
+
+**Accessibility assertions**
+
+- [`method: LocatorAssertions.toHaveAccessibleName`] checks if the element has the specified accessible name:
+  ```java
+  Locator locator = page.getByRole(AriaRole.BUTTON);
+  assertThat(locator).hasAccessibleName("Submit");
+  ```
+
+- [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
+  ```java
+  Locator locator = page.getByRole(AriaRole.BUTTON);
+  assertThat(locator).hasAccessibleDescription("Upload a photo");
+  ```
+
+- [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
+  ```java
+  Locator locator = page.getByTestId("save-button");
+  assertThat(locator).hasRole(AriaRole.BUTTON);
+  ```
+
+**Locator handler**
+
+- After executing the handler added with [`method: Page.addLocatorHandler`], Playwright will now wait until the overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with the new `setNoWaitAfter` option.
+- You can use new `setTimes` option in [`method: Page.addLocatorHandler`] to specify maximum number of times the handler should be run.
+- The handler in [`method: Page.addLocatorHandler`] now accepts the locator as argument.
+- New [`method: Page.removeLocatorHandler`] method for removing previously added locator handlers.
+
+```java
+Locator locator = page.getByText("This interstitial covers the button");
+page.addLocatorHandler(locator, overlay -> {
+  overlay.locator("#close").click();
+}, new Page.AddLocatorHandlerOptions().setTimes(3).setNoWaitAfter(true));
+// Run your tests that can be interrupted by the overlay.
+// ...
+page.removeLocatorHandler(locator);
+```
+
+**Miscellaneous options**
+
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`setMultipart`](./api/class-requestoptions#request-options-set-multipart) option in `RequestOptions`:
+  ```java
+  FormData formData = FormData.create();
+  formData.append("file", new FilePayload("f1.js", "text/javascript",
+  "var x = 2024;".getBytes(StandardCharsets.UTF_8)));
+  formData.append("file", new FilePayload("f2.txt", "text/plain",
+    "hello".getBytes(StandardCharsets.UTF_8)));
+  APIResponse response = context.request().post("https://example.com/uploadFile", RequestOptions.create().setMultipart(formData));
+  ```
+
+- `expect(page).toHaveURL(url)` now supports `setIgnoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+
+### Browser Versions
+
+* Chromium 125.0.6422.14
+* Mozilla Firefox 125.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 124
+* Microsoft Edge 124
+
 ## Version 1.43
 
 ### New APIs

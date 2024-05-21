@@ -21,7 +21,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
   ```js
   const locator = page.getByRole('button');
-  await expect(locator).toHaveAccessibleName('Upload the photo');
+  await expect(locator).toHaveAccessibleDescription('Upload a photo');
   ```
 
 - [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
@@ -59,7 +59,7 @@ await page.removeLocatorHandler(locator);
   });
   ```
 
-- `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.inervals` option globally in [`property: TestConfig.expect`] or per project in [`property: TestProject.expect`].
+- `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.intervals` option globally in [`property: TestConfig.expect`] or per project in [`property: TestProject.expect`].
 - `expect(page).toHaveURL(url)` now supports `ignoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
 - [`property: TestProject.ignoreSnapshots`](./api/class-testproject#test-project-ignore-snapshots) allows to configure  per project whether to skip screenshot expectations.
 

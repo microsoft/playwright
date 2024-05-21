@@ -4,6 +4,82 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.44
+
+### New APIs
+
+**Accessibility assertions**
+
+- [`method: LocatorAssertions.toHaveAccessibleName`] checks if the element has the specified accessible name:
+  ```csharp
+  var locator = Page.GetByRole(AriaRole.Button);
+  await Expect(locator).ToHaveAccessibleNameAsync("Submit");
+  ```
+
+- [`method: LocatorAssertions.toHaveAccessibleDescription`] checks if the element has the specified accessible description:
+  ```csharp
+  var locator = Page.GetByRole(AriaRole.Button);
+  await Expect(locator).ToHaveAccessibleDescriptionAsync("Upload a photo");
+  ```
+
+- [`method: LocatorAssertions.toHaveRole`] checks if the element has the specified ARIA role:
+  ```csharp
+  var locator = Page.GetByTestId("save-button");
+  await Expect(locator).ToHaveRoleAsync(AriaRole.Button);
+  ```
+
+**Locator handler**
+
+- After executing the handler added with [`method: Page.addLocatorHandler`], Playwright will now wait until the overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with the new `NoWaitAfter` option.
+- You can use new `Times` option in [`method: Page.addLocatorHandler`] to specify maximum number of times the handler should be run.
+- The handler in [`method: Page.addLocatorHandler`] now accepts the locator as argument.
+- New [`method: Page.removeLocatorHandler`] method for removing previously added locator handlers.
+
+```csharp
+var locator = Page.GetByText("This interstitial covers the button");
+await Page.AddLocatorHandlerAsync(locator, async (overlay) =>
+{
+    await overlay.Locator("#close").ClickAsync();
+}, new() { Times = 3, NoWaitAfter = true });
+// Run your tests that can be interrupted by the overlay.
+// ...
+await Page.RemoveLocatorHandlerAsync(locator);
+```
+
+**Miscellaneous options**
+
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()`:
+- ```
+  ```csharp
+  var formData = Context.APIRequest.CreateFormData();
+  formData.Append("file", new FilePayload()
+  {
+      Name = "f1.js",
+      MimeType = "text/javascript",
+      Buffer = System.Text.Encoding.UTF8.GetBytes("var x = 2024;")
+  });
+  formData.Append("file", new FilePayload()
+  {
+      Name = "f2.txt",
+      MimeType = "text/plain",
+      Buffer = System.Text.Encoding.UTF8.GetBytes("hello")
+  });
+  var response = await Context.APIRequest.PostAsync("https://example.com/uploadFiles", new() { Multipart = formData });
+  ```
+
+- [`method: PageAssertions.toHaveURL`] now supports `IgnoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+
+### Browser Versions
+
+* Chromium 125.0.6422.14
+* Mozilla Firefox 125.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 124
+* Microsoft Edge 124
+
 ## Version 1.43
 
 ### New APIs
