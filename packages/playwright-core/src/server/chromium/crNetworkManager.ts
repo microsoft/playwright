@@ -368,6 +368,10 @@ export class CRNetworkManager {
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
     const getResponseBody = async () => {
+      const fulfilledBody = request._route?._fulfilledBody;
+      if (fulfilledBody)
+        return fulfilledBody;
+
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
 
@@ -595,6 +599,7 @@ class RouteImpl implements network.RouteDelegate {
   private readonly _session: CRSession;
   private _interceptionId: string;
   _alreadyContinuedParams: Protocol.Fetch.continueRequestParameters | undefined;
+  _fulfilledBody: Buffer | undefined;
 
   constructor(session: CRSession, interceptionId: string) {
     this._session = session;
@@ -616,6 +621,7 @@ class RouteImpl implements network.RouteDelegate {
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
+    this._fulfilledBody = Buffer.from(body, 'base64');
 
     const responseHeaders = splitSetCookieHeader(response.headers);
     await catchDisallowedErrors(async () => {
