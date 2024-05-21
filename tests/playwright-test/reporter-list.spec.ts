@@ -70,7 +70,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             });
           });
         `,
-      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIST_PRINT_STEPS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
       const text = result.output;
       const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       lines.pop(); // Remove last item that contains [v] and time in ms.
