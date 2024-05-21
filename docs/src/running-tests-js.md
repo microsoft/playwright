@@ -83,6 +83,15 @@ To run a test with a specific title, use the `-g` flag followed by the title of 
 npx playwright test -g "add a todo item"
 ```
 
+### Run last failed tests
+
+To run only the tests that failed in the last test run, first run your tests and then run them again with the `--last-failed` flag.
+
+```bash
+npx playwright test --last-failed
+```
+
+
 ### Run tests in VS Code
 
 Tests can be run right from VS Code using the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Once installed you can simply click the green triangle next to the test you want to run or run all tests from the testing sidebar. Check out our [Getting Started with VS Code](./getting-started-vscode.md#running-tests) guide for more details.
