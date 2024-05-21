@@ -46,6 +46,7 @@ export type TraceViewerRedirectOptions = {
   reporter?: string[];
   webApp?: string;
   isServer?: boolean;
+  outputDir?: string;
 };
 
 export type TraceViewerAppOptions = {
@@ -129,6 +130,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('timeout', String(options.timeout));
   if (options.headed)
     params.append('headed', '');
+  if (options.outputDir)
+    params.append('outputDir', options.outputDir);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 

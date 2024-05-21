@@ -313,6 +313,7 @@ class TestServerDispatcher implements TestServerInterface {
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
+      outputDir: params.outputDir,
       workers: params.workers,
     };
     if (params.trace === 'on')

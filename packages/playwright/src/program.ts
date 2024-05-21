@@ -170,6 +170,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
       workers: cliOverrides.workers,
       timeout: cliOverrides.timeout,
+      outputDir: cliOverrides.outputDir,
     });
     await stopProfiling('runner');
     if (status === 'restarted')
