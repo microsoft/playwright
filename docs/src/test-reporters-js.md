@@ -167,6 +167,16 @@ Running 124 tests using 6 workers
 ······F·············································
 ```
 
+One character is displayed for each test that has run, indicating its status:
+
+| Character | Description
+|---|---|
+| `·` | Passed
+| `F` | Failed
+| `×` | Failed or timed out - and will be retried
+| `±` | Passed on retry (flaky)
+| `T` | Timed out
+| `°` | Skipped
 
 Dot report supports the following configuration options and environment variables:
 
@@ -174,7 +184,6 @@ Dot report supports the following configuration options and environment variable
 |---|---|---|---|
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
-
 
 ### HTML reporter
 
