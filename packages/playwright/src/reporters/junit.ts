@@ -19,6 +19,7 @@ import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
 import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
 import EmptyReporter from './empty';
+import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 
 type JUnitOptions = {
   outputFile?: string,
@@ -42,8 +43,8 @@ class JUnitReporter extends EmptyReporter {
 
   constructor(options: JUnitOptions) {
     super();
-    this.stripANSIControlSequences = options.stripANSIControlSequences || false;
-    this.includeProjectInTestName = options.includeProjectInTestName || false;
+    this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
+    this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
