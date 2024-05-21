@@ -75,7 +75,7 @@ export class WKInterceptableRequest {
       requestStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.requestStart) : -1,
       responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
     };
-    const setCookieSeparator = process.platform === 'darwin' ? ',' : '\n';
+    const setCookieSeparator = process.platform === 'darwin' ? ',' : 'playwright-set-cookie-separator';
     const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
 
     // No raw response headers in WebKit, use "provisional" ones.
@@ -128,7 +128,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
-      statusText: network.STATUS_TEXTS[String(response.status)],
+      statusText: network.statusText(response.status),
       mimeType,
       headers,
       base64Encoded: response.isBase64,

@@ -514,3 +514,47 @@ test('should report up to 3 timeout errors', async ({ runInlineTest }) => {
   expect(result.output).toContain('Test timeout of 1000ms exceeded while running "afterEach" hook.');
   expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "autoWorker".');
 });
+
+test('should complain when worker fixture times out during worker cleanup', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        slowTeardown: [async ({}, use) => {
+          await use('hey');
+          await new Promise(f => setTimeout(f, 2000));
+        }, { scope: 'worker', auto: true, timeout: 400 }],
+      });
+      test('test ok', async ({ slowTeardown }) => {
+        expect(slowTeardown).toBe('hey');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain(`Fixture "slowTeardown" timeout of 400ms exceeded during teardown.`);
+});
+
+test('should allow custom worker fixture timeout longer than force exit cap', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        slowTeardown: [async ({}, use) => {
+          await use('hey');
+          await new Promise(f => setTimeout(f, 1500));
+          console.log('output from teardown');
+          throw new Error('Oh my!');
+        }, { scope: 'worker', auto: true, timeout: 2000 }],
+      });
+      test('test ok', async ({ slowTeardown }) => {
+        expect(slowTeardown).toBe('hey');
+      });
+    `
+  }, {}, { PWTEST_FORCE_EXIT_TIMEOUT: '400' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain(`output from teardown`);
+  expect(result.output).toContain(`Error: Oh my!`);
+  expect(result.output).toContain(`1 error was not a part of any test, see above for details`);
+});

@@ -605,7 +605,6 @@ class ContextRecorder extends EventEmitter {
         frameId: frame.guid,
         startTime: monotonicTime(),
         endTime: 0,
-        wallTime: Date.now(),
         type: 'Frame',
         method: action,
         params,

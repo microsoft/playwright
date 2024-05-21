@@ -48,7 +48,15 @@ export class FailureTracker {
   }
 
   result(): 'failed' | 'passed' {
-    return this._hasWorkerErrors || this.hasReachedMaxFailures() || this._rootSuite?.allTests().some(test => !test.ok()) ? 'failed' : 'passed';
+    return this._hasWorkerErrors || this.hasReachedMaxFailures() || this.hasFailedTests() || (this._config.cliFailOnFlakyTests && this.hasFlakyTests()) ? 'failed' : 'passed';
+  }
+
+  hasFailedTests() {
+    return this._rootSuite?.allTests().some(test => !test.ok());
+  }
+
+  hasFlakyTests() {
+    return this._rootSuite?.allTests().some(test => (test.outcome() === 'flaky'));
   }
 
   maxFailures() {

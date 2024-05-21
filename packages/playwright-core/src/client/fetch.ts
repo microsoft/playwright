@@ -85,6 +85,7 @@ export class APIRequest implements api.APIRequest {
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   _request?: APIRequest;
   readonly _tracing: Tracing;
+  private _closeReason: string | undefined;
 
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
@@ -99,9 +100,10 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     await this.dispose();
   }
 
-  async dispose(): Promise<void> {
+  async dispose(options: { reason?: string } = {}): Promise<void> {
+    this._closeReason = options.reason;
     await this._instrumentation.onWillCloseRequestContext(this);
-    await this._channel.dispose();
+    await this._channel.dispose(options);
     this._tracing._resetStackCounter();
     this._request?._contexts.delete(this);
   }
@@ -156,6 +158,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   async _innerFetch(options: FetchOptions & { url?: string, request?: api.Request } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
+      if (this._closeReason)
+        throw new Error(this._closeReason);
       assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
       assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' should be greater than or equal to '0'`);

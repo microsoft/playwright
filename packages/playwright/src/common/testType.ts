@@ -263,7 +263,7 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    const step = testInfo._addStep({ wallTime: Date.now(), category: 'test.step', title, box: options.box });
+    const step = testInfo._addStep({ category: 'test.step', title, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
         const result = await body();

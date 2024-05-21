@@ -133,16 +133,16 @@ System.out.println(browser.contexts().size()); // prints "1"
 
 ```python async
 browser = await pw.webkit.launch()
-print(len(browser.contexts())) # prints `0`
+print(len(browser.contexts)) # prints `0`
 context = await browser.new_context()
-print(len(browser.contexts())) # prints `1`
+print(len(browser.contexts)) # prints `1`
 ```
 
 ```python sync
 browser = pw.webkit.launch()
-print(len(browser.contexts())) # prints `0`
+print(len(browser.contexts)) # prints `0`
 context = browser.new_context()
-print(len(browser.contexts())) # prints `1`
+print(len(browser.contexts)) # prints `1`
 ```
 
 ```csharp

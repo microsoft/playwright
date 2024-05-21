@@ -101,7 +101,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._fallbackOverrides.postDataBuffer = initializer.postData;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -128,11 +127,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   postData(): string | null {
-    return this._fallbackOverrides.postDataBuffer?.toString('utf-8') || null;
+    return (this._fallbackOverrides.postDataBuffer || this._initializer.postData)?.toString('utf-8') || null;
   }
 
   postDataBuffer(): Buffer | null {
-    return this._fallbackOverrides.postDataBuffer || null;
+    return this._fallbackOverrides.postDataBuffer || this._initializer.postData || null;
   }
 
   postDataJSON(): Object | null {

@@ -140,5 +140,5 @@ Call log:
 
 export type ExpectZone = {
   title: string;
-  wallTime: number;
+  stepId: string;
 };

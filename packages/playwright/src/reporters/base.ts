@@ -45,27 +45,41 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export const isTTY = !!process.env.PWTEST_TTY_WIDTH || process.stdout.isTTY;
-export const ttyWidth = process.env.PWTEST_TTY_WIDTH ? parseInt(process.env.PWTEST_TTY_WIDTH, 10) : process.stdout.columns || 0;
-let useColors = isTTY;
-if (process.env.DEBUG_COLORS === '0'
-    || process.env.DEBUG_COLORS === 'false'
-    || process.env.FORCE_COLOR === '0'
-    || process.env.FORCE_COLOR === 'false')
-  useColors = false;
-else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
-  useColors = true;
+export const { isTTY, ttyWidth, colors } = (() => {
+  let isTTY = !!process.stdout.isTTY;
+  let ttyWidth = process.stdout.columns || 0;
+  if (process.env.PLAYWRIGHT_FORCE_TTY === 'false' || process.env.PLAYWRIGHT_FORCE_TTY === '0') {
+    isTTY = false;
+    ttyWidth = 0;
+  } else if (process.env.PLAYWRIGHT_FORCE_TTY === 'true' || process.env.PLAYWRIGHT_FORCE_TTY === '1') {
+    isTTY = true;
+    ttyWidth = process.stdout.columns || 100;
+  } else if (process.env.PLAYWRIGHT_FORCE_TTY) {
+    isTTY = true;
+    ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
+    if (isNaN(ttyWidth))
+      ttyWidth = 100;
+  }
 
-export const colors = useColors ? realColors : {
-  bold: (t: string) => t,
-  cyan: (t: string) => t,
-  dim: (t: string) => t,
-  gray: (t: string) => t,
-  green: (t: string) => t,
-  red: (t: string) => t,
-  yellow: (t: string) => t,
-  enabled: false,
-};
+  let useColors = isTTY;
+  if (process.env.DEBUG_COLORS === '0' || process.env.DEBUG_COLORS === 'false' ||
+      process.env.FORCE_COLOR === '0' || process.env.FORCE_COLOR === 'false')
+    useColors = false;
+  else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
+    useColors = true;
+
+  const colors = useColors ? realColors : {
+    bold: (t: string) => t,
+    cyan: (t: string) => t,
+    dim: (t: string) => t,
+    gray: (t: string) => t,
+    green: (t: string) => t,
+    red: (t: string) => t,
+    yellow: (t: string) => t,
+    enabled: false,
+  };
+  return { isTTY, ttyWidth, colors };
+})();
 
 export class BaseReporter implements ReporterV2 {
   config!: FullConfig;

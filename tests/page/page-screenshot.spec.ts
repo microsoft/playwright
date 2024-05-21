@@ -221,6 +221,17 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage.png');
   });
 
+  it('should take fullPage screenshots and mask elements outside of it', async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30770' });
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshot = await page.screenshot({
+      fullPage: true,
+      mask: [page.locator('.box').nth(144)],
+    });
+    expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage-mask-outside-viewport.png');
+  });
+
   it('should restore viewport after fullPage screenshot', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
@@ -474,36 +485,6 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
       await page.addStyleTag({ content: 'iframe { border: none; }' });
-      expect(await page.screenshot({
-        mask: [
-          page.locator('div').nth(5),
-          page.frameLocator('#frame1').locator('div').nth(12),
-        ],
-      })).toMatchSnapshot('should-mask-inside-iframe.png');
-    });
-
-    it('should mask inside <dialog />', async ({ page, server, browserName, isElectron }) => {
-      it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29878' });
-      it.skip(browserName === 'webkit' && process.platform === 'darwin' && parseInt(os.release().split('.')[0], 10) < 23, 'SDKAlignedBehavior::PopoverAttributeEnabled is only enabled in macOS 14.0+');
-      it.fixme(isElectron, 'Requires a more recent Electron version');
-
-      await page.setViewportSize({ width: 500, height: 500 });
-      await page.goto(server.PREFIX + '/grid.html');
-      await page.evaluate(() => {
-        const elements = document.body.innerHTML;
-        document.body.innerHTML = '';
-        // Move all the elements of the body (grid elements) into a <dialog /> which lives on the Top-Layer.
-        const dialog = document.createElement('dialog');
-        dialog.style.padding = '0';
-        dialog.style.margin = '0';
-        dialog.style.border = 'none';
-        dialog.style.maxWidth = 'inherit';
-        dialog.style.maxHeight = 'inherit';
-        dialog.style.outline = 'none';
-        document.body.appendChild(dialog);
-        dialog.innerHTML = elements;
-        dialog.showModal();
-      });
       expect(await page.screenshot({
         mask: [
           page.locator('div').nth(5),

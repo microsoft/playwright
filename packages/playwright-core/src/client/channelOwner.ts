@@ -143,12 +143,16 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return async (params: any) => {
               return await this._wrapApiCall(async apiZone => {
-                const { apiName, frames, csi, callCookie, wallTime } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], wallTime: undefined } : apiZone;
+                const { apiName, frames, csi, callCookie, stepId } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], stepId: undefined } : apiZone;
                 apiZone.reported = true;
-                if (csi && apiName)
+                let currentStepId = stepId;
+                if (csi && apiName) {
+                  const out: { stepId?: string } = {};
                   // this is meant to be awaited so all async hooks can be completed before the actual command gets dispatched
-                  await csi.onApiCallBegin(apiName, params, frames, wallTime, callCookie);
-                return await this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' }), apiName, frames, wallTime);
+                  await csi.onApiCallBegin(apiName, params, frames, callCookie, out);
+                  currentStepId = out.stepId;
+                }
+                return await this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' }), apiName, frames, currentStepId);
               });
             };
           }
@@ -176,7 +180,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     // Enclosing zone could have provided the apiName and wallTime.
     const expectZone = zones.zoneData<ExpectZone>('expectZone');
-    const wallTime = expectZone ? expectZone.wallTime : Date.now();
+    const stepId = expectZone?.stepId;
     if (!isInternal && expectZone)
       apiName = expectZone.title;
 
@@ -187,7 +191,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
-      const apiZone: ApiZone = { apiName, frames, isInternal, reported: false, csi, callCookie, wallTime };
+      const apiZone: ApiZone = { apiName, frames, isInternal, reported: false, csi, callCookie, stepId };
       const result = await zones.run('apiZone', apiZone, async () => await func(apiZone));
       await csi?.onApiCallEnd(callCookie);
       logApiCall(logger, `<= ${apiName} succeeded`, isInternal);
@@ -244,5 +248,5 @@ type ApiZone = {
   reported: boolean;
   csi: ClientInstrumentation | undefined;
   callCookie: any;
-  wallTime: number;
+  stepId?: string;
 };

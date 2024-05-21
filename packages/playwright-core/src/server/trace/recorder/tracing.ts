@@ -45,7 +45,7 @@ import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
 
-const version: trace.VERSION = 6;
+const version: trace.VERSION = 7;
 
 export type TracerOptions = {
   name?: string;
@@ -100,10 +100,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._contextCreatedEvent = {
       version,
       type: 'context-options',
+      origin: 'library',
       browserName: '',
       options: {},
       platform: process.platform,
       wallTime: 0,
+      monotonicTime: 0,
       sdkLanguage: context.attribution.playwright.options.sdkLanguage,
       testIdAttributeName
     };
@@ -177,7 +179,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._allocateNewTraceFile(this._state);
 
     this._fs.mkdir(path.dirname(this._state.traceFile));
-    const event: trace.TraceEvent = { ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() };
+    const event: trace.TraceEvent = {
+      ...this._contextCreatedEvent,
+      title: options.title,
+      wallTime: Date.now(),
+      monotonicTime: monotonicTime()
+    };
     this._fs.appendFile(this._state.traceFile, JSON.stringify(event) + '\n');
 
     this._context.instrumentation.addListener(this, this._context);
@@ -535,7 +542,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActio
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,
-    wallTime: metadata.wallTime,
+    stepId: metadata.stepId,
     pageId: metadata.pageId,
   };
 }

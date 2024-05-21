@@ -285,3 +285,24 @@ test('should reveal errors in the sourcetab', async ({ runUITest }) => {
   await page.getByText('a.spec.ts:4', { exact: true }).click();
   await expect(page.locator('.source-line-running')).toContainText(`throw new Error('Oh my');`);
 });
+
+test('should show request source context id', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page, context, request }) => {
+        await page.goto('${server.EMPTY_PAGE}');
+        const page2 = await context.newPage();
+        await page2.goto('${server.EMPTY_PAGE}');
+        await request.get('${server.EMPTY_PAGE}');
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+  await expect(page.locator('span').filter({ hasText: 'Source' })).toBeVisible();
+  await expect(page.getByText('page#1')).toBeVisible();
+  await expect(page.getByText('page#2')).toBeVisible();
+  await expect(page.getByText('api#1')).toBeVisible();
+});

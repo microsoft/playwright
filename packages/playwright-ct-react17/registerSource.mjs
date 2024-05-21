@@ -86,6 +86,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 window.playwrightUnmount = async rootElement => {
   if (!__pwReactDOM.unmountComponentAtNode(rootElement))
     throw new Error('Component was not mounted');
+
+  __pwRootRegistry.delete(rootElement);
 };
 
 window.playwrightUpdate = async (rootElement, component) => {

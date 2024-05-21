@@ -26,7 +26,7 @@ export type ContextEntry = {
   browserName: string;
   channel?: string;
   platform?: string;
-  wallTime?: number;
+  wallTime: number;
   sdkLanguage?: Language;
   testIdAttributeName?: string;
   title?: string;
@@ -58,6 +58,7 @@ export function createEmptyContext(): ContextEntry {
     origin: 'testRunner',
     traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
+    wallTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,
     browserName: '',
     options: {
@@ -71,6 +72,6 @@ export function createEmptyContext(): ContextEntry {
     events: [],
     errors: [],
     stdio: [],
-    hasSource: false
+    hasSource: false,
   };
 }

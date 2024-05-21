@@ -317,7 +317,7 @@ export class CRNetworkManager {
       requestPausedSessionInfo!.session._sendMayFail('Fetch.fulfillRequest', {
         requestId: requestPausedEvent.requestId,
         responseCode: 204,
-        responsePhrase: network.STATUS_TEXTS['204'],
+        responsePhrase: network.statusText(204),
         responseHeaders,
         body: '',
       });
@@ -375,6 +375,10 @@ export class CRNetworkManager {
       const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+
+      // Make sure no network requests sent while reading the body for fulfilled requests.
+      if (request._route?._fulfilled)
+        return Buffer.from('');
 
       // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
@@ -595,6 +599,7 @@ class RouteImpl implements network.RouteDelegate {
   private readonly _session: CRSession;
   private _interceptionId: string;
   _alreadyContinuedParams: Protocol.Fetch.continueRequestParameters | undefined;
+  _fulfilled: boolean = false;
 
   constructor(session: CRSession, interceptionId: string) {
     this._session = session;
@@ -615,6 +620,7 @@ class RouteImpl implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
+    this._fulfilled = true;
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     const responseHeaders = splitSetCookieHeader(response.headers);
@@ -622,7 +628,7 @@ class RouteImpl implements network.RouteDelegate {
       await this._session.send('Fetch.fulfillRequest', {
         requestId: this._interceptionId!,
         responseCode: response.status,
-        responsePhrase: network.STATUS_TEXTS[String(response.status)],
+        responsePhrase: network.statusText(response.status),
         responseHeaders,
         body,
       });

@@ -132,7 +132,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  const urlPath  = `/trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  const urlPath  = `./trace/${options.webApp || 'index.html'}?${params.toString()}`;
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
@@ -145,7 +145,7 @@ export async function runTraceViewerApp(traceUrls: string[], browserName: string
   validateTraceUrls(traceUrls);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
-  const page = await openTraceViewerApp(server.urlPrefix(), browserName, options);
+  const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
   if (exitOnClose)
     page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
@@ -155,7 +155,7 @@ export async function runTraceInBrowser(traceUrls: string[], options: TraceViewe
   validateTraceUrls(traceUrls);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
-  await openTraceInBrowser(server.urlPrefix());
+  await openTraceInBrowser(server.urlPrefix('human-readable'));
 }
 
 export async function openTraceViewerApp(url: string, browserName: string, options?: TraceViewerAppOptions): Promise<Page> {

@@ -14,14 +14,85 @@
  * limitations under the License.
  */
 
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
-import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
-import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
+import type { Entry as ResourceSnapshot } from '../../../trace/src/har';
 
-export type Size = { width: number, height: number };
+type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+type Point = { x: number, y: number };
+type Size = { width: number, height: number };
 
-// Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export type VERSION = 7;
+type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
+
+type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
+  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
+  d?: string,
+  u?: string,
+  bi?: string,
+  m?: SerializedValue,
+  se?: SerializedValue,
+  r?: {
+    p: string,
+    f: string,
+  },
+  a?: SerializedValue[],
+  o?: {
+    k: string,
+    v: SerializedValue,
+  }[],
+  h?: number,
+  id?: number,
+  ref?: number,
+};
+
+type SerializedError = {
+  error?: {
+    message: string,
+    name: string,
+    stack?: string,
+  },
+  value?: SerializedValue,
+};
+
+type NodeSnapshot =
+  // Text node.
+  string |
+  // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
+  [ [number, number] ] |
+  // Just node name.
+  [ string ] |
+  // Node name, attributes, child nodes.
+  // Unfortunately, we cannot make this type definition recursive, therefore "any".
+  [ string, { [attr: string]: string }, ...any ];
+
+
+type ResourceOverride = {
+  url: string,
+  sha1?: string,
+  ref?: number
+};
+
+type FrameSnapshot = {
+  snapshotName?: string,
+  callId: string,
+  pageId: string,
+  frameId: string,
+  frameUrl: string,
+  timestamp: number,
+  collectionTime: number,
+  doctype?: string,
+  html: NodeSnapshot,
+  resourceOverrides: ResourceOverride[],
+  viewport: { width: number, height: number },
+  isMainFrame: boolean,
+};
 
 export type BrowserContextEventOptions = {
   viewport?: Size,
@@ -33,12 +104,10 @@ export type BrowserContextEventOptions = {
 export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
-  origin: 'testRunner' | 'library',
   browserName: string,
   channel?: string,
   platform: string,
   wallTime: number,
-  monotonicTime: number,
   title?: string,
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
@@ -62,7 +131,7 @@ export type BeforeActionTraceEvent = {
   class: string;
   method: string;
   params: Record<string, any>;
-  stepId?: string;
+  wallTime: number;
   beforeSnapshot?: string;
   stack?: StackFrame[];
   pageId?: string;

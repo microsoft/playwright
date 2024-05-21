@@ -281,7 +281,7 @@ test.describe('report location', () => {
         test('pass', ({}, testInfo) => {
         });
       `
-    }, { 'reporter': 'json' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_JSON_OUTPUT_NAME': '../my-report.json' }, {
+    }, { 'reporter': 'json' }, { 'PLAYWRIGHT_JSON_OUTPUT_NAME': '../my-report.json' }, {
       cwd: 'foo/bar/baz/tests',
     });
     expect(result.exitCode).toBe(0);
@@ -302,7 +302,7 @@ test.describe('report location', () => {
         test('pass', ({}, testInfo) => {
         });
       `
-    }, { 'reporter': 'json' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_JSON_OUTPUT_FILE': '../my-report.json' }, {
+    }, { 'reporter': 'json' }, { 'PLAYWRIGHT_JSON_OUTPUT_FILE': '../my-report.json' }, {
       cwd: 'foo/bar/baz/tests',
     });
     expect(result.exitCode).toBe(0);

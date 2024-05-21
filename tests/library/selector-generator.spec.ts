@@ -203,6 +203,15 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'div div')).toBe(`div >> internal:has-text=/^Hello world$/`);
   });
 
+  it('should use internal:has-text with regexp with a quote', async ({ page }) => {
+    await page.setContent(`
+      <span>Hello'world</span>
+      <div><div>Hello'<span>world</span></div>extra</div>
+      <a>Goodbye'<span>world</span></a>
+    `);
+    expect(await generate(page, 'div div')).toBe(`div >> internal:has-text=/^Hello\\'world$/`);
+  });
+
   it('should chain text after parent', async ({ page }) => {
     await page.setContent(`
       <div>Hello <span>world</span></div>
