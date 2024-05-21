@@ -19,7 +19,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { PNG } from 'playwright-core/lib/utilsBundle';
-import { removeFolders } from '../../packages/playwright-core/src/utils/fileUtils';
 import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
@@ -457,3 +456,9 @@ export default defineConfig({
   projects: [{name: 'default'}],
 });
 `;
+
+export async function removeFolders(dirs: string[]): Promise<Error[]> {
+  return await Promise.all(dirs.map((dir: string) =>
+    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
+  ));
+}
