@@ -457,3 +457,30 @@ it('should fulfill with gzip and readback', {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
   expect(await response.text()).toContain(`<div>hello, world!</div>`);
 });
+
+it('should not go to the network for fulfilled requests body', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30760' },
+}, async ({ page, server, browserName }) => {
+  await page.route('**/one-style.css', async route => {
+    return route.fulfill({
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Not Found! (mocked)',
+    });
+  });
+
+  let serverHit = false;
+  server.setRoute('/one-style.css', (req, res) => {
+    serverHit = true;
+    res.setHeader('Content-Type', 'text/css');
+    res.end('body { background-color: green; }');
+  });
+
+  const responsePromise = page.waitForResponse('**/one-style.css');
+  await page.goto(server.PREFIX + '/one-style.html');
+  const response = await responsePromise;
+  const body = await response.body();
+  expect(body).toBeTruthy();
+  expect(serverHit).toBe(false);
+});
+
