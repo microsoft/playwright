@@ -337,7 +337,7 @@ export abstract class APIRequestContext extends SdkObject {
 
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           // Best-effort UTF-8 decoding, per spec it's US-ASCII only, but browsers are more lenient.
-          // Node.js parses it as Latin1, so we convert it to UTF-8.
+          // Node.js parses it as Latin1 via std::v8::String, so we convert it to UTF-8.
           const locationHeaderValue = Buffer.from(response.headers.location ?? '', 'latin1').toString('utf8');
           if (locationHeaderValue) {
             let locationURL;
