@@ -150,6 +150,17 @@ Running 124 tests using 6 workers
 ······F·············································
 ```
 
+One character is displayed for each test that has run, indicating its status:
+
+| Character | Description
+|---|---|
+| `·` | Passed
+| `F` | Failed
+| `×` | Failed or timed out - and will be retried
+| `±` | Passed on retry (flaky)
+| `T` | Timed out
+| `°` | Skipped
+
 ### HTML reporter
 
 HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
