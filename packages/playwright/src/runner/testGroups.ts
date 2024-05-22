@@ -141,8 +141,11 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   const lengths = new Array(shard.total).fill(0);
   const shardSet = new Array(shard.total).fill(0).map(() => new Set<TestGroup>());
 
-  for (const group of testGroups) {
-    // We add the group to the shard with the smallest number of tests.
+  // We sort the test groups by the number of tests in descending order.
+  const sortedTestGroups = testGroups.slice().sort((a, b) => b.tests.length - a.tests.length);
+
+  // Then we add each group to the shard with the smallest number of tests.
+  for (const group of sortedTestGroups) {
     const index = lengths.reduce((minIndex, currentLength, currentIndex) => currentLength < lengths[minIndex] ? currentIndex : minIndex, 0);
     lengths[index] += group.tests.length;
     shardSet[index].add(group);
