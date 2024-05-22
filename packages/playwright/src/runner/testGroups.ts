@@ -138,27 +138,15 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   // Shards are still balanced by the number of tests, not files,
   // even in the case of non-paralleled files.
 
-  let shardableTotal = 0;
-  for (const group of testGroups)
-    shardableTotal += group.tests.length;
+  const lengths = new Array(shard.total).fill(0);
+  const shardSet = new Array(shard.total).fill(0).map(() => new Set<TestGroup>());
 
-  // Each shard gets some tests.
-  const shardSize = Math.floor(shardableTotal / shard.total);
-  // First few shards get one more test each.
-  const extraOne = shardableTotal - shardSize * shard.total;
-
-  const currentShard = shard.current - 1; // Make it zero-based for calculations.
-  const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-  const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
-
-  let current = 0;
-  const result = new Set<TestGroup>();
   for (const group of testGroups) {
-    // Any test group goes to the shard that contains the first test of this group.
-    // So, this shard gets any group that starts at [from; to)
-    if (current >= from && current < to)
-      result.add(group);
-    current += group.tests.length;
+    // We add the group to the shard with the smallest number of tests.
+    const index = lengths.reduce((minIndex, currentLength, currentIndex) => currentLength < lengths[minIndex] ? currentIndex : minIndex, 0);
+    lengths[index] += group.tests.length;
+    shardSet[index].add(group);
   }
-  return result;
+
+  return shardSet[shard.current - 1];
 }
