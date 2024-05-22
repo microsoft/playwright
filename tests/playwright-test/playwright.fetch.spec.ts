@@ -80,3 +80,30 @@ test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
+
+test('should hint unrouteAll if failed in the handler', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('late fetch', async ({ page }) => {
+        let closedCallback = () => {};
+        const closedPromise = new Promise<void>(f => closedCallback = f);
+        await page.route('**/empty.html', async route => {
+          await route.continue();
+          await closedPromise;
+          await route.fetch();
+        });
+        await page.goto('${server.EMPTY_PAGE}');
+        closedCallback();
+      });
+
+      test('second test', async ({ page }) => {
+        // Wait enough for the worker to be killed.
+        await new Promise(f => setTimeout(f, 1000));
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Consider awaiting `await page.unrouteAll({ behavior: \'ignoreErrors\' })`');
+});

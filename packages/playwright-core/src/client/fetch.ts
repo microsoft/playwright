@@ -28,7 +28,7 @@ import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
-import { isTargetClosedError } from './errors';
+import { TargetClosedError, isTargetClosedError } from './errors';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -165,7 +165,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   async _innerFetch(options: FetchOptions & { url?: string, request?: api.Request } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
       if (this._closeReason)
-        throw new Error(this._closeReason);
+        throw new TargetClosedError(this._closeReason);
       assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
       assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' should be greater than or equal to '0'`);
