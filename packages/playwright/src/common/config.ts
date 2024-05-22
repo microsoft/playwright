@@ -55,6 +55,7 @@ export class FullConfigInternal {
   cliFailOnFlakyTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
+  shardingSeed: string | null;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
@@ -92,6 +93,7 @@ export class FullConfigInternal {
       workers: 0,
       webServer: null,
     };
+    this.shardingSeed = takeFirst(configCLIOverrides.shardingSeed, userConfig.shardingSeed, null);
     for (const key in userConfig) {
       if (key.startsWith('@'))
         (this.config as any)[key] = (userConfig as any)[key];
