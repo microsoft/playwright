@@ -50,6 +50,7 @@ pnpm create playwright
 ```
 
 </TabItem>
+
 </Tabs>
 
 
@@ -81,9 +82,39 @@ The `tests` folder contains a basic example test to help you get started with te
 
 By default tests will be run on all 3 browsers, chromium, firefox and webkit using 3 workers. This can be configured in the [playwright.config file](./test-configuration.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright test
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test
+```
+
+</TabItem>
+
+</Tabs>
 
 ![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628) 
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
@@ -92,9 +123,39 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 
 After your test completes, an [HTML Reporter](./test-reporters.md#html-reporter) will be generated, which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright show-report
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright show-report
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright show-report
+```
+
+</TabItem>
+
+</Tabs>
 
 ![HTML Report](https://github.com/microsoft/playwright/assets/13063165/38ec17a7-9e61-4002-b137-a93812765501)
 
@@ -102,9 +163,41 @@ npx playwright show-report
 
 Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+
+<TabItem value="npm">
+
 ```bash
 npx playwright test --ui
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test --ui
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test --ui
+```
+
+</TabItem>
+
+</Tabs>
+
 ![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
 
 Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
@@ -113,16 +206,83 @@ Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about 
 
 To update Playwright to the latest version run the following command:
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+
+<TabItem value="npm">
+
 ```bash
 npm install -D @playwright/test@latest
 # Also download new browser binaries and their dependencies:
 npx playwright install --with-deps
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn add --dev @playwright/test@latest
+# Also download new browser binaries and their dependencies:
+yarn playwright install --with-deps
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm install --save-dev @playwright/test@latest
+# Also download new browser binaries and their dependencies:
+pnpm exec playwright install --with-deps
+```
+
+</TabItem>
+
+</Tabs>
+
 You can always check which version of Playwright you have by running the following command:
+
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+
+<TabItem value="npm">
 
 ```bash
 npx playwright --version
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright --version
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright --version
+```
+
+</TabItem>
+
+</Tabs>
 
 ## System requirements
 

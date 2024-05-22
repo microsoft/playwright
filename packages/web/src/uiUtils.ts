@@ -55,7 +55,7 @@ export function useMeasure<T extends Element>() {
 }
 
 export function msToString(ms: number): string {
-  if (!isFinite(ms))
+  if (ms < 0 || !isFinite(ms))
     return '-';
 
   if (ms === 0)

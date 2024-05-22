@@ -157,6 +157,8 @@ function indexModel(context: ContextEntry) {
   }
   for (const event of context.events)
     (event as any)[contextSymbol] = context;
+  for (const resource of context.resources)
+    (resource as any)[contextSymbol] = context;
 }
 
 function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
@@ -330,7 +332,7 @@ export function idForAction(action: ActionTraceEvent) {
   return `${action.pageId || 'none'}:${action.callId}`;
 }
 
-export function context(action: ActionTraceEvent | trace.EventTraceEvent): ContextEntry {
+export function context(action: ActionTraceEvent | trace.EventTraceEvent | ResourceSnapshot): ContextEntry {
   return (action as any)[contextSymbol];
 }
 

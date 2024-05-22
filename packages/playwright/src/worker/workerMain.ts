@@ -100,12 +100,17 @@ export class WorkerMain extends ProcessRunner {
   override async gracefullyClose() {
     try {
       await this._stop();
+      // Ignore top-level errors, they are already inside TestInfo.errors.
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
+      const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
-      await this._loadIfNeeded();
-      await this._teardownScopes();
+      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => this._loadIfNeeded()).catch(() => {});
+      await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(() => {});
+      await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
       // Close any other browsers launched in this process. This includes anything launched
       // manually in the test/hooks and internal browsers like Playwright Inspector.
-      await gracefullyCloseAll();
+      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => gracefullyCloseAll()).catch(() => {});
+      this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
       this._fatalErrors.push(serializeError(e));
     }
@@ -142,15 +147,6 @@ export class WorkerMain extends ProcessRunner {
     } else if (error.value) {
       error.value += message;
     }
-  }
-
-  private async _teardownScopes() {
-    const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
-    const runnable = { type: 'teardown' } as const;
-    // Ignore top-level errors, they are already inside TestInfo.errors.
-    await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(() => {});
-    await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
-    this._fatalErrors.push(...fakeTestInfo.errors);
   }
 
   unhandledError(error: Error | any) {

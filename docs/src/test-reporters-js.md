@@ -97,6 +97,15 @@ export default defineConfig({
 });
 ```
 
+List report supports the following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
+
+
 ### Line reporter
 
 Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests.
@@ -127,6 +136,14 @@ Running 124 tests using 6 workers
 [23/124] gitignore.spec.ts - should respect nested .gitignore
 ```
 
+Line report supports the following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
+
+
 ### Dot reporter
 
 Dot reporter is very concise - it only produces a single character per successful test run. It is the default on CI and useful where you don't want a lot of output.
@@ -150,6 +167,24 @@ Running 124 tests using 6 workers
 ······F·············································
 ```
 
+One character is displayed for each test that has run, indicating its status:
+
+| Character | Description
+|---|---|
+| `·` | Passed
+| `F` | Failed
+| `×` | Failed or timed out - and will be retried
+| `±` | Passed on retry (flaky)
+| `T` | Timed out
+| `°` | Skipped
+
+Dot report supports the following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
+
 ### HTML reporter
 
 HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
@@ -159,7 +194,7 @@ npx playwright test --reporter=html
 ```
 
 By default, HTML report is opened automatically if some of the tests failed. You can control this behavior via the
-`open` property in the Playwright config or the `PW_TEST_HTML_REPORT_OPEN` environmental variable. The possible values for that property are `always`, `never` and `on-failure`
+`open` property in the Playwright config or the `PLAYWRIGHT_HTML_OPEN` environmental variable. The possible values for that property are `always`, `never` and `on-failure`
 (default).
 
 You can also configure `host` and `port` that are used to serve the HTML report.
@@ -173,7 +208,7 @@ export default defineConfig({
 ```
 
 By default, report is written into the `playwright-report` folder in the current working directory. One can override
-that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
+that location using the `PLAYWRIGHT_HTML_OUTPUT_DIR` environment variable or a reporter configuration.
 
 In configuration file, pass options directly:
 
@@ -206,6 +241,16 @@ Or if there is a custom folder name:
 ```bash
 npx playwright show-report my-report
 ```
+
+HTML report supports the following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_HTML_OUTPUT_DIR` | `outputFolder` | Directory to save the report to. | `playwright-report`
+| `PLAYWRIGHT_HTML_OPEN` | `open` | When to open the html report in the browser, one of `'always'`, `'never'` or `'on-failure'` | `'on-failure'`
+| `PLAYWRIGHT_HTML_HOST` | `host` | When report opens in the browser, it will be served bound to this hostname. | `localhost`
+| `PLAYWRIGHT_HTML_PORT` | `port` | When report opens in the browser, it will be served on this port. | `9323` or any available port when `9323` is not available.
+| `PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL` | `attachmentsBaseURL` | A separate location where attachments from the `data` subdirectory are uploaded. Only needed when you upload report and `data` separately to different locations. | `data/`
 
 ### Blob reporter
 
@@ -308,8 +353,8 @@ JUnit report supports following configuration options and environment variables:
 | `PLAYWRIGHT_JUNIT_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is not specified. | `cwd` or config directory.
 | `PLAYWRIGHT_JUNIT_OUTPUT_NAME` | `outputFile` | Base file name for the output, relative to the output dir. | JUnit report is printed to the stdout.
 | `PLAYWRIGHT_JUNIT_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME` will be ignored. | JUnit report is printed to the stdout.
-|  | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
-|  | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
+| `PLAYWRIGHT_JUNIT_STRIP_ANSI` | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
+| `PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME` | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 

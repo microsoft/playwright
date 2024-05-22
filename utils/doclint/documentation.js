@@ -57,7 +57,6 @@ const md = require('../markdown');
  *   since: string,
  *   deprecated?: string | undefined,
  *   discouraged?: string | undefined,
- *   experimental: boolean
  * }} Metainfo
  */
 
@@ -126,18 +125,6 @@ class Documentation {
       if (clazz.langs.only && !clazz.langs.only.includes(lang))
         continue;
       clazz.filterForLanguage(lang, options);
-      classesArray.push(clazz);
-    }
-    this.classesArray = classesArray;
-    this.index();
-  }
-
-  filterOutExperimental() {
-    const classesArray = [];
-    for (const clazz of this.classesArray) {
-      if (clazz.experimental)
-        continue;
-      clazz.filterOutExperimental();
       classesArray.push(clazz);
     }
     this.classesArray = classesArray;
@@ -231,7 +218,6 @@ class Documentation {
    */
   constructor(metainfo, name, membersArray, extendsName = null, spec = undefined) {
     this.langs = metainfo.langs;
-    this.experimental = metainfo.experimental;
     this.since = metainfo.since;
     this.deprecated = metainfo.deprecated;
     this.discouraged = metainfo.discouraged;
@@ -286,7 +272,7 @@ class Documentation {
   }
 
   clone() {
-    const cls = new Class({ langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    const cls = new Class({ langs: this.langs, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
     cls.comment = this.comment;
     return cls;
   }
@@ -301,17 +287,6 @@ class Documentation {
       if (member.langs.only && !member.langs.only.includes(lang))
         continue;
       member.filterForLanguage(lang, options);
-      membersArray.push(member);
-    }
-    this.membersArray = membersArray;
-  }
-
-  filterOutExperimental()  {
-    const membersArray = [];
-    for (const member of this.membersArray) {
-      if (member.experimental)
-        continue;
-      member.filterOutExperimental();
       membersArray.push(member);
     }
     this.membersArray = membersArray;
@@ -362,7 +337,6 @@ class Member {
   constructor(kind, metainfo, name, type, argsArray, spec = undefined, required = true) {
     this.kind = kind;
     this.langs = metainfo.langs;
-    this.experimental = metainfo.experimental;
     this.since = metainfo.since;
     this.deprecated = metainfo.deprecated;
     this.discouraged = metainfo.discouraged;
@@ -447,22 +421,8 @@ class Member {
     }
   }
 
-  filterOutExperimental() {
-    if (!this.type)
-      return;
-    this.type.filterOutExperimental();
-    const argsArray = [];
-    for (const arg of this.argsArray) {
-      if (arg.experimental || !arg.type)
-        continue;
-      arg.type.filterOutExperimental();
-      argsArray.push(arg);
-    }
-    this.argsArray = argsArray;
-  }
-
   clone() {
-    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    const result = new Member(this.kind, { langs: this.langs, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
     result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
@@ -666,19 +626,6 @@ class Type {
       if (prop.langs.only && !prop.langs.only.includes(lang))
         continue;
       prop.filterForLanguage(lang, options);
-      properties.push(prop);
-    }
-    this.properties = properties;
-  }
-
-  filterOutExperimental() {
-    if (!this.properties)
-      return;
-    const properties = [];
-    for (const prop of this.properties) {
-      if (prop.experimental)
-        continue;
-      prop.filterOutExperimental();
       properties.push(prop);
     }
     this.properties = properties;

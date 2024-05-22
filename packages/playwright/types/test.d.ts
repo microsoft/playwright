@@ -2184,7 +2184,8 @@ interface TestFunction<TestArgs> {
    * test('basic test', {
    *   annotation: {
    *     type: 'issue',
-   *     description: 'https://github.com/microsoft/playwright/issues/23180',
+   *     description: 'feature tags API',
+   *     url: 'https://github.com/microsoft/playwright/issues/23180'
    *   },
    * }, async ({ page }) => {
    *   await page.goto('https://playwright.dev/');
@@ -2260,7 +2261,8 @@ interface TestFunction<TestArgs> {
    * test('basic test', {
    *   annotation: {
    *     type: 'issue',
-   *     description: 'https://github.com/microsoft/playwright/issues/23180',
+   *     description: 'feature tags API',
+   *     url: 'https://github.com/microsoft/playwright/issues/23180'
    *   },
    * }, async ({ page }) => {
    *   await page.goto('https://playwright.dev/');

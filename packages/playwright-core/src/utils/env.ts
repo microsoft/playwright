@@ -21,9 +21,13 @@ export function getFromENV(name: string): string | undefined {
   return value;
 }
 
-export function getAsBooleanFromENV(name: string): boolean {
+export function getAsBooleanFromENV(name: string, defaultValue?: boolean | undefined): boolean {
   const value = getFromENV(name);
-  return !!value && value !== 'false' && value !== '0';
+  if (value === 'false' || value === '0')
+    return false;
+  if (value)
+    return true;
+  return !!defaultValue;
 }
 
 export function getPackageManager() {

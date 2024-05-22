@@ -77,7 +77,10 @@ class ApiParser {
         continue;
       }
     }
-    const clazz = new docs.Class(extractMetainfo(node), name, [], extendsName, extractComments(node));
+    const metainfo = extractMetainfo(node);
+    const clazz = new docs.Class(metainfo, name, [], extendsName, extractComments(node));
+    if (metainfo.hidden)
+      return;
     this.classes.set(clazz.name, clazz);
   }
 
@@ -103,13 +106,14 @@ class ApiParser {
       returnType = new docs.Type('void');
 
     const comments = extractComments(spec);
+    const metainfo = extractMetainfo(spec);
     let member;
     if (match[1] === 'event')
-      member = docs.Member.createEvent(extractMetainfo(spec), name, returnType, comments);
+      member = docs.Member.createEvent(metainfo, name, returnType, comments);
     if (match[1] === 'property')
-      member = docs.Member.createProperty(extractMetainfo(spec), name, returnType, comments, !optional);
+      member = docs.Member.createProperty(metainfo, name, returnType, comments, !optional);
     if (['method', 'async method', 'optional method', 'optional async method'].includes(match[1])) {
-      member = docs.Member.createMethod(extractMetainfo(spec), name, [], returnType, comments);
+      member = docs.Member.createMethod(metainfo, name, [], returnType, comments);
       if (match[1].includes('async'))
         member.async = true;
       if (match[1].includes('optional'))
@@ -119,6 +123,11 @@ class ApiParser {
       throw new Error('Unknown member: ' + spec.text);
 
     const clazz = /** @type {docs.Class} */(this.classes.get(match[2]));
+    if (!clazz)
+      throw new Error(`Unknown class ${match[2]} for member: ` + spec.text);
+    if (metainfo.hidden)
+      return;
+
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
     if (existingMember && isTypeOverride(existingMember, member)) {
       for (const lang of member?.langs?.only || []) {
@@ -157,6 +166,8 @@ class ApiParser {
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
       const arg = this.parseProperty(spec);
+      if (!arg)
+        return;
       arg.name = name;
       const existingArg = method.argsArray.find(m => m.name === arg.name);
       if (existingArg && isTypeOverride(existingArg, arg)) {
@@ -171,13 +182,15 @@ class ApiParser {
       }
     } else {
       // match[1] === 'option'
+      const p = this.parseProperty(spec);
+      if (!p)
+        return;
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new docs.Type('Object', []);
-        options = docs.Member.createProperty({ langs: {}, experimental: false, since: 'v1.0', deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
+        options = docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
         method.argsArray.push(options);
       }
-      const p = this.parseProperty(spec);
       p.required = false;
       // @ts-ignore
       options.type.properties.push(p);
@@ -186,6 +199,7 @@ class ApiParser {
 
   /**
    * @param {MarkdownHeaderNode} spec
+   * @returns {docs.Member | null}
    */
   parseProperty(spec) {
     const param = childrenWithoutProperties(spec)[0];
@@ -196,12 +210,15 @@ class ApiParser {
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
     const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param));
-    return docs.Member.createProperty(extractMetainfo(spec), name, type, comments, !optional);
+    const metainfo = extractMetainfo(spec);
+    if (metainfo.hidden)
+      return null;
+    return docs.Member.createProperty(metainfo, name, type, comments, !optional);
   }
 
   /**
    * @param {MarkdownLiNode} spec
-   * @return {{ type: docs.Type, optional: boolean, experimental: boolean }}
+   * @return {{ type: docs.Type, optional: boolean }}
    */
   parseType(spec) {
     const arg = parseVariable(spec.text);
@@ -210,16 +227,16 @@ class ApiParser {
       const { name, text } = parseVariable(/** @type {string} */(child.text));
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       const childType = this.parseType(child);
-      properties.push(docs.Member.createProperty({ langs: {}, experimental: childType.experimental, since: 'v1.0', deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
+      properties.push(docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
     }
     const type = docs.Type.parse(arg.type, properties);
-    return { type, optional: arg.optional, experimental: arg.experimental };
+    return { type, optional: arg.optional };
   }
 }
 
 /**
  * @param {string} line
- * @returns {{ name: string, type: string, text: string, optional: boolean, experimental: boolean }}
+ * @returns {{ name: string, type: string, text: string, optional: boolean }}
  */
 function parseVariable(line) {
   let match = line.match(/^`([^`]+)` (.*)/);
@@ -234,12 +251,9 @@ function parseVariable(line) {
   const name = match[1];
   let remainder = match[2];
   let optional = false;
-  let experimental = false;
-  while ('?e'.includes(remainder[0])) {
+  while ('?'.includes(remainder[0])) {
     if (remainder[0] === '?')
       optional = true;
-    else if (remainder[0] === 'e')
-      experimental = true;
     remainder = remainder.substring(1);
   }
   if (!remainder.startsWith('<'))
@@ -252,7 +266,7 @@ function parseVariable(line) {
     if (c === '>')
       --depth;
     if (depth === 0)
-      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional, experimental };
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional };
   }
   throw new Error('Should not be reached, line: ' + line);
 }
@@ -344,15 +358,15 @@ function parseApi(apiDir, paramsPath) {
 
 /**
  * @param {MarkdownHeaderNode} spec
- * @returns {import('./documentation').Metainfo}
+ * @returns {import('./documentation').Metainfo & { hidden: boolean }}
  */
 function extractMetainfo(spec) {
   return {
     langs: extractLangs(spec),
     since: extractSince(spec),
-    experimental: extractExperimental(spec),
     deprecated: extractAttribute(spec, 'deprecated'),
     discouraged: extractAttribute(spec, 'discouraged'),
+    hidden: extractHidden(spec),
   };
 }
 
@@ -402,9 +416,9 @@ function extractSince(spec) {
  * @param {MarkdownHeaderNode} spec
  * @returns {boolean}
  */
- function extractExperimental(spec) {
+ function extractHidden(spec) {
   for (const child of spec.children) {
-    if (child.type === 'li' && child.liType === 'bullet' && child.text === 'experimental')
+    if (child.type === 'li' && child.liType === 'bullet' && child.text === 'hidden')
       return true;
   }
   return false;
@@ -429,7 +443,7 @@ function extractSince(spec) {
  */
 function childrenWithoutProperties(spec) {
   return (spec.children || []).filter(c => {
-    const isProperty = c.type === 'li' && c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text.startsWith('deprecated:') || c.text.startsWith('discouraged:') || c.text === 'experimental');
+    const isProperty = c.type === 'li' && c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text.startsWith('deprecated:') || c.text.startsWith('discouraged:') || c.text === 'hidden');
     return !isProperty;
   });
 }

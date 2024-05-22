@@ -44,11 +44,12 @@ export class ProcessRunner {
   }
 }
 
-let closed = false;
+let gracefullyCloseCalled = false;
+let forceExitInitiated = false;
 
 sendMessageToParent({ method: 'ready' });
 
-process.on('disconnect', gracefullyCloseAndExit);
+process.on('disconnect', () => gracefullyCloseAndExit(true));
 process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
 
@@ -76,7 +77,7 @@ process.on('message', async (message: any) => {
     const keys = new Set([...Object.keys(process.env), ...Object.keys(startingEnv)]);
     const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key]).map(key => [key, process.env[key] ?? null]);
     sendMessageToParent({ method: '__env_produced__', params: producedEnv });
-    await gracefullyCloseAndExit();
+    await gracefullyCloseAndExit(false);
     return;
   }
   if (message.method === '__dispatch__') {
@@ -92,19 +93,24 @@ process.on('message', async (message: any) => {
   }
 });
 
-async function gracefullyCloseAndExit() {
-  if (closed)
-    return;
-  closed = true;
-  // Force exit after 30 seconds.
-  // eslint-disable-next-line no-restricted-properties
-  setTimeout(() => process.exit(0), 30000);
-  // Meanwhile, try to gracefully shutdown.
-  await processRunner?.gracefullyClose().catch(() => {});
-  if (processName)
-    await stopProfiling(processName).catch(() => {});
-  // eslint-disable-next-line no-restricted-properties
-  process.exit(0);
+const kForceExitTimeout = +(process.env.PWTEST_FORCE_EXIT_TIMEOUT || 30000);
+
+async function gracefullyCloseAndExit(forceExit: boolean) {
+  if (forceExit && !forceExitInitiated) {
+    forceExitInitiated = true;
+    // Force exit after 30 seconds.
+    // eslint-disable-next-line no-restricted-properties
+    setTimeout(() => process.exit(0), kForceExitTimeout);
+  }
+  if (!gracefullyCloseCalled) {
+    gracefullyCloseCalled = true;
+    // Meanwhile, try to gracefully shutdown.
+    await processRunner?.gracefullyClose().catch(() => {});
+    if (processName)
+      await stopProfiling(processName).catch(() => {});
+    // eslint-disable-next-line no-restricted-properties
+    process.exit(0);
+  }
 }
 
 function sendMessageToParent(message: { method: string, params?: any }) {

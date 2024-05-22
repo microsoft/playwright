@@ -128,6 +128,19 @@ test('should allow flaky', async ({ runInlineTest }) => {
   expect(result.flaky).toBe(1);
 });
 
+test('failOnFlakyTests flag disallows flaky', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'retries': 1, 'fail-on-flaky-tests': true });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
 test('should fail on unexpected pass', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
     'unexpected-pass.spec.js': `

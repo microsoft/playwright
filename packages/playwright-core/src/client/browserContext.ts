@@ -446,6 +446,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closeReason = options.reason;
     this._closeWasCalled = true;
     await this._wrapApiCall(async () => {
+      await this.request.dispose(options);
+    }, true);
+    await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {
         const har = await this._channel.harExport({ harId });

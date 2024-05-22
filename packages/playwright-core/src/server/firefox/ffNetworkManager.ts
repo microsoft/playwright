@@ -242,7 +242,7 @@ class FFRouteImpl implements network.RouteDelegate {
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
       requestId: this._request._id,
       status: response.status,
-      statusText: network.STATUS_TEXTS[String(response.status)] || '',
+      statusText: network.statusText(response.status),
       headers: response.headers,
       base64body,
     });

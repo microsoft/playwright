@@ -308,10 +308,12 @@ class TestServerDispatcher implements TestServerInterface {
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
         trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
+        video: params.video === 'on' ? 'on' : (params.video === 'off' ? 'off' : undefined),
         headless: params.headed ? false : undefined,
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
+      outputDir: params.outputDir,
       workers: params.workers,
     };
     if (params.trace === 'on')
@@ -417,9 +419,9 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   return await innerRunTestServer(configLocation, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
-      await openTraceInBrowser(server.urlPrefix());
+      await openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {
-      const page = await openTraceViewerApp(server.urlPrefix(), 'chromium', {
+      const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
         headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
         persistentContextOptions: {
           handleSIGINT: false,
@@ -434,7 +436,7 @@ export async function runTestServer(configFile: string | undefined, options: { h
   const configLocation = resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, options, async server => {
     // eslint-disable-next-line no-console
-    console.log('Listening on ' + server.urlPrefix().replace('http:', 'ws:') + '/' + server.wsGuid());
+    console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
