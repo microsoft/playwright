@@ -112,12 +112,6 @@ Base directory for all relative paths used in the reporters.
 
 See [`property: TestConfig.shard`].
 
-## property: FullConfig.shardingSeed
-* since: ???
-- type: <[null]|[string]>
-
-See [`property: TestConfig.shardingSeed`].
-
 ## property: FullConfig.updateSnapshots
 * since: v1.10
 - type: <[UpdateSnapshots]<"all"|"none"|"missing">>

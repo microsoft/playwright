@@ -1807,11 +1807,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
-   * See [testConfig.shardingSeed](https://playwright.dev/docs/api/class-testconfig#test-config-sharding-seed).
-   */
-  shardingSeed: null|string;
-
-  /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */
   updateSnapshots: "all"|"none"|"missing";

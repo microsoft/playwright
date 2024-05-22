@@ -478,7 +478,7 @@ export default defineConfig({
 
 ## property: TestConfig.shardingSeed
 
-* since: ???
+* since: v1.45
 - type: ?<[string]>
 
 Shuffle the order of test groups with a seed. By default tests are run in the order they are discovered, which is mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. Shuffling the order of tests in a deterministic way can help to distribute the load more evenly.

@@ -182,8 +182,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const projectSuite of rootSuite.suites)
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
-    if (config.config.shardingSeed)
-      shuffleWithSeed(testGroups, config.config.shardingSeed);
+    if (config.shardingSeed)
+      shuffleWithSeed(testGroups, config.shardingSeed);
 
     // Shard test groups.
     const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
