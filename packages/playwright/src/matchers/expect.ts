@@ -129,7 +129,14 @@ function createExpect(info: ExpectMetaInfo) {
 
       if (property === 'extend') {
         return (matchers: any) => {
-          expectLibrary.extend(matchers);
+          const wrappedMatchers: any = {};
+          Object.entries(matchers).forEach(([name, matcher]) => {
+            wrappedMatchers[name] = function (...args: any[]) {
+              this.timeout = currentExpectTimeout({});
+              return (matcher as any).call(this, ...args);
+            };
+          });
+          expectLibrary.extend(wrappedMatchers);
           return expectInstance;
         };
       }
