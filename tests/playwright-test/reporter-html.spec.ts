@@ -1702,8 +1702,8 @@ for (const useIntermediateMergeReport of [false] as const) {
         const passedNavMenu = page.locator('.subnav-item:has-text("Passed")');
         const failedNavMenu = page.locator('.subnav-item:has-text("Failed")');
         const allNavMenu = page.locator('.subnav-item:has-text("All")');
-        const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
-        const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+        const smokeLabelButton =  page.locator('.label', { hasText: 'smoke' }).first();
+        const regressionLabelButton =  page.locator('.label', { hasText: 'regression' }).first();
 
         await failedNavMenu.click();
         await smokeLabelButton.click();
@@ -2231,7 +2231,7 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       const searchInput = page.locator('.subnav-search-input');
 
-      await searchInput.fill('a:key=value');
+      await searchInput.fill('annot:key=value');
       await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('non-annotated test')).not.toBeVisible();
       await expect(page.getByText('annotated test')).toBeVisible();

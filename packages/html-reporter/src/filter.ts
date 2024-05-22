@@ -46,8 +46,8 @@ export class Filter {
         labels.add(token);
         continue;
       }
-      if (token.startsWith('a:')) {
-        annotations.add(token.slice(2));
+      if (token.startsWith('annot:')) {
+        annotations.add(token.slice('annot:'.length));
         continue;
       }
       text.push(token.toLowerCase());
@@ -135,7 +135,7 @@ export class Filter {
     }
     if (this.annotations.length) {
       const matches = this.annotations.every(annotation =>
-        searchValues.annotations.some(_annotation => _annotation.includes(annotation)));
+        searchValues.annotations.some(a => a.includes(annotation)));
       if (!matches)
         return false;
     }
