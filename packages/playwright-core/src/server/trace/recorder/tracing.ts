@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { NameValue } from '../../../common/types';
 import type { TracingTracingStopChunkParams } from '@protocol/channels';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
-import { ManualPromise } from '../../../utils/manualPromise';
-import type { RegisteredListener } from '../../../utils/eventsHelper';
-import { eventsHelper } from '../../../utils/eventsHelper';
-import { assert, createGuid, monotonicTime } from '../../../utils';
-import { removeFolders } from '../../../utils/fileUtils';
+import { assert, createGuid, monotonicTime, SerializedFS, removeFolders, eventsHelper, type RegisteredListener } from '../../../utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import type { ElementHandle } from '../../dom';
@@ -40,7 +35,6 @@ import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
-import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
@@ -579,93 +573,4 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     result: metadata.result,
     point: metadata.point,
   };
-}
-
-class SerializedFS {
-  private _writeChain = Promise.resolve();
-  private _buffers = new Map<string, string[]>(); // Should never be accessed from within appendOperation.
-  private _error: Error | undefined;
-
-  mkdir(dir: string) {
-    this._appendOperation(() => fs.promises.mkdir(dir, { recursive: true }));
-  }
-
-  writeFile(file: string, content: string | Buffer, skipIfExists?: boolean) {
-    this._buffers.delete(file); // No need to flush the buffer since we'll overwrite anyway.
-
-    // Note: 'wx' flag only writes when the file does not exist.
-    // See https://nodejs.org/api/fs.html#file-system-flags.
-    // This way tracing never have to write the same resource twice.
-    this._appendOperation(async () => {
-      if (skipIfExists)
-        await fs.promises.writeFile(file, content, { flag: 'wx' }).catch(() => {});
-      else
-        await fs.promises.writeFile(file, content);
-    });
-  }
-
-  appendFile(file: string, text: string, flush?: boolean) {
-    if (!this._buffers.has(file))
-      this._buffers.set(file, []);
-    this._buffers.get(file)!.push(text);
-    if (flush)
-      this._flushFile(file);
-  }
-
-  private _flushFile(file: string) {
-    const buffer = this._buffers.get(file);
-    if (buffer === undefined)
-      return;
-    const text = buffer.join('');
-    this._buffers.delete(file);
-    this._appendOperation(() => fs.promises.appendFile(file, text));
-  }
-
-  copyFile(from: string, to: string) {
-    this._flushFile(from);
-    this._buffers.delete(to); // No need to flush the buffer since we'll overwrite anyway.
-    this._appendOperation(() => fs.promises.copyFile(from, to));
-  }
-
-  async syncAndGetError() {
-    for (const file of this._buffers.keys())
-      this._flushFile(file);
-    await this._writeChain;
-    return this._error;
-  }
-
-  zip(entries: NameValue[], zipFileName: string) {
-    for (const file of this._buffers.keys())
-      this._flushFile(file);
-
-    // Chain the export operation against write operations,
-    // so that files do not change during the export.
-    this._appendOperation(async () => {
-      const zipFile = new yazl.ZipFile();
-      const result = new ManualPromise<void>();
-      (zipFile as any as EventEmitter).on('error', error => result.reject(error));
-      for (const entry of entries)
-        zipFile.addFile(entry.value, entry.name);
-      zipFile.end();
-      zipFile.outputStream
-          .pipe(fs.createWriteStream(zipFileName))
-          .on('close', () => result.resolve())
-          .on('error', error => result.reject(error));
-      await result;
-    });
-  }
-
-  private _appendOperation(cb: () => Promise<unknown>): void {
-    // This method serializes all writes to the trace.
-    this._writeChain = this._writeChain.then(async () => {
-      // Ignore all operations after the first error.
-      if (this._error)
-        return;
-      try {
-        await cb();
-      } catch (e) {
-        this._error = e;
-      }
-    });
-  }
 }

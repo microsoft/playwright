@@ -19,7 +19,7 @@ import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, monotonicTime, createGuid } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, monotonicTime, createGuid, SerializedFS } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 import type { TestInfo, TestInfoError } from '../../types/test';
 import { filteredStackTrace } from '../util';
@@ -37,7 +37,7 @@ type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean
 export class TestTracing {
   private _testInfo: TestInfoImpl;
   private _options: TraceOptions | undefined;
-  private _liveTraceFile: string | undefined;
+  private _liveTraceFile: { file: string, fs: SerializedFS } | undefined;
   private _traceEvents: trace.TraceEvent[] = [];
   private _temporaryTraceFiles: string[] = [];
   private _artifactsDir: string;
@@ -103,10 +103,10 @@ export class TestTracing {
 
     if (!this._liveTraceFile && this._options._live) {
       // Note that trace name must start with testId for live tracing to work.
-      this._liveTraceFile = path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`);
-      await fs.promises.mkdir(path.dirname(this._liveTraceFile), { recursive: true });
+      this._liveTraceFile = { file: path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`), fs: new SerializedFS() };
+      this._liveTraceFile.fs.mkdir(path.dirname(this._liveTraceFile.file));
       const data = this._traceEvents.map(e => JSON.stringify(e)).join('\n') + '\n';
-      await fs.promises.writeFile(this._liveTraceFile, data);
+      this._liveTraceFile.fs.writeFile(this._liveTraceFile.file, data);
     }
   }
 
@@ -143,6 +143,10 @@ export class TestTracing {
   async stopIfNeeded() {
     if (!this._options)
       return;
+
+    const error = await this._liveTraceFile?.fs.syncAndGetError();
+    if (error)
+      throw error;
 
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
     const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
@@ -261,7 +265,7 @@ export class TestTracing {
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._traceEvents.push(event);
     if (this._liveTraceFile)
-      fs.appendFileSync(this._liveTraceFile, JSON.stringify(event) + '\n');
+      this._liveTraceFile.fs.appendFile(this._liveTraceFile.file, JSON.stringify(event) + '\n', true);
   }
 }
 

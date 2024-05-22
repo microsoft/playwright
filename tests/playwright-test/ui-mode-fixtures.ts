@@ -18,11 +18,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
-import { cleanEnv, cliEntrypoint, test as base, writeFiles } from './playwright-test-fixtures';
+import { cleanEnv, cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, BrowserType, Page, TestInfo } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
-import { removeFolders } from '../../packages/playwright-core/src/utils/fileUtils';
 
 type Latch = {
   blockingCode: string;
