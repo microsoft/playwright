@@ -49,7 +49,7 @@ import {
   toPass
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import type { Expect } from '../../types/test';
+import type { Expect, ExpectMatcherState } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
 import { filteredStackTrace, trimLongString } from '../util';
 import {
@@ -131,9 +131,16 @@ function createExpect(info: ExpectMetaInfo) {
         return (matchers: any) => {
           const wrappedMatchers: any = {};
           Object.entries(matchers).forEach(([name, matcher]) => {
-            wrappedMatchers[name] = function (...args: any[]) {
-              this.timeout = currentExpectTimeout({});
-              return (matcher as any).call(this, ...args);
+            wrappedMatchers[name] = function(...args: any[]) {
+              const { isNot, promise, utils, expand } = this;
+              const newThis: ExpectMatcherState = {
+                isNot,
+                promise,
+                utils,
+                expand,
+                timeout: currentExpectTimeout({})
+              };
+              return (matcher as any).call(newThis, ...args);
             };
           });
           expectLibrary.extend(wrappedMatchers);
@@ -177,8 +184,6 @@ function createExpect(info: ExpectMetaInfo) {
 
   return expectInstance;
 }
-
-export const expect: Expect<{}> = createExpect({});
 
 expectLibrary.setState({ expand: false });
 
@@ -351,7 +356,7 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
   return value ? `(${value})` : '';
 }
 
-expectLibrary.extend(customMatchers);
+export const expect: Expect<{}> = createExpect({}).extend(customMatchers);
 
 export function mergeExpects(...expects: any[]) {
   return expect;

@@ -361,6 +361,7 @@ export type ExpectMatcherState = {
   isNot: boolean;
   promise: 'rejects' | 'resolves' | '';
   utils: ExpectMatcherUtils;
+  expand: boolean;
   timeout: number;
 };
 

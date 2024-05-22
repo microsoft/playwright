@@ -19,17 +19,17 @@ import type { ExpectedTextValue } from '@protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils';
 import { expectTypes, callLogText } from '../util';
 import {
-  type ExpectMatcherContext,
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from './expect';
+import { EXPECTED_COLOR, matcherErrorMessage } from '../common/expectBundle';
+import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
-import { currentExpectTimeout } from '../common/globals';
 import type { Locator } from 'playwright-core';
 
 export async function toMatchText(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   matcherName: string,
   receiver: Locator,
   receiverType: string,
@@ -49,9 +49,9 @@ export async function toMatchText(
     !(expected && typeof expected.test === 'function')
   ) {
     throw new Error(
-        this.utils.matcherErrorMessage(
+        matcherErrorMessage(
             matcherHint(this, receiver, matcherName, receiver, expected, matcherOptions),
-            `${this.utils.EXPECTED_COLOR(
+            `${EXPECTED_COLOR(
                 'expected',
             )} value must be a string or regular expression`,
             this.utils.printWithType('Expected', expected, this.utils.printExpected),
@@ -59,7 +59,7 @@ export async function toMatchText(
     );
   }
 
-  const timeout = currentExpectTimeout(options);
+  const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';

@@ -16,7 +16,7 @@
 
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import { currentTestInfo, currentExpectTimeout } from '../common/globals';
+import { currentTestInfo } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
 import { getComparator, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import {
@@ -30,7 +30,7 @@ import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoImpl } from '../worker/testInfo';
-import type { ExpectMatcherContext } from './expect';
+import type { ExpectMatcherState } from '../../types/test';
 import type { MatcherResult } from './matcherHint';
 import type { FullProjectInternal } from '../common/config';
 
@@ -291,7 +291,7 @@ class SnapshotHelper {
 }
 
 export function toMatchSnapshot(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
@@ -348,7 +348,7 @@ export function toHaveScreenshotStepTitle(
 }
 
 export async function toHaveScreenshot(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   pageOrLocator: Page | Locator,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
@@ -380,7 +380,7 @@ export async function toHaveScreenshot(
     scale: helper.options.scale ?? 'css',
     style,
     isNot: !!this.isNot,
-    timeout: currentExpectTimeout(helper.options),
+    timeout: helper.options.timeout ?? this.timeout,
     comparator: helper.options.comparator,
     maxDiffPixels: helper.options.maxDiffPixels,
     maxDiffPixelRatio: helper.options.maxDiffPixelRatio,

@@ -17,8 +17,7 @@
 import { expectTypes, callLogText } from '../util';
 import { matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
-import { currentExpectTimeout } from '../common/globals';
-import type { ExpectMatcherContext } from './expect';
+import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
@@ -26,7 +25,7 @@ const EXPECTED_LABEL = 'Expected';
 const RECEIVED_LABEL = 'Received';
 
 export async function toEqual<T>(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   matcherName: string,
   receiver: Locator,
   receiverType: string,
@@ -42,7 +41,7 @@ export async function toEqual<T>(
     promise: this.promise,
   };
 
-  const timeout = currentExpectTimeout(options);
+  const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
 
