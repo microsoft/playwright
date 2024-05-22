@@ -20,7 +20,7 @@ Get started by installing Playwright and generating a test to see it in action. 
 
 Install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) or from the extensions tab in VS Code.
 
-![VS Code extension for Playwright](https://github.com/microsoft/playwright/assets/13063165/290f7373-d7ef-4aac-ae38-6c8eae217fba)
+![VS Code extension for Playwright](https://github.com/microsoft/playwright/assets/13063165/cab54568-3168-4b3f-bf3d-854976594903)
 
 Once installed, open the command panel and type:
 
@@ -35,13 +35,19 @@ Select **Test: Install Playwright** and Choose the browsers you would like to ru
 
 ![choose browsers](https://github.com/microsoft/playwright/assets/13063165/c9e8a25a-e9e8-4419-aeb5-1b8ba58bd71d)
 
-## Running Tests
+### Opening the testing sidebar
+
+The testing sidebar can be opened by clicking on the testing icon in the activity bar. This will give you access to the test explorer, which will show you all the tests in your project as well as the Playwright sidebar which includes projects, settings, tools and setup.
+
+![Testing Sidebar](https://github.com/microsoft/playwright/assets/13063165/d203fe83-6015-4e7a-b816-35d373906b24)
+
+## Running tests
 
 You can run a single test by clicking the green triangle next to your test block to run your test. Playwright will run through each line of the test and when it finishes you will see a green tick next to your test block as well as the time it took to run the test.
 
 ![run a single test](https://github.com/microsoft/playwright/assets/13063165/69dbccfc-4e9f-40e7-bcdf-7d5c5a11f988)
 
-### Run Tests and Show Browsers
+### Run tests and show browsers
 
 You can also run your tests and show the browsers by selecting the option **Show Browsers** in the testing sidebar. Then when you click the green triangle to run your test the browser will open and you will visually see it run through your test. Leave this selected if you want browsers open for all your tests or uncheck it if you prefer your tests to run in headless mode with no browser open.
 
@@ -49,23 +55,27 @@ You can also run your tests and show the browsers by selecting the option **Show
 
 Use the **Close all browsers** button to close all browsers.
 
-### View and Run All Tests
+### View and run all tests
 
 View all tests in the testing sidebar and extend the tests by clicking on each test. Tests that have not been run will not have the green check next to them. Run all tests by clicking on the white triangle as you hover over the tests in the testing sidebar.
 
 ![run all tests](https://github.com/microsoft/playwright/assets/13063165/348e18ff-f819-4caa-8f7e-f16c20724f56)
 
-### Run Tests on Specific Browsers
+### Running tests on multiple browsers
 
-The VS Code test runner runs your tests on the default browser of Chrome. To run on other/multiple browsers click the play button's dropdown and choose another profile or modify the default profile by clicking **Select Default Profile** and select the browsers you wish to run your tests on.
+The first section in the Playwright sidebar is the projects section. Here you can see all your projects as defined in your Playwright config file. The default config when installing Playwright gives you 3 projects, Chromium, Firefox and WebKit. The first project is selected by default.
 
-![run tests on specific browsers](https://github.com/microsoft/playwright/assets/13063165/4fb1fe46-ccfb-44cf-a91e-52dd146dc989)
+![Projects section in VS Code extension](https://github.com/microsoft/playwright/assets/13063165/58fedea6-a2b9-4942-b2c7-2f3d482210cf)
 
-Choose various or all profiles to run tests on multiple profiles. These profiles are read from the [playwright.config](./test-configuration.md) file. To add more profiles such as a mobile profile, first add it to your config file and it will then be available here.
+To run tests on multiple projects, select each project by checking the checkboxes next to the project name. Then when you run your tests from the sidebar or by pressing the play button next to the test name, the tests will run on all the selected projects.
 
-![choosing default profiles](https://github.com/microsoft/playwright/assets/13063165/8ae73c1e-aca7-4d6b-8051-9410be7f1a05)
+![Selecting projects to run tests on](https://github.com/microsoft/playwright/assets/13063165/6dc86ef4-6097-481c-9cab-b6e053ec7ea6)
 
-### Run tests with Trace Viewer
+You can also individually run a test on a specific project by clicking the grey play button next to the project name of the test.
+
+![Running a test on a specific project](https://github.com/microsoft/playwright/assets/13063165/d29a27ab-07b5-4ca6-b4d7-1ad6d44bf222)
+
+### Run tests with trace viewer
 
 For a better developer experience you can run your tests with the **Show Trace Viewer** option.
 
@@ -77,7 +87,9 @@ This will open up a full trace of your test where you can step through each acti
 
 To learn more about the trace viewer see our [Trace Viewer guide](./trace-viewer.md).
 
-## Debugging Tests
+
+
+## Debugging tests
 
 With the VS Code extension you can debug your tests right in VS Code see error messages, create breakpoints and live debug your tests.
 
@@ -86,13 +98,13 @@ With the VS Code extension you can debug your tests right in VS Code see error m
     title="Debugging Playwright tests in VS Code"
 />
 
-### Error Messages
+### Error messages
 
 If your test fails VS Code will show you error messages right in the editor showing what was expected, what was received as well as a complete call log.
 
 ![error messaging in vs code](https://github.com/microsoft/playwright/assets/13063165/3b8af12a-4805-4573-9d38-92055a0a7e75)
 
-### Live Debugging
+### Live debugging
 
 You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. Playwright will highlight it if it exists and show you if there is more than one result
 
@@ -100,7 +112,7 @@ You can debug your test live in VS Code. After running a test with the `Show Bro
 
 You can also edit the locators in VS Code and Playwright will show you the changes live in the browser window.
 
-### Run in Debug Mode
+### Run in debug mode
 
 To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears. Run the tests in debug mode by right clicking on the line next to the test you want to run. 
 
@@ -110,19 +122,11 @@ A browser window will open and the test will run and pause at where the breakpoi
 
 ![running in debug mode](https://github.com/microsoft/playwright/assets/13063165/b96a9f50-0f4d-49f9-a3d8-f093980a5673)
 
-### Debug in different Browsers
-
-By default debugging is done using the Chromium profile. You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
-
-![debug different browsers](https://github.com/microsoft/playwright/assets/13063165/cf97866e-3542-4f03-80a8-abd28f90babf)
-
-Then choose the test profile you would like to use for debugging your tests. Each time you run your test in debug mode it will use the profile you selected. You can run tests in debug mode by right clicking the line number where your test is and selecting 'Debug Test' from the menu.
-
 ![choosing a profile for debugging](https://github.com/microsoft/playwright/assets/13063165/48c1b428-8dd2-4229-9eb5-24f7168db834)
 
 To learn more about debugging, see [Debugging in Visual Studio Code](https://code.visualstudio.com/docs/editor/debugging).
 
-### Debug with Trace Viewer
+### Debug with trace viewer
 
 For a better developer experience you can debug your tests with the **Show Trace Viewer** option.
 
@@ -134,7 +138,7 @@ This will open up a full trace of your test where you can step through each acti
 
 To learn more about the trace viewer see our [Trace Viewer guide](./trace-viewer.md).
 
-## Generating Tests
+## Generating tests
 
 CodeGen will auto generate your tests for you as you perform actions in the browser and is a great way to quickly get started. The viewport for the browser window is set to a specific width and height. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
 
@@ -143,7 +147,7 @@ CodeGen will auto generate your tests for you as you perform actions in the brow
     title="Generating Playwright tests in VS Code"
 />
 
-### Record a New Test
+### Record a new test
 
 To record a test click on the **Record new** button from the Testing sidebar. This will create a `test-1.spec.ts` file as well as open up a browser window. In the browser go to the URL you wish to test and start clicking around. Playwright will record your actions and generate the test code directly in VS Code. You can also generate assertions by choosing one of the icons in the toolbar and then clicking on an element on the page to assert against. The following assertions can be generated:
   * `'assert visibility'` to assert that an element is visible
@@ -155,13 +159,13 @@ Once you are done recording click the **cancel** button or close the browser win
 
 ![record a new test](https://github.com/microsoft/playwright/assets/13063165/0407f112-e1cd-41e7-a05d-ae64e24d27ed)
 
-### Record at Cursor
+### Record at cursor
 
 To record from a specific point in your test file click the **Record at cursor** button from the Testing sidebar. This generates actions into the existing test at the current cursor position. You can run the test, position the cursor at the end of the test and continue generating the test.
 
 ![record at cursor](https://github.com/microsoft/playwright/assets/13063165/96933ea1-4c84-453a-acd7-22b4d3bde185)
 
-### Picking a Locator
+### Picking a locator
 
 Pick a [locator](./locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
@@ -169,6 +173,54 @@ Pick a [locator](./locators.md) and copy it into your test file by clicking the 
 ![pick locators](https://github.com/microsoft/playwright/assets/13063165/9a1b2da9-9ac7-4def-a9e0-f94770364fc2)
 
 Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+
+## Project Dependencies
+
+You can use [project dependencies](./test-projects.md) to run tests that depend on other tests. This is useful for **setup** tests such as logging in to a website. 
+
+### Running setup tests
+
+To run your setup tests select the **setup** project, as defined in your configuration file, from the project section in the Playwright sidebar. This will give you access to the **setup** tests in the test explorer.
+
+![setup tests in vscode](https://github.com/microsoft/playwright/assets/13063165/7a9eccd5-a5b3-431f-9eff-9b2971501e07)
+
+When you run a test that depends on the **setup** tests, the **setup** test will run first. Each time you run the test, the **setup** test will run again. 
+
+![running setup tests in vscode](https://github.com/microsoft/playwright/assets/13063165/a54b3868-3f9f-4e74-8d42-a93443f099fc)
+
+### Running setup tests only once
+
+To run the **setup** test only once, deselect it from the projects section in the Playwright sidebar. The **setup** test is now removed from the test explorer. When you run a test that depends on the **setup** test, it will no longer run the **setup** test, making it much faster and therefore a much better developer experience.
+
+![deselecting setup tests in vscode](https://github.com/microsoft/playwright/assets/13063165/ebc50e38-c98d-4538-82fe-ec08491f8487)
+
+## Global Setup
+
+**Global setup** tests are run when you execute your first test. This runs only once and is useful for setting up a database or starting a server. You can manually run a **global setup** test by clicking the `Run global setup` option from the **Setup** section in the Playwright sidebar. You can also run **global teardown** tests by clicking the `Run global teardown` option.
+
+Global setup will re-run when you debug tests as this ensures an isolated environment and dedicated setup for the test.
+
+![running global setup](https://github.com/microsoft/playwright/assets/13063165/bcf5fec7-2d7d-4cb9-a277-5f41e19b8d52)
+
+## Multiple configurations
+
+If your project contains more than one playwright configuration file, you can switch between them by first clicking on the gear icon in the top right corner of the Playwright sidebar. This will show you all the configuration files in your project. Select the configuration files you want to use by checking the checkbox next to each one and clicking on the 'ok' button.
+
+![Selecting a configuration file](https://github.com/microsoft/playwright/assets/13063165/ff9ff838-d27a-403d-b939-94e6c295e1d7)
+
+You will now have access to all your tests in the test explorer. To run a test click on the grey triangle next to the file or project name. 
+
+![Switching between configuration files](https://github.com/microsoft/playwright/assets/13063165/70930de5-0a0c-45e0-a6ee-b51f727f0e35)
+
+To run all tests from all configurations click on the grey triangle at the top of the test explorer.
+
+![Running all tests from all configurations](https://github.com/microsoft/playwright/assets/13063165/b3de4ce1-d311-4527-b2c7-b3e2f179a685)
+
+To choose a configuration file to work with simply toggle between them by clicking on the configuration file name in the Playwright sidebar. Now when you use the tools, such as Record a test, it will record a test for the selected configuration file. 
+
+![Recording a test for a specific configuration file](https://github.com/microsoft/playwright/assets/13063165/a8ecbcd1-fab8-4012-bdaa-428951f233a2)
+
+You can easily toggle back and forth between configurations by clicking on the configuration file name in the Playwright sidebar.
 
 ## What's next
 
