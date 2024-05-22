@@ -1006,6 +1006,45 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
+it.only('should support intercepting multipart/form-data requests', async function({ context, server }) {
+  const given = {
+    firstName: 'John',
+    lastName: 'Doe',
+    age: 27,
+  };
+
+  const formReceived = new Promise<{error: any, fields: formidable.Fields}>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const form = new formidable.IncomingForm();
+      form.parse(serverRequest, (error, fields, files) => {
+        server.serveFile(serverRequest, res);
+        resolve({ error, fields });
+      });
+    });
+  });
+
+  let bufferIntercepted: Buffer;
+
+  await context.route(
+      server.EMPTY_PAGE,
+      async (route, request) => {
+        bufferIntercepted = request.postDataBuffer();
+        await route.continue();
+      },
+  );
+
+  const [{ error }, response] = await Promise.all([
+    formReceived,
+    context.request.post(server.EMPTY_PAGE, {
+      multipart: given,
+    }),
+  ]);
+
+  expect(error).toBeFalsy();
+  expect(response.status()).toBe(200);
+  expect(bufferIntercepted.toString()).toEqual(expect.stringMatching(/content-disposition: form-data;/));
+});
+
 it('should support repeating names in multipart/form-data', async function({ context, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
   const nodeVersion = +process.versions.node.split('.')[0];
