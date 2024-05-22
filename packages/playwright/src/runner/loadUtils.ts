@@ -67,14 +67,12 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
   for (const [project, type] of projectClosure) {
     if (type === 'dependency') {
-      filesToRunByProject.delete(project);
       const treatProjectAsEmpty = doNotRunTestsOutsideProjectFilter && !filteredProjects.includes(project);
       const files = treatProjectAsEmpty ? [] : allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
 
-  testRun.projects = [...filesToRunByProject.keys()];
   testRun.projectFiles = filesToRunByProject;
   testRun.projectSuites = new Map();
 }

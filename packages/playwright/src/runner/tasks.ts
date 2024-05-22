@@ -51,7 +51,6 @@ export class TestRun {
   readonly failureTracker: FailureTracker;
   rootSuite: Suite | undefined = undefined;
   readonly phases: Phase[] = [];
-  projects: FullProjectInternal[] = [];
   projectFiles: Map<FullProjectInternal, string[]> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
 
