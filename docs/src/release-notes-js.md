@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.44
 
+<LiteYouTube
+  id="avjSahFWdCI"
+  title="Playwright 1.44"
+/>
+
 ### New APIs
 
 **Accessibility assertions**
