@@ -25,9 +25,6 @@ import type { Locator } from 'playwright-core';
 const EXPECTED_LABEL = 'Expected';
 const RECEIVED_LABEL = 'Received';
 
-// The optional property of matcher context is true if undefined.
-const isExpand = (expand?: boolean): boolean => expand !== false;
-
 export async function toEqual<T>(
   this: ExpectMatcherContext,
   matcherName: string,
@@ -61,7 +58,7 @@ export async function toEqual<T>(
           received,
           EXPECTED_LABEL,
           RECEIVED_LABEL,
-          isExpand(this.expand),
+          false,
       ) + callLogText(log);
 
   // Passing the actual and expected objects so that a custom reporter
