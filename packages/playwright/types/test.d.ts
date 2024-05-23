@@ -364,9 +364,9 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   repeatEach?: number;
 
   /**
-   * Whether to skip entries from `.gitignore` when searching for test files. By default it is true, i.e. if neither
-   * [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) nor
-   * [testProject.retries](https://playwright.dev/docs/api/class-testproject#test-project-retries) are explicitely
+   * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
    * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
    * behavior.
    */
@@ -1370,9 +1370,9 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
-   * Whether to skip entries from `.gitignore` when searching for test files. By default it is true, i.e. if neither
-   * [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) nor
-   * [testProject.retries](https://playwright.dev/docs/api/class-testproject#test-project-retries) are explicitely
+   * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
    * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
    * behavior.
    */
