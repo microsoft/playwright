@@ -157,3 +157,40 @@ test('should ignore .gitignore inside project testDir', async ({ runInlineTest }
   expect(result.passed).toBe(2);
 });
 
+test('global config respectGitIgnore', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30553' }
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/.gitignore': `
+      *.js
+    `,
+    'playwright.config.js': `
+      module.exports = { respectGitIgnore: false, projects: [{ }] };
+    `,
+    'tests/a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', ({}) => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('project config respectGitIgnore', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30553' }
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/.gitignore': `
+      *.js
+    `,
+    'playwright.config.js': `
+      module.exports = { projects: [{ respectGitIgnore: false }] };
+    `,
+    'tests/a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', ({}) => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

@@ -364,6 +364,15 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   repeatEach?: number;
 
   /**
+   * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
+   * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
+   * behavior.
+   */
+  respectGitIgnore?: boolean;
+
+  /**
    * The maximum number of retry attempts given to failed tests. Learn more about
    * [test retries](https://playwright.dev/docs/test-retries#retries).
    *
@@ -1359,6 +1368,15 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     threshold: number;
   };
+
+  /**
+   * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
+   * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
+   * behavior.
+   */
+  respectGitIgnore?: boolean;
 
   /**
    * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more

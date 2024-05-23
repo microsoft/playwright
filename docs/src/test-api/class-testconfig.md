@@ -439,6 +439,12 @@ export default defineConfig({
 
 Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
 
+## property: TestConfig.respectGitIgnore
+* since: v1.45
+- type: ?<[boolean]>
+
+Whether to skip entries from `.gitignore` when searching for test files. By default, if neither [`property: TestConfig.testDir`] nor [`property: TestProject.testDir`] are explicitely specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that behavior.
+
 ## property: TestConfig.retries
 * since: v1.10
 - type: ?<[int]>

@@ -196,7 +196,7 @@ export class FullProjectInternal {
       const stylePaths = Array.isArray(this.expect.toHaveScreenshot.stylePath) ? this.expect.toHaveScreenshot.stylePath : [this.expect.toHaveScreenshot.stylePath];
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));
     }
-    this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
+    this.respectGitIgnore = takeFirst(projectConfig.respectGitIgnore, config.respectGitIgnore, !projectConfig.testDir && !config.testDir);
     this.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots,  projectConfig.ignoreSnapshots, config.ignoreSnapshots, false);
   }
 }
