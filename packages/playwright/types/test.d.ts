@@ -6556,7 +6556,7 @@ export type Expect<ExtendedMatchers = {}> = {
     timeout?: number,
     soft?: boolean,
   }) => Expect<ExtendedMatchers>;
-  getState(): ExpectMatcherState;
+  getState(): unknown;
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
 
