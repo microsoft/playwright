@@ -83,7 +83,7 @@ export async function toMatchText(
       const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
       if (notFound)
         return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', this.expand !== false) + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false) + callLogText(log);
     }
   };
 
