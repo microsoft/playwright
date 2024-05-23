@@ -1204,3 +1204,34 @@ test('should record trace after fixture teardown timeout', async ({ runInlineTes
   // Check console events to make sure that library trace is recorded.
   expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
 });
+
+test('should take a screenshot-on-failure in workerStorageState', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30959' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        use: {
+          screenshot: 'only-on-failure',
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        storageState: ({ workerStorageState }, use) => use(workerStorageState),
+        workerStorageState: [async ({ browser }, use) => {
+          const page = await browser.newPage({ storageState: undefined });
+          await page.setContent('hello world!');
+          throw new Error('Failed!');
+          await use(undefined);
+        }, { scope: 'worker' }],
+      })
+      test('fail', async ({ page }) => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(fs.existsSync(test.info().outputPath('test-results', 'a-fail', 'test-failed-1.png'))).toBeTruthy();
+});
