@@ -6511,7 +6511,7 @@ export interface ExpectMatcherUtils {
 
 export type ExpectMatcherState = {
   /**
-   * Wehther this matcher was called with the negated .not modifier.
+   * Whether this matcher was called with the negated .not modifier.
    */
   isNot: boolean;
   /**

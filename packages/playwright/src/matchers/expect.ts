@@ -50,7 +50,7 @@ import {
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect, ExpectMatcherState } from '../../types/test';
-import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
+import { currentTestInfo } from '../common/globals';
 import { filteredStackTrace, trimLongString } from '../util';
 import {
   expect as expectLibrary,
@@ -129,18 +129,18 @@ function createExpect(info: ExpectMetaInfo) {
       if (property === 'extend') {
         return (matchers: any) => {
           const wrappedMatchers: any = {};
-          Object.entries(matchers).forEach(([name, matcher]) => {
+          for (const [name, matcher] of Object.entries(matchers)) {
             wrappedMatchers[name] = function(...args: any[]) {
               const { isNot, promise, utils } = this;
               const newThis: ExpectMatcherState = {
                 isNot,
                 promise,
                 utils,
-                timeout: currentExpectTimeout({})
+                timeout: currentExpectTimeout()
               };
               return (matcher as any).call(newThis, ...args);
             };
-          });
+          }
           expectLibrary.extend(wrappedMatchers);
           return expectInstance;
         };
@@ -255,7 +255,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (this._info.isPoll) {
       if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -345,6 +345,22 @@ async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: numb
 
     throw new Error(message);
   }
+}
+
+let currentExpectConfigureTimeout: number | undefined;
+
+function setCurrentExpectConfigureTimeout(timeout: number | undefined) {
+  currentExpectConfigureTimeout = timeout;
+}
+
+function currentExpectTimeout() {
+  if (currentExpectConfigureTimeout !== undefined)
+    return currentExpectConfigureTimeout;
+  const testInfo = currentTestInfo();
+  let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  return defaultExpectTimeout;
 }
 
 function computeArgsSuffix(matcherName: string, args: any[]) {
