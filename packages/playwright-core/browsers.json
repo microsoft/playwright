@@ -3,9 +3,9 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1119",
+      "revision": "1120",
       "installByDefault": true,
-      "browserVersion": "126.0.6478.8"
+      "browserVersion": "126.0.6478.17"
     },
     {
       "name": "chromium-tip-of-tree",
