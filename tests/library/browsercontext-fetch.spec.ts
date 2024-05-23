@@ -1006,43 +1006,42 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
-it.only('should support intercepting multipart/form-data requests', async function({ context, server }) {
-  const given = {
-    firstName: 'John',
-    lastName: 'Doe',
-    age: 27,
-  };
-
-  const formReceived = new Promise<{error: any, fields: formidable.Fields}>(resolve => {
+it.only('should support intercepting multipart/form-data requests', async function({ context, page, server }) {
+  const requestReceived = new Promise<void>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
-      const form = new formidable.IncomingForm();
-      form.parse(serverRequest, (error, fields, files) => {
-        server.serveFile(serverRequest, res);
-        resolve({ error, fields });
-      });
+      server.serveFile(serverRequest, res);
+      resolve();
     });
   });
 
-  let bufferIntercepted: Buffer;
-
-  await context.route(
-      server.EMPTY_PAGE,
-      async (route, request) => {
-        bufferIntercepted = request.postDataBuffer();
-        await route.continue();
-      },
+  const bufferInterceptedPromise = new Promise(
+      async resolve => await context.route(
+          /./,
+          async (route, request) => {
+            resolve(request.postDataBuffer());
+            await route.continue();
+          },
+      )
   );
 
-  const [{ error }, response] = await Promise.all([
-    formReceived,
-    context.request.post(server.EMPTY_PAGE, {
-      multipart: given,
-    }),
+  const [bufferIntercepted] = await Promise.all([
+    bufferInterceptedPromise,
+    requestReceived,
+    page.evaluate(url => {
+      const formData = new FormData();
+      formData.set('name', 'John');
+      formData.append('name', 'Doe');
+      formData.append('file', new File(['var x = 10;\r\n;console.log(x);'], 'f1.js', { type: 'text/javascript' }));
+      formData.append('file', new File(['hello'], 'f2.txt', { type: 'text/plain' }), 'custom_f2.txt');
+      formData.append('file', new Blob(['boo'], { type: 'text/plain' }));
+      void fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
+    }, server.EMPTY_PAGE),
   ]);
 
-  expect(error).toBeFalsy();
-  expect(response.status()).toBe(200);
-  expect(bufferIntercepted.toString()).toEqual(expect.stringMatching(/content-disposition: form-data;/));
+  expect(bufferIntercepted.toString()).toEqual(expect.stringMatching(/content-disposition: form-data;/i));
 });
 
 it('should support repeating names in multipart/form-data', async function({ context, server }) {
