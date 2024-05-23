@@ -37,9 +37,8 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload a file after popup', async ({ page, server, asset, browserName }) => {
+it('should upload a file after popup', async ({ page, server, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
-  it.fixme(browserName === 'firefox');
   await page.goto(server.PREFIX + '/input/fileupload.html');
   {
     const [popup] = await Promise.all([
