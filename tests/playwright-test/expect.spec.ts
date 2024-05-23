@@ -1012,7 +1012,7 @@ test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC 
       import type { ExpectMatcherState, MatcherReturnType } from '@playwright/test';
       import { test, expect as base } from '@playwright/test';
 
-      const expect = base.extend<{assertTimeout: (this: ExpectMatcherState, page: any, value: number) => MatcherReturnType}>({
+      const expect = base.extend({
         assertTimeout(page: any, value: number) {
           const pass = this.timeout === value;
           return {

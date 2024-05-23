@@ -58,7 +58,6 @@ import {
   RECEIVED_COLOR,
   printReceived,
 } from '../common/expectBundle';
-export type { ExpectMatcherContext } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
 import { ExpectError } from './matcherHint';
@@ -132,12 +131,11 @@ function createExpect(info: ExpectMetaInfo) {
           const wrappedMatchers: any = {};
           Object.entries(matchers).forEach(([name, matcher]) => {
             wrappedMatchers[name] = function(...args: any[]) {
-              const { isNot, promise, utils, expand } = this;
+              const { isNot, promise, utils } = this;
               const newThis: ExpectMatcherState = {
                 isNot,
                 promise,
                 utils,
-                expand,
                 timeout: currentExpectTimeout({})
               };
               return (matcher as any).call(newThis, ...args);
