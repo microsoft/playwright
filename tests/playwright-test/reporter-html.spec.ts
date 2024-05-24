@@ -1455,7 +1455,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         await showReport();
 
         const searchInput = page.locator('.subnav-search-input');
-        const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('Error Pages › @smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+        const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('Error Pages › @smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
 
         await expect(smokeLabelButton).toBeVisible();
         await smokeLabelButton.click();
@@ -1465,7 +1465,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @smoke fails');
 
-        const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('Error Pages › @regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+        const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('Error Pages › @regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
 
         await expect(regressionLabelButton).not.toBeVisible();
 
@@ -1577,7 +1577,7 @@ for (const useIntermediateMergeReport of [false] as const) {
 
         const searchInput = page.locator('.subnav-search-input');
 
-        const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+        const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
         await smokeLabelButton.click();
         await expect(page).toHaveURL(/@smoke/);
         await searchInput.clear();
@@ -1585,7 +1585,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         await expect(searchInput).toHaveValue('');
         await expect(page).not.toHaveURL(/@smoke/);
 
-        const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+        const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
         await regressionLabelButton.click();
         await expect(page).toHaveURL(/@regression/);
         await searchInput.clear();
@@ -1863,7 +1863,7 @@ for (const useIntermediateMergeReport of [false] as const) {
         await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information_widget fails' })).toHaveCount(1);
       });
 
-      test('handling of meta or ctrl key', async ({ runInlineTest, showReport, page,  }) => {
+      test('handling of meta or ctrl key', async ({ runInlineTest, showReport, page, }) => {
         const result = await runInlineTest({
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
@@ -2212,6 +2212,29 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
       await expect(page.getByText('failed title')).not.toBeVisible();
       await expect(page.getByText('passes title')).toBeVisible();
+    });
+
+    test('tests should filter by annotation texts', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('annotated test',{ annotation :[{type:'key',description:'value'}]}, async ({}) => {expect(1).toBe(1);});
+          test('non-annotated test', async ({}) => {expect(1).toBe(2);});
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(1);
+      expect(result.failed).toBe(1);
+
+      await showReport();
+
+      const searchInput = page.locator('.subnav-search-input');
+
+      await searchInput.fill('annot:key=value');
+      await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+      await expect(page.getByText('non-annotated test')).not.toBeVisible();
+      await expect(page.getByText('annotated test')).toBeVisible();
     });
 
     test('tests should filter by fileName:line/column', async ({ runInlineTest, showReport, page }) => {
