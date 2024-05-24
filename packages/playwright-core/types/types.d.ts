@@ -13746,6 +13746,13 @@ export interface BrowserType<Unused = {}> {
     headless?: boolean;
 
     /**
+     * Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the
+     * unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider
+     * hardening it with picking a specific interface.
+     */
+    host?: string;
+
+    /**
      * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
      * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
      */
@@ -14620,6 +14627,13 @@ export interface Android {
      * connected.
      */
     deviceSerialNumber?: string;
+
+    /**
+     * Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the
+     * unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider
+     * hardening it with picking a specific interface.
+     */
+    host?: string;
 
     /**
      * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
@@ -17201,6 +17215,9 @@ export interface BrowserServer {
    * Browser websocket endpoint which can be used as an argument to
    * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect)
    * to establish connection to the browser.
+   *
+   * Note that if the listen `host` option in `launchServer` options is not specified, localhost will be output anyway,
+   * even if the actual listening address is an unspecified address.
    */
   wsEndpoint(): string;
 

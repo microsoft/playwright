@@ -111,6 +111,7 @@ export type LaunchServerOptions = {
   },
   downloadsPath?: string,
   chromiumSandbox?: boolean,
+  host?: string,
   port?: number,
   wsPath?: string,
   logger?: Logger,
@@ -122,6 +123,7 @@ export type LaunchAndroidServerOptions = {
   adbHost?: string,
   adbPort?: number,
   omitDriverInstall?: boolean,
+  host?: string,
   port?: number,
   wsPath?: string,
 };

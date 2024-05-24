@@ -26,6 +26,13 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
+  it('should work with host', async ({ browserType }) => {
+    const host = '0.0.0.0';
+    const browserServer = await browserType.launchServer({ host });
+    expect(browserServer.wsEndpoint()).toContain(String(host));
+    await browserServer.close();
+  });
+
   it('should work with port', async ({ browserType }, testInfo) => {
     const port = 8800 + testInfo.workerIndex;
     const browserServer = await browserType.launchServer({ port });

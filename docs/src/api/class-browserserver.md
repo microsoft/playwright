@@ -31,3 +31,5 @@ Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [`method: BrowserType.connect`] to establish connection
 to the browser.
+
+Note that if the listen `host` option in `launchServer` options is not specified, localhost will be output anyway, even if the actual listening address is an unspecified address.
