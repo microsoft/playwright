@@ -18,7 +18,7 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | [screen](https://testing-library.com/docs/queries/about#screen) | [page](./api/class-page) and [component](./api/class-locator) |
 | [queries](https://testing-library.com/docs/queries/about) | [locators](./locators) |
 | [async helpers](https://testing-library.com/docs/dom-testing-library/api-async) | [assertions](./test-assertions) |
-| [user events](https://testing-library.com/docs/user-event/intro) | [actions](./api/class-locator) |
+| [user events](https://testing-library.com/docs/user-event/intro) | [actions](./input) |
 | `await user.click(screen.getByText('Click me'))`        | `await component.getByText('Click me').click()` |
 | `await user.click(await screen.findByText('Click me'))` | `await component.getByText('Click me').click()` |
 | `await user.type(screen.getByLabel('Password'), 'secret')` | `await component.getByLabel('Password').fill('secret')` |
