@@ -69,6 +69,8 @@ const RequestTab: React.FunctionComponent<{
         } else {
           setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), language });
         }
+      } else {
+        setRequestBody(null);
       }
     };
     readResources();
