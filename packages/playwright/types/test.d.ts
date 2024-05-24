@@ -6510,9 +6510,21 @@ export interface ExpectMatcherUtils {
 }
 
 export type ExpectMatcherState = {
+  /**
+   * Whether this matcher was called with the negated .not modifier.
+   */
   isNot: boolean;
+  /**
+   * - 'rejects' if matcher was called with the promise .rejects modifier
+   * - 'resolves' if matcher was called with the promise .resolves modifier
+   * - '' if matcher was not called with a promise modifier
+   */
   promise: 'rejects' | 'resolves' | '';
   utils: ExpectMatcherUtils;
+  /**
+   * Timeout in milliseconds for the assertion to be fulfilled.
+   */
+  timeout: number;
 };
 
 export type MatcherReturnType = {

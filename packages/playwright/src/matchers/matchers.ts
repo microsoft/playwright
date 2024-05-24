@@ -24,7 +24,7 @@ import { toExpectedTextValues, toMatchText } from './toMatchText';
 import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
-import type { ExpectMatcherContext } from './expect';
+import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
 
 interface LocatorEx extends Locator {
@@ -36,7 +36,7 @@ interface APIResponseEx extends APIResponse {
 }
 
 export function toBeAttached(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { attached?: boolean, timeout?: number },
 ) {
@@ -50,7 +50,7 @@ export function toBeAttached(
 }
 
 export function toBeChecked(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { checked?: boolean, timeout?: number },
 ) {
@@ -64,7 +64,7 @@ export function toBeChecked(
 }
 
 export function toBeDisabled(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -74,7 +74,7 @@ export function toBeDisabled(
 }
 
 export function toBeEditable(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { editable?: boolean, timeout?: number },
 ) {
@@ -88,7 +88,7 @@ export function toBeEditable(
 }
 
 export function toBeEmpty(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -98,7 +98,7 @@ export function toBeEmpty(
 }
 
 export function toBeEnabled(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { enabled?: boolean, timeout?: number },
 ) {
@@ -112,7 +112,7 @@ export function toBeEnabled(
 }
 
 export function toBeFocused(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -122,7 +122,7 @@ export function toBeFocused(
 }
 
 export function toBeHidden(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -132,7 +132,7 @@ export function toBeHidden(
 }
 
 export function toBeVisible(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { visible?: boolean, timeout?: number },
 ) {
@@ -146,7 +146,7 @@ export function toBeVisible(
 }
 
 export function toBeInViewport(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   options?: { timeout?: number, ratio?: number },
 ) {
@@ -156,7 +156,7 @@ export function toBeInViewport(
 }
 
 export function toContainText(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
@@ -175,7 +175,7 @@ export function toContainText(
 }
 
 export function toHaveAccessibleDescription(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number, ignoreCase?: boolean },
@@ -187,7 +187,7 @@ export function toHaveAccessibleDescription(
 }
 
 export function toHaveAccessibleName(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number, ignoreCase?: boolean },
@@ -199,7 +199,7 @@ export function toHaveAccessibleName(
 }
 
 export function toHaveAttribute(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp | undefined | { timeout?: number },
@@ -224,7 +224,7 @@ export function toHaveAttribute(
 }
 
 export function toHaveClass(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number },
@@ -243,7 +243,7 @@ export function toHaveClass(
 }
 
 export function toHaveCount(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: number,
   options?: { timeout?: number },
@@ -254,7 +254,7 @@ export function toHaveCount(
 }
 
 export function toHaveCSS(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
@@ -267,7 +267,7 @@ export function toHaveCSS(
 }
 
 export function toHaveId(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number },
@@ -279,7 +279,7 @@ export function toHaveId(
 }
 
 export function toHaveJSProperty(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   name: string,
   expected: any,
@@ -291,7 +291,7 @@ export function toHaveJSProperty(
 }
 
 export function toHaveRole(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string,
   options?: { timeout?: number, ignoreCase?: boolean },
@@ -305,7 +305,7 @@ export function toHaveRole(
 }
 
 export function toHaveText(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
@@ -324,7 +324,7 @@ export function toHaveText(
 }
 
 export function toHaveValue(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number },
@@ -336,7 +336,7 @@ export function toHaveValue(
 }
 
 export function toHaveValues(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   locator: LocatorEx,
   expected: (string | RegExp)[],
   options?: { timeout?: number },
@@ -348,7 +348,7 @@ export function toHaveValues(
 }
 
 export function toHaveTitle(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   page: Page,
   expected: string | RegExp,
   options: { timeout?: number } = {},
@@ -361,7 +361,7 @@ export function toHaveTitle(
 }
 
 export function toHaveURL(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   page: Page,
   expected: string | RegExp,
   options?: { ignoreCase?: boolean, timeout?: number },
@@ -376,7 +376,7 @@ export function toHaveURL(
 }
 
 export async function toBeOK(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   response: APIResponseEx
 ) {
   const matcherName = 'toBeOK';
@@ -398,7 +398,7 @@ export async function toBeOK(
 }
 
 export async function toPass(
-  this: ExpectMatcherContext,
+  this: ExpectMatcherState,
   callback: () => any,
   options: {
     intervals?: number[];

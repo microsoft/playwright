@@ -1000,3 +1000,42 @@ test('should respect timeout from configured expect when used outside of the tes
   expect(stdout).toBe('');
   expect(stripAnsi(stderr)).toContain('Timed out 10ms waiting for expect(locator).toBeAttached()');
 });
+
+test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC }) => {
+  const files = {
+    'playwright.config.ts': `
+      export default {
+        expect: { timeout: 1100 }
+      };
+    `,
+    'a.test.ts': `
+      import type { ExpectMatcherState, MatcherReturnType } from '@playwright/test';
+      import { test, expect as base } from '@playwright/test';
+
+      const expect = base.extend({
+        assertTimeout(page: any, value: number) {
+          const pass = this.timeout === value;
+          return {
+            message: () => 'Unexpected timeout: ' + this.timeout,
+            pass,
+            name: 'assertTimeout',
+          };
+        }
+      });
+
+      test('from config', async ({ page }) => {
+        expect(page).assertTimeout(1100);
+      });
+      test('from expect.configure', async ({ page }) => {
+        expect.configure({ timeout: 2200 })(page).assertTimeout(2200);
+      });
+      `,
+  };
+  const { exitCode } = await runTSC(files);
+  expect(exitCode).toBe(0);
+
+  const result = await runInlineTest(files);
+  expect(result.exitCode).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.passed).toBe(2);
+});
