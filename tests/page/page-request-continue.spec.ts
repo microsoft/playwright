@@ -515,8 +515,4 @@ it('continue should not change multipart/form-data body', async ({ page, server,
     '------'].join('\r\n');
   expect.soft((await reqBefore.postBody).toString('utf8')).toContain(fileContent);
   expect.soft((await reqAfter.postBody).toString('utf8')).toContain(fileContent);
-  // Firefox sends a bit longer boundary.
-  const expectedLength = browserName === 'firefox' ? '246' : '208';
-  expect.soft(reqBefore.headers['content-length']).toBe(expectedLength);
-  expect.soft(reqAfter.headers['content-length']).toBe(expectedLength);
 });

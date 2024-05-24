@@ -315,8 +315,9 @@ it('should get |undefined| with postDataJSON() when there is no post data', asyn
   expect(response.request().postDataJSON()).toBe(null);
 });
 
-it('should return multipart/form-data', async ({ page, server, browserName }) => {
+it('should return multipart/form-data', async ({ page, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'webkit', 'File content is missing in WebKit');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 126, 'Requires a recent enough protocol');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
