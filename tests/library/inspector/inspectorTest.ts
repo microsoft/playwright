@@ -131,12 +131,11 @@ class Recorder {
   async waitForOutput(file: string, text: string): Promise<Map<string, Source>> {
     if (!codegenLang2Id.has(file))
       throw new Error(`Unknown language: ${file}`);
-    const handle = await this.recorderPage.waitForFunction((params: { text: string, languageId: string }) => {
-      const w = window as any;
-      const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.id === params.languageId);
-      return source && source.text.includes(params.text) ? w.playwrightSourcesEchoForTest : null;
-    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 0, polling: 300 });
-    const sources: Source[] = await handle.jsonValue();
+    await expect.poll(() => this.recorderPage.evaluate(languageId => {
+      const sources = ((window as any).playwrightSourcesEchoForTest || []) as Source[];
+      return sources.find(s => s.id === languageId)?.text || '';
+    }, codegenLang2Id.get(file)), { timeout: 0 }).toContain(text);
+    const sources: Source[] = await this.recorderPage.evaluate(() => (window as any).playwrightSourcesEchoForTest || []);
     for (const source of sources) {
       if (!codegenLangId2lang.has(source.id))
         throw new Error(`Unknown language: ${source.id}`);

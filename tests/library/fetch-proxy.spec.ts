@@ -132,6 +132,8 @@ it(`should support proxy.bypass`, async ({ contextFactory, contextOptions, serve
 });
 
 it('should use socks proxy', async ({ playwright, server, socksPort }) => {
+  it.skip(!!process.env.INSIDE_DOCKER, 'connect ECONNREFUSED 127.0.0.1:<port>');
+
   const request = await playwright.request.newContext({ proxy: {
     server: `socks5://localhost:${socksPort}`,
   } });
