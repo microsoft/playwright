@@ -256,7 +256,11 @@ export class WKBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: channels.NetworkCookie) => {
-      const copy: any = { ... c };
+      const copy: any = { ...c };
+      // "Prevent cross-site tracking." is on by default in Safary, which essentially
+      // disables SameSite=None and such cookies become Lax.
+      if (copy.sameSite === 'None')
+        copy.sameSite = 'Lax';
       copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
       delete copy.session;
       return copy as channels.NetworkCookie;
@@ -267,7 +271,10 @@ export class WKBrowserContext extends BrowserContext {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,
-      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires
+      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires,
+      // With "Prevent cross-site tracking." on by default in Safary, SameSite=None cookies
+      // behave as Lax.
+      sameSite: (!c.sameSite || c.sameSite === 'None') ? 'Lax' : c.sameSite,
     })) as Protocol.Playwright.SetCookieParam[];
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }
