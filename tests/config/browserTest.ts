@@ -67,11 +67,11 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(false);
   }, { scope: 'worker' }],
 
-  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel, platform }, run) => {
+  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel }, run) => {
     if (browserName === 'chromium')
       await run('Lax');
     else if (browserName === 'webkit')
-      await run('Lax');
+      await run('None');
     else if (browserName === 'firefox' && channel === 'firefox-beta')
       await run(browserMajorVersion >= 103 && browserMajorVersion < 110 ? 'Lax' : 'None');
     else if (browserName === 'firefox' && channel !== 'firefox-beta')

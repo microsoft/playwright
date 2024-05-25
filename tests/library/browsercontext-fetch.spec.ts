@@ -1211,7 +1211,7 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       });
       await page.request.get(server.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (['chromium', 'webkit'].includes(browserName) && value === 'None')
+      if (browserName === 'chromium' && value === 'None')
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
