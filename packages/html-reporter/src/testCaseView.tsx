@@ -74,9 +74,8 @@ function renderAnnotationDescription(description: string) {
 
 function renderAnnotationLink(url: string) {
   try {
-    if (['http:', 'https:'].includes(new URL(url).protocol)) {
+    if (['http:', 'https:'].includes(new URL(url).protocol))
       return <a href={url} target='_blank' rel='noopener noreferrer'>{url}</a>;
-    }
   } catch {}
   return url;
 }
