@@ -224,7 +224,7 @@ it('should have |expires| set to |-1| for session cookies', async ({ context, se
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('should set cookie with reasonable defaults', async ({ context, server, browserName }) => {
+it('should set cookie with reasonable defaults', async ({ context, server, browserName, defaultSameSiteCookieValue }) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
@@ -239,7 +239,7 @@ it('should set cookie with reasonable defaults', async ({ context, server, brows
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
+    sameSite: defaultSameSiteCookieValue,
   }]);
 });
 

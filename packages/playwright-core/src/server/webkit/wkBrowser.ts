@@ -267,7 +267,11 @@ export class WKBrowserContext extends BrowserContext {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,
-      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires
+      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires,
+      // Cookies without SameSite attribute are treated as Lax by the spec,
+      // so we provide the value explicitly to not depend on the underlying
+      // network library defaults.
+      sameSite: c.sameSite ?? 'Lax',
     })) as Protocol.Playwright.SetCookieParam[];
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }

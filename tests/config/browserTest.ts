@@ -71,7 +71,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     if (browserName === 'chromium')
       await run('Lax');
     else if (browserName === 'webkit')
-      await run('None');
+      await run('Lax');
     else if (browserName === 'firefox' && channel === 'firefox-beta')
       await run(browserMajorVersion >= 103 && browserMajorVersion < 110 ? 'Lax' : 'None');
     else if (browserName === 'firefox' && channel !== 'firefox-beta')
