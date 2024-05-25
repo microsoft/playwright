@@ -72,11 +72,21 @@ function renderAnnotationDescription(description: string) {
   return description;
 }
 
-function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+function renderAnnotationLink(url: string) {
+  try {
+    if (['http:', 'https:'].includes(new URL(url).protocol)) {
+      return <a href={url} target='_blank' rel='noopener noreferrer'>{url}</a>;
+    }
+  } catch {}
+  return url;
+}
+
+function TestCaseAnnotationView({ annotation: { type, description, url } }: { annotation: TestCaseAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
       {description && <span>: {renderAnnotationDescription(description)}</span>}
+      {url && <span>: {renderAnnotationLink(url)}</span>}
     </div>
   );
 }
