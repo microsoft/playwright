@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-import { ComponentOptions } from 'vue';
-import { CombinedVueInstance, Vue, VueConstructor } from 'vue/types/vue';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { ComponentOptions } from 'vue';
+import type { CombinedVueInstance, Vue, VueConstructor } from 'vue/types/vue';
 
-export declare function beforeMount<HooksConfig extends JsonObject>(
-  callback: (params: { 
-    hooksConfig?: HooksConfig, 
-    Vue: VueConstructor<Vue>, 
+export declare function beforeMount<HooksConfig>(
+  callback: (params: {
+    hooksConfig?: HooksConfig,
+    Vue: VueConstructor<Vue>,
   }) => Promise<void | ComponentOptions<Vue> & Record<string, unknown>>
 ): void;
-export declare function afterMount<HooksConfig extends JsonObject>(
+export declare function afterMount<HooksConfig>(
   callback: (params: {
     hooksConfig?: HooksConfig;
     instance: CombinedVueInstance<
