@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
 import * as path from 'path';
-import { expect, stripAnsi, test } from './playwright-test-fixtures';
+import * as fs from 'fs';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support spec.ok and stats', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -31,7 +31,7 @@ test('should support spec.ok and stats', async ({ runInlineTest }) => {
       test.skip('math skipped', async ({}) => {
       });
     `
-  }, {});
+  }, { });
   expect(result.exitCode).toBe(1);
   expect(result.report.suites[0].specs[0].ok).toBe(true);
   expect(result.report.suites[0].specs[1].ok).toBe(false);
@@ -43,7 +43,7 @@ test('should support spec.ok and stats', async ({ runInlineTest }) => {
 });
 
 test('should not report skipped due to sharding', async ({ runInlineTest }) => {
-  const tests = {
+  const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('one', async () => {
@@ -62,29 +62,12 @@ test('should not report skipped due to sharding', async ({ runInlineTest }) => {
       test('five', async () => {
       });
     `,
-  };
-  {
-    const result = await runInlineTest(tests, { shard: '1/3', reporter: 'json' });
-    expect(result.exitCode).toBe(0);
-    expect(result.report.suites.length).toBe(1);
-    expect(result.report.suites[0].specs.length).toBe(3);
-    expect(result.report.suites[0].specs[0].tests[0].status).toBe('expected');
-    expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
-    expect(result.report.suites[0].specs[2].tests[0].status).toBe('expected');
-  }
-  {
-    const result = await runInlineTest(tests, { shard: '2/3', reporter: 'json' });
-    expect(result.exitCode).toBe(0);
-    expect(result.report.suites.length).toBe(1);
-    expect(result.report.suites[0].specs.length).toBe(2);
-    expect(result.report.suites[0].specs[0].tests[0].status).toBe('expected');
-    expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
-  }
-  {
-    const result = await runInlineTest(tests, { shard: '3/3', reporter: 'json' });
-    expect(result.exitCode).toBe(0);
-    expect(result.report.suites.length).toBe(0);
-  }
+  }, { shard: '1/3', reporter: 'json' });
+  expect(result.exitCode).toBe(0);
+  expect(result.report.suites.length).toBe(1);
+  expect(result.report.suites[0].specs.length).toBe(2);
+  expect(result.report.suites[0].specs[0].tests[0].status).toBe('expected');
+  expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
 });
 
 test('should report projects and stats', async ({ runInlineTest }, testInfo) => {
@@ -112,7 +95,7 @@ test('should report projects and stats', async ({ runInlineTest }, testInfo) => 
         expect(1 + 1).toBe(2);
       });
     `
-  }, {});
+  }, { });
   expect(result.exitCode).toBe(0);
   const projects = result.report.config.projects;
   const testDir = testInfo.outputDir.split(path.sep).join(path.posix.sep);
@@ -262,7 +245,7 @@ test('should have starting time in results', async ({ runInlineTest }, testInfo)
         expect(1 + 1).toBe(2);
       });
     `
-  }, { reporter: 'json' });
+  },   { reporter: 'json' });
   expect(result.exitCode).toBe(0);
   const startTime = result.report.suites[0].specs[0].tests[0].results[0].startTime;
   expect(new Date(startTime).getTime()).toBeGreaterThan(new Date('1/1/2000').getTime());

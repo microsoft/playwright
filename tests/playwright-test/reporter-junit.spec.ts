@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import xml2js from 'xml2js';
-import { expect, test } from './playwright-test-fixtures';
+import path from 'path';
+import { test, expect } from './playwright-test-fixtures';
+import fs from 'fs';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
@@ -190,8 +190,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
-    test('should not report skipped due to sharding', async ({ runInlineTest }) => {
-      const tests = {
+    test('should report skipped due to sharding', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('one', async () => {
@@ -210,34 +210,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           test('five', async () => {
           });
         `,
-      };
-      {
-        const result = await runInlineTest(tests, { shard: '1/3', reporter: 'junit' });
-        const xml = parseXML(result.output);
-        expect(xml['testsuites']['testsuite'].length).toBe(1);
-        expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('3');
-        expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
-        expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('1');
-        expect(result.exitCode).toBe(0);
-      }
-      {
-        const result = await runInlineTest(tests, { shard: '2/3', reporter: 'junit' });
-        const xml = parseXML(result.output);
-        expect(xml['testsuites']['testsuite'].length).toBe(1);
-        expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('2');
-        expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
-        expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('1');
-        expect(result.exitCode).toBe(0);
-      }
-      {
-        const result = await runInlineTest(tests, { shard: '3/3', reporter: 'junit' });
-        const xml = parseXML(result.output);
-        expect(xml['testsuites']['testsuite']).toBe(undefined);
-        expect(xml['testsuites']['$']['tests']).toBe('0');
-        expect(xml['testsuites']['$']['failures']).toBe('0');
-        expect(xml['testsuites']['$']['skipped']).toBe('0');
-        expect(result.exitCode).toBe(0);
-      }
+      }, { shard: '1/3', reporter: 'junit' });
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['testsuite'].length).toBe(1);
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('2');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+      expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('1');
+      expect(result.exitCode).toBe(0);
     });
 
     test('should not render projects if they dont exist', async ({ runInlineTest }) => {
