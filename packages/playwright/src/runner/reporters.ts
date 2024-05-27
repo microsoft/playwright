@@ -23,6 +23,7 @@ import GitHubReporter from '../reporters/github';
 import HtmlReporter from '../reporters/html';
 import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
+import LastRunReporter from '../reporters/lastrun';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import MarkdownReporter from '../reporters/markdown';
@@ -46,6 +47,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     null: EmptyReporter,
     html: HtmlReporter,
     markdown: MarkdownReporter,
+    lastrun: LastRunReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
