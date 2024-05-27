@@ -26,7 +26,7 @@
         const traceUrl = new URL(location.href).searchParams.get('trace');
         const params = new URLSearchParams();
         params.set('trace', traceUrl);
-        await fetch('context?' + params.toString()).then(r => r.json());
+        await fetch('contexts?' + params.toString()).then(r => r.json());
         await location.reload();
       })();
     </script>

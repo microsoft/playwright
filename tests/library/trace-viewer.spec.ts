@@ -1207,3 +1207,20 @@ test('should remove noscript when javaScriptEnabled is set to true', async ({ br
   await expect(frame.getByText('Always visible')).toBeVisible();
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
+
+test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('hello');
+  });
+  await traceViewer.snapshotFrame('page.setContent');
+  const popupPromise = traceViewer.page.context().waitForEvent('page');
+  await traceViewer.page.getByTitle('Open snapshot in a new tab').click();
+  const popup = await popupPromise;
+
+  // doesn't share sw.bundle.js
+  const newPage = await browser.newPage();
+  await newPage.goto(popup.url());
+  await expect(newPage.getByText('hello')).toBeVisible();
+  await newPage.close();
+});
