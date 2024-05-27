@@ -35,7 +35,7 @@ jobs:
           git push origin $BRANCH_NAME
       - name: Create Pull Request
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
           script: |
