@@ -151,6 +151,7 @@ export class Runner {
 export type LastRunInfo = {
   status: FullResult['status'];
   failedTests: string[];
+  testDurations?: { [testId: string]: number };
 };
 
 async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
@@ -161,7 +162,12 @@ async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) 
   await fs.promises.mkdir(outputDir, { recursive: true });
   const lastRunReportFile = path.join(outputDir, '.last-run.json');
   const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
-  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
+  const testDurations = testRun.rootSuite?.allTests().reduce((map, t) => {
+    if (t.results.length)
+      map[t.id] = t.results.reduce((a, b) => a + b.duration, 0);
+    return map;
+  }, {} as { [testId: string]: number });
+  const lastRunReport = JSON.stringify({ status, failedTests, testDurations }, undefined, 2);
   await fs.promises.writeFile(lastRunReportFile, lastRunReport);
 }
 
