@@ -184,9 +184,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (!config)
     return;
 
-  if (opts.lastFailed) {
+  if (opts.lastFailed || config.shardingMode === 'duration-round-robin') {
     const lastRunInfo = await readLastRunInfo(config);
-    config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+    if (opts.lastFailed)
+      config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+
+    if (config.shardingMode === 'duration-round-robin')
+      config.lastRunInfo = lastRunInfo;
   }
 
   config.cliArgs = args;
@@ -281,6 +285,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
+    shardingMode: options.shardingMode ? options.shardingMode : undefined,
     shardingSeed: options.shardingSeed ? options.shardingSeed : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -359,6 +364,7 @@ const testOptions: [string, string][] = [
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
+  ['--sharding-mode <mode>', `Sharding algorithm to use; "partition", "round-robin" or "duration-round-robin". Defaults to "partition".`],
   ['--sharding-seed <seed>', `Seed string for randomizing the test order before sharding. Defaults to not randomizing the order.`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],

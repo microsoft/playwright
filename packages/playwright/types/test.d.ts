@@ -1426,6 +1426,19 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * Defines the algorithm to be used for sharding. Defaults to `'partition'`.
+   * - `'partition'` - divide the set of test groups by number of shards. e.g. first half goes to shard 1/2 and
+   *   seconds half to shard 2/2.
+   * - `'round-robin'` - spread test groups to shards in a round-robin way. e.g. loop over test groups and always
+   *   assign to the shard that has the lowest number of tests.
+   * - `'duration-round-robin'` - use duration info from `.last-run.json` to spread test groups to shards in a
+   *   round-robin way. e.g. loop over test groups and always assign to the shard that has the lowest duration of
+   *   tests. new tests which were not present in the last run will use an average duration time. When no
+   *   `.last-run.json` could be found the behavior is identical to `'round-robin'`.
+   */
+  shardingMode?: "partition"|"round-robin"|"duration-round-robin";
+
+  /**
    * Shuffle the order of test groups with a seed. By default tests are run in the order they are discovered, which is
    * mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. Shuffling the order of tests
    * in a deterministic way can help to distribute the load more evenly.

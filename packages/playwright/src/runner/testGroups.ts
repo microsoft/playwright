@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import type { PlaywrightTestConfig } from '../../types/test';
 import type { Suite, TestCase } from '../common/test';
+import type { LastRunInfo } from './runner';
 
 export type TestGroup = {
   workerHash: string;
@@ -130,7 +132,12 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+export function filterForShard(
+  mode: PlaywrightTestConfig['shardingMode'],
+  shard: { total: number, current: number },
+  testGroups: TestGroup[],
+  lastRunInfo?: LastRunInfo,
+): Set<TestGroup> {
   // Note that sharding works based on test groups.
   // This means parallel files will be sharded by single tests,
   // while non-parallel files will be sharded by the whole file.
@@ -138,16 +145,85 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   // Shards are still balanced by the number of tests, not files,
   // even in the case of non-paralleled files.
 
-  const lengths = new Array(shard.total).fill(0);
+  if (mode === 'round-robin')
+    return filterForShardRoundRobin(shard, testGroups);
+  if (mode === 'duration-round-robin')
+    return filterForShardRoundRobin(shard, testGroups, lastRunInfo);
+  return filterForShardPartition(shard, testGroups);
+}
+
+/**
+ * Shards tests by partitioning them into equal parts.
+ *
+ * ```
+ *        [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
+ * Shard 1:  ^---------^                                      : [  1, 2, 3 ]
+ * Shard 2:              ^---------^                          : [  4, 5, 6 ]
+ * Shard 3:                          ^---------^              : [  7, 8, 9 ]
+ * Shard 4:                                      ^---------^  : [ 10,11,12 ]
+ * ```
+ */
+function filterForShardPartition(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+  let shardableTotal = 0;
+  for (const group of testGroups)
+    shardableTotal += group.tests.length;
+
+  // Each shard gets some tests.
+  const shardSize = Math.floor(shardableTotal / shard.total);
+  // First few shards get one more test each.
+  const extraOne = shardableTotal - shardSize * shard.total;
+
+  const currentShard = shard.current - 1; // Make it zero-based for calculations.
+  const from = shardSize * currentShard + Math.min(extraOne, currentShard);
+  const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+
+  let current = 0;
+  const result = new Set<TestGroup>();
+  for (const group of testGroups) {
+    // Any test group goes to the shard that contains the first test of this group.
+    // So, this shard gets any group that starts at [from; to)
+    if (current >= from && current < to)
+      result.add(group);
+    current += group.tests.length;
+  }
+  return result;
+}
+
+/**
+ * Shards tests by round-robin.
+ *
+ * ```
+ *          [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
+ * Shard 1:    ^               ^               ^              : [  1, 5, 9 ]
+ * Shard 2:        ^               ^               ^          : [  2, 6,10 ]
+ * Shard 3:            ^               ^               ^      : [  3, 7,11 ]
+ * Shard 4:                ^               ^               ^  : [  4, 8,12 ]
+ * ```
+ */
+function filterForShardRoundRobin(
+  shard: { total: number, current: number },
+  testGroups: TestGroup[],
+  lastRunInfo?: LastRunInfo,
+): Set<TestGroup> {
+
+  const weights = new Array(shard.total).fill(0);
   const shardSet = new Array(shard.total).fill(0).map(() => new Set<TestGroup>());
+  const averageDuration = lastRunInfo ? Object.values(lastRunInfo?.testDurations || {}).reduce((a, b) => a + b, 1) / Math.max(1, Object.values(lastRunInfo?.testDurations || {}).length) : 0;
+  const weight = (group: TestGroup) => {
+    if (!lastRunInfo)
+      // If we don't have last run info, we just count the number of tests.
+      return group.tests.length;
+    // If we have last run info, we use the duration of the tests.
+    return group.tests.reduce((sum, test) => sum + Math.max(1, lastRunInfo.testDurations?.[test.id] || averageDuration), 0);
+  };
 
   // We sort the test groups by the number of tests in descending order.
-  const sortedTestGroups = testGroups.slice().sort((a, b) => b.tests.length - a.tests.length);
+  const sortedTestGroups = testGroups.slice().sort((a, b) => weight(b) - weight(a));
 
   // Then we add each group to the shard with the smallest number of tests.
   for (const group of sortedTestGroups) {
-    const index = lengths.reduce((minIndex, currentLength, currentIndex) => currentLength < lengths[minIndex] ? currentIndex : minIndex, 0);
-    lengths[index] += group.tests.length;
+    const index = weights.reduce((minIndex, currentLength, currentIndex) => currentLength < weights[minIndex] ? currentIndex : minIndex, 0);
+    weights[index] += weight(group);
     shardSet[index].add(group);
   }
 
