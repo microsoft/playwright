@@ -202,6 +202,12 @@ Prevents automatic playwright driver installation on attach. Assumes that the dr
 Optional device serial number to launch the browser on. If not specified, it will
 throw if multiple devices are connected.
 
+### option: Android.launchServer.host
+* since: v1.45
+- `host` <[string]>
+
+Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider hardening it with picking a specific interface.
+
 ### option: Android.launchServer.port
 * since: v1.28
 - `port` <[int]>

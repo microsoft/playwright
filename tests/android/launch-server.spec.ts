@@ -30,6 +30,17 @@ test('android.launchServer should connect to a device', async ({ playwright }) =
   await browserServer.close();
 });
 
+test('android.launchServer should work with host', async ({ playwright }) => {
+  const host = '0.0.0.0';
+  const browserServer = await playwright._android.launchServer({ host });
+  expect(browserServer.wsEndpoint()).toContain(String(host));
+  const device = await playwright._android.connect(browserServer.wsEndpoint());
+  const output = await device.shell('echo 123');
+  expect(output.toString()).toBe('123\n');
+  await device.close();
+  await browserServer.close();
+});
+
 test('android.launchServer should handle close event correctly', async ({ playwright }) => {
   const receivedEvents: string[] = [];
   const browserServer = await playwright._android.launchServer();
