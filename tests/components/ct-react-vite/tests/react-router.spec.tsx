@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/experimental-ct-react';
 import App from '@/App';
-import type { HooksConfig } from '../playwright';
 
 test('navigate to a page by clicking a link', async ({ page, mount }) => {
-  const component = await mount<HooksConfig>(<App />, {
+  const component = await mount(<App />, {
     hooksConfig: { routing: true },
   });
   await expect(component.getByRole('main')).toHaveText('Login');
@@ -14,7 +13,7 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
 });
 
 test('update should not reset mount hooks', async ({ page, mount }) => {
-  const component = await mount<HooksConfig>(<App title='before'/>, {
+  const component = await mount(<App title='before'/>, {
     hooksConfig: { routing: true },
   });
   await expect(component.getByRole('heading')).toHaveText('before');
