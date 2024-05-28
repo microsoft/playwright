@@ -127,8 +127,6 @@ When you have finished interacting with the page, press the **record** button to
 
 Use the **clear** button to clear the code to start recording again. Once finished close the Playwright inspector window or stop the terminal command.
 
-To learn more about generating tests check out or detailed guide on [Codegen](./codegen.md).
-
 ### Generating locators
 You can generate [locators](/locators.md) with the test generator. 
 
