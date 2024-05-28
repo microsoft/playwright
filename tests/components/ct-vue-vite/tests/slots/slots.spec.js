@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
 import DefaultSlot from '@/components/DefaultSlot.vue';
 import NamedSlots from '@/components/NamedSlots.vue';
+import Button from '@/components/Button.vue';
 
 test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
@@ -16,6 +17,9 @@ test('render a component as slot', async ({ mount }) => {
     slots: {
       default: '<Button title="Submit" />', // component is registered globally in /playwright/index.ts
     },
+    hooksConfig: {
+      components: { Button }
+    }
   });
   await expect(component).toContainText('Submit');
 });

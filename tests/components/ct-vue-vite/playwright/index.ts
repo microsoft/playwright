@@ -4,14 +4,17 @@ import Button from '../src/components/Button.vue';
 import '../src/assets/index.css';
 
 export type HooksConfig = {
-  route?: string;
   routing?: boolean;
+  components?: Record<string, any>;
 }
 
 beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
-  if (hooksConfig?.routing) 
+  if (hooksConfig?.routing)
     app.use(router as any); // TODO: remove any and fix the various installed conflicting Vue versions
-  app.component('Button', Button);
+
+  for (const [name, component] of Object.entries(hooksConfig?.components || {}))
+    app.component(name, component);
+
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}, app: ${!!app}`);
 });
 
