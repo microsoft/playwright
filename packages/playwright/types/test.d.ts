@@ -267,7 +267,8 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
    * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
+   * `test.describe` name (if any), the test name and test tags divided by spaces, e.g. `my-test.spec.ts my-suite
+   * my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -1131,7 +1132,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
    * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
-   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
+   * any), the test name and  and test tags divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    *
