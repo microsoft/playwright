@@ -292,6 +292,38 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
   }
 });
 
+test('should produce consistent step ids', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31023' },
+}, async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [
+          ['blob', { outputFile: 'blob-report/report-1.zip' }],
+          ['blob', { outputFile: 'blob-report/report-2.zip' }]
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  };
+  await runInlineTest(files);
+  const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
+  const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html,json'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
+});
+
 test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {

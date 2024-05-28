@@ -32,6 +32,9 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
+  // In case there is blob reporter and UI mode, make sure one does override
+  // the id assigned by the other.
+  private readonly _idSymbol = Symbol('id');
 
   constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
@@ -55,7 +58,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onTestBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
-    (result as any)[idSymbol] = createGuid();
+    (result as any)[this._idSymbol] = createGuid();
     this._messageSink({
       method: 'onTestBegin',
       params: {
@@ -82,12 +85,12 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
-    (step as any)[idSymbol] = createGuid();
+    (step as any)[this._idSymbol] = createGuid();
     this._messageSink({
       method: 'onStepBegin',
       params: {
         testId: test.id,
-        resultId: (result as any)[idSymbol],
+        resultId: (result as any)[this._idSymbol],
         step: this._serializeStepStart(step)
       }
     });
@@ -98,7 +101,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       method: 'onStepEnd',
       params: {
         testId: test.id,
-        resultId: (result as any)[idSymbol],
+        resultId: (result as any)[this._idSymbol],
         step: this._serializeStepEnd(step)
       }
     });
@@ -126,7 +129,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     const data = isBase64 ? chunk.toString('base64') : chunk;
     this._messageSink({
       method: 'onStdIO',
-      params: { testId: test?.id, resultId: result ? (result as any)[idSymbol] : undefined, type, data, isBase64 }
+      params: { testId: test?.id, resultId: result ? (result as any)[this._idSymbol] : undefined, type, data, isBase64 }
     });
   }
 
@@ -214,7 +217,7 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   private _serializeResultStart(result: reporterTypes.TestResult): teleReceiver.JsonTestResultStart {
     return {
-      id: (result as any)[idSymbol],
+      id: (result as any)[this._idSymbol],
       retry: result.retry,
       workerIndex: result.workerIndex,
       parallelIndex: result.parallelIndex,
@@ -224,7 +227,7 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   private _serializeResultEnd(result: reporterTypes.TestResult): teleReceiver.JsonTestResultEnd {
     return {
-      id: (result as any)[idSymbol],
+      id: (result as any)[this._idSymbol],
       duration: result.duration,
       status: result.status,
       errors: result.errors,
@@ -244,8 +247,8 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   private _serializeStepStart(step: reporterTypes.TestStep): teleReceiver.JsonTestStepStart {
     return {
-      id: (step as any)[idSymbol],
-      parentStepId: (step.parent as any)?.[idSymbol],
+      id: (step as any)[this._idSymbol],
+      parentStepId: (step.parent as any)?.[this._idSymbol],
       title: step.title,
       category: step.category,
       startTime: +step.startTime,
@@ -255,7 +258,7 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   private _serializeStepEnd(step: reporterTypes.TestStep): teleReceiver.JsonTestStepEnd {
     return {
-      id: (step as any)[idSymbol],
+      id: (step as any)[this._idSymbol],
       duration: step.duration,
       error: step.error,
     };
@@ -280,5 +283,3 @@ export class TeleReporterEmitter implements ReporterV2 {
     return path.relative(this._rootDir, absolutePath);
   }
 }
-
-const idSymbol = Symbol('id');
