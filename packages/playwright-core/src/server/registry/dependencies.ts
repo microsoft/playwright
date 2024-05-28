@@ -371,6 +371,6 @@ export async function transformCommandsForRoot(commands: string[]): Promise<{ co
     return { command: 'sh', args: ['-c', `${commands.join('&& ')}`], elevatedPermissions: false };
   const sudoExists = await spawnAsync('which', ['sudo']);
   if (sudoExists.code === 0)
-    return { command: 'sudo', args: ['--', 'sh', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
+    return { command: 'sudo', args: ['--preserve-env', '--', 'sh', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
   return { command: 'su', args: ['root', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
 }
