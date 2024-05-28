@@ -68,7 +68,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
 
   // Go through instrumentation to exercise reentrant stack traces.
   const csi = {
-    onWillCloseBrowserContext: async () => {
+    runBeforeCloseBrowserContext: async () => {
       await page.hover('body');
       await page.close();
       traceFile = path.join(workerInfo.project.outputDir, String(workerInfo.workerIndex), browserName, 'trace.zip');

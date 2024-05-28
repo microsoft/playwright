@@ -77,7 +77,7 @@ export class APIRequest implements api.APIRequest {
     this._contexts.add(context);
     context._request = this;
     context._tracing._tracesDir = tracesDir;
-    await context._instrumentation.onDidCreateRequestContext(context);
+    await context._instrumentation.runAfterCreateRequestContext(context);
     return context;
   }
 }
@@ -102,7 +102,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   async dispose(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
-    await this._instrumentation.onWillCloseRequestContext(this);
+    await this._instrumentation.runBeforeCloseRequestContext(this);
     try {
       await this._channel.dispose(options);
     } catch (e) {
