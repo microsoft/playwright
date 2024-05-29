@@ -49,6 +49,7 @@ import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { HarRouter } from './harRouter';
+import type { Clock } from './clock';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -87,6 +88,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly mouse: Mouse;
   readonly request: APIRequestContext;
   readonly touchscreen: Touchscreen;
+  readonly clock: Clock;
+
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
@@ -116,6 +119,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.mouse = new Mouse(this);
     this.request = this._browserContext.request;
     this.touchscreen = new Touchscreen(this);
+    this.clock = this._browserContext.clock;
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;

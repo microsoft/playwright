@@ -1460,6 +1460,11 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   harExport(params: BrowserContextHarExportParams, metadata?: CallMetadata): Promise<BrowserContextHarExportResult>;
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFileResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
+  clockInstall(params: BrowserContextClockInstallParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallResult>;
+  clockJump(params: BrowserContextClockJumpParams, metadata?: CallMetadata): Promise<BrowserContextClockJumpResult>;
+  clockRunAll(params?: BrowserContextClockRunAllParams, metadata?: CallMetadata): Promise<BrowserContextClockRunAllResult>;
+  clockRunToLast(params?: BrowserContextClockRunToLastParams, metadata?: CallMetadata): Promise<BrowserContextClockRunToLastResult>;
+  clockTick(params: BrowserContextClockTickParams, metadata?: CallMetadata): Promise<BrowserContextClockTickResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1748,6 +1753,51 @@ export type BrowserContextUpdateSubscriptionOptions = {
 
 };
 export type BrowserContextUpdateSubscriptionResult = void;
+export type BrowserContextClockInstallParams = {
+  now?: number,
+  toFake?: string[],
+  loopLimit?: number,
+  shouldAdvanceTime?: boolean,
+  advanceTimeDelta?: number,
+};
+export type BrowserContextClockInstallOptions = {
+  now?: number,
+  toFake?: string[],
+  loopLimit?: number,
+  shouldAdvanceTime?: boolean,
+  advanceTimeDelta?: number,
+};
+export type BrowserContextClockInstallResult = void;
+export type BrowserContextClockJumpParams = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockJumpOptions = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockJumpResult = void;
+export type BrowserContextClockRunAllParams = {};
+export type BrowserContextClockRunAllOptions = {};
+export type BrowserContextClockRunAllResult = {
+  fakeTime: number,
+};
+export type BrowserContextClockRunToLastParams = {};
+export type BrowserContextClockRunToLastOptions = {};
+export type BrowserContextClockRunToLastResult = {
+  fakeTime: number,
+};
+export type BrowserContextClockTickParams = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockTickOptions = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockTickResult = {
+  fakeTime: number,
+};
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
