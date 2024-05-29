@@ -45,7 +45,13 @@ The testing sidebar can be opened by clicking on the testing icon in the activit
 
 You can run a single test by clicking the green triangle next to your test block to run your test. Playwright will run through each line of the test and when it finishes you will see a green tick next to your test block as well as the time it took to run the test.
 
+<LiteYouTube
+    id="mQmcIBMsc38"
+    title="Getting Started with Playwright in VS Code"
+/>
+
 ![run a single test](https://github.com/microsoft/playwright/assets/13063165/69dbccfc-4e9f-40e7-bcdf-7d5c5a11f988)
+
 
 ### Run tests and show browsers
 
