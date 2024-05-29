@@ -13383,11 +13383,12 @@ export interface BrowserType<Unused = {}> {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+       * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+       * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"immediately";
     };
 
     /**
@@ -14920,11 +14921,12 @@ export interface AndroidDevice {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+       * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+       * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"immediately";
     };
 
     /**
@@ -15651,11 +15653,12 @@ export interface APIRequest {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+       * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+       * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"immediately";
     };
 
     /**
@@ -16808,11 +16811,12 @@ export interface Browser extends EventEmitter {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+       * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+       * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"immediately";
     };
 
     /**
@@ -17705,11 +17709,12 @@ export interface Electron {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+       * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+       * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"immediately";
     };
 
     /**
@@ -20373,11 +20378,12 @@ export interface HTTPCredentials {
   origin?: string;
 
   /**
-   * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-   * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-   * from the browser.
+   * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+   * requests sent from the browser. `'immediately'` - `Authorization` header with basic authentication credentials will
+   * be sent with the first API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized)
+   * response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
    */
-  sendImmediately?: boolean;
+  send?: "unauthorized"|"immediately";
 }
 
 export interface Geolocation {
