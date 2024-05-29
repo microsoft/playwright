@@ -60,7 +60,7 @@ jobs:
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
     - name: Create Pull Request
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |

@@ -102,6 +102,7 @@ async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, op
 
   const selector = await page.evaluate(async ({ component, hooksConfig }) => {
     component = await window.__pwUnwrapObject(component);
+    hooksConfig = await window.__pwUnwrapObject(hooksConfig);
     let rootElement = document.getElementById('root');
     if (!rootElement) {
       rootElement = document.createElement('div');

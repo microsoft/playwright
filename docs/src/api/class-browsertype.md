@@ -380,6 +380,12 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 ### option: BrowserType.launchServer.logger = %%-browser-option-logger-%%
 * since: v1.8
 
+### option: BrowserType.launchServer.host
+* since: v1.45
+- `host` <[string]>
+
+Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider hardening it with picking a specific interface.
+
 ### option: BrowserType.launchServer.port
 * since: v1.8
 - `port` <[int]>

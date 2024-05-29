@@ -235,11 +235,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       context.setDefaultTimeout(this._defaultContextTimeout);
     if (this._defaultContextNavigationTimeout !== undefined)
       context.setDefaultNavigationTimeout(this._defaultContextNavigationTimeout);
-    await this._instrumentation.onDidCreateBrowserContext(context);
+    await this._instrumentation.runAfterCreateBrowserContext(context);
   }
 
   async _willCloseContext(context: BrowserContext) {
     this._contexts.delete(context);
-    await this._instrumentation.onWillCloseBrowserContext(context);
+    await this._instrumentation.runBeforeCloseBrowserContext(context);
   }
 }

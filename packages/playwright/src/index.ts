@@ -268,19 +268,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       onWillPause: () => {
         currentTestInfo()?.setTimeout(0);
       },
-      onDidCreateBrowserContext: async (context: BrowserContext) => {
+      runAfterCreateBrowserContext: async (context: BrowserContext) => {
         await artifactsRecorder?.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
         if (testInfo)
           attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
-      onDidCreateRequestContext: async (context: APIRequestContext) => {
+      runAfterCreateRequestContext: async (context: APIRequestContext) => {
         await artifactsRecorder?.didCreateRequestContext(context);
       },
-      onWillCloseBrowserContext: async (context: BrowserContext) => {
+      runBeforeCloseBrowserContext: async (context: BrowserContext) => {
         await artifactsRecorder?.willCloseBrowserContext(context);
       },
-      onWillCloseRequestContext: async (context: APIRequestContext) => {
+      runBeforeCloseRequestContext: async (context: APIRequestContext) => {
         await artifactsRecorder?.willCloseRequestContext(context);
       },
     };
