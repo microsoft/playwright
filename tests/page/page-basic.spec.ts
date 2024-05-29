@@ -255,8 +255,7 @@ it('frame.press should work', async ({ page, server }) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('has navigator.webdriver set to true', async ({ page, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('has navigator.webdriver set to true', async ({ page }) => {
   expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
 });
 
