@@ -94,7 +94,8 @@ export class Runner {
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
 
-    await writeLastRunInfo(testRun, status);
+    if (!listOnly)
+      await writeLastRunInfo(testRun, status);
 
     await reporter.onExit();
 
