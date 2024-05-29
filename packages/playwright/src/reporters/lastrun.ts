@@ -25,11 +25,6 @@ type LastRunOptions = {
   _mode: 'list' | 'test' | 'merge',
 };
 
-// The blob reporter adds a suffix to test ids to avoid collisions. But we need
-// to remove that suffix to match the test ids from the last run.
-function unsaltTestId(testId: string): string {
-  return testId.split('-').map(s => s.substring(0, 20)).join('-');
-}
 
 class LastRunReporter extends BaseReporter {
 
@@ -40,12 +35,10 @@ class LastRunReporter extends BaseReporter {
   };
 
   private resolvedOutputFile: string | undefined;
-  private testId: (testId: string) => string;
 
   constructor(options: LastRunOptions) {
     super();
     this.resolvedOutputFile = resolveOutputFile('LASTRUN', { fileName: '.last-run.json', ...options })?.outputFile;
-    this.testId = options._mode === 'merge' ? unsaltTestId : (testId: string) => testId;
   }
 
   override printsToStdio() {
@@ -54,9 +47,9 @@ class LastRunReporter extends BaseReporter {
 
   override onTestEnd(test: TestCase, result: TestResult): void {
     super.onTestEnd(test, result);
-    this.lastRun.testDurations![this.testId(test.id)] = result.duration;
+    this.lastRun.testDurations![test.id] = result.duration;
     if (result.status === 'failed')
-      this.lastRun.failedTests.push(this.testId(test.id));
+      this.lastRun.failedTests.push(test.id);
   }
 
   override async onEnd(result: FullResult) {
