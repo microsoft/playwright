@@ -58,7 +58,7 @@ export const ResizeView: React.FC<{
       right: 0,
       bottom: 0,
       left: -(7 - resizerWidth) / 2,
-      zIndex: 1000,
+      zIndex: 100, // Above the content, but below the film strip hover.
       pointerEvents: 'none',
     }}
     ref={ref}>
