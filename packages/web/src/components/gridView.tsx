@@ -38,15 +38,18 @@ export type GridViewProps<T> = Omit<ListViewProps<T>, 'render'> & {
 };
 
 export function GridView<T>(model: GridViewProps<T>) {
-  function offsets() {
+  const [offsets, setOffsets] = React.useState<number[]>([]);
+
+  React.useEffect(() => {
     const offsets: number[] = [];
     for (let i = 0; i < model.columns.length - 1; ++i) {
       const column = model.columns[i];
       offsets[i] = (offsets[i - 1] || 0) + model.columnWidths.get(column)!;
     }
-    return offsets;
-  }
-  function setOffsets(offsets: number[]) {
+    setOffsets(offsets);
+  }, [model.columns, model.columnWidths]);
+
+  function updateWidths(offsets: number[]) {
     const widths = new Map(model.columnWidths.entries());
     for (let i = 0; i < offsets.length; ++i) {
       const width = offsets[i] - (offsets[i - 1] || 0);
@@ -63,8 +66,8 @@ export function GridView<T>(model: GridViewProps<T>) {
   return <div className={`grid-view ${model.name}-grid-view`}>
     <ResizeView
       orientation={'horizontal'}
-      offsets={offsets()}
-      setOffsets={setOffsets}
+      offsets={offsets}
+      setOffsets={updateWidths}
       resizerColor='var(--vscode-panel-border)'
       resizerWidth={1}
       minColumnWidth={25}>
