@@ -569,14 +569,19 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
   expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(0);
 });
 
-test('should record with custom page fixture', async ({ runInlineTest }, testInfo) => {
+test('should record with custom page fixture that closes the context', async ({ runInlineTest }, testInfo) => {
+  // Note that original issue did not close the context, but we do not support such usecase.
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23220' });
+
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
 
       const test = base.extend({
         myPage: async ({ browser }, use) => {
-          await use(await browser.newPage());
+          const page = await browser.newPage();
+          await use(page);
+          await page.close();
         },
       });
 
@@ -1111,4 +1116,122 @@ test('trace:retain-on-first-failure should create trace if request context is di
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
+});
+
+test('should record trace in workerStorageState', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30287' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        storageState: ({ workerStorageState }, use) => use(workerStorageState),
+        workerStorageState: [async ({ browser }, use) => {
+          const page = await browser.newPage({ storageState: undefined });
+          await page.setContent('<div>hello</div>');
+          await page.close();
+          await use(undefined);
+        }, { scope: 'worker' }],
+      })
+      test('pass', async ({ page }) => {
+        await page.goto('data:text/html,<div>hi</div>');
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: workerStorageState',
+    '    browser.newPage',
+    '    page.setContent',
+    '    page.close',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'page.goto',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});
+
+test('should record trace after fixture teardown timeout', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30718' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fixture: async ({}, use) => {
+          await use('foo');
+          await new Promise(() => {});
+        },
+      })
+      test('fails', async ({ fixture, page }) => {
+        await page.evaluate(() => console.log('from the page'));
+      });
+    `,
+  }, { trace: 'on', timeout: '4000' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-fails', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: fixture',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'page.evaluate',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+    '  fixture: fixture',
+    'Worker Cleanup',
+    '  fixture: browser',
+  ]);
+  // Check console events to make sure that library trace is recorded.
+  expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
+});
+
+test('should take a screenshot-on-failure in workerStorageState', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30959' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        use: {
+          screenshot: 'only-on-failure',
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        storageState: ({ workerStorageState }, use) => use(workerStorageState),
+        workerStorageState: [async ({ browser }, use) => {
+          const page = await browser.newPage({ storageState: undefined });
+          await page.setContent('hello world!');
+          throw new Error('Failed!');
+          await use(undefined);
+        }, { scope: 'worker' }],
+      })
+      test('fail', async ({ page }) => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(fs.existsSync(test.info().outputPath('test-results', 'a-fail', 'test-failed-1.png'))).toBeTruthy();
 });

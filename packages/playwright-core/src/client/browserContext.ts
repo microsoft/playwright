@@ -44,6 +44,7 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { TargetClosedError, parseError } from './errors';
+import { Clock } from './clock';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -58,6 +59,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
+  readonly clock: Clock;
+
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
@@ -82,6 +85,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
+    this.clock = new Clock(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());

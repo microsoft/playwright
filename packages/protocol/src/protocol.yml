@@ -456,7 +456,11 @@ ContextOptions:
         username: string
         password: string
         origin: string?
-        sendImmediately: boolean?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -674,7 +678,11 @@ Playwright:
             username: string
             password: string
             origin: string?
-            sendImmediately: boolean?
+            send:
+              type: enum?
+              literals:
+              - always
+              - unauthorized
         proxy:
           type: object?
           properties:
@@ -1195,6 +1203,36 @@ BrowserContext:
           - requestFinished
           - requestFailed
         enabled: boolean
+
+    clockInstall:
+      parameters:
+        now: number?
+        toFake:
+          type: array?
+          items: string
+        loopLimit: number?
+        shouldAdvanceTime: boolean?
+        advanceTimeDelta: number?
+
+    clockJump:
+      parameters:
+        timeNumber: number?
+        timeString: string?
+
+    clockRunAll:
+      returns:
+        fakeTime: number
+
+    clockRunToLast:
+      returns:
+        fakeTime: number
+
+    clockTick:
+      parameters:
+        timeNumber: number?
+        timeString: string?
+      returns:
+        fakeTime: number
 
   events:
 

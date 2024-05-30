@@ -384,7 +384,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (!isMac && browserName === 'webkit')
+      if (isWindows && browserName === 'webkit')
         expect(serverRequest.headers.cookie).toBe('name=value');
       else
         expect(serverRequest.headers.cookie).toBeFalsy();
@@ -396,7 +396,10 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      expect(serverRequest.headers.cookie).toBe('name=value');
+      if (isLinux && browserName === 'webkit')
+        expect(serverRequest.headers.cookie).toBe(undefined);
+      else
+        expect(serverRequest.headers.cookie).toBe('name=value');
     }
   }
 });

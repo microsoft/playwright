@@ -109,7 +109,7 @@ it('should fall back to context.route', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should support Set-Cookie header', async ({ contextFactory, server, browserName, defaultSameSiteCookieValue }) => {
+it('should support Set-Cookie header', async ({ contextFactory, defaultSameSiteCookieValue }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await page.route('https://example.com/', (route, request) => {
@@ -152,7 +152,7 @@ it('should ignore secure Set-Cookie header for insecure requests', async ({ cont
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName, defaultSameSiteCookieValue }) => {
+it('should use Set-Cookie header in future requests', async ({ contextFactory, server, defaultSameSiteCookieValue }) => {
   const context = await contextFactory();
   const page = await context.newPage();
 

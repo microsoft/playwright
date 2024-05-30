@@ -920,6 +920,9 @@ would be `example.test`.
      */
     export interface CookieDeprecationMetadataIssueDetails {
       allowedSites: string[];
+      optOutPercentage: number;
+      isOptOutTopLevel: boolean;
+      operation: CookieOperation;
     }
     export type ClientHintIssueReason = "MetaTagAllowListInvalidOrigin"|"MetaTagModifiedHTML";
     export interface FederatedAuthRequestIssueDetails {

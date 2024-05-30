@@ -1374,9 +1374,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
-   * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
-   * behavior.
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitly
+   * specified, Playwright will ignore any test files matching `.gitignore` entries.
    */
   respectGitIgnore?: boolean;
 

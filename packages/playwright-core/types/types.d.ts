@@ -4864,6 +4864,11 @@ export interface Page {
   accessibility: Accessibility;
 
   /**
+   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   */
+  clock: Clock;
+
+  /**
    * **NOTE** Only available for Chromium atm.
    *
    * Browser-specific Coverage implementation. See {@link Coverage} for more details.
@@ -8979,6 +8984,11 @@ export interface BrowserContext {
    */
   waitForEvent(event: 'weberror', optionsOrPredicate?: { predicate?: (webError: WebError) => boolean | Promise<boolean>, timeout?: number } | ((webError: WebError) => boolean | Promise<boolean>)): Promise<WebError>;
 
+
+  /**
+   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   */
+  clock: Clock;
 
   /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
@@ -13383,11 +13393,12 @@ export interface BrowserType<Unused = {}> {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"always";
     };
 
     /**
@@ -14920,11 +14931,12 @@ export interface AndroidDevice {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"always";
     };
 
     /**
@@ -15651,11 +15663,12 @@ export interface APIRequest {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"always";
     };
 
     /**
@@ -15864,7 +15877,7 @@ export interface APIRequestContext {
    */
   dispose(options?: {
     /**
-     * The reason to be reported to the operations interrupted by the context disposure.
+     * The reason to be reported to the operations interrupted by the context disposal.
      */
     reason?: string;
   }): Promise<void>;
@@ -16808,11 +16821,12 @@ export interface Browser extends EventEmitter {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"always";
     };
 
     /**
@@ -17222,6 +17236,81 @@ export interface BrowserServer {
   wsEndpoint(): string;
 
   [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is
+ * installed for the entire {@link BrowserContext}, so the time in all the pages and iframes is controlled by the same
+ * clock.
+ */
+export interface Clock {
+  /**
+   * Creates a clock and installs it globally.
+   * @param options
+   */
+  install(options?: {
+    /**
+     * Relevant only when using with `shouldAdvanceTime`. Increment mocked time by advanceTimeDelta ms every
+     * advanceTimeDelta ms change in the real system time (default: 20).
+     */
+    advanceTimeDelta?: number;
+
+    /**
+     * The maximum number of timers that will be run when calling
+     * [clock.runAll()](https://playwright.dev/docs/api/class-clock#clock-run-all). Defaults to `1000`.
+     */
+    loopLimit?: number;
+
+    /**
+     * Install fake timers with the specified unix epoch (default: 0).
+     */
+    now?: number|Date;
+
+    /**
+     * Tells `@sinonjs/fake-timers` to increment mocked time automatically based on the real system time shift (e.g., the
+     * mocked time will be incremented by 20ms for every 20ms change in the real system time). Defaults to `false`.
+     */
+    shouldAdvanceTime?: boolean;
+
+    /**
+     * An array with names of global methods and APIs to fake. For instance, `await page.clock.install({ toFake:
+     * ['setTimeout'] })` will fake only `setTimeout()`. By default, `setTimeout`, `clearTimeout`, `setInterval`,
+     * `clearInterval` and `Date` are faked.
+     */
+    toFake?: Array<"setTimeout"|"clearTimeout"|"setInterval"|"clearInterval"|"Date"|"requestAnimationFrame"|"cancelAnimationFrame"|"requestIdleCallback"|"cancelIdleCallback"|"performance">;
+  }): Promise<void>;
+
+  /**
+   * Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the
+   * unix epoch. This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later,
+   * skipping intermediary timers.
+   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   */
+  jump(time: number|string): Promise<void>;
+
+  /**
+   * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
+   * run as well. This makes it easier to run asynchronous tests to completion without worrying about the number of
+   * timers they use, or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there
+   * is an infinite loop of timers and throws an error.
+   */
+  runAll(): Promise<number>;
+
+  /**
+   * This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as
+   * necessary. If new timers are added while it is executing they will be run only if they would occur before this
+   * time. This is useful when you want to run a test to completion, but the test recursively sets timers that would
+   * cause runAll to trigger an infinite loop warning.
+   */
+  runToLast(): Promise<number>;
+
+  /**
+   * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   */
+  tick(time: number|string): Promise<number>;
 }
 
 /**
@@ -17705,11 +17794,12 @@ export interface Electron {
       origin?: string;
 
       /**
-       * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-       * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-       * from the browser.
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
-      sendImmediately?: boolean;
+      send?: "unauthorized"|"always";
     };
 
     /**
@@ -20373,11 +20463,12 @@ export interface HTTPCredentials {
   origin?: string;
 
   /**
-   * Whether to send `Authorization` header with the first API request. By default, the credentials are sent only when
-   * 401 (Unauthorized) response with `WWW-Authenticate` header is received. This option does not affect requests sent
-   * from the browser.
+   * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+   * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+   * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+   * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
    */
-  sendImmediately?: boolean;
+  send?: "unauthorized"|"always";
 }
 
 export interface Geolocation {

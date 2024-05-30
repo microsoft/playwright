@@ -267,7 +267,9 @@ export class WKBrowserContext extends BrowserContext {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,
-      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires
+      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires,
+      // TODO: make WebKit on linux work without eplicit sameSite.
+      sameSite: c.sameSite ?? (process.platform === 'linux' ? 'Lax' : undefined)
     })) as Protocol.Playwright.SetCookieParam[];
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }

@@ -20,6 +20,7 @@ export { Browser } from './browser';
 export { BrowserContext } from './browserContext';
 export type { BrowserServer } from './browserType';
 export { BrowserType } from './browserType';
+export { Clock } from './clock';
 export { ConsoleMessage } from './consoleMessage';
 export { Coverage } from './coverage';
 export { Dialog } from './dialog';

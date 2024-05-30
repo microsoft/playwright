@@ -435,10 +435,10 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-it('should support HTTPCredentials.sendImmediately', async ({ contextFactory, server }) => {
+it('should support HTTPCredentials.sendImmediately for newContext', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const context = await contextFactory({
-    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), sendImmediately: true }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
   });
   {
     const [serverRequest, response] = await Promise.all([
@@ -457,6 +457,31 @@ it('should support HTTPCredentials.sendImmediately', async ({ contextFactory, se
     expect(serverRequest.headers.authorization).toBe(undefined);
     expect(response.status()).toBe(200);
   }
+});
+
+it('should support HTTPCredentials.sendImmediately for browser.newPage', async ({ contextFactory, server, browser }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
+  const page = await browser.newPage({
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
+  });
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.request.get(server.EMPTY_PAGE)
+    ]);
+    expect(serverRequest.headers.authorization).toBe('Basic ' + Buffer.from('user:pass').toString('base64'));
+    expect(response.status()).toBe(200);
+  }
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.request.get(server.CROSS_PROCESS_PREFIX + '/empty.html')
+    ]);
+    // Not sent to another origin.
+    expect(serverRequest.headers.authorization).toBe(undefined);
+    expect(response.status()).toBe(200);
+  }
+  await page.close();
 });
 
 it('delete should support post data', async ({ context, server }) => {
@@ -1202,7 +1227,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1212,6 +1237,8 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       await page.request.get(server.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
       if (browserName === 'chromium' && value === 'None')
+        expect(cookie).toBeFalsy();
+      else if (browserName === 'webkit' && isLinux && value === 'None')
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
