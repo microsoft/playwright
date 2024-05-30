@@ -349,10 +349,10 @@ it('should properly serialize null fields', async ({ page }) => {
 
 it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   expect(await page.evaluate(() => {
-    window.performance.mark('start');
-    window.performance.mark('end');
-    window.performance.measure('my-measure', 'start', 'end');
-    return performance.getEntriesByType('measure');
+    window.builtinPerformance.mark('start');
+    window.builtinPerformance.mark('end');
+    window.builtinPerformance.measure('my-measure', 'start', 'end');
+    return window.builtinPerformance.getEntriesByType('measure');
   })).toEqual([{
     duration: expect.any(Number),
     entryType: 'measure',
@@ -362,6 +362,8 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
 });
 
 it('should properly serialize window.performance object', async ({ page }) => {
+  it.skip(!!process.env.PW_FREEZE_TIME);
+
   expect(await page.evaluate(() => performance)).toEqual({
     'navigation': {
       'redirectCount': 0,
@@ -758,16 +760,6 @@ it('should work with overridden URL/Date/RegExp', async ({ page, server }) => {
       expect(await page.evaluate(() => ({ 'a': 2023 }))).toEqual({ 'a': 2023 });
     });
   }
-});
-
-it('should expose utilityScript', async ({ page }) => {
-  const result = await (page.mainFrame() as any)._evaluateExposeUtilityScript((utilityScript, { a }) => {
-    return { utils: 'parseEvaluationResultValue' in utilityScript, a };
-  }, { a: 42 });
-  expect(result).toEqual({
-    a: 42,
-    utils: true,
-  });
 });
 
 it('should work with Array.from/map', async ({ page }) => {

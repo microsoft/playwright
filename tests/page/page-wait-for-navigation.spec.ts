@@ -255,7 +255,7 @@ it('should fail when frame detaches', async ({ page, server }) => {
     frame.waitForNavigation().catch(e => e),
     page.$eval('iframe', frame => { frame.contentWindow.location.href = '/one-style.html'; }),
     // Make sure policy checks pass and navigation actually begins before removing the frame to avoid other errors
-    server.waitForRequest('/one-style.css').then(() => page.$eval('iframe', frame => setTimeout(() => frame.remove(), 0)))
+    server.waitForRequest('/one-style.css').then(() => page.$eval('iframe', frame => window.builtinSetTimeout(() => frame.remove(), 0)))
   ]);
   expect(error.message).toContain('waiting for navigation until "load"');
   expect(error.message).toContain('frame was detached');

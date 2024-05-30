@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestType } from '@playwright/test';
+import type { Frame, Page, TestType } from '@playwright/test';
 import type { PlatformWorkerFixtures } from '../config/platformFixtures';
 import type { TestModeTestFixtures, TestModeWorkerFixtures, TestModeWorkerOptions } from '../config/testModeFixtures';
 import { androidTest } from '../android/androidTest';
@@ -35,3 +35,11 @@ if (process.env.PWPAGE_IMPL === 'webview2')
   impl = webView2Test;
 
 export const test = impl;
+
+export async function rafraf(target: Page | Frame, count = 1) {
+  for (let i = 0; i < count; i++) {
+    await target.evaluate(async () => {
+      await new Promise(f => window.builtinRequestAnimationFrame(() => window.builtinRequestAnimationFrame(f)));
+    });
+  }
+}

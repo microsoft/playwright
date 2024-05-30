@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import type { Page } from '@playwright/test';
+import { test as it, expect, rafraf } from './pageTest';
 
-async function giveItAChanceToResolve(page) {
-  for (let i = 0; i < 5; i++)
-    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-}
+const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
 it('should select single option @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/select.html');

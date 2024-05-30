@@ -245,6 +245,7 @@ it('page.goForward during renderer-initiated navigation', async ({ page, server 
 
 it('regression test for issue 20791', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20791' });
+  it.skip(!!process.env.PW_FREEZE_TIME);
   server.setRoute('/iframe.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     // iframe access parent frame to log a value from it.

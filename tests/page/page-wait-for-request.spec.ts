@@ -70,7 +70,7 @@ it('should work with no timeout', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForRequest(server.PREFIX + '/digits/2.png', { timeout: 0 }),
-    page.evaluate(() => setTimeout(() => {
+    page.evaluate(() => window.builtinSetTimeout(() => {
       void fetch('/digits/1.png');
       void fetch('/digits/2.png');
       void fetch('/digits/3.png');

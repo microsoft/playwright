@@ -17274,8 +17274,7 @@ export interface Clock {
 
     /**
      * An array with names of global methods and APIs to fake. For instance, `await page.clock.install({ toFake:
-     * ['setTimeout'] })` will fake only `setTimeout()`. By default, `setTimeout`, `clearTimeout`, `setInterval`,
-     * `clearInterval` and `Date` are faked.
+     * ['setTimeout'] })` will fake only `setTimeout()`. By default, all the methods are faked.
      */
     toFake?: Array<"setTimeout"|"clearTimeout"|"setInterval"|"clearInterval"|"Date"|"requestAnimationFrame"|"cancelAnimationFrame"|"requestIdleCallback"|"cancelIdleCallback"|"performance">;
   }): Promise<void>;

@@ -92,7 +92,7 @@ it('should dispatch click when node is added in shadow dom', async ({ page, serv
     div.attachShadow({ mode: 'open' });
     document.body.appendChild(div);
   });
-  await page.evaluate(() => new Promise(f => setTimeout(f, 100)));
+  await page.waitForTimeout(100);
   await page.evaluate(() => {
     const span = document.createElement('span');
     span.textContent = 'Hello from shadow';

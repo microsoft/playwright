@@ -16,7 +16,7 @@
  */
 
 import os from 'os';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 import { verifyViewport, attachFrame } from '../config/utils';
 import type { Route } from 'playwright-core';
 import path from 'path';
@@ -589,14 +589,6 @@ it.describe('page screenshot', () => {
   });
 });
 
-async function rafraf(page) {
-  // Do a double raf since single raf does not
-  // actually guarantee a new animation frame.
-  await page.evaluate(() => new Promise(x => {
-    requestAnimationFrame(() => requestAnimationFrame(x));
-  }));
-}
-
 declare global {
   interface Window {
     animation?: Animation;
@@ -732,9 +724,9 @@ it.describe('page screenshot animations', () => {
     const div = page.locator('div');
     await div.evaluate(el => {
       el.addEventListener('transitionend', () => {
-        const time = Date.now();
+        const time = window.builtinDate.now();
         // Block main thread for 200ms, emulating heavy layout.
-        while (Date.now() - time < 200) {}
+        while (window.builtinDate.now() - time < 200) {}
         const h1 = document.createElement('h1');
         h1.textContent = 'woof-woof';
         document.body.append(h1);

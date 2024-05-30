@@ -1429,7 +1429,6 @@ scheme.FrameDispatchEventResult = tOptional(tObject({}));
 scheme.FrameEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
-  exposeUtilityScript: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
 });
 scheme.FrameEvaluateExpressionResult = tObject({
