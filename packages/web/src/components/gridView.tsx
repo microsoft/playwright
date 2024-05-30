@@ -47,7 +47,7 @@ export function GridView<T>(model: GridViewProps<T>) {
     return offsets;
   }
   function setOffsets(offsets: number[]) {
-    const widths = new Map<keyof T, number>(model.columnWidths.entries());
+    const widths = new Map(model.columnWidths.entries());
     for (let i = 0; i < offsets.length; ++i) {
       const width = offsets[i] - (offsets[i - 1] || 0);
       const column = model.columns[i];
