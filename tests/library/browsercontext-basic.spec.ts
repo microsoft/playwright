@@ -19,6 +19,7 @@ import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame, verifyViewport } from '../config/utils';
 import type { Page } from '@playwright/test';
+import { request } from '@playwright/test';
 
 it('should create new context @smoke', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
@@ -29,6 +30,22 @@ it('should create new context @smoke', async function({ browser }) {
   await context.close();
   expect(browser.contexts().length).toBe(0);
   expect(browser).toBe(context.browser());
+});
+
+it('log two contexts', async function({ browser }) {
+  const context1 = await browser.newContext();
+  const context2 = await browser.newContext();
+  const api1 = await request.newContext();
+  const api2 = await request.newContext();
+  const page1 = await context1.newPage();
+  const page2 = await context2.newPage();
+  await page1.evaluate(() => { window.open('about:blank'); });
+  const promises = [];
+  promises.push(page1.goto('https://playwright.dev/'));
+  promises.push(page2.goto('https://theverge.com/'));
+  promises.push(api1.get('https://playwright.dev/'));
+  promises.push(api2.get('https://theverge.com/'));
+  await Promise.all(promises);
 });
 
 it('should be able to click across browser contexts', async function({ browser }) {

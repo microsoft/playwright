@@ -30,19 +30,33 @@ export type RenderedGridCell = {
 export type GridViewProps<T> = Omit<ListViewProps<T>, 'render'> & {
   columns: (keyof T)[],
   columnTitle: (column: keyof T) => string,
-  columnWidth: (column: keyof T) => number,
+  columnWidths: Map<keyof T, number>,
+  setColumnWidths: (widths: Map<keyof T, number>) => void,
   render: (item: T, column: keyof T, index: number) => RenderedGridCell,
   sorting?: Sorting<T>,
   setSorting?: (sorting: Sorting<T> | undefined) => void,
 };
 
 export function GridView<T>(model: GridViewProps<T>) {
-  const initialOffsets: number[] = [];
-  for (let i = 0; i < model.columns.length - 1; ++i) {
-    const column = model.columns[i];
-    initialOffsets[i] = (initialOffsets[i - 1] || 0) + model.columnWidth(column);
+  function offsets() {
+    const offsets: number[] = [];
+    for (let i = 0; i < model.columns.length - 1; ++i) {
+      const column = model.columns[i];
+      offsets[i] = (offsets[i - 1] || 0) + model.columnWidths.get(column)!;
+    }
+    console.log('offsets', offsets, model.columns);
+    return offsets;
   }
-  const [offsets, setOffsets] = React.useState<number[]>(initialOffsets);
+  function setOffsets(offsets: number[]) {
+    const widths = new Map<keyof T, number>(model.columnWidths.entries());
+    for (let i = 0; i < offsets.length; ++i) {
+      const width = offsets[i] - (offsets[i - 1] || 0);
+      const column = model.columns[i];
+      widths.set(column, width);
+    }
+    console.log('setOffsets', offsets);
+    model.setColumnWidths(widths);
+  }
 
   const toggleSorting = React.useCallback((f: keyof T) => {
     model.setSorting?.({ by: f, negate: model.sorting?.by === f ? !model.sorting.negate : false });
@@ -51,7 +65,7 @@ export function GridView<T>(model: GridViewProps<T>) {
   return <div className={`grid-view ${model.name}-grid-view`}>
     <ResizeView
       orientation={'horizontal'}
-      offsets={offsets}
+      offsets={offsets()}
       setOffsets={setOffsets}
       resizerColor='var(--vscode-panel-border)'
       resizerWidth={1}
@@ -63,7 +77,7 @@ export function GridView<T>(model: GridViewProps<T>) {
           return <div
             className={'grid-view-header-cell ' + sortingHeader(column, model.sorting)}
             style={{
-              width: offsets[i] - (offsets[i - 1] || 0),
+              width: i < model.columns.length - 1 ? model.columnWidths.get(column) : undefined,
             }}
             onClick={() => model.setSorting && toggleSorting(column)}
           >
@@ -84,7 +98,9 @@ export function GridView<T>(model: GridViewProps<T>) {
               return <div
                 className={`grid-view-cell grid-view-column-${String(column)}`}
                 title={title}
-                style={{ width: offsets[i] - (offsets[i - 1] || 0) }}>
+                style={{
+                  width: i < model.columns.length - 1 ? model.columnWidths.get(column) : undefined,
+                }}>
                 {body}
               </div>;
             })}
