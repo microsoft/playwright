@@ -17,7 +17,7 @@
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { debugTest, relativeFilePath, serializeError } from '../util';
 import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, stdioChunkToParams } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { setCurrentTestInfo, setIsWorkerProcess, testLifecycleInstrumentation } from '../common/globals';
 import { deserializeConfig } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -304,10 +304,11 @@ export class WorkerMain extends ProcessRunner {
     if (this._lastRunningTests.length > 10)
       this._lastRunningTests.shift();
     let shouldRunAfterEachHooks = false;
+    const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
 
     testInfo._allowSkips = true;
     await testInfo._runAsStage({ title: 'setup and test' }, async () => {
-      await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test' } }, async () => {
+      await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
         // test runner instead of a fixture belonging to Playwright.
         // However, for backwards compatibility, we have to read it from a fixture today.
@@ -318,6 +319,7 @@ export class WorkerMain extends ProcessRunner {
         if (typeof traceFixtureRegistration.fn === 'function')
           throw new Error(`"trace" option cannot be a function`);
         await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
+        await testLifecycleInstrumentation()?.onTestBegin?.();
       });
 
       if (this._isStopped || isSkipped) {
@@ -372,10 +374,10 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runAsStage({ title: 'on-test-function-finish', runnable: { type: 'test', slot: afterHooksSlot } }, async () => testInfo._onDidFinishTestFunction?.());
+        await testInfo._runAsStage({ title: 'on-test-function-finish', runnable: { type: 'test', slot: tracingSlot } }, async () => {
+          await testLifecycleInstrumentation()?.onTestFunctionEnd?.();
+        });
       } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          didTimeoutInAfterHooks = true;
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
@@ -458,8 +460,8 @@ export class WorkerMain extends ProcessRunner {
       }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
     }
 
-    const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
     await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
+      await testLifecycleInstrumentation()?.onTestEnd?.();
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
