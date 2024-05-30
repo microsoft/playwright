@@ -24,7 +24,7 @@ it('should work @smoke', async ({ context, page, server }) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'password',
-    value: '123456'
+    value: '123456',
   }]);
   expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
 });
@@ -224,7 +224,7 @@ it('should have |expires| set to |-1| for session cookies', async ({ context, se
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('should set cookie with reasonable defaults', async ({ context, server, browserName }) => {
+it('should set cookie with reasonable defaults', async ({ context, server, defaultSameSiteCookieValue }) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
@@ -239,7 +239,7 @@ it('should set cookie with reasonable defaults', async ({ context, server, brows
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
+    sameSite: defaultSameSiteCookieValue,
   }]);
 });
 
