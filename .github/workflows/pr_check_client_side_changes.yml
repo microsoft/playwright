@@ -32,7 +32,7 @@ jobs:
             const title = '[Ports]: Backport client side changes for ' + currentPlaywrightVersion;
             for (const repo of ['playwright-python', 'playwright-java', 'playwright-dotnet']) {
               const { data: issuesData } = await github.rest.search.issuesAndPullRequests({
-                q: `is:issue is:open repo:microsoft/${repo} in:title "${title}" author:playwrightmachine"`
+                q: `is:issue is:open repo:microsoft/${repo} in:title "${title}" author:playwrightmachine`
               })
               let issueNumber = null;
               let issueBody = '';
