@@ -1654,7 +1654,6 @@ function withGlobal(_global) {
      * @returns {Clock}
      */
     function install(config) {
-        console.log('INSTALL', config);
         if (
             arguments.length > 1 ||
             config instanceof Date ||

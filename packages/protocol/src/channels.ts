@@ -1462,6 +1462,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
   clockInstall(params: BrowserContextClockInstallParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallResult>;
   clockJump(params: BrowserContextClockJumpParams, metadata?: CallMetadata): Promise<BrowserContextClockJumpResult>;
+  clockNext(params?: BrowserContextClockNextParams, metadata?: CallMetadata): Promise<BrowserContextClockNextResult>;
   clockRunAll(params?: BrowserContextClockRunAllParams, metadata?: CallMetadata): Promise<BrowserContextClockRunAllResult>;
   clockRunToLast(params?: BrowserContextClockRunToLastParams, metadata?: CallMetadata): Promise<BrowserContextClockRunToLastResult>;
   clockTick(params: BrowserContextClockTickParams, metadata?: CallMetadata): Promise<BrowserContextClockTickResult>;
@@ -1777,6 +1778,11 @@ export type BrowserContextClockJumpOptions = {
   timeString?: string,
 };
 export type BrowserContextClockJumpResult = void;
+export type BrowserContextClockNextParams = {};
+export type BrowserContextClockNextOptions = {};
+export type BrowserContextClockNextResult = {
+  fakeTime: number,
+};
 export type BrowserContextClockRunAllParams = {};
 export type BrowserContextClockRunAllOptions = {};
 export type BrowserContextClockRunAllResult = {

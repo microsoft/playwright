@@ -4,6 +4,7 @@
 Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is installed for the entire [BrowserContext], so the time
 in all the pages and iframes is controlled by the same clock.
 
+
 ## async method: Clock.install
 * since: v1.45
 
@@ -42,6 +43,14 @@ Tells `@sinonjs/fake-timers` to increment mocked time automatically based on the
 Relevant only when using with [`option: shouldAdvanceTime`]. Increment mocked time by advanceTimeDelta ms every advanceTimeDelta ms change
 in the real system time (default: 20).
 
+
+## async method: Clock.next
+* since: v1.45
+- returns: <[int]> Fake milliseconds since the unix epoch.
+
+Advances the clock to the the moment of the first scheduled timer, firing it.
+
+
 ## async method: Clock.jump
 * since: v1.45
 
@@ -53,7 +62,6 @@ This can be used to simulate the JS engine (such as a browser) being put to slee
 - `time` <[int]|[string]>
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
-
 
 ## async method: Clock.runAll
 * since: v1.45

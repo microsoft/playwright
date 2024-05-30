@@ -37,6 +37,11 @@ export class Clock implements api.Clock {
     });
   }
 
+  async next(): Promise<number> {
+    const result = await this._browserContext._channel.clockNext();
+    return result.fakeTime;
+  }
+
   async runAll(): Promise<number> {
     const result = await this._browserContext._channel.clockRunAll();
     return result.fakeTime;
