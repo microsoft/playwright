@@ -31,6 +31,7 @@ export { countTimes } from '../config/commonFixtures';
 type CliRunResult = {
   exitCode: number,
   output: string,
+  outputLines: string[],
 };
 
 export type RunResult = {
@@ -330,7 +331,12 @@ export const test = base
             cwd,
           });
           const { exitCode } = await testProcess.exited;
-          return { exitCode, output: testProcess.output.toString() };
+          const output = testProcess.output.toString();
+          return {
+            exitCode,
+            output,
+            outputLines: parseOutputLines(output),
+          };
         });
       },
 
@@ -416,6 +422,10 @@ export function expectTestHelper(result: RunResult) {
   };
 }
 
+function parseOutputLines(output: string): string[] {
+  return output.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
+}
+
 export function parseTestRunnerOutput(output: string) {
   const summary = (re: RegExp) => {
     let result = 0;
@@ -436,7 +446,7 @@ export function parseTestRunnerOutput(output: string) {
   const strippedOutput = stripAnsi(output);
   return {
     output: strippedOutput,
-    outputLines: strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim()),
+    outputLines: parseOutputLines(strippedOutput),
     rawOutput: output,
     passed,
     failed,

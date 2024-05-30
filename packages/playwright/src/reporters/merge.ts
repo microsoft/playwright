@@ -194,12 +194,18 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
   printStatus(`merging events`);
 
   const reports: ReportData[] = [];
+  const globalTestIdSet = new Set<string>();
 
   for (let i = 0; i < blobs.length; ++i) {
     // Generate unique salt for each blob.
     const { parsedEvents, metadata, localPath } = blobs[i];
     const eventPatchers = new JsonEventPatchers();
-    eventPatchers.patchers.push(new IdsPatcher(stringPool, metadata.name, String(i)));
+    eventPatchers.patchers.push(new IdsPatcher(
+        stringPool,
+        metadata.name,
+        String(i),
+        globalTestIdSet,
+    ));
     // Only patch path separators if we are merging reports with explicit config.
     if (rootDirOverride)
       eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
@@ -358,11 +364,20 @@ class IdsPatcher {
   private _stringPool: StringInternPool;
   private _botName: string | undefined;
   private _salt: string;
+  private _testIdsMap: Map<string, string>;
+  private _globalTestIdSet: Set<string>;
 
-  constructor(stringPool: StringInternPool, botName: string | undefined, salt: string) {
+  constructor(
+    stringPool: StringInternPool,
+    botName: string | undefined,
+    salt: string,
+    globalTestIdSet: Set<string>,
+  ) {
     this._stringPool = stringPool;
     this._botName = botName;
     this._salt = salt;
+    this._testIdsMap = new Map();
+    this._globalTestIdSet = globalTestIdSet;
   }
 
   patchEvent(event: JsonEvent) {
@@ -406,7 +421,20 @@ class IdsPatcher {
   }
 
   private _mapTestId(testId: string): string {
-    return this._stringPool.internString(testId + this._salt);
+    const t1 = this._stringPool.internString(testId);
+    if (this._testIdsMap.has(t1))
+      // already mapped
+      return this._testIdsMap.get(t1)!;
+    if (this._globalTestIdSet.has(t1)) {
+      // test id is used in another blob, so we need to salt it.
+      const t2 = this._stringPool.internString(testId + this._salt);
+      this._globalTestIdSet.add(t2);
+      this._testIdsMap.set(t1, t2);
+      return t2;
+    }
+    this._globalTestIdSet.add(t1);
+    this._testIdsMap.set(t1, t1);
+    return t1;
   }
 }
 
