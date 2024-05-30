@@ -76,6 +76,10 @@ export const NetworkTab: React.FunctionComponent<{
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, sorting, boundaries]);
 
+  const [widths, setWidths] = React.useState<Map<ColumnName, number>>(() => {
+    return new Map(allColumns().map(column => [column, columnWidth(column)]));
+  });
+
   if (!networkModel.resources.length)
     return <PlaceholderPanel text='No network calls' />;
 
@@ -87,7 +91,8 @@ export const NetworkTab: React.FunctionComponent<{
     onHighlighted={item => onEntryHovered(item?.resource)}
     columns={visibleColumns(!!selectedEntry, renderedEntries)}
     columnTitle={columnTitle}
-    columnWidth={columnWidth}
+    columnWidths={widths}
+    setColumnWidths={setWidths}
     isError={item => item.status.code >= 400}
     isInfo={item => !!item.route}
     render={(item, column) => renderCell(item, column)}
@@ -96,7 +101,7 @@ export const NetworkTab: React.FunctionComponent<{
   />;
   return <>
     {!selectedEntry && grid}
-    {selectedEntry && <SplitView sidebarSize={200} sidebarIsFirst={true} orientation='horizontal'>
+    {selectedEntry && <SplitView sidebarSize={widths.get('name')!} sidebarIsFirst={true} orientation='horizontal' settingName='networkResourceDetails'>
       <NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} />
       {grid}
     </SplitView>}
@@ -142,11 +147,14 @@ const columnWidth = (column: ColumnName) => {
 function visibleColumns(entrySelected: boolean, renderedEntries: RenderedEntry[]): (keyof RenderedEntry)[] {
   if (entrySelected)
     return ['name'];
-  const columns: (keyof RenderedEntry)[] = [];
-  if (hasMultipleContexts(renderedEntries))
-    columns.push('contextId');
-  columns.push('name', 'method', 'status', 'contentType', 'duration', 'size', 'start', 'route');
+  let columns: (keyof RenderedEntry)[] = allColumns();
+  if (!hasMultipleContexts(renderedEntries))
+    columns = columns.filter(name => name !== 'contextId');
   return columns;
+}
+
+function allColumns(): (keyof RenderedEntry)[] {
+  return ['contextId', 'name', 'method', 'status', 'contentType', 'duration', 'size', 'start', 'route'];
 }
 
 const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell => {
