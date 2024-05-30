@@ -189,7 +189,7 @@ All responses returned by [`method: APIRequestContext.get`] and similar methods 
 * since: v1.45
 - `reason` <[string]>
 
-The reason to be reported to the operations interrupted by the context disposure.
+The reason to be reported to the operations interrupted by the context disposal.
 
 ## async method: APIRequestContext.fetch
 * since: v1.16

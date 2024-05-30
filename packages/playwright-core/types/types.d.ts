@@ -15877,7 +15877,7 @@ export interface APIRequestContext {
    */
   dispose(options?: {
     /**
-     * The reason to be reported to the operations interrupted by the context disposure.
+     * The reason to be reported to the operations interrupted by the context disposal.
      */
     reason?: string;
   }): Promise<void>;
