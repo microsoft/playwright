@@ -312,6 +312,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { artifact: ArtifactDispatcher.from(this, artifact) };
   }
 
+  async clockInstall(params: channels.BrowserContextClockInstallParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallResult> {
+    await this._context.clock.install(params);
+  }
+
+  async clockJump(params: channels.BrowserContextClockJumpParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockJumpResult> {
+    await this._context.clock.jump(params.timeString || params.timeNumber || 0);
+  }
+
+  async clockRunAll(params: channels.BrowserContextClockRunAllParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunAllResult> {
+    return { fakeTime: await this._context.clock.runAll() };
+  }
+
+  async clockRunToLast(params: channels.BrowserContextClockRunToLastParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunToLastResult> {
+    return { fakeTime: await this._context.clock.runToLast() };
+  }
+
+  async clockTick(params: channels.BrowserContextClockTickParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockTickResult> {
+    return { fakeTime: await this._context.clock.tick(params.timeString || params.timeNumber || 0) };
+  }
+
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);

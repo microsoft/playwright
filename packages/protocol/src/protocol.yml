@@ -1196,6 +1196,36 @@ BrowserContext:
           - requestFailed
         enabled: boolean
 
+    clockInstall:
+      parameters:
+        now: number?
+        toFake:
+          type: array?
+          items: string
+        loopLimit: number?
+        shouldAdvanceTime: boolean?
+        advanceTimeDelta: number?
+
+    clockJump:
+      parameters:
+        timeNumber: number?
+        timeString: string?
+
+    clockRunAll:
+      returns:
+        fakeTime: number
+
+    clockRunToLast:
+      returns:
+        fakeTime: number
+
+    clockTick:
+      parameters:
+        timeNumber: number?
+        timeString: string?
+      returns:
+        fakeTime: number
+
   events:
 
     bindingCall:

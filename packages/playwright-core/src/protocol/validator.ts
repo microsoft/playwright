@@ -963,6 +963,34 @@ scheme.BrowserContextUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
+scheme.BrowserContextClockInstallParams = tObject({
+  now: tOptional(tNumber),
+  toFake: tOptional(tArray(tString)),
+  loopLimit: tOptional(tNumber),
+  shouldAdvanceTime: tOptional(tBoolean),
+  advanceTimeDelta: tOptional(tNumber),
+});
+scheme.BrowserContextClockInstallResult = tOptional(tObject({}));
+scheme.BrowserContextClockJumpParams = tObject({
+  timeNumber: tOptional(tNumber),
+  timeString: tOptional(tString),
+});
+scheme.BrowserContextClockJumpResult = tOptional(tObject({}));
+scheme.BrowserContextClockRunAllParams = tOptional(tObject({}));
+scheme.BrowserContextClockRunAllResult = tObject({
+  fakeTime: tNumber,
+});
+scheme.BrowserContextClockRunToLastParams = tOptional(tObject({}));
+scheme.BrowserContextClockRunToLastResult = tObject({
+  fakeTime: tNumber,
+});
+scheme.BrowserContextClockTickParams = tObject({
+  timeNumber: tOptional(tNumber),
+  timeString: tOptional(tString),
+});
+scheme.BrowserContextClockTickResult = tObject({
+  fakeTime: tNumber,
+});
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({

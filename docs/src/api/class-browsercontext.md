@@ -98,6 +98,12 @@ context.BackgroundPage += (_, backgroundPage) =>
 
 ```
 
+## property: BrowserContext.clock
+* since: v1.45
+- type: <[Clock]>
+
+Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+
 ## event: BrowserContext.close
 * since: v1.8
 - argument: <[BrowserContext]>
