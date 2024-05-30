@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { describe } from 'node:test';
 import { test, expect } from './pageTest';
 
 declare global {
