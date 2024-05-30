@@ -459,7 +459,7 @@ ContextOptions:
         send:
           type: enum?
           literals:
-          - immediately
+          - always
           - unauthorized
     deviceScaleFactor: number?
     isMobile: boolean?
@@ -681,7 +681,7 @@ Playwright:
             send:
               type: enum?
               literals:
-              - immediately
+              - always
               - unauthorized
         proxy:
           type: object?
