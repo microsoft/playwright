@@ -456,7 +456,11 @@ ContextOptions:
         username: string
         password: string
         origin: string?
-        sendImmediately: boolean?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -674,7 +678,11 @@ Playwright:
             username: string
             password: string
             origin: string?
-            sendImmediately: boolean?
+            send:
+              type: enum?
+              literals:
+              - always
+              - unauthorized
         proxy:
           type: object?
           properties:
