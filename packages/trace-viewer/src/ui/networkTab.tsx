@@ -76,7 +76,7 @@ export const NetworkTab: React.FunctionComponent<{
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, sorting, boundaries]);
 
-  const [widths, setWidths] = React.useState<Map<ColumnName, number>>(() => {
+  const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
   });
 
@@ -91,8 +91,8 @@ export const NetworkTab: React.FunctionComponent<{
     onHighlighted={item => onEntryHovered(item?.resource)}
     columns={visibleColumns(!!selectedEntry, renderedEntries)}
     columnTitle={columnTitle}
-    columnWidths={widths}
-    setColumnWidths={setWidths}
+    columnWidths={columnWidths}
+    setColumnWidths={setColumnWidths}
     isError={item => item.status.code >= 400}
     isInfo={item => !!item.route}
     render={(item, column) => renderCell(item, column)}
@@ -101,7 +101,7 @@ export const NetworkTab: React.FunctionComponent<{
   />;
   return <>
     {!selectedEntry && grid}
-    {selectedEntry && <SplitView sidebarSize={widths.get('name')!} sidebarIsFirst={true} orientation='horizontal' settingName='networkResourceDetails'>
+    {selectedEntry && <SplitView sidebarSize={columnWidths.get('name')!} sidebarIsFirst={true} orientation='horizontal' settingName='networkResourceDetails'>
       <NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} />
       {grid}
     </SplitView>}
@@ -145,8 +145,12 @@ const columnWidth = (column: ColumnName) => {
 };
 
 function visibleColumns(entrySelected: boolean, renderedEntries: RenderedEntry[]): (keyof RenderedEntry)[] {
-  if (entrySelected)
-    return ['name'];
+  if (entrySelected) {
+    const columns: (keyof RenderedEntry)[] = ['name'];
+    if (hasMultipleContexts(renderedEntries))
+      columns.unshift('contextId');
+    return columns;
+  }
   let columns: (keyof RenderedEntry)[] = allColumns();
   if (!hasMultipleContexts(renderedEntries))
     columns = columns.filter(name => name !== 'contextId');

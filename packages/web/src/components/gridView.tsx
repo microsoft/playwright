@@ -49,7 +49,7 @@ export function GridView<T>(model: GridViewProps<T>) {
     setOffsets(offsets);
   }, [model.columns, model.columnWidths]);
 
-  function updateWidths(offsets: number[]) {
+  function updateColumnWidths(offsets: number[]) {
     const widths = new Map(model.columnWidths.entries());
     for (let i = 0; i < offsets.length; ++i) {
       const width = offsets[i] - (offsets[i - 1] || 0);
@@ -67,7 +67,7 @@ export function GridView<T>(model: GridViewProps<T>) {
     <ResizeView
       orientation={'horizontal'}
       offsets={offsets}
-      setOffsets={updateWidths}
+      setOffsets={updateColumnWidths}
       resizerColor='var(--vscode-panel-border)'
       resizerWidth={1}
       minColumnWidth={25}>
