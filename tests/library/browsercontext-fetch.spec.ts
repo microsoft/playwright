@@ -438,7 +438,7 @@ it('should return error with wrong credentials', async ({ context, server }) => 
 it('should support HTTPCredentials.sendImmediately for newContext', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const context = await contextFactory({
-    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'immediately' }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
   });
   {
     const [serverRequest, response] = await Promise.all([
@@ -462,7 +462,7 @@ it('should support HTTPCredentials.sendImmediately for newContext', async ({ con
 it('should support HTTPCredentials.sendImmediately for browser.newPage', async ({ contextFactory, server, browser }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const page = await browser.newPage({
-    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'immediately' }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
   });
   {
     const [serverRequest, response] = await Promise.all([

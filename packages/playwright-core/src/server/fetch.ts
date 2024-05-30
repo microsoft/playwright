@@ -159,7 +159,7 @@ export abstract class APIRequestContext extends SdkObject {
     }
 
     const credentials = this._getHttpCredentials(requestUrl);
-    if (credentials?.send === 'immediately')
+    if (credentials?.send === 'always')
       setBasicAuthorizationHeader(headers, credentials);
 
     const method = params.method?.toUpperCase() || 'GET';
