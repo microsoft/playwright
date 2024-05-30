@@ -510,28 +510,30 @@ class FrameSession {
           this._handleFrameTree(frameTree);
           this._addRendererListeners();
         }
-        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
-        for (const frame of localFrames) {
-          // Note: frames might be removed before we send these.
-          this._client._sendMayFail('Page.createIsolatedWorld', {
-            frameId: frame._id,
-            grantUniveralAccess: true,
-            worldName: UTILITY_WORLD_NAME,
-          });
-          for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluateExpression(binding.source).catch(e => {});
-          for (const source of this._crPage._browserContext.initScripts)
-            frame.evaluateExpression(source).catch(e => {});
-        }
+
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
-          // Ignore lifecycle events for the initial empty page. It is never the final page
+          // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
           lifecycleEventsEnabled.catch(e => {}).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
+          const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
+          for (const frame of localFrames) {
+            // Note: frames might be removed before we send these.
+            this._client._sendMayFail('Page.createIsolatedWorld', {
+              frameId: frame._id,
+              grantUniveralAccess: true,
+              worldName: UTILITY_WORLD_NAME,
+            });
+            for (const binding of this._crPage._browserContext._pageBindings.values())
+              frame.evaluateExpression(binding.source).catch(e => {});
+            for (const source of this._crPage._browserContext.initScripts)
+              frame.evaluateExpression(source).catch(e => {});
+          }
+
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
         }
