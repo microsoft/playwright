@@ -12,6 +12,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Warn if directory does not exist
+      shell: bash
+      run: |
+        if [[ ! -d "${{ inputs.report_dir }}" ]]; then
+          echo "Directory '${{ inputs.report_dir }}' does not exist";
+          exit 0;
+        fi
     - name: Integrity check
       shell: bash
       run: find "${{ inputs.report_dir }}" -name "*.zip" -exec unzip -t {} \;
