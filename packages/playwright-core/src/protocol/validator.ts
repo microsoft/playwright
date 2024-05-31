@@ -976,6 +976,10 @@ scheme.BrowserContextClockJumpParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockJumpResult = tOptional(tObject({}));
+scheme.BrowserContextClockNextParams = tOptional(tObject({}));
+scheme.BrowserContextClockNextResult = tObject({
+  fakeTime: tNumber,
+});
 scheme.BrowserContextClockRunAllParams = tOptional(tObject({}));
 scheme.BrowserContextClockRunAllResult = tObject({
   fakeTime: tNumber,

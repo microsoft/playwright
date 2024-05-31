@@ -1219,6 +1219,10 @@ BrowserContext:
         timeNumber: number?
         timeString: string?
 
+    clockNext:
+      returns:
+        fakeTime: number
+
     clockRunAll:
       returns:
         fakeTime: number

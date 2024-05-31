@@ -17290,6 +17290,11 @@ export interface Clock {
   jump(time: number|string): Promise<void>;
 
   /**
+   * Advances the clock to the the moment of the first scheduled timer, firing it.
+   */
+  next(): Promise<number>;
+
+  /**
    * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
    * run as well. This makes it easier to run asynchronous tests to completion without worrying about the number of
    * timers they use, or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there

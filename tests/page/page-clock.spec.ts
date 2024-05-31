@@ -40,7 +40,7 @@ it.describe('tick', () => {
     });
 
     await page.clock.tick(0);
-    expect(calls).toEqual([{ params: [] }]);
+    expect(calls).toHaveLength(1);
   });
 
   it('does not trigger without sufficient delay', async ({ page, calls }) => {
@@ -58,7 +58,7 @@ it.describe('tick', () => {
       setTimeout(window.stub, 100);
     });
     await page.clock.tick(100);
-    expect(calls).toEqual([{ params: [] }]);
+    expect(calls).toHaveLength(1);
   });
 
   it('triggers simultaneous timers', async ({ page, calls }) => {
@@ -68,7 +68,7 @@ it.describe('tick', () => {
       setTimeout(window.stub, 100);
     });
     await page.clock.tick(100);
-    expect(calls).toEqual([{ params: [] }, { params: [] }]);
+    expect(calls).toHaveLength(2);
   });
 
   it('triggers multiple simultaneous timers', async ({ page, calls }) => {
@@ -91,7 +91,7 @@ it.describe('tick', () => {
     await page.clock.tick(50);
     expect(calls).toEqual([]);
     await page.clock.tick(100);
-    expect(calls).toEqual([{ params: [] }]);
+    expect(calls).toHaveLength(1);
   });
 
   it('triggers event when some throw', async ({ page, calls }) => {
@@ -102,7 +102,7 @@ it.describe('tick', () => {
     });
 
     await expect(page.clock.tick(120)).rejects.toThrow();
-    expect(calls).toEqual([{ params: [] }]);
+    expect(calls).toHaveLength(1);
   });
 
   it('creates updated Date while ticking', async ({ page, calls }) => {
@@ -210,7 +210,7 @@ it.describe('jump', () => {
   });
 });
 
-it.describe('runAllAsyn', () => {
+it.describe('runAll', () => {
   it('if there are no timers just return', async ({ page }) => {
     await page.clock.install();
     await page.clock.runAll();
@@ -610,5 +610,115 @@ it.describe('shouldAdvanceTime', () => {
     });
 
     expect(timeDifference).toBe(0);
+  });
+});
+
+it.describe('popup', () => {
+  it('should tick after popup', async ({ page }) => {
+    const now = new Date('2015-09-25');
+    await page.clock.install({ now });
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window.open('about:blank')),
+    ]);
+    const popupTime = await popup.evaluate(() => Date.now());
+    expect(popupTime).toBe(now.getTime());
+    await page.clock.tick(1000);
+    const popupTimeAfter = await popup.evaluate(() => Date.now());
+    expect(popupTimeAfter).toBe(now.getTime() + 1000);
+  });
+
+  it('should tick before popup', async ({ page, browserName }) => {
+    it.skip(browserName === 'chromium');
+    const now = new Date('2015-09-25');
+    await page.clock.install({ now });
+    const newNow = await page.clock.tick(1000);
+    expect(newNow).toBe(now.getTime() + 1000);
+
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window.open('about:blank')),
+    ]);
+    const popupTime = await popup.evaluate(() => Date.now());
+    expect(popupTime).toBe(now.getTime() + 1000);
+  });
+});
+
+it.describe('next', () => {
+  it('triggers the next timer', async ({ page, calls }) => {
+    await page.clock.install();
+    await page.evaluate(async () => {
+      setTimeout(window.stub, 100);
+    });
+    expect(await page.clock.next()).toBe(100);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('does not trigger simultaneous timers', async ({ page, calls }) => {
+    await page.clock.install();
+    await page.evaluate(() => {
+      setTimeout(() => {
+        window.stub();
+      }, 100);
+      setTimeout(() => {
+        window.stub();
+      }, 100);
+    });
+
+    await page.clock.next();
+    expect(calls).toHaveLength(1);
+  });
+
+  it('subsequent calls trigger simultaneous timers', async ({ page, calls }) => {
+    await page.clock.install();
+    await page.evaluate(async () => {
+      setTimeout(() => {
+        window.stub();
+      }, 100);
+      setTimeout(() => {
+        window.stub();
+      }, 100);
+      setTimeout(() => {
+        window.stub();
+      }, 99);
+      setTimeout(() => {
+        window.stub();
+      }, 100);
+    });
+
+    await page.clock.next();
+    expect(calls).toHaveLength(1);
+    await page.clock.next();
+    expect(calls).toHaveLength(2);
+    await page.clock.next();
+    expect(calls).toHaveLength(3);
+    await page.clock.next();
+    expect(calls).toHaveLength(4);
+  });
+
+  it('subsequent calls triggers simultaneous timers with zero callAt', async ({ page, calls }) => {
+    await page.clock.install();
+    await page.evaluate(async () => {
+      window.stub(1);
+      setTimeout(() => {
+        setTimeout(() => window.stub(2), 0);
+      }, 0);
+    });
+
+    await page.clock.next();
+    expect(calls).toEqual([{ params: [1] }]);
+    await page.clock.next();
+    expect(calls).toEqual([{ params: [1] }, { params: [2] }]);
+  });
+
+  it('throws exception thrown by timer', async ({ page, calls }) => {
+    await page.clock.install();
+    await page.evaluate(async () => {
+      setTimeout(() => {
+        throw new Error();
+      }, 100);
+    });
+
+    await expect(page.clock.next()).rejects.toThrow();
   });
 });

@@ -40,7 +40,13 @@ export class Clock {
 
   async jump(time: number | string) {
     this._assertInstalled();
-    await this._addAndEvaluate(`globalThis.__pwFakeTimers.jump(${JSON.stringify(time)}); 0`);
+    await this._addAndEvaluate(`globalThis.__pwFakeTimers.jump(${JSON.stringify(time)})`);
+  }
+
+  async next(): Promise<number> {
+    this._assertInstalled();
+    await this._browserContext.addInitScript(`globalThis.__pwFakeTimers.next()`);
+    return await this._evaluateInFrames(`globalThis.__pwFakeTimers.nextAsync()`);
   }
 
   async runAll(): Promise<number> {

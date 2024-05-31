@@ -320,6 +320,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.clock.jump(params.timeString || params.timeNumber || 0);
   }
 
+  async clockNext(params: channels.BrowserContextClockNextParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockNextResult> {
+    return { fakeTime: await this._context.clock.next() };
+  }
+
   async clockRunAll(params: channels.BrowserContextClockRunAllParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunAllResult> {
     return { fakeTime: await this._context.clock.runAll() };
   }
