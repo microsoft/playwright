@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 import { verifyViewport } from '../config/utils';
 import path from 'path';
 import fs from 'fs';
@@ -207,8 +207,7 @@ it.describe('element screenshot', () => {
       done = true;
       return buffer;
     });
-    for (let i = 0; i < 10; i++)
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+    await rafraf(page, 10);
     expect(done).toBe(false);
     await elementHandle.evaluate(e => e.style.visibility = 'visible');
     const screenshot = await promise;
@@ -233,10 +232,8 @@ it.describe('element screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const elementHandle = await page.$('.box:nth-of-type(3)');
-    await elementHandle.evaluate(e => {
-      e.classList.add('animation');
-      return new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
-    });
+    await elementHandle.evaluate(e => e.classList.add('animation'));
+    await rafraf(page);
     const screenshot = await elementHandle.screenshot();
     expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });

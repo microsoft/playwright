@@ -16,6 +16,8 @@
 
 import { test, expect } from './pageTest';
 
+test.skip(!!process.env.PW_FREEZE_TIME);
+
 declare global {
   interface Window {
     stub: (param?: any) => void

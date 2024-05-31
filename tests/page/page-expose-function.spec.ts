@@ -230,7 +230,7 @@ it('should not result in unhandled rejection', async ({ page, isAndroid, isWebVi
     await page.close();
   });
   await page.evaluate(() => {
-    setTimeout(() => (window as any).foo(), 0);
+    window.builtinSetTimeout(() => (window as any).foo(), 0);
     return undefined;
   });
   await closedPromise;

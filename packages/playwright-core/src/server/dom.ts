@@ -71,11 +71,11 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
   }
 
-  async evaluateExpression(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<any> {
+  async evaluateExpression(expression: string, options: { isFunction?: boolean }, arg?: any): Promise<any> {
     return js.evaluateExpression(this, expression, { ...options, returnByValue: true }, arg);
   }
 
-  async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<js.JSHandle<any>> {
+  async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg?: any): Promise<js.JSHandle<any>> {
     return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
   }
 

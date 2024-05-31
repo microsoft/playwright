@@ -44,9 +44,9 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
     console.error('Error');
     return new Promise(f => {
       // Generate exception.
-      setTimeout(() => {
+      window.builtinSetTimeout(() => {
         // And then resolve.
-        setTimeout(() => f('return ' + a), 0);
+        window.builtinSetTimeout(() => f('return ' + a), 0);
         throw new Error('Unhandled exception');
       }, 0);
     });

@@ -124,6 +124,18 @@ export class InjectedScript {
       (this.window as any).__injectedScript = this;
   }
 
+  builtinSetTimeout(callback: Function, timeout: number) {
+    if (this.window.__pwFakeTimers?.builtin)
+      return this.window.__pwFakeTimers.builtin.setTimeout(callback, timeout);
+    return setTimeout(callback, timeout);
+  }
+
+  builtinRequestAnimationFrame(callback: FrameRequestCallback) {
+    if (this.window.__pwFakeTimers?.builtin)
+      return this.window.__pwFakeTimers.builtin.requestAnimationFrame(callback);
+    return requestAnimationFrame(callback);
+  }
+
   eval(expression: string): any {
     return this.window.eval(expression);
   }
@@ -427,7 +439,7 @@ export class InjectedScript {
       observer.observe(element);
       // Firefox doesn't call IntersectionObserver callback unless
       // there are rafs.
-      requestAnimationFrame(() => {});
+      this.builtinRequestAnimationFrame(() => {});
     });
   }
 
@@ -536,12 +548,12 @@ export class InjectedScript {
         if (success !== continuePolling)
           fulfill(success);
         else
-          requestAnimationFrame(raf);
+          this.builtinRequestAnimationFrame(raf);
       } catch (e) {
         reject(e);
       }
     };
-    requestAnimationFrame(raf);
+    this.builtinRequestAnimationFrame(raf);
 
     return result;
   }
@@ -1509,4 +1521,15 @@ function deepEquals(a: any, b: any): boolean {
     return isNaN(a) && isNaN(b);
 
   return false;
+}
+
+declare global {
+  interface Window {
+    __pwFakeTimers?: {
+      builtin: {
+        setTimeout: Window['setTimeout'],
+        requestAnimationFrame: Window['requestAnimationFrame'],
+      }
+    }
+  }
 }

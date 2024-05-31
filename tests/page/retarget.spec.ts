@@ -16,12 +16,9 @@
  */
 
 import type { Page } from '@playwright/test';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 
-async function giveItAChanceToResolve(page: Page) {
-  for (let i = 0; i < 5; i++)
-    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-}
+const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
 it('element state checks should work as expected for label with zero-sized input', async ({ page, server }) => {
   await page.setContent(`

@@ -426,7 +426,7 @@ for (const params of [
     // Make sure we have a chance to paint.
     for (let i = 0; i < 10; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
-      await page.evaluate(() => new Promise(requestAnimationFrame));
+      await page.evaluate(() => new Promise(window.builtinRequestAnimationFrame));
     }
     await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
@@ -709,7 +709,7 @@ test('should not flush console events', async ({ context, page, mode }, testInfo
   });
 
   await page.evaluate(() => {
-    setTimeout(() => {
+    window.builtinSetTimeout(() => {
       for (let i = 0; i < 100; ++i)
         console.log('hello ' + i);
     }, 10);
@@ -749,7 +749,7 @@ test('should flush console events on tracing stop', async ({ context, page }, te
     });
   });
   await page.evaluate(() => {
-    setTimeout(() => {
+    window.builtinSetTimeout(() => {
       for (let i = 0; i < 100; ++i)
         console.log('hello ' + i);
     });

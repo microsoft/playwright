@@ -17,17 +17,20 @@
 import { serializeAsCallArgument, parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
 export class UtilityScript {
+  constructor(isUnderTest: boolean) {
+    if (isUnderTest)
+      this._setBuiltins();
+  }
+
   serializeAsCallArgument = serializeAsCallArgument;
   parseEvaluationResultValue = parseEvaluationResultValue;
 
-  evaluate(isFunction: boolean | undefined, returnByValue: boolean, exposeUtilityScript: boolean | undefined, expression: string, argCount: number, ...argsAndHandles: any[]) {
+  evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = [];
     for (let i = 0; i < args.length; i++)
       parameters[i] = this.parseEvaluationResultValue(args[i], handles);
-    if (exposeUtilityScript)
-      parameters.unshift(this);
 
     // eslint-disable-next-line no-restricted-globals
     let result = globalThis.eval(expression);
@@ -70,5 +73,48 @@ export class UtilityScript {
       })();
     }
     return safeJson(value);
+  }
+
+  private _setBuiltins() {
+    // eslint-disable-next-line no-restricted-globals
+    const window = (globalThis as any);
+    window.builtinSetTimeout = (callback: Function, timeout: number) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.setTimeout(callback, timeout);
+      return setTimeout(callback, timeout);
+    };
+
+    window.builtinClearTimeout = (id: number) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.clearTimeout(id);
+      return clearTimeout(id);
+    };
+
+    window.builtinSetInterval = (callback: Function, timeout: number) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.setInterval(callback, timeout);
+      return setInterval(callback, timeout);
+    };
+
+    window.builtinClearInterval = (id: number) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.clearInterval(id);
+      return clearInterval(id);
+    };
+
+    window.builtinRequestAnimationFrame = (callback: FrameRequestCallback) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.requestAnimationFrame(callback);
+      return requestAnimationFrame(callback);
+    };
+
+    window.builtinCancelAnimationFrame = (id: number) => {
+      if (window.__pwFakeTimers?.builtin)
+        return window.__pwFakeTimers.builtin.cancelAnimationFrame(id);
+      return cancelAnimationFrame(id);
+    };
+
+    window.builtinDate = window.__pwFakeTimers?.builtin.Date || Date;
+    window.builtinPerformance = window.__pwFakeTimers?.builtin.performance || performance;
   }
 }

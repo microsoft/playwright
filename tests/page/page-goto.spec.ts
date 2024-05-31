@@ -481,6 +481,7 @@ it('js redirect overrides url bar navigation ', async ({ page, server, browserNa
 
 it('should succeed on url bar navigation when there is pending navigation', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21574' });
+  it.skip(!!process.env.PW_FREEZE_TIME);
   server.setRoute('/a', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`
@@ -509,7 +510,7 @@ it('should succeed on url bar navigation when there is pending navigation', asyn
     events.push('finished c');
   });
   await page.goto(server.PREFIX + '/a');
-  await new Promise(f => setTimeout(f, 1000));
+  await page.waitForTimeout(1000);
   const error = await page.goto(server.PREFIX + '/b').then(r => null, e => e);
   const expectEvents = ['started c', 'started b', 'finished c', 'finished b'];
   await expect(() => expect(events).toEqual(expectEvents)).toPass({ timeout: 5000 });
@@ -753,6 +754,7 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
 
 it('should not resolve goto upon window.stop()', async ({ browserName, page, server }) => {
   it.fixme(browserName === 'firefox', 'load/domcontentloaded events are flaky');
+  it.skip(!!process.env.PW_FREEZE_TIME);
 
   let response;
   server.setRoute('/module.js', (req, res) => {
@@ -795,6 +797,7 @@ it('should return when navigation is committed if commit is specified', async ({
 });
 
 it('should wait for load when iframe attaches and detaches', async ({ page, server }) => {
+  it.skip(!!process.env.PW_FREEZE_TIME);
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`

@@ -65,7 +65,7 @@ it('should wait for visible', async ({ page, server }) => {
   await textarea.evaluate(e => e.style.display = 'none');
   let done = false;
   const promise = textarea.selectText({ timeout: 3000 }).then(() => done = true);
-  await page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+  await page.waitForTimeout(1000);
   expect(done).toBe(false);
   await textarea.evaluate(e => e.style.display = 'block');
   await promise;

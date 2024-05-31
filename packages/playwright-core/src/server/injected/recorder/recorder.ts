@@ -881,7 +881,7 @@ class Overlay {
   flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue') {
     const element = tool === 'assertingVisibility' ? this._assertVisibilityToggle : this._assertValuesToggle;
     element.classList.add('succeeded');
-    setTimeout(() => element.classList.remove('succeeded'), 2000);
+    this._recorder.injectedScript.builtinSetTimeout(() => element.classList.remove('succeeded'), 2000);
   }
 
   private _hideOverlay() {
@@ -1312,7 +1312,7 @@ interface Embedder {
 export class PollingRecorder implements RecorderDelegate {
   private _recorder: Recorder;
   private _embedder: Embedder;
-  private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
+  private _pollRecorderModeTimer: number | undefined;
 
   constructor(injectedScript: InjectedScript) {
     this._recorder = new Recorder(injectedScript);
@@ -1333,7 +1333,7 @@ export class PollingRecorder implements RecorderDelegate {
       clearTimeout(this._pollRecorderModeTimer);
     const state = await this._embedder.__pw_recorderState().catch(() => {});
     if (!state) {
-      this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+      this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
     }
     const win = this._recorder.document.defaultView!;
@@ -1343,7 +1343,7 @@ export class PollingRecorder implements RecorderDelegate {
       state.actionPoint = undefined;
     }
     this._recorder.setUIState(state, this);
-    this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+    this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
   async performAction(action: actions.Action) {

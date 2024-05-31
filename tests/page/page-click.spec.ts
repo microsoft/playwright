@@ -15,13 +15,11 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 import { attachFrame, detachFrame } from '../config/utils';
+import type { Page } from '@playwright/test';
 
-async function giveItAChanceToClick(page) {
-  for (let i = 0; i < 5; i++)
-    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-}
+const giveItAChanceToClick = (page: Page) => rafraf(page, 5);
 
 it('should click the button @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
@@ -456,7 +454,7 @@ it('should wait for stable position', async ({ page, server }) => {
     document.body.style.margin = '0';
   });
   // rafraf for Firefox to kick in the animation.
-  await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  await rafraf(page);
   await page.click('button');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   expect(await page.evaluate('pageX')).toBe(300);
@@ -1072,7 +1070,7 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
     function onClick(name) {
       console.log(`click ${name}`);
 
-      setTimeout(function() {
+      window.builtinSetTimeout(function() {
         console.log(`timeout ${name}`);
       }, 0);
 

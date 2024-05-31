@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 
 it('should timeout waiting for stable position', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
@@ -25,7 +25,7 @@ it('should timeout waiting for stable position', async ({ page, server }) => {
     button.style.marginLeft = '200px';
   });
   // rafraf for Firefox to kick in the animation.
-  await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  await rafraf(page);
   const error = await button.click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
   expect(error.message).toContain('waiting for element to be visible, enabled and stable');

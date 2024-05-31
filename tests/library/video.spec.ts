@@ -829,8 +829,8 @@ async function waitForRafs(page: Page, count: number): Promise<void> {
       if (!count)
         resolve();
       else
-        requestAnimationFrame(onRaf);
+        window.builtinRequestAnimationFrame(onRaf);
     };
-    requestAnimationFrame(onRaf);
+    window.builtinRequestAnimationFrame(onRaf);
   }), count);
 }
