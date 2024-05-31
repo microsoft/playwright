@@ -10,6 +10,49 @@ in all the pages and iframes is controlled by the same clock.
 
 Creates a clock and installs it globally.
 
+**Usage**
+
+```js
+await page.clock.install();
+await page.clock.install({ now });
+await page.clock.install({ now, toFake: ['Date'] });
+```
+
+```python async
+await page.clock.install()
+await page.clock.install(now=now)
+await page.clock.install(now=now, toFake=['Date'])
+```
+
+```python sync
+page.clock.install()
+page.clock.install(now=now)
+page.clock.install(now=now, toFake=['Date'])
+```
+
+```java
+page.clock().install();
+page.clock().install(
+    new Clock.InstallOptions()
+        .setNow(now));
+page.clock().install(
+    new Clock.InstallOptions()
+        .setNow(now)
+        .setToFake(new String[]{"Date"}));
+```
+
+```csharp
+await page.Clock.InstallAsync();
+await page.Clock.InstallAsync(
+    new ClockInstallOptions { Now = now });
+await page.Clock.InstallAsync(
+    new ClockInstallOptions
+    {
+        Now = now,
+        ToFake = new[] { "Date" }
+    });
+```
+
 ### option: Clock.install.now
 * since: v1.45
 - `now` <[int]|[Date]>
@@ -50,12 +93,60 @@ in the real system time (default: 20).
 
 Advances the clock to the the moment of the first scheduled timer, firing it.
 
+**Usage**
+
+```js
+await page.clock.next();
+```
+
+```python async
+await page.clock.next()
+```
+
+```python sync
+page.clock.next()
+```
+
+```java
+page.clock().next();
+```
+
+```csharp
+await page.Clock.NextAsync();
+```
 
 ## async method: Clock.jump
 * since: v1.45
 
 Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the unix epoch.
 This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later, skipping intermediary timers.
+
+**Usage**
+
+```js
+await page.clock.jump(1000);
+await page.clock.jump('30:00');
+```
+
+```python async
+await page.clock.jump(1000);
+await page.clock.jump('30:00')
+```
+
+```python sync
+page.clock.jump(1000);
+page.clock.jump('30:00')
+```
+
+```java
+page.clock().jump(1000);
+page.clock().jump("30:00");
+```
+
+```csharp
+await page.Clock.JumpAsync(1000);
+await page.Clock.JumpAsync("30:00");
+```
 
 ### param: Clock.jump.time
 * since: v1.45
@@ -68,6 +159,9 @@ Time may be the number of milliseconds to advance the clock by or a human-readab
 - returns: <[int]> Fake milliseconds since the unix epoch.
 
 Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be run as well.
+
+**Details**
+
 This makes it easier to run asynchronous tests to completion without worrying about the number of timers they use, or the delays in those timers.
 It runs a maximum of [`option: loopLimit`] times after which it assumes there is an infinite loop of timers and throws an error.
 
@@ -86,6 +180,33 @@ This is useful when you want to run a test to completion, but the test recursive
 - returns: <[int]> Fake milliseconds since the unix epoch.
 
 Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+
+**Usage**
+
+```js
+await page.clock.tick(1000);
+await page.clock.tick('30:00');
+```
+
+```python async
+await page.clock.tick(1000);
+await page.clock.tick('30:00')
+```
+
+```python sync
+page.clock.tick(1000);
+page.clock.tick('30:00')
+```
+
+```java
+page.clock().tick(1000);
+page.clock().tick("30:00");
+```
+
+```csharp
+await page.Clock.TickAsync(1000);
+await page.Clock.TickAsync("30:00");
+```
 
 ### param: Clock.tick.time
 * since: v1.45
