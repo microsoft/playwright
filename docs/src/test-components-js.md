@@ -195,93 +195,168 @@ npm run test-ct
 
 Refer to [Playwright config](./test-configuration.md) for configuring your project.
 
-## Test stories
+## API reference
 
-When Playwright Test is used to test web components, tests run in Node.js, while components run in the real browser. This brings together the best of both worlds: components run in the real browser environment, real clicks are triggered, real layout is executed, visual regression is possible. At the same time, test can use all the powers of Node.js as well as all the Playwright Test features. As a result, the same parallel, parametrized tests with the same post-mortem Tracing story are available during component testing.
+### props
 
-This however, is introducing a number of limitations:
+Provide props to a component when mounted.
 
-- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed.
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
 
-```js
-test('this will work', async ({ mount }) => {
-  const component = await mount(<ProcessViewer process={{ name: 'playwright' }}/>);
-});
-
-test('this will not work', async ({ mount }) => {
-  // `process` is a Node object, we can't pass it to the browser and expect it to work.
-  const component = await mount(<ProcessViewer process={process}/>);
-});
-```
-
-- You can't pass data to your component synchronously in a callback:
+<TabItem value="react">
 
 ```js
-test('this will not work', async ({ mount }) => {
-  // () => 'red' callback lives in Node. If `ColorPicker` component in the browser calls the parameter function
-  // `colorGetter` it won't get result synchronously. It'll be able to get it via await, but that is not how
-  // components are typically built.
-  const component = await mount(<ColorPicker colorGetter={() => 'red'}/>);
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
 });
 ```
 
-Working around these and other limitations is quick and elegant: for every use case of the tested component, create a wrapper of this component designed specifically for test. Not only it will mitigate the limitations, but it will also offer powerful abstractions for testing where you would be able to define environment, theme and other aspects of your component rendering.
+</TabItem>
+<TabItem value="solid">
 
-Let's say you'd like to test following component:
-
-```js title="input-media.tsx"
-import React from 'react';
-
-export const InputMedia: React.FC<{
-  // Media is a complex browser object we can't send to Node while testing.
-  onChange: (media: Media) => void,
-}> = ({ onChange }) => {
-  return <></> as any;
-};
-```
-
-Create a story file for your component:
-
-```js title="input-media.story.tsx"
-import React from 'react';
-import InputMedia from './import-media';
-
-export const InputMediaForTest: React.FC<{
-  onMediaChange: (mediaName: string) => void,
-}> = ({ onMediaChange }) => {
-  // Instead of sending a complex `media` object to the test, send the media name.
-  return <InputMedia onChange={media => onMediaChange(media.name)} />;
-};
-// Export more stories here.
-```
-
-Then test the component via testing the story:
-
-```js title="input-media.test.spec.tsx"
-test('changes the image', async ({ mount }) => {
-  let mediaSelected: string | null = null;
-
-  const component = await mount(
-    <InputMediaForTest
-      onMediaChange={mediaName => {
-        mediaSelected = mediaName;
-        console.log({ mediaName });
-      }}
-    />
-  );
-  await component
-    .getByTestId('imageInput')
-    .setInputFiles('src/assets/logo.png');
-
-  await expect(component.getByAltText(/selected image/i)).toBeVisible();
-  await expect.poll(() => mediaSelected).toBe('logo.png');
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
 });
 ```
 
-As a result, for every component you'll have a story file that exports all the stories that are actually tested.
-These stories live in the browser and "convert" complex object into the simple objects that can be accessed in the test.
+</TabItem>
+<TabItem value="svelte">
 
-## Hooks
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### callbacks / events
+
+Provide callbacks/events to a component when mounted.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('callback', async ({ mount }) => {
+  const component = await mount(<Component callback={() => {}} />);
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('callback', async ({ mount }) => {
+  const component = await mount(<Component callback={() => {}} />);
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('event', async ({ mount }) => {
+  const component = await mount(Component, { on: { callback() {} } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('event', async ({ mount }) => {
+  const component = await mount(Component, { on: { callback() {} } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### children / slots
+
+Provide children/slots to a component when mounted.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('slot', async ({ mount }) => {
+  const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('slot', async ({ mount }) => {
+  const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### hooks
 
 You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you setup things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture. This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
 
@@ -422,6 +497,218 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   </TabItem>
 
 </Tabs>
+
+### unmount
+
+Unmount the mounted component from the DOM. This is useful for testing the component's behavior upon unmounting. Use cases include testing an "Are you sure you want to leave?" modal or ensuring proper cleanup of event handlers to prevent memory leaks.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(Component);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(Component);
+  await component.unmount();
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### update
+
+Update props, slots/children, and/or events/callbacks of a mounted component. These component inputs can change at any time and are typically provided by the parent component, but sometimes it is necessary to ensure that your components behave appropriately to new inputs.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" callback={() => {}}>Child</Component>
+  );
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" callback={() => {}}>Child</Component>
+  );
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update({
+    props: { msg: 'greetings' },
+    on: { callback: () => {} },
+    slots: { default: 'Child' }
+  });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update({
+    props: { msg: 'greetings' },
+    on: { callback: () => {} },
+    slots: { default: 'Child' }
+  });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+## Test stories
+
+When Playwright Test is used to test web components, tests run in Node.js, while components run in the real browser. This brings together the best of both worlds: components run in the real browser environment, real clicks are triggered, real layout is executed, visual regression is possible. At the same time, test can use all the powers of Node.js as well as all the Playwright Test features. As a result, the same parallel, parametrized tests with the same post-mortem Tracing story are available during component testing.
+
+This however, is introducing a number of limitations:
+
+- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed.
+
+```js
+test('this will work', async ({ mount }) => {
+  const component = await mount(<ProcessViewer process={{ name: 'playwright' }}/>);
+});
+
+test('this will not work', async ({ mount }) => {
+  // `process` is a Node object, we can't pass it to the browser and expect it to work.
+  const component = await mount(<ProcessViewer process={process}/>);
+});
+```
+
+- You can't pass data to your component synchronously in a callback:
+
+```js
+test('this will not work', async ({ mount }) => {
+  // () => 'red' callback lives in Node. If `ColorPicker` component in the browser calls the parameter function
+  // `colorGetter` it won't get result synchronously. It'll be able to get it via await, but that is not how
+  // components are typically built.
+  const component = await mount(<ColorPicker colorGetter={() => 'red'}/>);
+});
+```
+
+Working around these and other limitations is quick and elegant: for every use case of the tested component, create a wrapper of this component designed specifically for test. Not only it will mitigate the limitations, but it will also offer powerful abstractions for testing where you would be able to define environment, theme and other aspects of your component rendering.
+
+Let's say you'd like to test following component:
+
+```js title="input-media.tsx"
+import React from 'react';
+
+export const InputMedia: React.FC<{
+  // Media is a complex browser object we can't send to Node while testing.
+  onChange: (media: Media) => void,
+}> = ({ onChange }) => {
+  return <></> as any;
+};
+```
+
+Create a story file for your component:
+
+```js title="input-media.story.tsx"
+import React from 'react';
+import InputMedia from './import-media';
+
+export const InputMediaForTest: React.FC<{
+  onMediaChange: (mediaName: string) => void,
+}> = ({ onMediaChange }) => {
+  // Instead of sending a complex `media` object to the test, send the media name.
+  return <InputMedia onChange={media => onMediaChange(media.name)} />;
+};
+// Export more stories here.
+```
+
+Then test the component via testing the story:
+
+```js title="input-media.test.spec.tsx"
+test('changes the image', async ({ mount }) => {
+  let mediaSelected: string | null = null;
+
+  const component = await mount(
+    <InputMediaForTest
+      onMediaChange={mediaName => {
+        mediaSelected = mediaName;
+        console.log({ mediaName });
+      }}
+    />
+  );
+  await component
+    .getByTestId('imageInput')
+    .setInputFiles('src/assets/logo.png');
+
+  await expect(component.getByAltText(/selected image/i)).toBeVisible();
+  await expect.poll(() => mediaSelected).toBe('logo.png');
+});
+```
+
+As a result, for every component you'll have a story file that exports all the stories that are actually tested.
+These stories live in the browser and "convert" complex object into the simple objects that can be accessed in the test.
 
 ## Under the hood
 
