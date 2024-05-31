@@ -135,7 +135,7 @@ it('should report logs while waiting for visible', async ({ page, server }) => {
   const error = await watchdog.catch(e => e);
   expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
   expect(error.message).toContain(`waiting for locator(\'div\') to be visible`);
-  expect(error.message).toContain(`locator resolved to hidden <div id="mydiv" class="foo bar" foo="1234567890123456…>abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
+  expect(error.message).toContain(`locator resolved to hidden <div id="mydiv" class="foo bar" foo=\"123456789012345678901234567890123456789012345678901234567890\">abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
   expect(error.message).toContain(`locator resolved to hidden <div class="another"></div>`);
 });
 

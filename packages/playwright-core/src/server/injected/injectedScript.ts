@@ -983,7 +983,7 @@ export class InjectedScript {
         attrs.push(` ${name}="${value}"`);
     }
     attrs.sort((a, b) => a.length - b.length);
-    const attrText = trimStringWithEllipsis(attrs.join(''), 50);
+    const attrText = trimStringWithEllipsis(attrs.join(''), 500);
     if (autoClosingTags.has(element.nodeName))
       return oneLine(`<${element.nodeName.toLowerCase()}${attrText}/>`);
 
