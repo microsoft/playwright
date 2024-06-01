@@ -24,7 +24,7 @@ await page.clock.install({ now: new Date('2020-02-02') });
 
 ## Only fake Date.now
 
-```html card
+```html
 <input type="datetime-local" id="my-time" data-testid="my-time">
 <script>
   const renderTime = () => {
@@ -95,7 +95,7 @@ await Expect(locator).ToHaveValueAsync("2024-01-01T10:00");
 
 ## Assert page at different points in time
 
-```html card
+```html
 <input type="datetime-local" id="my-time" data-testid="my-time">
 <script>
   const renderTime = () => {
