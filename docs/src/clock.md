@@ -113,7 +113,7 @@ await page.clock.install({ now: new Date('2024-01-01T10:00:00Z') });
 await page.goto('http://localhost:3333');
 await expect(page.getByTestId('my-time')).toHaveValue('2024-01-01T10:00');
 
-// Fast forward time 30 minutes withing firing timers, as if the user
+// Fast forward time 30 minutes without firing intermediate timers, as if the user
 // closed and opened the lid of the laptop.
 await page.clock.jump('30:00');
 await expect(page.getByTestId('my-time')).toHaveValue('2024-01-01T10:30');
@@ -129,7 +129,7 @@ await page.goto('http://localhost:3333')
 locator = page.get_by_test_id('my-time')
 await expect(locator).to_have_value('2024-01-01T10:00')
 
-# Fast forward time 30 minutes withing firing timers, as if the user
+# Fast forward time 30 minutes without firing intermediate timers, as if the user
 # closed and opened the lid of the laptop.
 await page.clock.jump('30:00')
 await expect(locator).to_have_value('2024-01-01T10:30')
@@ -145,7 +145,7 @@ page.goto('http://localhost:3333')
 locator = page.get_by_test_id('my-time')
 expect(locator).to_have_value('2024-01-01T10:00')
 
-# Fast forward time 30 minutes withing firing timers, as if the user
+# Fast forward time 30 minutes without firing intermediate timers, as if the user
 # closed and opened the lid of the laptop.
 page.clock.jump('30:00')
 expect(locator).to_have_value('2024-01-01T10:30')
@@ -162,7 +162,7 @@ page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("my-time");
 assertThat(locator).hasValue("2024-01-01T10:00");
 
-// Fast forward time 30 minutes withing firing timers, as if the user
+// Fast forward time 30 minutes without firing intermediate timers, as if the user
 // closed and opened the lid of the laptop.
 page.clock().jump("30:00");
 assertThat(locator).hasValue("2024-01-01T10:30");
@@ -180,7 +180,7 @@ await page.GotoAsync("http://localhost:3333");
 var locator = page.GetByTestId("my-time");
 await Expect(locator).ToHaveValueAsync("2024-01-01T10:00");
 
-// Fast forward time 30 minutes withing firing timers, as if the user
+// Fast forward time 30 minutes without firing intermediate timers, as if the user
 // closed and opened the lid of the laptop.
 await page.Clock.JumpAsync("30:00");
 await Expect(locator).ToHaveValueAsync("2024-01-01T10:30");
