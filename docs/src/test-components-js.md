@@ -195,6 +195,103 @@ npm run test-ct
 
 Refer to [Playwright config](./test-configuration.md) for configuring your project.
 
+## Test stories
+
+When Playwright Test is used to test web components, tests run in Node.js, while components run in the real browser. This brings together the best of both worlds: components run in the real browser environment, real clicks are triggered, real layout is executed, visual regression is possible. At the same time, test can use all the powers of Node.js as well as all the Playwright Test features. As a result, the same parallel, parametrized tests with the same post-mortem Tracing story are available during component testing.
+
+This however, is introducing a number of limitations:
+
+- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed.
+
+```js
+test('this will work', async ({ mount }) => {
+  const component = await mount(<ProcessViewer process={{ name: 'playwright' }}/>);
+});
+
+test('this will not work', async ({ mount }) => {
+  // `process` is a Node object, we can't pass it to the browser and expect it to work.
+  const component = await mount(<ProcessViewer process={process}/>);
+});
+```
+
+- You can't pass data to your component synchronously in a callback:
+
+```js
+test('this will not work', async ({ mount }) => {
+  // () => 'red' callback lives in Node. If `ColorPicker` component in the browser calls the parameter function
+  // `colorGetter` it won't get result synchronously. It'll be able to get it via await, but that is not how
+  // components are typically built.
+  const component = await mount(<ColorPicker colorGetter={() => 'red'}/>);
+});
+```
+
+Working around these and other limitations is quick and elegant: for every use case of the tested component, create a wrapper of this component designed specifically for test. Not only it will mitigate the limitations, but it will also offer powerful abstractions for testing where you would be able to define environment, theme and other aspects of your component rendering.
+
+Let's say you'd like to test following component:
+
+```js title="input-media.tsx"
+import React from 'react';
+
+export const InputMedia: React.FC<{
+  // Media is a complex browser object we can't send to Node while testing.
+  onChange: (media: Media) => void,
+}> = ({ onChange }) => {
+  return <></> as any;
+};
+```
+
+Create a story file for your component:
+
+```js title="input-media.story.tsx"
+import React from 'react';
+import InputMedia from './import-media';
+
+export const InputMediaForTest: React.FC<{
+  onMediaChange: (mediaName: string) => void,
+}> = ({ onMediaChange }) => {
+  // Instead of sending a complex `media` object to the test, send the media name.
+  return <InputMedia onChange={media => onMediaChange(media.name)} />;
+};
+// Export more stories here.
+```
+
+Then test the component via testing the story:
+
+```js title="input-media.test.spec.tsx"
+test('changes the image', async ({ mount }) => {
+  let mediaSelected: string | null = null;
+
+  const component = await mount(
+    <InputMediaForTest
+      onMediaChange={mediaName => {
+        mediaSelected = mediaName;
+        console.log({ mediaName });
+      }}
+    />
+  );
+  await component
+    .getByTestId('imageInput')
+    .setInputFiles('src/assets/logo.png');
+
+  await expect(component.getByAltText(/selected image/i)).toBeVisible();
+  await expect.poll(() => mediaSelected).toBe('logo.png');
+});
+```
+
+As a result, for every component you'll have a story file that exports all the stories that are actually tested.
+These stories live in the browser and "convert" complex object into the simple objects that can be accessed in the test.
+
+## Under the hood
+
+Here is how component testing works:
+
+- Once the tests are executed, Playwright creates a list of components that the tests need.
+- It then compiles a bundle that includes these components and serves it using a local static web server.
+- Upon the `mount` call within the test, Playwright navigates to the facade page `/playwright/index.html` of this bundle and tells it to render the component.
+- Events are marshalled back to the Node.js environment to allow verification.
+
+Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
+
 ## API reference
 
 ### props
@@ -623,103 +720,6 @@ test('update', async ({ mount }) => {
 </TabItem>
 
 </Tabs>
-
-## Test stories
-
-When Playwright Test is used to test web components, tests run in Node.js, while components run in the real browser. This brings together the best of both worlds: components run in the real browser environment, real clicks are triggered, real layout is executed, visual regression is possible. At the same time, test can use all the powers of Node.js as well as all the Playwright Test features. As a result, the same parallel, parametrized tests with the same post-mortem Tracing story are available during component testing.
-
-This however, is introducing a number of limitations:
-
-- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed.
-
-```js
-test('this will work', async ({ mount }) => {
-  const component = await mount(<ProcessViewer process={{ name: 'playwright' }}/>);
-});
-
-test('this will not work', async ({ mount }) => {
-  // `process` is a Node object, we can't pass it to the browser and expect it to work.
-  const component = await mount(<ProcessViewer process={process}/>);
-});
-```
-
-- You can't pass data to your component synchronously in a callback:
-
-```js
-test('this will not work', async ({ mount }) => {
-  // () => 'red' callback lives in Node. If `ColorPicker` component in the browser calls the parameter function
-  // `colorGetter` it won't get result synchronously. It'll be able to get it via await, but that is not how
-  // components are typically built.
-  const component = await mount(<ColorPicker colorGetter={() => 'red'}/>);
-});
-```
-
-Working around these and other limitations is quick and elegant: for every use case of the tested component, create a wrapper of this component designed specifically for test. Not only it will mitigate the limitations, but it will also offer powerful abstractions for testing where you would be able to define environment, theme and other aspects of your component rendering.
-
-Let's say you'd like to test following component:
-
-```js title="input-media.tsx"
-import React from 'react';
-
-export const InputMedia: React.FC<{
-  // Media is a complex browser object we can't send to Node while testing.
-  onChange: (media: Media) => void,
-}> = ({ onChange }) => {
-  return <></> as any;
-};
-```
-
-Create a story file for your component:
-
-```js title="input-media.story.tsx"
-import React from 'react';
-import InputMedia from './import-media';
-
-export const InputMediaForTest: React.FC<{
-  onMediaChange: (mediaName: string) => void,
-}> = ({ onMediaChange }) => {
-  // Instead of sending a complex `media` object to the test, send the media name.
-  return <InputMedia onChange={media => onMediaChange(media.name)} />;
-};
-// Export more stories here.
-```
-
-Then test the component via testing the story:
-
-```js title="input-media.test.spec.tsx"
-test('changes the image', async ({ mount }) => {
-  let mediaSelected: string | null = null;
-
-  const component = await mount(
-    <InputMediaForTest
-      onMediaChange={mediaName => {
-        mediaSelected = mediaName;
-        console.log({ mediaName });
-      }}
-    />
-  );
-  await component
-    .getByTestId('imageInput')
-    .setInputFiles('src/assets/logo.png');
-
-  await expect(component.getByAltText(/selected image/i)).toBeVisible();
-  await expect.poll(() => mediaSelected).toBe('logo.png');
-});
-```
-
-As a result, for every component you'll have a story file that exports all the stories that are actually tested.
-These stories live in the browser and "convert" complex object into the simple objects that can be accessed in the test.
-
-## Under the hood
-
-Here is how component testing works:
-
-- Once the tests are executed, Playwright creates a list of components that the tests need.
-- It then compiles a bundle that includes these components and serves it using a local static web server.
-- Upon the `mount` call within the test, Playwright navigates to the facade page `/playwright/index.html` of this bundle and tells it to render the component.
-- Events are marshalled back to the Node.js environment to allow verification.
-
-Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
 
 ## Frequently asked questions
 
