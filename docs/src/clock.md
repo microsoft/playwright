@@ -19,7 +19,7 @@ By default, the clock starts at the unix epoch (timestamp of 0), but you can ove
 
 ```js
 await page.clock.install();
-await page.clock.install({ now });
+await page.clock.install({ now: new Date('2020-02-02') });
 ```
 
 ## Only fake Date.now
