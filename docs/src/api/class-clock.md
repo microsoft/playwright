@@ -1,9 +1,10 @@
 # class: Clock
 * since: v1.45
 
-Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is installed for the entire [BrowserContext], so the time
-in all the pages and iframes is controlled by the same clock.
+Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn more about [clock emulation](../clock.md).
 
+Note that clock is installed for the entire [BrowserContext], so the time
+in all the pages and iframes is controlled by the same clock.
 
 ## async method: Clock.install
 * since: v1.45

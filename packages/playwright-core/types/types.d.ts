@@ -17239,9 +17239,11 @@ export interface BrowserServer {
 }
 
 /**
- * Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is
- * installed for the entire {@link BrowserContext}, so the time in all the pages and iframes is controlled by the same
- * clock.
+ * Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn
+ * more about [clock emulation](https://playwright.dev/docs/clock).
+ *
+ * Note that clock is installed for the entire {@link BrowserContext}, so the time in all the pages and iframes is
+ * controlled by the same clock.
  */
 export interface Clock {
   /**
