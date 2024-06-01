@@ -158,7 +158,9 @@ Once you're on Playwright Test, you get a lot!
 - Built-in test [artifact collection](./test-use-options.md#recording-options)
 
 You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
-- [Playwright Inspector](./debug.md)
+- [Visual Studio Code integration.](./getting-started-vscode-js)
+- [UI mode](./test-ui-mode-js) for debugging tests with a time travel experience complete with watch mode.
+- [Playwright Inspector](./debug.md#playwright-inspector)
 - [Playwright Test Code generation](./codegen-intro.md)
 - [Playwright Tracing](./trace-viewer.md) for post-mortem debugging
 
