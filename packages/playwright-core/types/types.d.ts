@@ -17246,6 +17246,15 @@ export interface BrowserServer {
 export interface Clock {
   /**
    * Creates a clock and installs it globally.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.install();
+   * await page.clock.install({ now });
+   * await page.clock.install({ now, toFake: ['Date'] });
+   * ```
+   *
    * @param options
    */
   install(options?: {
@@ -17283,6 +17292,14 @@ export interface Clock {
    * Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the
    * unix epoch. This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later,
    * skipping intermediary timers.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.jump(1000);
+   * await page.clock.jump('30:00');
+   * ```
+   *
    * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
    * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
    */
@@ -17290,14 +17307,25 @@ export interface Clock {
 
   /**
    * Advances the clock to the the moment of the first scheduled timer, firing it.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.next();
+   * ```
+   *
    */
   next(): Promise<number>;
 
   /**
    * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
-   * run as well. This makes it easier to run asynchronous tests to completion without worrying about the number of
-   * timers they use, or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there
-   * is an infinite loop of timers and throws an error.
+   * run as well.
+   *
+   * **Details**
+   *
+   * This makes it easier to run asynchronous tests to completion without worrying about the number of timers they use,
+   * or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there is an infinite
+   * loop of timers and throws an error.
    */
   runAll(): Promise<number>;
 
@@ -17311,6 +17339,14 @@ export interface Clock {
 
   /**
    * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.tick(1000);
+   * await page.clock.tick('30:00');
+   * ```
+   *
    * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
    * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
    */
