@@ -2722,7 +2722,7 @@ export interface Page {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -6265,7 +6265,7 @@ export interface Frame {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -11852,7 +11852,7 @@ export interface Locator {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -18187,7 +18187,7 @@ export interface FrameLocator {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
