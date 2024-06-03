@@ -87,39 +87,10 @@ Tells `@sinonjs/fake-timers` to increment mocked time automatically based on the
 Relevant only when using with [`option: shouldAdvanceTime`]. Increment mocked time by advanceTimeDelta ms every advanceTimeDelta ms change
 in the real system time (default: 20).
 
-
-## async method: Clock.next
-* since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
-
-Advances the clock to the the moment of the first scheduled timer, firing it.
-
-**Usage**
-
-```js
-await page.clock.next();
-```
-
-```python async
-await page.clock.next()
-```
-
-```python sync
-page.clock.next()
-```
-
-```java
-page.clock().next();
-```
-
-```csharp
-await page.Clock.NextAsync();
-```
-
 ## async method: Clock.jump
 * since: v1.45
 
-Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the unix epoch.
+Advance the clock by jumping forward in time, firing callbacks at most once.
 This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later, skipping intermediary timers.
 
 **Usage**
@@ -155,11 +126,40 @@ await page.Clock.JumpAsync("30:00");
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
+## async method: Clock.next
+* since: v1.45
+- returns: <[int]>
+
+Advances the clock to the the moment of the first scheduled timer, firing it.
+Returns fake milliseconds since the unix epoch.
+
+**Usage**
+
+```js
+await page.clock.next();
+```
+
+```python async
+await page.clock.next()
+```
+
+```python sync
+page.clock.next()
+```
+
+```java
+page.clock().next();
+```
+
+```csharp
+await page.Clock.NextAsync();
+```
+
 ## async method: Clock.runAll
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
+- returns: <[int]>
 
-Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be run as well.
+Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be run as well. Returns fake milliseconds since the unix epoch.
 
 **Details**
 
@@ -169,18 +169,19 @@ It runs a maximum of [`option: loopLimit`] times after which it assumes there is
 
 ## async method: Clock.runToLast
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
+- returns: <[int]>
 
 This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as necessary.
 If new timers are added while it is executing they will be run only if they would occur before this time.
 This is useful when you want to run a test to completion, but the test recursively sets timers that would cause runAll to trigger an infinite loop warning.
+Returns fake milliseconds since the unix epoch.
 
 
 ## async method: Clock.tick
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
+- returns: <[int]>
 
-Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch. Returns fake milliseconds since the unix epoch.
 
 **Usage**
 

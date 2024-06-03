@@ -17291,9 +17291,8 @@ export interface Clock {
   }): Promise<void>;
 
   /**
-   * Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the
-   * unix epoch. This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later,
-   * skipping intermediary timers.
+   * Advance the clock by jumping forward in time, firing callbacks at most once. This can be used to simulate the JS
+   * engine (such as a browser) being put to sleep and resumed later, skipping intermediary timers.
    *
    * **Usage**
    *
@@ -17308,7 +17307,8 @@ export interface Clock {
   jump(time: number|string): Promise<void>;
 
   /**
-   * Advances the clock to the the moment of the first scheduled timer, firing it.
+   * Advances the clock to the the moment of the first scheduled timer, firing it. Returns fake milliseconds since the
+   * unix epoch.
    *
    * **Usage**
    *
@@ -17321,7 +17321,7 @@ export interface Clock {
 
   /**
    * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
-   * run as well.
+   * run as well. Returns fake milliseconds since the unix epoch.
    *
    * **Details**
    *
@@ -17335,12 +17335,13 @@ export interface Clock {
    * This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as
    * necessary. If new timers are added while it is executing they will be run only if they would occur before this
    * time. This is useful when you want to run a test to completion, but the test recursively sets timers that would
-   * cause runAll to trigger an infinite loop warning.
+   * cause runAll to trigger an infinite loop warning. Returns fake milliseconds since the unix epoch.
    */
   runToLast(): Promise<number>;
 
   /**
-   * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+   * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch. Returns fake
+   * milliseconds since the unix epoch.
    *
    * **Usage**
    *
