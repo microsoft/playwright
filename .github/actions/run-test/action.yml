@@ -36,14 +36,23 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
     - uses: ./.github/actions/enable-microphone-access
-    - run: npm ci
+    - run: |
+        echo "::group::npm ci"
+        npm ci
+        echo "::endgroup::"
       shell: bash
       env:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-    - run: npm run build
+    - run: |
+        echo "::group::npm run build"
+        npm run build
+        echo "::endgroup::"
       shell: bash
-    - run: npx playwright install --with-deps ${{ inputs.browsers-to-install }}
+    - run: |
+        echo "::group::npx playwright install --with-deps"
+        npx playwright install --with-deps ${{ inputs.browsers-to-install }}
+        echo "::endgroup::"
       shell: bash
     - name: Run tests
       if: inputs.shell == 'bash'
@@ -69,7 +78,10 @@ runs:
         client-id: ${{ inputs.flakiness-client-id }}
         tenant-id: ${{ inputs.flakiness-tenant-id }}
         subscription-id: ${{ inputs.flakiness-subscription-id }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+    - run: |
+        echo "::group::./utils/upload_flakiness_dashboard.sh"
+        ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+        echo "::endgroup::"
       if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
