@@ -56,7 +56,7 @@ const os: 'linux' | 'windows' = (process.env.PLAYWRIGHT_SERVICE_OS as 'linux' | 
 const runId = process.env.PLAYWRIGHT_SERVICE_RUN_ID || new Date().toISOString(); // name the test run
 
 let connectOptions: any;
-let webServer: any;
+let webServer: Config['webServer'];
 
 if (mode === 'service') {
   connectOptions = { wsEndpoint: 'ws://localhost:3333/' };
@@ -64,6 +64,7 @@ if (mode === 'service') {
     command: 'npx playwright run-server --port=3333',
     url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
+    env: { PWTEST_UNDER_TEST: '1' }
   };
 }
 if (mode === 'service2') {
