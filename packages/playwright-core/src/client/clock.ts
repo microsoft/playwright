@@ -15,7 +15,6 @@
  */
 
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
 import type { BrowserContext } from './browserContext';
 
 export class Clock implements api.Clock {
@@ -25,35 +24,41 @@ export class Clock implements api.Clock {
     this._browserContext = browserContext;
   }
 
-  async install(options?: Omit<channels.BrowserContextClockInstallOptions, 'now'> & { now?: number | Date }) {
-    const now = options && options.now ? (options.now instanceof Date ? options.now.getTime() : options.now) : undefined;
-    await this._browserContext._channel.clockInstall({ ...options, now });
+  async installFakeTimers(time: number | Date, options: { loopLimit?: number } = {}) {
+    const timeMs = time instanceof Date ? time.getTime() : time;
+    await this._browserContext._channel.clockInstallFakeTimers({ time: timeMs, loopLimit: options.loopLimit });
   }
 
-  async jump(time: number | string) {
-    await this._browserContext._channel.clockJump({
+  async runAllTimers(): Promise<number> {
+    const result = await this._browserContext._channel.clockRunAllTimers();
+    return result.fakeTime;
+  }
+
+  async runFor(time: number | string): Promise<number> {
+    const result = await this._browserContext._channel.clockRunFor({
       timeNumber: typeof time === 'number' ? time : undefined,
       timeString: typeof time === 'string' ? time : undefined
     });
-  }
-
-  async next(): Promise<number> {
-    const result = await this._browserContext._channel.clockNext();
     return result.fakeTime;
   }
 
-  async runAll(): Promise<number> {
-    const result = await this._browserContext._channel.clockRunAll();
+  async runToLastTimer(): Promise<number> {
+    const result = await this._browserContext._channel.clockRunToLastTimer();
     return result.fakeTime;
   }
 
-  async runToLast(): Promise<number> {
-    const result = await this._browserContext._channel.clockRunToLast();
+  async runToNextTimer(): Promise<number> {
+    const result = await this._browserContext._channel.clockRunToNextTimer();
     return result.fakeTime;
   }
 
-  async tick(time: number | string): Promise<number> {
-    const result = await this._browserContext._channel.clockTick({
+  async setTime(time: number | Date) {
+    const timeMs = time instanceof Date ? time.getTime() : time;
+    await this._browserContext._channel.clockSetTime({ time: timeMs });
+  }
+
+  async skipTime(time: number | string) {
+    const result = await this._browserContext._channel.clockSkipTime({
       timeNumber: typeof time === 'number' ? time : undefined,
       timeString: typeof time === 'string' ? time : undefined
     });

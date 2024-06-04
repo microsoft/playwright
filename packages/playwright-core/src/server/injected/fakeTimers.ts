@@ -16,9 +16,8 @@
 
 // @ts-ignore
 import SinonFakeTimers from '../../third_party/fake-timers-src';
-import type * as channels from '@protocol/channels';
 
-export function install(params: channels.BrowserContextClockInstallOptions) {
+export function inject() {
   // eslint-disable-next-line no-restricted-globals
   const window = globalThis;
   const builtin = {
@@ -34,7 +33,7 @@ export function install(params: channels.BrowserContextClockInstallOptions) {
     Intl: window.Intl,
     Date: window.Date,
   };
-  const result = SinonFakeTimers.install(params);
+  const result = SinonFakeTimers;
   result.builtin = builtin;
   return result;
 }

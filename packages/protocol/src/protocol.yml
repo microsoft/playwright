@@ -1204,34 +1204,35 @@ BrowserContext:
           - requestFailed
         enabled: boolean
 
-    clockInstall:
+    clockInstallFakeTimers:
       parameters:
-        now: number?
-        toFake:
-          type: array?
-          items: string
+        time: number
         loopLimit: number?
-        shouldAdvanceTime: boolean?
-        advanceTimeDelta: number?
 
-    clockJump:
+    clockRunAllTimers:
+      returns:
+        fakeTime: number
+
+    clockRunFor:
       parameters:
         timeNumber: number?
         timeString: string?
-
-    clockNext:
       returns:
         fakeTime: number
 
-    clockRunAll:
+    clockRunToLastTimer:
       returns:
         fakeTime: number
 
-    clockRunToLast:
+    clockRunToNextTimer:
       returns:
         fakeTime: number
 
-    clockTick:
+    clockSetTime:
+      parameters:
+        time: number
+
+    clockSkipTime:
       parameters:
         timeNumber: number?
         timeString: string?
