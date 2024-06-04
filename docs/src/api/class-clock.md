@@ -106,7 +106,7 @@ Returns fake milliseconds since the unix epoch.
 * since: v1.45
 - returns: <[int]>
 
-Advances the clock to the the moment of the first scheduled timer, firing it.
+Advances the clock to the moment of the first scheduled timer, firing it.
 Fake timers must be installed.
 Returns fake milliseconds since the unix epoch.
 

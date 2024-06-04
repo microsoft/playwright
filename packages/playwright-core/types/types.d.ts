@@ -17311,8 +17311,8 @@ export interface Clock {
   runToLastTimer(): Promise<number>;
 
   /**
-   * Advances the clock to the the moment of the first scheduled timer, firing it. Fake timers must be installed.
-   * Returns fake milliseconds since the unix epoch.
+   * Advances the clock to the moment of the first scheduled timer, firing it. Fake timers must be installed. Returns
+   * fake milliseconds since the unix epoch.
    */
   runToNextTimer(): Promise<number>;
 
