@@ -17307,8 +17307,8 @@ export interface Clock {
   jump(time: number|string): Promise<void>;
 
   /**
-   * Advances the clock to the the moment of the first scheduled timer, firing it. Returns fake milliseconds since the
-   * unix epoch.
+   * Advances the clock to the moment of the first scheduled timer, firing it. Returns fake milliseconds since the unix
+   * epoch.
    *
    * **Usage**
    *
