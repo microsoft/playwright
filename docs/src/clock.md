@@ -202,7 +202,7 @@ await page.goto('http://localhost:3333');
 // Tick through time manually, firing all timers in the process.
 // In this case, time will be updated in the screen 2 times.
 await page.clock.runFor(2000);
-await expect(locator).to_have_text('2/2/2024, 10:00:02 AM')
+await expect(locator).to_have_text('2/2/2024, 10:00:02 AM');
 ```
 
 ```python async
