@@ -721,6 +721,45 @@ test('update', async ({ mount }) => {
 
 </Tabs>
 
+### Handling network requests
+
+Playwright provides [`method: Page.route`] method to route your network requests. See the [network mocking guide](./mock.md) for more details.
+
+### MSW support
+
+If you are using the [MSW library](https://mswjs.io/) to handle network requests during development or testing, try the **experimental fixture** `msw` and give us feedback. With this fixture, you can reuse request handlers between development and tests.
+
+```ts
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ msw }) => {
+  // install common handlers before each test
+  await msw.use(...handlers);
+})
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+You can also introduce test-specific handlers.
+
+```ts
+import { http, HttpResponse } from 'msw';
+
+test('example test', async ({ mount, msw }) => {
+  await msw.use(
+    http.get('/data', async ({ request }) => {
+      return HttpResponse.json({ value: 'mocked' });
+    }),
+  );
+
+  // test as usual, your handler is active
+  // ...
+});
+```
+
 ## Frequently asked questions
 
 ### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?

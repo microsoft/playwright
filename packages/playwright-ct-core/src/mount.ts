@@ -19,6 +19,7 @@ import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } fr
 import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
 import type { ImportRef } from './injected/importRegistry';
 import { wrapObject } from './injected/serializers';
+import { type MSW, MSWImpl } from './msw';
 
 let boundCallbacksForMount: Function[] = [];
 
@@ -29,8 +30,9 @@ interface MountResult extends Locator {
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   mount: (component: any, options: any) => Promise<MountResult>;
+  msw: MSW;
 };
-type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } };
+type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions;
 type BaseTestFixtures = {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>,
   _optionContextReuseMode: ContextReuseMode
@@ -41,8 +43,6 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
   _optionContextReuseMode: 'when-possible',
 
   serviceWorkers: 'block',
-
-  _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
 
   page: async ({ page }, use, info) => {
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
@@ -77,6 +77,12 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
       });
     });
     boundCallbacksForMount = [];
+  },
+
+  msw: async ({ context, baseURL }, use) => {
+    const msw = new MSWImpl(context, baseURL);
+    await use(msw);
+    await msw.dispose();
   },
 };
 
