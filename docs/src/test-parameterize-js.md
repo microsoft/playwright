@@ -216,8 +216,8 @@ import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Read from default ".env" file.
-dotenv.config();
+// Read from ".env" file.
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Alternatively, read from "../my.env" file.
 dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
