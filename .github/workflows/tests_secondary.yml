@@ -307,7 +307,9 @@ jobs:
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
+    # Stick with macos-latest-large for now which is Intel-based until
+    # https://github.com/microsoft/playwright/issues/30705 is fixed.
+    runs-on: macos-latest-large
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test

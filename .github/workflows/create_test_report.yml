@@ -1,7 +1,7 @@
 name: Publish Test Results
 on:
   workflow_run:
-    workflows: ["tests 1", "tests 2"]
+    workflows: ["tests 1", "tests 2", "tests others"]
     types:
       - completed
 jobs:
