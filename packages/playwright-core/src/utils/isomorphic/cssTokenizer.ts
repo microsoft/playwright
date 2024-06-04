@@ -392,16 +392,11 @@ export function tokenize(str1: string): CSSTokenInterface[] {
           break;
         }
       }
-      if (whitespace(next())) consume();
-      let value = parseInt(
-        digits
-          .map(function (x) {
-            return String.fromCharCode(x);
-          })
-          .join(""),
-        16
-      );
-      if (value > maximumallowedcodepoint) value = 0xfffd;
+      if (whitespace(next()))
+        consume();
+      let value = parseInt(digits.map(function(x) { return String.fromCharCode(x); }).join(''), 16);
+      if (value > maximumallowedcodepoint)
+        value = 0xfffd;
       return value;
     } else if (eof()) {
       return 0xfffd;
