@@ -130,7 +130,7 @@ Time may be the number of milliseconds to advance the clock by or a human-readab
 * since: v1.45
 - returns: <[int]>
 
-Advances the clock to the the moment of the first scheduled timer, firing it.
+Advances the clock to the moment of the first scheduled timer, firing it.
 Returns fake milliseconds since the unix epoch.
 
 **Usage**

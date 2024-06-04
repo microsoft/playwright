@@ -378,7 +378,7 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const consumeEscape = function() {
-    // Assume the the current character is the \
+    // Assume the current character is the \
     // and the next code point is not a newline.
     consume();
     if (hexdigit(code)) {
@@ -392,11 +392,16 @@ export function tokenize(str1: string): CSSTokenInterface[] {
           break;
         }
       }
-      if (whitespace(next()))
-        consume();
-      let value = parseInt(digits.map(function(x) { return String.fromCharCode(x); }).join(''), 16);
-      if (value > maximumallowedcodepoint)
-        value = 0xfffd;
+      if (whitespace(next())) consume();
+      let value = parseInt(
+        digits
+          .map(function (x) {
+            return String.fromCharCode(x);
+          })
+          .join(""),
+        16
+      );
+      if (value > maximumallowedcodepoint) value = 0xfffd;
       return value;
     } else if (eof()) {
       return 0xfffd;
