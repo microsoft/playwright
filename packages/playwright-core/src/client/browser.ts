@@ -86,7 +86,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     const context = BrowserContext.from(response.context);
     await this._browserType._didCreateContext(context, contextOptions, this._options, options.logger || this._logger);
     if (!forReuse && !!process.env.PW_FREEZE_TIME)
-      await this._wrapApiCall(async () => { await context.clock.install(); }, true);
+      await this._wrapApiCall(async () => { await context.clock.installFakeTimers(new Date(0)); }, true);
     return context;
   }
 
