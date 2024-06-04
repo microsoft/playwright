@@ -520,6 +520,7 @@ export const deps: any = {
       'gstreamer1.0-plugins-bad',
       'gstreamer1.0-plugins-base',
       'gstreamer1.0-plugins-good',
+      'libicu74',
       'libatomic1',
       'libatk-bridge2.0-0t64',
       'libatk1.0-0t64',
