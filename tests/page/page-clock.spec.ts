@@ -549,6 +549,19 @@ it.describe('stubTimers', () => {
     expect(await promise).toEqual({ prev: 0, next: 1000 });
   });
 
+  it('replaces global performance.timeOrigin', async ({ page }) => {
+    await page.clock.installFakeTimers(1000);
+    const promise = page.evaluate(async () => {
+      const prev = performance.now();
+      await new Promise(f => setTimeout(f, 1000));
+      const next = performance.now();
+      return { prev, next };
+    });
+    expect(await page.evaluate(() => performance.timeOrigin)).toBe(1000);
+    await page.clock.runFor(1000);
+    expect(await promise).toEqual({ prev: 0, next: 1000 });
+  });
+
   it('fakes Date constructor', async ({ page }) => {
     await page.clock.installFakeTimers(0);
     const now = await page.evaluate(() => new Date().getTime());

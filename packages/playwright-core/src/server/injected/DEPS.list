@@ -2,6 +2,3 @@
 [*]
 ../isomorphic/
 ../../utils/isomorphic
-
-[fakeTimers.ts]
-../../third_party/fake-timers-src
