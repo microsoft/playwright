@@ -15,12 +15,12 @@
  */
 
 import type { BrowserContext } from './browserContext';
-import * as fakeTimersSource from '../generated/fakeTimersSource';
+import * as clockSource from '../generated/clockSource';
 
 export class Clock {
   private _browserContext: BrowserContext;
   private _scriptInjected = false;
-  private _fakeTimersInstalled = false;
+  private _clockInstalled = false;
   private _now = 0;
 
   constructor(browserContext: BrowserContext) {
@@ -30,48 +30,48 @@ export class Clock {
   async installFakeTimers(time: number, loopLimit: number | undefined) {
     await this._injectScriptIfNeeded();
     await this._addAndEvaluate(`(() => {
-      globalThis.__pwFakeTimers.clock?.uninstall();
-      globalThis.__pwFakeTimers.clock = globalThis.__pwFakeTimers.install(${JSON.stringify({ now: time, loopLimit })});
+      globalThis.__pwClock.clock?.uninstall();
+      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, loopLimit })});
     })();`);
     this._now = time;
-    this._fakeTimersInstalled = true;
+    this._clockInstalled = true;
   }
 
   async runToNextTimer(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwFakeTimers.clock.next()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwFakeTimers.clock.nextAsync()`);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.next()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.nextAsync()`);
     return this._now;
   }
 
   async runAllTimers(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwFakeTimers.clock.runAll()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwFakeTimers.clock.runAllAsync()`);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.runAll()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runAllAsync()`);
     return this._now;
   }
 
   async runToLastTimer(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwFakeTimers.clock.runToLast()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwFakeTimers.clock.runToLastAsync()`);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.runToLast()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runToLastAsync()`);
     return this._now;
   }
 
   async setTime(time: number) {
-    if (this._fakeTimersInstalled) {
+    if (this._clockInstalled) {
       const jump = time - this._now;
       if (jump < 0)
         throw new Error('Unable to set time into the past when fake timers are installed');
-      await this._addAndEvaluate(`globalThis.__pwFakeTimers.clock.jump(${jump})`);
+      await this._addAndEvaluate(`globalThis.__pwClock.clock.jump(${jump})`);
       this._now = time;
       return this._now;
     }
 
     await this._injectScriptIfNeeded();
     await this._addAndEvaluate(`(() => {
-      globalThis.__pwFakeTimers.clock?.uninstall();
-      globalThis.__pwFakeTimers.clock = globalThis.__pwFakeTimers.install(${JSON.stringify({ now: time, toFake: ['Date'] })});
+      globalThis.__pwClock.clock?.uninstall();
+      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, toFake: ['Date'] })});
     })();`);
     this._now = time;
     return this._now;
@@ -85,8 +85,8 @@ export class Clock {
 
   async runFor(time: number | string): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwFakeTimers.clock.tick(${JSON.stringify(time)})`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwFakeTimers.clock.tickAsync(${JSON.stringify(time)})`);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.tick(${JSON.stringify(time)})`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.tickAsync(${JSON.stringify(time)})`);
     return this._now;
   }
 
@@ -96,8 +96,8 @@ export class Clock {
     this._scriptInjected = true;
     const script = `(() => {
       const module = {};
-      ${fakeTimersSource.source}
-      globalThis.__pwFakeTimers = (module.exports.inject())(globalThis);
+      ${clockSource.source}
+      globalThis.__pwClock = (module.exports.inject())(globalThis);
     })();`;
     await this._addAndEvaluate(script);
   }
@@ -114,7 +114,7 @@ export class Clock {
   }
 
   private _assertInstalled() {
-    if (!this._fakeTimersInstalled)
+    if (!this._clockInstalled)
       throw new Error('Clock is not installed');
   }
 }

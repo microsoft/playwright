@@ -125,14 +125,14 @@ export class InjectedScript {
   }
 
   builtinSetTimeout(callback: Function, timeout: number) {
-    if (this.window.__pwFakeTimers?.builtin)
-      return this.window.__pwFakeTimers.builtin.setTimeout(callback, timeout);
+    if (this.window.__pwClock?.builtin)
+      return this.window.__pwClock.builtin.setTimeout(callback, timeout);
     return setTimeout(callback, timeout);
   }
 
   builtinRequestAnimationFrame(callback: FrameRequestCallback) {
-    if (this.window.__pwFakeTimers?.builtin)
-      return this.window.__pwFakeTimers.builtin.requestAnimationFrame(callback);
+    if (this.window.__pwClock?.builtin)
+      return this.window.__pwClock.builtin.requestAnimationFrame(callback);
     return requestAnimationFrame(callback);
   }
 
@@ -1525,7 +1525,7 @@ function deepEquals(a: any, b: any): boolean {
 
 declare global {
   interface Window {
-    __pwFakeTimers?: {
+    __pwClock?: {
       builtin: {
         setTimeout: Window['setTimeout'],
         requestAnimationFrame: Window['requestAnimationFrame'],
