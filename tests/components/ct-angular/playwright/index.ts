@@ -1,3 +1,4 @@
+import 'zone.js';
 import '@/assets/styles.css';
 import { TOKEN } from '@/components/inject.component';
 import { routes } from '@/router';

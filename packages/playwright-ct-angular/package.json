@@ -36,8 +36,7 @@
     "@angular/core": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "rxjs": "~7.8.1",
-    "typescript": "~5.2.0",
-    "zone.js": "~0.14.0"
+    "typescript": "~5.2.0"
   },
   "peerDependencies": {
     "@angular/compiler": "^17.0.0",
