@@ -97,7 +97,7 @@ export class Clock {
     const script = `(() => {
       const module = {};
       ${fakeTimersSource.source}
-      globalThis.__pwFakeTimers = (module.exports.inject())();
+      globalThis.__pwFakeTimers = (module.exports.inject())(globalThis);
     })();`;
     await this._addAndEvaluate(script);
   }
