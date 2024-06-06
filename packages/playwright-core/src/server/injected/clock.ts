@@ -89,149 +89,59 @@ export class ClockController {
     return this._now - this._adjustedSystemTime - this.start;
   }
 
-  private _doTick(tickValue: number | string, isAsync: boolean, resolve?: (time: number) => void, reject?: (error: Error) => void): number | undefined {
-    const msFloat =
-      typeof tickValue === 'number'
-        ? tickValue
-        : parseTime(tickValue);
-    const ms = Math.floor(msFloat);
-    let tickTo = this._now + ms;
-
+  private async _doTick(msFloat: number): Promise<number> {
     if (msFloat < 0)
       throw new TypeError('Negative ticks are not supported');
 
+    const ms = Math.floor(msFloat);
+    let tickTo = this._now + ms;
     let tickFrom = this._now;
     let previous = this._now;
-    // ESLint fails to detect this correctly
-    /* eslint-disable prefer-const */
-    let timer;
-    let firstException: Error;
-    let oldNow: number;
-    let nextPromiseTick: (() => void) | null;
-    let compensationCheck: () => void;
-    let postTimerCall: () => void;
-
+    let firstException: Error | undefined;
     this._duringTick = true;
 
-    // perform microtasks
-    oldNow = this._now;
-    if (oldNow !== this._now) {
-      // compensate for any setSystemTime() call during microtask callback
-      tickFrom += this._now - oldNow;
-      tickTo += this._now - oldNow;
-    }
-
-    const doTickInner = (): number | undefined => {
-      // perform each timer in the requested range
-      timer = this._firstTimerInRange(tickFrom, tickTo);
-      while (timer && tickFrom <= tickTo) {
-        if (this._timers.has(timer.id)) {
-          tickFrom = timer.callAt;
-          this._now = timer.callAt;
-          oldNow = this._now;
-          try {
-            this._callTimer(timer);
-          } catch (e) {
-            firstException = firstException || e;
-          }
-
-          if (isAsync) {
-            // finish up after native setImmediate callback to allow
-            // all native es6 promises to process their callbacks after
-            // each timer fires.
-            this._embedder.postTask(nextPromiseTick!);
-            return;
-          }
-          compensationCheck();
-        }
-        postTimerCall();
+    // perform each timer in the requested range
+    let timer = this._firstTimerInRange(tickFrom, tickTo);
+    while (timer && tickFrom <= tickTo) {
+      tickFrom = timer.callAt;
+      this._now = timer.callAt;
+      const oldNow = this._now;
+      try {
+        this._callTimer(timer);
+        await new Promise<void>(f => this._embedder.postTask(f));
+      } catch (e) {
+        firstException = firstException || e;
       }
 
-      // perform process.nextTick()s again
-      oldNow = this._now;
-      if (oldNow !== this._now) {
-        // compensate for any setSystemTime() call during process.nextTick() callback
-        tickFrom += this._now - oldNow;
-        tickTo += this._now - oldNow;
-      }
-      this._duringTick = false;
-
-      // corner case: during runJobs new timers were scheduled which could be in the range [clock.now, tickTo]
-      timer = this._firstTimerInRange(tickFrom, tickTo);
-      if (timer) {
-        try {
-          this.tick(tickTo - this._now); // do it all again - for the remainder of the requested range
-        } catch (e) {
-          firstException = firstException || e;
-        }
-      } else {
-        // no timers remaining in the requested range: move the clock all the way to the end
-        this._now = tickTo;
-      }
-      if (firstException)
-        throw firstException;
-
-      if (isAsync)
-        resolve!(this._now);
-      else
-        return this._now;
-    };
-
-    nextPromiseTick =
-      isAsync ?
-        () => {
-          try {
-            compensationCheck();
-            postTimerCall();
-            doTickInner();
-          } catch (e) {
-            reject!(e);
-          }
-        } : null;
-
-    compensationCheck = () => {
       // compensate for any setSystemTime() call during timer callback
       if (oldNow !== this._now) {
         tickFrom += this._now - oldNow;
         tickTo += this._now - oldNow;
         previous += this._now - oldNow;
       }
-    };
 
-    postTimerCall = () => {
       timer = this._firstTimerInRange(previous, tickTo);
       previous = tickFrom;
-    };
-
-    return doTickInner();
-  }
-
-  tick(tickValue: string | number): number {
-    return this._doTick(tickValue, false)!;
-  }
-
-  async tickAsync(tickValue: string | number): Promise<number> {
-    await new Promise<void>(f => this._embedder.postTask(f));
-    return new Promise((resolve, reject) => this._doTick(tickValue, true, resolve, reject));
-  }
-
-  next() {
-    const timer = this._firstTimer();
-    if (!timer)
-      return this._now;
-
-    this._duringTick = true;
-    try {
-      this._now = timer.callAt;
-      this._callTimer(timer);
-      return this._now;
-    } finally {
-      this._duringTick = false;
     }
+
+    this._duringTick = false;
+    this._now = tickTo;
+    if (firstException)
+      throw firstException;
+
+    return this._now;
   }
 
-  async nextAsync() {
-    await new Promise<void>(f => this._embedder.postTask(f));
+  async recordTick(tickValue: string | number) {
+    const msFloat = parseTime(tickValue);
+    this._now += msFloat;
+  }
+
+  async tick(tickValue: string | number): Promise<number> {
+    return await this._doTick(parseTime(tickValue));
+  }
+
+  async next() {
     const timer = this._firstTimer();
     if (!timer)
       return this._now;
@@ -241,45 +151,29 @@ export class ClockController {
     this._now = timer.callAt;
     try {
       this._callTimer(timer);
+      await new Promise<void>(f => this._embedder.postTask(f));
     } catch (e) {
       err = e;
     }
     this._duringTick = false;
 
-    await new Promise<void>(f => this._embedder.postTask(f));
     if (err)
       throw err;
     return this._now;
   }
 
-  runAll() {
-    for (let i = 0; i < this._loopLimit; i++) {
-      const numTimers = this._timers.size;
-      if (numTimers === 0)
-        return this._now;
-      this.next();
-    }
-
-    const excessJob = this._firstTimer();
-    if (!excessJob)
-      return;
-    throw this._getInfiniteLoopError(excessJob);
-  }
-
-  runToFrame() {
+  async runToFrame() {
     return this.tick(this.getTimeToNextFrame());
   }
 
-  async runAllAsync() {
+  async runAll() {
     for (let i = 0; i < this._loopLimit; i++) {
-      await new Promise<void>(f => this._embedder.postTask(f));
       const numTimers = this._timers.size;
       if (numTimers === 0)
         return this._now;
 
-      this.next();
+      await this.next();
     }
-    await new Promise<void>(f => this._embedder.postTask(f));
 
     const excessJob = this._firstTimer();
     if (!excessJob)
@@ -287,28 +181,11 @@ export class ClockController {
     throw this._getInfiniteLoopError(excessJob);
   }
 
-  runToLast() {
+  async runToLast() {
     const timer = this._lastTimer();
     if (!timer)
       return this._now;
-    return this.tick(timer.callAt - this._now);
-  }
-
-  runToLastAsync() {
-    return new Promise<number>((resolve, reject) => {
-      this._embedder.postTask(() => {
-        try {
-          const timer = this._lastTimer();
-          if (!timer) {
-            resolve(this._now);
-            return;
-          }
-          this.tickAsync(timer.callAt - this._now).then(resolve);
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
+    return await this.tick(timer.callAt - this._now);
   }
 
   reset() {
@@ -332,18 +209,15 @@ export class ClockController {
     }
   }
 
-  jump(tickValue: string | number): number {
-    const msFloat =
-      typeof tickValue === 'number'
-        ? tickValue
-        : parseTime(tickValue);
+  async jump(tickValue: string | number): Promise<number> {
+    const msFloat = parseTime(tickValue);
     const ms = Math.floor(msFloat);
 
     for (const timer of this._timers.values()) {
       if (this._now + ms > timer.callAt)
         timer.callAt = this._now + ms;
     }
-    return this.tick(ms);
+    return await this.tick(ms);
   }
 
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: () => any[] }): number {
@@ -524,9 +398,12 @@ function inRange(from: number, to: number, timer: Timer): boolean {
  * number of milliseconds. This is used to support human-readable strings passed
  * to clock.tick()
  */
-function parseTime(str: string): number {
-  if (!str)
+function parseTime(value: number | string): number {
+  if (typeof value === 'number')
+    return value;
+  if (!value)
     return 0;
+  const str = value;
 
   const strings = str.split(':');
   const l = strings.length;
