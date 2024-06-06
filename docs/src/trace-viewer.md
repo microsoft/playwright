@@ -160,6 +160,8 @@ Available options to record a trace:
 
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
+There are more granular options available, see [`property: TestOptions.trace`].
+
 If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
 
 ## Recording a trace
