@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '../playwright';
 import Counter from '@/components/Counter';
 import DefaultChildren from '@/components/DefaultChildren';
 

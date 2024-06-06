@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '../playwright';
 import TitleWithFont from '@/components/TitleWithFont';
 
 test('should load font without routes', async ({ mount, page }) => {

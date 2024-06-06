@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '../playwright';
 import Button from '@/components/Button';
 import MultiRoot from '@/components/MultiRoot';
 

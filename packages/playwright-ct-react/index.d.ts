@@ -15,10 +15,9 @@
  */
 
 import type { Locator } from 'playwright/test';
-import type { TestType } from '@playwright/experimental-ct-core';
-import type { RegisterHooksConfig } from './hooks';
+import type { TestType as BaseTestType } from '@playwright/experimental-ct-core';
 
-export interface MountOptions<HooksConfig extends RegisterHooksConfig> {
+export interface MountOptions<HooksConfig> {
   hooksConfig?: HooksConfig;
 }
 
@@ -27,12 +26,14 @@ export interface MountResult extends Locator {
   update(component: JSX.Element): Promise<void>;
 }
 
-export const test: TestType<{
-  mount<HooksConfig extends RegisterHooksConfig = RegisterHooksConfig>(
+export type TestType<TestHooksConfig = Record<string, any>> = BaseTestType<{
+  mount<HooksConfig extends TestHooksConfig>(
     component: JSX.Element,
     options?: MountOptions<HooksConfig>
   ): Promise<MountResult>;
 }>;
+
+export const test: TestType;
 
 export { defineConfig, type PlaywrightTestConfig } from '@playwright/experimental-ct-core';
 export { expect, devices } from 'playwright/test';

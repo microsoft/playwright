@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-export interface RegisterHooksConfig {}
-
-export declare function beforeMount<HooksConfig = RegisterHooksConfig>(
+export declare function beforeMount<HooksConfig>(
   callback: (params: { hooksConfig?: HooksConfig; App: () => JSX.Element }) => Promise<void | JSX.Element>
 ): void;
-export declare function afterMount<HooksConfig = RegisterHooksConfig>(
+export declare function afterMount<HooksConfig>(
   callback: (params: { hooksConfig?: HooksConfig }) => Promise<void>
 ): void;

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '../playwright';
 import App from '@/App';
 
 test('navigate to a page by clicking a link', async ({ page, mount }) => {
@@ -12,7 +12,7 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
   await expect(page).toHaveURL('/dashboard');
 });
 
-test('update should not reset mount hooks', async ({ page, mount }) => {
+test('update should not reset mount hooks', async ({ mount }) => {
   const component = await mount(<App title='before'/>, {
     hooksConfig: { routing: true },
   });
