@@ -1458,8 +1458,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, metadata?: CallMetadata): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, metadata?: CallMetadata): Promise<BrowserContextHarExportResult>;
-  createTempFile(params: BrowserContextCreateTempFileParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFileResult>;
-  createTempDirectory(params: BrowserContextCreateTempDirectoryParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempDirectoryResult>;
+  createTempFiles(params: BrowserContextCreateTempFilesParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFilesResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
   clockInstallFakeTimers(params: BrowserContextClockInstallFakeTimersParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallFakeTimersResult>;
   clockRunAllTimers(params?: BrowserContextClockRunAllTimersParams, metadata?: CallMetadata): Promise<BrowserContextClockRunAllTimersResult>;
@@ -1738,28 +1737,18 @@ export type BrowserContextHarExportOptions = {
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
-export type BrowserContextCreateTempFileParams = {
-  name: string,
-  lastModifiedMs?: number,
-};
-export type BrowserContextCreateTempFileOptions = {
-  lastModifiedMs?: number,
-};
-export type BrowserContextCreateTempFileResult = {
-  writableStream: WritableStreamChannel,
-};
-export type BrowserContextCreateTempDirectoryParams = {
-  root: string,
+export type BrowserContextCreateTempFilesParams = {
+  rootDirName?: string,
   items: {
     name: string,
     lastModifiedMs?: number,
   }[],
 };
-export type BrowserContextCreateTempDirectoryOptions = {
-
+export type BrowserContextCreateTempFilesOptions = {
+  rootDirName?: string,
 };
-export type BrowserContextCreateTempDirectoryResult = {
-  dir: string,
+export type BrowserContextCreateTempFilesResult = {
+  remoteDir: string,
   writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {

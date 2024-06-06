@@ -1184,16 +1184,9 @@ BrowserContext:
       returns:
         artifact: Artifact
 
-    createTempFile:
+    createTempFiles:
       parameters:
-        name: string
-        lastModifiedMs: number?
-      returns:
-        writableStream: WritableStream
-
-    createTempDirectory:
-      parameters:
-        root: string
+        rootDirName: string?
         items:
           type: array
           items:
@@ -1202,7 +1195,7 @@ BrowserContext:
               name: string
               lastModifiedMs: number?
       returns:
-        dir: string
+        remoteDir: string
         writableStreams:
           type: array
           items: WritableStream

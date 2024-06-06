@@ -951,22 +951,15 @@ scheme.BrowserContextHarExportParams = tObject({
 scheme.BrowserContextHarExportResult = tObject({
   artifact: tChannel(['Artifact']),
 });
-scheme.BrowserContextCreateTempFileParams = tObject({
-  name: tString,
-  lastModifiedMs: tOptional(tNumber),
-});
-scheme.BrowserContextCreateTempFileResult = tObject({
-  writableStream: tChannel(['WritableStream']),
-});
-scheme.BrowserContextCreateTempDirectoryParams = tObject({
-  root: tString,
+scheme.BrowserContextCreateTempFilesParams = tObject({
+  rootDirName: tOptional(tString),
   items: tArray(tObject({
     name: tString,
     lastModifiedMs: tOptional(tNumber),
   })),
 });
-scheme.BrowserContextCreateTempDirectoryResult = tObject({
-  dir: tString,
+scheme.BrowserContextCreateTempFilesResult = tObject({
+  remoteDir: tString,
   writableStreams: tArray(tChannel(['WritableStream'])),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({

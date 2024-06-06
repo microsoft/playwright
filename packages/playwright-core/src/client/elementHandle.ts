@@ -269,34 +269,25 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (context._connection.isRemote()) {
       let streams: channels.WritableStreamChannel[] | undefined;
       let localPaths: string[] | undefined;
-      for (const item of items as string[]) {
-        if ((await fs.promises.stat(item)).isDirectory()) {
-          const files = (await fs.promises.readdir(item, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(item, f.name));
-          const { writableStreams, dir } = await context._wrapApiCall(async () => context._channel.createTempDirectory({
-            root: item,
-            items: await Promise.all(files.map(async f => {
-              const lastModifiedMs = (await fs.promises.stat(f)).mtimeMs;
-              return {
-                name: path.relative(item, f),
-                lastModifiedMs
-              };
-            })),
-          }), true);
-          for (let i = 0; i < files.length; i++) {
-            const writable = WritableStream.from(writableStreams[i]);
-            await pipelineAsync(fs.createReadStream(files[i]), writable.stream());
-          }
-          localPaths ??= [];
-          localPaths.push(dir);
-        } else {
-          const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
-          const { writableStream } = await context._wrapApiCall(() => context._channel.createTempFile({ name: path.basename(item), lastModifiedMs }), true);
-          const writable = WritableStream.from(writableStream);
-          await pipelineAsync(fs.createReadStream(item), writable.stream());
-          streams ??= [];
-          streams.push(writableStream);
+      await Promise.all((items as string[]).map(async item => {
+        const isDirectory = (await fs.promises.stat(item)).isDirectory();
+        const files = isDirectory ? (await fs.promises.readdir(item, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(item, f.name)) : [item];
+        const { writableStreams, remoteDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
+          rootDirName: isDirectory ? item : undefined,
+          items: await Promise.all(files.map(f => fileToTempFileParams(f))),
+        }), true);
+        for (let i = 0; i < files.length; i++) {
+          const writable = WritableStream.from(writableStreams[i]);
+          await pipelineAsync(fs.createReadStream(files[i]), writable.stream());
         }
-      }
+        if (isDirectory) {
+          localPaths ??= [];
+          localPaths.push(remoteDir);
+        } else {
+          streams ??= [];
+          streams.push(...writableStreams);
+        }
+      }));
       return { streams, localPaths };
     }
     return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
@@ -306,6 +297,11 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (filePayloadExceedsSizeLimit(payloads))
     throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
   return { payloads };
+}
+
+async function fileToTempFileParams(file: string): Promise<channels.BrowserContextCreateTempFilesParams['items'][0]> {
+  const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
+  return { name: path.basename(file), lastModifiedMs };
 }
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {

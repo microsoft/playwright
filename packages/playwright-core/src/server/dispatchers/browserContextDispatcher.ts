@@ -178,22 +178,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return false;
   }
 
-  async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
+  async createTempFiles(params: channels.BrowserContextCreateTempFilesParams): Promise<channels.BrowserContextCreateTempFilesResult> {
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
-    await fs.promises.mkdir(tmpDir);
-    this._context._tempDirs.push(tmpDir);
-    const file = fs.createWriteStream(path.join(tmpDir, params.name));
-    return { writableStream: new WritableStreamDispatcher(this, file, params.lastModifiedMs) };
-  }
-
-  async createTempDirectory(params: channels.BrowserContextCreateTempDirectoryParams): Promise<channels.BrowserContextCreateTempDirectoryResult> {
-    const dir = this._context._browser.options.artifactsDir;
-    const tmpDir = path.join(dir, 'upload-' + createGuid());
-    const tempDirWithRootName = path.join(tmpDir, path.basename(params.root));
+    const tempDirWithRootName = path.join(tmpDir, params.rootDirName ? path.basename(params.rootDirName) : '');
     await fs.promises.mkdir(tempDirWithRootName, { recursive: true });
     return {
-      dir: tempDirWithRootName,
+      remoteDir: tempDirWithRootName,
       writableStreams: await Promise.all(params.items.map(async item => {
         await fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true });
         const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
