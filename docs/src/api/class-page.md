@@ -155,7 +155,7 @@ page.Load -= PageLoadHandler;
 * since: v1.45
 - type: <[Clock]>
 
-Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+Playwright has ability to mock clock and passage of time.
 
 ## event: Page.close
 * since: v1.8

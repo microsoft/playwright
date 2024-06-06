@@ -79,42 +79,42 @@ export class UtilityScript {
     // eslint-disable-next-line no-restricted-globals
     const window = (globalThis as any);
     window.builtinSetTimeout = (callback: Function, timeout: number) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.setTimeout(callback, timeout);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.setTimeout(callback, timeout);
       return setTimeout(callback, timeout);
     };
 
     window.builtinClearTimeout = (id: number) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.clearTimeout(id);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.clearTimeout(id);
       return clearTimeout(id);
     };
 
     window.builtinSetInterval = (callback: Function, timeout: number) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.setInterval(callback, timeout);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.setInterval(callback, timeout);
       return setInterval(callback, timeout);
     };
 
     window.builtinClearInterval = (id: number) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.clearInterval(id);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.clearInterval(id);
       return clearInterval(id);
     };
 
     window.builtinRequestAnimationFrame = (callback: FrameRequestCallback) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.requestAnimationFrame(callback);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.requestAnimationFrame(callback);
       return requestAnimationFrame(callback);
     };
 
     window.builtinCancelAnimationFrame = (id: number) => {
-      if (window.__pwFakeTimers?.builtin)
-        return window.__pwFakeTimers.builtin.cancelAnimationFrame(id);
+      if (window.__pwClock?.builtin)
+        return window.__pwClock.builtin.cancelAnimationFrame(id);
       return cancelAnimationFrame(id);
     };
 
-    window.builtinDate = window.__pwFakeTimers?.builtin.Date || Date;
-    window.builtinPerformance = window.__pwFakeTimers?.builtin.performance || performance;
+    window.builtinDate = window.__pwClock?.builtin.Date || Date;
+    window.builtinPerformance = window.__pwClock?.builtin.performance || performance;
   }
 }

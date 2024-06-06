@@ -4864,7 +4864,7 @@ export interface Page {
   accessibility: Accessibility;
 
   /**
-   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
 
@@ -8986,7 +8986,7 @@ export interface BrowserContext {
 
 
   /**
-   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
 
