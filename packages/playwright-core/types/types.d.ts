@@ -4055,8 +4055,8 @@ export interface Page {
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the current working directory. For empty array, clears the selected files. In order
-   * to upload a directory (`[webkitdirectory]`) pass the path to the directory.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files. For inputs
+   * with a `[webkitdirectory]` attribute, only a single directory path is supported.
    *
    * This method expects `selector` to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside
@@ -10580,8 +10580,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the current working directory. For empty array, clears the selected files. In order
-   * to upload a directory (`[webkitdirectory]`) pass the path to the directory.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files. For inputs
+   * with a `[webkitdirectory]` attribute, only a single directory path is supported.
    *
    * This method expects {@link ElementHandle} to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside
@@ -12788,8 +12788,8 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Upload file or multiple files into `<input type=file>`. In order to upload a directory (`[webkitdirectory]`) pass
-   * the path to the directory.
+   * Upload file or multiple files into `<input type=file>`. For inputs with a `[webkitdirectory]` attribute, only a
+   * single directory path is supported.
    *
    * **Usage**
    *

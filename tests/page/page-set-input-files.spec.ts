@@ -37,20 +37,17 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-async function createTestDirectoryStructure() {
-  const baseDir = path.join(it.info().outputDir, 'file-upload-test');
-  await fs.promises.mkdir(baseDir, { recursive: true });
-  await fs.promises.writeFile(path.join(baseDir, 'file1.txt'), 'file1 content');
-  await fs.promises.writeFile(path.join(baseDir, 'file2'), 'file2 content');
-  await fs.promises.mkdir(path.join(baseDir, 'sub-dir'));
-  await fs.promises.writeFile(path.join(baseDir, 'sub-dir', 'really.txt'), 'sub-dir file content');
-  return baseDir;
-}
-
 it('should upload a folder', async ({ page, server, browserName, headless, browserMajorVersion }) => {
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
-  const dir = await createTestDirectoryStructure();
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+    await fs.promises.writeFile(path.join(dir, 'file2'), 'file2 content');
+    await fs.promises.mkdir(path.join(dir, 'sub-dir'));
+    await fs.promises.writeFile(path.join(dir, 'sub-dir', 'really.txt'), 'sub-dir file content');
+  }
   await input.setInputFiles(dir);
   expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
     // https://issues.chromium.org/issues/345393164
@@ -68,6 +65,22 @@ it('should upload a folder', async ({ page, server, browserName, headless, brows
     }, i);
     expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
   }
+});
+
+it('should upload a folder and throw for multiple directories', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir, 'folder1'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder1', 'file1.txt'), 'file1 content');
+    await fs.promises.mkdir(path.join(dir, 'folder2'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder2', 'file2.txt'), 'file2 content');
+  }
+  await expect(input.setInputFiles([
+    path.join(dir, 'folder1'),
+    path.join(dir, 'folder2'),
+  ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 
 it('should upload a file after popup', async ({ page, server, asset }) => {

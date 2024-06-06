@@ -648,8 +648,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
         const isDirectoryUpload = localPaths.length === 1 ? (await fs.promises.stat(localPaths[0])).isDirectory() : false;
-        const waitForChangeEvent = isDirectoryUpload ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfil => {
-          node.addEventListener('change', fulfil, { once: true });
+        const waitForChangeEvent = isDirectoryUpload ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfill => {
+          node.addEventListener('change', fulfill, { once: true });
         }), undefined) : Promise.resolve();
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
         await waitForChangeEvent;
