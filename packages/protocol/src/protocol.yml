@@ -1191,6 +1191,22 @@ BrowserContext:
       returns:
         writableStream: WritableStream
 
+    createTempDirectory:
+      parameters:
+        root: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              lastModifiedMs: number?
+      returns:
+        dir: string
+        writableStreams:
+          type: array
+          items: WritableStream
+
     updateSubscription:
       parameters:
         event:

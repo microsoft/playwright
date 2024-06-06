@@ -958,6 +958,17 @@ scheme.BrowserContextCreateTempFileParams = tObject({
 scheme.BrowserContextCreateTempFileResult = tObject({
   writableStream: tChannel(['WritableStream']),
 });
+scheme.BrowserContextCreateTempDirectoryParams = tObject({
+  root: tString,
+  items: tArray(tObject({
+    name: tString,
+    lastModifiedMs: tOptional(tNumber),
+  })),
+});
+scheme.BrowserContextCreateTempDirectoryResult = tObject({
+  dir: tString,
+  writableStreams: tArray(tChannel(['WritableStream'])),
+});
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,

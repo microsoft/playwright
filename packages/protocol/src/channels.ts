@@ -1459,6 +1459,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   harStart(params: BrowserContextHarStartParams, metadata?: CallMetadata): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, metadata?: CallMetadata): Promise<BrowserContextHarExportResult>;
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFileResult>;
+  createTempDirectory(params: BrowserContextCreateTempDirectoryParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempDirectoryResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
   clockInstallFakeTimers(params: BrowserContextClockInstallFakeTimersParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallFakeTimersResult>;
   clockRunAllTimers(params?: BrowserContextClockRunAllTimersParams, metadata?: CallMetadata): Promise<BrowserContextClockRunAllTimersResult>;
@@ -1746,6 +1747,20 @@ export type BrowserContextCreateTempFileOptions = {
 };
 export type BrowserContextCreateTempFileResult = {
   writableStream: WritableStreamChannel,
+};
+export type BrowserContextCreateTempDirectoryParams = {
+  root: string,
+  items: {
+    name: string,
+    lastModifiedMs?: number,
+  }[],
+};
+export type BrowserContextCreateTempDirectoryOptions = {
+
+};
+export type BrowserContextCreateTempDirectoryResult = {
+  dir: string,
+  writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'request' | 'response' | 'requestFinished' | 'requestFailed',

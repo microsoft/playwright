@@ -633,7 +633,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return;
       if (element.tagName !== 'INPUT')
         throw injected.createStacklessError('Node is not an HTMLInputElement');
-      if (multiple && !(element as HTMLInputElement).multiple)
+      if (multiple && !(element as HTMLInputElement).multiple && !(element as HTMLInputElement).webkitdirectory)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
       return element;
     }, multiple);
@@ -647,7 +647,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await Promise.all(localPaths.map(localPath => (
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
+        const isDirectoryUpload = localPaths.length === 1 ? (await fs.promises.stat(localPaths[0])).isDirectory() : false;
+        const waitForChangeEvent = isDirectoryUpload ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfil => {
+          node.addEventListener('change', fulfil, { once: true });
+        }), undefined) : Promise.resolve();
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
+        await waitForChangeEvent;
       } else {
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
       }

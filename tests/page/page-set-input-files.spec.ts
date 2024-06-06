@@ -37,6 +37,39 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
+async function createTestDirectoryStructure() {
+  const baseDir = path.join(it.info().outputDir, 'file-upload-test');
+  await fs.promises.mkdir(baseDir, { recursive: true });
+  await fs.promises.writeFile(path.join(baseDir, 'file1.txt'), 'file1 content');
+  await fs.promises.writeFile(path.join(baseDir, 'file2'), 'file2 content');
+  await fs.promises.mkdir(path.join(baseDir, 'sub-dir'));
+  await fs.promises.writeFile(path.join(baseDir, 'sub-dir', 'really.txt'), 'sub-dir file content');
+  return baseDir;
+}
+
+it('should upload a folder', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = await createTestDirectoryStructure();
+  await input.setInputFiles(dir);
+  expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
+    // https://issues.chromium.org/issues/345393164
+    ...((browserName === 'chromium' && headless && browserMajorVersion < 128) ? [] : ['file-upload-test/sub-dir/really.txt']),
+    'file-upload-test/file1.txt',
+    'file-upload-test/file2',
+  ]));
+  const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input);
+  for (let i = 0; i < webkitRelativePaths.length; i++) {
+    const content = await input.evaluate((e, i) => {
+      const reader = new FileReader();
+      const promise = new Promise(fulfill => reader.onload = fulfill);
+      reader.readAsText(e.files[i]);
+      return promise.then(() => reader.result);
+    }, i);
+    expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
+  }
+});
+
 it('should upload a file after popup', async ({ page, server, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
   await page.goto(server.PREFIX + '/input/fileupload.html');
