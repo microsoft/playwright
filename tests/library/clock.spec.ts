@@ -2326,6 +2326,40 @@ it.describe('Intl API', () => {
   });
 });
 
+it.describe('startRealTime', () => {
+  it.only('should start real time', async ({ clock }) => {
+    clock.startRealTime({ speed: 2 });
+    const start = Date.now();
+    clock.setTimeout(() => {
+      const end = Date.now();
+      console.log('A', clock.Date.now(), end - start);
+    }, 1000);
+    clock.setTimeout(() => {
+      const end = Date.now();
+      console.log('B', clock.Date.now(), end - start);
+    }, 1100);
+    clock.setTimeout(() => {
+      const end = Date.now();
+      console.log('C', clock.Date.now(), end - start);
+      clock.setTimeout(() => {
+        const end = Date.now();
+        console.log('D', clock.Date.now(), end - start);
+      }, 400);
+    }, 300);
+    await new Promise(f => setTimeout(f, 2000));
+  });
+
+  it.only('should start real time interval', async ({ clock }) => {
+    clock.startRealTime({ speed: 2 });
+    const start = Date.now();
+    clock.setInterval(() => {
+      const end = Date.now();
+      console.log('A', clock.Date.now(), end - start);
+    }, 100);
+    await new Promise(f => setTimeout(f, 2000));
+  });
+});
+
 interface Stub {
   called: boolean;
   callCount: number;

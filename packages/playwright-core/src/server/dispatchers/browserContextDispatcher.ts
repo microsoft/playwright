@@ -313,7 +313,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockInstallFakeTimers(params: channels.BrowserContextClockInstallFakeTimersParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallFakeTimersResult> {
-    await this._context.clock.installFakeTimers(params.time, params.loopLimit);
+    await this._context.clock.installFakeTimers(params.time, params.loopLimit, params.speed);
   }
 
   async clockRunAllTimers(params: channels.BrowserContextClockRunAllTimersParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunAllTimersResult> {

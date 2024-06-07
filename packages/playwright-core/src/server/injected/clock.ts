@@ -31,6 +31,7 @@ export type ClockConfig = {
 
 export type InstallConfig = ClockConfig & {
   toFake?: (keyof ClockMethods)[];
+  speed?: number;
 };
 
 enum TimerType {
@@ -53,7 +54,8 @@ type Timer = {
 };
 
 interface Embedder {
-  postTask(task: () => void): void;
+  performanceNow(): DOMHighResTimeStamp;
+  postTask(task: () => void, timeout?: number): () => void;
   postTaskPeriodically(task: () => void, delay: number): () => void;
 }
 
@@ -66,6 +68,8 @@ export class ClockController {
   private _uniqueTimerId = idCounterStart;
   private _embedder: Embedder;
   readonly disposables: (() => void)[] = [];
+  private _realTime: { startTicks: number, speed: number, lastSyncTicks: number } | undefined;
+  private _currentRealTimeTimer: { callAt: number, dispose: () => void } | undefined;
 
   constructor(embedder: Embedder, startDate: Date | number | undefined, loopLimit: number = 1000) {
     const start = Math.floor(getEpoch(startDate));
@@ -145,6 +149,37 @@ export class ClockController {
     return this.tick(this.getTimeToNextFrame());
   }
 
+  startRealTime(options: { speed?: number } = {}) {
+    const now = Math.ceil(this._embedder.performanceNow());
+    this._realTime = { startTicks: now, speed: options.speed || 1, lastSyncTicks: now };
+  }
+
+  private _ensureTimer() {
+    const firstTimer = this._firstTimer();
+    if (!firstTimer)
+      return;
+    const callAt = firstTimer.callAt;
+
+    if (this._currentRealTimeTimer && this._currentRealTimeTimer.callAt < callAt)
+      return;
+
+    if (this._currentRealTimeTimer) {
+      this._currentRealTimeTimer.dispose();
+      this._currentRealTimeTimer = undefined;
+    }
+
+    this._currentRealTimeTimer = {
+      callAt,
+      dispose: this._embedder.postTask(() => {
+        const now = Math.ceil(this._embedder.performanceNow());
+        const sinceLastSync = now - this._realTime!.lastSyncTicks;
+        this._realTime!.lastSyncTicks = now;
+        this._currentRealTimeTimer = undefined;
+        this.tick(sinceLastSync * this._realTime!.speed).then(() => this._ensureTimer());
+      }, (callAt - this._now.ticks) / this._realTime!.speed),
+    };
+  }
+
   async runAll(): Promise<number> {
     for (let i = 0; i < this._loopLimit; i++) {
       const numTimers = this._timers.size;
@@ -204,6 +239,8 @@ export class ClockController {
       error: new Error(),
     };
     this._timers.set(timer.id, timer);
+    if (this._realTime)
+      this._ensureTimer();
     return timer.id;
   }
 
@@ -412,7 +449,7 @@ function parseTime(value: number | string): number {
 
 function mirrorDateProperties(target: any, source: typeof Date): DateConstructor & Date {
   let prop;
-  for (prop of Object.keys(source) as (keyof DateConstructor)[])
+  for (prop of Object.getOwnPropertyNames(source) as (keyof DateConstructor)[])
     target[prop] = source[prop];
   target.toString = () => source.toString();
   target.prototype = source.prototype;
@@ -485,7 +522,7 @@ function createIntl(clock: ClockController, NativeIntl: typeof Intl): typeof Int
     * All properties of Intl are non-enumerable, so we need
     * to do a bit of work to get them out.
     */
-  for (const key of Object.keys(NativeIntl) as (keyof typeof Intl)[])
+  for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof typeof Intl)[])
     ClockIntl[key] = NativeIntl[key];
 
   ClockIntl.DateTimeFormat = function(...args: any[]) {
@@ -661,8 +698,10 @@ function fakePerformance(clock: ClockController, performance: Performance): Perf
 export function createClock(globalObject: WindowOrWorkerGlobalScope, config: ClockConfig = {}): { clock: ClockController, api: ClockMethods, originals: ClockMethods } {
   const originals = platformOriginals(globalObject);
   const embedder = {
-    postTask: (task: () => void) => {
-      originals.bound.setTimeout(task, 0);
+    performanceNow: () => originals.raw.performance!.now(),
+    postTask: (task: () => void, timeout?: number) => {
+      const timerId = originals.bound.setTimeout(task, timeout);
+      return () => originals.bound.clearTimeout(timerId);
     },
     postTaskPeriodically: (task: () => void, delay: number) => {
       const intervalId = globalObject.setInterval(task, delay);
@@ -701,6 +740,9 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any)[method] = originals[method];
     });
   }
+
+  if (typeof config.speed === 'number')
+    clock.startRealTime({ speed: config.speed });
 
   return { clock, api, originals };
 }

@@ -17271,6 +17271,8 @@ export interface Clock {
      * [clock.runAllTimers()](https://playwright.dev/docs/api/class-clock#clock-run-all-timers). Defaults to `1000`.
      */
     loopLimit?: number;
+
+    speed?: number;
   }): Promise<void>;
 
   /**

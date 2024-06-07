@@ -1758,9 +1758,11 @@ export type BrowserContextUpdateSubscriptionResult = void;
 export type BrowserContextClockInstallFakeTimersParams = {
   time: number,
   loopLimit?: number,
+  speed?: number,
 };
 export type BrowserContextClockInstallFakeTimersOptions = {
   loopLimit?: number,
+  speed?: number,
 };
 export type BrowserContextClockInstallFakeTimersResult = void;
 export type BrowserContextClockRunAllTimersParams = {};

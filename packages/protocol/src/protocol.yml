@@ -1208,6 +1208,7 @@ BrowserContext:
       parameters:
         time: number
         loopLimit: number?
+        speed: number?
 
     clockRunAllTimers:
       returns:

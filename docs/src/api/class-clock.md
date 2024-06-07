@@ -35,6 +35,10 @@ Install fake timers with the specified base time.
 
 The maximum number of timers that will be run in [`method: Clock.runAllTimers`]. Defaults to `1000`.
 
+### option: Clock.installFakeTimers.speed
+* since: v1.45
+- `speed` <[float]>
+
 ## async method: Clock.runAllTimers
 * since: v1.45
 - returns: <[int]>

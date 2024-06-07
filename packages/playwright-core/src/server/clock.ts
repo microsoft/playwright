@@ -27,11 +27,11 @@ export class Clock {
     this._browserContext = browserContext;
   }
 
-  async installFakeTimers(time: number, loopLimit: number | undefined) {
+  async installFakeTimers(time: number, loopLimit: number | undefined, speed: number | undefined) {
     await this._injectScriptIfNeeded();
     await this._addAndEvaluate(`(() => {
       globalThis.__pwClock.clock?.uninstall();
-      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, loopLimit })});
+      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, loopLimit, speed })});
     })();`);
     this._now = time;
     this._clockInstalled = true;

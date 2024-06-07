@@ -24,9 +24,9 @@ export class Clock implements api.Clock {
     this._browserContext = browserContext;
   }
 
-  async installFakeTimers(time: number | Date, options: { loopLimit?: number } = {}) {
+  async installFakeTimers(time: number | Date, options: { loopLimit?: number, speed?: number } = {}) {
     const timeMs = time instanceof Date ? time.getTime() : time;
-    await this._browserContext._channel.clockInstallFakeTimers({ time: timeMs, loopLimit: options.loopLimit });
+    await this._browserContext._channel.clockInstallFakeTimers({ time: timeMs, loopLimit: options.loopLimit, speed: options.speed });
   }
 
   async runAllTimers(): Promise<number> {

@@ -966,6 +966,7 @@ scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.BrowserContextClockInstallFakeTimersParams = tObject({
   time: tNumber,
   loopLimit: tOptional(tNumber),
+  speed: tOptional(tNumber),
 });
 scheme.BrowserContextClockInstallFakeTimersResult = tOptional(tObject({}));
 scheme.BrowserContextClockRunAllTimersParams = tOptional(tObject({}));

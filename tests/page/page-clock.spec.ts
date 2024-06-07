@@ -738,4 +738,12 @@ it.describe('setTime', () => {
     await page.clock.setTime(200);
     expect(calls).toHaveLength(2);
   });
+
+  it.only('my clock', async ({ page }) => {
+    await page.clock.installFakeTimers(Date.now(), { speed: 0.5 });
+    await page.goto('https://www.online-stopwatch.com/large-online-clock/');
+    // await page.goto('https://www.example.com');
+    await new Promise(() => {});
+  });
+
 });
