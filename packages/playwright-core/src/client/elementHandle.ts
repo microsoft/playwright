@@ -262,8 +262,8 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (items.some(item => typeof item === 'string')) {
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
-    const itemFileType = (await Promise.all(items.map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
-    if (new Set(itemFileType).size > 1 || itemFileType.filter(type => type === 'directory').length > 1)
+    const itemFileTypes = (await Promise.all(items.map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
+    if (new Set(itemFileTypes).size > 1 || itemFileTypes.filter(type => type === 'directory').length > 1)
       throw new Error('File paths must be all files or a single directory');
 
     if (context._connection.isRemote()) {

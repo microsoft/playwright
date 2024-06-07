@@ -647,8 +647,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await Promise.all(localPaths.map(localPath => (
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
-        const isDirectoryUpload = localPaths.length === 1 ? (await fs.promises.stat(localPaths[0])).isDirectory() : false;
-        const waitForChangeEvent = isDirectoryUpload ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfill => {
+        const itemFileTypes = (await Promise.all(localPaths.map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
+        if (new Set(itemFileTypes).size > 1 || itemFileTypes.filter(type => type === 'directory').length > 1)
+          throw new Error('File paths must be all files or a single directory');
+        const waitForChangeEvent = itemFileTypes.includes('directory') ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfill => {
           node.addEventListener('change', fulfill, { once: true });
         }), undefined) : Promise.resolve();
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
