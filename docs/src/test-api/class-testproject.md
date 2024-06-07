@@ -365,7 +365,7 @@ Use [`property: TestConfig.timeout`] to change this option for all projects.
 
 ## property: TestProject.use
 * since: v1.10
-- type: <[Fixtures]>
+- type: ?<[TestOptions]>
 
 Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
