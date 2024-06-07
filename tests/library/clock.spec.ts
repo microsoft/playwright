@@ -1734,7 +1734,6 @@ it.describe('stubTimers', () => {
   });
 
   it('decide on Date.now support at call-time when supported', async ({ install }) => {
-    (Date.now as any) = () => {};
     install({ now: 0 });
     expect(Date.now).toEqual(expect.any(Function));
   });
