@@ -587,8 +587,8 @@ it.describe('popup', () => {
   it('should tick before popup', async ({ page, browserName }) => {
     const now = new Date('2015-09-25');
     await page.clock.installFakeTimers(now);
-    const newNow = await page.clock.runFor(1000);
-    expect(newNow).toBe(now.getTime() + 1000);
+    const ticks = await page.clock.runFor(1000);
+    expect(ticks).toBe(1000);
 
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
