@@ -225,9 +225,8 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 
 function resolveWorkes(workers: string) {
   const parsedWorkers = parseInt(workers, 10);
-  if (isNaN(parsedWorkers)) {
+  if (isNaN(parsedWorkers))
     throw new Error(`Workers ${workers} must be a number or percentage.`);
-  }
 
   return parsedWorkers;
 }
