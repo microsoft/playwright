@@ -107,7 +107,7 @@ export class FullConfigInternal {
         const cpus = os.cpus().length;
         this.config.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
       } else {
-        this.config.workers = parseInt(workers, 10);
+        this.config.workers = resolveWorkes(workers);
       }
     } else {
       this.config.workers = workers;
@@ -221,6 +221,15 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
       return [id, arg];
     return [require.resolve(id, { paths: [rootDir] }), arg];
   });
+}
+
+function resolveWorkes(workers: string) {
+  const parsedWorkers = parseInt(workers, 10);
+  if (isNaN(parsedWorkers)) {
+    throw new Error('Workers must be a number or percentage.');
+  }
+
+  return parsedWorkers;
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
