@@ -98,7 +98,7 @@ it.describe('setTimeout', () => {
 
     clock1.setTimeout(stubs[0], 100);
     clock2.setTimeout(stubs[1], 100);
-    clock2.tick(200);
+    await clock2.tick(200);
 
     expect(stubs[0].called).toBeFalsy();
     expect(stubs[1].called).toBeTruthy();
@@ -110,7 +110,7 @@ it.describe('setTimeout', () => {
       evalCalled = true;
       // @ts-expect-error
     }, '10');
-    clock.tick(10);
+    await clock.tick(10);
     expect(evalCalled).toBeTruthy();
   });
 
@@ -120,7 +120,7 @@ it.describe('setTimeout', () => {
       evalCalled = true;
       // @ts-expect-error
     }, 'string');
-    clock.tick(10);
+    await clock.tick(10);
 
     expect(evalCalled).toBeTruthy();
   });
@@ -128,49 +128,49 @@ it.describe('setTimeout', () => {
   it('passes setTimeout parameters', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 2, 'the first', 'the second');
-    clock.tick(3);
+    await clock.tick(3);
     expect(stub.calledWithExactly('the first', 'the second')).toBeTruthy();
   });
 
   it('calls correct timeout on recursive tick', async ({ clock }) => {
     const stub = createStub();
     const recurseCallback = () => {
-      clock.tick(100);
+      void clock.tick(100);
     };
 
     clock.setTimeout(recurseCallback, 50);
     clock.setTimeout(stub, 100);
 
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeTruthy();
   });
 
   it('does not depend on this', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
-    clock.tick(100);
+    await clock.tick(100);
     expect(stub.called).toBeTruthy();
   });
 
   it('is not influenced by forward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
-    clock.tick(1000);
+    await clock.tick(1000);
     clock.setSystemTime(new clock.Date().getTime() + 1000);
-    clock.tick(3990);
+    await clock.tick(3990);
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
   it('is not influenced by backward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
-    clock.tick(1000);
+    await clock.tick(1000);
     clock.setSystemTime(new clock.Date().getTime() - 1000);
-    clock.tick(3990);
+    await clock.tick(3990);
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
@@ -185,7 +185,7 @@ it.describe('setTimeout', () => {
     clock.setTimeout(() => {
       calls.push('-Infinity');
     }, Number.NEGATIVE_INFINITY);
-    clock.runAll();
+    await clock.runAll();
     expect(calls).toEqual(['NaN', 'Infinity', '-Infinity']);
   });
 
@@ -200,7 +200,7 @@ it.describe('setTimeout', () => {
 
     it('evals non-function callbacks', async ({ clock }) => {
       clock.setTimeout('globalThis.evalCalled = true', 10);
-      clock.tick(10);
+      await clock.tick(10);
 
       expect(globalThis.evalCalled).toBeTruthy();
     });
@@ -209,7 +209,7 @@ it.describe('setTimeout', () => {
       const x = 15;
       try {
         clock.setTimeout('x', x);
-        clock.tick(x);
+        await clock.tick(x);
         expect(true).toBeFalsy();
       } catch (e) {
         expect(e).toBeInstanceOf(ReferenceError);
@@ -222,21 +222,21 @@ it.describe('tick', () => {
   it('triggers immediately without specified delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub);
-    clock.tick(0);
+    await clock.tick(0);
     expect(stub.called).toBeTruthy();
   });
 
   it('does not trigger without sufficient delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
-    clock.tick(10);
+    await clock.tick(10);
     expect(stub.called).toBeFalsy();
   });
 
   it('triggers after sufficient delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
-    clock.tick(100);
+    await clock.tick(100);
     expect(stub.called).toBeTruthy();
   });
 
@@ -244,7 +244,7 @@ it.describe('tick', () => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 100);
     clock.setTimeout(spies[1], 100);
-    clock.tick(100);
+    await clock.tick(100);
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
   });
@@ -255,7 +255,7 @@ it.describe('tick', () => {
     clock.setTimeout(spies[1], 100);
     clock.setTimeout(spies[2], 99);
     clock.setTimeout(spies[3], 100);
-    clock.tick(100);
+    await clock.tick(100);
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
     expect(spies[2].called).toBeTruthy();
@@ -274,19 +274,19 @@ it.describe('tick', () => {
     // First spy calls another setTimeout with delay=0
     clock.setTimeout(spies[0], 0);
     clock.setTimeout(spies[2], 10);
-    clock.tick(10);
+    await clock.tick(10);
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
     expect(spies[2].called).toBeTruthy();
   });
 
   it('waits after setTimeout was called', async ({ clock }) => {
-    clock.tick(100);
+    await clock.tick(100);
     const stub = createStub();
     clock.setTimeout(stub, 150);
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
-    clock.tick(100);
+    await clock.tick(100);
     expect(stub.called).toBeTruthy();
   });
 
@@ -294,19 +294,19 @@ it.describe('tick', () => {
     const stubs = [createStub(), createStub(), createStub()];
     clock.setTimeout(stubs[0], 100);
     clock.setTimeout(stubs[1], 120);
-    clock.tick(10);
-    clock.tick(89);
+    await clock.tick(10);
+    await clock.tick(89);
     expect(stubs[0].called).toBeFalsy();
     expect(stubs[1].called).toBeFalsy();
     clock.setTimeout(stubs[2], 20);
-    clock.tick(1);
+    await clock.tick(1);
     expect(stubs[0].called).toBeTruthy();
     expect(stubs[1].called).toBeFalsy();
     expect(stubs[2].called).toBeFalsy();
-    clock.tick(19);
+    await clock.tick(19);
     expect(stubs[1].called).toBeFalsy();
     expect(stubs[2].called).toBeTruthy();
-    clock.tick(1);
+    await clock.tick(1);
     expect(stubs[1].called).toBeTruthy();
   });
 
@@ -316,9 +316,7 @@ it.describe('tick', () => {
     clock.setTimeout(stubs[0], 100);
     clock.setTimeout(stubs[1], 120);
 
-    expect(() => {
-      clock.tick(120);
-    }).toThrow();
+    await expect(clock.tick(120)).rejects.toThrow();
 
     expect(stubs[0].called).toBeTruthy();
     expect(stubs[1].called).toBeTruthy();
@@ -327,11 +325,7 @@ it.describe('tick', () => {
   it('calls function with global object or null (strict mode) as this', async ({ clock }) => {
     const stub = createStub().throws();
     clock.setTimeout(stub, 100);
-
-    expect(() => {
-      clock.tick(100);
-    }).toThrow();
-
+    await expect(clock.tick(100)).rejects.toThrow();
     expect(stub.calledOn(global) || stub.calledOn(null)).toBeTruthy();
   });
 
@@ -340,7 +334,7 @@ it.describe('tick', () => {
     clock.setTimeout(spies[0], 13);
     clock.setTimeout(spies[1], 11);
 
-    clock.tick(15);
+    await clock.tick(15);
 
     expect(spies[1].calledBefore(spies[0])).toBeTruthy();
   });
@@ -352,7 +346,7 @@ it.describe('tick', () => {
       spy(new clock.Date().getTime());
     }, 10);
 
-    clock.tick(100);
+    await clock.tick(100);
 
     expect(spy.callCount).toBe(10);
     expect(spy.calledWith(10)).toBeTruthy();
@@ -370,7 +364,7 @@ it.describe('tick', () => {
   it('fires timer in intervals of 13', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 13);
-    clock.tick(500);
+    await clock.tick(500);
     expect(spy.callCount).toBe(38);
   });
 
@@ -378,7 +372,7 @@ it.describe('tick', () => {
     const spy = createStub();
     // @ts-expect-error
     clock.setInterval(spy, '13');
-    clock.tick(500);
+    await clock.tick(500);
     expect(spy.callCount).toBe(38);
   });
 
@@ -394,7 +388,7 @@ it.describe('tick', () => {
       spy10(new clock.Date().getTime());
     }, 10);
 
-    clock.tick(500);
+    await clock.tick(500);
 
     expect(spy13.callCount).toBe(38);
     expect(spy10.callCount).toBe(50);
@@ -408,7 +402,7 @@ it.describe('tick', () => {
     clock.setInterval(spies[0], 10);
     clock.setTimeout(spies[1], 50);
 
-    clock.tick(100);
+    await clock.tick(100);
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
     expect(spies[0].callCount).toBe(10);
@@ -422,37 +416,29 @@ it.describe('tick', () => {
       if (callback.callCount === 3)
         clock.clearInterval(id);
     });
-
     id = clock.setInterval(callback, 10);
-    clock.tick(100);
-
+    await clock.tick(100);
     expect(callback.callCount).toBe(3);
   });
 
   it('passes 8 seconds', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 4000);
-
-    clock.tick('08');
-
+    await clock.tick('08');
     expect(spy.callCount).toBe(2);
   });
 
   it('passes 1 minute', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 6000);
-
-    clock.tick('01:00');
-
+    await clock.tick('01:00');
     expect(spy.callCount).toBe(10);
   });
 
   it('passes 2 hours, 34 minutes and 10 seconds', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 10000);
-
-    clock.tick('02:34:10');
-
+    await clock.tick('02:34:10');
     expect(spy.callCount).toBe(925);
   });
 
@@ -460,9 +446,7 @@ it.describe('tick', () => {
     const spy = createStub();
     clock.setInterval(spy, 10000);
 
-    expect(() => {
-      clock.tick('12:02:34:10');
-    }).toThrow();
+    await expect(clock.tick('12:02:34:10')).rejects.toThrow();
 
     expect(spy.callCount).toBe(0);
   });
@@ -470,11 +454,7 @@ it.describe('tick', () => {
   it('throws for invalid minutes', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 10000);
-
-    expect(() => {
-      clock.tick('67:10');
-    }).toThrow();
-
+    await expect(clock.tick('67:10')).rejects.toThrow();
     expect(spy.callCount).toBe(0);
   });
 
@@ -482,16 +462,13 @@ it.describe('tick', () => {
     const spy = createStub();
     clock.setInterval(spy, 10000);
 
-    expect(() => {
-      clock.tick('-7:10');
-    }).toThrow();
-
+    await expect(clock.tick('-7:10')).rejects.toThrow();
     expect(spy.callCount).toBe(0);
   });
 
   it('treats missing argument as 0', async ({ clock }) => {
     // @ts-expect-error
-    clock.tick();
+    await clock.tick();
 
     expect(clock.now()).toBe(0);
   });
@@ -506,9 +483,7 @@ it.describe('tick', () => {
     };
 
     callback();
-
-    clock.tick(1000);
-
+    await clock.tick(1000);
     expect(i).toBe(11);
   });
 
@@ -516,16 +491,12 @@ it.describe('tick', () => {
     const callback = () => {
       throw new Error('oh no!');
     };
-
     clock.setTimeout(callback, 1000);
-
-    expect(() => {
-      clock.tick(1000);
-    }).toThrow();
+    await expect(clock.tick(1000)).rejects.toThrow();
   });
 
   it('returns the current now value', async ({ clock }) => {
-    const value = clock.tick(200);
+    const value = await clock.tick(200);
     expect(clock.now()).toBe(value);
   });
 
@@ -536,9 +507,9 @@ it.describe('tick', () => {
     const stub = createStub();
     clock.setTimeout(callback, 1000);
     clock.setTimeout(stub, 2000);
-    clock.tick(1990);
+    await clock.tick(1990);
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
@@ -549,9 +520,9 @@ it.describe('tick', () => {
     const stub = createStub();
     clock.setTimeout(callback, 1000);
     clock.setTimeout(stub, 2000);
-    clock.tick(1990);
+    await clock.tick(1990);
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
@@ -564,12 +535,10 @@ it.describe('tick', () => {
     clock.setTimeout(callback, 1000);
     clock.setTimeout(stub, 2000);
 
-    expect(() => {
-      clock.tick(1990);
-    }).toThrow();
+    await expect(clock.tick(1990)).rejects.toThrow();
 
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
@@ -582,188 +551,15 @@ it.describe('tick', () => {
     clock.setTimeout(callback, 1000);
     clock.setTimeout(stub, 2000);
 
-    expect(() => {
-      clock.tick(1990);
-    }).toThrow();
+    await expect(clock.tick(1990)).rejects.toThrow();
 
     expect(stub.callCount).toBe(0);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
   it('throws on negative ticks', async ({ clock }) => {
-    expect(() => {
-      clock.tick(-500);
-    }).toThrow('Negative ticks are not supported');
-  });
-});
-
-it.describe('tickAsync', () => {
-  it('triggers immediately without specified delay', async ({ clock }) => {
-    const stub = createStub();
-    clock.setTimeout(stub);
-
-    await clock.tickAsync(0);
-
-    expect(stub.called).toBeTruthy();
-  });
-
-  it('does not trigger without sufficient delay', async ({ clock }) => {
-    const stub = createStub();
-    clock.setTimeout(stub, 100);
-
-    await clock.tickAsync(10);
-
-    expect(stub.called).toBeFalsy();
-  });
-
-  it('triggers after sufficient delay', async ({ clock }) => {
-    const stub = createStub();
-    clock.setTimeout(stub, 100);
-
-    await clock.tickAsync(100);
-
-    expect(stub.called).toBeTruthy();
-  });
-
-  it('triggers simultaneous timers', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 100);
-    clock.setTimeout(spies[1], 100);
-
-    await clock.tickAsync(100);
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('triggers multiple simultaneous timers', async ({ clock }) => {
-    const spies = [createStub(), createStub(), createStub(), createStub()];
-    clock.setTimeout(spies[0], 100);
-    clock.setTimeout(spies[1], 100);
-    clock.setTimeout(spies[2], 99);
-    clock.setTimeout(spies[3], 100);
-
-    await clock.tickAsync(100);
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-    expect(spies[2].called).toBeTruthy();
-    expect(spies[3].called).toBeTruthy();
-  });
-
-  it('triggers multiple simultaneous timers with zero callAt', async ({ clock }) => {
-    const spies = [
-      createStub(() => {
-        clock.setTimeout(spies[1], 0);
-      }),
-      createStub(),
-      createStub(),
-    ];
-
-    // First spy calls another setTimeout with delay=0
-    clock.setTimeout(spies[0], 0);
-    clock.setTimeout(spies[2], 10);
-
-    await clock.tickAsync(10);
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-    expect(spies[2].called).toBeTruthy();
-  });
-
-  it('waits after setTimeout was called', async ({ clock }) => {
-    const stub = createStub();
-    clock.setTimeout(stub, 150);
-
-    await clock.tickAsync(50);
-
-    expect(stub.called).toBeFalsy();
-
-    await clock.tickAsync(100);
-
-    expect(stub.called).toBeTruthy();
-  });
-
-  it('mini integration test', async ({ clock }) => {
-    const stubs = [createStub(), createStub(), createStub()];
-    clock.setTimeout(stubs[0], 100);
-    clock.setTimeout(stubs[1], 120);
-
-    await clock.tickAsync(10);
-    await clock.tickAsync(89);
-
-    expect(stubs[0].called).toBeFalsy();
-    expect(stubs[1].called).toBeFalsy();
-
-    clock.setTimeout(stubs[2], 20);
-    await clock.tickAsync(1);
-
-    expect(stubs[0].called).toBeTruthy();
-    expect(stubs[1].called).toBeFalsy();
-    expect(stubs[2].called).toBeFalsy();
-
-    await clock.tickAsync(19);
-
-    expect(stubs[1].called).toBeFalsy();
-    expect(stubs[2].called).toBeTruthy();
-
-    await clock.tickAsync(1);
-
-    expect(stubs[1].called).toBeTruthy();
-  });
-
-  it('triggers even when some throw', async ({ clock }) => {
-    const stubs = [createStub().throws(), createStub()];
-
-    clock.setTimeout(stubs[0], 100);
-    clock.setTimeout(stubs[1], 120);
-
-    await expect(clock.tickAsync(120)).rejects.toThrow();
-
-    expect(stubs[0].called).toBeTruthy();
-    expect(stubs[1].called).toBeTruthy();
-  });
-
-  it('calls function with global object or null (strict mode) as this', async ({ clock }) => {
-    const stub = createStub().throws();
-    clock.setTimeout(stub, 100);
-
-    await expect(clock.tickAsync(100)).rejects.toThrow();
-
-    expect(stub.calledOn(global) || stub.calledOn(null)).toBeTruthy();
-  });
-
-  it('triggers in the order scheduled', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 13);
-    clock.setTimeout(spies[1], 11);
-
-    await clock.tickAsync(15);
-
-    expect(spies[1].calledBefore(spies[0])).toBeTruthy();
-  });
-
-  it('creates updated Date while ticking', async ({ clock }) => {
-    const spy = createStub();
-
-    clock.setInterval(() => {
-      spy(new clock.Date().getTime());
-    }, 10);
-
-    await clock.tickAsync(100);
-
-    expect(spy.callCount).toBe(10);
-    expect(spy.calledWith(10)).toBeTruthy();
-    expect(spy.calledWith(20)).toBeTruthy();
-    expect(spy.calledWith(30)).toBeTruthy();
-    expect(spy.calledWith(40)).toBeTruthy();
-    expect(spy.calledWith(50)).toBeTruthy();
-    expect(spy.calledWith(60)).toBeTruthy();
-    expect(spy.calledWith(70)).toBeTruthy();
-    expect(spy.calledWith(80)).toBeTruthy();
-    expect(spy.calledWith(90)).toBeTruthy();
-    expect(spy.calledWith(100)).toBeTruthy();
+    await expect(clock.tick(-500)).rejects.toThrow('Negative ticks are not supported');
   });
 
   it('creates updated Date while ticking promises', async ({ clock }) => {
@@ -775,7 +571,7 @@ it.describe('tickAsync', () => {
       });
     }, 10);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spy.callCount).toBe(10);
     expect(spy.calledWith(10)).toBeTruthy();
@@ -788,36 +584,6 @@ it.describe('tickAsync', () => {
     expect(spy.calledWith(80)).toBeTruthy();
     expect(spy.calledWith(90)).toBeTruthy();
     expect(spy.calledWith(100)).toBeTruthy();
-  });
-
-  it('fires timer in intervals of 13', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 13);
-
-    await clock.tickAsync(500);
-
-    expect(spy.callCount).toBe(38);
-  });
-
-  it('fires timers in correct order', async ({ clock }) => {
-    const spy13 = createStub();
-    const spy10 = createStub();
-
-    clock.setInterval(() => {
-      spy13(new clock.Date().getTime());
-    }, 13);
-
-    clock.setInterval(() => {
-      spy10(new clock.Date().getTime());
-    }, 10);
-
-    await clock.tickAsync(500);
-
-    expect(spy13.callCount).toBe(38);
-    expect(spy10.callCount).toBe(50);
-
-    expect(spy13.calledWith(416)).toBeTruthy();
-    expect(spy10.calledWith(320)).toBeTruthy();
   });
 
   it('fires promise timers in correct order', async ({ clock }) => {
@@ -836,39 +602,13 @@ it.describe('tickAsync', () => {
       });
     }, 10);
 
-    await clock.tickAsync(500);
+    await clock.tick(500);
 
     expect(spy13.callCount).toBe(38);
     expect(spy10.callCount).toBe(50);
 
     expect(spy13.calledWith(416)).toBeTruthy();
     expect(spy10.calledWith(320)).toBeTruthy();
-  });
-
-  it('triggers timeouts and intervals in the order scheduled', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setInterval(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-
-    await clock.tickAsync(100);
-
-    expect(spies[0].calledBefore(spies[1])).toBeTruthy();
-    expect(spies[0].callCount).toBe(10);
-    expect(spies[1].callCount).toBe(1);
-  });
-
-  it('does not fire canceled intervals', async ({ clock }) => {
-    // eslint-disable-next-line prefer-const
-    let id;
-    const callback = createStub(() => {
-      if (callback.callCount === 3)
-        clock.clearInterval(id);
-    });
-
-    id = clock.setInterval(callback, 10);
-    await clock.tickAsync(100);
-
-    expect(callback.callCount).toBe(3);
   });
 
   it('does not fire intervals canceled in a promise', async ({ clock }) => {
@@ -884,84 +624,9 @@ it.describe('tickAsync', () => {
     });
 
     id = clock.setInterval(callback, 10);
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(callback.callCount).toBe(3);
-  });
-
-  it('passes 8 seconds', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 4000);
-
-    await clock.tickAsync('08');
-
-    expect(spy.callCount).toBe(2);
-  });
-
-  it('passes 1 minute', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 6000);
-
-    await clock.tickAsync('01:00');
-
-    expect(spy.callCount).toBe(10);
-  });
-
-  it('passes 2 hours, 34 minutes and 10 seconds', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 10000);
-
-    await clock.tickAsync('02:34:10');
-
-    expect(spy.callCount).toBe(925);
-  });
-
-  it('throws for invalid format', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 10000);
-    await expect(clock.tickAsync('12:02:34:10')).rejects.toThrow();
-    expect(spy.callCount).toBe(0);
-  });
-
-  it('throws for invalid minutes', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 10000);
-
-    await expect(clock.tickAsync('67:10')).rejects.toThrow();
-
-    expect(spy.callCount).toBe(0);
-  });
-
-  it('throws for negative minutes', async ({ clock }) => {
-    const spy = createStub();
-    clock.setInterval(spy, 10000);
-
-    await expect(clock.tickAsync('-7:10')).rejects.toThrow();
-
-    expect(spy.callCount).toBe(0);
-  });
-
-  it('treats missing argument as 0', async ({ clock }) => {
-    // @ts-expect-error
-    await clock.tickAsync();
-
-    expect(clock.now()).toBe(0);
-  });
-
-  it('fires nested setTimeout calls properly', async ({ clock }) => {
-    let i = 0;
-    const callback = () => {
-      ++i;
-      clock.setTimeout(() => {
-        callback();
-      }, 100);
-    };
-
-    callback();
-
-    await clock.tickAsync(1000);
-
-    expect(i).toBe(11);
   });
 
   it('fires nested setTimeout calls in user-created promises properly', async ({ clock }) => {
@@ -979,37 +644,10 @@ it.describe('tickAsync', () => {
 
     callback();
 
-    await clock.tickAsync(1000);
-
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await clock.tick(1000);
     expect(i).toBe(11);
-  });
-
-  it('does not silently catch errors', async ({ clock }) => {
-    const callback = () => {
-      throw new Error('oh no!');
-    };
-
-    clock.setTimeout(callback, 1000);
-
-    await expect(clock.tickAsync(1000)).rejects.toThrow();
-  });
-
-  it('returns the current now value', async ({ clock }) => {
-    const value = await clock.tickAsync(200);
-    expect(clock.now()).toBe(value);
-  });
-
-  it('is not influenced by forward system clock changes', async ({ clock }) => {
-    const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() + 1000);
-    };
-    const stub = createStub();
-    clock.setTimeout(callback, 1000);
-    clock.setTimeout(stub, 2000);
-    await clock.tickAsync(1990);
-    expect(stub.callCount).toBe(0);
-    await clock.tickAsync(20);
-    expect(stub.callCount).toBe(1);
   });
 
   it('is not influenced by forward system clock changes in promises', async ({ clock }) => {
@@ -1021,25 +659,9 @@ it.describe('tickAsync', () => {
     const stub = createStub();
     clock.setTimeout(callback, 1000);
     clock.setTimeout(stub, 2000);
-    await clock.tickAsync(1990);
+    await clock.tick(1990);
     expect(stub.callCount).toBe(0);
-    await clock.tickAsync(20);
-    expect(stub.callCount).toBe(1);
-  });
-
-  it('is not influenced by forward system clock changes when an error is thrown', async ({ clock }) => {
-    const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() + 1000);
-      throw new Error();
-    };
-    const stub = createStub();
-    clock.setTimeout(callback, 1000);
-    clock.setTimeout(stub, 2000);
-
-    await expect(clock.tickAsync(1990)).rejects.toThrow();
-
-    expect(stub.callCount).toBe(0);
-    await clock.tickAsync(20);
+    await clock.tick(20);
     expect(stub.callCount).toBe(1);
   });
 
@@ -1050,7 +672,7 @@ it.describe('tickAsync', () => {
       void Promise.resolve().then(spy);
     }, 100);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spy.called).toBeTruthy();
   });
@@ -1065,7 +687,7 @@ it.describe('tickAsync', () => {
           .then(spies[2]);
     }, 100);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
@@ -1081,7 +703,7 @@ it.describe('tickAsync', () => {
       void Promise.resolve().then(spies[2]);
     }, 100);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
@@ -1099,7 +721,7 @@ it.describe('tickAsync', () => {
       });
     }, 100);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spy.called).toBeTruthy();
   });
@@ -1112,7 +734,7 @@ it.describe('tickAsync', () => {
       void Promise.resolve().then(spies[2]).catch(spies[3]);
     }, 100);
 
-    await clock.tickAsync(100);
+    await clock.tick(100);
 
     expect(spies[0].callCount).toBe(0);
     expect(spies[1].called).toBeTruthy();
@@ -1129,20 +751,20 @@ it.describe('tickAsync', () => {
 
     clock.setTimeout(spies[1], 200);
 
-    await clock.tickAsync(200);
+    await clock.tick(200);
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
   it('should settle local promises before calling timeouts', async ({ clock }) => {
     const spies = [createStub(), createStub()];
-
     void Promise.resolve().then(spies[0]);
-
     clock.setTimeout(spies[1], 100);
 
-    await clock.tickAsync(100);
+    // Clock API is async.
+    await new Promise(setImmediate);
 
+    await clock.tick(100);
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
@@ -1157,7 +779,9 @@ it.describe('tickAsync', () => {
 
     clock.setTimeout(spies[1], 100);
 
-    await clock.tickAsync(100);
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await clock.tick(100);
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
@@ -1168,7 +792,7 @@ it.describe('next', () => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
 
-    clock.next();
+    await clock.next();
 
     expect(stub.called).toBeTruthy();
   });
@@ -1178,7 +802,7 @@ it.describe('next', () => {
     clock.setTimeout(spies[0], 100);
     clock.setTimeout(spies[1], 100);
 
-    clock.next();
+    await clock.next();
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeFalsy();
@@ -1191,25 +815,25 @@ it.describe('next', () => {
     clock.setTimeout(spies[2], 99);
     clock.setTimeout(spies[3], 100);
 
-    clock.next();
+    await clock.next();
 
     expect(spies[2].called).toBeTruthy();
     expect(spies[0].called).toBeFalsy();
     expect(spies[1].called).toBeFalsy();
     expect(spies[3].called).toBeFalsy();
 
-    clock.next();
+    await clock.next();
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeFalsy();
     expect(spies[3].called).toBeFalsy();
 
-    clock.next();
+    await clock.next();
 
     expect(spies[1].called).toBeTruthy();
     expect(spies[3].called).toBeFalsy();
 
-    clock.next();
+    await clock.next();
 
     expect(spies[3].called).toBeTruthy();
   });
@@ -1227,40 +851,31 @@ it.describe('next', () => {
     clock.setTimeout(spies[0], 0);
     clock.setTimeout(spies[2], 10);
 
-    clock.next();
+    await clock.next();
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeFalsy();
 
-    clock.next();
+    await clock.next();
 
     expect(spies[1].called).toBeTruthy();
 
-    clock.next();
+    await clock.next();
 
     expect(spies[2].called).toBeTruthy();
   });
 
   it('throws exception thrown by timer', async ({ clock }) => {
     const stub = createStub().throws();
-
     clock.setTimeout(stub, 100);
-
-    expect(() => {
-      clock.next();
-    }).toThrow();
-
+    await expect(clock.next()).rejects.toThrow();
     expect(stub.called).toBeTruthy();
   });
 
   it('calls function with global object or null (strict mode) as this', async ({ clock }) => {
     const stub = createStub().throws();
     clock.setTimeout(stub, 100);
-
-    expect(() => {
-      clock.next();
-    }).toThrow();
-
+    await expect(clock.next()).rejects.toThrow();
     expect(stub.calledOn(global) || stub.calledOn(null)).toBeTruthy();
   });
 
@@ -1269,8 +884,8 @@ it.describe('next', () => {
     clock.setTimeout(spies[0], 13);
     clock.setTimeout(spies[1], 11);
 
-    clock.next();
-    clock.next();
+    await clock.next();
+    await clock.next();
 
     expect(spies[1].calledBefore(spies[0])).toBeTruthy();
   });
@@ -1282,16 +897,16 @@ it.describe('next', () => {
       spy(new clock.Date().getTime());
     }, 10);
 
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
 
     expect(spy.callCount).toBe(10);
     expect(spy.calledWith(10)).toBeTruthy();
@@ -1311,12 +926,12 @@ it.describe('next', () => {
     clock.setInterval(spies[0], 10);
     clock.setTimeout(spies[1], 50);
 
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
 
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
     expect(spies[0].callCount).toBe(5);
@@ -1333,196 +948,26 @@ it.describe('next', () => {
     });
 
     id = clock.setInterval(callback, 10);
-    clock.next();
-    clock.next();
-    clock.next();
-    clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
 
     expect(callback.callCount).toBe(3);
   });
 
   it('advances the clock based on when the timer was supposed to be called', async ({ clock }) => {
     clock.setTimeout(createStub(), 55);
-    clock.next();
+    await clock.next();
 
     expect(clock.now()).toBe(55);
   });
 
   it('returns the current now value', async ({ clock }) => {
     clock.setTimeout(createStub(), 55);
-    const value = clock.next();
+    const value = await clock.next();
 
     expect(clock.now()).toBe(value);
-  });
-});
-
-it.describe('nextAsync', () => {
-  it('triggers the next timer', async ({ clock }) => {
-    const stub = createStub();
-    clock.setTimeout(stub, 100);
-
-    await clock.nextAsync();
-
-    expect(stub.called).toBeTruthy();
-  });
-
-  it('does not trigger simultaneous timers', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 100);
-    clock.setTimeout(spies[1], 100);
-
-    await clock.nextAsync();
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeFalsy();
-  });
-
-  it('subsequent calls trigger simultaneous timers', async ({ clock }) => {
-    const spies = [createStub(), createStub(), createStub(), createStub()];
-    clock.setTimeout(spies[0], 100);
-    clock.setTimeout(spies[1], 100);
-    clock.setTimeout(spies[2], 99);
-    clock.setTimeout(spies[3], 100);
-
-    await clock.nextAsync();
-
-    expect(spies[2].called).toBeTruthy();
-    expect(spies[0].called).toBeFalsy();
-    expect(spies[1].called).toBeFalsy();
-    expect(spies[3].called).toBeFalsy();
-
-    await clock.nextAsync();
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeFalsy();
-    expect(spies[3].called).toBeFalsy();
-
-    await clock.nextAsync();
-
-    expect(spies[1].called).toBeTruthy();
-    expect(spies[3].called).toBeFalsy();
-
-    await clock.nextAsync();
-
-    expect(spies[3].called).toBeTruthy();
-  });
-
-  it('subsequent calls trigger simultaneous timers with zero callAt', async ({ clock }) => {
-    const spies = [
-      createStub(() => {
-        clock.setTimeout(spies[1], 0);
-      }),
-      createStub(),
-      createStub(),
-    ];
-
-    // First spy calls another setTimeout with delay=0
-    clock.setTimeout(spies[0], 0);
-    clock.setTimeout(spies[2], 10);
-
-    await clock.nextAsync();
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeFalsy();
-
-    await clock.nextAsync();
-
-    expect(spies[1].called).toBeTruthy();
-
-    await clock.nextAsync();
-
-    expect(spies[2].called).toBeTruthy();
-  });
-
-  it('throws exception thrown by timer', async ({ clock }) => {
-    const stub = createStub().throws();
-    clock.setTimeout(stub, 100);
-    await expect(clock.nextAsync()).rejects.toThrow();
-    expect(stub.called).toBeTruthy();
-  });
-
-  it('calls function with global object or null (strict mode) as this', async ({ clock }) => {
-    const stub = createStub().throws();
-    clock.setTimeout(stub, 100);
-    await expect(clock.nextAsync()).rejects.toThrow();
-    expect(stub.calledOn(global) || stub.calledOn(null)).toBeTruthy();
-  });
-
-  it('subsequent calls trigger in the order scheduled', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 13);
-    clock.setTimeout(spies[1], 11);
-
-    await clock.nextAsync();
-    await clock.nextAsync();
-
-    expect(spies[1].calledBefore(spies[0])).toBeTruthy();
-  });
-
-  it('creates updated Date while ticking', async ({ clock }) => {
-    const spy = createStub();
-
-    clock.setInterval(() => {
-      spy(new clock.Date().getTime());
-    }, 10);
-
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-
-    expect(spy.callCount).toBe(10);
-    expect(spy.calledWith(10)).toBeTruthy();
-    expect(spy.calledWith(20)).toBeTruthy();
-    expect(spy.calledWith(30)).toBeTruthy();
-    expect(spy.calledWith(40)).toBeTruthy();
-    expect(spy.calledWith(50)).toBeTruthy();
-    expect(spy.calledWith(60)).toBeTruthy();
-    expect(spy.calledWith(70)).toBeTruthy();
-    expect(spy.calledWith(80)).toBeTruthy();
-    expect(spy.calledWith(90)).toBeTruthy();
-    expect(spy.calledWith(100)).toBeTruthy();
-  });
-
-  it('subsequent calls trigger timeouts and intervals in the order scheduled', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setInterval(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-
-    expect(spies[0].calledBefore(spies[1])).toBeTruthy();
-    expect(spies[0].callCount).toBe(5);
-    expect(spies[1].callCount).toBe(1);
-  });
-
-  it('does not fire canceled intervals', async ({ clock }) => {
-    // ESLint fails to detect this correctly
-    /* eslint-disable prefer-const */
-    let id;
-    const callback = createStub(() => {
-      if (callback.callCount === 3)
-        clock.clearInterval(id);
-    });
-
-    id = clock.setInterval(callback, 10);
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-
-    expect(callback.callCount).toBe(3);
   });
 
   it('does not fire intervals canceled in promises', async ({ clock }) => {
@@ -1538,26 +983,12 @@ it.describe('nextAsync', () => {
     });
 
     id = clock.setInterval(callback, 10);
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
-    await clock.nextAsync();
+    await clock.next();
+    await clock.next();
+    await clock.next();
+    await clock.next();
 
     expect(callback.callCount).toBe(3);
-  });
-
-  it('advances the clock based on when the timer was supposed to be called', async ({ clock }) => {
-    clock.setTimeout(createStub(), 55);
-    await clock.nextAsync();
-
-    expect(clock.now()).toBe(55);
-  });
-
-  it('returns the current now value', async ({ clock }) => {
-    clock.setTimeout(createStub(), 55);
-    const value = await clock.nextAsync();
-
-    expect(clock.now()).toBe(value);
   });
 
   it('should settle user-created promises', async ({ clock }) => {
@@ -1567,7 +998,7 @@ it.describe('nextAsync', () => {
       void Promise.resolve().then(spy);
     }, 55);
 
-    await clock.nextAsync();
+    await clock.next();
 
     expect(spy.called).toBeTruthy();
   });
@@ -1583,27 +1014,26 @@ it.describe('nextAsync', () => {
       });
     }, 55);
 
-    await clock.nextAsync();
+    await clock.next();
 
     expect(spy.called).toBeTruthy();
   });
 
   it('should settle local promises before firing timers', async ({ clock }) => {
     const spies = [createStub(), createStub()];
-
     void Promise.resolve().then(spies[0]);
-
     clock.setTimeout(spies[1], 55);
 
-    await clock.nextAsync();
-
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await clock.next();
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 });
 
 it.describe('runAll', () => {
   it('if there are no timers just return', async ({ clock }) => {
-    clock.runAll();
+    await clock.runAll();
   });
 
   it('runs all timers', async ({ clock }) => {
@@ -1611,7 +1041,7 @@ it.describe('runAll', () => {
     clock.setTimeout(spies[0], 10);
     clock.setTimeout(spies[1], 50);
 
-    clock.runAll();
+    await clock.runAll();
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
@@ -1628,7 +1058,7 @@ it.describe('runAll', () => {
     // Spy calls another setTimeout
     clock.setTimeout(spies[0], 10);
 
-    clock.runAll();
+    await clock.runAll();
 
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
@@ -1639,7 +1069,7 @@ it.describe('runAll', () => {
       clock.setTimeout(recursiveCallback, 10);
     };
     recursiveCallback();
-    expect(() => clock.runAll()).toThrow();
+    await expect(clock.runAll()).rejects.toThrow();
   });
 
   it('the loop limit can be set when creating a clock', async ({}) => {
@@ -1647,7 +1077,7 @@ it.describe('runAll', () => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 10);
     clock.setTimeout(spies[1], 50);
-    expect(() => clock.runAll()).toThrow();
+    await expect(clock.runAll()).rejects.toThrow();
   });
 
   it('the loop limit can be set when installing a clock', async ({ install }) => {
@@ -1656,66 +1086,7 @@ it.describe('runAll', () => {
     setTimeout(spies[0], 10);
     setTimeout(spies[1], 50);
 
-    expect(() => clock.runAll()).toThrow();
-  });
-});
-
-it.describe('runAllAsync', () => {
-  it('if there are no timers just return', async ({ clock }) => {
-    await clock.runAllAsync();
-  });
-
-  it('runs all timers', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-
-    await clock.runAllAsync();
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('new timers added while running are also run', async ({ clock }) => {
-    const spies = [
-      createStub(() => {
-        clock.setTimeout(spies[1], 50);
-      }),
-      createStub(),
-    ];
-
-    // Spy calls another setTimeout
-    clock.setTimeout(spies[0], 10);
-
-    await clock.runAllAsync();
-
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('new timers added in promises while running are also run', async ({ clock }) => {
-    const spies = [
-      createStub(() => {
-        void Promise.resolve().then(() => {
-          clock.setTimeout(spies[1], 50);
-        });
-      }),
-      createStub(),
-    ];
-
-    // Spy calls another setTimeout
-    clock.setTimeout(spies[0], 10);
-    await clock.runAllAsync();
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('throws before allowing infinite recursion', async ({ clock }) => {
-    const recursiveCallback = () => {
-      clock.setTimeout(recursiveCallback, 10);
-    };
-    recursiveCallback();
-    await expect(clock.runAllAsync()).rejects.toThrow();
+    await expect(clock.runAll()).rejects.toThrow();
   });
 
   it('throws before allowing infinite recursion from promises', async ({ clock }) => {
@@ -1725,23 +1096,10 @@ it.describe('runAllAsync', () => {
       });
     };
     recursiveCallback();
-    await expect(clock.runAllAsync()).rejects.toThrow();
-  });
 
-  it('the loop limit can be set when creating a clock', async ({}) => {
-    const clock = createClock(0, 1);
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-    await expect(clock.runAllAsync()).rejects.toThrow();
-  });
-
-  it('the loop limit can be set when installing a clock', async ({ install }) => {
-    const clock = install({ loopLimit: 1 });
-    const spies = [createStub(), createStub()];
-    setTimeout(spies[0], 10);
-    setTimeout(spies[1], 50);
-    await expect(clock.runAllAsync()).rejects.toThrow();
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await expect(clock.runAll()).rejects.toThrow();
   });
 
   it('should settle user-created promises', async ({ clock }) => {
@@ -1749,7 +1107,7 @@ it.describe('runAllAsync', () => {
     clock.setTimeout(() => {
       void Promise.resolve().then(spy);
     }, 55);
-    await clock.runAllAsync();
+    await clock.runAll();
     expect(spy.called).toBeTruthy();
   });
 
@@ -1764,7 +1122,7 @@ it.describe('runAllAsync', () => {
       });
     }, 55);
 
-    await clock.runAllAsync();
+    await clock.runAll();
 
     expect(spy.called).toBeTruthy();
   });
@@ -1773,7 +1131,10 @@ it.describe('runAllAsync', () => {
     const spies = [createStub(), createStub()];
     void Promise.resolve().then(spies[0]);
     clock.setTimeout(spies[1], 55);
-    await clock.runAllAsync();
+
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await clock.runAll();
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
@@ -1783,14 +1144,14 @@ it.describe('runAllAsync', () => {
       void Promise.resolve().then(spies[0]);
     }, 55);
     clock.setTimeout(spies[1], 75);
-    await clock.runAllAsync();
+    await clock.runAll();
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 });
 
 it.describe('runToLast', () => {
   it('returns current time when there are no timers', async ({ clock }) => {
-    const time = clock.runToLast();
+    const time = await clock.runToLast();
     expect(time).toBe(0);
   });
 
@@ -1798,7 +1159,7 @@ it.describe('runToLast', () => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 10);
     clock.setTimeout(spies[1], 50);
-    clock.runToLast();
+    await clock.runToLast();
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
   });
@@ -1807,7 +1168,7 @@ it.describe('runToLast', () => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 10);
     clock.setTimeout(spies[1], 50);
-    const time = clock.runToLast();
+    const time = await clock.runToLast();
     expect(time).toBe(50);
   });
 
@@ -1815,7 +1176,7 @@ it.describe('runToLast', () => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 10);
     clock.setTimeout(spies[1], 10);
-    clock.runToLast();
+    await clock.runToLast();
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
   });
@@ -1830,7 +1191,7 @@ it.describe('runToLast', () => {
 
     // Spy calls another setTimeout
     clock.setTimeout(spies[0], 10);
-    clock.runToLast();
+    await clock.runToLast();
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeFalsy();
   });
@@ -1847,7 +1208,7 @@ it.describe('runToLast', () => {
     clock.setTimeout(spies[0], 100);
     // Spy calls another setTimeout
     clock.setTimeout(spies[1], 10);
-    clock.runToLast();
+    await clock.runToLast();
     expect(spies[0].called).toBeTruthy();
     expect(spies[1].called).toBeTruthy();
     expect(spies[2].called).toBeTruthy();
@@ -1861,7 +1222,7 @@ it.describe('runToLast', () => {
 
     clock.setTimeout(recursiveCallback, 0);
     clock.setTimeout(spy, 100);
-    clock.runToLast();
+    await clock.runToLast();
     expect(spy.called).toBeTruthy();
   });
 
@@ -1873,87 +1234,9 @@ it.describe('runToLast', () => {
       clock.setTimeout(cb, 50);
     }, 50);
 
-    clock.runToLast();
+    await clock.runToLast();
 
     expect(invocations).toBe(1);
-  });
-});
-
-it.describe('runToLastAsync', () => {
-  it('returns current time when there are no timers', async ({ clock }) => {
-    const time = await clock.runToLastAsync();
-    expect(time).toBe(0);
-  });
-
-  it('runs all existing timers', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-    await clock.runToLastAsync();
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('returns time of the last timer', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 10);
-    clock.setTimeout(spies[1], 50);
-    const time = await clock.runToLastAsync();
-    expect(time).toBe(50);
-  });
-
-  it('runs all existing timers when two timers are matched for being last', async ({ clock }) => {
-    const spies = [createStub(), createStub()];
-    clock.setTimeout(spies[0], 10);
-    clock.setTimeout(spies[1], 10);
-    await clock.runToLastAsync();
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-  });
-
-  it('new timers added with a call time later than the last existing timer are NOT run', async ({ clock }) => {
-    const spies = [
-      createStub(() => {
-        clock.setTimeout(spies[1], 50);
-      }),
-      createStub(),
-    ];
-
-    // Spy calls another setTimeout
-    clock.setTimeout(spies[0], 10);
-    await clock.runToLastAsync();
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeFalsy();
-  });
-
-  it('new timers added with a call time earlier than the last existing timer are run', async ({ clock }) => {
-    const spies = [
-      createStub(),
-      createStub(() => {
-        clock.setTimeout(spies[2], 50);
-      }),
-      createStub(),
-    ];
-
-    clock.setTimeout(spies[0], 100);
-    // Spy calls another setTimeout
-    clock.setTimeout(spies[1], 10);
-    await clock.runToLastAsync();
-    expect(spies[0].called).toBeTruthy();
-    expect(spies[1].called).toBeTruthy();
-    expect(spies[2].called).toBeTruthy();
-  });
-
-  it('new timers cannot cause an infinite loop', async ({ clock }) => {
-    const spy = createStub();
-    const recursiveCallback = () => {
-      clock.setTimeout(recursiveCallback, 0);
-    };
-
-    clock.setTimeout(recursiveCallback, 0);
-    clock.setTimeout(spy, 100);
-    await clock.runToLastAsync();
-    expect(spy.called).toBeTruthy();
   });
 
   it('should settle user-created promises', async ({ clock }) => {
@@ -1961,7 +1244,7 @@ it.describe('runToLastAsync', () => {
     clock.setTimeout(() => {
       void Promise.resolve().then(spy);
     }, 55);
-    await clock.runToLastAsync();
+    await clock.runToLast();
     expect(spy.called).toBeTruthy();
   });
 
@@ -1976,7 +1259,7 @@ it.describe('runToLastAsync', () => {
       });
     }, 55);
 
-    await clock.runToLastAsync();
+    await clock.runToLast();
     expect(spy.called).toBeTruthy();
   });
 
@@ -1984,7 +1267,10 @@ it.describe('runToLastAsync', () => {
     const spies = [createStub(), createStub()];
     void Promise.resolve().then(spies[0]);
     clock.setTimeout(spies[1], 55);
-    await clock.runToLastAsync();
+
+    // Clock API is async.
+    await new Promise(setImmediate);
+    await clock.runToLast();
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
@@ -1994,7 +1280,7 @@ it.describe('runToLastAsync', () => {
       void Promise.resolve().then(spies[0]);
     }, 55);
     clock.setTimeout(spies[1], 75);
-    await clock.runToLastAsync();
+    await clock.runToLast();
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 });
@@ -2004,7 +1290,7 @@ it.describe('clearTimeout', () => {
     const stub = createStub();
     const id = clock.setTimeout(stub, 50);
     clock.clearTimeout(id);
-    await clock.tickAsync(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2012,7 +1298,7 @@ it.describe('clearTimeout', () => {
     const stub = createStub();
     const id = clock.setInterval(stub, 50);
     clock.clearTimeout(id);
-    await clock.tickAsync(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2020,7 +1306,7 @@ it.describe('clearTimeout', () => {
     const stub = createStub();
     const id = clock.setInterval(stub);
     clock.clearTimeout(id);
-    await clock.tickAsync(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2031,13 +1317,13 @@ it.describe('clearTimeout', () => {
 
 it.describe('reset', () => {
   it('resets to the time install with - issue #183', async ({ clock }) => {
-    clock.tick(100);
+    await clock.tick(100);
     clock.reset();
     expect(clock.now()).toBe(0);
   });
 
   it('resets hrTime - issue #206', async ({ clock }) => {
-    clock.tick(100);
+    await clock.tick(100);
     expect(clock.performance.now()).toEqual(100);
     clock.reset();
     expect(clock.performance.now()).toEqual(0);
@@ -2067,7 +1353,7 @@ it.describe('setInterval', () => {
   it('schedules recurring timeout', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
-    clock.tick(99);
+    await clock.tick(99);
 
     expect(stub.callCount).toBe(9);
   });
@@ -2075,23 +1361,23 @@ it.describe('setInterval', () => {
   it('is not influenced by forward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
-    clock.tick(11);
+    await clock.tick(11);
     expect(stub.callCount).toBe(1);
     clock.setSystemTime(new clock.Date().getTime() + 1000);
-    clock.tick(8);
+    await clock.tick(8);
     expect(stub.callCount).toBe(1);
-    clock.tick(3);
+    await clock.tick(3);
     expect(stub.callCount).toBe(2);
   });
 
   it('is not influenced by backward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
-    clock.tick(5);
+    await clock.tick(5);
     clock.setSystemTime(new clock.Date().getTime() - 1000);
-    clock.tick(6);
+    await clock.tick(6);
     expect(stub.callCount).toBe(1);
-    clock.tick(10);
+    await clock.tick(10);
     expect(stub.callCount).toBe(2);
   });
 
@@ -2102,7 +1388,7 @@ it.describe('setInterval', () => {
     });
 
     const id = clock.setInterval(stub, 10);
-    clock.tick(100);
+    await clock.tick(100);
 
     expect(stub.callCount).toBe(3);
   });
@@ -2110,7 +1396,7 @@ it.describe('setInterval', () => {
   it('passes setTimeout parameters', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 2, 'the first', 'the second');
-    clock.tick(3);
+    await clock.tick(3);
     expect(stub.calledWithExactly('the first', 'the second')).toBeTruthy();
   });
 });
@@ -2120,7 +1406,7 @@ it.describe('clearInterval', () => {
     const stub = createStub();
     const id = clock.setInterval(stub, 50);
     clock.clearInterval(id);
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2128,7 +1414,7 @@ it.describe('clearInterval', () => {
     const stub = createStub();
     const id = clock.setInterval(stub);
     clock.clearInterval(id);
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2136,7 +1422,7 @@ it.describe('clearInterval', () => {
     const stub = createStub();
     const id = clock.setTimeout(stub, 50);
     clock.clearInterval(id);
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2172,7 +1458,7 @@ it.describe('date', () => {
 
   it('listens to ticking clock', async ({ clock }) => {
     const date1 = new clock.Date();
-    clock.tick(3);
+    await clock.tick(3);
     const date2 = new clock.Date();
     expect(date2.getTime() - date1.getTime()).toBe(3);
   });
@@ -2279,79 +1565,79 @@ it.describe('date', () => {
 });
 
 it.describe('stubTimers', () => {
-  it('returns clock object', ({ install }) => {
+  it('returns clock object', async ({ install }) => {
     const clock = install();
     expect(clock).toEqual(expect.any(Object));
     expect(clock.tick).toEqual(expect.any(Function));
   });
 
-  it('takes an object parameter', ({ install }) => {
+  it('takes an object parameter', async ({ install }) => {
     const clock = install({});
     expect(clock).toEqual(expect.any(Object));
   });
 
-  it('sets initial timestamp', ({ install }) => {
+  it('sets initial timestamp', async ({ install }) => {
     const clock = install({ now: 1400 });
     expect(clock.now()).toBe(1400);
   });
 
-  it('replaces global setTimeout', ({ install }) => {
+  it('replaces global setTimeout', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
     setTimeout(stub, 1000);
-    clock.tick(1000);
+    await clock.tick(1000);
 
     expect(stub.called).toBeTruthy();
   });
 
-  it('global fake setTimeout should return id', ({ install }) => {
+  it('global fake setTimeout should return id', async ({ install }) => {
     install();
     const stub = createStub();
     const to = setTimeout(stub, 1000);
     expect(to).toEqual(expect.any(Number));
   });
 
-  it('replaces global clearTimeout', ({ install }) => {
+  it('replaces global clearTimeout', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
     clearTimeout(setTimeout(stub, 1000));
-    clock.tick(1000);
+    await clock.tick(1000);
 
     expect(stub.called).toBeFalsy();
   });
 
-  it('replaces global setInterval', ({ install }) => {
+  it('replaces global setInterval', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
     setInterval(stub, 500);
-    clock.tick(1000);
+    await clock.tick(1000);
 
     expect(stub.callCount).toBe(2);
   });
 
-  it('replaces global clearInterval', ({ install }) => {
+  it('replaces global clearInterval', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
     clearInterval(setInterval(stub, 500));
-    clock.tick(1000);
+    await clock.tick(1000);
 
     expect(stub.called).toBeFalsy();
   });
 
-  it('replaces global performance.now', ({ install }) => {
+  it('replaces global performance.now', async ({ install }) => {
     const clock = install();
     const prev = performance.now();
-    clock.tick(1000);
+    await clock.tick(1000);
     const next = performance.now();
     expect(next).toBe(1000);
     expect(prev).toBe(0);
   });
 
-  it('uninstalls global performance.now', ({ install }) => {
+  it('uninstalls global performance.now', async ({ install }) => {
     const oldNow = performance.now;
     const clock = install();
     expect(performance.now).toBe(clock.performance.now);
@@ -2359,7 +1645,7 @@ it.describe('stubTimers', () => {
     expect(performance.now).toBe(oldNow);
   });
 
-  it('should let performance.mark still be callable after install() (#136)', ({ install }) => {
+  it('should let performance.mark still be callable after install() (#136)', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     install();
     expect(() => {
@@ -2367,7 +1653,7 @@ it.describe('stubTimers', () => {
     }).not.toThrow();
   });
 
-  it('should not alter the global performance properties and methods', ({ install }) => {
+  it('should not alter the global performance properties and methods', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     (Performance.prototype as any).someFunc1 = () => {};
     (Performance.prototype as any).someFunc2 = () => {};
@@ -2383,7 +1669,7 @@ it.describe('stubTimers', () => {
     delete (Performance.prototype as any).someFunc3;
   });
 
-  it('should replace the getEntries, getEntriesByX methods with noops that return []', ({ install }) => {
+  it('should replace the getEntries, getEntriesByX methods with noops that return []', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     const backupDescriptors = Object.getOwnPropertyDescriptors(Performance);
 
@@ -2442,18 +1728,18 @@ it.describe('stubTimers', () => {
     expect(now.getTime()).toBe(0);
   });
 
-  it(`fake Date constructor should mirror Date's properties`, ({ clock }) => {
+  it(`fake Date constructor should mirror Date's properties`, async ({ clock }) => {
     expect(Date).not.toBe(clock.Date);
     expect(Date.prototype).toEqual(clock.Date.prototype);
   });
 
-  it('decide on Date.now support at call-time when supported', ({ install }) => {
+  it('decide on Date.now support at call-time when supported', async ({ install }) => {
     (Date.now as any) = () => {};
     install({ now: 0 });
     expect(Date.now).toEqual(expect.any(Function));
   });
 
-  it('mirrors custom Date properties', ({ install }) => {
+  it('mirrors custom Date properties', async ({ install }) => {
     const f = () => {
       return '';
     };
@@ -2475,7 +1761,7 @@ it.describe('stubTimers', () => {
     expect(Date).not.toBe(originals.Date);
   });
 
-  it('resets faked methods', ({ install }) => {
+  it('resets faked methods', async ({ install }) => {
     const { clock, originals } = rawInstall(globalThis, {
       now: 0,
       toFake: ['setTimeout', 'Date'],
@@ -2574,30 +1860,30 @@ it.describe('requestAnimationFrame', () => {
   it('should run every 16ms', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
-    clock.tick(15);
+    await clock.tick(15);
     expect(stub.callCount).toBe(0);
-    clock.tick(1);
+    await clock.tick(1);
     expect(stub.callCount).toBe(1);
   });
 
   it('should be called with performance.now() when available', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.calledWith(16)).toBeTruthy();
   });
 
   it('should be called with performance.now() even when performance unavailable', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.calledWith(16)).toBeTruthy();
   });
 
   it('should call callback once', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
-    clock.tick(32);
+    await clock.tick(32);
     expect(stub.callCount).toBe(1);
   });
 
@@ -2605,9 +1891,9 @@ it.describe('requestAnimationFrame', () => {
     const stub1 = createStub();
     const stub2 = createStub();
     clock.requestAnimationFrame(stub1);
-    clock.tick(5);
+    await clock.tick(5);
     clock.requestAnimationFrame(stub2);
-    clock.tick(11);
+    await clock.tick(11);
     expect(stub1.calledWith(16)).toBeTruthy();
     expect(stub2.calledWith(16)).toBeTruthy();
   });
@@ -2616,18 +1902,18 @@ it.describe('requestAnimationFrame', () => {
     const stub1 = createStub();
     const stub2 = createStub();
     clock.requestAnimationFrame(stub1);
-    clock.tick(57);
+    await clock.tick(57);
     clock.requestAnimationFrame(stub2);
-    clock.tick(10);
+    await clock.tick(10);
     expect(stub1.calledWith(16)).toBeTruthy();
     expect(stub2.calledWith(64)).toBeTruthy();
   });
 
-  it('should schedule for next frame if on current frame', ({ clock }) => {
+  it('should schedule for next frame if on current frame', async ({ clock }) => {
     const stub = createStub();
-    clock.tick(16);
+    await clock.tick(16);
     clock.requestAnimationFrame(stub);
-    clock.tick(16);
+    await clock.tick(16);
     expect(stub.calledWith(32)).toBeTruthy();
   });
 });
@@ -2637,7 +1923,7 @@ it.describe('cancelAnimationFrame', () => {
     const stub = createStub();
     const id = clock.requestAnimationFrame(stub);
     clock.cancelAnimationFrame(id);
-    clock.tick(16);
+    await clock.tick(16);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2647,7 +1933,7 @@ it.describe('cancelAnimationFrame', () => {
     expect(() => {
       clock.cancelAnimationFrame(id);
     }).toThrow();
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeTruthy();
   });
 
@@ -2657,7 +1943,7 @@ it.describe('cancelAnimationFrame', () => {
     expect(() => {
       clock.cancelAnimationFrame(id);
     }).toThrow();
-    clock.tick(50);
+    await clock.tick(50);
     expect(stub.called).toBeTruthy();
   });
 
@@ -2668,10 +1954,10 @@ it.describe('cancelAnimationFrame', () => {
 
 it.describe('runToFrame', () => {
   it('should tick next frame', async ({ clock }) => {
-    clock.runToFrame();
+    await clock.runToFrame();
     expect(clock.now()).toBe(16);
-    clock.tick(3);
-    clock.runToFrame();
+    await clock.tick(3);
+    await clock.runToFrame();
     expect(clock.now()).toBe(32);
   });
 });
@@ -2680,7 +1966,7 @@ it.describe('jump', () => {
   it('ignores timers which wouldn\'t be run', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 1000);
-    clock.jump(500);
+    await clock.jump(500);
     expect(stub.called).toBeFalsy();
   });
 
@@ -2689,7 +1975,7 @@ it.describe('jump', () => {
     clock.setTimeout(() => {
       stub(clock.Date.now());
     }, 1000);
-    clock.jump(2000);
+    await clock.jump(2000);
     expect(stub.callCount).toBe(1);
     expect(stub.calledWith(2000)).toBeTruthy();
   });
@@ -2702,7 +1988,7 @@ it.describe('jump', () => {
     clock.setTimeout(shortTimers[0], 250);
     clock.setInterval(shortTimers[1], 100);
     clock.requestAnimationFrame(shortTimers[2]);
-    clock.jump(1500);
+    await clock.jump(1500);
     for (const stub of longTimers)
       expect(stub.called).toBeFalsy();
     for (const stub of shortTimers)
@@ -2712,7 +1998,7 @@ it.describe('jump', () => {
   it('supports string time arguments', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100000); // 100000 = 1:40
-    clock.jump('01:50');
+    await clock.jump('01:50');
     expect(stub.callCount).toBe(1);
   });
 });
@@ -2724,7 +2010,7 @@ it.describe('performance.now()', () => {
   });
 
   it('should run along with clock.tick', async ({ clock }) => {
-    clock.tick(5000);
+    await clock.tick(5000);
     const result = clock.performance.now();
     expect(result).toBe(5000);
   });
@@ -2733,7 +2019,7 @@ it.describe('performance.now()', () => {
     for (let i = 0; i < 10; i++) {
       const next = clock.performance.now();
       expect(next).toBe(1000 * i);
-      clock.tick(1000);
+      await clock.tick(1000);
     }
   });
 
@@ -2742,7 +2028,7 @@ it.describe('performance.now()', () => {
       const result = clock.performance.now();
       expect(result).toBe(2500);
     }, 2500);
-    clock.tick(5000);
+    await clock.tick(5000);
   });
 });
 
@@ -2768,7 +2054,7 @@ it.describe('requestIdleCallback', () => {
   it('runs after all timers', async ({ clock }) => {
     const stub = createStub();
     clock.requestIdleCallback(stub);
-    clock.tick(1000);
+    await clock.tick(1000);
     expect(stub.called).toBeTruthy();
   });
 
@@ -2777,7 +2063,7 @@ it.describe('requestIdleCallback', () => {
     clock.setTimeout(() => {}, 10);
     clock.setTimeout(() => {}, 30);
     clock.requestIdleCallback(stub, { timeout: 20 });
-    clock.tick(20);
+    await clock.tick(20);
     expect(stub.called).toBeTruthy();
   });
 
@@ -2785,7 +2071,7 @@ it.describe('requestIdleCallback', () => {
     const stub = createStub();
     clock.setTimeout(() => {}, 30);
     clock.requestIdleCallback(stub);
-    clock.tick(35);
+    await clock.tick(35);
     expect(stub.called).toBeFalsy();
   });
 });
@@ -2795,7 +2081,7 @@ it.describe('cancelIdleCallback', () => {
     const stub = createStub();
     const callbackId = clock.requestIdleCallback(stub, { timeout: 0 });
     clock.cancelIdleCallback(callbackId);
-    clock.tick(0);
+    await clock.tick(0);
     expect(stub.called).toBeFalsy();
   });
 });
@@ -2813,14 +2099,14 @@ it.describe('loop limit stack trace', () => {
       };
 
       recursiveCreateTimer();
-      await clock.runAllAsync().catch(catchSpy);
+      await clock.runAll().catch(catchSpy);
       expect(catchSpy.callCount).toBe(1);
       const err = catchSpy.firstCall.args[0];
       expect(err.message).toBe(expectedMessage);
       expect(err.stack).toMatch(new RegExp(`Error: ${expectedMessage}\\s+Timeout - recursiveCreateTimer`));
     });
 
-    it('provides a stack trace for running all sync', ({ clock }) => {
+    it('provides a stack trace for running all sync', async ({ clock }) => {
       let caughtError = false;
       const recursiveCreateTimer = () => {
         clock.setTimeout(recursiveCreateTimer, 10);
@@ -2828,7 +2114,7 @@ it.describe('loop limit stack trace', () => {
 
       recursiveCreateTimer();
       try {
-        clock.runAll();
+        await clock.runAll();
       } catch (err) {
         caughtError = true;
         expect(err.message).toBe(expectedMessage);
@@ -2846,14 +2132,14 @@ it.describe('loop limit stack trace', () => {
       };
 
       recursiveCreateTimer();
-      await clock.runAllAsync().catch(catchSpy);
+      await clock.runAll().catch(catchSpy);
       expect(catchSpy.callCount).toBe(1);
       const err = catchSpy.firstCall.args[0];
       expect(err.message).toBe(expectedMessage);
       expect(err.stack).toMatch(new RegExp(`Error: ${expectedMessage}\\s+IdleCallback - recursiveCreateTimer`));
     });
 
-    it('provides a stack trace for running all sync', ({ clock }) => {
+    it('provides a stack trace for running all sync', async ({ clock }) => {
       let caughtError = false;
       const recursiveCreateTimer = () => {
         clock.requestIdleCallback(recursiveCreateTimer, { timeout: 10 });
@@ -2861,7 +2147,7 @@ it.describe('loop limit stack trace', () => {
 
       recursiveCreateTimer();
       try {
-        clock.runAll();
+        await clock.runAll();
       } catch (err) {
         caughtError = true;
         expect(err.message).toBe(expectedMessage);
@@ -2879,14 +2165,14 @@ it.describe('loop limit stack trace', () => {
       };
 
       recursiveCreateTimer();
-      await clock.runAllAsync().catch(catchSpy);
+      await clock.runAll().catch(catchSpy);
       expect(catchSpy.callCount).toBe(1);
       const err = catchSpy.firstCall.args[0];
       expect(err.message).toBe(expectedMessage);
       expect(err.stack).toMatch(new RegExp(`Error: ${expectedMessage}\\s+Interval - recursiveCreateTimer`));
     });
 
-    it('provides a stack trace for running all sync', ({ clock }) => {
+    it('provides a stack trace for running all sync', async ({ clock }) => {
       let caughtError = false;
       const recursiveCreateTimer = () => {
         clock.setInterval(recursiveCreateTimer, 10);
@@ -2894,7 +2180,7 @@ it.describe('loop limit stack trace', () => {
 
       recursiveCreateTimer();
       try {
-        clock.runAll();
+        await clock.runAll();
       } catch (err) {
         caughtError = true;
         expect(err.message).toBe(expectedMessage);
@@ -2912,14 +2198,14 @@ it.describe('loop limit stack trace', () => {
       };
 
       recursiveCreateTimer();
-      await clock.runAllAsync().catch(catchSpy);
+      await clock.runAll().catch(catchSpy);
       expect(catchSpy.callCount).toBe(1);
       const err = catchSpy.firstCall.args[0];
       expect(err.message).toBe(expectedMessage);
       expect(err.stack).toMatch(new RegExp(`Error: ${expectedMessage}\\s+AnimationFrame - recursiveCreateTimer`));
     });
 
-    it('provides a stack trace for running all sync', ({ clock }) => {
+    it('provides a stack trace for running all sync', async ({ clock }) => {
       let caughtError = false;
       const recursiveCreateTimer = () => {
         clock.requestAnimationFrame(recursiveCreateTimer);
@@ -2927,7 +2213,7 @@ it.describe('loop limit stack trace', () => {
 
       recursiveCreateTimer();
       try {
-        clock.runAll();
+        await clock.runAll();
       } catch (err) {
         caughtError = true;
         expect(err.message).toBe(expectedMessage);

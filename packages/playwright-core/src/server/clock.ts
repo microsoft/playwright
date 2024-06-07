@@ -39,22 +39,19 @@ export class Clock {
 
   async runToNextTimer(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.next()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.nextAsync()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.next()`);
     return this._now;
   }
 
   async runAllTimers(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.runAll()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runAllAsync()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runAll()`);
     return this._now;
   }
 
   async runToLastTimer(): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.runToLast()`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runToLastAsync()`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runToLast()`);
     return this._now;
   }
 
@@ -85,8 +82,8 @@ export class Clock {
 
   async runFor(time: number | string): Promise<number> {
     this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.tick(${JSON.stringify(time)})`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.tickAsync(${JSON.stringify(time)})`);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.recordTick(${JSON.stringify(time)})`);
+    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.tick(${JSON.stringify(time)})`);
     return this._now;
   }
 
