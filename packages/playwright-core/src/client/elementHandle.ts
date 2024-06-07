@@ -267,28 +267,26 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
       throw new Error('File paths must be all files or a single directory');
 
     if (context._connection.isRemote()) {
-      let streams: channels.WritableStreamChannel[] | undefined;
-      let localPaths: string[] | undefined;
-      await Promise.all((items as string[]).map(async item => {
+      const streams = (await Promise.all((items as string[]).map(async item => {
         const isDirectory = (await fs.promises.stat(item)).isDirectory();
-        const files = isDirectory ? (await fs.promises.readdir(item, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(item, f.name)) : [item];
-        const { writableStreams, remoteDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
-          rootDirName: isDirectory ? item : undefined,
-          items: await Promise.all(files.map(f => fileToTempFileParams(f))),
+        const files = isDirectory ? (await fs.promises.readdir(item, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : [item];
+        const { writableStreams } = await context._wrapApiCall(async () => context._channel.createTempFiles({
+          rootDirName: isDirectory ? path.basename(item) : undefined,
+          items: await Promise.all(files.map(async file => {
+            const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
+            return {
+              name: isDirectory ? path.relative(item, file) : path.basename(file),
+              lastModifiedMs
+            };
+          })),
         }), true);
         for (let i = 0; i < files.length; i++) {
           const writable = WritableStream.from(writableStreams[i]);
           await pipelineAsync(fs.createReadStream(files[i]), writable.stream());
         }
-        if (isDirectory) {
-          localPaths ??= [];
-          localPaths.push(remoteDir);
-        } else {
-          streams ??= [];
-          streams.push(...writableStreams);
-        }
-      }));
-      return { streams, localPaths };
+        return writableStreams;
+      }))).flat();
+      return { streams };
     }
     return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
   }
@@ -297,11 +295,6 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (filePayloadExceedsSizeLimit(payloads))
     throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
   return { payloads };
-}
-
-async function fileToTempFileParams(file: string): Promise<channels.BrowserContextCreateTempFilesParams['items'][0]> {
-  const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
-  return { name: path.basename(file), lastModifiedMs };
 }
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {

@@ -959,7 +959,6 @@ scheme.BrowserContextCreateTempFilesParams = tObject({
   })),
 });
 scheme.BrowserContextCreateTempFilesResult = tObject({
-  remoteDir: tString,
   writableStreams: tArray(tChannel(['WritableStream'])),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({

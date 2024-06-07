@@ -36,8 +36,13 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
   if ([payloads, localPaths, streams].filter(Boolean).length !== 1)
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
 
-  if (streams)
-    localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
+  if (streams) {
+    const directoryMode = streams.every(c => (c as WritableStreamDispatcher).rootDir());
+    if (directoryMode)
+      localPaths = Array.from(new Set(streams.map(c => (c as WritableStreamDispatcher).rootDir()!)));
+    else
+      localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
+  }
   if (localPaths) {
     for (const p of localPaths)
       assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');

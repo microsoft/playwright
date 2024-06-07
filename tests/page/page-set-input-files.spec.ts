@@ -83,6 +83,17 @@ it('should upload a folder and throw for multiple directories', async ({ page, s
   ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 
+it('should throw when uploading a folder in a normal file upload input', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+  }
+  await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
+});
+
 it('should upload a file after popup', async ({ page, server, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
   await page.goto(server.PREFIX + '/input/fileupload.html');

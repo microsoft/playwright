@@ -626,17 +626,24 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const { filePayloads, localPaths } = items;
+    const localPathsFileTypes = (await Promise.all((localPaths ?? []).map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
+    if (new Set(localPathsFileTypes).size > 1 || localPathsFileTypes.filter(type => type === 'directory').length > 1)
+      throw new Error('File paths must be all files or a single directory');
+    const doesLocalPathsIncludeDirectory = localPathsFileTypes.includes('directory');
     const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
-    const result = await this.evaluateHandleInUtility(([injected, node, multiple]): Element | undefined => {
+    const result = await this.evaluateHandleInUtility(([injected, node, { multiple, doesLocalPathsIncludeDirectory }]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
         return;
       if (element.tagName !== 'INPUT')
         throw injected.createStacklessError('Node is not an HTMLInputElement');
-      if (multiple && !(element as HTMLInputElement).multiple && !(element as HTMLInputElement).webkitdirectory)
+      const inputElement = element as HTMLInputElement;
+      if (multiple && !inputElement.multiple && !inputElement.webkitdirectory)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
-      return element;
-    }, multiple);
+      if (doesLocalPathsIncludeDirectory && !inputElement.webkitdirectory)
+        throw injected.createStacklessError('File input does not support directories, pass individual files instead');
+      return inputElement;
+    }, { multiple, doesLocalPathsIncludeDirectory });
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
@@ -647,14 +654,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await Promise.all(localPaths.map(localPath => (
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
-        const itemFileTypes = (await Promise.all(localPaths.map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
-        if (new Set(itemFileTypes).size > 1 || itemFileTypes.filter(type => type === 'directory').length > 1)
-          throw new Error('File paths must be all files or a single directory');
-        const waitForChangeEvent = itemFileTypes.includes('directory') ? this.evaluateInUtility(([_, node]) => new Promise<any>(fulfill => {
-          node.addEventListener('change', fulfill, { once: true });
-        }), undefined) : Promise.resolve();
+        const waitForInputEvent = doesLocalPathsIncludeDirectory ? this.evaluate(node => new Promise<any>(fulfill => {
+          node.addEventListener('input', fulfill, { once: true });
+        })).catch(() => {}) : Promise.resolve();
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
-        await waitForChangeEvent;
+        await waitForInputEvent;
       } else {
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
       }

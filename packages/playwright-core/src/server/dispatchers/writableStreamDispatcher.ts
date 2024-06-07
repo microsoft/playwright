@@ -23,10 +23,12 @@ import type { BrowserContextDispatcher } from './browserContextDispatcher';
 export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
   _type_WritableStream = true;
   private _lastModifiedMs: number | undefined;
+  private _rootDir: string | undefined;
 
-  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream, lastModifiedMs?: number) {
+  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream, lastModifiedMs?: number, rootDir?: string) {
     super(scope, { guid: 'writableStream@' + createGuid(), stream }, 'WritableStream', {});
     this._lastModifiedMs = lastModifiedMs;
+    this._rootDir = rootDir;
   }
 
   async write(params: channels.WritableStreamWriteParams): Promise<channels.WritableStreamWriteResult> {
@@ -50,5 +52,9 @@ export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream:
 
   path(): string {
     return this._object.stream.path as string;
+  }
+
+  rootDir(): string | undefined {
+    return this._rootDir;
   }
 }

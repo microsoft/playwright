@@ -181,14 +181,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async createTempFiles(params: channels.BrowserContextCreateTempFilesParams): Promise<channels.BrowserContextCreateTempFilesResult> {
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
-    const tempDirWithRootName = path.join(tmpDir, params.rootDirName ? path.basename(params.rootDirName) : '');
+    const tempDirWithRootName = params.rootDirName ? path.join(tmpDir, path.basename(params.rootDirName)) : tmpDir;
     await fs.promises.mkdir(tempDirWithRootName, { recursive: true });
+    this._context._tempDirs.push(tmpDir);
     return {
-      remoteDir: tempDirWithRootName,
       writableStreams: await Promise.all(params.items.map(async item => {
         await fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true });
         const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
-        return new WritableStreamDispatcher(this, file, item.lastModifiedMs);
+        return new WritableStreamDispatcher(this, file, item.lastModifiedMs, params.rootDirName ? tempDirWithRootName : undefined);
       }))
     };
   }

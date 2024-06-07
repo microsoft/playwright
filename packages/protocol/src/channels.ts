@@ -1748,7 +1748,6 @@ export type BrowserContextCreateTempFilesOptions = {
   rootDirName?: string,
 };
 export type BrowserContextCreateTempFilesResult = {
-  remoteDir: string,
   writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {
