@@ -23,6 +23,27 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
+type AsyncContentProps = {
+  content: Promise<string>;
+};
+
+const AsyncContent: React.FunctionComponent<AsyncContentProps> = ({ content }) => {
+  const [text, setText] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    content.then(text => {
+      if (isMounted)
+        setText(text);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [content]);
+
+  return <>{text}</>;
+};
+
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
 }> = ({ model }) => {
@@ -83,6 +104,11 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
         <a href={attachmentURL(a) + '&download'}>{a.name}</a>
+        { a.contentType === 'text/plain' &&
+          <div className="attachment__content">
+            <AsyncContent content={fetch(attachmentURL(a)).then(response => response.text())} />
+          </div>
+        }
       </div>;
     })}
   </div>;
