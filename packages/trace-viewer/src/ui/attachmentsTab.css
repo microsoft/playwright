@@ -45,3 +45,9 @@
   max-width: 80%;
   box-shadow: 0 12px 28px 0 rgba(0,0,0,.2), 0 2px 4px 0 rgba(0,0,0,.1);
 }
+
+.attachment-item .attachment-item__text {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
+}
