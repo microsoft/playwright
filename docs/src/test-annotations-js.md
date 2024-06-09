@@ -182,7 +182,7 @@ You can also annotate all tests in a group or provide multiple annotations:
 import { test, expect } from '@playwright/test';
 
 test.describe('report tests', {
-  annotation: { type: 'category', description: 'report', url: 'https://github.com/microsoft/playwright/issues/23180' },
+  annotation: { type: 'category', description: 'report' },
 }, () => {
   test('test report header', async ({ page }) => {
     // ...
@@ -192,7 +192,7 @@ test.describe('report tests', {
     annotation: [
       { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23180' },
       { type: 'performance', description: 'very slow test!' },
-      { type: 'performance', description: 'very slow test!', url: 'https://github.com/microsoft/playwright/issues/23180' },
+      { type: 'performance', url: 'https://github.com/microsoft/playwright/issues/23180' },
     ],
   }, async ({ page }) => {
     // ...
