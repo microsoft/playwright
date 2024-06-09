@@ -16,81 +16,74 @@
 
 import type { BrowserContext } from './browserContext';
 import * as clockSource from '../generated/clockSource';
+import { isJavaScriptErrorInEvaluate } from './javascript';
 
 export class Clock {
   private _browserContext: BrowserContext;
-  private _scriptInjected = false;
-  private _clockInstalled = false;
-  private _now = 0;
+  private _scriptInstalled = false;
 
   constructor(browserContext: BrowserContext) {
     this._browserContext = browserContext;
   }
 
-  async installFakeTimers(time: number, loopLimit: number | undefined) {
-    await this._injectScriptIfNeeded();
-    await this._addAndEvaluate(`(() => {
-      globalThis.__pwClock.clock?.uninstall();
-      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, loopLimit })});
-    })();`);
-    this._now = time;
-    this._clockInstalled = true;
+  async fastForward(ticks: number | string) {
+    await this._installIfNeeded();
+    const ticksMillis = parseTicks(ticks);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForward', ${Date.now()}, ${ticksMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForward(${ticksMillis})`);
   }
 
-  async runToNextTimer(): Promise<number> {
-    this._assertInstalled();
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.next()`);
-    return this._now;
+  async fastForwardTo(ticks: number | string) {
+    await this._installIfNeeded();
+    const timeMillis = parseTime(ticks);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForwardTo', ${Date.now()}, ${timeMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForwardTo(${timeMillis})`);
   }
 
-  async runAllTimers(): Promise<number> {
-    this._assertInstalled();
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runAll()`);
-    return this._now;
+  async install(time: number | string | undefined) {
+    await this._installIfNeeded();
+    const timeMillis = time !== undefined ? parseTime(time) : Date.now();
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('install', ${Date.now()}, ${timeMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.install(${timeMillis})`);
   }
 
-  async runToLastTimer(): Promise<number> {
-    this._assertInstalled();
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.runToLast()`);
-    return this._now;
+  async pause() {
+    await this._installIfNeeded();
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pause', ${Date.now()})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.pause()`);
   }
 
-  async setTime(time: number) {
-    if (this._clockInstalled) {
-      const jump = time - this._now;
-      if (jump < 0)
-        throw new Error('Unable to set time into the past when fake timers are installed');
-      await this._addAndEvaluate(`globalThis.__pwClock.clock.jump(${jump})`);
-      this._now = time;
-      return this._now;
-    }
-
-    await this._injectScriptIfNeeded();
-    await this._addAndEvaluate(`(() => {
-      globalThis.__pwClock.clock?.uninstall();
-      globalThis.__pwClock.clock = globalThis.__pwClock.install(${JSON.stringify({ now: time, toFake: ['Date'] })});
-    })();`);
-    this._now = time;
-    return this._now;
+  async resume() {
+    await this._installIfNeeded();
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('resume', ${Date.now()})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.resume()`);
   }
 
-  async skipTime(time: number | string) {
-    const delta = parseTime(time);
-    await this.setTime(this._now + delta);
-    return this._now;
+  async setFixedTime(time: string | number) {
+    await this._installIfNeeded();
+    const timeMillis = parseTime(time);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setFixedTime', ${Date.now()}, ${timeMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.setFixedTime(${timeMillis})`);
   }
 
-  async runFor(time: number | string): Promise<number> {
-    this._assertInstalled();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.clock.recordTick(${JSON.stringify(time)})`);
-    this._now = await this._evaluateInFrames(`globalThis.__pwClock.clock.tick(${JSON.stringify(time)})`);
-    return this._now;
+  async setSystemTime(time: string | number) {
+    await this._installIfNeeded();
+    const timeMillis = parseTime(time);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setSystemTime', ${Date.now()}, ${timeMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.setSystemTime(${timeMillis})`);
   }
 
-  private async _injectScriptIfNeeded() {
-    if (this._scriptInjected)
+  async runFor(ticks: number | string) {
+    await this._installIfNeeded();
+    const ticksMillis = parseTicks(ticks);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('runFor', ${Date.now()}, ${ticksMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.runFor(${ticksMillis})`);
+  }
+
+  private async _installIfNeeded() {
+    if (this._scriptInstalled)
       return;
-    this._scriptInjected = true;
+    this._scriptInstalled = true;
     const script = `(() => {
       const module = {};
       ${clockSource.source}
@@ -106,37 +99,56 @@ export class Clock {
 
   private async _evaluateInFrames(script: string) {
     const frames = this._browserContext.pages().map(page => page.frames()).flat();
-    const results = await Promise.all(frames.map(frame => frame.evaluateExpression(script)));
+    const results = await Promise.all(frames.map(async frame => {
+      try {
+        await frame.nonStallingEvaluateInExistingContext(script, false, 'main');
+      } catch (e) {
+        if (isJavaScriptErrorInEvaluate(e))
+          throw e;
+      }
+    }));
     return results[0];
-  }
-
-  private _assertInstalled() {
-    if (!this._clockInstalled)
-      throw new Error('Clock is not installed');
   }
 }
 
-// Taken from sinonjs/fake-timerss-src.
-function parseTime(time: string | number): number {
-  if (typeof time === 'number')
-    return time;
-  if (!time)
+/**
+ * Parse strings like '01:10:00' (meaning 1 hour, 10 minutes, 0 seconds) into
+ * number of milliseconds. This is used to support human-readable strings passed
+ * to clock.tick()
+ */
+function parseTicks(value: number | string): number {
+  if (typeof value === 'number')
+    return value;
+  if (!value)
     return 0;
+  const str = value;
 
-  const strings = time.split(':');
+  const strings = str.split(':');
   const l = strings.length;
   let i = l;
   let ms = 0;
   let parsed;
 
-  if (l > 3 || !/^(\d\d:){0,2}\d\d?$/.test(time))
-    throw new Error(`tick only understands numbers, 'm:s' and 'h:m:s'. Each part must be two digits`);
+  if (l > 3 || !/^(\d\d:){0,2}\d\d?$/.test(str)) {
+    throw new Error(
+        `Clock only understands numbers, 'mm:ss' and 'hh:mm:ss'`,
+    );
+  }
 
   while (i--) {
     parsed = parseInt(strings[i], 10);
     if (parsed >= 60)
-      throw new Error(`Invalid time ${time}`);
+      throw new Error(`Invalid time ${str}`);
     ms += parsed * Math.pow(60, l - i - 1);
   }
+
   return ms * 1000;
+}
+
+function parseTime(epoch: string | number | undefined): number {
+  if (!epoch)
+    return 0;
+  if (typeof epoch === 'number')
+    return epoch;
+  return new Date(epoch).getTime();
 }

@@ -312,32 +312,36 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { artifact: ArtifactDispatcher.from(this, artifact) };
   }
 
-  async clockInstallFakeTimers(params: channels.BrowserContextClockInstallFakeTimersParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallFakeTimersResult> {
-    await this._context.clock.installFakeTimers(params.time, params.loopLimit);
+  async clockFastForward(params: channels.BrowserContextClockFastForwardParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockFastForwardResult> {
+    await this._context.clock.fastForward(params.ticksString ?? params.ticksNumber ?? 0);
   }
 
-  async clockRunAllTimers(params: channels.BrowserContextClockRunAllTimersParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunAllTimersResult> {
-    return { fakeTime: await this._context.clock.runAllTimers() };
+  async clockFastForwardTo(params: channels.BrowserContextClockFastForwardToParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockFastForwardToResult> {
+    await this._context.clock.fastForwardTo(params.timeString ?? params.timeNumber ?? 0);
   }
 
-  async clockRunToLastTimer(params: channels.BrowserContextClockRunToLastTimerParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunToLastTimerResult> {
-    return { fakeTime: await this._context.clock.runToLastTimer() };
+  async clockInstall(params: channels.BrowserContextClockInstallParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallResult> {
+    await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined);
   }
 
-  async clockRunToNextTimer(params: channels.BrowserContextClockRunToNextTimerParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunToNextTimerResult> {
-    return { fakeTime: await this._context.clock.runToNextTimer() };
+  async clockPause(params: channels.BrowserContextClockPauseParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockPauseResult> {
+    await this._context.clock.pause();
   }
 
-  async clockSetTime(params: channels.BrowserContextClockSetTimeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockSetTimeResult> {
-    await this._context.clock.setTime(params.time);
-  }
-
-  async clockSkipTime(params: channels.BrowserContextClockSkipTimeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockSkipTimeResult> {
-    return { fakeTime: await this._context.clock.skipTime(params.timeString || params.timeNumber || 0) };
+  async clockResume(params: channels.BrowserContextClockResumeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockResumeResult> {
+    await this._context.clock.resume();
   }
 
   async clockRunFor(params: channels.BrowserContextClockRunForParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockRunForResult> {
-    return { fakeTime: await this._context.clock.runFor(params.timeString || params.timeNumber || 0) };
+    await this._context.clock.runFor(params.ticksString ?? params.ticksNumber ?? 0);
+  }
+
+  async clockSetFixedTime(params: channels.BrowserContextClockSetFixedTimeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockSetFixedTimeResult> {
+    await this._context.clock.setFixedTime(params.timeString ?? params.timeNumber ?? 0);
+  }
+
+  async clockSetSystemTime(params: channels.BrowserContextClockSetSystemTimeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockSetSystemTimeResult> {
+    await this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0);
   }
 
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams): Promise<void> {

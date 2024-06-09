@@ -963,41 +963,40 @@ scheme.BrowserContextUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
-scheme.BrowserContextClockInstallFakeTimersParams = tObject({
-  time: tNumber,
-  loopLimit: tOptional(tNumber),
+scheme.BrowserContextClockFastForwardParams = tObject({
+  ticksNumber: tOptional(tNumber),
+  ticksString: tOptional(tString),
 });
-scheme.BrowserContextClockInstallFakeTimersResult = tOptional(tObject({}));
-scheme.BrowserContextClockRunAllTimersParams = tOptional(tObject({}));
-scheme.BrowserContextClockRunAllTimersResult = tObject({
-  fakeTime: tNumber,
+scheme.BrowserContextClockFastForwardResult = tOptional(tObject({}));
+scheme.BrowserContextClockFastForwardToParams = tObject({
+  timeNumber: tOptional(tNumber),
+  timeString: tOptional(tString),
 });
+scheme.BrowserContextClockFastForwardToResult = tOptional(tObject({}));
+scheme.BrowserContextClockInstallParams = tObject({
+  timeNumber: tOptional(tNumber),
+  timeString: tOptional(tString),
+});
+scheme.BrowserContextClockInstallResult = tOptional(tObject({}));
+scheme.BrowserContextClockPauseParams = tOptional(tObject({}));
+scheme.BrowserContextClockPauseResult = tOptional(tObject({}));
+scheme.BrowserContextClockResumeParams = tOptional(tObject({}));
+scheme.BrowserContextClockResumeResult = tOptional(tObject({}));
 scheme.BrowserContextClockRunForParams = tObject({
+  ticksNumber: tOptional(tNumber),
+  ticksString: tOptional(tString),
+});
+scheme.BrowserContextClockRunForResult = tOptional(tObject({}));
+scheme.BrowserContextClockSetFixedTimeParams = tObject({
   timeNumber: tOptional(tNumber),
   timeString: tOptional(tString),
 });
-scheme.BrowserContextClockRunForResult = tObject({
-  fakeTime: tNumber,
-});
-scheme.BrowserContextClockRunToLastTimerParams = tOptional(tObject({}));
-scheme.BrowserContextClockRunToLastTimerResult = tObject({
-  fakeTime: tNumber,
-});
-scheme.BrowserContextClockRunToNextTimerParams = tOptional(tObject({}));
-scheme.BrowserContextClockRunToNextTimerResult = tObject({
-  fakeTime: tNumber,
-});
-scheme.BrowserContextClockSetTimeParams = tObject({
-  time: tNumber,
-});
-scheme.BrowserContextClockSetTimeResult = tOptional(tObject({}));
-scheme.BrowserContextClockSkipTimeParams = tObject({
+scheme.BrowserContextClockSetFixedTimeResult = tOptional(tObject({}));
+scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeNumber: tOptional(tNumber),
   timeString: tOptional(tString),
 });
-scheme.BrowserContextClockSkipTimeResult = tObject({
-  fakeTime: tNumber,
-});
+scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({
