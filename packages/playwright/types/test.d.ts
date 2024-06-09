@@ -1845,6 +1845,7 @@ export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interru
 type TestDetailsAnnotation = {
   type: string;
   description?: string;
+  url?: string;
 };
 
 export type TestDetails = {
@@ -8175,6 +8176,11 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
+
+    /**
+     * Optional url.
+     */
+    url?: string;
   }>;
 
   /**

@@ -198,7 +198,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string, url?: string]) {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
         'It looks like you are calling test.skip() inside the test and pass a callback.',
@@ -473,19 +473,19 @@ export class TestInfoImpl implements TestInfo {
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }
 
-  skip(...args: [arg?: any, description?: string]) {
+  skip(...args: [arg?: any, description?: string, url?: string]) {
     this._modifier('skip', args);
   }
 
-  fixme(...args: [arg?: any, description?: string]) {
+  fixme(...args: [arg?: any, description?: string, url?: string]) {
     this._modifier('fixme', args);
   }
 
-  fail(...args: [arg?: any, description?: string]) {
+  fail(...args: [arg?: any, description?: string, url?: string]) {
     this._modifier('fail', args);
   }
 
-  slow(...args: [arg?: any, description?: string]) {
+  slow(...args: [arg?: any, description?: string, url?: string]) {
     this._modifier('slow', args);
   }
 

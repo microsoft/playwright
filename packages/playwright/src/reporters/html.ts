@@ -380,7 +380,11 @@ class HtmlBuilder {
         location,
         duration,
         // Annotations can be pushed directly, with a wrong type.
-        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        annotations: test.annotations.map(a => ({
+          type: a.type,
+          description: a.description ? String(a.description) : a.description,
+          url: a.url ? String(a.url) : a.url
+        })),
         tags: test.tags,
         outcome: test.outcome(),
         path,
@@ -394,7 +398,11 @@ class HtmlBuilder {
         location,
         duration,
         // Annotations can be pushed directly, with a wrong type.
-        annotations: test.annotations.map(a => ({ type: a.type, description: a.description ? String(a.description) : a.description })),
+        annotations: test.annotations.map(a => ({
+          type: a.type,
+          description: a.description ? String(a.description) : a.description,
+          url: a.url ? String(a.url) : a.url
+        })),
         tags: test.tags,
         outcome: test.outcome(),
         path,

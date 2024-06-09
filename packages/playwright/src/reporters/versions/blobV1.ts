@@ -71,7 +71,7 @@ export type JsonTestEnd = {
   testId: string;
   expectedStatus: reporterTypes.TestStatus;
   timeout: number;
-  annotations: { type: string, description?: string }[];
+  annotations: { type: string, description?: string, url?: string }[];
 };
 
 export type JsonTestResultStart = {

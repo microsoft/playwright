@@ -744,16 +744,15 @@ test.info().annotations.push({ type: 'issue', description: 'I am not interested 
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('annotated test', async ({ page }) => {
-            test.info().annotations.push({ type: 'issue', description: 'I add URL field to annotations for hyperlink display', url: 'https://github.com/microsoft/playwright/pull/31014' });
+            test.info().annotations.push({ type: 'url', url: 'https://github.com/microsoft/playwright/pull/31014' });
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
-
       await showReport();
       await page.click('text=annotated test');
-      await expect(page.locator('.test-case-annotation')).toHaveText('issue: I am not interested in this test');
+      await expect(page.locator('.test-case-annotation')).toHaveText(`url: https://github.com/microsoft/playwright/pull/31014`);
     });
 
     test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {

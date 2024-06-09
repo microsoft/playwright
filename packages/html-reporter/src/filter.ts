@@ -176,7 +176,10 @@ function cacheSearchValues(test: TestCaseSummary): SearchValues {
     line: String(test.location.line),
     column: String(test.location.column),
     labels: test.tags.map(tag => tag.toLowerCase()),
-    annotations: test.annotations.map(a => a.type.toLowerCase() + '=' + a.description?.toLocaleLowerCase())
+    annotations: test.annotations.map(a => {
+      const value = a.description?.toLocaleLowerCase() || a.url?.toLocaleLowerCase() || '';
+      return a.type.toLowerCase() + '=' + value;
+    }),
   };
   (test as any)[searchValuesSymbol] = searchValues;
   return searchValues;

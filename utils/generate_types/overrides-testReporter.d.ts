@@ -94,7 +94,7 @@ export interface JSONReportSpec {
 
 export interface JSONReportTest {
   timeout: number;
-  annotations: { type: string, description?: string }[],
+  annotations: { type: string, description?: string, url?: string }[],
   expectedStatus: TestStatus;
   projectName: string;
   projectId: string;
