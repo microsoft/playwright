@@ -156,7 +156,7 @@ it.describe('setTimeout', () => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
     await clock.tick(1000);
-    clock.setSystemTime(new clock.Date().getTime() + 1000);
+    clock.setTime(new clock.Date().getTime() + 1000);
     await clock.tick(3990);
     expect(stub.callCount).toBe(0);
     await clock.tick(20);
@@ -167,7 +167,7 @@ it.describe('setTimeout', () => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
     await clock.tick(1000);
-    clock.setSystemTime(new clock.Date().getTime() - 1000);
+    clock.setTime(new clock.Date().getTime() - 1000);
     await clock.tick(3990);
     expect(stub.callCount).toBe(0);
     await clock.tick(20);
@@ -502,7 +502,7 @@ it.describe('tick', () => {
 
   it('is not influenced by forward system clock changes', async ({ clock }) => {
     const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() + 1000);
+      clock.setTime(new clock.Date().getTime() + 1000);
     };
     const stub = createStub();
     clock.setTimeout(callback, 1000);
@@ -515,7 +515,7 @@ it.describe('tick', () => {
 
   it('is not influenced by forward system clock changes 2', async ({ clock }) => {
     const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() - 1000);
+      clock.setTime(new clock.Date().getTime() - 1000);
     };
     const stub = createStub();
     clock.setTimeout(callback, 1000);
@@ -528,7 +528,7 @@ it.describe('tick', () => {
 
   it('is not influenced by forward system clock changes when an error is thrown', async ({ clock }) => {
     const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() + 1000);
+      clock.setTime(new clock.Date().getTime() + 1000);
       throw new Error();
     };
     const stub = createStub();
@@ -544,7 +544,7 @@ it.describe('tick', () => {
 
   it('is not influenced by forward system clock changes when an error is thrown 2', async ({ clock }) => {
     const callback = () => {
-      clock.setSystemTime(new clock.Date().getTime() - 1000);
+      clock.setTime(new clock.Date().getTime() - 1000);
       throw new Error();
     };
     const stub = createStub();
@@ -653,7 +653,7 @@ it.describe('tick', () => {
   it('is not influenced by forward system clock changes in promises', async ({ clock }) => {
     const callback = () => {
       void Promise.resolve().then(() => {
-        clock.setSystemTime(new clock.Date().getTime() + 1000);
+        clock.setTime(new clock.Date().getTime() + 1000);
       });
     };
     const stub = createStub();
@@ -1363,7 +1363,7 @@ it.describe('setInterval', () => {
     clock.setInterval(stub, 10);
     await clock.tick(11);
     expect(stub.callCount).toBe(1);
-    clock.setSystemTime(new clock.Date().getTime() + 1000);
+    clock.setTime(new clock.Date().getTime() + 1000);
     await clock.tick(8);
     expect(stub.callCount).toBe(1);
     await clock.tick(3);
@@ -1374,7 +1374,7 @@ it.describe('setInterval', () => {
     const stub = createStub();
     clock.setInterval(stub, 10);
     await clock.tick(5);
-    clock.setSystemTime(new clock.Date().getTime() - 1000);
+    clock.setTime(new clock.Date().getTime() - 1000);
     await clock.tick(6);
     expect(stub.callCount).toBe(1);
     await clock.tick(10);
@@ -1465,7 +1465,7 @@ it.describe('date', () => {
 
   it('listens to system clock changes', async ({ clock }) => {
     const date1 = new clock.Date();
-    clock.setSystemTime(date1.getTime() + 1000);
+    clock.setTime(date1.getTime() + 1000);
     const date2 = new clock.Date();
     expect(date2.getTime() - date1.getTime()).toBe(1000);
   });
@@ -2056,6 +2056,9 @@ it.describe('requestIdleCallback', () => {
     clock.requestIdleCallback(stub);
     await clock.tick(1000);
     expect(stub.called).toBeTruthy();
+    const idleCallbackArg = stub.firstCall.args[0];
+    expect(idleCallbackArg.didTimeout).toBeFalsy();
+    expect(idleCallbackArg.timeRemaining()).toBe(0);
   });
 
   it('runs no later than timeout option even if there are any timers', async ({ clock }) => {

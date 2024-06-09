@@ -44,7 +44,7 @@ enum TimerType {
 type Timer = {
   type: TimerType;
   func: TimerHandler;
-  args: () => any[];
+  args: any[];
   delay: number;
   callAt: number;
   createdAt: number;
@@ -58,10 +58,9 @@ interface Embedder {
 }
 
 export class ClockController {
-  readonly start: number;
-  private _now: number;
+  readonly timeOrigin: number;
+  private _now: { time: number, ticks: number, timeFrozen: boolean };
   private _loopLimit: number;
-  private _adjustedSystemTime = 0;
   private _duringTick = false;
   private _timers = new Map<number, Timer>();
   private _uniqueTimerId = idCounterStart;
@@ -70,8 +69,8 @@ export class ClockController {
 
   constructor(embedder: Embedder, startDate: Date | number | undefined, loopLimit: number = 1000) {
     const start = Math.floor(getEpoch(startDate));
-    this.start = start;
-    this._now = start;
+    this.timeOrigin = start;
+    this._now = { time: start, ticks: 0, timeFrozen: false };
     this._embedder = embedder;
     this._loopLimit = loopLimit;
   }
@@ -82,11 +81,22 @@ export class ClockController {
   }
 
   now(): number {
-    return this._now;
+    return this._now.time;
+  }
+
+  setTime(now: Date | number, options: { freeze?: boolean } = {}) {
+    this._now.time = getEpoch(now);
+    this._now.timeFrozen = !!options.freeze;
   }
 
   performanceNow(): DOMHighResTimeStamp {
-    return this._now - this._adjustedSystemTime - this.start;
+    return this._now.ticks;
+  }
+
+  private _advanceNow(toTicks: number) {
+    if (!this._now.timeFrozen)
+      this._now.time += toTicks - this._now.ticks;
+    this._now.ticks = toTicks;
   }
 
   private async _doTick(msFloat: number): Promise<number> {
@@ -94,119 +104,72 @@ export class ClockController {
       throw new TypeError('Negative ticks are not supported');
 
     const ms = Math.floor(msFloat);
-    let tickTo = this._now + ms;
-    let tickFrom = this._now;
-    let previous = this._now;
+    const tickTo = this._now.ticks + ms;
+    let tickFrom = this._now.ticks;
+    let previous = this._now.ticks;
     let firstException: Error | undefined;
-    this._duringTick = true;
-
-    // perform each timer in the requested range
     let timer = this._firstTimerInRange(tickFrom, tickTo);
     while (timer && tickFrom <= tickTo) {
       tickFrom = timer.callAt;
-      this._now = timer.callAt;
-      const oldNow = this._now;
-      try {
-        this._callTimer(timer);
-        await new Promise<void>(f => this._embedder.postTask(f));
-      } catch (e) {
-        firstException = firstException || e;
-      }
-
-      // compensate for any setSystemTime() call during timer callback
-      if (oldNow !== this._now) {
-        tickFrom += this._now - oldNow;
-        tickTo += this._now - oldNow;
-        previous += this._now - oldNow;
-      }
-
+      const error = await this._callTimer(timer).catch(e => e);
+      firstException = firstException || error;
       timer = this._firstTimerInRange(previous, tickTo);
       previous = tickFrom;
     }
 
-    this._duringTick = false;
-    this._now = tickTo;
+    this._advanceNow(tickTo);
     if (firstException)
       throw firstException;
 
-    return this._now;
+    return this._now.ticks;
   }
 
   async recordTick(tickValue: string | number) {
     const msFloat = parseTime(tickValue);
-    this._now += msFloat;
+    this._advanceNow(this._now.ticks + msFloat);
   }
 
   async tick(tickValue: string | number): Promise<number> {
     return await this._doTick(parseTime(tickValue));
   }
 
-  async next() {
+  async next(): Promise<number> {
     const timer = this._firstTimer();
     if (!timer)
-      return this._now;
-
-    let err: Error | undefined;
-    this._duringTick = true;
-    this._now = timer.callAt;
-    try {
-      this._callTimer(timer);
-      await new Promise<void>(f => this._embedder.postTask(f));
-    } catch (e) {
-      err = e;
-    }
-    this._duringTick = false;
-
-    if (err)
-      throw err;
-    return this._now;
+      return this._now.ticks;
+    await this._callTimer(timer);
+    return this._now.ticks;
   }
 
-  async runToFrame() {
+  async runToFrame(): Promise<number> {
     return this.tick(this.getTimeToNextFrame());
   }
 
-  async runAll() {
+  async runAll(): Promise<number> {
     for (let i = 0; i < this._loopLimit; i++) {
       const numTimers = this._timers.size;
       if (numTimers === 0)
-        return this._now;
+        return this._now.ticks;
 
       await this.next();
     }
 
     const excessJob = this._firstTimer();
     if (!excessJob)
-      return;
+      return this._now.ticks;
     throw this._getInfiniteLoopError(excessJob);
   }
 
-  async runToLast() {
+  async runToLast(): Promise<number> {
     const timer = this._lastTimer();
     if (!timer)
-      return this._now;
-    return await this.tick(timer.callAt - this._now);
+      return this._now.ticks;
+    return await this.tick(timer.callAt - this._now.ticks);
   }
 
   reset() {
     this._timers.clear();
-    this._now = this.start;
-  }
-
-  setSystemTime(systemTime: Date | number) {
-    // determine time difference
-    const newNow = getEpoch(systemTime);
-    const difference = newNow - this._now;
-
-    this._adjustedSystemTime = this._adjustedSystemTime + difference;
-    // update 'system clock'
-    this._now = newNow;
-
-    // update timers and intervals to keep them stable
-    for (const timer of this._timers.values()) {
-      timer.createdAt += difference;
-      timer.callAt += difference;
-    }
+    this._now = { time: this.timeOrigin, ticks: 0, timeFrozen: false };
   }
 
   async jump(tickValue: string | number): Promise<number> {
@@ -214,13 +177,13 @@ export class ClockController {
     const ms = Math.floor(msFloat);
 
     for (const timer of this._timers.values()) {
-      if (this._now + ms > timer.callAt)
-        timer.callAt = this._now + ms;
+      if (this._now.ticks + ms > timer.callAt)
+        timer.callAt = this._now.ticks + ms;
     }
     return await this.tick(ms);
   }
 
-  addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: () => any[] }): number {
+  addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
     if (options.func === undefined)
       throw new Error('Callback must be provided to timer calls');
 
@@ -233,10 +196,10 @@ export class ClockController {
     const timer: Timer = {
       type: options.type,
       func: options.func,
-      args: options.args || (() => []),
+      args: options.args || [],
       delay,
-      callAt: this._now + (delay || (this._duringTick ? 1 : 0)),
-      createdAt: this._now,
+      callAt: this._now.ticks + (delay || (this._duringTick ? 1 : 0)),
+      createdAt: this._now.ticks,
       id: this._uniqueTimerId++,
       error: new Error(),
     };
@@ -278,12 +241,32 @@ export class ClockController {
     return lastTimer;
   }
 
-  private _callTimer(timer: Timer) {
+  private async _callTimer(timer: Timer) {
+    this._advanceNow(timer.callAt);
+
     if (timer.type === TimerType.Interval)
       this._timers.get(timer.id)!.callAt += timer.delay;
     else
       this._timers.delete(timer.id);
-    callFunction(timer.func, timer.args());
+
+    this._duringTick = true;
+    try {
+      if (typeof timer.func !== 'function') {
+        (() => { eval(timer.func); })();
+        return;
+      }
+
+      let args = timer.args;
+      if (timer.type === TimerType.AnimationFrame)
+        args = [this._now.ticks];
+      else if (timer.type === TimerType.IdleCallback)
+        args = [{ didTimeout: false, timeRemaining: () => 0 }];
+
+      timer.func.apply(null, args);
+      await new Promise<void>(f => this._embedder.postTask(f));
+    } finally {
+      this._duringTick = false;
+    }
   }
 
   private _getInfiniteLoopError(job: Timer) {
@@ -336,7 +319,7 @@ export class ClockController {
   }
 
   getTimeToNextFrame() {
-    return 16 - ((this._now - this.start) % 16);
+    return 16 - this._now.ticks % 16;
   }
 
   clearTimer(timerId: number, type: TimerType) {
@@ -375,7 +358,7 @@ export class ClockController {
 
   advanceAutomatically(advanceTimeDelta: number = 20): () => void {
     return this._embedder.postTaskPeriodically(
-        () => this.tick(advanceTimeDelta!),
+        () => this._doTick(advanceTimeDelta!),
         advanceTimeDelta,
     );
   }
@@ -556,13 +539,6 @@ function compareTimers(a: Timer, b: Timer) {
   // As timer ids are unique, no fallback `0` is necessary
 }
 
-function callFunction(func: TimerHandler, args: any[]) {
-  if (typeof func === 'function')
-    func.apply(null, args);
-  else
-    (() => { eval(func); })();
-}
-
 const maxTimeout = Math.pow(2, 31) - 1;  // see https://heycam.github.io/webidl/#abstract-opdef-converttoint
 const idCounterStart = 1e12; // arbitrarily large number to avoid collisions with native timer IDs
 
@@ -605,7 +581,7 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       return clock.addTimer({
         type: TimerType.Timeout,
         func,
-        args: () => args,
+        args,
         delay
       });
     },
@@ -618,7 +594,7 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       return clock.addTimer({
         type: TimerType.Interval,
         func,
-        args: () => args,
+        args,
         delay,
       });
     },
@@ -631,7 +607,6 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
         type: TimerType.AnimationFrame,
         func: callback,
         delay: clock.getTimeToNextFrame(),
-        args: () => [clock.performanceNow()],
       });
     },
     cancelAnimationFrame: (timerId: number): void => {
@@ -646,7 +621,6 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       return clock.addTimer({
         type: TimerType.IdleCallback,
         func: callback,
-        args: () => [],
         delay: options?.timeout ? Math.min(options?.timeout, timeToNextIdlePeriod) : timeToNextIdlePeriod,
       });
     },
@@ -670,7 +644,7 @@ function getClearHandler(type: TimerType) {
 function fakePerformance(clock: ClockController, performance: Performance): Performance {
   const result: any = {
     now: () => clock.performanceNow(),
-    timeOrigin: clock.start,
+    timeOrigin: clock.timeOrigin,
   };
   // eslint-disable-next-line no-proto
   for (const key of Object.keys((performance as any).__proto__)) {
