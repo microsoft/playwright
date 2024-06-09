@@ -382,8 +382,7 @@ class HtmlBuilder {
         // Annotations can be pushed directly, with a wrong type.
         annotations: test.annotations.map(a => ({
           type: a.type,
-          description: a.description ? String(a.description) : a.description,
-          url: a.url ? String(a.url) : a.url
+          description: a.description ? String(a.description) : a.description
         })),
         tags: test.tags,
         outcome: test.outcome(),
@@ -400,8 +399,7 @@ class HtmlBuilder {
         // Annotations can be pushed directly, with a wrong type.
         annotations: test.annotations.map(a => ({
           type: a.type,
-          description: a.description ? String(a.description) : a.description,
-          url: a.url ? String(a.url) : a.url
+          description: a.description ? String(a.description) : a.description
         })),
         tags: test.tags,
         outcome: test.outcome(),
