@@ -221,13 +221,12 @@ export class TestTypeImpl {
       }
 
       if (typeof modifierArgs[0] === 'function') {
-        suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1], url: modifierArgs[1] });
+        suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1] });
       } else {
         if (modifierArgs.length >= 1 && !modifierArgs[0])
           return;
         const description = modifierArgs[1];
-        const url = modifierArgs[1];
-        suite._staticAnnotations.push({ type, description, url });
+        suite._staticAnnotations.push({ type, description });
       }
       return;
     }
