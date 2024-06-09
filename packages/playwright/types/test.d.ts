@@ -8176,11 +8176,6 @@ export interface TestInfo {
      * Optional description.
      */
     description?: string;
-
-    /**
-     * Optional url.
-     */
-    url?: string;
   }>;
 
   /**

@@ -481,11 +481,6 @@ export interface TestCase {
      * Optional description.
      */
     description?: string;
-    
-    /**
-     * Optional url.
-     */
-    url?: string;
   }>;
 
   /**
