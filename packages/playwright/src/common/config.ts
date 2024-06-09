@@ -107,7 +107,7 @@ export class FullConfigInternal {
         const cpus = os.cpus().length;
         this.config.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
       } else {
-        this.config.workers = resolveWorkes(workers);
+        this.config.workers = resolveWorkers(workers);
       }
     } else {
       this.config.workers = workers;
@@ -223,7 +223,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
   });
 }
 
-function resolveWorkes(workers: string) {
+function resolveWorkers(workers: string) {
   const parsedWorkers = parseInt(workers, 10);
   if (isNaN(parsedWorkers))
     throw new Error(`Workers ${workers} must be a number or percentage.`);
