@@ -71,6 +71,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     if (focus)
       setSelectedTab('locator');
     setLocator(asLocator(language, selector));
+    navigator.clipboard.writeText(asLocator(language, selector));
   };
 
   window.playwrightSetFileIfNeeded = (value: string) => {
