@@ -18,6 +18,7 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
 
@@ -556,6 +557,17 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   const frame = await traceViewer.snapshotFrame('page.evaluate');
   const size = await frame.locator('img').evaluate(e => (e as HTMLImageElement).naturalWidth);
   expect(size).toBe(10);
+});
+
+test('should handle file URIs', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName !== 'chromium');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(pathToFileURL(path.join(__dirname, '..', 'assets', 'one-style.html')).href);
+  });
+
+  const frame = await traceViewer.snapshotFrame('goto');
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
 test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
