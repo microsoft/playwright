@@ -23,10 +23,11 @@ This project incorporates components from the projects listed below. The origina
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
 -	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
--	ip@2.0.1 (https://github.com/indutny/node-ip)
+-	ip-address@9.0.5 (https://github.com/beaugunderson/ip-address)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
 -	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
+-	jsbn@1.1.0 (https://github.com/andyperlitch/jsbn)
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
@@ -41,7 +42,8 @@ This project incorporates components from the projects listed below. The origina
 -	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
 -	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
 -	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
--	socks@2.7.0 (https://github.com/JoshGlazebrook/socks)
+-	socks@2.8.3 (https://github.com/JoshGlazebrook/socks)
+-	sprintf-js@1.1.3 (https://github.com/alexei/sprintf.js)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.4.2 (https://github.com/websockets/ws)
@@ -740,100 +742,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF https-proxy-agent@5.0.0 AND INFORMATION
 
-%% ip@2.0.1 NOTICES AND INFORMATION BEGIN HERE
+%% ip-address@9.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-# IP  
-[![](https://badge.fury.io/js/ip.svg)](https://www.npmjs.com/package/ip)  
+Copyright (C) 2011 by Beau Gunderson
 
-IP address utilities for node.js
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## Installation
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-###  npm
-```shell
-npm install ip
-```
-
-### git
-
-```shell
-git clone https://github.com/indutny/node-ip.git
-```
-  
-## Usage
-Get your ip address, compare ip addresses, validate ip addresses, etc.
-
-```js
-var ip = require('ip');
-
-ip.address() // my ip address
-ip.isEqual('::1', '::0:1'); // true
-ip.toBuffer('127.0.0.1') // Buffer([127, 0, 0, 1])
-ip.toString(new Buffer([127, 0, 0, 1])) // 127.0.0.1
-ip.fromPrefixLen(24) // 255.255.255.0
-ip.mask('192.168.1.134', '255.255.255.0') // 192.168.1.0
-ip.cidr('192.168.1.134/26') // 192.168.1.128
-ip.not('255.255.255.0') // 0.0.0.255
-ip.or('192.168.1.134', '0.0.0.255') // 192.168.1.255
-ip.isPrivate('127.0.0.1') // true
-ip.isV4Format('127.0.0.1'); // true
-ip.isV6Format('::ffff:127.0.0.1'); // true
-
-// operate on buffers in-place
-var buf = new Buffer(128);
-var offset = 64;
-ip.toBuffer('127.0.0.1', buf, offset);  // [127, 0, 0, 1] at offset 64
-ip.toString(buf, offset, 4);            // '127.0.0.1'
-
-// subnet information
-ip.subnet('192.168.1.134', '255.255.255.192')
-// { networkAddress: '192.168.1.128',
-//   firstAddress: '192.168.1.129',
-//   lastAddress: '192.168.1.190',
-//   broadcastAddress: '192.168.1.191',
-//   subnetMask: '255.255.255.192',
-//   subnetMaskLength: 26,
-//   numHosts: 62,
-//   length: 64,
-//   contains: function(addr){...} }
-ip.cidrSubnet('192.168.1.134/26')
-// Same as previous.
-
-// range checking
-ip.cidrSubnet('192.168.1.134/26').contains('192.168.1.190') // true
-
-
-// ipv4 long conversion
-ip.toLong('127.0.0.1'); // 2130706433
-ip.fromLong(2130706433); // '127.0.0.1'
-```
-
-### License
-
-This software is licensed under the MIT License.
-
-Copyright Fedor Indutny, 2012.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to permit
-persons to whom the Software is furnished to do so, subject to the
-following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 =========================================
-END OF ip@2.0.1 AND INFORMATION
+END OF ip-address@9.0.5 AND INFORMATION
 
 %% is-docker@2.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -892,6 +823,51 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
 END OF jpeg-js@0.4.4 AND INFORMATION
+
+%% jsbn@1.1.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Licensing
+---------
+
+This software is covered under the following copyright:
+
+/*
+ * Copyright (c) 2003-2005  Tom Wu
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+ *
+ * IN NO EVENT SHALL TOM WU BE LIABLE FOR ANY SPECIAL, INCIDENTAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND, OR ANY DAMAGES WHATSOEVER
+ * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER OR NOT ADVISED OF
+ * THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF LIABILITY, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * In addition, the following condition applies:
+ *
+ * All redistributions must retain an intact copy of this copyright notice
+ * and disclaimer.
+ */
+
+Address all questions regarding this license to:
+
+  Tom Wu
+  tjw@cs.Stanford.EDU
+=========================================
+END OF jsbn@1.1.0 AND INFORMATION
 
 %% mime@3.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1359,7 +1335,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF socks-proxy-agent@6.1.1 AND INFORMATION
 
-%% socks@2.7.0 NOTICES AND INFORMATION BEGIN HERE
+%% socks@2.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -1382,7 +1358,36 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF socks@2.7.0 AND INFORMATION
+END OF socks@2.8.3 AND INFORMATION
+
+%% sprintf-js@1.1.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (c) 2007-present, Alexandru Mărășteanu <hello@alexei.ro>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of this software nor the names of its contributors may be
+  used to endorse or promote products derived from this software without
+  specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+=========================================
+END OF sprintf-js@1.1.3 AND INFORMATION
 
 %% stack-utils@2.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1508,6 +1513,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 43
+Total Packages: 45
 =========================================
 END OF SUMMARY
