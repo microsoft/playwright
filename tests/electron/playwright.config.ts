@@ -35,6 +35,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    // Needed since tests/electron/package.json exists which would otherwise be picked up as tests/electron/ (outputDir)
     ['blob', { fileName: path.join(__dirname, '../../blob-report/', `${process.env.PWTEST_BOT_NAME}.zip`) }],
   ] : 'line',
   projects: [],
