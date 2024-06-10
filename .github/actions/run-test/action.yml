@@ -86,7 +86,7 @@ runs:
       shell: bash
     - name: Upload blob report
       # We only merge reports for PRs as per .github/workflows/create_test_report.yml.
-      if: ${{ !cancelled() && github.event.workflow_run.event == 'pull_request' }}
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
