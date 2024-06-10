@@ -31,17 +31,14 @@ async function filesExceedUploadLimit(files: string[]) {
 
 export async function prepareFilesForUpload(frame: Frame, params: channels.ElementHandleSetInputFilesParams): Promise<InputFilesItems> {
   const { payloads, streams } = params;
-  let { localPaths } = params;
+  let { localPaths, localDirectory } = params;
 
   if ([payloads, localPaths, streams].filter(Boolean).length !== 1)
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
 
   if (streams) {
-    const directoryMode = streams.every(c => (c as WritableStreamDispatcher).rootDir());
-    if (directoryMode)
-      localPaths = Array.from(new Set(streams.map(c => (c as WritableStreamDispatcher).rootDir()!)));
-    else
-      localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
+    localPaths = streams.map(c => (c as WritableStreamDispatcher)).filter(s => !s.isDirectory()).map(s => s.path());
+    localDirectory = streams.map(c => (c as WritableStreamDispatcher)).filter(s => s.isDirectory()).map(s => s.path())[0];
   }
   if (localPaths) {
     for (const p of localPaths)
@@ -78,5 +75,5 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
     lastModifiedMs: payload.lastModifiedMs
   }));
 
-  return { localPaths, filePayloads };
+  return { localPaths, localDirectory, filePayloads };
 }

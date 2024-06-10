@@ -1748,6 +1748,7 @@ export type BrowserContextCreateTempFilesOptions = {
   rootDirName?: string,
 };
 export type BrowserContextCreateTempFilesResult = {
+  rootDir?: WritableStreamChannel,
   writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {
@@ -2916,6 +2917,7 @@ export type FrameSetInputFilesParams = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -2928,6 +2930,7 @@ export type FrameSetInputFilesOptions = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -3540,6 +3543,7 @@ export type ElementHandleSetInputFilesParams = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -3551,6 +3555,7 @@ export type ElementHandleSetInputFilesOptions = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,

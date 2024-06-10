@@ -1195,6 +1195,7 @@ BrowserContext:
               name: string
               lastModifiedMs: number?
       returns:
+        rootDir: WritableStream?
         writableStreams:
           type: array
           items: WritableStream
@@ -2195,6 +2196,7 @@ Frame:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
         localPaths:
           type: array?
           items: string
@@ -2755,6 +2757,7 @@ ElementHandle:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
         localPaths:
           type: array?
           items: string

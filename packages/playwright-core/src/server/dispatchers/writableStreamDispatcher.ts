@@ -20,19 +20,19 @@ import * as fs from 'fs';
 import { createGuid } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
+export class WritableStreamDispatcher extends Dispatcher<{ guid: string, streamOrDirectory: fs.WriteStream | string }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
   _type_WritableStream = true;
   private _lastModifiedMs: number | undefined;
-  private _rootDir: string | undefined;
 
-  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream, lastModifiedMs?: number, rootDir?: string) {
-    super(scope, { guid: 'writableStream@' + createGuid(), stream }, 'WritableStream', {});
+  constructor(scope: BrowserContextDispatcher, streamOrDirectory: fs.WriteStream | string, lastModifiedMs?: number) {
+    super(scope, { guid: 'writableStream@' + createGuid(), streamOrDirectory }, 'WritableStream', {});
     this._lastModifiedMs = lastModifiedMs;
-    this._rootDir = rootDir;
   }
 
   async write(params: channels.WritableStreamWriteParams): Promise<channels.WritableStreamWriteResult> {
-    const stream = this._object.stream;
+    if (typeof this._object.streamOrDirectory === 'string')
+      throw new Error('Cannot write to a directory');
+    const stream = this._object.streamOrDirectory;
     await new Promise<void>((fulfill, reject) => {
       stream.write(params.binary, error => {
         if (error)
@@ -44,17 +44,21 @@ export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream:
   }
 
   async close() {
-    const stream = this._object.stream;
+    if (typeof this._object.streamOrDirectory === 'string')
+      throw new Error('Cannot close a directory');
+    const stream = this._object.streamOrDirectory;
     await new Promise<void>(fulfill => stream.end(fulfill));
     if (this._lastModifiedMs)
       await fs.promises.utimes(this.path(), new Date(this._lastModifiedMs), new Date(this._lastModifiedMs));
   }
 
   path(): string {
-    return this._object.stream.path as string;
+    if (typeof this._object.streamOrDirectory === 'string')
+      return this._object.streamOrDirectory;
+    return this._object.streamOrDirectory.path as string;
   }
 
-  rootDir(): string | undefined {
-    return this._rootDir;
+  isDirectory(): boolean {
+    return typeof this._object.streamOrDirectory === 'string';
   }
 }

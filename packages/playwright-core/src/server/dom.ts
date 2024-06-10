@@ -34,6 +34,7 @@ import { prepareFilesForUpload } from './fileUploadUtils';
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],
   localPaths?: string[]
+  localDirectory?: string
 };
 
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
@@ -625,13 +626,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    const { filePayloads, localPaths } = items;
-    const localPathsFileTypes = (await Promise.all((localPaths ?? []).map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
-    if (new Set(localPathsFileTypes).size > 1 || localPathsFileTypes.filter(type => type === 'directory').length > 1)
-      throw new Error('File paths must be all files or a single directory');
-    const doesLocalPathsIncludeDirectory = localPathsFileTypes.includes('directory');
+    const { filePayloads, localPaths, localDirectory } = items;
     const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
-    const result = await this.evaluateHandleInUtility(([injected, node, { multiple, doesLocalPathsIncludeDirectory }]): Element | undefined => {
+    const result = await this.evaluateHandleInUtility(([injected, node, { multiple, directoryUpload }]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
         return;
@@ -640,24 +637,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const inputElement = element as HTMLInputElement;
       if (multiple && !inputElement.multiple && !inputElement.webkitdirectory)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
-      if (doesLocalPathsIncludeDirectory && !inputElement.webkitdirectory)
+      if (directoryUpload && !inputElement.webkitdirectory)
         throw injected.createStacklessError('File input does not support directories, pass individual files instead');
       return inputElement;
-    }, { multiple, doesLocalPathsIncludeDirectory });
+    }, { multiple, directoryUpload: !!localDirectory });
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (localPaths) {
-        await Promise.all(localPaths.map(localPath => (
+      if (localPaths || localDirectory) {
+        const localPathsOrDirectory = localDirectory ? [localDirectory] : localPaths!;
+        await Promise.all((localPathsOrDirectory).map(localPath => (
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
-        const waitForInputEvent = doesLocalPathsIncludeDirectory ? this.evaluate(node => new Promise<any>(fulfill => {
+        const waitForInputEvent = localDirectory ? this.evaluate(node => new Promise<any>(fulfill => {
           node.addEventListener('input', fulfill, { once: true });
         })).catch(() => {}) : Promise.resolve();
-        await this._page._delegate.setInputFilePaths(retargeted, localPaths);
+        await this._page._delegate.setInputFilePaths(retargeted, localPathsOrDirectory);
         await waitForInputEvent;
       } else {
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);

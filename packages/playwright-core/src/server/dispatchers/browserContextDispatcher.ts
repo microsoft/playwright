@@ -185,10 +185,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await fs.promises.mkdir(tempDirWithRootName, { recursive: true });
     this._context._tempDirs.push(tmpDir);
     return {
+      rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
       writableStreams: await Promise.all(params.items.map(async item => {
         await fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true });
         const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
-        return new WritableStreamDispatcher(this, file, item.lastModifiedMs, params.rootDirName ? tempDirWithRootName : undefined);
+        return new WritableStreamDispatcher(this, file, item.lastModifiedMs);
       }))
     };
   }

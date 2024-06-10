@@ -959,6 +959,7 @@ scheme.BrowserContextCreateTempFilesParams = tObject({
   })),
 });
 scheme.BrowserContextCreateTempFilesResult = tObject({
+  rootDir: tOptional(tChannel(['WritableStream'])),
   writableStreams: tArray(tChannel(['WritableStream'])),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
@@ -1629,6 +1630,7 @@ scheme.FrameSetInputFilesParams = tObject({
     mimeType: tOptional(tString),
     buffer: tBinary,
   }))),
+  localDirectory: tOptional(tString),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
@@ -1996,6 +1998,7 @@ scheme.ElementHandleSetInputFilesParams = tObject({
     mimeType: tOptional(tString),
     buffer: tBinary,
   }))),
+  localDirectory: tOptional(tString),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),

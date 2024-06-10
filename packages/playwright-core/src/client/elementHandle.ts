@@ -250,7 +250,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
   return { options: values as SelectOption[] };
 }
 
-type SetInputFilesFiles = Pick<channels.ElementHandleSetInputFilesParams, 'payloads' | 'localPaths' | 'streams'>;
+type SetInputFilesFiles = Pick<channels.ElementHandleSetInputFilesParams, 'payloads' | 'localPaths'| 'localDirectory' | 'streams'>;
 
 function filePayloadExceedsSizeLimit(payloads: FilePayload[]) {
   return payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) >= fileUploadSizeLimit;
@@ -262,33 +262,37 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (items.some(item => typeof item === 'string')) {
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
-    const itemFileTypes = (await Promise.all(items.map(async item => (await fs.promises.stat(item as string)).isDirectory() ? 'directory' : 'file')));
+    const itemFileTypes = (await Promise.all((items as string[]).map(async item => (await fs.promises.stat(item)).isDirectory() ? 'directory' : 'file')));
     if (new Set(itemFileTypes).size > 1 || itemFileTypes.filter(type => type === 'directory').length > 1)
       throw new Error('File paths must be all files or a single directory');
 
     if (context._connection.isRemote()) {
-      const streams = (await Promise.all((items as string[]).map(async item => {
-        const isDirectory = (await fs.promises.stat(item)).isDirectory();
-        const files = isDirectory ? (await fs.promises.readdir(item, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : [item];
-        const { writableStreams } = await context._wrapApiCall(async () => context._channel.createTempFiles({
-          rootDirName: isDirectory ? path.basename(item) : undefined,
-          items: await Promise.all(files.map(async file => {
-            const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
+      const streams = (await Promise.all((items).map(async item => {
+        const isDirectory = (await fs.promises.stat(item as string)).isDirectory();
+        const files = isDirectory ? (await fs.promises.readdir(item as string, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : [item];
+        const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
+          rootDirName: isDirectory ? path.basename(item as string) : undefined,
+          items: await Promise.all((files as string[]).map(async file => {
+            const lastModifiedMs = (await fs.promises.stat(item as string)).mtimeMs;
             return {
-              name: isDirectory ? path.relative(item, file) : path.basename(file),
+              name: isDirectory ? path.relative(item as string, file) : path.basename(file),
               lastModifiedMs
             };
           })),
         }), true);
         for (let i = 0; i < files.length; i++) {
           const writable = WritableStream.from(writableStreams[i]);
-          await pipelineAsync(fs.createReadStream(files[i]), writable.stream());
+          await pipelineAsync(fs.createReadStream((files as string[])[i]), writable.stream());
         }
-        return writableStreams;
+        return rootDir ?? writableStreams;
       }))).flat();
       return { streams };
     }
-    return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
+    const resolvedItems = (items as string[]).map(f => path.resolve(f));
+    return {
+      localPaths: resolvedItems.filter((_, i) => itemFileTypes[i] === 'file'),
+      localDirectory: resolvedItems.find((_, i) => itemFileTypes[i] === 'directory'),
+    };
   }
 
   const payloads = items as FilePayload[];
