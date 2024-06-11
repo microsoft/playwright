@@ -71,8 +71,7 @@ import { test, expect } from '@playwright/test';
 test('basic test', {
   annotation: {
     type: 'issue',
-    description: 'feature tags API',
-    url: 'https://github.com/microsoft/playwright/issues/23180'
+    description: 'https://github.com/microsoft/playwright/issues/23180',
   },
 }, async ({ page }) => {
   await page.goto('https://playwright.dev/');
@@ -98,8 +97,7 @@ Test title.
   - `tag` ?<[string]|[Array]<[string]>>
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]> Annotation type, for example `'issue'`.
-    - `description` ?<[string]> Optional annotation description.
-    - `url` ?<[string]> Optional for example an issue url.
+    - `description` ?<[string]> Optional annotation description, for example an issue url.
 
 Additional test details.
 
@@ -442,7 +440,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 Additional details for all tests in the group.
 
@@ -571,7 +568,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -627,7 +623,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -681,7 +676,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -733,7 +727,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -789,7 +782,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -847,7 +839,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -900,7 +891,6 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.describe`] for details description.
 
@@ -1119,7 +1109,6 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.(call)`] for test details description.
 
@@ -1225,7 +1214,6 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.(call)`] for test details description.
 
@@ -1303,7 +1291,6 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.(call)`] for test details description.
 
@@ -1449,7 +1436,6 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-    - `url` ?<[string]>
 
 See [`method: Test.(call)`] for test details description.
 
