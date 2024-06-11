@@ -22,12 +22,6 @@ Now, if you run these shards in parallel on different computers, your test suite
 
 Note that Playwright can only shard tests that can be run in parallel. By default, this means Playwright will shard test files. Learn about other options in the [parallelism guide](./test-parallel.md).
 
-## Randomizing test order in a deterministic way
-
-By default tests are run in the order they are discovered, which is mostly alphabetical. This could lead to an uneven distribution of slow and fast tests. For example, if the first half of your tests are slower than the rest of your tests and you are using 4 shards it means that shard 1 and 2 will take significantly more time then shard 3 and 4.
-
-To aid with this problem you can pass `--sharding-seed=string-value` to randomize the order of tests in a deterministic way, which could yield better distribution of slow and fast tests across all shards.
-
 ## Merging reports from multiple shards
 
 In the previous example, each test shard has its own test report. If you want to have a combined report showing all the test results from all the shards, you can merge them.

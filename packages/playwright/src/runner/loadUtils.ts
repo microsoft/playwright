@@ -31,7 +31,6 @@ import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
-import { shuffleWithSeed } from './shuffle';
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
@@ -179,9 +178,6 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites)
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
-
-    if (config.shardingSeed)
-      shuffleWithSeed(testGroups, config.shardingSeed);
 
     // Shard test groups.
     const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
