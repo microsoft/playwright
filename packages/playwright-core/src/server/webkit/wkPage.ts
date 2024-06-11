@@ -715,7 +715,7 @@ export class WKPage implements PageDelegate {
     if (options.isMobile) {
       const angle = viewportSize.width > viewportSize.height ? 90 : 0;
       // Special handling for macOS 12.
-      const useLegacySetOrientationOverrideMethod = parseInt(os.release().split('.')[0], 10) <= 21;
+      const useLegacySetOrientationOverrideMethod = os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21;
       promises.push(this._pageProxySession.send(useLegacySetOrientationOverrideMethod ? 'Page.setOrientationOverride' as any : 'Emulation.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);
