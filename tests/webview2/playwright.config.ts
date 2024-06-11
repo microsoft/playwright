@@ -56,6 +56,7 @@ config.projects.push({
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {
     browserName: 'chromium',
+    headless: false,
   },
   testDir: path.join(testDir, 'page'),
   metadata,

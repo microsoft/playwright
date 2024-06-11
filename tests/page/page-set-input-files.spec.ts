@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { attachFrame } from '../config/utils';
+import { attachFrame, chromiumVersionLessThan } from '../config/utils';
 
 import path from 'path';
 import fs from 'fs';
@@ -37,7 +37,7 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload a folder', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+it('should upload a folder', async ({ page, server, browserName, headless, browserVersion }) => {
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
   const dir = path.join(it.info().outputDir, 'file-upload-test');
@@ -51,7 +51,7 @@ it('should upload a folder', async ({ page, server, browserName, headless, brows
   await input.setInputFiles(dir);
   expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
     // https://issues.chromium.org/issues/345393164
-    ...((browserName === 'chromium' && headless && browserMajorVersion < 128) ? [] : ['file-upload-test/sub-dir/really.txt']),
+    ...((browserName === 'chromium' && headless && !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW && chromiumVersionLessThan(browserVersion, '127.0.6533.0')) ? [] : ['file-upload-test/sub-dir/really.txt']),
     'file-upload-test/file1.txt',
     'file-upload-test/file2',
   ]));
