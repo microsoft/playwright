@@ -109,10 +109,10 @@ dotnet test --filter "Name~GetStartedLink"
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -159,4 +159,4 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
+- [Learn more about the MSTest and NUnit base classes](./test-runners.md)

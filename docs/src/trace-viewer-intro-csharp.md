@@ -18,10 +18,10 @@ Traces can be recorded using the [`property: BrowserContext.tracing`] API as fol
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -134,4 +134,4 @@ Check out our detailed guide on [Trace Viewer](/trace-viewer.md) to learn more a
 ## What's next
 
 - [Run tests on CI with GitHub Actions](/ci-intro.md)
-- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
+- [Learn more about the MSTest and NUnit base classes](./test-runners.md)

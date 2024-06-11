@@ -637,7 +637,7 @@ This version was also tested against the following stable channels:
 ### Other highlights
 
 - New option `MaxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
-- Codegen now supports NUnit and MSTest frameworks.
+- Codegen now supports MSTest and NUnit frameworks.
 - ASP .NET is now supported.
 
 ### Behavior Change

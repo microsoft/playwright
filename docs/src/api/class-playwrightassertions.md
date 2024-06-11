@@ -50,19 +50,18 @@ public class TestExample {
 ```
 
 ```csharp
-using System.Threading.Tasks;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
-[TestFixture]
-public class ExampleTests : PageTest
+[TestClass]
+public class ExampleTest : PageTest
 {
-    [Test]
+    [TestMethod]
     public async Task StatusBecomesSubmitted()
     {
-        await Page.Locator("#submit-button").ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
