@@ -256,27 +256,33 @@ function filePayloadExceedsSizeLimit(payloads: FilePayload[]) {
   return payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) >= fileUploadSizeLimit;
 }
 
+async function resolvePathsAndDirectoryForInputFiles(items: string[]): Promise<[string[] | undefined, string | undefined]> {
+  let localPaths: string[] | undefined;
+  let localDirectory: string | undefined;
+  for (const item of items) {
+    const stat = await fs.promises.stat(item as string);
+    if (stat.isDirectory()) {
+      if (localDirectory)
+        throw new Error('Multiple directories are not supported');
+      localDirectory = path.resolve(item as string);
+    } else {
+      localPaths ??= [];
+      localPaths.push(path.resolve(item as string));
+    }
+  }
+  if (localPaths?.length && localDirectory)
+    throw new Error('File paths must be all files or a single directory');
+  return [localPaths, localDirectory];
+}
+
 export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<SetInputFilesFiles> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
   if (items.some(item => typeof item === 'string')) {
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
-    let localPaths: string[] | undefined;
-    let localDirectory: string | undefined;
-    for (const item of items) {
-      const stat = await fs.promises.stat(item as string);
-      if (stat.isDirectory()) {
-        if (localDirectory)
-          throw new Error('Multiple directories are not supported');
-        localDirectory = path.resolve(item as string);
-      } else {
-        localPaths ??= [];
-        localPaths.push(path.resolve(item as string));
-      }
-    }
-    if (localPaths?.length && localDirectory)
-      throw new Error('File paths must be all files or a single directory');
+
+    const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(items as string[]);
 
     if (context._connection.isRemote()) {
       const files = localDirectory ? (await fs.promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : localPaths!;
