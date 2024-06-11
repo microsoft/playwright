@@ -1535,6 +1535,97 @@ it.describe('Intl API', () => {
   });
 });
 
+it('works with concurrent runFor calls', async ({ clock }) => {
+  clock.setSystemTime(0);
+
+  const log: string[] = [];
+  for (let t = 500; t > 0; t -= 100) {
+    clock.setTimeout(() => {
+      log.push(`${t}: ${clock.Date.now()}`);
+      clock.setTimeout(() => {
+        log.push(`${t}+0: ${clock.Date.now()}`);
+      }, 0);
+    }, t);
+  }
+
+  await Promise.all([
+    clock.runFor(500),
+    clock.runFor(600),
+  ]);
+  expect(log).toEqual([
+    `100: 100`,
+    `100+0: 101`,
+    `200: 200`,
+    `200+0: 201`,
+    `300: 300`,
+    `300+0: 301`,
+    `400: 400`,
+    `400+0: 401`,
+    `500: 500`,
+    `500+0: 501`,
+  ]);
+});
+
+it('works with slow setTimeout in busy embedder', async ({ installEx }) => {
+  const { originals, api, clock } = installEx({ now: 0 });
+  await clock.pauseAt(0);
+
+  const log: string[] = [];
+  api.setTimeout(() => {
+    log.push(`100: ${api.Date.now()}`);
+    api.setTimeout(() => {
+      log.push(`100+10: ${api.Date.now()}`);
+    }, 10);
+  }, 100);
+  api.setTimeout(() => log.push(`200: ${api.Date.now()}`), 200);
+  api.setTimeout(() => log.push(`300: ${api.Date.now()}`), 300);
+  api.setTimeout(() => log.push(`400: ${api.Date.now()}`), 400);
+
+  (clock as any)._embedder.setTimeout = (task, timeout) => {
+    const timerId = originals.setTimeout(task, (timeout || 0) + 200);
+    return () => originals.clearTimeout(timerId);
+  };
+
+  await clock.runFor(500);
+  expect(log).toEqual([
+    `100: 100`,
+    `100+10: 110`,
+    `200: 200`,
+    `300: 300`,
+    `400: 400`,
+  ]);
+});
+
+it('works with slow setTimeout in busy embedder when not paused', async ({ installEx }) => {
+  const { originals, api, clock } = installEx({ now: 0 });
+  clock.setSystemTime(0);
+
+  const log: string[] = [];
+  api.setTimeout(() => {
+    log.push(`200: ${api.Date.now()}`);
+    api.setTimeout(() => {
+      log.push(`200+10: ${api.Date.now()}`);
+    }, 10);
+  }, 200);
+  api.setTimeout(() => log.push(`400: ${api.Date.now()}`), 400);
+  api.setTimeout(() => log.push(`600: ${api.Date.now()}`), 600);
+  api.setTimeout(() => log.push(`800: ${api.Date.now()}`), 800);
+
+  (clock as any)._embedder.setTimeout = (task, timeout) => {
+    const timerId = originals.setTimeout(task, timeout === undefined ? 300 : timeout);
+    return () => originals.clearTimeout(timerId);
+  };
+
+  await clock.runFor(5000);
+  expect(log).toEqual([
+    `200: 200`,
+    `200+10: 210`,
+    `400: 400`,
+    `600: 600`,
+    `800: 800`,
+  ]);
+});
+
 interface Stub {
   called: boolean;
   callCount: number;
