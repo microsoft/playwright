@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { devices } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 import { browserTest } from '../config/browserTest';
 import { verifyViewport } from '../config/utils';
@@ -173,5 +174,15 @@ browserTest('should be able to get correct orientation angle on non-mobile devic
   expect(await page.evaluate(() => window.screen.orientation.angle)).toBe(0);
   await page.setViewportSize({ width: 400, height: 300 });
   expect(await page.evaluate(() => window.screen.orientation.angle)).toBe(0);
+  await context.close();
+});
+
+it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31151' });
+  it.skip(browserName === 'firefox', 'Firefox does not support mobile emulation');
+  const context = await contextFactory(devices['iPhone 14']);
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/index.html');
+  expect(await page.evaluate(() => window.screen.orientation.type)).toBe('portrait-primary');
   await context.close();
 });
