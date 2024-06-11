@@ -45,43 +45,6 @@ await page.Clock.FastForwardAsync("30:00");
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
-## async method: Clock.fastForwardTo
-* since: v1.45
-
-Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user closing the laptop lid for a while and
-reopening it at the specified time.
-
-**Usage**
-
-```js
-await page.clock.fastForwardTo(new Date('2020-02-02'));
-await page.clock.fastForwardTo('2020-02-02');
-```
-
-```python async
-await page.clock.fast_forward_to(datetime.datetime(2020, 2, 2))
-await page.clock.fast_forward_to("2020-02-02")
-```
-
-```python sync
-page.clock.fast_forward_to(datetime.datetime(2020, 2, 2))
-page.clock.fast_forward_to("2020-02-02")
-```
-
-```java
-page.clock().fastForwardTo(Instant.parse("2020-02-02"));
-page.clock().fastForwardTo("2020-02-02");
-```
-
-```csharp
-await page.Clock.FastForwardToAsync(DateTime.Parse("2020-02-02"));
-await page.Clock.FastForwardToAsync("2020-02-02");
-```
-
-### param: Clock.fastForwardTo.time
-* since: v1.45
-- `time` <[int]|[string]|[Date]>
-
 ## async method: Clock.install
 * since: v1.45
 
@@ -145,10 +108,47 @@ await page.Clock.RunForAsync("30:00");
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
 
-## async method: Clock.pause
+## async method: Clock.pauseAt
 * since: v1.45
 
-Pause timers. Once this method is called, no timers are fired unless [`method: Clock.runFor`], [`method: Clock.fastForward`], [`method: Clock.fastForwardTo`] or [`method: Clock.resume`] is called.
+Advance the clock by jumping forward in time and pause the time. Once this method is called, no timers
+are fired unless [`method: Clock.runFor`], [`method: Clock.fastForward`], [`method: Clock.pauseAt`] or [`method: Clock.resume`] is called.
+
+Only fires due timers at most once.
+This is equivalent to user closing the laptop lid for a while and reopening it at the specified time and
+pausing.
+
+**Usage**
+
+```js
+await page.clock.pauseAt(new Date('2020-02-02'));
+await page.clock.pauseAt('2020-02-02');
+```
+
+```python async
+await page.clock.pause_at(datetime.datetime(2020, 2, 2))
+await page.clock.pause_at("2020-02-02")
+```
+
+```python sync
+page.clock.pause_at(datetime.datetime(2020, 2, 2))
+page.clock.pause_at("2020-02-02")
+```
+
+```java
+page.clock().pauseAt(Instant.parse("2020-02-02"));
+page.clock().pauseAt("2020-02-02");
+```
+
+```csharp
+await page.Clock.PauseAtAsync(DateTime.Parse("2020-02-02"));
+await page.Clock.PauseAtAsync("2020-02-02");
+```
+
+### param: Clock.pauseAt.time
+* since: v1.45
+- `time` <[int]|[string]|[Date]>
+
 
 ## async method: Clock.resume
 * since: v1.45
@@ -202,7 +202,7 @@ Time to be set.
 ## async method: Clock.setSystemTime
 * since: v1.45
 
-Sets current system time but does not trigger any timers, unlike [`method: Clock.fastForwardTo`].
+Sets current system time but does not trigger any timers.
 
 **Usage**
 

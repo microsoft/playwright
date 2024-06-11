@@ -1342,10 +1342,11 @@ it.describe('fastForward', () => {
     clock.setInterval(shortTimers[1], 100);
     clock.requestAnimationFrame(shortTimers[2]);
     await clock.fastForward(1500);
-    for (const stub of longTimers)
-      expect(stub.called).toBeFalsy();
-    for (const stub of shortTimers)
-      expect(stub.callCount).toBe(1);
+    expect(longTimers[0].called).toBeFalsy();
+    expect(longTimers[1].called).toBeFalsy();
+    expect(shortTimers[0].callCount).toBe(1);
+    expect(shortTimers[1].callCount).toBe(1);
+    expect(shortTimers[2].callCount).toBe(1);
   });
 });
 

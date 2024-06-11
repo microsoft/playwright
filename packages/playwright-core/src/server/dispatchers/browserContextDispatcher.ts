@@ -316,16 +316,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.clock.fastForward(params.ticksString ?? params.ticksNumber ?? 0);
   }
 
-  async clockFastForwardTo(params: channels.BrowserContextClockFastForwardToParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockFastForwardToResult> {
-    await this._context.clock.fastForwardTo(params.timeString ?? params.timeNumber ?? 0);
-  }
-
   async clockInstall(params: channels.BrowserContextClockInstallParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallResult> {
     await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined);
   }
 
-  async clockPause(params: channels.BrowserContextClockPauseParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockPauseResult> {
-    await this._context.clock.pause();
+  async clockPauseAt(params: channels.BrowserContextClockPauseAtParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockPauseAtResult> {
+    await this._context.clock.pauseAt(params.timeString ?? params.timeNumber ?? 0);
   }
 
   async clockResume(params: channels.BrowserContextClockResumeParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockResumeResult> {

@@ -33,13 +33,6 @@ export class Clock {
     await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForward(${ticksMillis})`);
   }
 
-  async fastForwardTo(ticks: number | string) {
-    await this._installIfNeeded();
-    const timeMillis = parseTime(ticks);
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForwardTo', ${Date.now()}, ${timeMillis})`);
-    await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForwardTo(${timeMillis})`);
-  }
-
   async install(time: number | string | undefined) {
     await this._installIfNeeded();
     const timeMillis = time !== undefined ? parseTime(time) : Date.now();
@@ -47,10 +40,11 @@ export class Clock {
     await this._evaluateInFrames(`globalThis.__pwClock.controller.install(${timeMillis})`);
   }
 
-  async pause() {
+  async pauseAt(ticks: number | string) {
     await this._installIfNeeded();
-    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pause', ${Date.now()})`);
-    await this._evaluateInFrames(`globalThis.__pwClock.controller.pause()`);
+    const timeMillis = parseTime(ticks);
+    await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pauseAt', ${Date.now()}, ${timeMillis})`);
+    await this._evaluateInFrames(`globalThis.__pwClock.controller.pauseAt(${timeMillis})`);
   }
 
   async resume() {

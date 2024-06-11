@@ -67,10 +67,9 @@ In this case, you can install the clock and fast forward to the time of interest
 await page.clock.install({ time: new Date('2024-02-02T08:00:00') });
 await page.goto('http://localhost:3333');
 
-// Take control over time flow.
-await page.clock.pause();
-// Pretend that the user closed the laptop lid and opened it again at 10am.
-await page.clock.fastForwardTo(new Date('2024-02-02T10:00:00'));
+// Pretend that the user closed the laptop lid and opened it again at 10am,
+// Pause the time once reached that point.
+await page.clock.pauseAt(new Date('2024-02-02T10:00:00'));
 
 // Assert the page state.
 await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:00:00 AM');
@@ -86,10 +85,9 @@ await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:30:00 AM
 await page.clock.install(time=datetime.datetime(2024, 2, 2, 8, 0, 0))
 await page.goto("http://localhost:3333")
 
-# Take control over time flow.
-await page.clock.pause()
 # Pretend that the user closed the laptop lid and opened it again at 10am.
-await page.clock.fast_forward_to(datetime.datetime(2024, 2, 2, 10, 0, 0))
+# Pause the time once reached that point.
+await page.clock.pause_at(datetime.datetime(2024, 2, 2, 10, 0, 0))
 
 # Assert the page state.
 await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
@@ -105,10 +103,9 @@ await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:
 page.clock.install(time=datetime.datetime(2024, 2, 2, 8, 0, 0))
 page.goto("http://localhost:3333")
 
-# Take control over time flow.
-page.clock.pause()
 # Pretend that the user closed the laptop lid and opened it again at 10am.
-page.clock.fast_forward_to(datetime.datetime(2024, 2, 2, 10, 0, 0))
+# Pause the time once reached that point.
+page.clock.pause_at(datetime.datetime(2024, 2, 2, 10, 0, 0))
 
 # Assert the page state.
 expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
@@ -125,10 +122,9 @@ page.clock().install(new Clock.InstallOptions().setTime(Instant.parse("2024-02-0
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
-// Take control over time flow.
-page.clock().pause();
 // Pretend that the user closed the laptop lid and opened it again at 10am.
-page.clock().fastForwardTo(Instant.parse("2024-02-02T10:00:00"));
+// Pause the time once reached that point.
+page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
 
 // Assert the page state.
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
@@ -147,10 +143,9 @@ await Page.Clock.InstallAsync(new
 });
 await Page.GotoAsync("http://localhost:3333");
 
-// Take control over time flow.
-await Page.Clock.PauseAsync();
 // Pretend that the user closed the laptop lid and opened it again at 10am.
-await Page.Clock.FastForwardToAsync(new DateTime(2024, 2, 2, 10, 0, 0));
+// Pause the time once reached that point.
+await Page.Clock.PauseAtAsync(new DateTime(2024, 2, 2, 10, 0, 0));
 
 // Assert the page state.
 await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:00:00 AM");
@@ -272,8 +267,7 @@ await page.goto('http://localhost:3333');
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-await page.clock.pause();
-await page.clock.fastForwardTo(new Date('2024-02-02T10:00:00'));
+await page.clock.pauseAt(new Date('2024-02-02T10:00:00'));
 await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:00:00 AM');
 
 // Tick through time manually, firing all timers in the process.
@@ -292,8 +286,7 @@ locator = page.get_by_test_id("current-time")
 
 # Pause the time flow, stop the timers, you now have manual control
 # over the page time.
-await page.clock.pause()
-await page.clock.fast_forward_to(datetime.datetime(2024, 2, 2, 10, 0, 0))
+await page.clock.pause_at(datetime.datetime(2024, 2, 2, 10, 0, 0))
 await expect(locator).to_have_text("2/2/2024, 10:00:00 AM")
 
 # Tick through time manually, firing all timers in the process.
@@ -312,8 +305,7 @@ locator = page.get_by_test_id("current-time")
 
 # Pause the time flow, stop the timers, you now have manual control
 # over the page time.
-page.clock.pause()
-page.clock.fast_forward_to(datetime.datetime(2024, 2, 2, 10, 0, 0))
+page.clock.pause_at(datetime.datetime(2024, 2, 2, 10, 0, 0))
 expect(locator).to_have_text("2/2/2024, 10:00:00 AM")
 
 # Tick through time manually, firing all timers in the process.
@@ -331,8 +323,7 @@ Locator locator = page.getByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-page.clock().pause();
-page.clock().fastForwardTo(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
 
 // Tick through time manually, firing all timers in the process.
@@ -352,8 +343,7 @@ var locator = page.GetByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-await Page.Clock.PauseAsync();
-await Page.Clock.FastForwardToAsync(new DateTime(2024, 2, 2, 10, 0, 0));
+await Page.Clock.PauseAtAsync(new DateTime(2024, 2, 2, 10, 0, 0));
 await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 
 // Tick through time manually, firing all timers in the process.

@@ -69,7 +69,7 @@ type Time = {
   origin: number;
 };
 
-type LogEntryType = 'fastForward' | 'fastForwardTo' | 'install' | 'pause' | 'resume' | 'runFor' | 'setFixedTime' | 'setSystemTime';
+type LogEntryType = 'fastForward' |'install' | 'pauseAt' | 'resume' | 'runFor' | 'setFixedTime' | 'setSystemTime';
 
 export class ClockController {
   readonly _now: Time;
@@ -163,9 +163,10 @@ export class ClockController {
       throw firstException;
   }
 
-  pause() {
+  async pauseAt(time: number) {
     this._replayLogOnce();
     this._innerPause();
+    await this._innerFastForwardTo(time);
   }
 
   private _innerPause() {
@@ -218,18 +219,18 @@ export class ClockController {
 
   async fastForward(ticks: number) {
     this._replayLogOnce();
-    const ms = ticks | 0;
-    for (const timer of this._timers.values()) {
-      if (this._now.ticks + ms > timer.callAt)
-        timer.callAt = this._now.ticks + ms;
-    }
-    await this.runFor(ms);
+    await this._innerFastForwardTo(this._now.ticks + ticks | 0);
   }
 
-  async fastForwardTo(time: number) {
-    this._replayLogOnce();
-    const ticks = time - this._now.time;
-    await this.fastForward(ticks);
+
+  private async _innerFastForwardTo(toTicks: number) {
+    if (toTicks < this._now.ticks)
+      throw new Error('Cannot fast-forward to the past');
+    for (const timer of this._timers.values()) {
+      if (toTicks > timer.callAt)
+        timer.callAt = toTicks;
+    }
+    await this._runTo(toTicks);
   }
 
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
@@ -381,11 +382,10 @@ export class ClockController {
         this._innerSetTime(param!);
       } else if (type === 'fastForward' || type === 'runFor') {
         this._advanceNow(this._now.ticks + param!);
-      } else if (type === 'fastForwardTo') {
-        this._innerSetTime(param!);
-      } else if (type === 'pause') {
-        this._innerPause();
+      } else if (type === 'pauseAt') {
         isPaused = true;
+        this._innerPause();
+        this._innerSetTime(param!);
       } else if (type === 'resume') {
         this._innerResume();
         isPaused = false;

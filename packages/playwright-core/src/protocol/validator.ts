@@ -968,18 +968,16 @@ scheme.BrowserContextClockFastForwardParams = tObject({
   ticksString: tOptional(tString),
 });
 scheme.BrowserContextClockFastForwardResult = tOptional(tObject({}));
-scheme.BrowserContextClockFastForwardToParams = tObject({
-  timeNumber: tOptional(tNumber),
-  timeString: tOptional(tString),
-});
-scheme.BrowserContextClockFastForwardToResult = tOptional(tObject({}));
 scheme.BrowserContextClockInstallParams = tObject({
   timeNumber: tOptional(tNumber),
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockInstallResult = tOptional(tObject({}));
-scheme.BrowserContextClockPauseParams = tOptional(tObject({}));
-scheme.BrowserContextClockPauseResult = tOptional(tObject({}));
+scheme.BrowserContextClockPauseAtParams = tObject({
+  timeNumber: tOptional(tNumber),
+  timeString: tOptional(tString),
+});
+scheme.BrowserContextClockPauseAtResult = tOptional(tObject({}));
 scheme.BrowserContextClockResumeParams = tOptional(tObject({}));
 scheme.BrowserContextClockResumeResult = tOptional(tObject({}));
 scheme.BrowserContextClockRunForParams = tObject({

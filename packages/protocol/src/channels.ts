@@ -1461,9 +1461,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFileResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
   clockFastForward(params: BrowserContextClockFastForwardParams, metadata?: CallMetadata): Promise<BrowserContextClockFastForwardResult>;
-  clockFastForwardTo(params: BrowserContextClockFastForwardToParams, metadata?: CallMetadata): Promise<BrowserContextClockFastForwardToResult>;
   clockInstall(params: BrowserContextClockInstallParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallResult>;
-  clockPause(params?: BrowserContextClockPauseParams, metadata?: CallMetadata): Promise<BrowserContextClockPauseResult>;
+  clockPauseAt(params: BrowserContextClockPauseAtParams, metadata?: CallMetadata): Promise<BrowserContextClockPauseAtResult>;
   clockResume(params?: BrowserContextClockResumeParams, metadata?: CallMetadata): Promise<BrowserContextClockResumeResult>;
   clockRunFor(params: BrowserContextClockRunForParams, metadata?: CallMetadata): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, metadata?: CallMetadata): Promise<BrowserContextClockSetFixedTimeResult>;
@@ -1765,15 +1764,6 @@ export type BrowserContextClockFastForwardOptions = {
   ticksString?: string,
 };
 export type BrowserContextClockFastForwardResult = void;
-export type BrowserContextClockFastForwardToParams = {
-  timeNumber?: number,
-  timeString?: string,
-};
-export type BrowserContextClockFastForwardToOptions = {
-  timeNumber?: number,
-  timeString?: string,
-};
-export type BrowserContextClockFastForwardToResult = void;
 export type BrowserContextClockInstallParams = {
   timeNumber?: number,
   timeString?: string,
@@ -1783,9 +1773,15 @@ export type BrowserContextClockInstallOptions = {
   timeString?: string,
 };
 export type BrowserContextClockInstallResult = void;
-export type BrowserContextClockPauseParams = {};
-export type BrowserContextClockPauseOptions = {};
-export type BrowserContextClockPauseResult = void;
+export type BrowserContextClockPauseAtParams = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockPauseAtOptions = {
+  timeNumber?: number,
+  timeString?: string,
+};
+export type BrowserContextClockPauseAtResult = void;
 export type BrowserContextClockResumeParams = {};
 export type BrowserContextClockResumeOptions = {};
 export type BrowserContextClockResumeResult = void;

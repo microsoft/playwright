@@ -36,8 +36,8 @@ const it = test.extend<{ calls: { params: any[] }[] }>({
 
 it.describe('runFor', () => {
   it.beforeEach(async ({ page }) => {
-    await page.clock.install();
-    await page.clock.pause();
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
   });
 
   it('triggers immediately without specified delay', async ({ page, calls }) => {
@@ -171,9 +171,8 @@ it.describe('runFor', () => {
 
 it.describe('fastForward', () => {
   it.beforeEach(async ({ page }) => {
-    await page.clock.install();
-    await page.clock.pause();
-    await page.clock.setSystemTime(0);
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
   });
 
   it(`ignores timers which wouldn't be run`, async ({ page, calls }) => {
@@ -194,7 +193,7 @@ it.describe('fastForward', () => {
     });
 
     await page.clock.fastForward(2000);
-    expect(calls).toEqual([{ params: [2000] }]);
+    expect(calls).toEqual([{ params: [1000 + 2000] }]);
   });
 
   it('supports string time arguments', async ({ page, calls }) => {
@@ -204,15 +203,14 @@ it.describe('fastForward', () => {
       }, 100000);  // 100000 = 1:40
     });
     await page.clock.fastForward('01:50');
-    expect(calls).toEqual([{ params: [110000] }]);
+    expect(calls).toEqual([{ params: [1000 + 110000] }]);
   });
 });
 
 it.describe('fastForwardTo', () => {
   it.beforeEach(async ({ page }) => {
-    await page.clock.install();
-    await page.clock.pause();
-    await page.clock.setSystemTime(0);
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
   });
 
   it(`ignores timers which wouldn't be run`, async ({ page, calls }) => {
@@ -221,7 +219,7 @@ it.describe('fastForwardTo', () => {
         window.stub('should not be logged');
       }, 1000);
     });
-    await page.clock.fastForwardTo(500);
+    await page.clock.fastForward(500);
     expect(calls).toEqual([]);
   });
 
@@ -232,16 +230,15 @@ it.describe('fastForwardTo', () => {
       }, 1000);
     });
 
-    await page.clock.fastForwardTo(2000);
-    expect(calls).toEqual([{ params: [2000] }]);
+    await page.clock.fastForward(2000);
+    expect(calls).toEqual([{ params: [1000 + 2000] }]);
   });
 });
 
 it.describe('stubTimers', () => {
   it.beforeEach(async ({ page }) => {
-    await page.clock.install();
-    await page.clock.pause();
-    await page.clock.setSystemTime(0);
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
   });
   it('sets initial timestamp', async ({ page, calls }) => {
     await page.clock.setSystemTime(1400);
@@ -295,20 +292,19 @@ it.describe('stubTimers', () => {
       return { prev, next };
     });
     await page.clock.runFor(1000);
-    expect(await promise).toEqual({ prev: 0, next: 1000 });
+    expect(await promise).toEqual({ prev: 1000, next: 2000 });
   });
 
   it('fakes Date constructor', async ({ page }) => {
     const now = await page.evaluate(() => new Date().getTime());
-    expect(now).toBe(0);
+    expect(now).toBe(1000);
   });
 });
 
 it.describe('stubTimers', () => {
   it('replaces global performance.timeOrigin', async ({ page }) => {
     await page.clock.install({ time: 1000 });
-    await page.clock.pause();
-    await page.clock.setSystemTime(1000);
+    await page.clock.pauseAt(2000);
     const promise = page.evaluate(async () => {
       const prev = performance.now();
       await new Promise(f => setTimeout(f, 1000));
@@ -317,16 +313,15 @@ it.describe('stubTimers', () => {
     });
     await page.clock.runFor(1000);
     expect(await page.evaluate(() => performance.timeOrigin)).toBe(1000);
-    expect(await promise).toEqual({ prev: 0, next: 1000 });
+    expect(await promise).toEqual({ prev: 2000, next: 3000 });
   });
 });
 
 it.describe('popup', () => {
   it('should tick after popup', async ({ page }) => {
     await page.clock.install();
-    await page.clock.pause();
     const now = new Date('2015-09-25');
-    await page.clock.setSystemTime(now);
+    await page.clock.pauseAt(now);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => window.open('about:blank')),
@@ -340,9 +335,8 @@ it.describe('popup', () => {
 
   it('should tick before popup', async ({ page }) => {
     await page.clock.install();
-    await page.clock.pause();
     const now = new Date('2015-09-25');
-    await page.clock.setSystemTime(now);
+    await page.clock.pauseAt(now);
     await page.clock.runFor(1000);
 
     const [popup] = await Promise.all([
@@ -358,7 +352,6 @@ it.describe('popup', () => {
       res.setHeader('Content-Type', 'text/html');
       res.end(`<script>window.time = Date.now()</script>`);
     });
-    await page.clock.setSystemTime(0);
     await page.goto(server.EMPTY_PAGE);
     // Wait for 2 second in real life to check that it is past in popup.
     await page.waitForTimeout(2000);
@@ -376,8 +369,7 @@ it.describe('popup', () => {
       res.end(`<script>window.time = Date.now()</script>`);
     });
     await page.clock.install();
-    await page.clock.pause();
-    await page.clock.setSystemTime(0);
+    await page.clock.pauseAt(1000);
     await page.goto(server.EMPTY_PAGE);
     // Wait for 2 second in real life to check that it is past in popup.
     await page.waitForTimeout(2000);
@@ -386,7 +378,7 @@ it.describe('popup', () => {
       page.evaluate(url => window.open(url), server.PREFIX + '/popup.html'),
     ]);
     const popupTime = await popup.evaluate('time');
-    expect(popupTime).toBe(0);
+    expect(popupTime).toBe(1000);
   });
 });
 
@@ -457,7 +449,7 @@ it.describe('while running', () => {
   it('should fastForwardTo', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.fastForwardTo(10000);
+    await page.clock.fastForward(10000);
     const now = await page.evaluate(() => Date.now());
     expect(now).toBeGreaterThanOrEqual(10000);
     expect(now).toBeLessThanOrEqual(11000);
@@ -466,7 +458,7 @@ it.describe('while running', () => {
   it('should pause', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
+    await page.clock.pauseAt(1000);
     await page.waitForTimeout(1000);
     await page.clock.resume();
     const now = await page.evaluate(() => Date.now());
@@ -474,20 +466,19 @@ it.describe('while running', () => {
     expect(now).toBeLessThanOrEqual(1000);
   });
 
-  it('should pause and fastForwardTo', async ({ page }) => {
+  it('should pause and fastForward', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
-    await page.clock.fastForwardTo(1000);
+    await page.clock.pauseAt(1000);
+    await page.clock.fastForward(1000);
     const now = await page.evaluate(() => Date.now());
-    expect(now).toBe(1000);
+    expect(now).toBe(2000);
   });
 
   it('should set system time on pause', async ({ page }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
-    await page.clock.setSystemTime(1000);
+    await page.clock.pauseAt(1000);
     const now = await page.evaluate(() => Date.now());
     expect(now).toBe(1000);
   });
@@ -495,9 +486,9 @@ it.describe('while running', () => {
 
 it.describe('while on pause', () => {
   it('fastForward should not run nested immediate', async ({ page, calls }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
+    await page.clock.pauseAt(1000);
     await page.evaluate(() => {
       setTimeout(() => {
         window.stub('outer');
@@ -511,9 +502,9 @@ it.describe('while on pause', () => {
   });
 
   it('runFor should not run nested immediate', async ({ page, calls }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
+    await page.clock.pauseAt(1000);
     await page.evaluate(() => {
       setTimeout(() => {
         window.stub('outer');
@@ -527,9 +518,9 @@ it.describe('while on pause', () => {
   });
 
   it('runFor should not run nested immediate from microtask', async ({ page, calls }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
-    await page.clock.pause();
+    await page.clock.pauseAt(1000);
     await page.evaluate(() => {
       setTimeout(() => {
         window.stub('outer');
