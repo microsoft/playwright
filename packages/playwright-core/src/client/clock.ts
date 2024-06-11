@@ -32,12 +32,8 @@ export class Clock implements api.Clock {
     await this._browserContext._channel.clockFastForward(parseTicks(ticks));
   }
 
-  async fastForwardTo(time: number | string | Date) {
-    await this._browserContext._channel.clockFastForwardTo(parseTime(time));
-  }
-
-  async pause() {
-    await this._browserContext._channel.clockPause({});
+  async pauseAt(time: number | string | Date) {
+    await this._browserContext._channel.clockPauseAt(parseTime(time));
   }
 
   async resume() {

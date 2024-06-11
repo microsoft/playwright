@@ -88,7 +88,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     if (!forReuse && !!process.env.PW_FREEZE_TIME) {
       await this._wrapApiCall(async () => {
         await context.clock.install({ time: 0 });
-        await context.clock.pause();
+        await context.clock.pauseAt(1000);
       }, true);
     }
     return context;

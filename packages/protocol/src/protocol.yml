@@ -1209,17 +1209,15 @@ BrowserContext:
         ticksNumber: number?
         ticksString: string?
 
-    clockFastForwardTo:
-      parameters:
-        timeNumber: number?
-        timeString: string?
-
     clockInstall:
       parameters:
         timeNumber: number?
         timeString: string?
 
-    clockPause:
+    clockPauseAt:
+      parameters:
+        timeNumber: number?
+        timeString: string?
 
     clockResume:
 

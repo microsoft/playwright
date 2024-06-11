@@ -17264,21 +17264,6 @@ export interface Clock {
   fastForward(ticks: number|string): Promise<void>;
 
   /**
-   * Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user
-   * closing the laptop lid for a while and reopening it at the specified time.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.clock.fastForwardTo(new Date('2020-02-02'));
-   * await page.clock.fastForwardTo('2020-02-02');
-   * ```
-   *
-   * @param time
-   */
-  fastForwardTo(time: number|string|Date): Promise<void>;
-
-  /**
    * Install fake implementations for the following time-related functions:
    * - `Date`
    * - `setTimeout`
@@ -17305,13 +17290,25 @@ export interface Clock {
   }): Promise<void>;
 
   /**
-   * Pause timers. Once this method is called, no timers are fired unless
-   * [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for),
+   * Advance the clock by jumping forward in time and pause the time. Once this method is called, no timers are fired
+   * unless [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for),
    * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward),
-   * [clock.fastForwardTo(time)](https://playwright.dev/docs/api/class-clock#clock-fast-forward-to) or
+   * [clock.pauseAt(time)](https://playwright.dev/docs/api/class-clock#clock-pause-at) or
    * [clock.resume()](https://playwright.dev/docs/api/class-clock#clock-resume) is called.
+   *
+   * Only fires due timers at most once. This is equivalent to user closing the laptop lid for a while and reopening it
+   * at the specified time and pausing.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.pauseAt(new Date('2020-02-02'));
+   * await page.clock.pauseAt('2020-02-02');
+   * ```
+   *
+   * @param time
    */
-  pause(): Promise<void>;
+  pauseAt(time: number|string|Date): Promise<void>;
 
   /**
    * Resumes timers. Once this method is called, time resumes flowing, timers are fired as usual.
@@ -17349,8 +17346,7 @@ export interface Clock {
   setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * Sets current system time but does not trigger any timers, unlike
-   * [clock.fastForwardTo(time)](https://playwright.dev/docs/api/class-clock#clock-fast-forward-to).
+   * Sets current system time but does not trigger any timers.
    *
    * **Usage**
    *
