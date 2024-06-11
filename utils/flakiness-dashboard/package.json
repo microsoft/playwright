@@ -5,7 +5,7 @@
   "main": "processing/index.js",
   "author": "",
   "dependencies": {
-    "@azure/identity": "^4.1.0",
+    "@azure/identity": "^4.2.1",
     "@azure/storage-blob": "^12.17.0"
   }
 }
