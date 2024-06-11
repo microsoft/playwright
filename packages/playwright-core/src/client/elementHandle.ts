@@ -250,7 +250,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
   return { options: values as SelectOption[] };
 }
 
-type SetInputFilesFiles = Pick<channels.ElementHandleSetInputFilesParams, 'payloads' | 'localPaths'| 'localDirectory' | 'streams'>;
+type SetInputFilesFiles = Pick<channels.ElementHandleSetInputFilesParams, 'payloads' | 'localPaths' | 'localDirectory' | 'streams' | 'directoryStream'>;
 
 function filePayloadExceedsSizeLimit(payloads: FilePayload[]) {
   return payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) >= fileUploadSizeLimit;
@@ -262,36 +262,46 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (items.some(item => typeof item === 'string')) {
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
-    const itemFileTypes = (await Promise.all((items as string[]).map(async item => (await fs.promises.stat(item)).isDirectory() ? 'directory' : 'file')));
-    if (new Set(itemFileTypes).size > 1 || itemFileTypes.filter(type => type === 'directory').length > 1)
+    let localPaths: string[] | undefined;
+    let localDirectory: string | undefined;
+    for (const item of items) {
+      const stat = await fs.promises.stat(item as string);
+      if (stat.isDirectory()) {
+        if (localDirectory)
+          throw new Error('Multiple directories are not supported');
+        localDirectory = path.resolve(item as string);
+      } else {
+        localPaths ??= [];
+        localPaths.push(path.resolve(item as string));
+      }
+    }
+    if (localPaths?.length && localDirectory)
       throw new Error('File paths must be all files or a single directory');
 
     if (context._connection.isRemote()) {
-      const streams = (await Promise.all((items).map(async item => {
-        const isDirectory = (await fs.promises.stat(item as string)).isDirectory();
-        const files = isDirectory ? (await fs.promises.readdir(item as string, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : [item];
-        const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
-          rootDirName: isDirectory ? path.basename(item as string) : undefined,
-          items: await Promise.all((files as string[]).map(async file => {
-            const lastModifiedMs = (await fs.promises.stat(item as string)).mtimeMs;
-            return {
-              name: isDirectory ? path.relative(item as string, file) : path.basename(file),
-              lastModifiedMs
-            };
-          })),
-        }), true);
-        for (let i = 0; i < files.length; i++) {
-          const writable = WritableStream.from(writableStreams[i]);
-          await pipelineAsync(fs.createReadStream((files as string[])[i]), writable.stream());
-        }
-        return rootDir ?? writableStreams;
-      }))).flat();
-      return { streams };
+      const files = localDirectory ? (await fs.promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : localPaths!;
+      const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
+        rootDirName: localDirectory ? path.basename(localDirectory as string) : undefined,
+        items: await Promise.all(files.map(async file => {
+          const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
+          return {
+            name: localDirectory ? path.relative(localDirectory as string, file) : path.basename(file),
+            lastModifiedMs
+          };
+        })),
+      }), true);
+      for (let i = 0; i < files.length; i++) {
+        const writable = WritableStream.from(writableStreams[i]);
+        await pipelineAsync(fs.createReadStream(files[i]), writable.stream());
+      }
+      return {
+        directoryStream: rootDir,
+        streams: localDirectory ? undefined : writableStreams,
+      };
     }
-    const resolvedItems = (items as string[]).map(f => path.resolve(f));
     return {
-      localPaths: resolvedItems.filter((_, i) => itemFileTypes[i] === 'file'),
-      localDirectory: resolvedItems.find((_, i) => itemFileTypes[i] === 'directory'),
+      localPaths,
+      localDirectory,
     };
   }
 

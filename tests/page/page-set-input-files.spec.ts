@@ -80,6 +80,20 @@ it('should upload a folder and throw for multiple directories', async ({ page, s
   await expect(input.setInputFiles([
     path.join(dir, 'folder1'),
     path.join(dir, 'folder2'),
+  ])).rejects.toThrow('Multiple directories are not supported');
+});
+
+it('should throw if a directory and files are passed', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir, 'folder1'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder1', 'file1.txt'), 'file1 content');
+  }
+  await expect(input.setInputFiles([
+    path.join(dir, 'folder1'),
+    path.join(dir, 'folder1', 'file1.txt'),
   ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 

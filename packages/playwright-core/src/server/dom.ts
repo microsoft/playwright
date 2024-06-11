@@ -652,6 +652,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await Promise.all((localPathsOrDirectory).map(localPath => (
           fs.promises.access(localPath, fs.constants.F_OK)
         )));
+        // Browsers traverse the given directory asynchronously and we want to ensure all files are uploaded.
         const waitForInputEvent = localDirectory ? this.evaluate(node => new Promise<any>(fulfill => {
           node.addEventListener('input', fulfill, { once: true });
         })).catch(() => {}) : Promise.resolve();

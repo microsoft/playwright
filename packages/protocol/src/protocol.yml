@@ -2197,6 +2197,7 @@ Frame:
               mimeType: string?
               buffer: binary
         localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string
@@ -2758,6 +2759,7 @@ ElementHandle:
               mimeType: string?
               buffer: binary
         localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string

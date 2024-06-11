@@ -57,8 +57,4 @@ export class WritableStreamDispatcher extends Dispatcher<{ guid: string, streamO
       return this._object.streamOrDirectory;
     return this._object.streamOrDirectory.path as string;
   }
-
-  isDirectory(): boolean {
-    return typeof this._object.streamOrDirectory === 'string';
-  }
 }
