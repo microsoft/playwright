@@ -56,7 +56,7 @@ using Microsoft.Playwright.MSTest;
 namespace PlaywrightTests;
 
 [TestClass]
-public class ExampleTest : PageTest
+public class ExampleTests : PageTest
 {
     [TestMethod]
     public async Task StatusBecomesSubmitted()

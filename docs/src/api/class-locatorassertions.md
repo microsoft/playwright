@@ -53,11 +53,12 @@ using Microsoft.Playwright.MSTest;
 namespace PlaywrightTests;
 
 [TestClass]
-public class ExampleTest : PageTest
+public class ExampleTests : PageTest
 {
     [TestMethod]
     public async Task StatusBecomesSubmitted()
     {
+        // ...
         await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
