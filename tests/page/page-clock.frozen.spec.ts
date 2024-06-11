@@ -18,6 +18,7 @@ import { test as it, expect } from './pageTest';
 
 it.skip(!process.env.PW_FREEZE_TIME);
 
-it('cock should be frozen', async ({ page }) => {
+it('clock should be frozen', async ({ page }) => {
+  await page.clock.setSystemTime(0);
   expect(await page.evaluate('Date.now()')).toBe(0);
 });

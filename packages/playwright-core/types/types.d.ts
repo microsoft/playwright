@@ -17248,7 +17248,39 @@ export interface BrowserServer {
  */
 export interface Clock {
   /**
+   * Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user
+   * closing the laptop lid for a while and reopening it later, after given time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.fastForward(1000);
+   * await page.clock.fastForward('30:00');
+   * ```
+   *
+   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   */
+  fastForward(ticks: number|string): Promise<void>;
+
+  /**
+   * Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user
+   * closing the laptop lid for a while and reopening it at the specified time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.fastForwardTo(new Date('2020-02-02'));
+   * await page.clock.fastForwardTo('2020-02-02');
+   * ```
+   *
+   * @param time
+   */
+  fastForwardTo(time: number|string|Date): Promise<void>;
+
+  /**
    * Install fake implementations for the following time-related functions:
+   * - `Date`
    * - `setTimeout`
    * - `clearTimeout`
    * - `setInterval`
@@ -17261,34 +17293,33 @@ export interface Clock {
    *
    * Fake timers are used to manually control the flow of time in tests. They allow you to advance time, fire timers,
    * and control the behavior of time-dependent functions. See
-   * [clock.runFor(time)](https://playwright.dev/docs/api/class-clock#clock-run-for) and
-   * [clock.skipTime(time)](https://playwright.dev/docs/api/class-clock#clock-skip-time) for more information.
-   * @param time Install fake timers with the specified base time.
+   * [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for) and
+   * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward) for more information.
    * @param options
    */
-  installFakeTimers(time: number|Date, options?: {
+  install(options?: {
     /**
-     * The maximum number of timers that will be run in
-     * [clock.runAllTimers()](https://playwright.dev/docs/api/class-clock#clock-run-all-timers). Defaults to `1000`.
+     * Time to initialize with, current system time by default.
      */
-    loopLimit?: number;
+    time?: number|string|Date;
   }): Promise<void>;
 
   /**
-   * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
-   * run as well. Fake timers must be installed. Returns fake milliseconds since the unix epoch.
-   *
-   * **Details**
-   *
-   * This makes it easier to run asynchronous tests to completion without worrying about the number of timers they use,
-   * or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there is an infinite
-   * loop of timers and throws an error.
+   * Pause timers. Once this method is called, no timers are fired unless
+   * [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for),
+   * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward),
+   * [clock.fastForwardTo(time)](https://playwright.dev/docs/api/class-clock#clock-fast-forward-to) or
+   * [clock.resume()](https://playwright.dev/docs/api/class-clock#clock-resume) is called.
    */
-  runAllTimers(): Promise<number>;
+  pause(): Promise<void>;
 
   /**
-   * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch. Fake timers must
-   * be installed. Returns fake milliseconds since the unix epoch.
+   * Resumes timers. Once this method is called, time resumes flowing, timers are fired as usual.
+   */
+  resume(): Promise<void>;
+
+  /**
+   * Advance the clock, firing all the time-related callbacks.
    *
    * **Usage**
    *
@@ -17297,55 +17328,41 @@ export interface Clock {
    * await page.clock.runFor('30:00');
    * ```
    *
-   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
    * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
    */
-  runFor(time: number|string): Promise<number>;
+  runFor(ticks: number|string): Promise<void>;
 
   /**
-   * This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as
-   * necessary. If new timers are added while it is executing they will be run only if they would occur before this
-   * time. This is useful when you want to run a test to completion, but the test recursively sets timers that would
-   * cause runAll to trigger an infinite loop warning. Fake timers must be installed. Returns fake milliseconds since
-   * the unix epoch.
-   */
-  runToLastTimer(): Promise<number>;
-
-  /**
-   * Advances the clock to the moment of the first scheduled timer, firing it. Fake timers must be installed. Returns
-   * fake milliseconds since the unix epoch.
-   */
-  runToNextTimer(): Promise<number>;
-
-  /**
-   * Set the clock to the specified time.
-   *
-   * When fake timers are installed, only fires timers at most once. This can be used to simulate the JS engine (such as
-   * a browser) being put to sleep and resumed later, skipping intermediary timers.
-   * @param time
-   */
-  setTime(time: number|Date): Promise<void>;
-
-  /**
-   * Advance the clock by jumping forward in time, equivalent to running
-   * [clock.setTime(time)](https://playwright.dev/docs/api/class-clock#clock-set-time) with the new target time.
-   *
-   * When fake timers are installed, [clock.skipTime(time)](https://playwright.dev/docs/api/class-clock#clock-skip-time)
-   * only fires due timers at most once, while
-   * [clock.runFor(time)](https://playwright.dev/docs/api/class-clock#clock-run-for) fires all the timers up to the
-   * current time. Returns fake milliseconds since the unix epoch.
+   * Makes `Date.now` and `new Date()` return fixed fake time at all times, keeps all the timers running.
    *
    * **Usage**
    *
    * ```js
-   * await page.clock.skipTime(1000);
-   * await page.clock.skipTime('30:00');
+   * await page.clock.setFixedTime(Date.now());
+   * await page.clock.setFixedTime(new Date('2020-02-02'));
+   * await page.clock.setFixedTime('2020-02-02');
    * ```
    *
-   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
-   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   * @param time Time to be set.
    */
-  skipTime(time: number|string): Promise<number>;
+  setFixedTime(time: number|string|Date): Promise<void>;
+
+  /**
+   * Sets current system time but does not trigger any timers, unlike
+   * [clock.fastForwardTo(time)](https://playwright.dev/docs/api/class-clock#clock-fast-forward-to).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.setSystemTime(Date.now());
+   * await page.clock.setSystemTime(new Date('2020-02-02'));
+   * await page.clock.setSystemTime('2020-02-02');
+   * ```
+   *
+   * @param time
+   */
+  setSystemTime(time: number|string|Date): Promise<void>;
 }
 
 /**
