@@ -47,21 +47,19 @@ def test_status_becomes_submitted(page: Page) -> None:
 ```
 
 ```csharp
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
-[TestFixture]
+[TestClass]
 public class ExampleTests : PageTest
 {
-    [Test]
+    [TestMethod]
     public async Task StatusBecomesSubmitted()
     {
-        // ..
-        await Page.GetByRole(AriaRole.Button).ClickAsync();
+        // ...
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }

@@ -77,10 +77,10 @@ expect.set_options(timeout=10_000)
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">

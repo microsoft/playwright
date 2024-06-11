@@ -244,10 +244,10 @@ Traces can be recorded using the [`property: BrowserContext.tracing`] API as fol
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -355,10 +355,10 @@ Setup your tests to record a trace only when the test fails:
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
