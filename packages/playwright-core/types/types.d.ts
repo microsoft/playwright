@@ -8516,21 +8516,22 @@ export interface BrowserContext {
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
    * specified.
    * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:
-   * - `'geolocation'`
-   * - `'midi'`
-   * - `'midi-sysex'` (system-exclusive midi)
-   * - `'notifications'`
-   * - `'camera'`
-   * - `'microphone'`
-   * - `'background-sync'`
-   * - `'ambient-light-sensor'`
    * - `'accelerometer'`
-   * - `'gyroscope'`
-   * - `'magnetometer'`
    * - `'accessibility-events'`
+   * - `'ambient-light-sensor'`
+   * - `'background-sync'`
+   * - `'camera'`
    * - `'clipboard-read'`
    * - `'clipboard-write'`
+   * - `'geolocation'`
+   * - `'gyroscope'`
+   * - `'magnetometer'`
+   * - `'microphone'`
+   * - `'midi-sysex'` (system-exclusive midi)
+   * - `'midi'`
+   * - `'notifications'`
    * - `'payment-handler'`
+   * - `'storage-access'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {

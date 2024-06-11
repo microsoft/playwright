@@ -172,3 +172,29 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   await page.evaluate(() => navigator.clipboard.writeText('test content'));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test content');
 });
+
+it('storage access', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31227' }
+}, async ({ page, context, server, browserName }) => {
+  it.fixme(browserName !== 'chromium');
+  await context.grantPermissions(['storage-access']);
+  expect(await getPermission(page, 'storage-access')).toBe('granted');
+  server.setRoute('/set-cookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'name=value; Path=/; SameSite=Strict; Secure');
+    res.end();
+  });
+  server.setRoute('/my-frame.html', (req, res) => {
+    res.setHeader('Content-type', 'text/html');
+    res.end(`<iframe src="${server.CROSS_PROCESS_PREFIX + '/empty.html'}"></iframe>`);
+  });
+
+  // Navigate once to the domain as top level.
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/set-cookie.html');
+  await page.goto(server.PREFIX + '/my-frame.html');
+
+  const frame = page.frames()[1];
+  expect(await getPermission(frame, 'storage-access')).toBe('granted');
+  const access = await frame.evaluate(() => document.requestStorageAccess().then(() => true, () => false));
+  expect(access).toBe(true);
+  expect(await frame.evaluate(() => document.hasStorageAccess())).toBe(true);
+});

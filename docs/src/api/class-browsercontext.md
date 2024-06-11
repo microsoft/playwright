@@ -1044,21 +1044,22 @@ specified.
 - `permissions` <[Array]<[string]>>
 
 A permission or an array of permissions to grant. Permissions can be one of the following values:
-* `'geolocation'`
-* `'midi'`
-* `'midi-sysex'` (system-exclusive midi)
-* `'notifications'`
-* `'camera'`
-* `'microphone'`
-* `'background-sync'`
-* `'ambient-light-sensor'`
 * `'accelerometer'`
-* `'gyroscope'`
-* `'magnetometer'`
 * `'accessibility-events'`
+* `'ambient-light-sensor'`
+* `'background-sync'`
+* `'camera'`
 * `'clipboard-read'`
 * `'clipboard-write'`
+* `'geolocation'`
+* `'gyroscope'`
+* `'magnetometer'`
+* `'microphone'`
+* `'midi-sysex'` (system-exclusive midi)
+* `'midi'`
+* `'notifications'`
 * `'payment-handler'`
+* `'storage-access'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8
