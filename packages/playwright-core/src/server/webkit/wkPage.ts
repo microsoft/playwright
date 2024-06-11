@@ -16,6 +16,7 @@
  */
 
 import path from 'path';
+import os from 'os';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
@@ -713,7 +714,9 @@ export class WKPage implements PageDelegate {
     ];
     if (options.isMobile) {
       const angle = viewportSize.width > viewportSize.height ? 90 : 0;
-      promises.push(this._session.send('Page.setOrientationOverride', { angle }));
+      // Special handling for macOS 12.
+      const useLegacySetOrientationOverrideMethod = os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21;
+      promises.push(this._pageProxySession.send(useLegacySetOrientationOverrideMethod ? 'Page.setOrientationOverride' as any : 'Emulation.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);
   }
