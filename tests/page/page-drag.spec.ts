@@ -21,6 +21,7 @@ import { attachFrame } from '../config/utils';
 it.describe('Drag and drop', () => {
   it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
   it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
+  it.fixme(({ headless, isLinux }) => isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
 
   it('should work @smoke', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -334,7 +335,8 @@ it.describe('Drag and drop', () => {
   });
 });
 
-it('should work if not doing a drag', async ({ page }) => {
+it('should work if not doing a drag', async ({ page, isLinux, headless }) => {
+  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
   const eventsHandle = await trackEvents(await page.$('html'));
   await page.mouse.move(50, 50);
   await page.mouse.down();
