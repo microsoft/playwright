@@ -37,9 +37,9 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
 
   if (streams)
-    localPaths = streams.map(c => (c as WritableStreamDispatcher)).map(s => s.path());
+    localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
   if (directoryStream)
-    localDirectory = (directoryStream as WritableStreamDispatcher | undefined)?.path();
+    localDirectory = (directoryStream as WritableStreamDispatcher).path();
 
   if (localPaths) {
     for (const p of localPaths)
