@@ -975,6 +975,7 @@ scheme.BrowserContextClockFastForwardResult = tOptional(tObject({}));
 scheme.BrowserContextClockInstallParams = tObject({
   timeNumber: tOptional(tNumber),
   timeString: tOptional(tString),
+  expireCookies: tOptional(tBoolean),
 });
 scheme.BrowserContextClockInstallResult = tOptional(tObject({}));
 scheme.BrowserContextClockPauseAtParams = tObject({

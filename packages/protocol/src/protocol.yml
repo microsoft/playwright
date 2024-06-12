@@ -1222,6 +1222,7 @@ BrowserContext:
       parameters:
         timeNumber: number?
         timeString: string?
+        expireCookies: boolean?
 
     clockPauseAt:
       parameters:

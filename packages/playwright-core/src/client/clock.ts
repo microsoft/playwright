@@ -24,8 +24,8 @@ export class Clock implements api.Clock {
     this._browserContext = browserContext;
   }
 
-  async install(options: { time?: number | string | Date } = { }) {
-    await this._browserContext._channel.clockInstall(options.time !== undefined ? parseTime(options.time) : {});
+  async install(options: { time?: number | string | Date, expireCookies?: boolean } = { }) {
+    await this._browserContext._channel.clockInstall({ ...parseTime(options.time), expireCookies: options.expireCookies });
   }
 
   async fastForward(ticks: number | string) {
@@ -53,12 +53,14 @@ export class Clock implements api.Clock {
   }
 }
 
-function parseTime(time: string | number | Date): { timeNumber?: number, timeString?: string } {
+function parseTime(time: string | number | Date | undefined): { timeNumber?: number, timeString?: string } {
   if (typeof time === 'number')
     return { timeNumber: time };
   if (typeof time === 'string')
     return { timeString: time };
-  return { timeNumber: time.getTime() };
+  if (time)
+    return { timeNumber: time.getTime() };
+  return {};
 }
 
 function parseTicks(ticks: string | number): { ticksNumber?: number, ticksString?: string } {

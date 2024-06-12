@@ -533,3 +533,42 @@ it.describe('while on pause', () => {
     expect(calls).toEqual([{ params: ['outer'] }, { params: ['inner'] }]);
   });
 });
+
+it('expireCookies should throw for non-current time', async ({ page }) => {
+  await expect(page.clock.install({ time: 0, expireCookies: true })).rejects.toThrow();
+});
+
+
+it.describe('cookies', () => {
+  it.beforeEach(async ({ page, server }) => {
+    await page.clock.install({ expireCookies: true });
+    await page.goto(server.EMPTY_PAGE);
+    const date = Date.now() + 1000 * 60 * 60 * 24;
+    await page.evaluate(timestamp => {
+      const date = new Date(timestamp);
+      document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      return document.cookie;
+    }, date);
+    expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
+  });
+
+  it('expire with fastForward', async ({ page }) => {
+    await page.clock.fastForward(1000 * 60 * 60 * 23);
+    expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
+    await page.clock.fastForward(1000 * 60 * 60 * 1);
+    expect(await page.evaluate(() => document.cookie)).toBe('');
+  });
+
+  it('expire with runFor', async ({ page }) => {
+    await page.clock.fastForward(1000 * 60 * 60 * 23.9);
+    expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
+    await page.clock.runFor(1000 * 60 * 60 * 0.1);
+    expect(await page.evaluate(() => document.cookie)).toBe('');
+  });
+
+  it('expire with pauseAt', async ({ page }) => {
+    const now = await page.evaluate(() => Date.now());
+    await page.clock.pauseAt(now + 1000 * 60 * 60 * 24);
+    await expect.poll(async () => await page.evaluate(() => document.cookie)).toBe('');
+  });
+});

@@ -21,6 +21,7 @@ import { isJavaScriptErrorInEvaluate } from './javascript';
 export class Clock {
   private _browserContext: BrowserContext;
   private _scriptInstalled = false;
+  private _expireCookies = false;
 
   constructor(browserContext: BrowserContext) {
     this._browserContext = browserContext;
@@ -31,11 +32,15 @@ export class Clock {
     const ticksMillis = parseTicks(ticks);
     await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('fastForward', ${Date.now()}, ${ticksMillis})`);
     await this._evaluateInFrames(`globalThis.__pwClock.controller.fastForward(${ticksMillis})`);
+    await this._expireCookiesIfNeeded(ticksMillis);
   }
 
-  async install(time: number | string | undefined) {
+  async install(time: number | string | undefined, expireCookies: boolean) {
     await this._installIfNeeded();
     const timeMillis = time !== undefined ? parseTime(time) : Date.now();
+    this._expireCookies = expireCookies;
+    if (time !== undefined && expireCookies)
+      throw new Error('Cannot expire cookies when installing the clock with the non-current time');
     await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('install', ${Date.now()}, ${timeMillis})`);
     await this._evaluateInFrames(`globalThis.__pwClock.controller.install(${timeMillis})`);
   }
@@ -44,7 +49,8 @@ export class Clock {
     await this._installIfNeeded();
     const timeMillis = parseTime(ticks);
     await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('pauseAt', ${Date.now()}, ${timeMillis})`);
-    await this._evaluateInFrames(`globalThis.__pwClock.controller.pauseAt(${timeMillis})`);
+    const consumedTicks = await this._evaluateInFrames(`globalThis.__pwClock.controller.pauseAt(${timeMillis})`);
+    this._expireCookiesIfNeeded(consumedTicks);
   }
 
   async resume() {
@@ -64,7 +70,8 @@ export class Clock {
     await this._installIfNeeded();
     const timeMillis = parseTime(time);
     await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('setSystemTime', ${Date.now()}, ${timeMillis})`);
-    await this._evaluateInFrames(`globalThis.__pwClock.controller.setSystemTime(${timeMillis})`);
+    const consumedTicks = await this._evaluateInFrames(`globalThis.__pwClock.controller.setSystemTime(${timeMillis})`);
+    this._expireCookiesIfNeeded(consumedTicks);
   }
 
   async runFor(ticks: number | string) {
@@ -72,6 +79,7 @@ export class Clock {
     const ticksMillis = parseTicks(ticks);
     await this._browserContext.addInitScript(`globalThis.__pwClock.controller.log('runFor', ${Date.now()}, ${ticksMillis})`);
     await this._evaluateInFrames(`globalThis.__pwClock.controller.runFor(${ticksMillis})`);
+    await this._expireCookiesIfNeeded(ticksMillis);
   }
 
   private async _installIfNeeded() {
@@ -95,7 +103,7 @@ export class Clock {
     const frames = this._browserContext.pages().map(page => page.frames()).flat();
     const results = await Promise.all(frames.map(async frame => {
       try {
-        await frame.nonStallingEvaluateInExistingContext(script, false, 'main');
+        return await frame.nonStallingEvaluateInExistingContext(script, false, 'main');
       } catch (e) {
         if (isJavaScriptErrorInEvaluate(e))
           throw e;
@@ -103,7 +111,25 @@ export class Clock {
     }));
     return results[0];
   }
+
+  private async _expireCookiesIfNeeded(ticks: number) {
+    if (!this._expireCookies)
+      return;
+    const cookies = await this._browserContext.cookies();
+    let dirty = false;
+    for (const cookie of cookies) {
+      if (cookie.expires > 0) {
+        cookie.expires -= ticks / 1000;
+        dirty = true;
+      }
+    }
+    if (dirty) {
+      await this._browserContext.clearCookies();
+      await this._browserContext.addCookies(cookies);
+    }
+  }
 }
+
 
 /**
  * Parse strings like '01:10:00' (meaning 1 hour, 10 minutes, 0 seconds) into

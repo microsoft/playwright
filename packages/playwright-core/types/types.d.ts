@@ -17287,6 +17287,21 @@ export interface Clock {
    */
   install(options?: {
     /**
+     * Whether to simulate cookies' expiration over time as clock is fast forwarded. Requires clock to be installed with
+     * current time, i.e. `time` should not be specified. Defaults to `false`.
+     *
+     * **Details**
+     *
+     * Cookies are managed by the network stack, which is a part of the operating system in case of macOS. Playwright only
+     * simulates the browser context time, so the network is largely unaware of the changes.
+     *
+     * Passing this option will make Playwright simulate the cookie expiration over time via shifting its expiration date
+     * into the past. Note that getting and setting cookies of the {@link BrowserContext} will return raw cookie values as
+     * in the cookie jar.
+     */
+    expireCookies?: boolean;
+
+    /**
      * Time to initialize with, current system time by default.
      */
     time?: number|string|Date;

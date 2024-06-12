@@ -279,7 +279,7 @@ export abstract class BrowserContext extends SdkObject {
     return await this.doGetCookies(urls as string[]);
   }
 
-  async clearCookies(options: {name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp}): Promise<void> {
+  async clearCookies(options: {name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp} = {}): Promise<void> {
     const currentCookies = await this.cookies();
     await this.doClearCookies();
 

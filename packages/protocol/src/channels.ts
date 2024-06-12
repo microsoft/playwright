@@ -1771,10 +1771,12 @@ export type BrowserContextClockFastForwardResult = void;
 export type BrowserContextClockInstallParams = {
   timeNumber?: number,
   timeString?: string,
+  expireCookies?: boolean,
 };
 export type BrowserContextClockInstallOptions = {
   timeNumber?: number,
   timeString?: string,
+  expireCookies?: boolean,
 };
 export type BrowserContextClockInstallResult = void;
 export type BrowserContextClockPauseAtParams = {

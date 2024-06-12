@@ -324,7 +324,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockInstall(params: channels.BrowserContextClockInstallParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockInstallResult> {
-    await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined);
+    await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined, !!params.expireCookies);
   }
 
   async clockPauseAt(params: channels.BrowserContextClockPauseAtParams, metadata?: CallMetadata | undefined): Promise<channels.BrowserContextClockPauseAtResult> {
