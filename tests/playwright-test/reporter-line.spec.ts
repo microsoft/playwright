@@ -109,6 +109,28 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ].join('\n'));
     });
 
+    test('should trim multiline step titles to first line', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31266' }
+    }, async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await test.step(\`outer
+                             1.0\`, async () => {
+              await test.step(\`inner
+                                1.1\`, async () => {
+                expect(1).toBe(1);
+              });
+            });
+          });
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('[1/1] a.test.ts:6:26 › passes › outer › inner');
+      expect(result.exitCode).toBe(0);
+    });
+
     test('should render failed test steps', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
