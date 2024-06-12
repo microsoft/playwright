@@ -55,6 +55,7 @@ config.projects.push({
   name: 'electron-api',
   use: {
     browserName: 'chromium',
+    headless: false,
   },
   testDir: path.join(testDir, 'electron'),
   metadata,
@@ -66,6 +67,7 @@ config.projects.push({
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {
     browserName: 'chromium',
+    headless: false,
   },
   testDir: path.join(testDir, 'page'),
   metadata,

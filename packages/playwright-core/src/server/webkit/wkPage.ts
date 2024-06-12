@@ -226,12 +226,12 @@ export class WKPage implements PageDelegate {
     }
     if (this._page.fileChooserIntercepted())
       promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled' as any, value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled', value: contextOptions.isMobile }));
     await Promise.all(promises);
   }
 

@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { attachFrame } from '../config/utils';
+import { attachFrame, chromiumVersionLessThan } from '../config/utils';
 
 import path from 'path';
 import fs from 'fs';
@@ -35,6 +35,77 @@ it('should upload the file', async ({ page, server, asset }) => {
     reader.readAsText(e.files[0]);
     return promise.then(() => reader.result);
   }, input)).toBe('contents of the file');
+});
+
+it('should upload a folder', async ({ page, server, browserName, headless, browserVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+    await fs.promises.writeFile(path.join(dir, 'file2'), 'file2 content');
+    await fs.promises.mkdir(path.join(dir, 'sub-dir'));
+    await fs.promises.writeFile(path.join(dir, 'sub-dir', 'really.txt'), 'sub-dir file content');
+  }
+  await input.setInputFiles(dir);
+  expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
+    // https://issues.chromium.org/issues/345393164
+    ...((browserName === 'chromium' && headless && !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW && chromiumVersionLessThan(browserVersion, '127.0.6533.0')) ? [] : ['file-upload-test/sub-dir/really.txt']),
+    'file-upload-test/file1.txt',
+    'file-upload-test/file2',
+  ]));
+  const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input);
+  for (let i = 0; i < webkitRelativePaths.length; i++) {
+    const content = await input.evaluate((e, i) => {
+      const reader = new FileReader();
+      const promise = new Promise(fulfill => reader.onload = fulfill);
+      reader.readAsText(e.files[i]);
+      return promise.then(() => reader.result);
+    }, i);
+    expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
+  }
+});
+
+it('should upload a folder and throw for multiple directories', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir, 'folder1'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder1', 'file1.txt'), 'file1 content');
+    await fs.promises.mkdir(path.join(dir, 'folder2'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder2', 'file2.txt'), 'file2 content');
+  }
+  await expect(input.setInputFiles([
+    path.join(dir, 'folder1'),
+    path.join(dir, 'folder2'),
+  ])).rejects.toThrow('Multiple directories are not supported');
+});
+
+it('should throw if a directory and files are passed', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir, 'folder1'), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'folder1', 'file1.txt'), 'file1 content');
+  }
+  await expect(input.setInputFiles([
+    path.join(dir, 'folder1'),
+    path.join(dir, 'folder1', 'file1.txt'),
+  ])).rejects.toThrow('File paths must be all files or a single directory');
+});
+
+it('should throw when uploading a folder in a normal file upload input', async ({ page, server, browserName, headless, browserMajorVersion }) => {
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const input = await page.$('input');
+  const dir = path.join(it.info().outputDir, 'file-upload-test');
+  {
+    await fs.promises.mkdir(path.join(dir), { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+  }
+  await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
 });
 
 it('should upload a file after popup', async ({ page, server, asset }) => {

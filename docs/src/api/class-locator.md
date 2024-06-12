@@ -2164,6 +2164,7 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 Upload file or multiple files into `<input type=file>`.
+For inputs with a `[webkitdirectory]` attribute, only a single directory path is supported.
 
 **Usage**
 
