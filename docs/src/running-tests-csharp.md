@@ -22,7 +22,7 @@ Use the following command to run all tests.
 dotnet test
 ```
 
-### Run your tests in headed mode
+### Run tests in headed mode
 
 Use the following command to run your tests in headed mode opening a browser window for each test.
 
