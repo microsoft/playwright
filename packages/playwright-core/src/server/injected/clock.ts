@@ -705,11 +705,12 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
 }
 
 export function inject(globalObject: WindowOrWorkerGlobalScope) {
+  const builtin = platformOriginals(globalObject).bound;
   const { clock: controller } = install(globalObject);
   controller.resume();
   return {
     controller,
-    builtin: platformOriginals(globalObject).bound,
+    builtin,
   };
 }
 
