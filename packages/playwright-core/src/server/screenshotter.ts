@@ -204,7 +204,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.style, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -233,7 +233,7 @@ export class Screenshotter {
       progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.style, options.caret !== 'initial', options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, handle._frame, options.style, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
@@ -257,7 +257,7 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
+  async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
@@ -266,9 +266,7 @@ export class Screenshotter {
     }));
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');
-      await Promise.all(this._page.frames().map(async frame => {
-        await frame.nonStallingEvaluateInExistingContext('document.fonts.ready', false, 'utility').catch(() => {});
-      }));
+      await frame.nonStallingEvaluateInExistingContext('document.fonts.ready', false, 'utility').catch(() => {});
       progress.log('fonts loaded');
     }
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
