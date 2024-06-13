@@ -928,3 +928,7 @@ test('override initialState ', async ({ mount }) => {
   await expect(component).toContainText('override initialState');
 });
 ```
+
+### How do I access the component's methods or its instance?
+
+Accessing a component's internal methods or its instance within test code is neither recommended nor supported. Instead, focus on observing and interacting with the component from a user's perspective, typically by clicking or verifying if something is visible on the page. Tests become less fragile and more valuable when they avoid interacting with internal implementation details, such as the component instance or its methods. Keep in mind that if a test fails when run from a user’s perspective, it likely means the automated test has uncovered a genuine bug in your code.
