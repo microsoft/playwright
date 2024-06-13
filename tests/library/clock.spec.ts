@@ -1350,6 +1350,30 @@ it.describe('fastForward', () => {
   });
 });
 
+it.describe('pauseAt', () => {
+  it('pause at target time', async ({ clock }) => {
+    clock.install(0);
+    await clock.pauseAt(1000);
+    expect(clock.Date.now()).toBe(1000);
+  });
+
+  it('fire target timers', async ({ clock }) => {
+    clock.install(0);
+    const stub = createStub();
+    clock.setTimeout(stub, 1000);
+    clock.setTimeout(stub, 1001);
+    await clock.pauseAt(1000);
+    expect(stub.callCount).toBe(1);
+  });
+
+  it('returns consumed clicks', async ({ clock }) => {
+    const now = Date.now();
+    clock.install(now);
+    const consumedTicks = await clock.pauseAt(now + 1000 * 60 * 60 * 24);
+    expect(consumedTicks).toBe(1000 * 60 * 60 * 24);
+  });
+});
+
 it.describe('performance.now()', () => {
   it('should start at 0', async ({ clock }) => {
     const result = clock.performance.now();

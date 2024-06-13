@@ -313,13 +313,13 @@ it.describe('stubTimers', () => {
     });
     await page.clock.runFor(1000);
     expect(await page.evaluate(() => performance.timeOrigin)).toBe(1000);
-    expect(await promise).toEqual({ prev: 2000, next: 3000 });
+    expect(await promise).toEqual({ prev: 1000, next: 2000 });
   });
 });
 
 it.describe('popup', () => {
   it('should tick after popup', async ({ page }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
     const [popup] = await Promise.all([
@@ -334,7 +334,7 @@ it.describe('popup', () => {
   });
 
   it('should tick before popup', async ({ page }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
     await page.clock.runFor(1000);
@@ -368,7 +368,7 @@ it.describe('popup', () => {
       res.setHeader('Content-Type', 'text/html');
       res.end(`<script>window.time = Date.now()</script>`);
     });
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.clock.pauseAt(1000);
     await page.goto(server.EMPTY_PAGE);
     // Wait for 2 second in real life to check that it is past in popup.
