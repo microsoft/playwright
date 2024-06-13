@@ -2178,6 +2178,9 @@ await page.getByLabel('Upload files').setInputFiles([
   path.join(__dirname, 'file2.txt'),
 ]);
 
+// Select a directory
+await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+
 // Remove all the selected files
 await page.getByLabel('Upload file').setInputFiles([]);
 
@@ -2196,6 +2199,9 @@ page.getByLabel("Upload file").setInputFiles(Paths.get("myfile.pdf"));
 // Select multiple files
 page.getByLabel("Upload files").setInputFiles(new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
 
+// Select a directory
+page.getByLabel("Upload directory").setInputFiles(Paths.get("mydir"));
+
 // Remove all the selected files
 page.getByLabel("Upload file").setInputFiles(new Path[0]);
 
@@ -2210,6 +2216,9 @@ await page.get_by_label("Upload file").set_input_files('myfile.pdf')
 
 # Select multiple files
 await page.get_by_label("Upload files").set_input_files(['file1.txt', 'file2.txt'])
+
+# Select a directory
+await page.get_by_label("Upload directory").set_input_files('mydir')
 
 # Remove all the selected files
 await page.get_by_label("Upload file").set_input_files([])
@@ -2229,6 +2238,9 @@ page.get_by_label("Upload file").set_input_files('myfile.pdf')
 # Select multiple files
 page.get_by_label("Upload files").set_input_files(['file1.txt', 'file2.txt'])
 
+# Select a directory
+page.get_by_label("Upload directory").set_input_files('mydir')
+
 # Remove all the selected files
 page.get_by_label("Upload file").set_input_files([])
 
@@ -2246,6 +2258,9 @@ await page.GetByLabel("Upload file").SetInputFilesAsync("myfile.pdf");
 
 // Select multiple files
 await page.GetByLabel("Upload files").SetInputFilesAsync(new[] { "file1.txt", "file12.txt" });
+
+// Select a directory
+await page.GetByLabel("Upload directory").SetInputFilesAsync("mydir");
 
 // Remove all the selected files
 await page.GetByLabel("Upload file").SetInputFilesAsync(new[] {});
