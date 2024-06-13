@@ -623,6 +623,72 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
     expect(message.text()).toBe('2');
   });
 
+  test('should select with multiple attribute', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait('<select id="age" multiple onchange="console.log([...age.selectedOptions].map(x => x.value))"><option value="1">1<option value="2">2</select>');
+
+    const locator = await recorder.hoverOverElement('select');
+    expect(locator).toBe(`locator('#age')`);
+    await page.getByRole('option', { name: '1' }).click();
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text().includes('2')),
+      recorder.waitForOutput('JavaScript', 'selectOption(['),
+      page.getByRole('option', { name: '2' }).click({ modifiers: ['ControlOrMeta'] })
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#age').selectOption(['1', '2']);`);
+
+    expect(sources.get('Java')!.text).toContain(`
+      page.locator("#age").selectOption(new String[] {"1", "2"});`);
+
+    expect(sources.get('Python')!.text).toContain(`
+    page.locator("#age").select_option(["1", "2"])`);
+
+    expect(sources.get('Python Async')!.text).toContain(`
+    await page.locator("#age").select_option(["1", "2"])`);
+
+    expect(sources.get('C#')!.text).toContain(`
+await page.Locator("#age").SelectOptionAsync(new[] { "1", "2" });`);
+
+    expect(message.text()).toBe('[1, 2]');
+  });
+
+  test('should unselect with multiple attribute', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait('<select id="age" multiple onchange="console.log([...age.selectedOptions].map(x => x.value))"><option value="1">1<option value="2">2</select>');
+
+    const locator = await recorder.hoverOverElement('select');
+    expect(locator).toBe(`locator('#age')`);
+    await page.getByRole('option', { name: '1' }).click();
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === '[]'),
+      recorder.waitForOutput('JavaScript', 'selectOption(['),
+      page.getByRole('option', { name: '1' }).click({ modifiers: ['ControlOrMeta'] })
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#age').selectOption([]);`);
+
+    expect(sources.get('Java')!.text).toContain(`
+      page.locator("#age").selectOption(new String[0]);`);
+
+    expect(sources.get('Python')!.text).toContain(`
+    page.locator("#age").select_option([])`);
+
+    expect(sources.get('Python Async')!.text).toContain(`
+    await page.locator("#age").select_option([])`);
+
+    expect(sources.get('C#')!.text).toContain(`
+await page.Locator("#age").SelectOptionAsync(new[] {  });`);
+
+    expect(message.text()).toBe('[]');
+  });
+
   test('should await popup', async ({ page, openRecorder, browserName, headless }) => {
     const recorder = await openRecorder();
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
