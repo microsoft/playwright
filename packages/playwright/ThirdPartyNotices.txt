@@ -38,7 +38,6 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/plugin-syntax-async-generators@7.8.4 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-async-generators)
 -	@babel/plugin-syntax-class-static-block@7.14.5 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-decorators@7.24.1 (https://github.com/babel/babel)
--	@babel/plugin-syntax-dynamic-import@7.8.3 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-dynamic-import)
 -	@babel/plugin-syntax-explicit-resource-management@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-export-namespace-from@7.8.3 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-export-namespace-from)
 -	@babel/plugin-syntax-import-attributes@7.24.1 (https://github.com/babel/babel)
@@ -54,7 +53,6 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/plugin-syntax-typescript@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-class-properties@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-class-static-block@7.24.4 (https://github.com/babel/babel)
--	@babel/plugin-transform-dynamic-import@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-export-namespace-from@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-logical-assignment-operators@7.24.1 (https://github.com/babel/babel)
 -	@babel/plugin-transform-modules-commonjs@7.24.1 (https://github.com/babel/babel)
@@ -1252,33 +1250,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-syntax-decorators@7.24.1 AND INFORMATION
 
-%% @babel/plugin-syntax-dynamic-import@7.8.3 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/plugin-syntax-dynamic-import@7.8.3 AND INFORMATION
-
 %% @babel/plugin-syntax-explicit-resource-management@7.24.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -1683,33 +1654,6 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-transform-class-static-block@7.24.4 AND INFORMATION
-
-%% @babel/plugin-transform-dynamic-import@7.24.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/plugin-transform-dynamic-import@7.24.1 AND INFORMATION
 
 %% @babel/plugin-transform-export-namespace-from@7.24.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -4461,6 +4405,6 @@ END OF yallist@3.1.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 153
+Total Packages: 151
 =========================================
 END OF SUMMARY
