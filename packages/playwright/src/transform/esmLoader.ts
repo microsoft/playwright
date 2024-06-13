@@ -19,6 +19,7 @@ import url from 'url';
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { transformHook, resolveHook, setTransformConfig, shouldTransform } from './transform';
 import { PortTransport } from './portTransport';
+import { fileIsModule } from '../util';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
@@ -62,9 +63,13 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   if (transformed.serializedCache)
     await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
 
-  // Output format is always the same as input format, if it was unknown, we always report modules.
+  // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
-  return { format: context.format || 'module', source: transformed.code, shortCircuit: true };
+  return {
+    format: context.format || (fileIsModule(filename) ? 'module' : 'commonjs'),
+    source: transformed.code,
+    shortCircuit: true,
+  };
 }
 
 let transport: PortTransport | undefined;
