@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './inspectorTest';
-import type { ConsoleMessage } from 'playwright';
+import type { ConsoleMessage, Locator } from 'playwright';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -680,6 +680,93 @@ await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
 await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
+  });
+
+  const clickMultipleSelectOption = async (locator: Locator, withCtrlOrMeta = false) => {
+    const page = locator.page();
+
+    // Webkit can't click multiple select options
+    // https://github.com/microsoft/playwright/issues/32126
+    if (page.context().browser().browserType().name() === 'webkit') {
+      const elem = await locator.elementHandle();
+      const rect = await elem!.evaluate(e => {
+        return e.getBoundingClientRect()!;
+      });
+      if (withCtrlOrMeta)
+        await page.keyboard.down('ControlOrMeta');
+
+      await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      if (withCtrlOrMeta)
+        await page.keyboard.up('ControlOrMeta');
+
+    } else {
+      await locator.click({ modifiers: withCtrlOrMeta ? ['ControlOrMeta'] : [] });
+    }
+  };
+
+  test('should select with multiple attribute', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
+
+    const locator = await recorder.hoverOverElement('select');
+    expect(locator).toBe(`locator('#age')`);
+    await clickMultipleSelectOption(page.getByRole('option', { name: '1' }));
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text().includes('2')),
+      recorder.waitForOutput('JavaScript', 'selectOption(['),
+      clickMultipleSelectOption(page.getByRole('option', { name: '2' }), true)
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#age').selectOption(['1', '2']);`);
+
+    expect(sources.get('Java')!.text).toContain(`
+      page.locator("#age").selectOption(new String[] {"1", "2"});`);
+
+    expect(sources.get('Python')!.text).toContain(`
+    page.locator("#age").select_option(["1", "2"])`);
+
+    expect(sources.get('Python Async')!.text).toContain(`
+    await page.locator("#age").select_option(["1", "2"])`);
+
+    expect(sources.get('C#')!.text).toContain(`
+await page.Locator("#age").SelectOptionAsync(new[] { "1", "2" });`);
+
+    expect(message.text()).toBe('[1,2]');
+  });
+
+  test('should unselect with multiple attribute', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
+    const locator = await recorder.hoverOverElement('select');
+    expect(locator).toBe(`locator('#age')`);
+    await clickMultipleSelectOption(page.getByRole('option', { name: '1' }));
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === '[]'),
+      recorder.waitForOutput('JavaScript', 'selectOption(['),
+      clickMultipleSelectOption(page.getByRole('option', { name: '1' }), true)
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#age').selectOption([]);`);
+
+    expect(sources.get('Java')!.text).toContain(`
+      page.locator("#age").selectOption(new String[0]);`);
+
+    expect(sources.get('Python')!.text).toContain(`
+    page.locator("#age").select_option([])`);
+
+    expect(sources.get('Python Async')!.text).toContain(`
+    await page.locator("#age").select_option([])`);
+
+    expect(sources.get('C#')!.text).toContain(`
+await page.Locator("#age").SelectOptionAsync(new[] {  });`);
+
+    expect(message.text()).toBe('[]');
   });
 
   test('should await popup', async ({ openRecorder }) => {
