@@ -22,7 +22,6 @@
     "@babel/plugin-syntax-optional-catch-binding": "^7.8.3",
     "@babel/plugin-transform-class-properties": "^7.24.1",
     "@babel/plugin-transform-class-static-block": "^7.24.4",
-    "@babel/plugin-transform-dynamic-import": "^7.24.1",
     "@babel/plugin-transform-export-namespace-from": "^7.24.1",
     "@babel/plugin-transform-logical-assignment-operators": "^7.24.1",
     "@babel/plugin-transform-modules-commonjs": "^7.24.1",
