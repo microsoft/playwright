@@ -12804,6 +12804,9 @@ export interface Locator {
    *   path.join(__dirname, 'file2.txt'),
    * ]);
    *
+   * // Select a directory
+   * await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+   *
    * // Remove all the selected files
    * await page.getByLabel('Upload file').setInputFiles([]);
    *
