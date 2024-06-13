@@ -22,7 +22,7 @@ The default value can be changed by using the
 * langs: js
 - `timeout` <[float]>
 
-Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `navigationTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultNavigationTimeout`],
+Maximum operation time in milliseconds. Defaults to `30000` - 30 seconds (`0` - no timeout in Playwright Test). The default value can be changed via `navigationTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultNavigationTimeout`],
 [`method: BrowserContext.setDefaultTimeout`],
 [`method: Page.setDefaultNavigationTimeout`] or
 [`method: Page.setDefaultTimeout`] methods.
@@ -38,7 +38,7 @@ value can be changed by using the [`method: BrowserContext.setDefaultTimeout`] o
 * langs: js
 - `timeout` <[float]>
 
-Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+Maximum time to wait for in milliseconds. Defaults to `30000` - 30 seconds (`0` - no timeout in Playwright Test). The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 ## input-strict
 - `strict` <[boolean]>
@@ -58,7 +58,7 @@ using the [`method: BrowserContext.setDefaultTimeout`] or
 * langs: js
 - `timeout` <[float]>
 
-Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or
+Maximum time in milliseconds. Defaults to `30000` - 30 seconds (`0` - no timeout in Playwright Test). The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or
 [`method: Page.setDefaultTimeout`] methods.
 
 ## input-no-wait-after

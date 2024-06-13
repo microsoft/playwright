@@ -31,6 +31,7 @@ export class TimeoutSettings {
 
   setDefaultTimeout(timeout: number | undefined) {
     this._defaultTimeout = timeout;
+    console.log('timeoutSettings.ts: setDefaultTimeout: this._defaultTimeout: ', this._defaultTimeout, new Error().stack);
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {

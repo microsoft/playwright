@@ -86,7 +86,7 @@ Event name, same one would pass into `webSocket.on(event)`.
 * langs: js
 - `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> Receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` ?<[float]> Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+  - `timeout` ?<[float]> Maximum time to wait for in milliseconds. Defaults to `30000` - 30 seconds (`0` - no timeout in Playwright Test). The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 Either a predicate that receives an event or an options object. Optional.
 
