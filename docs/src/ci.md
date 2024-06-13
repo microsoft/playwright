@@ -628,7 +628,7 @@ DEBUG=pw:browser dotnet test
 
 ## Running headed
 
-By default, Playwright launches browsers in headless mode. See in our [Running tests](./running-tests.md) guide how to run tests in headed mode.
+By default, Playwright launches browsers in headless mode. See in our [Running tests](./running-tests.md#run-tests-in-headed-mode) guide how to run tests in headed mode.
 
 On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the actual command.
 
