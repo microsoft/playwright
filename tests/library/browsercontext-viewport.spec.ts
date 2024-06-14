@@ -19,6 +19,7 @@ import { devices } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 import { browserTest } from '../config/browserTest';
 import { verifyViewport } from '../config/utils';
+import * as os from 'os';
 
 it('should get the proper default viewport size', async ({ page, server }) => {
   await verifyViewport(page, 1280, 720);
@@ -177,9 +178,10 @@ browserTest('should be able to get correct orientation angle on non-mobile devic
   await context.close();
 });
 
-it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server }) => {
+it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server, isMac }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31151' });
   it.skip(browserName === 'firefox', 'Firefox does not support mobile emulation');
+  it.skip(isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support orientation.type override');
   const context = await contextFactory(devices['iPhone 14']);
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/index.html');
