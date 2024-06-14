@@ -281,3 +281,39 @@ it('should fulfill popup main request using alias', async ({ page, server, isEle
   ]);
   await expect(popup.locator('body')).toHaveText('hello');
 });
+
+it('request.postData is not null when fetching FormData with a Blob', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
+}, async ({ server, page, browserName, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.fixme(browserName === 'webkit', 'The body is empty in WebKit when intercepting');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+<script>
+  function doStuff() {
+    const formData = new FormData();
+    formData.append('file', new Blob(["hello"], { type: "text/plain" }));
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+  }
+</script>
+<body>
+<button onclick="doStuff()" data-testid="click-me">Click me!</button>
+</body>`);
+  let resolvePostData;
+  const postDataPromise = new Promise<string>(resolve => resolvePostData = resolve);
+  await page.route(server.PREFIX + '/upload', async (route, request) => {
+    expect(request.method()).toBe('POST');
+    resolvePostData(await request.postData());
+    await route.fulfill({
+      status: 200,
+      body: 'ok',
+    });
+  });
+  await page.getByTestId('click-me').click();
+  const postData = await postDataPromise;
+  expect(postData).toContain('Content-Disposition: form-data; name="file"; filename="blob"');
+  expect(postData).toContain('\r\nhello\r\n');
+});
