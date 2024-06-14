@@ -307,7 +307,7 @@ it('request.postData is not null when fetching FormData with a Blob', {
   await page.route(server.PREFIX + '/upload', async (route, request) => {
     expect(request.method()).toBe('POST');
     resolvePostData(await request.postData());
-    route.fulfill({
+    await route.fulfill({
       status: 200,
       body: 'ok',
     });
