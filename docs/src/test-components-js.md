@@ -263,7 +263,7 @@ Then test the component via testing the story:
 
 ```js title="input-media.test.spec.tsx"
 test('changes the image', async ({ mount }) => {
-  let mediaSelected: string;
+  let mediaSelected: string | null = null;
 
   const component = await mount(
     <InputMediaForTest
