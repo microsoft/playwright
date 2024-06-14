@@ -6,6 +6,98 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.45
+
+### Clock
+
+Utilizing the new [Clock] API allows to manipulate and control time within tests to verify time-related behavior. This API covers many common scenarios, including:
+* testing with predefined time;
+* keeping consistent time and timers;
+* monitoring inactivity;
+* ticking through time manually.
+
+```js
+// Initialize clock and let the page load naturally.
+await page.clock.install({ time: new Date('2024-02-02T08:00:00') });
+await page.goto('http://localhost:3333');
+
+// Pretend that the user closed the laptop lid and opened it again at 10am,
+// Pause the time once reached that point.
+await page.clock.pauseAt(new Date('2024-02-02T10:00:00'));
+
+// Assert the page state.
+await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:00:00 AM');
+
+// Close the laptop lid again and open it at 10:30am.
+await page.clock.fastForward('30:00');
+await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:30:00 AM');
+```
+
+See [the clock guide](./clock.md) for more details.
+
+### Test runner
+
+- New CLI option `--fail-on-flaky-tests` that sets exit code to `1` upon any flaky tests. Note that by default, the test runner exits with code `0` when all failed tests recovered upon a retry. With this option, the test run will fail in such case.
+
+- New enviroment variable `PLAYWRIGHT_FORCE_TTY` controls whether built-in `list`, `line` and `dot` reporters assume a live terminal. For example, this could be useful to disable tty behavior when your CI environment does not handle ANSI control sequences well. Alternatively, you can enable tty behavior even when to live terminal is present, if you plan to post-process the output and handle control sequences.
+
+  ```sh
+  # Avoid TTY features that output ANSI control sequences
+  PLAYWRIGHT_FORCE_TTY=0 npx playwrigh test
+
+  # Enable TTY features, assuming a terminal width 80
+  PLAYWRIGHT_FORCE_TTY=80 npx playwrigh test
+  ```
+
+- New options [`property: TestConfig.respectGitIgnore`] and [`property: TestProject.respectGitIgnore`] control whether files matching `.gitignore` patterns are excluded when searching for tests.
+
+- New property `timeout` is now available for custom expect matchers. This property takes into account `playwright.config.ts` and `expect.configure()`.
+  ```ts
+  import { expect as baseExpect } from '@playwright/test';
+
+  export const expect = baseExpect.extend({
+    async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+      // When no timeout option is specified, use the config timeout.
+      const timeout = options?.timeout ?? this.timeout;
+      // ... implement the assertion ...
+    },
+  });
+  ```
+
+### Miscellaneous
+
+- Method [`method: Locator.setInputFiles`] now supports uploading a directory for `<input type=file webkitdirectory>` elements.
+  ```ts
+  await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+  ```
+
+- Multiple methods like [`method: Locator.click`] or [`method: Locator.press`] now support a `ControlOrMeta` modifier key. This key maps to `Meta` on macOS and maps to `Control` on Windows and Linux.
+  ```ts
+  // Press the common keyboard shortcut Control+S or Meta+S to trigger a "Save" operation.
+  await page.keyboard.press('ControlOrMeta+S');
+  ```
+
+- New property `httpCredentials.send` in [`method: APIRequest.newContext`] that allows to either always send the `Authorization` header or only send it in response to `401 Unauthorized`.
+
+- New option `reason` in [`method: APIRequestContext.dispose`] that will be included in the error message of ongoing operations interrupted by the context disposal.
+
+- New option `host` in [`method: BrowserType.launchServer`] allows to accept websocket connections on a specific address instead of unspecified `0.0.0.0`.
+
+- Playwright now supports Chromium, Firefox and WebKit on Ubuntu 24.04.
+
+- v1.45 is the last release to receive WebKit update for macOS 12 Monterey. Please update macOS to keep using the latest WebKit.
+
+### Browser Versions
+
+* Chromium 127.0.6533.5
+* Mozilla Firefox 127.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 126
+* Microsoft Edge 126
+
 ## Version 1.44
 
 <LiteYouTube
