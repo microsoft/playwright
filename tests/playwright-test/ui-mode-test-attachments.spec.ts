@@ -25,6 +25,7 @@ test('should contain text attachment', async ({ runUITest }) => {
       test('attach test', async () => {
         await test.info().attach('note', { path: __filename });
         await test.info().attach('🎭', { body: 'hi tester!', contentType: 'text/plain' });
+        await test.info().attach('escaped', { body: '<div>\\nFoo\\nBar\\n</div>', contentType: 'text/plain' });
       });
     `,
   });
@@ -32,13 +33,15 @@ test('should contain text attachment', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  for (const { name, content } of [
-    { name: 'note', content: 'attach test' },
-    { name: '🎭', content: 'hi tester!' }
+  for (const { name, content, displayedAsText } of [
+    { name: 'note', content: 'attach test', displayedAsText: false },
+    { name: '🎭', content: 'hi tester!', displayedAsText: true },
+    { name: 'escaped', content: '<div>\nFoo\nBar\n</div>', displayedAsText: true },
   ]) {
     await page.getByText(`attach "${name}"`, { exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
-    await expect(page.getByLabel('🎭')).toHaveText('hi tester!');
+    if (displayedAsText)
+      await expect(page.getByLabel(name)).toHaveText(content);
     await page.getByRole('link', { name: name }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(name);

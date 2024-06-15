@@ -41,7 +41,9 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
     };
   }, [attachment]);
 
-  return <textarea aria-label={attachment.name} className="attachment-item__text" disabled value={text!}/>;
+  return <div aria-label={attachment.name} className="attachment-item__text">
+    {text!}
+  </div>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{

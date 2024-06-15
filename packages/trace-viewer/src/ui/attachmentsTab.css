@@ -49,5 +49,7 @@
 .attachment-item .attachment-item__text {
   display: block;
   width: 100%;
+  border: 1px solid var(--vscode-panel-border);
   border-radius: 2px;
+  padding: 0.5rem;
 }
