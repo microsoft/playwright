@@ -302,8 +302,8 @@ class PageHandler {
     await this._pageTarget.activateAndRun(() => {});
   }
 
-  async ['Page.setCacheDisabled'](options) {
-    return await this._contentPage.send('setCacheDisabled', options);
+  async ['Page.setCacheDisabled']({cacheDisabled}) {
+    return await this._pageTarget.setCacheDisabled(cacheDisabled);
   }
 
   async ['Page.addBinding']({ worldName, name, script }) {

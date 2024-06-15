@@ -355,6 +355,7 @@ class PageTarget {
     this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
     this.forcedColors = 'no-override';
+    this.disableCache = false;
     this.mediumOverride = '';
     this.crossProcessCookie = {
       initScripts: [],
@@ -461,10 +462,24 @@ class PageTarget {
     this.updateReducedMotionOverride(browsingContext);
     this.updateForcedColorsOverride(browsingContext);
     this.updateForceOffline(browsingContext);
+    this.updateCacheDisabled(browsingContext);
   }
 
   updateForceOffline(browsingContext = undefined) {
     (browsingContext || this._linkedBrowser.browsingContext).forceOffline = this._browserContext.forceOffline;
+  }
+
+  setCacheDisabled(disabled) {
+    this.disableCache = disabled;
+    this.updateCacheDisabled();
+  }
+
+  updateCacheDisabled(browsingContext = this._linkedBrowser.browsingContext) {
+    const enableFlags = Ci.nsIRequest.LOAD_NORMAL;
+    const disableFlags = Ci.nsIRequest.LOAD_BYPASS_CACHE |
+                  Ci.nsIRequest.INHIBIT_CACHING;
+
+    browsingContext.defaultLoadFlags = (this._browserContext.disableCache || this.disableCache) ? disableFlags : enableFlags;
   }
 
   updateTouchOverride(browsingContext = undefined) {
@@ -837,6 +852,7 @@ class BrowserContext {
     this.defaultPlatform = null;
     this.touchOverride = false;
     this.forceOffline = false;
+    this.disableCache = false;
     this.colorScheme = 'none';
     this.forcedColors = 'no-override';
     this.reducedMotion = 'none';
@@ -936,6 +952,12 @@ class BrowserContext {
     this.forceOffline = forceOffline;
     for (const page of this.pages)
       page.updateForceOffline();
+  }
+
+  setCacheDisabled(disabled) {
+    this.disableCache = disabled;
+    for (const page of this.pages)
+      page.updateCacheDisabled();
   }
 
   async setDefaultViewport(viewport) {

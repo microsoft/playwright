@@ -186,6 +186,10 @@ class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).requestInterceptionEnabled = enabled;
   }
 
+  ['Browser.setCacheDisabled']({browserContextId, cacheDisabled}) {
+    this._targetRegistry.browserContextForId(browserContextId).setCacheDisabled(cacheDisabled);
+  }
+
   ['Browser.setIgnoreHTTPSErrors']({browserContextId, ignoreHTTPSErrors}) {
     this._targetRegistry.browserContextForId(browserContextId).setIgnoreHTTPSErrors(nullToUndefined(ignoreHTTPSErrors));
   }
