@@ -557,6 +557,7 @@ await page.Locator("#checkbox").UncheckAsync();`);
 
     const locator = await recorder.hoverOverElement('select');
     expect(locator).toBe(`locator('#age')`);
+    await page.locator('select').click();
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
