@@ -232,12 +232,14 @@ Let's say you'd like to test following component:
 ```js title="input-media.tsx"
 import React from 'react';
 
-export const InputMedia: React.FC<{
+type InputMediaProps = {
   // Media is a complex browser object we can't send to Node while testing.
-  onChange: (media: Media) => void,
-}> = ({ onChange }) => {
-  return <></> as any;
+  onChange(media: Media): void;
 };
+
+export function InputMedia(props: InputMediaProps) {
+  return <></> as any;
+}
 ```
 
 Create a story file for your component:
@@ -246,12 +248,14 @@ Create a story file for your component:
 import React from 'react';
 import InputMedia from './import-media';
 
-export const InputMediaForTest: React.FC<{
-  onMediaChange: (mediaName: string) => void,
-}> = ({ onMediaChange }) => {
-  // Instead of sending a complex `media` object to the test, send the media name.
-  return <InputMedia onChange={media => onMediaChange(media.name)} />;
+type InputMediaForTestProps = {
+  onMediaChange(mediaName: string): void;
 };
+
+export function InputMediaForTest(props: InputMediaForTestProps) {
+  // Instead of sending a complex `media` object to the test, send the media name.
+  return <InputMedia onChange={media => props.onMediaChange(media.name)} />;
+}
 // Export more stories here.
 ```
 
@@ -265,7 +269,6 @@ test('changes the image', async ({ mount }) => {
     <InputMediaForTest
       onMediaChange={mediaName => {
         mediaSelected = mediaName;
-        console.log({ mediaName });
       }}
     />
   );
