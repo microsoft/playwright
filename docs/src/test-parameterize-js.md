@@ -18,7 +18,7 @@ You can either parameterize tests on a test level or on a project level.
   test(`testing with ${name}`, async ({ page }) => {
     await page.goto(`/greet?name=${name}`);
     await expect(page.getByRole('heading', { name })).toBeVisible();
-  })
+  });
 });
 ```
 
@@ -43,7 +43,7 @@ test.afterEach(async ({ page }) => {
   test(`testing with ${name}`, async ({ page }) => {
     await page.goto(`/greet?name=${name}`);
     await expect(page.getByRole('heading', { name })).toBeVisible();
-  })
+  });
 });
 ```
 
