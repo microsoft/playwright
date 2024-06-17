@@ -973,7 +973,7 @@ export class Recorder {
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
     `);
     this.installListeners();
-
+    injectedScript.utils.cacheNormalizedWhitespaces();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
