@@ -132,53 +132,46 @@ await Page.CloseAsync(new() { RunBeforeUnload = true });
 In order to assert that a print dialog via [`window.print`](https://developer.mozilla.org/en-US/docs/Web/API/Window/print) was opened, you can use the following snippet:
 
 ```js
-let resolveWaitForPrintDialog;
-const waitForPrintDialog = new Promise<void>(x => resolveWaitForPrintDialog = x);
-await page.exposeBinding('print', resolveWaitForPrintDialog);
+await page.evaluate('(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()');
 
 await page.goto('<url>');
 await page.getByText('Print it!').click();
 
-await waitForPrintDialog;
+await page.waitForFunction('window.waitForPrintDialog');
 ```
 
 ```java
-CompletableFuture<Void> waitForPrintDialog = new CompletableFuture<>();
-page.exposeBinding("print", () -> waitForPrintDialog.complete(null));
+page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
 
 page.navigate("<url>");
 page.getByText("Print it!").click();
 
-waitForPrintDialog.get();
+page.waitForFunction("window.waitForPrintDialog");
 ```
 
 ```python async
-import asyncio
-
-wait_for_dialog_fut = asyncio.Future()
-page.expose_binding("print", lambda: wait_for_dialog_fut.set_result(None))
+await page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
 
 await page.goto("<url>")
 await page.get_by_text("Print it!").click()
 
-await wait_for_dialog_fut
+await page.wait_for_function("window.waitForPrintDialog")
 ```
 
 ```python sync
-page.evaluate("window.waitForPrintDialog = new Promise(resolve => window.print = resolve);")
+page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
 
 page.goto("<url>")
 page.get_by_text("Print it!").click()
 
-page.evaluate("window.waitForPrintDialog")
+page.wait_for_function("window.waitForPrintDialog")
 ```
 
 ```csharp
-var waitForPrintDialog = new TaskCompletionSource<object>();
-await Page.ExposeBindingAsync("print", () => waitForPrintDialog.SetResult(null));
+await Page.EvaluateAsync("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
 
 await Page.GotoAsync("<url>");
 await Page.GetByText("Print it!").ClickAsync();
 
-await waitForPrintDialog.Task;
+await Page.WaitForFunctionAsync("window.waitForPrintDialog");
 ```
