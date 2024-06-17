@@ -551,7 +551,7 @@ function suitableTextAlternatives(text: string) {
 
   result = result.filter(r => r.text);
   if (!result.length)
-    result.push({ text: trimWordBoundary(text, 80), scoreBouns: 0 });
+    result.push({ text: text.substring(0, 80), scoreBouns: 0 });
 
   return result;
 }
