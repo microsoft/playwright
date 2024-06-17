@@ -22,7 +22,30 @@ You can either parameterize tests on a test level or on a project level.
 });
 ```
 
-When looping over `before{Each,All}` or `after{Each,All}` hooks, they will be executed for every iteration, so in most cases, you should loop only over tests.
+### Before and after hooks
+
+When looping over `before{Each,All}` or `after{Each,All}` hooks, they will be executed for every iteration, so in most cases, you should loop only over tests:
+
+```js title="example.spec.ts"
+test.beforeEach(async ({ page }) => {
+  // ...
+});
+
+test.afterEach(async ({ page }) => {
+  // ...
+});
+
+[
+  { name: 'Alice', expected: 'Hello, Alice!' },
+  { name: 'Bob', expected: 'Hello, Bob!' },
+  { name: 'Charlie', expected: 'Hello, Charlie!' },
+].forEach(({ name, expected }) => {
+  test(`testing with ${name}`, async ({ page }) => {
+    await page.goto(`/greet?name=${name}`);
+    await expect(page.getByRole('heading', { name })).toBeVisible();
+  })
+});
+```
 
 ## Parameterized Projects
 
