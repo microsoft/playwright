@@ -5,7 +5,7 @@ title: "Dialogs"
 
 ## Introduction
 
-Playwright can interact with the web page dialogs such as [`alert`](https://developer.mozilla.org/en-US/docs/Web/API/Window/alert), [`confirm`](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm), [`prompt`](https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt) as well as [`beforeunload`](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event) confirmation.
+Playwright can interact with the web page dialogs such as [`alert`](https://developer.mozilla.org/en-US/docs/Web/API/Window/alert), [`confirm`](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm), [`prompt`](https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt) as well as [`beforeunload`](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event) confirmation. For print dialogs, see [Print](#print-dialogs).
 
 ## alert(), confirm(), prompt() dialogs
 
@@ -125,4 +125,60 @@ Page.Dialog += async (_, dialog) =>
     await dialog.DismissAsync();
 };
 await Page.CloseAsync(new() { RunBeforeUnload = true });
+```
+
+## Print dialogs
+
+In order to assert that a print dialog via [`window.print`](https://developer.mozilla.org/en-US/docs/Web/API/Window/print) was opened, you can use the following snippet:
+
+```js
+let resolveWaitForPrintDialog;
+const waitForPrintDialog = new Promise<void>(x => resolveWaitForPrintDialog = x);
+await page.exposeBinding('print', resolveWaitForPrintDialog);
+
+await page.goto('<url>');
+await page.getByText('Print it!').click();
+
+await waitForPrintDialog;
+```
+
+```java
+CompletableFuture<Void> waitForPrintDialog = new CompletableFuture<>();
+page.exposeBinding("print", () -> waitForPrintDialog.complete(null));
+
+page.navigate("<url>");
+page.getByText("Print it!").click();
+
+waitForPrintDialog.get();
+```
+
+```python async
+import asyncio
+
+wait_for_dialog_fut = asyncio.Future()
+page.expose_binding("print", lambda: wait_for_dialog_fut.set_result(None))
+
+await page.goto("<url>")
+await page.get_by_text("Print it!").click()
+
+await wait_for_dialog_fut
+```
+
+```python sync
+page.evaluate("window.waitForPrintDialog = new Promise(resolve => window.print = resolve);")
+
+page.goto("<url>")
+page.get_by_text("Print it!").click()
+
+page.evaluate("window.waitForPrintDialog")
+```
+
+```csharp
+var waitForPrintDialog = new TaskCompletionSource<object>();
+await Page.ExposeBindingAsync("print", () => waitForPrintDialog.SetResult(null));
+
+await Page.GotoAsync("<url>");
+await Page.GetByText("Print it!").ClickAsync();
+
+await waitForPrintDialog.Task;
 ```
