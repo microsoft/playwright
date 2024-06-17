@@ -177,7 +177,7 @@ it('should give access to the intercepted response body', async ({ page, server,
 
 it('should intercept multipart/form-data request body', async ({ page, server, asset, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14624' });
-  it.fail(browserName !== 'firefox');
+  it.fixme(browserName !== 'firefox');
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   await page.locator('input[type=file]').setInputFiles(filePath);
