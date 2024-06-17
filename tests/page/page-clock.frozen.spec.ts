@@ -16,9 +16,12 @@
 
 import { test as it, expect } from './pageTest';
 
-it.skip(!process.env.PW_FREEZE_TIME);
-
 it('clock should be frozen', async ({ page }) => {
-  await page.clock.setSystemTime(0);
-  expect(await page.evaluate('Date.now()')).toBe(0);
+  it.skip(process.env.PW_CLOCK !== 'frozen');
+  expect(await page.evaluate('Date.now()')).toBe(1000);
+});
+
+it('clock should be realtime', async ({ page }) => {
+  it.skip(process.env.PW_CLOCK !== 'realtime');
+  expect(await page.evaluate('Date.now()')).toBeLessThan(1000);
 });

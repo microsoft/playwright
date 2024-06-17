@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test.skip(!!process.env.PW_FREEZE_TIME);
+test.skip(!!process.env.PW_CLOCK);
 
 declare global {
   interface Window {
