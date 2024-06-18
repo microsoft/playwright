@@ -26,6 +26,10 @@ export class Clock {
     this._browserContext = browserContext;
   }
 
+  markAsUninstalled() {
+    this._scriptInstalled = false;
+  }
+
   async fastForward(ticks: number | string) {
     await this._installIfNeeded();
     const ticksMillis = parseTicks(ticks);
