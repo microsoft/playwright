@@ -829,7 +829,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
  * @param {Documentation.Type} type
  */
 function registerModelType(typeName, type) {
-  if (['object', 'string', 'int'].includes(typeName))
+  if (['object', 'string', 'int', 'long'].includes(typeName))
     return;
   if (typeName.endsWith('Option'))
     return;
