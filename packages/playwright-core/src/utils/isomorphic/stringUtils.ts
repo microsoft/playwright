@@ -75,7 +75,7 @@ export function cacheNormalizedWhitespaces() {
 
 export function normalizeWhiteSpace(text: string): string {
   let result = normalizedWhitespaceCache?.get(text);
-  if (!result) {
+  if (result === undefined) {
     result = text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
     normalizedWhitespaceCache?.set(text, result);
   }
