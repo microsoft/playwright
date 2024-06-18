@@ -207,34 +207,6 @@ it.describe('fastForward', () => {
   });
 });
 
-it.describe('fastForwardTo', () => {
-  it.beforeEach(async ({ page }) => {
-    await page.clock.install({ time: 0 });
-    await page.clock.pauseAt(1000);
-  });
-
-  it(`ignores timers which wouldn't be run`, async ({ page, calls }) => {
-    await page.evaluate(async () => {
-      setTimeout(() => {
-        window.stub('should not be logged');
-      }, 1000);
-    });
-    await page.clock.fastForward(500);
-    expect(calls).toEqual([]);
-  });
-
-  it('pushes back execution time for skipped timers', async ({ page, calls }) => {
-    await page.evaluate(async () => {
-      setTimeout(() => {
-        window.stub(Date.now());
-      }, 1000);
-    });
-
-    await page.clock.fastForward(2000);
-    expect(calls).toEqual([{ params: [1000 + 2000] }]);
-  });
-});
-
 it.describe('stubTimers', () => {
   it.beforeEach(async ({ page }) => {
     await page.clock.install({ time: 0 });
