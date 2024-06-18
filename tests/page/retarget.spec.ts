@@ -377,3 +377,18 @@ it('check retargeting', async ({ page, asset }) => {
     });
   }
 });
+
+it('should not retarget anchor into parent label', async ({ page }) => {
+  await page.setContent(`
+    <label disabled>Text<a href='#' onclick='window.__clicked=1'>Target</a></label>
+  `);
+  await page.locator('a').click();
+  expect(await page.evaluate('window.__clicked')).toBe(1);
+
+  await page.setContent(`
+    <input type="radio" id="input-id" checked disabled />
+    <label for="input-id">Text<a href='#' onclick='window.__clicked=2'>Target</a></label>
+  `);
+  await page.locator('a').click();
+  expect(await page.evaluate('window.__clicked')).toBe(2);
+});
