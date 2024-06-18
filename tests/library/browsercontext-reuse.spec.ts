@@ -252,6 +252,19 @@ test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
   expect(error.message).toContain('Must start tracing before stopping');
 });
 
+test('should work with clock emulation', async ({ reusedContext, trace }, testInfo) => {
+  let context = await reusedContext();
+
+  let page = await context.newPage();
+  await page.clock.setFixedTime(new Date('2020-01-01T00:00:00.000Z'));
+  expect(await page.evaluate('new Date().toISOString()')).toBe('2020-01-01T00:00:00.000Z');
+
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.clock.setFixedTime(new Date('2020-01-01T00:00:00Z'));
+  expect(await page.evaluate('new Date().toISOString()')).toBe('2020-01-01T00:00:00.000Z');
+});
+
 test('should continue issuing events after closing the reused page', async ({ reusedContext, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24574' });
 

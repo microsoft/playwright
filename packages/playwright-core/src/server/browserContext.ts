@@ -216,6 +216,7 @@ export abstract class BrowserContext extends SdkObject {
     await this._resetStorage();
     await this._removeExposedBindings();
     await this._removeInitScripts();
+    this.clock.markAsUninstalled();
     // TODO: following can be optimized to not perform noops.
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
