@@ -46,7 +46,7 @@
     },
     {
       "name": "android",
-      "revision": "1000",
+      "revision": "1001",
       "installByDefault": false
     }
   ]
