@@ -280,12 +280,13 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server, isElectron, isMac }) => {
+  it('should work for canvas', async ({ page, server, isElectron, isMac, browserName }) => {
     it.fixme(isElectron && isMac, 'Fails on the bots');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
+    const screenshotPrefix = browserName === 'chromium' && isMac && process.arch === 'arm64' ? '-macOS-arm64' : '';
+    expect(screenshot).toMatchSnapshot(`screenshot-canvas${screenshotPrefix}.png`);
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
