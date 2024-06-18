@@ -29,7 +29,7 @@ import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult, TestError } from '../types/testReporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { program } from 'playwright-core/lib/cli/program';
+import { program, InvalidArgumentError } from 'playwright-core/lib/utilsBundle';
 export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
@@ -40,7 +40,7 @@ function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('run tests with Playwright Test');
   const options = testOptions.sort((a, b) => a[0].replace(/-/g, '').localeCompare(b[0].replace(/-/g, '')));
-  options.forEach(([name, description]) => command.option(name, description));
+  options.forEach(([name, description, validator]) => validator ? command.option(name, description, validator) : command.option(name, description));
   command.action(async (args, opts) => {
     try {
       await runTests(args, opts);
@@ -332,9 +332,34 @@ function resolveReporter(id: string) {
   return require.resolve(id, { paths: [process.cwd()] });
 }
 
+class OptionValidators {
+  static validateWorkers(value: string): string {
+    if (value.endsWith('%'))
+      return value;
+    if (isNaN(parseInt(value, 10)))
+      throw new InvalidArgumentError('Not a number.');
+    return value;
+  }
+
+  static validateNumber(value: string): string {
+    if (isNaN(parseInt(value, 10)))
+      throw new InvalidArgumentError('Not a number.');
+    return value;
+  }
+
+  static validateShard(value: string): string {
+    if (!value.includes('/'))
+      throw new InvalidArgumentError('Shard should be in the form "current/all"');
+    const [current, all] = value.split('/').map(v => parseInt(v, 10));
+    if (isNaN(current) || isNaN(all))
+      throw new InvalidArgumentError('Shard should be in the form "current/all"');
+    return value;
+  }
+}
+
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];
 
-const testOptions: [string, string][] = [
+const testOptions: [string, string, ((value: string) => string | number)?][] = [
   ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
   ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
   ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
@@ -348,23 +373,23 @@ const testOptions: [string, string][] = [
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
   ['--list', `Collect all the tests and report them, but do not run`],
-  ['--max-failures <N>', `Stop after the first N failures`],
+  ['--max-failures <N>', `Stop after the first N failures`, OptionValidators.validateNumber],
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
-  ['--repeat-each <N>', `Run each test N times (default: 1)`],
+  ['--repeat-each <N>', `Run each test N times (default: 1)`, OptionValidators.validateNumber],
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
-  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
-  ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
-  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
+  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`, OptionValidators.validateNumber],
+  ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`, OptionValidators.validateShard],
+  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`, OptionValidators.validateNumber],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
-  ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'],
+  ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab', OptionValidators.validateNumber],
   ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
-  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
+  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`, OptionValidators.validateWorkers],
   ['-x', `Stop after the first failure`],
 ];
 

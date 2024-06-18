@@ -41,7 +41,7 @@ export const open = openLibrary;
 
 export { PNG } from 'pngjs';
 
-export { program } from 'commander';
+export { program, InvalidArgumentError } from 'commander';
 
 import progressLibrary from 'progress';
 export const progress = progressLibrary;
