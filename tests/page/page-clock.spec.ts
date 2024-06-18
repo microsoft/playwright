@@ -245,6 +245,11 @@ it.describe('stubTimers', () => {
     expect(await page.evaluate(() => Date.now())).toBe(1400);
   });
 
+  it('should throw for invalid date', async ({ page }) => {
+    await expect(page.clock.setSystemTime(new Date('invalid'))).rejects.toThrow('Invalid date: Invalid Date');
+    await expect(page.clock.setSystemTime('invalid')).rejects.toThrow('clock.setSystemTime: Invalid date: invalid');
+  });
+
   it('replaces global setTimeout', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 1000);
