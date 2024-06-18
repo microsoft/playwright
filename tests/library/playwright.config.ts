@@ -134,6 +134,7 @@ for (const browserName of browserNames) {
         mode,
         video: !!video,
         trace: !!trace,
+        clock: 'clock-' + (process.env.PW_CLOCK || 'default'),
       },
     });
   }
