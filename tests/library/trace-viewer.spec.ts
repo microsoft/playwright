@@ -1236,3 +1236,38 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
   await expect(newPage.getByText('hello')).toBeVisible();
   await newPage.close();
 });
+
+function parseMillis(s: string): number {
+  const matchMs = s.match(/(\d+)ms/);
+  if (matchMs)
+    return +matchMs[1];
+  const matchSeconds = s.match(/([\d.]+)s/);
+  if (!matchSeconds)
+    throw new Error('Failed to parse to millis: ' + s);
+  return (+matchSeconds[1]) * 1000;
+}
+
+test('should show correct request start time', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31133' },
+}, async ({ page, runAndTrace, server }) => {
+  server.setRoute('/api', (req, res) => {
+    setTimeout(() => {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('done');
+    }, 1100);
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      return fetch('/api').then(r => r.text());
+    });
+  });
+  await traceViewer.selectAction('page.evaluate');
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests).toContainText([/apiGET200text/]);
+  const line = traceViewer.networkRequests.getByText(/apiGET200text/);
+  const start = await line.locator('.grid-view-column-start').textContent();
+  const duration =  await line.locator('.grid-view-column-duration').textContent();
+  expect(parseMillis(duration)).toBeGreaterThan(1000);
+  expect(parseMillis(start)).toBeLessThan(1000);
+});
