@@ -484,7 +484,7 @@ it('should throw after dispose', async ({ playwright, server }) => {
   await expect(request.get(server.EMPTY_PAGE)).rejects.toThrow('Target page, context or browser has been closed');
 });
 
-it('should retrty ECONNRESET', {
+it('should retry ECONNRESET', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
 }, async ({ context, server }) => {
   let requestCount = 0;
