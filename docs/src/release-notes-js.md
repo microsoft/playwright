@@ -43,10 +43,10 @@ See [the clock guide](./clock.md) for more details.
 
   ```sh
   # Avoid TTY features that output ANSI control sequences
-  PLAYWRIGHT_FORCE_TTY=0 npx playwrigh test
+  PLAYWRIGHT_FORCE_TTY=0 npx playwright test
 
   # Enable TTY features, assuming a terminal width 80
-  PLAYWRIGHT_FORCE_TTY=80 npx playwrigh test
+  PLAYWRIGHT_FORCE_TTY=80 npx playwright test
   ```
 
 - New options [`property: TestConfig.respectGitIgnore`] and [`property: TestProject.respectGitIgnore`] control whether files matching `.gitignore` patterns are excluded when searching for tests.
