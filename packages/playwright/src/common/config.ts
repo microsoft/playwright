@@ -220,10 +220,9 @@ function parseWorkers(workers: string) {
     const cpus = os.cpus().length;
     return Math.max(1, Math.floor(cpus * (percentage / 100)));
   }
-  const parsedWorkers = parseInt(workers, 10);
-  if (isNaN(parsedWorkers))
+  if (/[^0-9]/.test(workers))
     throw new Error(`Workers ${workers} must be a number or percentage.`);
-  return parsedWorkers;
+  return parseInt(workers, 10);
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {

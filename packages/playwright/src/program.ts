@@ -340,7 +340,7 @@ class OptionValidators {
     if (isNaN(parsed))
       throw new InvalidArgumentError('Not a number.');
     if (options.min !== undefined && parsed < options.min)
-      throw new InvalidArgumentError(`Expected a number greater than ${options.min}.`);
+      throw new InvalidArgumentError(`Expected a number greater or equal than ${options.min}.`);
     if (options.max !== undefined && parsed > options.max)
       throw new InvalidArgumentError(`Expected a number less than ${options.max}.`);
     return value;
@@ -348,7 +348,7 @@ class OptionValidators {
 
   static validateWorkers(value: string): string {
     if (value[value.length - 1] === '%') {
-      OptionValidators.validateNumber(value, { min: 1, max: 100 });
+      OptionValidators.validateNumber(value.slice(0, -1), { min: 1, max: 100 });
       return value;
     }
     OptionValidators.validateNumber(value, { min: 1 });
@@ -384,7 +384,7 @@ const testOptions: [string, string, ((value: string) => string | number)?][] = [
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
-  ['--repeat-each <N>', `Run each test N times (default: 1)`, value => OptionValidators.validateNumber(value, { min: 0 })],
+  ['--repeat-each <N>', `Run each test N times (default: 1)`, value => OptionValidators.validateNumber(value, { min: 1 })],
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`, value => OptionValidators.validateNumber(value, { min: 0 })],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`, OptionValidators.validateShard],
