@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test.skip(!!process.env.PW_FREEZE_TIME);
+test.skip(!!process.env.PW_CLOCK);
 
 declare global {
   interface Window {
@@ -207,34 +207,6 @@ it.describe('fastForward', () => {
   });
 });
 
-it.describe('fastForwardTo', () => {
-  it.beforeEach(async ({ page }) => {
-    await page.clock.install({ time: 0 });
-    await page.clock.pauseAt(1000);
-  });
-
-  it(`ignores timers which wouldn't be run`, async ({ page, calls }) => {
-    await page.evaluate(async () => {
-      setTimeout(() => {
-        window.stub('should not be logged');
-      }, 1000);
-    });
-    await page.clock.fastForward(500);
-    expect(calls).toEqual([]);
-  });
-
-  it('pushes back execution time for skipped timers', async ({ page, calls }) => {
-    await page.evaluate(async () => {
-      setTimeout(() => {
-        window.stub(Date.now());
-      }, 1000);
-    });
-
-    await page.clock.fastForward(2000);
-    expect(calls).toEqual([{ params: [1000 + 2000] }]);
-  });
-});
-
 it.describe('stubTimers', () => {
   it.beforeEach(async ({ page }) => {
     await page.clock.install({ time: 0 });
@@ -243,6 +215,11 @@ it.describe('stubTimers', () => {
   it('sets initial timestamp', async ({ page, calls }) => {
     await page.clock.setSystemTime(1400);
     expect(await page.evaluate(() => Date.now())).toBe(1400);
+  });
+
+  it('should throw for invalid date', async ({ page }) => {
+    await expect(page.clock.setSystemTime(new Date('invalid'))).rejects.toThrow('Invalid date: Invalid Date');
+    await expect(page.clock.setSystemTime('invalid')).rejects.toThrow('clock.setSystemTime: Invalid date: invalid');
   });
 
   it('replaces global setTimeout', async ({ page, calls }) => {
@@ -313,13 +290,13 @@ it.describe('stubTimers', () => {
     });
     await page.clock.runFor(1000);
     expect(await page.evaluate(() => performance.timeOrigin)).toBe(1000);
-    expect(await promise).toEqual({ prev: 2000, next: 3000 });
+    expect(await promise).toEqual({ prev: 1000, next: 2000 });
   });
 });
 
 it.describe('popup', () => {
   it('should tick after popup', async ({ page }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
     const [popup] = await Promise.all([
@@ -334,7 +311,7 @@ it.describe('popup', () => {
   });
 
   it('should tick before popup', async ({ page }) => {
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
     await page.clock.runFor(1000);
@@ -368,7 +345,7 @@ it.describe('popup', () => {
       res.setHeader('Content-Type', 'text/html');
       res.end(`<script>window.time = Date.now()</script>`);
     });
-    await page.clock.install();
+    await page.clock.install({ time: 0 });
     await page.clock.pauseAt(1000);
     await page.goto(server.EMPTY_PAGE);
     // Wait for 2 second in real life to check that it is past in popup.

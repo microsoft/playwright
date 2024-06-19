@@ -1184,12 +1184,21 @@ BrowserContext:
       returns:
         artifact: Artifact
 
-    createTempFile:
+    createTempFiles:
       parameters:
-        name: string
-        lastModifiedMs: number?
+        rootDirName: string?
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              lastModifiedMs: number?
       returns:
-        writableStream: WritableStream
+        rootDir: WritableStream?
+        writableStreams:
+          type: array
+          items: WritableStream
 
     updateSubscription:
       parameters:
@@ -2184,6 +2193,8 @@ Frame:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string
@@ -2744,6 +2755,8 @@ ElementHandle:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string

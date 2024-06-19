@@ -427,7 +427,7 @@ class TypesGenerator {
       return `{ [key: ${keyType}]: ${valueType}; }`;
     }
     let out = type.name;
-    if (out === 'int' || out === 'float')
+    if (out === 'int' || out === 'long' || out === 'float')
       out = 'number';
     if (out === 'Array' && direction === 'in')
       out = 'ReadonlyArray';

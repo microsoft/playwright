@@ -146,6 +146,7 @@ class NetworkRequest {
     this._expectingInterception = false;
     this._expectingResumedRequest = undefined;  // { method, headers, postData }
     this._sentOnResponse = false;
+    this._fulfilled = false;
 
     if (this._pageNetwork)
       appendExtraHTTPHeaders(httpChannel, this._pageNetwork.combinedExtraHTTPHeaders());
@@ -194,6 +195,7 @@ class NetworkRequest {
 
   // Public interception API.
   fulfill(status, statusText, headers, base64body) {
+    this._fulfilled = true;
     this._interceptedChannel.synthesizeStatus(status, statusText);
     for (const header of headers) {
       this._interceptedChannel.synthesizeHeader(header.name, header.value);
@@ -801,7 +803,8 @@ class ResponseStorage {
       return;
     }
     let encodings = [];
-    if ((request.httpChannel instanceof Ci.nsIEncodedChannel) && request.httpChannel.contentEncodings && !request.httpChannel.applyConversion) {
+    // Note: fulfilled request comes with decoded body right away.
+    if ((request.httpChannel instanceof Ci.nsIEncodedChannel) && request.httpChannel.contentEncodings && !request.httpChannel.applyConversion && !request._fulfilled) {
       const encodingHeader = request.httpChannel.getResponseHeader("Content-Encoding");
       encodings = encodingHeader.split(/\s*\t*,\s*\t*/);
     }

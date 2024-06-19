@@ -31,7 +31,7 @@ In the Actions tab you can see what locator was used for every action and how lo
 
 ### Screenshots
 
-When tracing with the [`option: screenshots`] option turned on, each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect. 
+When tracing with the [`option: screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect. 
 
 Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
@@ -58,7 +58,7 @@ Notice how it highlights both, the DOM Node as well as the exact click position.
 
 ### Source
 
-As you hover over each action of your test the line of code for that action is highlighted in the source panel.
+When you click on an action in the sidebar, the line of code for that action is highlighted in the source panel.
 
 ![showing source code tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/daa8845d-c250-4923-aa7a-5d040da9adc5)
 
@@ -86,12 +86,20 @@ See console logs from the browser as well as from your test. Different icons are
 
 ![showing log of tests in trace viewer](https://github.com/microsoft/playwright/assets/13063165/4107c08d-1eaf-421c-bdd4-9dd2aa641d4a)
 
+Double click on an action from your test in the actions sidebar. This will filter the console to only show the logs that were made during that action. Click the *Show all* button to see all console logs again.
+
+Use the timeline to filter actions, by clicking a start point and dragging to an ending point. The console tab will also be filtered to only show the logs that were made during the actions selected.
+
 
 ### Network
 
 The Network tab shows you all the network requests that were made during your test. You can sort by different types of requests, status code, method, request, content type, duration and size. Click on a request to see more information about it such as the request headers, response headers, request body and response body.
 
 ![network requests tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/0a3d1671-8ccd-4f7a-a844-35f5eb37f236)
+
+Double click on an action from your test in the actions sidebar. This will filter the network requests to only show the requests that were made during that action. Click the *Show all* button to see all network requests again.
+
+Use the timeline to filter actions, by clicking a start point and dragging to an ending point. The network tab will also be filtered to only show the network requests that were made during the actions selected.
 
 ### Metadata
 

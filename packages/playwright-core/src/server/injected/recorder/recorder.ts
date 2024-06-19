@@ -356,7 +356,7 @@ class RecordActionTool implements RecorderTool {
         return;
       this._performAction({
         name: 'select',
-        selector: this._hoveredModel!.selector,
+        selector: this._activeModel!.selector,
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
       });
@@ -973,7 +973,7 @@ export class Recorder {
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
     `);
     this.installListeners();
-
+    injectedScript.utils.cacheNormalizedWhitespaces();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }

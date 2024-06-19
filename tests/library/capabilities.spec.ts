@@ -110,7 +110,6 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
 });
 
 it('should support webgl @smoke', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -119,10 +118,7 @@ it('should support webgl @smoke', async ({ page, browserName, platform }) => {
 });
 
 it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows, platform }) => {
-  it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && isWindows);
-  it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
-  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
 
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');

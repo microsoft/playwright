@@ -178,13 +178,20 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return false;
   }
 
-  async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
+  async createTempFiles(params: channels.BrowserContextCreateTempFilesParams): Promise<channels.BrowserContextCreateTempFilesResult> {
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
-    await fs.promises.mkdir(tmpDir);
+    const tempDirWithRootName = params.rootDirName ? path.join(tmpDir, path.basename(params.rootDirName)) : tmpDir;
+    await fs.promises.mkdir(tempDirWithRootName, { recursive: true });
     this._context._tempDirs.push(tmpDir);
-    const file = fs.createWriteStream(path.join(tmpDir, params.name));
-    return { writableStream: new WritableStreamDispatcher(this, file, params.lastModifiedMs) };
+    return {
+      rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
+      writableStreams: await Promise.all(params.items.map(async item => {
+        await fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true });
+        const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
+        return new WritableStreamDispatcher(this, file, item.lastModifiedMs);
+      }))
+    };
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {

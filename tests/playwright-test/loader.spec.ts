@@ -961,10 +961,19 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
 
-test('should support dynamic import', async ({ runInlineTest }) => {
+test('should support dynamic imports of js, ts from js, ts and cjs', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       module.exports.foo = 'foo';
+    `,
+    'helper2.ts': `
+      module.exports.bar = 'bar';
+    `,
+    'helper3.js': `
+      module.exports.baz = 'baz';
+    `,
+    'passthrough.cjs': `
+      module.exports.load = () => import('./helper2');
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -972,9 +981,24 @@ test('should support dynamic import', async ({ runInlineTest }) => {
       test('pass', async () => {
         const { foo } = await import('./helper');
         expect(foo).toBe('foo');
+
+        const { baz } = await import('./helper3');
+        expect(baz).toBe('baz');
       });
     `,
     'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { load } from './passthrough.cjs';
+
+      test('pass', async () => {
+        const { foo } = await import('./helper');
+        expect(foo).toBe('foo');
+
+        const { bar } = await load();
+        expect(bar).toBe('bar');
+      });
+    `,
+    'c.test.js': `
       import { test, expect } from '@playwright/test';
 
       test('pass', async () => {
@@ -983,7 +1007,33 @@ test('should support dynamic import', async ({ runInlineTest }) => {
       });
     `,
   }, { workers: 1 });
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(3);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support dynamic imports of esm-only packages', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/foo-pkg/package.json': `
+      {
+        "name": "foo-pkg",
+        "type": "module",
+        "exports": { "default": "./index.js" }
+      }
+    `,
+    'node_modules/foo-pkg/index.js': `
+      export const foo = 'bar';
+    `,
+    'package.json': `{ "name": "test-project" }`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async () => {
+        const { foo } = await import('foo-pkg');
+        expect(foo).toBe('bar');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
 

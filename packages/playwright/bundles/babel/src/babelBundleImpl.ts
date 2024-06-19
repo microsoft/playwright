@@ -73,8 +73,9 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
-    // This converts async imports to require() calls so that we can intercept them with pirates.
-    plugins.push([require('@babel/plugin-transform-dynamic-import')]);
+    // Note: we used to include '@babel/plugin-transform-dynamic-import' to convert async imports
+    // into require(), so that pirates can intercept them. With the ESM loader enabled by default,
+    // there is no need for this.
     plugins.push([
       (): PluginObj => ({
         name: 'css-to-identity-obj-proxy',

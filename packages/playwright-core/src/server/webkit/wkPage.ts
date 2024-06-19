@@ -226,12 +226,12 @@ export class WKPage implements PageDelegate {
     }
     if (this._page.fileChooserIntercepted())
       promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled' as any, value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled', value: contextOptions.isMobile }));
     await Promise.all(promises);
   }
 
@@ -716,7 +716,10 @@ export class WKPage implements PageDelegate {
       const angle = viewportSize.width > viewportSize.height ? 90 : 0;
       // Special handling for macOS 12.
       const useLegacySetOrientationOverrideMethod = os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21;
-      promises.push(this._pageProxySession.send(useLegacySetOrientationOverrideMethod ? 'Page.setOrientationOverride' as any : 'Emulation.setOrientationOverride', { angle }));
+      if (useLegacySetOrientationOverrideMethod)
+        promises.push(this._session.send('Page.setOrientationOverride' as any, { angle }));
+      else
+        promises.push(this._pageProxySession.send('Emulation.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);
   }

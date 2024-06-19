@@ -628,65 +628,15 @@ DEBUG=pw:browser dotnet test
 
 ## Running headed
 
-By default, Playwright launches browsers in headless mode. This can be changed by passing a flag when the browser is launched.
-
-```js
-// Works across chromium, firefox and webkit
-const { chromium } = require('playwright');
-const browser = await chromium.launch({ headless: false });
-```
-
-```java
-// Works across chromium, firefox and webkit
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(false));
-    }
-  }
-}
-```
-
-```python async
-import asyncio
-from playwright.async_api import async_playwright
-
-async def main():
-    async with async_playwright() as p:
-         # Works across chromium, firefox and webkit
-         browser = await p.chromium.launch(headless=False)
-
-asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-   # Works across chromium, firefox and webkit
-   browser = p.chromium.launch(headless=False)
-```
-
-```csharp
-using Microsoft.Playwright;
-
-using var playwright = await Playwright.CreateAsync();
-await playwright.Chromium.LaunchAsync(new()
-{
-    Headless = false
-});
-```
+By default, Playwright launches browsers in headless mode. See in our [Running tests](./running-tests.md#run-tests-in-headed-mode) guide how to run tests in headed mode.
 
 On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the actual command.
 
 ```bash js
-xvfb-run node index.js
+xvfb-run npx playwrght test
 ```
 ```bash python
-xvfb-run python test.py
+xvfb-run pytest
 ```
 ```bash java
 xvfb-run mvn test

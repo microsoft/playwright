@@ -1458,7 +1458,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, metadata?: CallMetadata): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, metadata?: CallMetadata): Promise<BrowserContextHarExportResult>;
-  createTempFile(params: BrowserContextCreateTempFileParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFileResult>;
+  createTempFiles(params: BrowserContextCreateTempFilesParams, metadata?: CallMetadata): Promise<BrowserContextCreateTempFilesResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: CallMetadata): Promise<BrowserContextUpdateSubscriptionResult>;
   clockFastForward(params: BrowserContextClockFastForwardParams, metadata?: CallMetadata): Promise<BrowserContextClockFastForwardResult>;
   clockInstall(params: BrowserContextClockInstallParams, metadata?: CallMetadata): Promise<BrowserContextClockInstallResult>;
@@ -1737,15 +1737,19 @@ export type BrowserContextHarExportOptions = {
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
-export type BrowserContextCreateTempFileParams = {
-  name: string,
-  lastModifiedMs?: number,
+export type BrowserContextCreateTempFilesParams = {
+  rootDirName?: string,
+  items: {
+    name: string,
+    lastModifiedMs?: number,
+  }[],
 };
-export type BrowserContextCreateTempFileOptions = {
-  lastModifiedMs?: number,
+export type BrowserContextCreateTempFilesOptions = {
+  rootDirName?: string,
 };
-export type BrowserContextCreateTempFileResult = {
-  writableStream: WritableStreamChannel,
+export type BrowserContextCreateTempFilesResult = {
+  rootDir?: WritableStreamChannel,
+  writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
@@ -2918,6 +2922,8 @@ export type FrameSetInputFilesParams = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
+  directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -2930,6 +2936,8 @@ export type FrameSetInputFilesOptions = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
+  directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -3542,6 +3550,8 @@ export type ElementHandleSetInputFilesParams = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
+  directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
@@ -3553,6 +3563,8 @@ export type ElementHandleSetInputFilesOptions = {
     mimeType?: string,
     buffer: Binary,
   }[],
+  localDirectory?: string,
+  directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,

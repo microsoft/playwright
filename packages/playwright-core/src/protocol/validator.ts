@@ -951,12 +951,16 @@ scheme.BrowserContextHarExportParams = tObject({
 scheme.BrowserContextHarExportResult = tObject({
   artifact: tChannel(['Artifact']),
 });
-scheme.BrowserContextCreateTempFileParams = tObject({
-  name: tString,
-  lastModifiedMs: tOptional(tNumber),
+scheme.BrowserContextCreateTempFilesParams = tObject({
+  rootDirName: tOptional(tString),
+  items: tArray(tObject({
+    name: tString,
+    lastModifiedMs: tOptional(tNumber),
+  })),
 });
-scheme.BrowserContextCreateTempFileResult = tObject({
-  writableStream: tChannel(['WritableStream']),
+scheme.BrowserContextCreateTempFilesResult = tObject({
+  rootDir: tOptional(tChannel(['WritableStream'])),
+  writableStreams: tArray(tChannel(['WritableStream'])),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'request', 'response', 'requestFinished', 'requestFailed']),
@@ -1623,6 +1627,8 @@ scheme.FrameSetInputFilesParams = tObject({
     mimeType: tOptional(tString),
     buffer: tBinary,
   }))),
+  localDirectory: tOptional(tString),
+  directoryStream: tOptional(tChannel(['WritableStream'])),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
@@ -1990,6 +1996,8 @@ scheme.ElementHandleSetInputFilesParams = tObject({
     mimeType: tOptional(tString),
     buffer: tBinary,
   }))),
+  localDirectory: tOptional(tString),
+  directoryStream: tOptional(tChannel(['WritableStream'])),
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
