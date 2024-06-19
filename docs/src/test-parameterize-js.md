@@ -16,7 +16,7 @@ You can either parameterize tests on a test level or on a project level.
 ].forEach(({ name, expected }) => {
   // You can also do it with test.describe() or with multiple tests as long the test name is unique.
   test(`testing with ${name}`, async ({ page }) => {
-    await page.goto(`/greet?name=${name}`);
+    await page.goto(`https://example.com/greet?name=${name}`);
     await expect(page.getByRole('heading')).toHaveText(expected);
   });
 });
@@ -41,8 +41,27 @@ test.afterEach(async ({ page }) => {
   { name: 'Charlie', expected: 'Hello, Charlie!' },
 ].forEach(({ name, expected }) => {
   test(`testing with ${name}`, async ({ page }) => {
-    await page.goto(`/greet?name=${name}`);
+    await page.goto(`https://example.com/greet?name=${name}`);
     await expect(page.getByRole('heading')).toHaveText(expected);
+  });
+});
+```
+
+If you want to have hooks for each test, you can put them inside a `describe()` - so they are executed for each iteration / each invidual test:
+
+```js title="example.spec.ts"
+[
+  { name: 'Alice', expected: 'Hello, Alice!' },
+  { name: 'Bob', expected: 'Hello, Bob!' },
+  { name: 'Charlie', expected: 'Hello, Charlie!' },
+].forEach(({ name, expected }) => {
+  test.describe(() => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto(`https://example.com/greet?name=${name}`);
+    });
+    test(`testing with ${expected}`, async ({ page }) => {
+      await expect(page.getByRole('heading')).toHaveText(expected);
+    });
   });
 });
 ```
