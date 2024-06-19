@@ -201,7 +201,7 @@ export abstract class APIRequestContext extends SdkObject {
       setHeader(headers, 'content-length', String(postData.byteLength));
     const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
-      return this._sendRequestWithRetries(progress, requestUrl, options, postData);
+      return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
@@ -247,14 +247,16 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
-    const maxRetries = 5;
+  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
+    maxRetries ??= 5;
     let backoff = 250;
     for (let i = 0; i <= maxRetries; i++) {
       try {
         return await this._sendRequest(progress, url, options, postData);
       } catch (e) {
-        if (i === maxRetries - 1 || (options.deadline && monotonicTime() + backoff > options.deadline))
+        if (maxRetries === 0)
+          throw e;
+        if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
           throw new Error(`Failed after ${i + 1} attempt(s): ${e}`);
         // Retry on connection reset only.
         if (e.code !== 'ECONNRESET')

@@ -59,7 +59,7 @@ it('should throw on network error', async ({ context, server }) => {
   server.setRoute('/test', (req, res) => {
     req.socket.destroy();
   });
-  const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
+  const error = await context.request.get(server.PREFIX + '/test', { maxRetries: 0 }).catch(e => e);
   expect(error.message).toContain('apiRequestContext.get: socket hang up');
 });
 
@@ -68,7 +68,7 @@ it('should throw on network error after redirect', async ({ context, server }) =
   server.setRoute('/test', (req, res) => {
     req.socket.destroy();
   });
-  const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
+  const error = await context.request.get(server.PREFIX + '/redirect', { maxRetries: 0 }).catch(e => e);
   expect(error.message).toContain('apiRequestContext.get: socket hang up');
 });
 
