@@ -133,7 +133,7 @@ for (const browserName of browserNames) {
             return 'headless-new';
           if (headed)
             return 'headed';
-          return 'headless-old';
+          return 'headless';
         })(),
         browserName,
         channel,
