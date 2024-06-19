@@ -299,6 +299,7 @@ APIRequestContext:
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
         maxRedirects: number?
+        maxRetries: number?
       returns:
         response: APIResponse
 
