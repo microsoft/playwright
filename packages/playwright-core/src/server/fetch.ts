@@ -261,7 +261,7 @@ export abstract class APIRequestContext extends SdkObject {
         // Retry on connection reset only.
         if (e.code !== 'ECONNRESET')
           throw e;
-        progress.log(`Received ECONNRESET, will retry after ${backoff}ms.`);
+        progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
         await new Promise(f => setTimeout(f, backoff));
         backoff *= 2;
       }
