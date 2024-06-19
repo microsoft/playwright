@@ -129,49 +129,52 @@ await Page.CloseAsync(new() { RunBeforeUnload = true });
 
 ## Print dialogs
 
-In order to assert that a print dialog via [`window.print`](https://developer.mozilla.org/en-US/docs/Web/API/Window/print) was opened, you can use the following snippet:
+In order to assert that a print dialog via [`window.print`](https://developer.mozilla.org/en-US/docs/Web/API/Window/print) was triggered, you can use the following snippet:
 
 ```js
-await page.evaluate('(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()');
-
 await page.goto('<url>');
+
+await page.evaluate('(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()');
 await page.getByText('Print it!').click();
 
 await page.waitForFunction('window.waitForPrintDialog');
 ```
 
 ```java
-page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
-
 page.navigate("<url>");
+
+page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
 page.getByText("Print it!").click();
 
 page.waitForFunction("window.waitForPrintDialog");
 ```
 
 ```python async
-await page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
-
 await page.goto("<url>")
+
+await page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
 await page.get_by_text("Print it!").click()
 
 await page.wait_for_function("window.waitForPrintDialog")
 ```
 
 ```python sync
-page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
-
 page.goto("<url>")
+
+page.evaluate("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()")
 page.get_by_text("Print it!").click()
 
 page.wait_for_function("window.waitForPrintDialog")
 ```
 
 ```csharp
-await Page.EvaluateAsync("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
-
 await Page.GotoAsync("<url>");
+
+await Page.EvaluateAsync("(() => {window.waitForPrintDialog = new Promise(f => window.print = f);})()");
 await Page.GetByText("Print it!").ClickAsync();
 
 await Page.WaitForFunctionAsync("window.waitForPrintDialog");
 ```
+
+This will wait for the print dialog to be opened after the button is clicked.
+Make sure to evaluate the script before clicking the button / after the page is loaded.
