@@ -17,14 +17,14 @@ You can either parameterize tests on a test level or on a project level.
   // You can also do it with test.describe() or with multiple tests as long the test name is unique.
   test(`testing with ${name}`, async ({ page }) => {
     await page.goto(`/greet?name=${name}`);
-    await expect(page.getByRole('heading', { name })).toBeVisible();
+    await expect(page.getByRole('heading')).toHaveText(expected);
   });
 });
 ```
 
 ### Before and after hooks
 
-When looping over `before{Each,All}` or `after{Each,All}` hooks, they will be executed for every iteration, so in most cases, you should loop only over tests:
+Most of the time you should put `beforeEach`, `beforeAll`, `afterEach` and `afterAll` hooks outside of `forEach`, so that hooks are executed just once:
 
 ```js title="example.spec.ts"
 test.beforeEach(async ({ page }) => {
@@ -42,7 +42,7 @@ test.afterEach(async ({ page }) => {
 ].forEach(({ name, expected }) => {
   test(`testing with ${name}`, async ({ page }) => {
     await page.goto(`/greet?name=${name}`);
-    await expect(page.getByRole('heading', { name })).toBeVisible();
+    await expect(page.getByRole('heading')).toHaveText(expected);
   });
 });
 ```
