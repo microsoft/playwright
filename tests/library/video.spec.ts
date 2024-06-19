@@ -206,9 +206,8 @@ it.describe('screencast', () => {
     expectRedFrames(videoFile, size);
   });
 
-  it('should continue recording main page after popup closes', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
+  it('should continue recording main page after popup closes', async ({ browser, browserName }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30837' });
-    it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/30837');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({

@@ -124,9 +124,8 @@ it('should emulate reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: null });
 });
 
-it('should keep reduced motion and color emulation after reload', async ({ page, server, browserName }) => {
+it('should keep reduced motion and color emulation after reload', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31328' });
-  it.fixme(browserName === 'firefox');
 
   // Pre-conditions
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toEqual(false);
