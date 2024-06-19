@@ -20,6 +20,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import { isTextualMimeType } from 'playwright-core/lib/utils';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
@@ -106,7 +107,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
         <a href={attachmentURL(a) + '&download'}>{a.name}</a>
-        { a.contentType === 'text/plain' &&
+        { isTextualMimeType(a.contentType) &&
           <TextAttachment attachment={a} />
         }
       </div>;
