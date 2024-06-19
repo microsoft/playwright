@@ -134,7 +134,7 @@ Defaults to `20`. Pass `0` to not follow redirects.
 * since: v1.46
 - `maxRetries` <[int]>
 
-Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `5`. Pass `0` to disable retries.
+Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
 
 ## method: RequestOptions.setMethod
 * since: v1.18
