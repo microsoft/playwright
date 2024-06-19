@@ -100,16 +100,7 @@ export class FullConfigInternal {
     (this.config as any)[configInternalSymbol] = this;
 
     const workers = takeFirst(configCLIOverrides.workers, userConfig.workers, '50%');
-    if (typeof workers === 'string') {
-      if (workers.endsWith('%')) {
-        const cpus = os.cpus().length;
-        this.config.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
-      } else {
-        this.config.workers = parseWorkers(workers);
-      }
-    } else {
-      this.config.workers = workers;
-    }
+    this.config.workers = typeof workers === 'string' ? parseWorkers(workers) : workers;
 
     const webServers = takeFirst(userConfig.webServer, null);
     if (Array.isArray(webServers)) { // multiple web server mode
@@ -222,10 +213,16 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 }
 
 function parseWorkers(workers: string) {
+  if (workers[workers.length - 1] === '%') {
+    if (/[^0-9]/.test(workers.slice(0, -1)))
+      throw new Error(`Workers ${workers} must be a number or percentage.`);
+    const percentage = parseInt(workers.slice(0, -1), 10);
+    const cpus = os.cpus().length;
+    return Math.max(1, Math.floor(cpus * (percentage / 100)));
+  }
   const parsedWorkers = parseInt(workers, 10);
   if (isNaN(parsedWorkers))
     throw new Error(`Workers ${workers} must be a number or percentage.`);
-
   return parsedWorkers;
 }
 

@@ -333,25 +333,30 @@ function resolveReporter(id: string) {
 }
 
 class OptionValidators {
-  static validateWorkers(value: string): string {
-    if (value.endsWith('%'))
-      return value;
-    if (isNaN(parseInt(value, 10)))
+  static validateNumber(value: string, options: { min?: number, max?: number }): string {
+    if (/[^0-9]/.test(value))
       throw new InvalidArgumentError('Not a number.');
+    const parsed = parseInt(value, 10);
+    if (isNaN(parsed))
+      throw new InvalidArgumentError('Not a number.');
+    if (options.min !== undefined && parsed < options.min)
+      throw new InvalidArgumentError(`Expected a number greater than ${options.min}.`);
+    if (options.max !== undefined && parsed > options.max)
+      throw new InvalidArgumentError(`Expected a number less than ${options.max}.`);
     return value;
   }
 
-  static validateNumber(value: string): string {
-    if (isNaN(parseInt(value, 10)))
-      throw new InvalidArgumentError('Not a number.');
+  static validateWorkers(value: string): string {
+    if (value[value.length - 1] === '%') {
+      OptionValidators.validateNumber(value, { min: 1, max: 100 });
+      return value;
+    }
+    OptionValidators.validateNumber(value, { min: 1 });
     return value;
   }
 
   static validateShard(value: string): string {
-    if (!value.includes('/'))
-      throw new InvalidArgumentError('Shard should be in the form "current/all"');
-    const [current, all] = value.split('/').map(v => parseInt(v, 10));
-    if (isNaN(current) || isNaN(all))
+    if (!/^\d+\/\d+$/.test(value))
       throw new InvalidArgumentError('Shard should be in the form "current/all"');
     return value;
   }
@@ -373,21 +378,21 @@ const testOptions: [string, string, ((value: string) => string | number)?][] = [
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
   ['--list', `Collect all the tests and report them, but do not run`],
-  ['--max-failures <N>', `Stop after the first N failures`, OptionValidators.validateNumber],
+  ['--max-failures <N>', `Stop after the first N failures`, value => OptionValidators.validateNumber(value, { min: 0 })],
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
-  ['--repeat-each <N>', `Run each test N times (default: 1)`, OptionValidators.validateNumber],
+  ['--repeat-each <N>', `Run each test N times (default: 1)`, value => OptionValidators.validateNumber(value, { min: 0 })],
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
-  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`, OptionValidators.validateNumber],
+  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`, value => OptionValidators.validateNumber(value, { min: 0 })],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`, OptionValidators.validateShard],
-  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`, OptionValidators.validateNumber],
+  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`, value => OptionValidators.validateNumber(value, { min: 0 })],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
-  ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab', OptionValidators.validateNumber],
+  ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab', value => OptionValidators.validateNumber(value, { min: 0, max: 65_535 })],
   ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`, OptionValidators.validateWorkers],
   ['-x', `Stop after the first failure`],
