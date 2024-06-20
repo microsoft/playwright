@@ -315,8 +315,8 @@ test('should return app name / version from manifest', async ({ launchElectronAp
   });
 });
 
-test('should report downloads', async ({ launchElectronApp, server }) => {
-  test.skip(parseInt(require('electron/package.json').version.split('.')[0], 10) < 30, 'Depends on https://github.com/electron/electron/pull/41718');
+test('should report downloads', async ({ launchElectronApp, electronMajorVersion, server }) => {
+  test.skip(electronMajorVersion < 30, 'Depends on https://github.com/electron/electron/pull/41718');
 
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');

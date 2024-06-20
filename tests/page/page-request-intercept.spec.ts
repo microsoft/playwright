@@ -285,7 +285,7 @@ it('should fulfill popup main request using alias', async ({ page, server, isEle
 it('request.postData is not null when fetching FormData with a Blob', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
 }, async ({ server, page, browserName, isElectron, electronMajorVersion }) => {
-  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
+  it.skip(isElectron && electronMajorVersion < 31);
   it.fixme(browserName === 'webkit', 'The body is empty in WebKit when intercepting');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
