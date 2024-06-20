@@ -82,7 +82,7 @@
     "concurrently": "^6.2.1",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.0",
-    "electron": "19.0.11",
+    "electron": "^30.1.2",
     "enquirer": "^2.3.6",
     "esbuild": "^0.18.11",
     "eslint": "^8.55.0",

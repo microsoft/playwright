@@ -152,9 +152,9 @@ it('should contain referer header', async ({ page, server }) => {
   expect(requests[1].headers().referer).toContain('/one-style.html');
 });
 
-it('should properly return navigation response when URL has cookies', async ({ page, server, isElectron, isAndroid }) => {
+it('should properly return navigation response when URL has cookies', async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(isAndroid, 'No isolated context');
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
 
   // Setup cookie.
   await page.goto(server.EMPTY_PAGE);

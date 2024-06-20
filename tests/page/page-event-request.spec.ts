@@ -107,9 +107,8 @@ it('should report requests and responses handled by service worker with routing'
   expect(interceptedUrls).toEqual(expectedUrls);
 });
 
-it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron, browserName }) => {
+it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, browserName }) => {
   it.fixme(isAndroid);
-  it.fixme(isElectron);
 
   await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
   await page.evaluate(() => window['activationPromise']);
@@ -136,9 +135,8 @@ it('should report navigation requests and responses handled by service worker', 
   }
 });
 
-it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, browserName }) => {
+it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, browserName }) => {
   it.fixme(isAndroid);
-  it.fixme(isElectron);
 
   await page.route('**/*', route => route.continue());
   await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
