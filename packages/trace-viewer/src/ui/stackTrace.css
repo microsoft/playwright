@@ -30,3 +30,17 @@
 .stack-trace-frame-line {
   flex: none;
 }
+
+.stack-trace-copy-to-clipboard {
+  padding: 0 5px;
+}
+
+.copy-icon {
+  display: none;
+  margin-right: 4px;
+}
+
+.list-view-entry:hover .copy-icon {
+  display: block;
+  cursor: pointer;
+}

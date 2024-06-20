@@ -18,7 +18,8 @@ import * as React from 'react';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,
-}> = ({ value }) => {
+  description?: string,
+}> = ({ value, description }) => {
   const [iconClassName, setIconClassName] = React.useState('codicon-clippy');
 
   const handleCopy = React.useCallback(() => {
@@ -32,5 +33,5 @@ export const CopyToClipboard: React.FunctionComponent<{
     });
 
   }, [value]);
-  return <span className={`copy-icon codicon ${iconClassName}`} onClick={handleCopy}/>;
+  return <span title={description ? description : 'Copy'} className={`copy-icon codicon ${iconClassName}`} onClick={handleCopy}/>;
 };
