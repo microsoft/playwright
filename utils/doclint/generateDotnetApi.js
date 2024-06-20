@@ -82,6 +82,7 @@ classNameMap.set('boolean', 'bool');
 classNameMap.set('any', 'object');
 classNameMap.set('Buffer', 'byte[]');
 classNameMap.set('path', 'string');
+classNameMap.set('Date', 'DateTime');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
