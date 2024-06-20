@@ -128,7 +128,13 @@ for (const browserName of browserNames) {
       metadata: {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
-        headful: !!headed,
+        headless: (() => {
+          if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
+            return 'headless-new';
+          if (headed)
+            return 'headed';
+          return 'headless';
+        })(),
         browserName,
         channel,
         mode,

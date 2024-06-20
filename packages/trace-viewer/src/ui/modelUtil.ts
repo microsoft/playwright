@@ -285,6 +285,10 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
       for (const frame of page.screencastFrames)
         frame.timestamp += monotonicTimeDelta;
     }
+    for (const resource of context.resources) {
+      if (resource._monotonicTime)
+        resource._monotonicTime += monotonicTimeDelta;
+    }
   }
 }
 

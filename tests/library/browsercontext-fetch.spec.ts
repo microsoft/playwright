@@ -1287,3 +1287,21 @@ it('should not work after context dispose', async ({ context, server }) => {
   await context.close({ reason: 'Test ended.' });
   expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain('Test ended.');
 });
+
+it('should retrty ECONNRESET', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
+}, async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test', (req, res) => {
+    if (requestCount++ < 3) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('Hello!');
+  });
+  const response = await context.request.get(server.PREFIX + '/test', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('Hello!');
+  expect(requestCount).toBe(4);
+});
