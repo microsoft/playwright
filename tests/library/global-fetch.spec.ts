@@ -436,7 +436,7 @@ it('should throw an error when maxRedirects is less than 0', async ({ playwright
 
   const request = await playwright.request.newContext();
   for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH'])
-    await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: -1 })).rejects.toThrow(`'maxRedirects' should be greater than or equal to '0'`);
+    await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: -1 })).rejects.toThrow(`'maxRedirects' must be greater than or equal to '0'`);
   await request.dispose();
 });
 
@@ -482,4 +482,22 @@ it('should throw after dispose', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   await request.dispose();
   await expect(request.get(server.EMPTY_PAGE)).rejects.toThrow('Target page, context or browser has been closed');
+});
+
+it('should retry ECONNRESET', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
+}, async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test', (req, res) => {
+    if (requestCount++ < 3) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('Hello!');
+  });
+  const response = await context.request.fetch(server.PREFIX + '/test', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('Hello!');
+  expect(requestCount).toBe(4);
 });
