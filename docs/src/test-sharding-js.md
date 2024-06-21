@@ -5,7 +5,11 @@ title: "Sharding"
 
 ## Introduction
 
-By default, Playwright runs test files in [parallel](./test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding".
+By default, Playwright runs test files in [parallel](./test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding". Sharding in Playwright means splitting your tests into smaller parts called "shards". Each shard is like a separate job that can run independently. The whole purpose is to divide your tests to speed up test runtime.
+
+When you shard your tests, each shard can run on its own, utilizing the available CPU cores. This helps speed up the testing process by doing tasks simultaneously.
+
+In a CI pipeline, each shard can run as a separate job, making use of the hardware resources available in your CI pipeline, like CPU cores, to run tests faster.
 
 ## Sharding tests between multiple machines
 
@@ -18,7 +22,7 @@ npx playwright test --shard=3/4
 npx playwright test --shard=4/4
 ```
 
-Now, if you run these shards in parallel on different computers, your test suite completes four times faster.
+Now, if you run these shards in parallel on different jobs, your test suite completes four times faster.
 
 Note that Playwright can only shard tests that can be run in parallel. By default, this means Playwright will shard test files. Learn about other options in the [parallelism guide](./test-parallel.md).
 
