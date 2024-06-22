@@ -332,12 +332,13 @@ export class CRNetworkManager {
     }
 
     let route = null;
+    let headersOverride: types.HeadersArray | undefined;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
         // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
-        const headers = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
-        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers });
+        headersOverride = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
+        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
         route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);
       }
@@ -353,7 +354,8 @@ export class CRNetworkManager {
       route,
       requestWillBeSentEvent,
       requestPausedEvent,
-      redirectedFrom
+      redirectedFrom,
+      headersOverride: headersOverride || null,
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
 
@@ -361,7 +363,7 @@ export class CRNetworkManager {
       // We will not receive extra info when intercepting the request.
       // Use the headers from the Fetch.requestPausedPayload and release the allHeaders()
       // right away, so that client can call it from the route handler.
-      request.request.setRawRequestHeaders(headersObjectToArray(requestPausedEvent.request.headers, '\n'));
+      request.request.setRawRequestHeaders(headersOverride ?? headersObjectToArray(requestPausedEvent.request.headers, '\n'));
     }
     (this._page?._frameManager || this._serviceWorker)!.requestStarted(request.request, route || undefined);
   }
@@ -568,8 +570,9 @@ class InterceptableRequest {
     requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload;
     requestPausedEvent: Protocol.Fetch.requestPausedPayload | undefined;
     redirectedFrom: InterceptableRequest | null;
+    headersOverride: types.HeadersArray | null;
   }) {
-    const { session, context, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker } = options;
+    const { session, context, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker, headersOverride } = options;
     this.session = session;
     this._timestamp = requestWillBeSentEvent.timestamp;
     this._wallTime = requestWillBeSentEvent.wallTime;
@@ -591,7 +594,7 @@ class InterceptableRequest {
     if (entries && entries.length)
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
-    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
+    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer,  headersOverride || headersObjectToArray(headers));
   }
 }
 
