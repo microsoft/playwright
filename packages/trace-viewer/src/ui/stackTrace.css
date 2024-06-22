@@ -32,12 +32,15 @@
 }
 
 .stack-trace-copy-to-clipboard {
-  padding: 0 5px;
+  display: block;
+  width: 20px;
+  margin-right: 4px;
+  padding: 0 2px;
 }
 
 .copy-icon {
   display: none;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 .list-view-entry:hover .copy-icon {
