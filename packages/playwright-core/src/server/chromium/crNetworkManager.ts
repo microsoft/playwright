@@ -359,11 +359,11 @@ export class CRNetworkManager {
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
 
-    if (requestPausedEvent) {
-      // We will not receive extra info when intercepting the request.
+    if (route) {
+      // We may not receive extra info when intercepting the request.
       // Use the headers from the Fetch.requestPausedPayload and release the allHeaders()
       // right away, so that client can call it from the route handler.
-      request.request.setRawRequestHeaders(headersOverride ?? headersObjectToArray(requestPausedEvent.request.headers, '\n'));
+      request.request.setRawRequestHeaders(headersObjectToArray(requestPausedEvent!.request.headers, '\n'));
     }
     (this._page?._frameManager || this._serviceWorker)!.requestStarted(request.request, route || undefined);
   }
