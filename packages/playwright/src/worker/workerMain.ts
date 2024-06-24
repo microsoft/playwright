@@ -261,7 +261,7 @@ export class WorkerMain extends ProcessRunner {
             testInfo.expectedStatus = 'failed';
           break;
         case 'slow':
-          testInfo.slow();
+          testInfo._timeoutManager.slow();
           break;
       }
     };
