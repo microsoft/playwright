@@ -748,83 +748,6 @@ await page.SetContentAsync("<script>\n" +
 await page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
-An example of passing an element handle:
-
-```js
-await context.exposeBinding('clicked', async (source, element) => {
-  console.log(await element.textContent());
-}, { handle: true });
-await page.setContent(`
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-`);
-```
-
-```java
-context.exposeBinding("clicked", (source, args) -> {
-  ElementHandle element = (ElementHandle) args[0];
-  System.out.println(element.textContent());
-  return null;
-}, new BrowserContext.ExposeBindingOptions().setHandle(true));
-page.setContent("" +
-  "<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-```
-
-```python async
-async def print(source, element):
-    print(await element.text_content())
-
-await context.expose_binding("clicked", print, handle=true)
-await page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```python sync
-def print(source, element):
-    print(element.text_content())
-
-context.expose_binding("clicked", print, handle=true)
-page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```csharp
-var result = new TaskCompletionSource<string>();
-var page = await Context.NewPageAsync();
-await Context.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
-{
-    return result.TrySetResult(await t.AsElement().TextContentAsync());
-});
-
-await page.SetContentAsync("<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-
-await page.ClickAsync("div");
-// Note: it makes sense to await the result here, because otherwise, the context
-//  gets closed and the binding function will throw an exception.
-Assert.AreEqual("Click me", await result.Task);
-```
-
 ### param: BrowserContext.exposeBinding.name
 * since: v1.8
 - `name` <[string]>
@@ -839,6 +762,7 @@ Callback function that will be called in the Playwright's context.
 
 ### option: BrowserContext.exposeBinding.handle
 * since: v1.8
+* deprecated: This option will be removed in the future.
 - `handle` <[boolean]>
 
 Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
