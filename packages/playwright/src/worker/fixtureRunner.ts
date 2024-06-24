@@ -40,10 +40,10 @@ class Fixture {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
-    const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
-    const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
+    const shouldGenerateStep = !this.registration.box && !this.registration.option;
+    const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
-    const location = isInternalFixture ? this.registration.location : undefined;
+    const location = isUserFixture ? this.registration.location : undefined;
     this._stepInfo = shouldGenerateStep ? { category: 'fixture', location } : undefined;
     this._setupDescription = {
       title,
