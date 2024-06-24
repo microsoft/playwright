@@ -814,21 +814,6 @@ export interface Page {
    * })();
    * ```
    *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await page.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
-   * ```
-   *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
@@ -873,21 +858,6 @@ export interface Page {
    *   `);
    *   await page.click('button');
    * })();
-   * ```
-   *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await page.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
    * ```
    *
    * @param name Name of the function on the window object.
@@ -7637,21 +7607,6 @@ export interface BrowserContext {
    * })();
    * ```
    *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await context.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
-   * ```
-   *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
@@ -7691,21 +7646,6 @@ export interface BrowserContext {
    *   `);
    *   await page.getByRole('button').click();
    * })();
-   * ```
-   *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await context.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
    * ```
    *
    * @param name Name of the function on the window object.
