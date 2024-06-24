@@ -5,7 +5,7 @@ title: "Docker"
 
 ## Introduction
 
-[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. These image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
+[Dockerfile.jammy] can be used to run Playwright scripts in Docker environment. This image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
 
 ## Usage
 
