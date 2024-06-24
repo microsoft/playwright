@@ -25,7 +25,7 @@ test('should contain text attachment', async ({ runUITest }) => {
       test('attach test', async () => {
         await test.info().attach('note', { path: __filename });
         await test.info().attach('🎭', { body: 'hi tester!', contentType: 'text/plain' });
-        await test.info().attach('escaped', { body: '<div>\\nFoo\\nBar\\n</div>', contentType: 'text/plain' });
+        await test.info().attach('escaped', { body: '## Header\\n\\n> TODO: some todo\\n- _Foo_\\n- **Bar**', contentType: 'text/plain' });
       });
     `,
   });
@@ -36,7 +36,7 @@ test('should contain text attachment', async ({ runUITest }) => {
   for (const { name, content, displayedAsText } of [
     { name: 'note', content: 'attach test', displayedAsText: false },
     { name: '🎭', content: 'hi tester!', displayedAsText: true },
-    { name: 'escaped', content: '<div>\nFoo\nBar\n</div>', displayedAsText: true },
+    { name: 'escaped', content: '## Header\\n\\n> TODO: some todo\\n- _Foo_\\n- **Bar**', displayedAsText: true },
   ]) {
     await page.getByText(`attach "${name}"`, { exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
@@ -47,6 +47,7 @@ test('should contain text attachment', async ({ runUITest }) => {
     expect(download.suggestedFilename()).toBe(name);
     expect((await readAllFromStream(await download.createReadStream())).toString()).toContain(content);
   }
+  await page.pause();
 });
 
 test('should contain binary attachment', async ({ runUITest }) => {

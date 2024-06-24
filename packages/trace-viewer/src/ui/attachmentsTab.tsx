@@ -20,7 +20,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
-
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 
 
@@ -43,10 +43,9 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
       isMounted = false;
     };
   }, [attachment]);
-
-  return <div aria-label={attachment.name} className="attachment-item__text">
-    {text!}
-  </div>;
+  return text ?
+    <CodeMirrorWrapper text={text} readOnly wrapLines={false}></CodeMirrorWrapper> :
+    <div><i>Loading...</i></div>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
@@ -109,8 +108,9 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
         <a href={attachmentURL(a) + '&download'}>{a.name}</a>
-        { isTextualMimeType(a.contentType) &&
-          <TextAttachment attachment={a} />
+        { isTextualMimeType(a.contentType) ?
+          <TextAttachment attachment={a} /> :
+          <div><i>no preview available</i></div>
         }
       </div>;
     })}
