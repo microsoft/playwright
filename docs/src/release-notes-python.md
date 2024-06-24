@@ -4,6 +4,66 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.45
+
+### Clock
+
+Utilizing the new [Clock] API allows to manipulate and control time within tests to verify time-related behavior. This API covers many common scenarios, including:
+* testing with predefined time;
+* keeping consistent time and timers;
+* monitoring inactivity;
+* ticking through time manually.
+
+```python
+# Initialize clock with some time before the test time and let the page load
+# naturally. `Date.now` will progress as the timers fire.
+page.clock.install(time=datetime.datetime(2024, 2, 2, 8, 0, 0))
+page.goto("http://localhost:3333")
+
+# Pretend that the user closed the laptop lid and opened it again at 10am.
+# Pause the time once reached that point.
+page.clock.pause_at(datetime.datetime(2024, 2, 2, 10, 0, 0))
+
+# Assert the page state.
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
+
+# Close the laptop lid again and open it at 10:30am.
+page.clock.fast_forward("30:00")
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM")
+```
+
+See [the clock guide](./clock.md) for more details.
+
+### Miscellaneous
+
+- Method [`method: Locator.setInputFiles`] now supports uploading a directory for `<input type=file webkitdirectory>` elements.
+  ```python
+  page.get_by_label("Upload directory").set_input_files('mydir')
+  ```
+
+- Multiple methods like [`method: Locator.click`] or [`method: Locator.press`] now support a `ControlOrMeta` modifier key. This key maps to `Meta` on macOS and maps to `Control` on Windows and Linux.
+  ```python
+  # Press the common keyboard shortcut Control+S or Meta+S to trigger a "Save" operation.
+  page.keyboard.press("ControlOrMeta+S")
+  ```
+
+- New property `httpCredentials.send` in [`method: APIRequest.newContext`] that allows to either always send the `Authorization` header or only send it in response to `401 Unauthorized`.
+
+- Playwright now supports Chromium, Firefox and WebKit on Ubuntu 24.04.
+
+- v1.45 is the last release to receive WebKit update for macOS 12 Monterey. Please update macOS to keep using the latest WebKit.
+
+### Browser Versions
+
+* Chromium 127.0.6533.5
+* Mozilla Firefox 127.0
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 126
+* Microsoft Edge 126
+
 ## Version 1.44
 
 ### New APIs
@@ -109,7 +169,7 @@ This version was also tested against the following stable channels:
 ### New Locator Handler
 
 New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
-  
+
 ```python
 # Setup the handler.
 page.add_locator_handler(
