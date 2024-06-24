@@ -15,7 +15,6 @@
  */
 
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
 import type { BrowserContext } from './browserContext';
 
 export class Clock implements api.Clock {
@@ -25,33 +24,48 @@ export class Clock implements api.Clock {
     this._browserContext = browserContext;
   }
 
-  async install(options?: Omit<channels.BrowserContextClockInstallOptions, 'now'> & { now?: number | Date }) {
-    const now = options && options.now ? (options.now instanceof Date ? options.now.getTime() : options.now) : undefined;
-    await this._browserContext._channel.clockInstall({ ...options, now });
+  async install(options: { time?: number | string | Date } = { }) {
+    await this._browserContext._channel.clockInstall(options.time !== undefined ? parseTime(options.time) : {});
   }
 
-  async jump(time: number | string) {
-    await this._browserContext._channel.clockJump({
-      timeNumber: typeof time === 'number' ? time : undefined,
-      timeString: typeof time === 'string' ? time : undefined
-    });
+  async fastForward(ticks: number | string) {
+    await this._browserContext._channel.clockFastForward(parseTicks(ticks));
   }
 
-  async runAll(): Promise<number> {
-    const result = await this._browserContext._channel.clockRunAll();
-    return result.fakeTime;
+  async pauseAt(time: number | string | Date) {
+    await this._browserContext._channel.clockPauseAt(parseTime(time));
   }
 
-  async runToLast(): Promise<number> {
-    const result = await this._browserContext._channel.clockRunToLast();
-    return result.fakeTime;
+  async resume() {
+    await this._browserContext._channel.clockResume({});
   }
 
-  async tick(time: number | string): Promise<number> {
-    const result = await this._browserContext._channel.clockTick({
-      timeNumber: typeof time === 'number' ? time : undefined,
-      timeString: typeof time === 'string' ? time : undefined
-    });
-    return result.fakeTime;
+  async runFor(ticks: number | string) {
+    await this._browserContext._channel.clockRunFor(parseTicks(ticks));
   }
+
+  async setFixedTime(time: string | number | Date) {
+    await this._browserContext._channel.clockSetFixedTime(parseTime(time));
+  }
+
+  async setSystemTime(time: string | number | Date) {
+    await this._browserContext._channel.clockSetSystemTime(parseTime(time));
+  }
+}
+
+function parseTime(time: string | number | Date): { timeNumber?: number, timeString?: string } {
+  if (typeof time === 'number')
+    return { timeNumber: time };
+  if (typeof time === 'string')
+    return { timeString: time };
+  if (!isFinite(time.getTime()))
+    throw new Error(`Invalid date: ${time}`);
+  return { timeNumber: time.getTime() };
+}
+
+function parseTicks(ticks: string | number): { ticksNumber?: number, ticksString?: string } {
+  return {
+    ticksNumber: typeof ticks === 'number' ? ticks : undefined,
+    ticksString: typeof ticks === 'string' ? ticks : undefined
+  };
 }

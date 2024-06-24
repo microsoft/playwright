@@ -457,7 +457,7 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 
 ### Firefox
 
-Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches. 
+Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches.
 
 ### WebKit
 
@@ -602,6 +602,24 @@ pwsh bin/Debug/netX/playwright.ps1 install
 ```powershell tab=bash-powershell lang=csharp
 $Env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
 pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+If you are [installing dependencies](#install-system-dependencies) and need to use a proxy on Linux, make sure to run the command as a root user. Otherwise, Playwright will attempt to become a root and will not pass environment variables like `HTTPS_PROXY` to the linux package manager.
+
+```bash js
+sudo HTTPS_PROXY=https://192.0.2.1 npx playwright install-deps
+```
+
+```bash java
+sudo HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+```
+
+```bash python
+sudo HTTPS_PROXY=https://192.0.2.1 playwright install-deps
+```
+
+```bash csharp
+sudo HTTPS_PROXY=https://192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install-deps
 ```
 
 ## Download from artifact repository

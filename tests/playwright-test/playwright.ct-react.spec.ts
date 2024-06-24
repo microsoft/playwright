@@ -290,9 +290,9 @@ test('should pass "key" attribute from JSX in variable', async ({ runInlineTest 
           </Container>
         );
         const button = component.getByRole('button');
-        expect(button).toHaveText("1");
+        await expect(button).toHaveText("1");
         await button.click();
-        expect(button).toHaveText("10");
+        await expect(button).toHaveText("10");
       });
     `,
   }, { workers: 1 });

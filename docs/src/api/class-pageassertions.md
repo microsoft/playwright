@@ -50,21 +50,19 @@ def test_navigates_to_login_page(page: Page) -> None:
 
 ```csharp
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
-[TestFixture]
+[TestClass]
 public class ExampleTests : PageTest
 {
-    [Test]
+    [TestMethod]
     public async Task NavigatetoLoginPage()
     {
-        // ..
-        await Page.GetByText("Sing in").ClickAsync();
-        await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/login"));
     }
 }
 ```

@@ -35,6 +35,8 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    // Needed since tests/electron/package.json exists which would otherwise be picked up as tests/electron/ (outputDir)
+    ['blob', { fileName: path.join(__dirname, '../../blob-report/', `${process.env.PWTEST_BOT_NAME}.zip`) }],
   ] : 'line',
   projects: [],
   globalSetup: './globalSetup.ts'
@@ -53,6 +55,7 @@ config.projects.push({
   name: 'electron-api',
   use: {
     browserName: 'chromium',
+    headless: false,
   },
   testDir: path.join(testDir, 'electron'),
   metadata,
@@ -64,6 +67,7 @@ config.projects.push({
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {
     browserName: 'chromium',
+    headless: false,
   },
   testDir: path.join(testDir, 'page'),
   metadata,

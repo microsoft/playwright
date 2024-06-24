@@ -322,6 +322,12 @@ const Browser = {
         enabled: t.Boolean,
       },
     },
+    'setCacheDisabled': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        cacheDisabled: t.Boolean,
+      },
+    },
     'setGeolocationOverride': {
       params: {
         browserContextId: t.Optional(t.String),

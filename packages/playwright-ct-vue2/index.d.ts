@@ -24,7 +24,7 @@ type ComponentEvents = Record<string, Function>;
 
 // Copied from: https://github.com/vuejs/language-tools/blob/master/packages/vue-component-type-helpers/index.d.ts#L10-L13
 type ComponentProps<T> =
-	T extends new () => { $props: infer P; } ? NonNullable<P> :
+	T extends new (...angs: any) => { $props: infer P; } ? NonNullable<P> :
 	T extends (props: infer P, ...args: any) => any ? P :
 	{};
 

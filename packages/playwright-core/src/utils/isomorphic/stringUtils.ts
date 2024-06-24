@@ -67,8 +67,19 @@ function cssEscapeOne(s: string, i: number): string {
   return '\\' + s.charAt(i);
 }
 
+let normalizedWhitespaceCache: Map<string, string> | undefined;
+
+export function cacheNormalizedWhitespaces() {
+  normalizedWhitespaceCache = new Map();
+}
+
 export function normalizeWhiteSpace(text: string): string {
-  return text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
+  let result = normalizedWhitespaceCache?.get(text);
+  if (result === undefined) {
+    result = text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
+    normalizedWhitespaceCache?.set(text, result);
+  }
+  return result;
 }
 
 export function normalizeEscapedRegexQuotes(source: string) {

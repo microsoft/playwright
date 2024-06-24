@@ -24,7 +24,7 @@ it('should reject all promises when browser is closed', async ({ browserType }) 
   const page = await (await browser.newContext()).newPage();
   let error: Error | undefined;
   const neverResolves = page.evaluate(() => new Promise(r => {})).catch(e => error = e);
-  await page.evaluate(() => new Promise(f => setTimeout(f, 0)));
+  await page.evaluate(() => new Promise(f => window.builtinSetTimeout(f, 0)));
   await browser.close();
   await neverResolves;
   // WebKit under task-set -c 1 is giving browser, rest are giving target.

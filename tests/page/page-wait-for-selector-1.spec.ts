@@ -16,12 +16,11 @@
  */
 
 import type { Frame } from '@playwright/test';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 import { attachFrame, detachFrame } from '../config/utils';
 
 async function giveItTimeToLog(frame: Frame) {
-  await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-  await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  await rafraf(frame, 2);
 }
 
 const addElement = (tag: string) => document.body.appendChild(document.createElement(tag));
@@ -135,7 +134,7 @@ it('should report logs while waiting for visible', async ({ page, server }) => {
   const error = await watchdog.catch(e => e);
   expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
   expect(error.message).toContain(`waiting for locator(\'div\') to be visible`);
-  expect(error.message).toContain(`locator resolved to hidden <div id="mydiv" class="foo bar" foo="1234567890123456…>abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
+  expect(error.message).toContain(`locator resolved to hidden <div id="mydiv" class="foo bar" foo=\"123456789012345678901234567890123456789012345678901234567890\">abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
   expect(error.message).toContain(`locator resolved to hidden <div class="another"></div>`);
 });
 
@@ -189,7 +188,7 @@ it('should resolve promise when node is added in shadow dom', async ({ page, ser
     div.attachShadow({ mode: 'open' });
     document.body.appendChild(div);
   });
-  await page.evaluate(() => new Promise(f => setTimeout(f, 100)));
+  await page.waitForTimeout(100);
   await page.evaluate(() => {
     const span = document.createElement('span');
     span.textContent = 'Hello from shadow';

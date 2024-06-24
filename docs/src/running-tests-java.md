@@ -85,6 +85,10 @@ See [here](./test-runners.md) for further details on how to run tests in paralle
 
 See experimental [JUnit integration](./junit.md) to automatically initialize Playwright objects and more.
 
+### Run tests in headed mode
+
+If you prefer, you can run your tests in headed mode by using the `launch(new BrowserType.LaunchOptions().setHeadless(false))` option.
+
 ## What's Next
 
 - [Debugging tests](./debug.md)

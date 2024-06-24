@@ -848,3 +848,27 @@ test('should explain a failure when using a dispose APIRequestContext', async ({
   expect(result.passed).toBe(0);
   expect(result.output).toContain(`Recommended fix: use a separate { request } in the test`);
 });
+
+test('should allow dynamic import in evaluate', async ({ runInlineTest, server }) => {
+  server.setRoute('/foo.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/javascript' }).end(`
+      export const foo = 'bar';
+    `);
+  });
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        await page.goto("${server.EMPTY_PAGE}");
+        const result = await page.evaluate(async () => {
+          const { foo } = await import("${server.PREFIX + '/foo.js'}");
+          return foo;
+        });
+        expect(result).toBe('bar');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

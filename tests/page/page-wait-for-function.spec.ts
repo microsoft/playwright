@@ -44,10 +44,10 @@ it('should poll on interval', async ({ page, server }) => {
   const polling = 100;
   const timeDelta = await page.waitForFunction(() => {
     if (!window['__startTime']) {
-      window['__startTime'] = Date.now();
+      window['__startTime'] = window.builtinDate.now();
       return false;
     }
-    return Date.now() - window['__startTime'];
+    return window.builtinDate.now() - window['__startTime'];
   }, {}, { polling });
   expect(await timeDelta.jsonValue()).not.toBeLessThan(polling);
 });

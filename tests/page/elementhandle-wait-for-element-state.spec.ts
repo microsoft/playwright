@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import type { Page } from '@playwright/test';
+import { test as it, expect, rafraf } from './pageTest';
 
-async function giveItAChanceToResolve(page) {
-  for (let i = 0; i < 5; i++)
-    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-}
+const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
 it('should wait for visible', async ({ page }) => {
   await page.setContent(`<div style='display:none'>content</div>`);
@@ -124,7 +122,7 @@ it('should wait for stable position', async ({ page, server, browserName, platfo
     button.style.marginLeft = '20000px';
   });
   // rafraf for Firefox to kick in the animation.
-  await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+  await rafraf(page);
   let done = false;
   const promise = button.waitForElementState('stable').then(() => done = true);
   await giveItAChanceToResolve(page);

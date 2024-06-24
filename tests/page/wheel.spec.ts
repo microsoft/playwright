@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import type { Page } from 'playwright-core';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 
 it.skip(({ isAndroid }) => {
   return isAndroid;
@@ -209,8 +209,7 @@ it('should work when the event is canceled', async ({ page }) => {
     document.querySelector('div').addEventListener('wheel', e => e.preventDefault());
   });
   // Give wheel listener a chance to propagate through all the layers in Firefox.
-  for (let i = 0; i < 10; i++)
-    await page.evaluate(() => new Promise(x => requestAnimationFrame(() => requestAnimationFrame(x))));
+  await rafraf(page, 10);
   await page.mouse.wheel(0, 100);
   await expectEvent(page, {
     deltaX: 0,

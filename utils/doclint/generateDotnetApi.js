@@ -82,6 +82,7 @@ classNameMap.set('boolean', 'bool');
 classNameMap.set('any', 'object');
 classNameMap.set('Buffer', 'byte[]');
 classNameMap.set('path', 'string');
+classNameMap.set('Date', 'DateTime');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
@@ -829,7 +830,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
  * @param {Documentation.Type} type
  */
 function registerModelType(typeName, type) {
-  if (['object', 'string', 'int'].includes(typeName))
+  if (['object', 'string', 'int', 'long'].includes(typeName))
     return;
   if (typeName.endsWith('Option'))
     return;

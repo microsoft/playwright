@@ -201,7 +201,7 @@ export abstract class APIRequestContext extends SdkObject {
       setHeader(headers, 'content-length', String(postData.byteLength));
     const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
-      return this._sendRequest(progress, requestUrl, options, postData);
+      return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
@@ -245,6 +245,28 @@ export abstract class APIRequestContext extends SdkObject {
       const valueArray = cookies.map(c => `${c.name}=${c.value}`);
       setHeader(headers, 'cookie', valueArray.join('; '));
     }
+  }
+
+  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
+    maxRetries ??= 0;
+    let backoff = 250;
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await this._sendRequest(progress, url, options, postData);
+      } catch (e) {
+        if (maxRetries === 0)
+          throw e;
+        if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
+          throw new Error(`Failed after ${i + 1} attempt(s): ${e}`);
+        // Retry on connection reset only.
+        if (e.code !== 'ECONNRESET')
+          throw e;
+        progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
+        await new Promise(f => setTimeout(f, backoff));
+        backoff *= 2;
+      }
+    }
+    throw new Error('Unreachable');
   }
 
   private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{

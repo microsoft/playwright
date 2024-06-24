@@ -4055,7 +4055,8 @@ export interface Page {
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the current working directory. For empty array, clears the selected files.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files. For inputs
+   * with a `[webkitdirectory]` attribute, only a single directory path is supported.
    *
    * This method expects `selector` to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside
@@ -4864,7 +4865,7 @@ export interface Page {
   accessibility: Accessibility;
 
   /**
-   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
 
@@ -8516,21 +8517,22 @@ export interface BrowserContext {
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
    * specified.
    * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:
-   * - `'geolocation'`
-   * - `'midi'`
-   * - `'midi-sysex'` (system-exclusive midi)
-   * - `'notifications'`
-   * - `'camera'`
-   * - `'microphone'`
-   * - `'background-sync'`
-   * - `'ambient-light-sensor'`
    * - `'accelerometer'`
-   * - `'gyroscope'`
-   * - `'magnetometer'`
    * - `'accessibility-events'`
+   * - `'ambient-light-sensor'`
+   * - `'background-sync'`
+   * - `'camera'`
    * - `'clipboard-read'`
    * - `'clipboard-write'`
+   * - `'geolocation'`
+   * - `'gyroscope'`
+   * - `'magnetometer'`
+   * - `'microphone'`
+   * - `'midi-sysex'` (system-exclusive midi)
+   * - `'midi'`
+   * - `'notifications'`
    * - `'payment-handler'`
+   * - `'storage-access'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {
@@ -8986,7 +8988,7 @@ export interface BrowserContext {
 
 
   /**
-   * Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+   * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
 
@@ -10579,7 +10581,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the current working directory. For empty array, clears the selected files.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files. For inputs
+   * with a `[webkitdirectory]` attribute, only a single directory path is supported.
    *
    * This method expects {@link ElementHandle} to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside
@@ -12786,7 +12789,8 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Upload file or multiple files into `<input type=file>`.
+   * Upload file or multiple files into `<input type=file>`. For inputs with a `[webkitdirectory]` attribute, only a
+   * single directory path is supported.
    *
    * **Usage**
    *
@@ -12799,6 +12803,9 @@ export interface Locator {
    *   path.join(__dirname, 'file1.txt'),
    *   path.join(__dirname, 'file2.txt'),
    * ]);
+   *
+   * // Select a directory
+   * await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
    *
    * // Remove all the selected files
    * await page.getByLabel('Upload file').setInputFiles([]);
@@ -15957,6 +15964,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
      * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
      */
@@ -16057,6 +16070,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16137,6 +16156,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16215,6 +16240,12 @@ export interface APIRequestContext {
      * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
      */
     maxRedirects?: number;
+
+    /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
@@ -16339,6 +16370,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16417,6 +16454,12 @@ export interface APIRequestContext {
      * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
      */
     maxRedirects?: number;
+
+    /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
@@ -17239,78 +17282,125 @@ export interface BrowserServer {
 }
 
 /**
- * Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is
- * installed for the entire {@link BrowserContext}, so the time in all the pages and iframes is controlled by the same
- * clock.
+ * Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn
+ * more about [clock emulation](https://playwright.dev/docs/clock).
+ *
+ * Note that clock is installed for the entire {@link BrowserContext}, so the time in all the pages and iframes is
+ * controlled by the same clock.
  */
 export interface Clock {
   /**
-   * Creates a clock and installs it globally.
+   * Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user
+   * closing the laptop lid for a while and reopening it later, after given time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.fastForward(1000);
+   * await page.clock.fastForward('30:00');
+   * ```
+   *
+   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   */
+  fastForward(ticks: number|string): Promise<void>;
+
+  /**
+   * Install fake implementations for the following time-related functions:
+   * - `Date`
+   * - `setTimeout`
+   * - `clearTimeout`
+   * - `setInterval`
+   * - `clearInterval`
+   * - `requestAnimationFrame`
+   * - `cancelAnimationFrame`
+   * - `requestIdleCallback`
+   * - `cancelIdleCallback`
+   * - `performance`
+   *
+   * Fake timers are used to manually control the flow of time in tests. They allow you to advance time, fire timers,
+   * and control the behavior of time-dependent functions. See
+   * [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for) and
+   * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward) for more information.
    * @param options
    */
   install(options?: {
     /**
-     * Relevant only when using with `shouldAdvanceTime`. Increment mocked time by advanceTimeDelta ms every
-     * advanceTimeDelta ms change in the real system time (default: 20).
+     * Time to initialize with, current system time by default.
      */
-    advanceTimeDelta?: number;
-
-    /**
-     * The maximum number of timers that will be run when calling
-     * [clock.runAll()](https://playwright.dev/docs/api/class-clock#clock-run-all). Defaults to `1000`.
-     */
-    loopLimit?: number;
-
-    /**
-     * Install fake timers with the specified unix epoch (default: 0).
-     */
-    now?: number|Date;
-
-    /**
-     * Tells `@sinonjs/fake-timers` to increment mocked time automatically based on the real system time shift (e.g., the
-     * mocked time will be incremented by 20ms for every 20ms change in the real system time). Defaults to `false`.
-     */
-    shouldAdvanceTime?: boolean;
-
-    /**
-     * An array with names of global methods and APIs to fake. For instance, `await page.clock.install({ toFake:
-     * ['setTimeout'] })` will fake only `setTimeout()`. By default, `setTimeout`, `clearTimeout`, `setInterval`,
-     * `clearInterval` and `Date` are faked.
-     */
-    toFake?: Array<"setTimeout"|"clearTimeout"|"setInterval"|"clearInterval"|"Date"|"requestAnimationFrame"|"cancelAnimationFrame"|"requestIdleCallback"|"cancelIdleCallback"|"performance">;
+    time?: number|string|Date;
   }): Promise<void>;
 
   /**
-   * Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the
-   * unix epoch. This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later,
-   * skipping intermediary timers.
-   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
+   * Advance the clock by jumping forward in time and pause the time. Once this method is called, no timers are fired
+   * unless [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for),
+   * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward),
+   * [clock.pauseAt(time)](https://playwright.dev/docs/api/class-clock#clock-pause-at) or
+   * [clock.resume()](https://playwright.dev/docs/api/class-clock#clock-resume) is called.
+   *
+   * Only fires due timers at most once. This is equivalent to user closing the laptop lid for a while and reopening it
+   * at the specified time and pausing.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.pauseAt(new Date('2020-02-02'));
+   * await page.clock.pauseAt('2020-02-02');
+   * ```
+   *
+   * @param time
+   */
+  pauseAt(time: number|string|Date): Promise<void>;
+
+  /**
+   * Resumes timers. Once this method is called, time resumes flowing, timers are fired as usual.
+   */
+  resume(): Promise<void>;
+
+  /**
+   * Advance the clock, firing all the time-related callbacks.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.runFor(1000);
+   * await page.clock.runFor('30:00');
+   * ```
+   *
+   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
    * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
    */
-  jump(time: number|string): Promise<void>;
+  runFor(ticks: number|string): Promise<void>;
 
   /**
-   * Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be
-   * run as well. This makes it easier to run asynchronous tests to completion without worrying about the number of
-   * timers they use, or the delays in those timers. It runs a maximum of `loopLimit` times after which it assumes there
-   * is an infinite loop of timers and throws an error.
+   * Makes `Date.now` and `new Date()` return fixed fake time at all times, keeps all the timers running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.setFixedTime(Date.now());
+   * await page.clock.setFixedTime(new Date('2020-02-02'));
+   * await page.clock.setFixedTime('2020-02-02');
+   * ```
+   *
+   * @param time Time to be set.
    */
-  runAll(): Promise<number>;
+  setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as
-   * necessary. If new timers are added while it is executing they will be run only if they would occur before this
-   * time. This is useful when you want to run a test to completion, but the test recursively sets timers that would
-   * cause runAll to trigger an infinite loop warning.
+   * Sets current system time but does not trigger any timers.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.clock.setSystemTime(Date.now());
+   * await page.clock.setSystemTime(new Date('2020-02-02'));
+   * await page.clock.setSystemTime('2020-02-02');
+   * ```
+   *
+   * @param time
    */
-  runToLast(): Promise<number>;
-
-  /**
-   * Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
-   * @param time Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
-   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
-   */
-  tick(time: number|string): Promise<number>;
+  setSystemTime(time: number|string|Date): Promise<void>;
 }
 
 /**

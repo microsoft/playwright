@@ -3,31 +3,31 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1121",
+      "revision": "1124",
       "installByDefault": true,
-      "browserVersion": "126.0.6478.26"
+      "browserVersion": "127.0.6533.17"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1227",
+      "revision": "1231",
       "installByDefault": false,
-      "browserVersion": "127.0.6510.0"
+      "browserVersion": "128.0.6536.0"
     },
     {
       "name": "firefox",
-      "revision": "1452",
+      "revision": "1456",
       "installByDefault": true,
-      "browserVersion": "126.0"
+      "browserVersion": "127.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1452",
+      "revision": "1456",
       "installByDefault": false,
-      "browserVersion": "127.0b3"
+      "browserVersion": "128.0b3"
     },
     {
       "name": "webkit",
-      "revision": "2014",
+      "revision": "2037",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
@@ -46,7 +46,7 @@
     },
     {
       "name": "android",
-      "revision": "1000",
+      "revision": "1001",
       "installByDefault": false
     }
   ]

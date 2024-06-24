@@ -48,7 +48,7 @@ async function testWaiting(page, after) {
   const div = await page.$('div');
   let done = false;
   const promise = div.scrollIntoViewIfNeeded().then(() => done = true);
-  await page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+  await page.waitForTimeout(1000);
   expect(done).toBe(false);
   await div.evaluate(after);
   await promise;

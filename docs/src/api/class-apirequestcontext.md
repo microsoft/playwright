@@ -344,6 +344,9 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
+### option: APIRequestContext.fetch.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.get
 * since: v1.16
 - returns: <[APIResponse]>
@@ -433,6 +436,9 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 ### option: APIRequestContext.get.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
+### option: APIRequestContext.get.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.head
 * since: v1.16
 - returns: <[APIResponse]>
@@ -486,6 +492,9 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
+### option: APIRequestContext.head.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.patch
 * since: v1.16
 - returns: <[APIResponse]>
@@ -538,6 +547,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.patch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
+
+### option: APIRequestContext.patch.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
 
 ## async method: APIRequestContext.post
 * since: v1.16
@@ -713,6 +725,9 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 ### option: APIRequestContext.post.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
+### option: APIRequestContext.post.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.put
 * since: v1.16
 - returns: <[APIResponse]>
@@ -765,6 +780,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.put.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
+
+### option: APIRequestContext.put.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
 
 ## async method: APIRequestContext.storageState
 * since: v1.16

@@ -30,14 +30,17 @@ async function filesExceedUploadLimit(files: string[]) {
 }
 
 export async function prepareFilesForUpload(frame: Frame, params: channels.ElementHandleSetInputFilesParams): Promise<InputFilesItems> {
-  const { payloads, streams } = params;
-  let { localPaths } = params;
+  const { payloads, streams, directoryStream } = params;
+  let { localPaths, localDirectory } = params;
 
-  if ([payloads, localPaths, streams].filter(Boolean).length !== 1)
+  if ([payloads, localPaths, localDirectory, streams, directoryStream].filter(Boolean).length !== 1)
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
 
   if (streams)
     localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
+  if (directoryStream)
+    localDirectory = (directoryStream as WritableStreamDispatcher).path();
+
   if (localPaths) {
     for (const p of localPaths)
       assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
@@ -73,5 +76,5 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
     lastModifiedMs: payload.lastModifiedMs
   }));
 
-  return { localPaths, filePayloads };
+  return { localPaths, localDirectory, filePayloads };
 }

@@ -15,17 +15,16 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import type { Config, Fixtures, PlaywrightTestConfig, Project, ReporterDescription } from '../../types/test';
-import type { Location } from '../../types/testReporter';
+import type { FullConfig, FullProject, Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import { getPackageJsonPath, mergeObjects } from '../util';
-import type { Matcher } from '../util';
-import type { ConfigCLIOverrides } from './ipc';
-import type { FullConfig, FullProject } from '../../types/testReporter';
-import { setTransformConfig } from '../transform/transform';
 import type { LastRunInfo } from '../runner/runner';
+import { setTransformConfig } from '../transform/transform';
+import type { Matcher } from '../util';
+import { getPackageJsonPath, mergeObjects } from '../util';
+import type { ConfigCLIOverrides } from './ipc';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;
@@ -36,7 +35,7 @@ export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
-export type Annotation = { type: string, description?: string, url?: string };
+export type Annotation = { type: string, description?: string };
 
 export const defaultTimeout = 30000;
 
@@ -57,7 +56,6 @@ export class FullConfigInternal {
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
   shardingMode: Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
-  shardingSeed: string | null;
   lastRunInfo?: LastRunInfo;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
@@ -97,7 +95,6 @@ export class FullConfigInternal {
       webServer: null,
     };
     this.shardingMode = takeFirst(configCLIOverrides.shardingMode, userConfig.shardingMode, 'partition');
-    this.shardingSeed = takeFirst(configCLIOverrides.shardingSeed, userConfig.shardingSeed, null);
     for (const key in userConfig) {
       if (key.startsWith('@'))
         (this.config as any)[key] = (userConfig as any)[key];
@@ -111,7 +108,7 @@ export class FullConfigInternal {
         const cpus = os.cpus().length;
         this.config.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
       } else {
-        this.config.workers = parseInt(workers, 10);
+        this.config.workers = parseWorkers(workers);
       }
     } else {
       this.config.workers = workers;
@@ -225,6 +222,14 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
       return [id, arg];
     return [require.resolve(id, { paths: [rootDir] }), arg];
   });
+}
+
+function parseWorkers(workers: string) {
+  const parsedWorkers = parseInt(workers, 10);
+  if (isNaN(parsedWorkers))
+    throw new Error(`Workers ${workers} must be a number or percentage.`);
+
+  return parsedWorkers;
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {

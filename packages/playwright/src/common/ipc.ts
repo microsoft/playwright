@@ -15,9 +15,9 @@
  */
 
 import util from 'util';
-import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
-import type { ConfigLocation, FullConfigInternal } from './config';
 import type { PlaywrightTestConfig, ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
+import { serializeCompilationCache, type SerializedCompilationCache } from '../transform/compilationCache';
+import type { ConfigLocation, FullConfigInternal } from './config';
 
 export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
@@ -33,7 +33,6 @@ export type ConfigCLIOverrides = {
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   shardingMode?: PlaywrightTestConfig['shardingMode'];
-  shardingSeed?: string;
   timeout?: number;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';

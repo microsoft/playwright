@@ -67,7 +67,7 @@ it('should dismiss the confirm prompt', async ({ page }) => {
 it('should be able to close context with open alert', async ({ page }) => {
   const alertPromise = page.waitForEvent('dialog');
   await page.evaluate(() => {
-    setTimeout(() => alert('hello'), 0);
+    window.builtinSetTimeout(() => alert('hello'), 0);
   });
   await alertPromise;
 });

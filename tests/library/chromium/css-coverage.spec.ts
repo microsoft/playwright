@@ -135,7 +135,7 @@ it('should work with a recently loaded stylesheet', async function({ page, serve
     link.href = url;
     document.head.appendChild(link);
     await new Promise(x => link.onload = x);
-    await new Promise(f => requestAnimationFrame(f));
+    await new Promise(f => window.builtinRequestAnimationFrame(f));
   }, server.PREFIX + '/csscoverage/stylesheet1.css');
   const coverage = await page.coverage.stopCSSCoverage();
   expect(coverage.length).toBe(1);

@@ -253,7 +253,7 @@ it('should not click iframe overlaying the target', async ({ page, server }) => 
   `);
   const error = await page.click('text=click-me', { timeout: 1000 }).catch(e => e);
   expect(await page.evaluate('window._clicked')).toBe(undefined);
-  expect(error.message).toContain(`<iframe srcdoc="<body onclick='window.top._clicked=2' st…></iframe> from <div>…</div> subtree intercepts pointer events`);
+  expect(error.message).toContain(`<iframe srcdoc=\"<body onclick='window.top._clicked=2' style='background-color:red;height:40px;'></body>\"></iframe> from <div>…</div> subtree intercepts pointer events`);
 });
 
 it('should not click an element overlaying iframe with the target', async ({ page, server }) => {

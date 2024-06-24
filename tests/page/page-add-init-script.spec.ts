@@ -98,3 +98,14 @@ it('init script should run only once in iframe', async ({ page, server, browserN
     'init script: ' + (browserName === 'firefox' ? 'no url yet' : '/frames/frame.html'),
   ]);
 });
+
+it('init script should run only once in popup', async ({ page, browserName }) => {
+  await page.context().addInitScript(() => {
+    window['callCount'] = (window['callCount'] || 0) + 1;
+  });
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('about:blank')),
+  ]);
+  expect(await popup.evaluate('callCount')).toEqual(1);
+});

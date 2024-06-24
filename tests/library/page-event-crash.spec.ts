@@ -70,9 +70,8 @@ test('should cancel navigation when page crashes', async ({ server, page, crash 
   expect(error.message).toContain('page.goto: Page crashed');
 });
 
-test('should be able to close context when page crashes', async ({ isAndroid, isElectron, isWebView2, page, crash }) => {
+test('should be able to close context when page crashes', async ({ isAndroid, isWebView2, page, crash }) => {
   test.skip(isAndroid);
-  test.skip(isElectron);
   test.skip(isWebView2, 'Page.close() is not supported in WebView2');
 
   await page.setContent(`<div>This page should crash</div>`);

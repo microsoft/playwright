@@ -16,25 +16,24 @@
 
 /* eslint-disable no-console */
 
-import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { Runner, readLastRunInfo } from './runner/runner';
-import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { serializeError } from './util';
-import { showHTMLReport } from './reporters/html';
-import { createMergedReport } from './reporters/merge';
+import { program } from 'playwright-core/lib/cli/program';
+import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import type { Command } from 'playwright-core/lib/utilsBundle';
+import type { ReporterDescription, TraceMode } from '../types/test';
+import type { FullResult, TestError } from '../types/testReporter';
+import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult, TestError } from '../types/testReporter';
-import type { TraceMode } from '../types/test';
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { program } from 'playwright-core/lib/cli/program';
-export { program } from 'playwright-core/lib/cli/program';
-import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
+import { showHTMLReport } from './reporters/html';
+import { createMergedReport } from './reporters/merge';
+import { Runner, readLastRunInfo } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { clearCacheAndLogToConsole } from './runner/testServer';
+import { serializeError } from './util';
+export { program } from 'playwright-core/lib/cli/program';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -286,7 +285,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
     shardingMode: options.shardingMode ? options.shardingMode : undefined,
-    shardingSeed: options.shardingSeed ? options.shardingSeed : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
@@ -365,7 +363,6 @@ const testOptions: [string, string][] = [
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
   ['--sharding-mode <mode>', `Sharding algorithm to use; "partition", "round-robin" or "duration-round-robin". Defaults to "partition".`],
-  ['--sharding-seed <seed>', `Seed string for randomizing the test order before sharding. Defaults to not randomizing the order.`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],

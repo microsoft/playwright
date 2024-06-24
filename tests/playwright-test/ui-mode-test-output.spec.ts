@@ -154,7 +154,7 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
   await expect(link).toHaveCSS('text-decoration', 'none solid rgb(0, 0, 255)');
 });
 
-test('should stream console messages live', async ({ runUITest }, testInfo) => {
+test('should stream console messages live', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -162,7 +162,7 @@ test('should stream console messages live', async ({ runUITest }, testInfo) => {
         await page.setContent('<button>Click me</button>');
         const button = page.getByRole('button', { name: 'Click me' });
         await button.evaluate(node => node.addEventListener('click', () => {
-          setTimeout(() => { console.log('I was clicked'); }, 1000);
+          builtinSetTimeout(() => { console.log('I was clicked'); }, 1000);
         }));
         console.log('I was logged');
         await button.click();
