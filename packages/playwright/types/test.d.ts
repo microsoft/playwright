@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, APIResponse, Browser, BrowserContext, BrowserContextOptions, Geolocation, HTTPCredentials, LaunchOptions, Locator, Page, PageScreenshotOptions, ViewportSize } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription = Readonly<
