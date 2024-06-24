@@ -106,13 +106,16 @@ export const AttachmentsTab: React.FunctionComponent<{
     })}
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
-      return <div className='attachment-item' key={`attachment-${i}`}>
-        <a href={attachmentURL(a) + '&download'}>{a.name}</a>
-        { isTextualMimeType(a.contentType) ?
-          <TextAttachment attachment={a} /> :
-          <div><i>no preview available</i></div>
-        }
-      </div>;
+      return <>
+        { i > 0 && <hr /> }
+        <div className='attachment-item' key={`attachment-${i}`}>
+          <a href={attachmentURL(a) + '&download'}>{a.name}</a>
+          { isTextualMimeType(a.contentType) ?
+            <TextAttachment attachment={a} /> :
+            <div><i>no preview available</i></div>
+          }
+        </div>
+      </>;
     })}
   </div>;
 };

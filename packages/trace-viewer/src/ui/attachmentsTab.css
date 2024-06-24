@@ -53,3 +53,7 @@
   border-radius: 2px;
   padding: 0.5rem;
 }
+
+.attachment-item hr {
+  border: 0.2px solid var(--vscode-panel-border);
+}
