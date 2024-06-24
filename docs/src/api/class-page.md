@@ -1817,80 +1817,6 @@ class PageExamples
 }
 ```
 
-An example of passing an element handle:
-
-```js
-await page.exposeBinding('clicked', async (source, element) => {
-  console.log(await element.textContent());
-}, { handle: true });
-await page.setContent(`
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-`);
-```
-
-```java
-page.exposeBinding("clicked", (source, args) -> {
-  ElementHandle element = (ElementHandle) args[0];
-  System.out.println(element.textContent());
-  return null;
-}, new Page.ExposeBindingOptions().setHandle(true));
-page.setContent("" +
-  "<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-```
-
-```python async
-async def print(source, element):
-    print(await element.text_content())
-
-await page.expose_binding("clicked", print, handle=true)
-await page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```python sync
-def print(source, element):
-    print(element.text_content())
-
-page.expose_binding("clicked", print, handle=true)
-page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```csharp
-var result = new TaskCompletionSource<string>();
-await page.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
-{
-    return result.TrySetResult(await t.AsElement().TextContentAsync());
-});
-
-await page.SetContentAsync("<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-
-await page.ClickAsync("div");
-Console.WriteLine(await result.Task);
-```
-
 ### param: Page.exposeBinding.name
 * since: v1.8
 - `name` <[string]>
@@ -1905,6 +1831,7 @@ Callback function that will be called in the Playwright's context.
 
 ### option: Page.exposeBinding.handle
 * since: v1.8
+* deprecated: This option will be removed in the future.
 - `handle` <[boolean]>
 
 Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
