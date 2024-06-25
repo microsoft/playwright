@@ -690,3 +690,25 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip' }]);
   expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);
 });
+
+test('should skip beforeEach hooks upon modifiers', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('top', () => {});
+
+      test.describe(() => {
+        test.skip(({ viewport }) => true);
+        test.beforeEach(() => { throw new Error(); });
+
+        test.describe(() => {
+          test.beforeEach(() => { throw new Error(); });
+          test('test', () => {});
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(1);
+});
