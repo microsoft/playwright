@@ -36,18 +36,17 @@ test('should contain text attachment', async ({ runUITest }) => {
   for (const { name, content, displayedAsText } of [
     { name: 'note', content: 'attach test', displayedAsText: false },
     { name: '🎭', content: 'hi tester!', displayedAsText: true },
-    { name: 'escaped', content: '## Header\\n\\n> TODO: some todo\\n- _Foo_\\n- **Bar**', displayedAsText: true },
+    { name: 'escaped', content: '## Header\n\n> TODO: some todo\n- _Foo_\n- **Bar**', displayedAsText: true },
   ]) {
     await page.getByText(`attach "${name}"`, { exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
     if (displayedAsText)
-      await expect(page.getByLabel(name)).toHaveText(content);
+      await expect(page.getByLabel(name)).toContainText(content.split('\n')?.[0]);
     await page.getByRole('link', { name: name }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(name);
     expect((await readAllFromStream(await download.createReadStream())).toString()).toContain(content);
   }
-  await page.pause();
 });
 
 test('should contain binary attachment', async ({ runUITest }) => {

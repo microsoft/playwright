@@ -28,9 +28,10 @@ type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type TextAttachmentProps = {
   attachment: Attachment;
+  label?: string;
 };
 
-const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachment }) => {
+const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachment, label }) => {
   const [text, setText] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -43,9 +44,13 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
       isMounted = false;
     };
   }, [attachment]);
-  return text ?
-    <CodeMirrorWrapper text={text} readOnly wrapLines={false}></CodeMirrorWrapper> :
-    <div><i>Loading...</i></div>;
+  return <div aria-label={label}>
+    {
+      text ?
+        <CodeMirrorWrapper text={text} readOnly wrapLines={false}></CodeMirrorWrapper> :
+        <div><i>Loading...</i></div>
+    }
+  </div>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
@@ -111,7 +116,7 @@ export const AttachmentsTab: React.FunctionComponent<{
         <div className='attachment-item' key={`attachment-${i}`}>
           <a href={attachmentURL(a) + '&download'}>{a.name}</a>
           { isTextualMimeType(a.contentType) ?
-            <TextAttachment attachment={a} /> :
+            <TextAttachment attachment={a} label={a.name}/> :
             <div><i>no preview available</i></div>
           }
         </div>
