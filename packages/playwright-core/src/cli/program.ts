@@ -149,12 +149,8 @@ program
             const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
             console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
             console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
-            if (executable.downloadURLs?.length) {
-              const [url, ...fallbacks] = executable.downloadURLs;
-              console.log(`  Download url:        ${url}`);
-              for (let i = 0; i < fallbacks.length; ++i)
-                console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
-            }
+            if (executable.downloadURL)
+              console.log(`  Download url:        ${executable.downloadURL}`);
             console.log(``);
           }
         } else {

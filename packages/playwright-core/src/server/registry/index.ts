@@ -36,19 +36,7 @@ import { debugLogger } from '../../utils/debugLogger';
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
 
-const PLAYWRIGHT_CDN_MIRRORS = [
-  'https://playwright.azureedge.net',
-  'https://playwright-akamai.azureedge.net',
-  'https://playwright-verizon.azureedge.net',
-];
-
-if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
-  for (let i = 0; i < PLAYWRIGHT_CDN_MIRRORS.length; i++) {
-    const cdn = PLAYWRIGHT_CDN_MIRRORS[i];
-    if (cdn !== process.env.PW_TEST_CDN_THAT_SHOULD_WORK)
-      PLAYWRIGHT_CDN_MIRRORS[i] = cdn + '.does-not-resolve.playwright.dev';
-  }
-}
+const PLAYWRIGHT_CDN_MIRROR = 'https://playwright.azureedge.net';
 
 const EXECUTABLE_PATHS = {
   'chromium': {
@@ -360,7 +348,7 @@ export interface Executable {
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
-  downloadURLs?: string[],
+  downloadURL?: string,
   browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
@@ -428,7 +416,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
-      downloadURLs: this._downloadURLs(chromium),
+      downloadURL: this._downloadURL(chromium),
       browserVersion: chromium.browserVersion,
       _install: () => this._downloadExecutable(chromium, chromiumExecutable),
       _dependencyGroup: 'chromium',
@@ -446,7 +434,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
-      downloadURLs: this._downloadURLs(chromiumTipOfTree),
+      downloadURL: this._downloadURL(chromiumTipOfTree),
       browserVersion: chromiumTipOfTree.browserVersion,
       _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable),
       _dependencyGroup: 'chromium',
@@ -532,7 +520,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, sdkLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
-      downloadURLs: this._downloadURLs(firefox),
+      downloadURL: this._downloadURL(firefox),
       browserVersion: firefox.browserVersion,
       _install: () => this._downloadExecutable(firefox, firefoxExecutable),
       _dependencyGroup: 'firefox',
@@ -550,7 +538,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
-      downloadURLs: this._downloadURLs(firefoxBeta),
+      downloadURL: this._downloadURL(firefoxBeta),
       browserVersion: firefoxBeta.browserVersion,
       _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable),
       _dependencyGroup: 'firefox',
@@ -578,7 +566,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
-      downloadURLs: this._downloadURLs(webkit),
+      downloadURL: this._downloadURL(webkit),
       browserVersion: webkit.browserVersion,
       _install: () => this._downloadExecutable(webkit, webkitExecutable),
       _dependencyGroup: 'webkit',
@@ -596,7 +584,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault, sdkLanguage),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: () => Promise.resolve(),
-      downloadURLs: this._downloadURLs(ffmpeg),
+      downloadURL: this._downloadURL(ffmpeg),
       _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable),
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
@@ -611,7 +599,7 @@ export class Registry {
       executablePathOrDie: () => '',
       installType: 'download-on-demand',
       _validateHostRequirements: () => Promise.resolve(),
-      downloadURLs: this._downloadURLs(android),
+      downloadURL: this._downloadURL(android),
       _install: () => this._downloadExecutable(android),
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
@@ -828,14 +816,14 @@ export class Registry {
     await fs.promises.writeFile(markerFile, '').catch(() => {});
   }
 
-  private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
+  private _downloadURL(descriptor: BrowsersJSONDescriptor): string | undefined {
     const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
     const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
     if (!downloadPathTemplate)
-      return [];
+      return undefined;
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
 
-    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
+    let downloadURL = `${PLAYWRIGHT_CDN_MIRROR}/download/playwright/${downloadPath}`;
     let downloadHostEnv;
     if (descriptor.name.startsWith('chromium'))
       downloadHostEnv = 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST';
@@ -846,13 +834,13 @@ export class Registry {
 
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
     if (customHostOverride)
-      downloadURLs = [`${customHostOverride}/${downloadPath}`];
-    return downloadURLs;
+      downloadURL = `${customHostOverride}/${downloadPath}`;
+    return downloadURL;
   }
 
   private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string) {
-    const downloadURLs = this._downloadURLs(descriptor);
-    if (!downloadURLs.length)
+    const downloadURL = this._downloadURL(descriptor);
+    if (!downloadURL)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (!isOfficiallySupportedPlatform)
       logPolitely(`BEWARE: your OS is not officially supported by Playwright; downloading fallback build for ${hostPlatform}.`);
@@ -867,7 +855,7 @@ export class Registry {
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     const downloadConnectionTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
     const downloadConnectionTimeout = +(downloadConnectionTimeoutEnv || '0') || 30_000;
-    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout).catch(e => {
+    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURL, downloadFileName, downloadConnectionTimeout).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
   }
