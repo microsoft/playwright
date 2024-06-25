@@ -296,7 +296,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+container: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 
 steps:
 - task: NodeTool@0
@@ -318,7 +318,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+container: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
 
 steps:
 - task: UsePythonVersion@0
@@ -340,7 +340,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+container: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
 
 steps:
 - task: JavaToolInstaller@0
@@ -361,7 +361,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+container: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
 
 steps:
 - task: UseDotNet@2
@@ -384,28 +384,28 @@ Running Playwright on CircleCI is very similar to running on GitHub Actions. In 
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+      - image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 ```
 
 ```yml python
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+      - image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
 ```
 
 ```yml java
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+      - image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
 ```
 
 ```yml csharp
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+      - image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
 ```
 
 Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
@@ -430,7 +430,7 @@ to run tests on Jenkins.
 
 ```groovy js
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:v%%VERSION%%-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:v%%VERSION%%-noble' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -444,7 +444,7 @@ pipeline {
 
 ```groovy python
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/python:v%%VERSION%%-noble' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -458,7 +458,7 @@ pipeline {
 
 ```groovy java
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/java:v%%VERSION%%-noble' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -472,7 +472,7 @@ pipeline {
 
 ```groovy csharp
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -489,19 +489,19 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml js
-image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 ```
 
 ```yml python
-image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
 ```
 
 ```yml java
-image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
 ```
 
 ```yml csharp
-image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
 ```
 
 ### GitLab CI
@@ -514,7 +514,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
   script:
   ...
 ```
@@ -525,7 +525,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
   script:
   ...
 ```
@@ -536,7 +536,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
   script:
   ...
 ```
@@ -547,7 +547,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
   script:
   ...
 ```
@@ -563,7 +563,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
   parallel: 7
   script:
     - npm ci
@@ -578,7 +578,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
   parallel:
     matrix:
       - PROJECT: ['chromium', 'webkit']
@@ -594,7 +594,7 @@ To run Playwright tests on Google Cloud Build, use our public Docker image ([see
 
 ```yml
 steps:
-- name: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+- name: mcr.microsoft.com/playwright:v%%VERSION%%-noble
   script: 
   ...
   env:
