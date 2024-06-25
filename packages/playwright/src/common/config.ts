@@ -56,6 +56,7 @@ export class FullConfigInternal {
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
   shardingMode: Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
+  lastRunFile: string | undefined;
   lastRunInfo?: LastRunInfo;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
@@ -95,6 +96,7 @@ export class FullConfigInternal {
       webServer: null,
     };
     this.shardingMode = takeFirst(configCLIOverrides.shardingMode, userConfig.shardingMode, 'partition');
+    this.lastRunFile = configCLIOverrides.lastRunFile;
     for (const key in userConfig) {
       if (key.startsWith('@'))
         (this.config as any)[key] = (userConfig as any)[key];

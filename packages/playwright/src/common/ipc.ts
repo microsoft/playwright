@@ -33,6 +33,7 @@ export type ConfigCLIOverrides = {
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   shardingMode?: PlaywrightTestConfig['shardingMode'];
+  lastRunFile?: string;
   timeout?: number;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
