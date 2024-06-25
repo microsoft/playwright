@@ -59,13 +59,13 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
-  _playwrightImpl: [({}, use) => use(require('playwright-core')), { scope: 'worker' }],
+  _playwrightImpl: [({}, use) => use(require('playwright-core')), { scope: 'worker', box: true }],
 
   playwright: [async ({ _playwrightImpl, screenshot }, use) => {
     await connector.setPlaywright(_playwrightImpl, screenshot);
     await use(_playwrightImpl);
     await connector.setPlaywright(undefined, screenshot);
-  }, { scope: 'worker', _hideStep: true } as any],
+  }, { scope: 'worker', box: true }],
 
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
@@ -93,7 +93,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(options);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
       (browserType as any)._defaultLaunchOptions = undefined;
-  }, { scope: 'worker', auto: true }],
+  }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
@@ -152,7 +152,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true }],
   contextOptions: [{}, { option: true }],
 
-  _combinedContextOptions: async ({
+  _combinedContextOptions: [async ({
     acceptDownloads,
     bypassCSP,
     colorScheme,
@@ -223,7 +223,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       ...contextOptions,
       ...options,
     });
-  },
+  }, { box: true }],
 
   _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
@@ -246,9 +246,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._defaultContextTimeout = undefined;
       (browserType as any)._defaultContextNavigationTimeout = undefined;
     }
-  }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
+  }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _contextFactory: [async ({ browser, video, _reuseContext }, use, testInfo) => {
+  _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
@@ -301,7 +301,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
     }));
 
-  }, { scope: 'test',  _title: 'context' } as any],
+  }, { scope: 'test',  title: 'context', box: true }],
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true }],
@@ -312,7 +312,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       mode = 'when-possible';
     const reuse = mode === 'when-possible' && normalizeVideoMode(video) === 'off';
     await use(reuse);
-  }, { scope: 'worker',  _title: 'context' } as any],
+  }, { scope: 'worker',  title: 'context', box: true }],
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
     attachConnectedHeaderIfNeeded(testInfo, browser);

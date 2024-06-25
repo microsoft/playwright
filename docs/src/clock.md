@@ -118,13 +118,14 @@ expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM"
 ```java
 // Initialize clock with some time before the test time and let the page load
 // naturally. `Date.now` will progress as the timers fire.
-page.clock().install(new Clock.InstallOptions().setTime(Instant.parse("2024-02-02T08:00:00")));
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
+page.clock().install(new Clock.InstallOptions().setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pretend that the user closed the laptop lid and opened it again at 10am.
 // Pause the time once reached that point.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 
 // Assert the page state.
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
@@ -315,15 +316,16 @@ expect(locator).to_have_text("2/2/2024, 10:00:02 AM")
 ```
 
 ```java
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
 // Initialize clock with a specific time, let the page load naturally.
 page.clock().install(new Clock.InstallOptions()
-    .setTime(Instant.parse("2024-02-02T08:00:00")));
+    .setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
 
 // Tick through time manually, firing all timers in the process.

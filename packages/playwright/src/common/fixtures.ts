@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation } from '../util';
+import { filterStackFile, formatLocation } from '../util';
 import * as crypto from 'crypto';
 import type { Fixtures } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -23,7 +23,7 @@ import type { FixturesWithLocation } from './config';
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
 const kScopeOrder: FixtureScope[] = ['test', 'worker'];
-type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };
+type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 export type FixtureRegistration = {
   // Fixture registration location.
@@ -49,8 +49,8 @@ export type FixtureRegistration = {
   super?: FixtureRegistration;
   // Whether this fixture is an option override value set from the config.
   optionOverride?: boolean;
-  // Do not generate the step for this fixture.
-  hideStep?: boolean;
+  // Do not generate the step for this fixture, consider it internal.
+  box?: boolean;
 };
 export type LoadError = {
   message: string;
@@ -63,7 +63,7 @@ type OptionOverrides = {
 };
 
 function isFixtureTuple(value: any): value is FixtureTuple {
-  return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1] || 'timeout' in value[1]);
+  return Array.isArray(value) && typeof value[1] === 'object';
 }
 
 function isFixtureOption(value: any): value is FixtureTuple {
@@ -103,15 +103,15 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined, hideStep: boolean | undefined } | undefined;
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean } | undefined;
       if (isFixtureTuple(value)) {
         options = {
           auto: value[1].auto ?? false,
           scope: value[1].scope || 'test',
           option: !!value[1].option,
           timeout: value[1].timeout,
-          customTitle: (value[1] as any)._title,
-          hideStep: (value[1] as any)._hideStep,
+          customTitle: value[1].title,
+          box: value[1].box,
         };
         value = value[0];
       }
@@ -128,9 +128,9 @@ export class FixturePool {
           continue;
         }
       } else if (previous) {
-        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle, hideStep: undefined };
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle, box: previous.box };
       } else if (!options) {
-        options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined, hideStep: undefined };
+        options = { auto: false, scope: 'test', option: false, timeout: undefined };
       }
 
       if (!kScopeOrder.includes(options.scope)) {
@@ -152,7 +152,7 @@ export class FixturePool {
       }
 
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, hideStep: options.hideStep, deps, super: previous, optionOverride: isOptionsOverride };
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride };
       registrationId(registration);
       this._registrations.set(name, registration);
     }
@@ -161,29 +161,36 @@ export class FixturePool {
   private validate() {
     const markers = new Map<FixtureRegistration, 'visiting' | 'visited'>();
     const stack: FixtureRegistration[] = [];
-    const visit = (registration: FixtureRegistration) => {
+    let hasDependencyErrors = false;
+    const addDependencyError = (message: string, location: Location) => {
+      hasDependencyErrors = true;
+      this._addLoadError(message, location);
+    };
+    const visit = (registration: FixtureRegistration, boxedOnly: boolean) => {
       markers.set(registration, 'visiting');
       stack.push(registration);
       for (const name of registration.deps) {
         const dep = this.resolve(name, registration);
         if (!dep) {
           if (name === registration.name)
-            this._addLoadError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
+            addDependencyError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
           else
-            this._addLoadError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
+            addDependencyError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
           continue;
         }
         if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope)) {
-          this._addLoadError(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}" defined in ${formatLocation(dep.location)}.`, registration.location);
+          addDependencyError(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}" defined in ${formatPotentiallyInternalLocation(dep.location)}.`, registration.location);
           continue;
         }
         if (!markers.has(dep)) {
-          visit(dep);
+          visit(dep, boxedOnly);
         } else if (markers.get(dep) === 'visiting') {
           const index = stack.indexOf(dep);
-          const regs = stack.slice(index, stack.length);
+          const allRegs = stack.slice(index, stack.length);
+          const filteredRegs = allRegs.filter(r => !r.box);
+          const regs = boxedOnly ? filteredRegs : allRegs;
           const names = regs.map(r => `"${r.name}"`);
-          this._addLoadError(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle: ${regs.map(r => formatLocation(r.location)).join(' -> ')}`, dep.location);
+          addDependencyError(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle: ${regs.map(r => formatPotentiallyInternalLocation(r.location)).join(' -> ')} -> ${formatPotentiallyInternalLocation(dep.location)}`, dep.location);
           continue;
         }
       }
@@ -191,11 +198,27 @@ export class FixturePool {
       stack.pop();
     };
 
-    const hash = crypto.createHash('sha1');
     const names = Array.from(this._registrations.keys()).sort();
+
+    // First iterate over non-boxed fixtures to provide clear error messages.
     for (const name of names) {
       const registration = this._registrations.get(name)!;
-      visit(registration);
+      if (!registration.box)
+        visit(registration, true);
+    }
+
+    // If no errors found, iterate over boxed fixtures
+    if (!hasDependencyErrors) {
+      for (const name of names) {
+        const registration = this._registrations.get(name)!;
+        if (registration.box)
+          visit(registration, false);
+      }
+    }
+
+    const hash = crypto.createHash('sha1');
+    for (const name of names) {
+      const registration = this._registrations.get(name)!;
       if (registration.scope === 'worker')
         hash.update(registration.id + ';');
     }
@@ -226,6 +249,11 @@ export class FixturePool {
 }
 
 const signatureSymbol = Symbol('signature');
+
+export function formatPotentiallyInternalLocation(location: Location): string {
+  const isUserFixture = location && filterStackFile(location.file);
+  return isUserFixture ? formatLocation(location) : '<builtin>';
+}
 
 export function fixtureParameterNames(fn: Function | any, location: Location, onError: LoadErrorSink): string[] {
   if (typeof fn !== 'function')
