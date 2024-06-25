@@ -256,6 +256,41 @@ test('should detect fixture dependency cycle', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test('should hide boxed fixtures in dependency cycle', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'x.spec.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        storageState: async ({ context, storageState }, use) => {
+          await use(storageState);
+        }
+      });
+      test('failed', async ({ page }) => {});
+    `,
+  });
+  expect(result.output).toContain('Fixtures "context" -> "storageState" -> "context" form a dependency cycle: <builtin> -> x.spec.ts:3:25 -> <builtin>');
+  expect(result.exitCode).toBe(1);
+});
+
+test('should show boxed fixtures in dependency cycle if there are no public fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'x.spec.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        f1: [async ({ f2 }, use) => {
+          await use(f2);
+        }, { box: true }],
+        f2: [async ({ f1 }, use) => {
+          await use(f1);
+        }, { box: true }],
+      });
+      test('failed', async ({ f1, f2 }) => {});
+    `,
+  });
+  expect(result.output).toContain('Fixtures "f1" -> "f2" -> "f1" form a dependency cycle: x.spec.ts:3:25 -> x.spec.ts:3:25 -> x.spec.ts:3:25');
+  expect(result.exitCode).toBe(1);
+});
+
 test('should not reuse fixtures from one file in another one', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

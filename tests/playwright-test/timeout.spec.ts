@@ -182,7 +182,7 @@ test('should respect fixture timeout', async ({ runInlineTest }) => {
         slowSetup: [async ({}, use) => {
           await new Promise(f => setTimeout(f, 2000));
           await use('hey');
-        }, { timeout: 500, _title: 'custom title' }],
+        }, { timeout: 500, title: 'custom title' }],
         slowTeardown: [async ({}, use) => {
           await use('hey');
           await new Promise(f => setTimeout(f, 2000));
@@ -227,7 +227,7 @@ test('should respect test.setTimeout in the worker fixture', async ({ runInlineT
         slowTeardown: [async ({}, use) => {
           await use('hey');
           await new Promise(f => setTimeout(f, 2000));
-        }, { scope: 'worker', timeout: 400, _title: 'custom title' }],
+        }, { scope: 'worker', timeout: 400, title: 'custom title' }],
       });
       test('test ok', async ({ fixture, noTimeout }) => {
         await new Promise(f => setTimeout(f, 1000));
