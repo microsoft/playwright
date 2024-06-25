@@ -28,8 +28,6 @@ fi
 
 # Ubuntu 20.04
 FOCAL_TAGS=(
-  "next"
-  "next-focal"
   "v${PW_VERSION}-focal"
 )
 
@@ -39,7 +37,6 @@ fi
 
 # Ubuntu 22.04
 JAMMY_TAGS=(
-  "next-jammy"
   "v${PW_VERSION}-jammy"
   "v${PW_VERSION}"
 )
@@ -50,7 +47,6 @@ if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
 fi
 
 NOBLE_TAGS=(
-  "next-noble"
   "v${PW_VERSION}-noble"
 )
 
