@@ -22,6 +22,7 @@ import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
+import { Expandable } from '@web/components/expandable';
 
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
@@ -51,6 +52,18 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
         <div><i>Loading...</i></div>
     }
   </div>;
+};
+
+const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> = ({ attachment }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  return <Expandable title={
+    <a href={attachmentURL(attachment) + '&download'}>{attachment.name}</a>
+  } expanded={expanded} setExpanded={exp => setExpanded(exp)}>
+    {isTextualMimeType(attachment.contentType) ?
+      <TextAttachment attachment={attachment} label={attachment.name} /> :
+      <div><i>no preview available</i></div>
+    }
+  </Expandable>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
@@ -114,11 +127,7 @@ export const AttachmentsTab: React.FunctionComponent<{
       return <>
         { i > 0 && <hr /> }
         <div className='attachment-item' key={`attachment-${i}`}>
-          <a href={attachmentURL(a) + '&download'}>{a.name}</a>
-          { isTextualMimeType(a.contentType) ?
-            <TextAttachment attachment={a} label={a.name}/> :
-            <div><i>no preview available</i></div>
-          }
+          <ExpandableAttachment attachment={a} />
         </div>
       </>;
     })}
