@@ -29,6 +29,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
+import { popout } from './popout';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -190,7 +191,7 @@ export const SnapshotTab: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
-        const win = window.open(popoutUrl || '', '_blank');
+        const win = popout(popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
           new ConsoleAPI(injectedScript);
