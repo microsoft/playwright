@@ -319,7 +319,7 @@ export class Chromium extends BrowserType {
       if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
         chromeArguments.push('--headless=new');
       else
-        chromeArguments.push('--headless');
+        chromeArguments.push('--headless=old');
 
       chromeArguments.push(
           '--hide-scrollbars',
