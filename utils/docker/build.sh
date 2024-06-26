@@ -17,7 +17,7 @@ if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
 fi
 
 function cleanup() {
-  rm -f "playwright-core.tar.gz"
+  # rm -f "playwright-core.tar.gz"
 }
 
 trap "cleanup; cd $(pwd -P)" EXIT
