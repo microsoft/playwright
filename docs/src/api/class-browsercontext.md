@@ -357,17 +357,13 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
-  - `url` ?<[string]> either url or domain / path are required. Optional.
-  - `domain` ?<[string]> either url or domain / path are required Optional.
-  - `path` ?<[string]> either url or domain / path are required Optional.
+  - `url` ?<[string]> Either url or domain / path are required. Optional.
+  - `domain` ?<[string]> For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url or domain / path are required. Optional.
+  - `path` ?<[string]> Either url or domain / path are required Optional.
   - `expires` ?<[float]> Unix time in seconds. Optional.
   - `httpOnly` ?<[boolean]> Optional.
   - `secure` ?<[boolean]> Optional.
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
-
-Adds cookies to the browser context.
-
-For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
 
 ## async method: BrowserContext.addInitScript
 * since: v1.8

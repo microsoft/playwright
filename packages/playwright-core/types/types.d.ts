@@ -8286,9 +8286,7 @@ export interface BrowserContext {
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
    * ```
    *
-   * @param cookies Adds cookies to the browser context.
-   *
-   * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
+   * @param cookies
    */
   addCookies(cookies: ReadonlyArray<{
     name: string;
@@ -8296,17 +8294,18 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * either url or domain / path are required. Optional.
+     * Either url or domain / path are required. Optional.
      */
     url?: string;
 
     /**
-     * either url or domain / path are required Optional.
+     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url
+     * or domain / path are required. Optional.
      */
     domain?: string;
 
     /**
-     * either url or domain / path are required Optional.
+     * Either url or domain / path are required Optional.
      */
     path?: string;
 
