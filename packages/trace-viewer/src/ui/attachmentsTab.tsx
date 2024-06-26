@@ -124,12 +124,9 @@ export const AttachmentsTab: React.FunctionComponent<{
     })}
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
-      return <>
-        { i > 0 && <hr /> }
-        <div className='attachment-item' key={`attachment-${i}`}>
-          <ExpandableAttachment attachment={a} />
-        </div>
-      </>;
+      return <div className='attachment-item' key={`attachment-${i}`}>
+        <ExpandableAttachment attachment={a} />
+      </div>;
     })}
   </div>;
 };
