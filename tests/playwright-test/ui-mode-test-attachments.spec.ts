@@ -40,8 +40,10 @@ test('should contain text attachment', async ({ runUITest }) => {
   ]) {
     await page.getByText(`attach "${name}"`, { exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
-    if (displayedAsText)
+    if (displayedAsText){
+      await page.locator('.expandable-title', { hasText: name }).locator('.codicon-chevron-right').click();
       await expect(page.getByLabel(name)).toContainText(content.split('\n')?.[0]);
+    }
     await page.getByRole('link', { name: name }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(name);
