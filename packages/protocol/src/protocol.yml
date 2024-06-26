@@ -1603,6 +1603,27 @@ Page:
         slowMo: true
         snapshot: true
 
+    touchscreenTouch:
+      parameters:
+        type:
+          type: enum
+          literals:
+          - touchstart
+          - touchend
+          - touchmove
+          - touchcancel
+        touchPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              x: number
+              y: number
+              id: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?
