@@ -8294,7 +8294,7 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * either url or domain / path are required. Optional.
+     * Either url or domain / path are required. Optional.
      */
     url?: string;
 
@@ -8305,7 +8305,7 @@ export interface BrowserContext {
     domain?: string;
 
     /**
-     * either url or domain / path are required Optional.
+     * Either url or domain / path are required Optional.
      */
     path?: string;
 
