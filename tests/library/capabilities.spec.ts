@@ -139,15 +139,14 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
   it.skip(browserName === 'chromium' && browserMajorVersion < 99, 'Fixed in Chromium r956769');
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
-  await Promise.race([
-    page.evaluate(async () => {
-      const dir = await (window as any).showDirectoryPicker();
-      return dir.name;
-    }).catch(e => expect(e.message).toContain('DOMException: The user aborted a request')),
-    // The dialog will not be accepted, so we just wait for some time to
-    // to give the browser a chance to crash.
-    new Promise(r => setTimeout(r, 1000))
-  ]);
+  page.evaluate(async () => {
+    const dir = await (window as any).showDirectoryPicker();
+    return dir.name;
+    // In headless it throws (aborted), in headed it stalls (Test ended) and waits for the picker to be accepted.
+  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): The user aborted a request|Test ended)/));
+  // The dialog will not be accepted, so we just wait for some time to
+  // to give the browser a chance to crash.
+  await page.waitForTimeout(3_000);
 });
 
 it('should not crash on storage.getDirectory()', async ({ page, server, browserName, isMac }) => {
