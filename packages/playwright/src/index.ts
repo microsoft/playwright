@@ -274,6 +274,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       contexts.set(context, contextData);
       if (captureVideo)
         context.on('page', page => contextData.pagesWithVideo.push(page));
+
+      if (process.env.PW_CLOCK === 'frozen') {
+        await (context as any)._wrapApiCall(async () => {
+          await context.clock.install({ time: 0 });
+          await context.clock.pauseAt(1000);
+        }, true);
+      } else if (process.env.PW_CLOCK === 'realtime') {
+        await (context as any)._wrapApiCall(async () => {
+          await context.clock.install({ time: 0 });
+        }, true);
+      }
+
       return context;
     });
 
