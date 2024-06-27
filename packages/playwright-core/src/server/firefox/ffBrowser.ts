@@ -21,7 +21,7 @@ import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
-import type { Page, PageBinding, PageDelegate } from '../page';
+import type { InitScript, Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
@@ -352,8 +352,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials });
   }
 
-  async doAddInitScript(source: string) {
-    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this.initScripts.map(script => ({ script })) });
+  async doAddInitScript(initScript: InitScript) {
+    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this.initScripts.map(script => ({ script: script.source })) });
   }
 
   async doRemoveInitScripts() {
