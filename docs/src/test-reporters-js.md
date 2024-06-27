@@ -426,6 +426,7 @@ npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
 * [Argos Visual Testing](https://argos-ci.com/docs/playwright)
+* [Common Test Report Format](https://github.com/ctrf-io/playwright-ctrf-json-report)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
 * [GitHub Actions Reporter](https://www.npmjs.com/package/@estruyf/github-actions-reporter)
 * [GitHub Pull Request Comment](https://github.com/marketplace/actions/playwright-report-comment)
