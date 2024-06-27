@@ -15,12 +15,13 @@
  */
 
 import fs from 'fs';
+import type { AddressInfo } from 'net';
 import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { getUserData } from 'playwright/lib/transform/compilationCache';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from 'playwright/types/test';
 import type { FullConfig } from 'playwright/types/testReporter';
-import type { InlineConfig, Plugin, TransformResult, UserConfig } from 'vite';
+import type { InlineConfig, Plugin, PreviewServer, TransformResult, UserConfig } from 'vite';
 import type { ImportInfo } from './tsxTransform';
 import { resolveHook } from 'playwright/lib/transform/transform';
 
@@ -164,7 +165,7 @@ export function hasJSComponents(components: ImportInfo[]): boolean {
 const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 
-export function transformIndexFile(id: string, content: string, templateDir: string, registerSource: string, importInfos: Map<string, ImportInfo>): TransformResult  | null {
+export function transformIndexFile(id: string, content: string, templateDir: string, registerSource: string, importInfos: Map<string, ImportInfo>): TransformResult | null {
   // Vite React plugin will do this for .jsx files, but not .js files.
   if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
     const code = `import React from 'react';\n${content}`;
@@ -196,4 +197,22 @@ export function transformIndexFile(id: string, content: string, templateDir: str
 
 export function frameworkConfig(config: FullConfig): { registerSourceFile: string, frameworkPluginFactory?: () => Promise<Plugin> } {
   return (config as any)['@playwright/experimental-ct-core'];
+}
+
+export function getTestBaseUrl(config: FullConfig, previewServer: PreviewServer, viteConfig: Record<string, any>): string | undefined {
+  const use = config.projects[0].use as CtConfig;
+  if (use.baseURL)
+    return use.baseURL;
+
+  const address = previewServer.httpServer.address();
+  if (isAddressInfo(address)) {
+    const protocol = viteConfig.preview.https ? 'https:' : 'http:';
+    return `${protocol}//${viteConfig.preview.host}:${address.port}`;
+  }
+
+  return undefined;
+}
+
+function isAddressInfo(maybeAddressInfo: undefined | unknown | AddressInfo): maybeAddressInfo is AddressInfo {
+  return Boolean(maybeAddressInfo) && Boolean((maybeAddressInfo as AddressInfo).address);
 }

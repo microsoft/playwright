@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import type http from 'http';
-import type { AddressInfo } from 'net';
 import path from 'path';
 import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
@@ -29,7 +28,7 @@ import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
-import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
+import { createConfig, frameworkConfig, getTestBaseUrl, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
 
 const log = debug('pw:vite');
@@ -57,12 +56,10 @@ export function createPlugin(): TestRunnerPlugin {
       const { preview } = await import('vite');
       const previewServer = await preview(viteConfig);
       stoppableServer = stoppable(previewServer.httpServer as http.Server, 0);
-      const isAddressInfo = (x: any): x is AddressInfo => x?.address;
-      const address = previewServer.httpServer.address();
-      if (isAddressInfo(address)) {
-        const protocol = viteConfig.preview.https ? 'https:' : 'http:';
-        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//${viteConfig.preview.host}:${address.port}`;
-      }
+
+      const baseUrl = getTestBaseUrl(config, previewServer, viteConfig);
+      if (baseUrl)
+        process.env.PLAYWRIGHT_TEST_BASE_URL = baseUrl;
     },
 
     end: async () => {
