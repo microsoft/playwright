@@ -194,7 +194,7 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
     }
     await this._pageProxySession.send('Input.dispatchTouchEvent', {
       type,
-      touchPoints: touchPoints.map(p => ({...p, id: p.id || 0})),
+      touchPoints: touchPoints.map(p => ({ ...p, id: p.id || 0 })),
       modifiers: toModifiersMask(modifiers)
     });
   }

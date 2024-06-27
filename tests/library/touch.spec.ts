@@ -26,7 +26,7 @@ it('slow swipe events @smoke', async ({ page }) => {
   await page.setContent(`<div id="a" style="background: lightblue; width: 200px; height: 200px">a</div>`);
   const eventsHandle = await trackEvents(await page.locator('#a'));
   const center = await centerPoint(page.locator('#a'));
-  await page.touchscreen.touch('touchstart', [{...center, id: 1}]);
+  await page.touchscreen.touch('touchstart', [{ ...center, id: 1 }]);
   expect.soft(await eventsHandle.jsonValue()).toEqual([
     'pointerover',
     'pointerenter',
@@ -35,8 +35,8 @@ it('slow swipe events @smoke', async ({ page }) => {
   ]);
 
   await eventsHandle.evaluate(events => events.length = 0);
-  await page.touchscreen.touch('touchmove', [{x: center.x + 10, y: center.y + 10, id: 1}]);
-  await page.touchscreen.touch('touchmove', [{x: center.x + 20, y: center.y + 20, id: 1}]);
+  await page.touchscreen.touch('touchmove', [{ x: center.x + 10, y: center.y + 10, id: 1 }]);
+  await page.touchscreen.touch('touchmove', [{ x: center.x + 20, y: center.y + 20, id: 1 }]);
   expect.soft(await eventsHandle.jsonValue()).toEqual([
     'pointermove',
     'touchmove',
@@ -45,7 +45,7 @@ it('slow swipe events @smoke', async ({ page }) => {
   ]);
 
   await eventsHandle.evaluate(events => events.length = 0);
-  await page.touchscreen.touch('touchend', [{x: center.x + 20, y: center.y + 20, id: 1}]);
+  await page.touchscreen.touch('touchend', [{ x: center.x + 20, y: center.y + 20, id: 1 }]);
   expect.soft(await eventsHandle.jsonValue()).toEqual([
     'pointerup',
     'pointerout',
@@ -61,9 +61,8 @@ async function trackEvents(target: Locator) {
     for (const event of [
       'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'click',
       'pointercancel', 'pointerdown', 'pointerenter', 'pointerleave', 'pointermove', 'pointerout', 'pointerover', 'pointerup',
-      'touchstart', 'touchend', 'touchmove', 'touchcancel',
-    ])
-    target.addEventListener(event, () => events.push(event), { passive: false });
+      'touchstart', 'touchend', 'touchmove', 'touchcancel',])
+      target.addEventListener(event, () => events.push(event), { passive: false });
     return events;
   });
   return eventsHandle;
