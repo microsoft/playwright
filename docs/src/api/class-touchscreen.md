@@ -32,7 +32,7 @@ Synthesizes a touch event.
 
 Type of the touch event.
 
-### param: Touchscreen.touch.touchPoints
+### param: Touchscreen.touch.touches
 * since: v1.46
 - `touchPoints` <[Array]<[Object]>>
   - `x` <[float]> x coordinate of the event in CSS pixels.
