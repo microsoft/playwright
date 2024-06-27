@@ -19682,6 +19682,29 @@ export interface Touchscreen {
    * @param y
    */
   tap(x: number, y: number): Promise<void>;
+
+  /**
+   * Synthesizes a touch event.
+   * @param type Type of the touch event.
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
+   * touch events for the duration of its movement around the surface.
+   */
+  touch(type: "touchstart"|"touchend"|"touchmove"|"touchcancel", touchPoints: ReadonlyArray<{
+    /**
+     * x coordinate of the event in CSS pixels.
+     */
+    x: number;
+
+    /**
+     * y coordinate of the event in CSS pixels.
+     */
+    y: number;
+
+    /**
+     * Identifier used to track the touch point between events, must be unique within an event. Optional.
+     */
+    id?: number;
+  }>): Promise<void>;
 }
 
 /**

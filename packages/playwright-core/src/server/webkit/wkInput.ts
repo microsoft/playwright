@@ -182,4 +182,20 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       modifiers: toModifiersMask(modifiers),
     });
   }
+
+  async touch(eventType: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], modifiers: Set<types.KeyboardModifier>) {
+    let type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel';
+    switch (eventType) {
+      case 'touchstart': type = 'touchStart'; break;
+      case 'touchmove': type = 'touchMove'; break;
+      case 'touchend': type = 'touchEnd'; break;
+      case 'touchcancel': type = 'touchCancel'; break;
+      default: throw new Error('Invalid eventType: ' + eventType);
+    }
+    await this._pageProxySession.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: touchPoints.map(p => ({ ...p, id: p.id || 0 })),
+      modifiers: toModifiersMask(modifiers)
+    });
+  }
 }
