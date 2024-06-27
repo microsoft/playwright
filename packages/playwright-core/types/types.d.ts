@@ -19687,7 +19687,7 @@ export interface Touchscreen {
   /**
    * Synthesizes a touch event.
    * @param type Type of the touch event.
-   * @param touchPoints List of touch points for this event. `id` is a unieue identifier of a touch point that helps indentify it between
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
    * touch events for the duration of its movement around the surface.
    */
   touch(type: "touchstart"|"touchend"|"touchmove"|"touchcancel", touchPoints: ReadonlyArray<{
