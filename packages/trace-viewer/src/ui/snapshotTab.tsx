@@ -38,7 +38,8 @@ export const SnapshotTab: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
+  openPage?: (url: string, target?: string) => Window | any,
+}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
@@ -190,7 +191,9 @@ export const SnapshotTab: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
-        const win = window.open(popoutUrl || '', '_blank');
+        if (!openPage)
+          openPage = window.open;
+        const win = openPage(popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
           new ConsoleAPI(injectedScript);
