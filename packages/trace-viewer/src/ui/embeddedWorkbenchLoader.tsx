@@ -21,6 +21,11 @@ import './embeddedWorkbenchLoader.css';
 import { Workbench } from './workbench';
 import { currentTheme, toggleTheme } from '@web/theme';
 
+function openPage(url: string, target?: string) {
+  if (url)
+    window.parent!.postMessage({ command: 'openExternal', params: { url, target } }, '*');
+}
+
 export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
   const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
   const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
@@ -38,7 +43,7 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
       }
     });
     // notify vscode that it is now listening to its messages
-    window.parent?.postMessage({ type: 'loaded' }, '*');
+    window.parent!.postMessage({ type: 'loaded' }, '*');
   }, []);
 
   React.useEffect(() => {
@@ -81,7 +86,7 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} />
+    <Workbench model={model} openPage={openPage} />
     {!traceURLs.length && <div className='empty-state'>
       <div className='title'>Select test to see the trace</div>
     </div>}
