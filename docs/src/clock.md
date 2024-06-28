@@ -2,6 +2,7 @@
 id: clock
 title: "Clock"
 ---
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
@@ -353,3 +354,10 @@ await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 await Page.Clock.RunForAsync(2000);
 await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:02 AM");
 ```
+
+## Related Videos
+
+<LiteYouTube
+  id="54_aC-rVKHg"
+  title="Playwright 1.45"
+/>
