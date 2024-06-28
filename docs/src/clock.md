@@ -8,6 +8,18 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Utilizing [Clock] functionality allows developers to manipulate and control time within tests, enabling the precise validation of features such as rendering time, timeouts, scheduled tasks without the delays and variability of real-time execution.
 
+The [Clock] API provides the following methods to control time:
+- `setFixedTime`: Sets the fixed time for `Date.now()` and `new Date()`.
+- `install`: initializes the clock and allows you to:
+  - `pauseAt`: Pauses the time at a specific time.
+  - `fastForward`: Fast forwards the time.
+  - `runFor`: Runs the time for a specific duration.
+  - `resume`: Resumes the time.
+- `setSystemTime`: Sets the current system time.
+
+The recommended approach is to use `setFixedTime` to set the time to a specific value. If that doesn't work for your use case, you can use `install` which allows you to pause time later on, fast forward it, tick it, etc. `setSystemTime` is only recommended for advanced use cases.
+
+:::note
 [`property: Page.clock`] overrides native global classes and functions related to time allowing them to be manually controlled:
   - `Date`
   - `setTimeout`
@@ -19,6 +31,7 @@ Accurately simulating time-dependent behavior is essential for verifying the cor
   - `requestIdleCallback`
   - `cancelIdleCallback`
   - `performance`
+:::
 
 ## Test with predefined time
 
