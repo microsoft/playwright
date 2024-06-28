@@ -67,7 +67,7 @@ test('should contain binary attachment', async ({ runUITest }) => {
   await page.getByText('Attachments').click();
   await page.getByText('attach "data"', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'data' }).click();
+  await page.locator('.expandable-title', { hasText: 'data' }).getByRole('link').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('data');
   expect(await readAllFromStream(await download.createReadStream())).toEqual(Buffer.from([1, 2, 3]));
@@ -88,7 +88,7 @@ test('should contain string attachment', async ({ runUITest }) => {
   await page.getByText('Attachments').click();
   await page.getByText('attach "note"', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'note' }).click();
+  await page.locator('.expandable-title', { hasText: 'note' }).getByRole('link').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('note');
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
