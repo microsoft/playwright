@@ -24,7 +24,6 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 
-
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type TextAttachmentProps = {
@@ -57,11 +56,18 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
 const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> = ({ attachment }) => {
   const [expanded, setExpanded] = React.useState(false);
   return <Expandable title={
-    <a href={attachmentURL(attachment) + '&download'}>{attachment.name}</a>
-  } expanded={expanded} setExpanded={exp => setExpanded(exp)}>
+    <>
+      {attachment.name}
+      <a href={attachmentURL(attachment) + '&download'}
+        className={'codicon codicon-cloud-download'}
+        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
+        onClick={$event => $event.stopPropagation()}>
+      </a>
+    </>
+  } expanded={expanded} expandOnTitleClick={true} setExpanded={exp => setExpanded(exp)}>
     {isTextualMimeType(attachment.contentType) ?
       <TextAttachment attachment={attachment} label={attachment.name} /> :
-      <div><i>no preview available</i></div>
+      <div aria-label={attachment.name}><i>no preview available</i></div>
     }
   </Expandable>;
 };
