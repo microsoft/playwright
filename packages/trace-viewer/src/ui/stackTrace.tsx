@@ -18,7 +18,6 @@ import * as React from 'react';
 import './stackTrace.css';
 import { ListView } from '@web/components/listView';
 import type { StackFrame } from '@protocol/channels';
-import { CopyToClipboard } from './copyToClipboard';
 
 const StackFrameListView = ListView<StackFrame>;
 
@@ -28,29 +27,21 @@ export const StackTraceView: React.FunctionComponent<{
   setSelectedFrame: (index: number) => void
 }> = ({ stack, setSelectedFrame, selectedFrame }) => {
   const frames = stack || [];
-  const getFileName = (frame: StackFrame) => {
-    const pathSep = frame.file[1] === ':' ? '\\' : '/';
-    const fileName = frame.file.split(pathSep).pop();
-    return fileName;
-  };
-
   return <StackFrameListView
     name='stack-trace'
     items={frames}
     selectedItem={frames[selectedFrame]}
     render={frame => {
+      const pathSep = frame.file[1] === ':' ? '\\' : '/';
       return <>
         <span className='stack-trace-frame-function'>
           {frame.function || '(anonymous)'}
         </span>
         <span className='stack-trace-frame-location'>
-          {getFileName(frame)}
+          {frame.file.split(pathSep).pop()}
         </span>
         <span className='stack-trace-frame-line'>
           {':' + frame.line}
-        </span>
-        <span className='stack-trace-copy-to-clipboard'>
-          <CopyToClipboard description='Copy filename' value={`${getFileName(frame)}:${frame.line}`}/>
         </span>
       </>;
     }}
