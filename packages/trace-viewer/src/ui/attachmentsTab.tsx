@@ -27,27 +27,15 @@ import { Expandable } from '@web/components/expandable';
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type TextAttachmentProps = {
-  attachment: Attachment;
+  attachmentText: string;
   label?: string;
 };
 
-const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachment, label }) => {
-  const [text, setText] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let isMounted = true;
-    fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
-      if (isMounted)
-        setText(text);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [attachment]);
+const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachmentText, label }) => {
   return <div aria-label={label}>
     {
-      text ?
-        <CodeMirrorWrapper text={text} readOnly wrapLines={false}></CodeMirrorWrapper> :
+      attachmentText ?
+        <CodeMirrorWrapper text={attachmentText} readOnly wrapLines={false}></CodeMirrorWrapper> :
         <div><i>Loading...</i></div>
     }
   </div>;
@@ -55,6 +43,18 @@ const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachme
 
 const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> = ({ attachment }) => {
   const [expanded, setExpanded] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+  const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
+
+  React.useMemo(() => {
+    if (expanded && !loaded) {
+      fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
+        setAttachmentText(text);
+        setLoaded(true);
+      });
+    }
+  }, [attachment, expanded, loaded]);
+
   return <Expandable title={
     <>
       {attachment.name}
@@ -66,7 +66,7 @@ const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> 
     </>
   } expanded={expanded} expandOnTitleClick={true} setExpanded={exp => setExpanded(exp)}>
     {isTextualMimeType(attachment.contentType) ?
-      <TextAttachment attachment={attachment} label={attachment.name} /> :
+      <TextAttachment attachmentText={attachmentText!} label={attachment.name} /> :
       <div aria-label={attachment.name}><i>no preview available</i></div>
     }
   </Expandable>;
