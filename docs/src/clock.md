@@ -2,11 +2,24 @@
 id: clock
 title: "Clock"
 ---
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
 Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Utilizing [Clock] functionality allows developers to manipulate and control time within tests, enabling the precise validation of features such as rendering time, timeouts, scheduled tasks without the delays and variability of real-time execution.
 
+The [Clock] API provides the following methods to control time:
+- `setFixedTime`: Sets the fixed time for `Date.now()` and `new Date()`.
+- `install`: initializes the clock and allows you to:
+  - `pauseAt`: Pauses the time at a specific time.
+  - `fastForward`: Fast forwards the time.
+  - `runFor`: Runs the time for a specific duration.
+  - `resume`: Resumes the time.
+- `setSystemTime`: Sets the current system time.
+
+The recommended approach is to use `setFixedTime` to set the time to a specific value. If that doesn't work for your use case, you can use `install` which allows you to pause time later on, fast forward it, tick it, etc. `setSystemTime` is only recommended for advanced use cases.
+
+:::note
 [`property: Page.clock`] overrides native global classes and functions related to time allowing them to be manually controlled:
   - `Date`
   - `setTimeout`
@@ -18,6 +31,7 @@ Accurately simulating time-dependent behavior is essential for verifying the cor
   - `requestIdleCallback`
   - `cancelIdleCallback`
   - `performance`
+:::
 
 ## Test with predefined time
 
@@ -118,13 +132,14 @@ expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM"
 ```java
 // Initialize clock with some time before the test time and let the page load
 // naturally. `Date.now` will progress as the timers fire.
-page.clock().install(new Clock.InstallOptions().setTime(Instant.parse("2024-02-02T08:00:00")));
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
+page.clock().install(new Clock.InstallOptions().setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pretend that the user closed the laptop lid and opened it again at 10am.
 // Pause the time once reached that point.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 
 // Assert the page state.
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
@@ -315,15 +330,16 @@ expect(locator).to_have_text("2/2/2024, 10:00:02 AM")
 ```
 
 ```java
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
 // Initialize clock with a specific time, let the page load naturally.
 page.clock().install(new Clock.InstallOptions()
-    .setTime(Instant.parse("2024-02-02T08:00:00")));
+    .setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
 
 // Tick through time manually, firing all timers in the process.
@@ -351,3 +367,10 @@ await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 await Page.Clock.RunForAsync(2000);
 await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:02 AM");
 ```
+
+## Related Videos
+
+<LiteYouTube
+  id="54_aC-rVKHg"
+  title="Playwright 1.45"
+/>

@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { LongStandingScope, assert, isError } from '../utils';
+import { LongStandingScope, assert, createGuid, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -56,7 +56,7 @@ export interface PageDelegate {
   goForward(): Promise<boolean>;
   exposeBinding(binding: PageBinding): Promise<void>;
   removeExposedBindings(): Promise<void>;
-  addInitScript(source: string): Promise<void>;
+  addInitScript(initScript: InitScript): Promise<void>;
   removeInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   potentiallyUninitializedPage(): Page;
@@ -154,7 +154,7 @@ export class Page extends SdkObject {
   private _emulatedMedia: Partial<EmulatedMedia> = {};
   private _interceptFileChooser = false;
   private readonly _pageBindings = new Map<string, PageBinding>();
-  readonly initScripts: string[] = [];
+  readonly initScripts: InitScript[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -527,8 +527,9 @@ export class Page extends SdkObject {
   }
 
   async addInitScript(source: string) {
-    this.initScripts.push(source);
-    await this._delegate.addInitScript(source);
+    const initScript = new InitScript(source);
+    this.initScripts.push(initScript);
+    await this._delegate.addInitScript(initScript);
   }
 
   async _removeInitScripts() {
@@ -903,6 +904,22 @@ function addPageBinding(bindingName: string, needsHandle: boolean, utilityScript
     return promise;
   };
   (globalThis as any)[bindingName].__installed = true;
+}
+
+export class InitScript {
+  readonly source: string;
+
+  constructor(source: string) {
+    const guid = createGuid();
+    this.source = `(() => {
+      globalThis.__pwInitScripts = globalThis.__pwInitScripts || {};
+      const hasInitScript = globalThis.__pwInitScripts[${JSON.stringify(guid)}];
+      if (hasInitScript)
+        return;
+      globalThis.__pwInitScripts[${JSON.stringify(guid)}] = true;
+      ${source}
+    })();`;
+  }
 }
 
 class FrameThrottler {
