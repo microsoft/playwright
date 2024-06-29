@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.45
 
+<LiteYouTube
+  id="54_aC-rVKHg"
+  title="Playwright 1.45"
+/>
+
 ### Clock
 
 Utilizing the new [Clock] API allows to manipulate and control time within tests to verify time-related behavior. This API covers many common scenarios, including:

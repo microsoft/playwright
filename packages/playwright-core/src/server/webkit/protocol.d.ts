@@ -5013,6 +5013,23 @@ might return multiple quads for inline nodes.
      * UTC time in seconds, counted from January 1, 1970.
      */
     export type TimeSinceEpoch = number;
+    /**
+     * Touch point.
+     */
+    export interface TouchPoint {
+      /**
+       * X coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      x: number;
+      /**
+       * Y coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      y: number;
+      /**
+       * Identifier used to track touch sources between events, must be unique within an event.
+       */
+      id: number;
+    }
     
     
     /**
@@ -5168,6 +5185,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       modifiers?: number;
     }
     export type dispatchTapEventReturnValue = {
+    }
+    /**
+     * Dispatches a touch event to the page.
+     */
+    export type dispatchTouchEventParameters = {
+      /**
+       * Type of the touch event.
+       */
+      type: "touchStart"|"touchMove"|"touchEnd"|"touchCancel";
+      /**
+       * Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+       */
+      modifiers?: number;
+      /**
+       * List of touch points
+       */
+      touchPoints?: TouchPoint[];
+    }
+    export type dispatchTouchEventReturnValue = {
     }
   }
   
@@ -9532,6 +9569,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
     "Input.dispatchWheelEvent": Input.dispatchWheelEventParameters;
     "Input.dispatchTapEvent": Input.dispatchTapEventParameters;
+    "Input.dispatchTouchEvent": Input.dispatchTouchEventParameters;
     "Inspector.enable": Inspector.enableParameters;
     "Inspector.disable": Inspector.disableParameters;
     "Inspector.initialized": Inspector.initializedParameters;
@@ -9843,6 +9881,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
     "Input.dispatchWheelEvent": Input.dispatchWheelEventReturnValue;
     "Input.dispatchTapEvent": Input.dispatchTapEventReturnValue;
+    "Input.dispatchTouchEvent": Input.dispatchTouchEventReturnValue;
     "Inspector.enable": Inspector.enableReturnValue;
     "Inspector.disable": Inspector.disableReturnValue;
     "Inspector.initialized": Inspector.initializedReturnValue;

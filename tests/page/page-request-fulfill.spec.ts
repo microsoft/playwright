@@ -140,10 +140,10 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, mode }) => {
+it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
-  it.skip(isElectron, 'Protocol error (Storage.getCookies): Browser context management is not supported');
+  it.skip(isElectron && electronMajorVersion < 30, 'Protocol error (Storage.getCookies): Browser context management is not supported');
 
   await page.route('**/*', route => {
     void route.fulfill({
@@ -253,8 +253,8 @@ it('should include the origin header', async ({ page, server, isAndroid }) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
-it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron, rewriteAndroidLoopbackURL }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const request = await playwright.request.newContext();
     const response = await request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
@@ -265,8 +265,8 @@ it('should fulfill with global fetch result', async ({ playwright, page, server,
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should fulfill with fetch result', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
     void route.fulfill({ response });
@@ -276,8 +276,8 @@ it('should fulfill with fetch result', async ({ page, server, isElectron, rewrit
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result and overrides', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should fulfill with fetch result and overrides', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
     void route.fulfill({
@@ -295,8 +295,8 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fetch original request and fulfill', async ({ page, server, isElectron, isAndroid }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should fetch original request and fulfill', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());
@@ -309,8 +309,8 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron, 'Electron 14+ is required');
+it('should fulfill with multiple set-cookie', async ({ page, server, isElectron, electronMajorVersion }) => {
+  it.skip(isElectron && electronMajorVersion < 14, 'Electron 14+ is required');
   const cookies = ['a=b', 'c=d'];
   await page.route('**/empty.html', async route => {
     void route.fulfill({
@@ -442,9 +442,9 @@ it('should fulfill json', async ({ page, server }) => {
 
 it('should fulfill with gzip and readback', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29261' },
-}, async ({ page, server, isAndroid, isElectron }) => {
+}, async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   server.enableGzip('/one-style.html');
   await page.route('**/one-style.html', async route => {
     const response = await route.fetch();

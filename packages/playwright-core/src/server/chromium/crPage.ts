@@ -26,7 +26,7 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
-import type { PageBinding, PageDelegate } from '../page';
+import type { InitScript, PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
@@ -256,8 +256,8 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async addInitScript(source: string, world: types.World = 'main'): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source, world));
+  async addInitScript(initScript: InitScript, world: types.World = 'main'): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(initScript, world));
   }
 
   async removeInitScripts() {
@@ -511,6 +511,20 @@ class FrameSession {
           this._addRendererListeners();
         }
 
+        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
+        for (const frame of localFrames) {
+          // Note: frames might be removed before we send these.
+          this._client._sendMayFail('Page.createIsolatedWorld', {
+            frameId: frame._id,
+            grantUniveralAccess: true,
+            worldName: UTILITY_WORLD_NAME,
+          });
+          for (const binding of this._crPage._browserContext._pageBindings.values())
+            frame.evaluateExpression(binding.source).catch(e => {});
+          for (const initScript of this._crPage._browserContext.initScripts)
+            frame.evaluateExpression(initScript.source).catch(e => {});
+        }
+
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
           // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
@@ -520,20 +534,6 @@ class FrameSession {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
-          const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
-          for (const frame of localFrames) {
-            // Note: frames might be removed before we send these.
-            this._client._sendMayFail('Page.createIsolatedWorld', {
-              frameId: frame._id,
-              grantUniveralAccess: true,
-              worldName: UTILITY_WORLD_NAME,
-            });
-            for (const binding of this._crPage._browserContext._pageBindings.values())
-              frame.evaluateExpression(binding.source).catch(e => {});
-            for (const source of this._crPage._browserContext.initScripts)
-              frame.evaluateExpression(source).catch(e => {});
-          }
-
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
         }
@@ -575,10 +575,10 @@ class FrameSession {
       promises.push(this._updateFileChooserInterception(true));
       for (const binding of this._crPage._page.allBindings())
         promises.push(this._initBinding(binding));
-      for (const source of this._crPage._browserContext.initScripts)
-        promises.push(this._evaluateOnNewDocument(source, 'main'));
-      for (const source of this._crPage._page.initScripts)
-        promises.push(this._evaluateOnNewDocument(source, 'main'));
+      for (const initScript of this._crPage._browserContext.initScripts)
+        promises.push(this._evaluateOnNewDocument(initScript, 'main'));
+      for (const initScript of this._crPage._page.initScripts)
+        promises.push(this._evaluateOnNewDocument(initScript, 'main'));
       if (screencastOptions)
         promises.push(this._startVideoRecording(screencastOptions));
     }
@@ -1099,9 +1099,9 @@ class FrameSession {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
-  async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {
+  async _evaluateOnNewDocument(initScript: InitScript, world: types.World): Promise<void> {
     const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
-    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
+    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName });
     this._evaluateOnNewDocumentIdentifiers.push(identifier);
   }
 

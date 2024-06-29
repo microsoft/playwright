@@ -578,8 +578,8 @@ class TextAssertionTool implements RecorderTool {
 
   onPointerUp(event: PointerEvent) {
     const target = this._hoverHighlight?.elements[0];
-    if (this._kind === 'value' && target && target.nodeName === 'INPUT' && (target as HTMLInputElement).disabled) {
-      // Click on a disabled input does not produce a "click" event, but we still want
+    if (this._kind === 'value' && target && (target.nodeName === 'INPUT' || target.nodeName === 'SELECT') && (target as HTMLInputElement).disabled) {
+      // Click on a disabled input (or select) does not produce a "click" event, but we still want
       // to assert the value.
       this._commitAssertValue();
     }

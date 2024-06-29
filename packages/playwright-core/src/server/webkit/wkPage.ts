@@ -30,7 +30,7 @@ import { eventsHelper } from '../../utils/eventsHelper';
 import { helper } from '../helper';
 import type { JSHandle } from '../javascript';
 import * as network from '../network';
-import type { PageBinding, PageDelegate } from '../page';
+import type { InitScript, PageBinding, PageDelegate } from '../page';
 import { Page } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
@@ -777,7 +777,7 @@ export class WKPage implements PageDelegate {
     await this._updateBootstrapScript();
   }
 
-  async addInitScript(script: string): Promise<void> {
+  async addInitScript(initScript: InitScript): Promise<void> {
     await this._updateBootstrapScript();
   }
 
@@ -797,8 +797,8 @@ export class WKPage implements PageDelegate {
 
     for (const binding of this._page.allBindings())
       scripts.push(binding.source);
-    scripts.push(...this._browserContext.initScripts);
-    scripts.push(...this._page.initScripts);
+    scripts.push(...this._browserContext.initScripts.map(s => s.source));
+    scripts.push(...this._page.initScripts.map(s => s.source));
     return scripts.join(';\n');
   }
 

@@ -21,7 +21,7 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert, createGuid } from '../../utils';
 import * as network from '../network';
-import type { PageBinding, PageDelegate, Worker } from '../page';
+import type { InitScript, PageBinding, PageDelegate, Worker } from '../page';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
@@ -348,7 +348,7 @@ export class CRBrowserContext extends BrowserContext {
   override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [super._initialize()];
-    if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank' && this._options.acceptDownloads !== 'internal-browser-default') {
+    if (this._browser.options.name !== 'clank' && this._options.acceptDownloads !== 'internal-browser-default') {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads === 'accept' ? 'allowAndName' : 'deny',
         browserContextId: this._browserContextId,
@@ -486,9 +486,9 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateHttpCredentials();
   }
 
-  async doAddInitScript(source: string) {
+  async doAddInitScript(initScript: InitScript) {
     for (const page of this.pages())
-      await (page._delegate as CRPage).addInitScript(source);
+      await (page._delegate as CRPage).addInitScript(initScript);
   }
 
   async doRemoveInitScripts() {

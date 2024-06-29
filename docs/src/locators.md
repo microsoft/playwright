@@ -1444,14 +1444,6 @@ page.getByText("orange").click();
 await page.GetByText("orange").ClickAsync();
 ```
 
-```html card
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
-```
-
 #### Filter by text
 Use the [`method: Locator.filter`] to locate a specific item in a list.
 
