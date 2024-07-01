@@ -46,7 +46,7 @@ test('console event should work in popup 2', async ({ page, browserName }) => {
   const [, message, popup] = await Promise.all([
     page.evaluate(async () => {
       const win = window.open('javascript:console.log("hello")')!;
-      await new Promise(f => setTimeout(f, 0));
+      await new Promise(f => window.builtinSetTimeout(f, 0));
       win.close();
     }),
     page.context().waitForEvent('console', msg => msg.type() === 'log'),

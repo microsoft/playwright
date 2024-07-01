@@ -39,6 +39,11 @@
   font-weight: bold;
 }
 
+.network-request-details-general {
+  white-space: pre;
+  margin-left: 10px;
+}
+
 .network-request-details-tab .cm-wrapper {
   overflow: hidden;
 }
@@ -52,7 +57,7 @@
 .tab-network .toolbar::after {
   box-shadow: none !important;
 }
- 
+
 .tab-network .tabbed-pane-tab.selected {
   font-weight: bold;
 }

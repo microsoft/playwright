@@ -16,12 +16,9 @@
  */
 
 import type { Page } from '@playwright/test';
-import { test as it, expect } from './pageTest';
+import { test as it, expect, rafraf } from './pageTest';
 
-async function giveItAChanceToResolve(page: Page) {
-  for (let i = 0; i < 5; i++)
-    await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-}
+const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
 it('element state checks should work as expected for label with zero-sized input', async ({ page, server }) => {
   await page.setContent(`
@@ -379,4 +376,19 @@ it('check retargeting', async ({ page, asset }) => {
       expect(await page.$eval('input', (input: HTMLInputElement) => input.checked)).toBe(false);
     });
   }
+});
+
+it('should not retarget anchor into parent label', async ({ page }) => {
+  await page.setContent(`
+    <label disabled>Text<a href='#' onclick='window.__clicked=1'>Target</a></label>
+  `);
+  await page.locator('a').click();
+  expect(await page.evaluate('window.__clicked')).toBe(1);
+
+  await page.setContent(`
+    <input type="radio" id="input-id" checked disabled />
+    <label for="input-id">Text<a href='#' onclick='window.__clicked=2'>Target</a></label>
+  `);
+  await page.locator('a').click();
+  expect(await page.evaluate('window.__clicked')).toBe(2);
 });

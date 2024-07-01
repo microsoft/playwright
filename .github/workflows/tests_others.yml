@@ -1,0 +1,161 @@
+name: tests others
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+    types: [ labeled ]
+    branches:
+      - main
+      - release-*
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  test_stress:
+    name: Stress - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Stick with macos-latest-large for now which is Intel-based until
+        # https://github.com/microsoft/playwright/issues/30705 is fixed.
+        os: [ubuntu-latest, macos-latest-large, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run stest contexts -- --project=chromium
+      if: ${{ !cancelled() }}
+    - run: npm run stest browsers -- --project=chromium
+      if: ${{ !cancelled() }}
+    - run: npm run stest frames -- --project=chromium
+      if: ${{ !cancelled() }}
+    - run: npm run stest contexts -- --project=webkit
+      if: ${{ !cancelled() }}
+    - run: npm run stest browsers -- --project=webkit
+      if: ${{ !cancelled() }}
+    - run: npm run stest frames -- --project=webkit
+      if: ${{ !cancelled() }}
+    - run: npm run stest contexts -- --project=firefox
+      if: ${{ !cancelled() }}
+    - run: npm run stest browsers -- --project=firefox
+      if: ${{ !cancelled() }}
+    - run: npm run stest frames -- --project=firefox
+      if: ${{ !cancelled() }}
+    - run: npm run stest heap -- --project=chromium
+      if: ${{ !cancelled() }}
+
+  test_webview2:
+    name: WebView2
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    runs-on: windows-2022
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    - run: dotnet build
+      working-directory: tests/webview2/webview2-app/
+    - name: Update to Evergreen WebView2 Runtime
+      shell: pwsh
+      run: |
+        # See here: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+        Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'setup.exe'
+        Start-Process -FilePath setup.exe -Verb RunAs -Wait
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 20
+        browsers-to-install: chromium
+        command: npm run webview2test
+        bot-name: "webview2-chromium-windows"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+
+  test_clock_frozen_time_linux:
+    name: time library - ${{ matrix.clock }}
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        clock: [frozen, realtime]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 20
+        browsers-to-install: chromium
+        command: npm run test -- --project=chromium-*
+        bot-name: "${{ matrix.clock }}-time-library-chromium-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        PW_CLOCK: ${{ matrix.clock }}
+
+  test_clock_frozen_time_test_runner:
+    name: time test runner - ${{ matrix.clock }}
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    runs-on: ubuntu-22.04
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        clock: [frozen, realtime]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 20
+        command: npm run ttest
+        bot-name: "${{ matrix.clock }}-time-runner-chromium-linux"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        PW_CLOCK: ${{ matrix.clock }}
+
+  test_electron:
+    name: Electron - ${{ matrix.os }}
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/run-test
+      with:
+        browsers-to-install: chromium
+        command: npm run etest
+        bot-name: "electron-${{ matrix.os }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        ELECTRON_SKIP_BINARY_DOWNLOAD:

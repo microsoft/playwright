@@ -2122,6 +2122,10 @@ export module Protocol {
        * Array of <code>DOMNode</code> ids of any children marked as selected.
        */
       selectedChildNodeIds?: NodeId[];
+      /**
+       * On / off state of switch form controls.
+       */
+      switchState?: "off"|"on";
     }
     /**
      * A structure holding an RGBA color.
@@ -4584,6 +4588,14 @@ might return multiple quads for inline nodes.
     }
     export type resetPermissionsReturnValue = {
     }
+    /**
+     * Overrides window.orientation with provided value.
+     */
+    export type setOrientationOverrideParameters = {
+      angle?: number;
+    }
+    export type setOrientationOverrideReturnValue = {
+    }
   }
   
   /**
@@ -5001,6 +5013,23 @@ might return multiple quads for inline nodes.
      * UTC time in seconds, counted from January 1, 1970.
      */
     export type TimeSinceEpoch = number;
+    /**
+     * Touch point.
+     */
+    export interface TouchPoint {
+      /**
+       * X coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      x: number;
+      /**
+       * Y coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      y: number;
+      /**
+       * Identifier used to track touch sources between events, must be unique within an event.
+       */
+      id: number;
+    }
     
     
     /**
@@ -5156,6 +5185,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       modifiers?: number;
     }
     export type dispatchTapEventReturnValue = {
+    }
+    /**
+     * Dispatches a touch event to the page.
+     */
+    export type dispatchTouchEventParameters = {
+      /**
+       * Type of the touch event.
+       */
+      type: "touchStart"|"touchMove"|"touchEnd"|"touchCancel";
+      /**
+       * Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+       */
+      modifiers?: number;
+      /**
+       * List of touch points
+       */
+      touchPoints?: TouchPoint[];
+    }
+    export type dispatchTouchEventReturnValue = {
     }
   }
   
@@ -7352,14 +7401,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type crashReturnValue = {
     }
     /**
-     * Overrides window.orientation with provided value.
-     */
-    export type setOrientationOverrideParameters = {
-      angle?: number;
-    }
-    export type setOrientationOverrideReturnValue = {
-    }
-    /**
      * Ensures that the scroll regions are up to date.
      */
     export type updateScrollingStateParameters = {
@@ -9509,6 +9550,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Emulation.setActiveAndFocused": Emulation.setActiveAndFocusedParameters;
     "Emulation.grantPermissions": Emulation.grantPermissionsParameters;
     "Emulation.resetPermissions": Emulation.resetPermissionsParameters;
+    "Emulation.setOrientationOverride": Emulation.setOrientationOverrideParameters;
     "Heap.enable": Heap.enableParameters;
     "Heap.disable": Heap.disableParameters;
     "Heap.gc": Heap.gcParameters;
@@ -9527,6 +9569,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
     "Input.dispatchWheelEvent": Input.dispatchWheelEventParameters;
     "Input.dispatchTapEvent": Input.dispatchTapEventParameters;
+    "Input.dispatchTouchEvent": Input.dispatchTouchEventParameters;
     "Inspector.enable": Inspector.enableParameters;
     "Inspector.disable": Inspector.disableParameters;
     "Inspector.initialized": Inspector.initializedParameters;
@@ -9591,7 +9634,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.createUserWorld": Page.createUserWorldParameters;
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.crash": Page.crashParameters;
-    "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
     "Page.updateScrollingState": Page.updateScrollingStateParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
@@ -9820,6 +9862,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Emulation.setActiveAndFocused": Emulation.setActiveAndFocusedReturnValue;
     "Emulation.grantPermissions": Emulation.grantPermissionsReturnValue;
     "Emulation.resetPermissions": Emulation.resetPermissionsReturnValue;
+    "Emulation.setOrientationOverride": Emulation.setOrientationOverrideReturnValue;
     "Heap.enable": Heap.enableReturnValue;
     "Heap.disable": Heap.disableReturnValue;
     "Heap.gc": Heap.gcReturnValue;
@@ -9838,6 +9881,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
     "Input.dispatchWheelEvent": Input.dispatchWheelEventReturnValue;
     "Input.dispatchTapEvent": Input.dispatchTapEventReturnValue;
+    "Input.dispatchTouchEvent": Input.dispatchTouchEventReturnValue;
     "Inspector.enable": Inspector.enableReturnValue;
     "Inspector.disable": Inspector.disableReturnValue;
     "Inspector.initialized": Inspector.initializedReturnValue;
@@ -9902,7 +9946,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.createUserWorld": Page.createUserWorldReturnValue;
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.crash": Page.crashReturnValue;
-    "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
     "Page.updateScrollingState": Page.updateScrollingStateReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;

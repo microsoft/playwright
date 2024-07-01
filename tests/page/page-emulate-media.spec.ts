@@ -124,6 +124,29 @@ it('should emulate reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: null });
 });
 
+it('should keep reduced motion and color emulation after reload', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31328' });
+
+  // Pre-conditions
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toEqual(false);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(false);
+
+  // Emulation
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toEqual(true);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+
+  // Force CanonicalBrowsingContext replacement in Firefox.
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toEqual(true);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+});
+
 it('should emulate forcedColors ', async ({ page, browserName }) => {
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
   await page.emulateMedia({ forcedColors: 'none' });

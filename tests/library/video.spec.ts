@@ -206,6 +206,36 @@ it.describe('screencast', () => {
     expectRedFrames(videoFile, size);
   });
 
+  it('should continue recording main page after popup closes', async ({ browser, browserName }, testInfo) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30837' });
+    // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    await page.setContent('<a target=_blank href="about:blank">clickme</a>');
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      await page.click('a'),
+    ]);
+    await popup.close();
+
+    await page.evaluate(() => {
+      document.body.textContent = ''; // remove link
+      document.body.style.backgroundColor = 'red';
+    });
+    await waitForRafs(page, 100);
+    await context.close();
+
+    const videoFile = await page.video().path();
+    expectRedFrames(videoFile, size);
+  });
+
   it('should expose video path', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
@@ -829,8 +859,8 @@ async function waitForRafs(page: Page, count: number): Promise<void> {
       if (!count)
         resolve();
       else
-        requestAnimationFrame(onRaf);
+        window.builtinRequestAnimationFrame(onRaf);
     };
-    requestAnimationFrame(onRaf);
+    window.builtinRequestAnimationFrame(onRaf);
   }), count);
 }

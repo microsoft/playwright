@@ -631,6 +631,27 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     expect.soft(sources2.get('C#')!.text).toContain(`await Expect(page.Locator("#second")).ToHaveValueAsync("bar")`);
   });
 
+  test('should assert value on disabled select', async ({ openRecorder, browserName }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <select id=first><option value=foo1>Foo1</option><option value=bar1>Bar1</option></select>
+      <select id=second disabled><option value=foo2>Foo2</option><option value=bar2 selected>Bar2</option></select>
+    `);
+
+    await recorder.page.click('x-pw-tool-item.value');
+    await recorder.hoverOverElement('#second');
+    const [sources2] = await Promise.all([
+      recorder.waitForOutput('JavaScript', '#second'),
+      recorder.trustedClick(),
+    ]);
+    expect.soft(sources2.get('JavaScript')!.text).toContain(`await expect(page.locator('#second')).toHaveValue('bar2')`);
+    expect.soft(sources2.get('Python')!.text).toContain(`expect(page.locator("#second")).to_have_value("bar2")`);
+    expect.soft(sources2.get('Python Async')!.text).toContain(`await expect(page.locator("#second")).to_have_value("bar2")`);
+    expect.soft(sources2.get('Java')!.text).toContain(`assertThat(page.locator("#second")).hasValue("bar2")`);
+    expect.soft(sources2.get('C#')!.text).toContain(`await Expect(page.Locator("#second")).ToHaveValueAsync("bar2")`);
+  });
+
   test('should assert visibility', async ({ openRecorder }) => {
     const recorder = await openRecorder();
 

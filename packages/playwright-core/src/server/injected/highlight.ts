@@ -101,7 +101,7 @@ export class Highlight {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
     this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), { tooltipText: asLocator(this._language, stringifySelector(selector)) });
-    this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
+    this._rafRequest = this._injectedScript.builtinRequestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
   uninstall() {

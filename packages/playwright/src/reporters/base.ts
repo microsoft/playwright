@@ -414,7 +414,7 @@ function relativeTestPath(config: FullConfig, test: TestCase): string {
 
 export function stepSuffix(step: TestStep | undefined) {
   const stepTitles = step ? step.titlePath() : [];
-  return stepTitles.map(t => ' › ' + t).join('');
+  return stepTitles.map(t => t.split('\n')[0]).map(t => ' › ' + t).join('');
 }
 
 export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {

@@ -18,8 +18,11 @@ import type { ElementHandle, Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
+it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
+it.fixme(({ headless, isLinux }) => isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
+it.fixme(({ headless, isWindows, browserName }) => isWindows && !headless && browserName === 'webkit', 'WebKit win also send stray mouse events.');
+
 it.describe('Drag and drop', () => {
-  it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
   it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
 
   it('should work @smoke', async ({ page, server }) => {
@@ -257,9 +260,7 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
   });
 
-  it('should be able to drag the mouse in a frame', async ({ page, server, isAndroid }) => {
-    it.fixme(isAndroid);
-
+  it('should be able to drag the mouse in a frame', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     const eventsHandle = await trackEvents(await page.frames()[1].$('html'));
     await page.mouse.move(30, 30);
@@ -334,7 +335,7 @@ it.describe('Drag and drop', () => {
   });
 });
 
-it('should work if not doing a drag', async ({ page }) => {
+it('should work if not doing a drag', async ({ page, isLinux, headless }) => {
   const eventsHandle = await trackEvents(await page.$('html'));
   await page.mouse.move(50, 50);
   await page.mouse.down();
@@ -357,7 +358,7 @@ it('should report event.buttons', async ({ page, browserName }) => {
     function onEvent(event) {
       logs.push({ type: event.type, buttons: event.buttons });
     }
-    await new Promise(requestAnimationFrame);
+    await new Promise(window.builtinRequestAnimationFrame);
     return logs;
   });
   await page.mouse.move(20, 20);

@@ -25,7 +25,7 @@
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "6.1.1",
     "stack-utils": "2.0.5",
-    "ws": "8.4.2"
+    "ws": "8.17.1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",

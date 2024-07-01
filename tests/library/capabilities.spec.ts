@@ -110,7 +110,6 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
 });
 
 it('should support webgl @smoke', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -119,10 +118,7 @@ it('should support webgl @smoke', async ({ page, browserName, platform }) => {
 });
 
 it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows, platform }) => {
-  it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && isWindows);
-  it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
-  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
 
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
@@ -143,15 +139,14 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
   it.skip(browserName === 'chromium' && browserMajorVersion < 99, 'Fixed in Chromium r956769');
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
-  await Promise.race([
-    page.evaluate(async () => {
-      const dir = await (window as any).showDirectoryPicker();
-      return dir.name;
-    }).catch(e => expect(e.message).toContain('DOMException: The user aborted a request')),
-    // The dialog will not be accepted, so we just wait for some time to
-    // to give the browser a chance to crash.
-    new Promise(r => setTimeout(r, 1000))
-  ]);
+  page.evaluate(async () => {
+    const dir = await (window as any).showDirectoryPicker();
+    return dir.name;
+    // In headless it throws (aborted), in headed it stalls (Test ended) and waits for the picker to be accepted.
+  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): The user aborted a request|Test ended)/));
+  // The dialog will not be accepted, so we just wait for some time to
+  // to give the browser a chance to crash.
+  await page.waitForTimeout(3_000);
 });
 
 it('should not crash on storage.getDirectory()', async ({ page, server, browserName, isMac }) => {

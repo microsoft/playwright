@@ -43,6 +43,7 @@ it('should ignore eval() scripts by default', async function({ page, server }) {
 });
 
 it('shouldn\'t ignore eval() scripts if reportAnonymousScripts is true', async function({ page, server }) {
+  it.skip(!!process.env.PW_CLOCK);
   await page.coverage.startJSCoverage({ reportAnonymousScripts: true });
   await page.goto(server.PREFIX + '/jscoverage/eval.html');
   const coverage = await page.coverage.stopJSCoverage();

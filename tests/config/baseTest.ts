@@ -41,3 +41,16 @@ export function step<This extends Object, Args extends any[], Return>(
   }
   return replacementMethod;
 }
+
+declare global {
+  interface Window {
+    builtinSetTimeout: WindowOrWorkerGlobalScope['setTimeout'],
+    builtinClearTimeout: WindowOrWorkerGlobalScope['setTimeout'],
+    builtinSetInterval: WindowOrWorkerGlobalScope['setInterval'],
+    builtinClearInterval: WindowOrWorkerGlobalScope['clearInterval'],
+    builtinRequestAnimationFrame: AnimationFrameProvider['requestAnimationFrame'],
+    builtinCancelAnimationFrame: AnimationFrameProvider['cancelAnimationFrame'],
+    builtinPerformance: WindowOrWorkerGlobalScope['performance'],
+    builtinDate: typeof Date,
+  }
+}

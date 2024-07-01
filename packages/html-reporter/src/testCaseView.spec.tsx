@@ -52,8 +52,8 @@ const testCase: TestCase = {
   projectName: 'chromium',
   location: { file: 'test.spec.ts', line: 42, column: 0 },
   annotations: [
-    { type: 'annotation', description: 'Annotation text', url: 'example url' },
-    { type: 'annotation', description: 'Another annotation text', url: 'Another example url' },
+    { type: 'annotation', description: 'Annotation text' },
+    { type: 'annotation', description: 'Another annotation text' },
   ],
   tags: [],
   outcome: 'expected',

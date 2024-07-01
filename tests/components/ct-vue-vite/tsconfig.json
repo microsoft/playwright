@@ -1,5 +1,5 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "tests/**/*", "playwright"],
   "compilerOptions": {
     "baseUrl": ".",
@@ -8,11 +8,5 @@
       "*": ["_"],
     },
     "ignoreDeprecations": "5.0"
-  },
-
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+  }
 }

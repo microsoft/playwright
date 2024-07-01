@@ -59,7 +59,7 @@ export type TestFileSummary = {
   stats: Stats;
 };
 
-export type TestCaseAnnotation = { type: string, description?: string, url?: string};
+export type TestCaseAnnotation = { type: string, description?: string };
 
 export type TestCaseSummary = {
   testId: string,

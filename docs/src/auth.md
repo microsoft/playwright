@@ -15,7 +15,7 @@ We recommend to create `playwright/.auth` directory and add it to your `.gitigno
 
 ```bash tab=bash-bash
 mkdir -p playwright/.auth
-echo "\nplaywright/.auth" >> .gitignore
+echo $'\nplaywright/.auth' >> .gitignore
 ```
 
 ```batch tab=bash-batch

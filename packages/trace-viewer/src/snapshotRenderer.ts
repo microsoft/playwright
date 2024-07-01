@@ -401,13 +401,20 @@ export function rewriteURLForCustomProtocol(href: string): string {
 
     // Pass through if possible.
     const isBlob = url.protocol === 'blob:';
-    if (!isBlob && schemas.includes(url.protocol))
+    const isFile = url.protocol === 'file:';
+    if (!isBlob && !isFile && schemas.includes(url.protocol))
       return href;
 
-    // Rewrite blob and custom schemas.
+    // Rewrite blob, file and custom schemas.
     const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
-    url.protocol = 'https:';
+    if (!isFile)
+      url.protocol = 'https:';
     url.hostname = url.hostname ? `${prefix}--${url.hostname}` : prefix;
+    if (isFile) {
+      // File URIs can only have their protocol changed after the hostname
+      // is set. (For all other URIs, we must set the protocol first.)
+      url.protocol = 'https:';
+    }
     return url.toString();
   } catch {
     return href;
@@ -423,7 +430,8 @@ const urlInCSSRegex = /url\(['"]?([\w-]+:)\/\//ig;
 function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
   return text.replace(urlInCSSRegex, (match: string, protocol: string) => {
     const isBlob = protocol === 'blob:';
-    if (!isBlob && schemas.includes(protocol))
+    const isFile = protocol === 'file:';
+    if (!isBlob && !isFile && schemas.includes(protocol))
       return match;
     return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
   });

@@ -102,7 +102,7 @@ context.BackgroundPage += (_, backgroundPage) =>
 * since: v1.45
 - type: <[Clock]>
 
-Playwright is using [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) to fake timers and clock.
+Playwright has ability to mock clock and passage of time.
 
 ## event: BrowserContext.close
 * since: v1.8
@@ -357,17 +357,13 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
-  - `url` ?<[string]> either url or domain / path are required. Optional.
-  - `domain` ?<[string]> either url or domain / path are required Optional.
-  - `path` ?<[string]> either url or domain / path are required Optional.
+  - `url` ?<[string]> Either url or domain / path are required. Optional.
+  - `domain` ?<[string]> For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url or domain / path are required. Optional.
+  - `path` ?<[string]> Either url or domain / path are required Optional.
   - `expires` ?<[float]> Unix time in seconds. Optional.
   - `httpOnly` ?<[boolean]> Optional.
   - `secure` ?<[boolean]> Optional.
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
-
-Adds cookies to the browser context.
-
-For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
 
 ## async method: BrowserContext.addInitScript
 * since: v1.8
@@ -748,83 +744,6 @@ await page.SetContentAsync("<script>\n" +
 await page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
-An example of passing an element handle:
-
-```js
-await context.exposeBinding('clicked', async (source, element) => {
-  console.log(await element.textContent());
-}, { handle: true });
-await page.setContent(`
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-`);
-```
-
-```java
-context.exposeBinding("clicked", (source, args) -> {
-  ElementHandle element = (ElementHandle) args[0];
-  System.out.println(element.textContent());
-  return null;
-}, new BrowserContext.ExposeBindingOptions().setHandle(true));
-page.setContent("" +
-  "<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-```
-
-```python async
-async def print(source, element):
-    print(await element.text_content())
-
-await context.expose_binding("clicked", print, handle=true)
-await page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```python sync
-def print(source, element):
-    print(element.text_content())
-
-context.expose_binding("clicked", print, handle=true)
-page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```csharp
-var result = new TaskCompletionSource<string>();
-var page = await Context.NewPageAsync();
-await Context.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
-{
-    return result.TrySetResult(await t.AsElement().TextContentAsync());
-});
-
-await page.SetContentAsync("<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-
-await page.ClickAsync("div");
-// Note: it makes sense to await the result here, because otherwise, the context
-//  gets closed and the binding function will throw an exception.
-Assert.AreEqual("Click me", await result.Task);
-```
-
 ### param: BrowserContext.exposeBinding.name
 * since: v1.8
 - `name` <[string]>
@@ -839,6 +758,7 @@ Callback function that will be called in the Playwright's context.
 
 ### option: BrowserContext.exposeBinding.handle
 * since: v1.8
+* deprecated: This option will be removed in the future.
 - `handle` <[boolean]>
 
 Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
@@ -1044,21 +964,22 @@ specified.
 - `permissions` <[Array]<[string]>>
 
 A permission or an array of permissions to grant. Permissions can be one of the following values:
-* `'geolocation'`
-* `'midi'`
-* `'midi-sysex'` (system-exclusive midi)
-* `'notifications'`
-* `'camera'`
-* `'microphone'`
-* `'background-sync'`
-* `'ambient-light-sensor'`
 * `'accelerometer'`
-* `'gyroscope'`
-* `'magnetometer'`
 * `'accessibility-events'`
+* `'ambient-light-sensor'`
+* `'background-sync'`
+* `'camera'`
 * `'clipboard-read'`
 * `'clipboard-write'`
+* `'geolocation'`
+* `'gyroscope'`
+* `'magnetometer'`
+* `'microphone'`
+* `'midi-sysex'` (system-exclusive midi)
+* `'midi'`
+* `'notifications'`
 * `'payment-handler'`
+* `'storage-access'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8

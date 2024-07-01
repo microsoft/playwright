@@ -232,12 +232,14 @@ Let's say you'd like to test following component:
 ```js title="input-media.tsx"
 import React from 'react';
 
-export const InputMedia: React.FC<{
+type InputMediaProps = {
   // Media is a complex browser object we can't send to Node while testing.
-  onChange: (media: Media) => void,
-}> = ({ onChange }) => {
-  return <></> as any;
+  onChange(media: Media): void;
 };
+
+export function InputMedia(props: InputMediaProps) {
+  return <></> as any;
+}
 ```
 
 Create a story file for your component:
@@ -246,12 +248,14 @@ Create a story file for your component:
 import React from 'react';
 import InputMedia from './import-media';
 
-export const InputMediaForTest: React.FC<{
-  onMediaChange: (mediaName: string) => void,
-}> = ({ onMediaChange }) => {
-  // Instead of sending a complex `media` object to the test, send the media name.
-  return <InputMedia onChange={media => onMediaChange(media.name)} />;
+type InputMediaForTestProps = {
+  onMediaChange(mediaName: string): void;
 };
+
+export function InputMediaForTest(props: InputMediaForTestProps) {
+  // Instead of sending a complex `media` object to the test, send the media name.
+  return <InputMedia onChange={media => props.onMediaChange(media.name)} />;
+}
 // Export more stories here.
 ```
 
@@ -265,7 +269,6 @@ test('changes the image', async ({ mount }) => {
     <InputMediaForTest
       onMediaChange={mediaName => {
         mediaSelected = mediaName;
-        console.log({ mediaName });
       }}
     />
   );
@@ -281,7 +284,179 @@ test('changes the image', async ({ mount }) => {
 As a result, for every component you'll have a story file that exports all the stories that are actually tested.
 These stories live in the browser and "convert" complex object into the simple objects that can be accessed in the test.
 
-## Hooks
+## Under the hood
+
+Here is how component testing works:
+
+- Once the tests are executed, Playwright creates a list of components that the tests need.
+- It then compiles a bundle that includes these components and serves it using a local static web server.
+- Upon the `mount` call within the test, Playwright navigates to the facade page `/playwright/index.html` of this bundle and tells it to render the component.
+- Events are marshalled back to the Node.js environment to allow verification.
+
+Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
+
+## API reference
+
+### props
+
+Provide props to a component when mounted.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('props', async ({ mount }) => {
+  const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### callbacks / events
+
+Provide callbacks/events to a component when mounted.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('callback', async ({ mount }) => {
+  const component = await mount(<Component callback={() => {}} />);
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('callback', async ({ mount }) => {
+  const component = await mount(<Component callback={() => {}} />);
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('event', async ({ mount }) => {
+  const component = await mount(Component, { on: { callback() {} } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('event', async ({ mount }) => {
+  const component = await mount(Component, { on: { callback() {} } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### children / slots
+
+Provide children/slots to a component when mounted.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('slot', async ({ mount }) => {
+  const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('slot', async ({ mount }) => {
+  const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### hooks
 
 You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you setup things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture. This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
 
@@ -423,16 +598,131 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
 </Tabs>
 
-## Under the hood
+### unmount
 
-Here is how component testing works:
+Unmount the mounted component from the DOM. This is useful for testing the component's behavior upon unmounting. Use cases include testing an "Are you sure you want to leave?" modal or ensuring proper cleanup of event handlers to prevent memory leaks.
 
-- Once the tests are executed, Playwright creates a list of components that the tests need.
-- It then compiles a bundle that includes these components and serves it using a local static web server.
-- Upon the `mount` call within the test, Playwright navigates to the facade page `/playwright/index.html` of this bundle and tells it to render the component.
-- Events are marshalled back to the Node.js environment to allow verification.
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
 
-Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
+<TabItem value="react">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(Component);
+  await component.unmount();
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('unmount', async ({ mount }) => {
+  const component = await mount(Component);
+  await component.unmount();
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+### update
+
+Update props, slots/children, and/or events/callbacks of a mounted component. These component inputs can change at any time and are typically provided by the parent component, but sometimes it is necessary to ensure that your components behave appropriately to new inputs.
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
+  ]
+}>
+
+<TabItem value="react">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" callback={() => {}}>Child</Component>
+  );
+});
+```
+
+</TabItem>
+<TabItem value="solid">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" callback={() => {}}>Child</Component>
+  );
+});
+```
+
+</TabItem>
+<TabItem value="svelte">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update({
+    props: { msg: 'greetings' },
+    on: { callback: () => {} },
+    slots: { default: 'Child' }
+  });
+});
+```
+
+</TabItem>
+<TabItem value="vue">
+
+```js
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update({
+    props: { msg: 'greetings' },
+    on: { callback: () => {} },
+    slots: { default: 'Child' }
+  });
+});
+```
+
+</TabItem>
+
+</Tabs>
 
 ## Frequently asked questions
 
@@ -641,3 +931,7 @@ test('override initialState ', async ({ mount }) => {
   await expect(component).toContainText('override initialState');
 });
 ```
+
+### How do I access the component's methods or its instance?
+
+Accessing a component's internal methods or its instance within test code is neither recommended nor supported. Instead, focus on observing and interacting with the component from a user's perspective, typically by clicking or verifying if something is visible on the page. Tests become less fragile and more valuable when they avoid interacting with internal implementation details, such as the component instance or its methods. Keep in mind that if a test fails when run from a user’s perspective, it likely means the automated test has uncovered a genuine bug in your code.

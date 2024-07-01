@@ -294,6 +294,7 @@ for (const useIntermediateMergeReport of [false] as const) {
     });
 
     test('should include image diff when screenshot failed to generate due to animation', async ({ runInlineTest, page, showReport }) => {
+      test.skip(process.env.PW_CLOCK === 'frozen', 'Assumes Date.now() changes');
       const result = await runInlineTest({
         'playwright.config.ts': `
           module.exports = { use: { viewport: { width: 200, height: 200 }} };

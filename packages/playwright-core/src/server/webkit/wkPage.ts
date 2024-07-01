@@ -16,6 +16,7 @@
  */
 
 import path from 'path';
+import os from 'os';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
@@ -29,7 +30,7 @@ import { eventsHelper } from '../../utils/eventsHelper';
 import { helper } from '../helper';
 import type { JSHandle } from '../javascript';
 import * as network from '../network';
-import type { PageBinding, PageDelegate } from '../page';
+import type { InitScript, PageBinding, PageDelegate } from '../page';
 import { Page } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
@@ -225,12 +226,12 @@ export class WKPage implements PageDelegate {
     }
     if (this._page.fileChooserIntercepted())
       promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled' as any, value: !contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled' as any, value: contextOptions.isMobile }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled' as any, value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled', value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled', value: contextOptions.isMobile }));
     await Promise.all(promises);
   }
 
@@ -713,7 +714,12 @@ export class WKPage implements PageDelegate {
     ];
     if (options.isMobile) {
       const angle = viewportSize.width > viewportSize.height ? 90 : 0;
-      promises.push(this._session.send('Page.setOrientationOverride', { angle }));
+      // Special handling for macOS 12.
+      const useLegacySetOrientationOverrideMethod = os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21;
+      if (useLegacySetOrientationOverrideMethod)
+        promises.push(this._session.send('Page.setOrientationOverride' as any, { angle }));
+      else
+        promises.push(this._pageProxySession.send('Emulation.setOrientationOverride', { angle }));
     }
     await Promise.all(promises);
   }
@@ -771,7 +777,7 @@ export class WKPage implements PageDelegate {
     await this._updateBootstrapScript();
   }
 
-  async addInitScript(script: string): Promise<void> {
+  async addInitScript(initScript: InitScript): Promise<void> {
     await this._updateBootstrapScript();
   }
 
@@ -791,8 +797,8 @@ export class WKPage implements PageDelegate {
 
     for (const binding of this._page.allBindings())
       scripts.push(binding.source);
-    scripts.push(...this._browserContext.initScripts);
-    scripts.push(...this._page.initScripts);
+    scripts.push(...this._browserContext.initScripts.map(s => s.source));
+    scripts.push(...this._page.initScripts.map(s => s.source));
     return scripts.join(';\n');
   }
 

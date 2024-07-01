@@ -528,7 +528,7 @@ function suitableTextAlternatives(text: string) {
     const match = text.match(/^([\d.,]+)[^.,\w]/);
     const leadingNumberLength = match ? match[1].length : 0;
     if (leadingNumberLength) {
-      const alt = text.substring(leadingNumberLength).trimStart();
+      const alt = trimWordBoundary(text.substring(leadingNumberLength).trimStart(), 80);
       result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
     }
   }
@@ -537,7 +537,7 @@ function suitableTextAlternatives(text: string) {
     const match = text.match(/[^.,\w]([\d.,]+)$/);
     const trailingNumberLength = match ? match[1].length : 0;
     if (trailingNumberLength) {
-      const alt = text.substring(0, text.length - trailingNumberLength).trimEnd();
+      const alt = trimWordBoundary(text.substring(0, text.length - trailingNumberLength).trimEnd(), 80);
       result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
     }
   }

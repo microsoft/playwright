@@ -356,7 +356,7 @@ class RecordActionTool implements RecorderTool {
         return;
       this._performAction({
         name: 'select',
-        selector: this._hoveredModel!.selector,
+        selector: this._activeModel!.selector,
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
       });
@@ -578,8 +578,8 @@ class TextAssertionTool implements RecorderTool {
 
   onPointerUp(event: PointerEvent) {
     const target = this._hoverHighlight?.elements[0];
-    if (this._kind === 'value' && target && target.nodeName === 'INPUT' && (target as HTMLInputElement).disabled) {
-      // Click on a disabled input does not produce a "click" event, but we still want
+    if (this._kind === 'value' && target && (target.nodeName === 'INPUT' || target.nodeName === 'SELECT') && (target as HTMLInputElement).disabled) {
+      // Click on a disabled input (or select) does not produce a "click" event, but we still want
       // to assert the value.
       this._commitAssertValue();
     }
@@ -881,7 +881,7 @@ class Overlay {
   flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue') {
     const element = tool === 'assertingVisibility' ? this._assertVisibilityToggle : this._assertValuesToggle;
     element.classList.add('succeeded');
-    setTimeout(() => element.classList.remove('succeeded'), 2000);
+    this._recorder.injectedScript.builtinSetTimeout(() => element.classList.remove('succeeded'), 2000);
   }
 
   private _hideOverlay() {
@@ -973,7 +973,7 @@ export class Recorder {
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
     `);
     this.installListeners();
-
+    injectedScript.utils.cacheNormalizedWhitespaces();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
@@ -1312,7 +1312,7 @@ interface Embedder {
 export class PollingRecorder implements RecorderDelegate {
   private _recorder: Recorder;
   private _embedder: Embedder;
-  private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
+  private _pollRecorderModeTimer: number | undefined;
 
   constructor(injectedScript: InjectedScript) {
     this._recorder = new Recorder(injectedScript);
@@ -1333,7 +1333,7 @@ export class PollingRecorder implements RecorderDelegate {
       clearTimeout(this._pollRecorderModeTimer);
     const state = await this._embedder.__pw_recorderState().catch(() => {});
     if (!state) {
-      this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+      this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
     }
     const win = this._recorder.document.defaultView!;
@@ -1343,7 +1343,7 @@ export class PollingRecorder implements RecorderDelegate {
       state.actionPoint = undefined;
     }
     this._recorder.setUIState(state, this);
-    this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+    this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
   async performAction(action: actions.Action) {

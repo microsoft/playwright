@@ -1,86 +1,242 @@
 # class: Clock
 * since: v1.45
 
-Playwright uses [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for clock emulation. Clock is installed for the entire [BrowserContext], so the time
+Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn more about [clock emulation](../clock.md).
+
+Note that clock is installed for the entire [BrowserContext], so the time
 in all the pages and iframes is controlled by the same clock.
+
+## async method: Clock.fastForward
+* since: v1.45
+
+Advance the clock by jumping forward in time. Only fires due timers at most once. This is equivalent to user closing the laptop lid for a while and
+reopening it later, after given time.
+
+**Usage**
+
+```js
+await page.clock.fastForward(1000);
+await page.clock.fastForward('30:00');
+```
+
+```python async
+await page.clock.fast_forward(1000)
+await page.clock.fast_forward("30:00")
+```
+
+```python sync
+page.clock.fast_forward(1000)
+page.clock.fast_forward("30:00")
+```
+
+```java
+page.clock().fastForward(1000);
+page.clock().fastForward("30:00");
+```
+
+```csharp
+await page.Clock.FastForwardAsync(1000);
+await page.Clock.FastForwardAsync("30:00");
+```
+
+### param: Clock.fastForward.ticks
+* since: v1.45
+- `ticks` <[long]|[string]>
+
+Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
 ## async method: Clock.install
 * since: v1.45
 
-Creates a clock and installs it globally.
+Install fake implementations for the following time-related functions:
 
-### option: Clock.install.now
+* `Date`
+* `setTimeout`
+* `clearTimeout`
+* `setInterval`
+* `clearInterval`
+* `requestAnimationFrame`
+* `cancelAnimationFrame`
+* `requestIdleCallback`
+* `cancelIdleCallback`
+* `performance`
+
+Fake timers are used to manually control the flow of time in tests. They allow you to advance time, fire timers, and control the behavior of time-dependent functions. See [`method: Clock.runFor`] and [`method: Clock.fastForward`] for more information.
+
+### option: Clock.install.time
 * since: v1.45
-- `now` <[int]|[Date]>
+- `time` <[long]|[string]|[Date]>
 
-Install fake timers with the specified unix epoch (default: 0).
+Time to initialize with, current system time by default.
 
-### option: Clock.install.toFake
-* since: v1.45
-- `toFake` <[Array]<[FakeMethod]<"setTimeout"|"clearTimeout"|"setInterval"|"clearInterval"|"Date"|"requestAnimationFrame"|"cancelAnimationFrame"|"requestIdleCallback"|"cancelIdleCallback"|"performance">>>
-
-An array with names of global methods and APIs to fake. For instance, `await page.clock.install({ toFake: ['setTimeout'] })` will fake only `setTimeout()`.
-By default, `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval` and `Date` are faked.
-
-### option: Clock.install.loopLimit
-* since: v1.45
-- `loopLimit` <[int]>
-
-The maximum number of timers that will be run when calling  [`method: Clock.runAll`]. Defaults to `1000`.
-
-### option: Clock.install.shouldAdvanceTime
-* since: v1.45
-- `shouldAdvanceTime` <[boolean]>
-
-Tells `@sinonjs/fake-timers` to increment mocked time automatically based on the real system time shift (e.g., the mocked time will be incremented by
-20ms for every 20ms change in the real system time). Defaults to `false`.
-
-### option: Clock.install.advanceTimeDelta
-* since: v1.45
-- `advanceTimeDelta` <[int]>
-
-Relevant only when using with [`option: shouldAdvanceTime`]. Increment mocked time by advanceTimeDelta ms every advanceTimeDelta ms change
-in the real system time (default: 20).
-
-## async method: Clock.jump
+## async method: Clock.runFor
 * since: v1.45
 
-Advance the clock by jumping forward in time, firing callbacks at most once. Returns fake milliseconds since the unix epoch.
-This can be used to simulate the JS engine (such as a browser) being put to sleep and resumed later, skipping intermediary timers.
+Advance the clock, firing all the time-related callbacks.
 
-### param: Clock.jump.time
+**Usage**
+
+```js
+await page.clock.runFor(1000);
+await page.clock.runFor('30:00');
+```
+
+```python async
+await page.clock.run_for(1000);
+await page.clock.run_for("30:00")
+```
+
+```python sync
+page.clock.run_for(1000);
+page.clock.run_for("30:00")
+```
+
+```java
+page.clock().runFor(1000);
+page.clock().runFor("30:00");
+```
+
+```csharp
+await page.Clock.RunForAsync(1000);
+await page.Clock.RunForAsync("30:00");
+```
+
+### param: Clock.runFor.ticks
 * since: v1.45
-- `time` <[int]|[string]>
+- `ticks` <[long]|[string]>
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
 
-## async method: Clock.runAll
+## async method: Clock.pauseAt
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
 
-Runs all pending timers until there are none remaining. If new timers are added while it is executing they will be run as well.
-This makes it easier to run asynchronous tests to completion without worrying about the number of timers they use, or the delays in those timers.
-It runs a maximum of [`option: loopLimit`] times after which it assumes there is an infinite loop of timers and throws an error.
+Advance the clock by jumping forward in time and pause the time. Once this method is called, no timers
+are fired unless [`method: Clock.runFor`], [`method: Clock.fastForward`], [`method: Clock.pauseAt`] or [`method: Clock.resume`] is called.
 
+Only fires due timers at most once.
+This is equivalent to user closing the laptop lid for a while and reopening it at the specified time and
+pausing.
 
-## async method: Clock.runToLast
+**Usage**
+
+```js
+await page.clock.pauseAt(new Date('2020-02-02'));
+await page.clock.pauseAt('2020-02-02');
+```
+
+```python async
+await page.clock.pause_at(datetime.datetime(2020, 2, 2))
+await page.clock.pause_at("2020-02-02")
+```
+
+```python sync
+page.clock.pause_at(datetime.datetime(2020, 2, 2))
+page.clock.pause_at("2020-02-02")
+```
+
+```java
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd");
+page.clock().pauseAt(format.parse("2020-02-02"));
+page.clock().pauseAt("2020-02-02");
+```
+
+```csharp
+await page.Clock.PauseAtAsync(DateTime.Parse("2020-02-02"));
+await page.Clock.PauseAtAsync("2020-02-02");
+```
+
+### param: Clock.pauseAt.time
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
-
-This takes note of the last scheduled timer when it is run, and advances the clock to that time firing callbacks as necessary.
-If new timers are added while it is executing they will be run only if they would occur before this time.
-This is useful when you want to run a test to completion, but the test recursively sets timers that would cause runAll to trigger an infinite loop warning.
+- `time` <[long]|[string]|[Date]>
 
 
-## async method: Clock.tick
+## async method: Clock.resume
 * since: v1.45
-- returns: <[int]> Fake milliseconds since the unix epoch.
 
-Advance the clock, firing callbacks if necessary. Returns fake milliseconds since the unix epoch.
+Resumes timers. Once this method is called, time resumes flowing, timers are fired as usual.
 
-### param: Clock.tick.time
+## async method: Clock.setFixedTime
 * since: v1.45
-- `time` <[int]|[string]>
 
-Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+Makes `Date.now` and `new Date()` return fixed fake time at all times,
+keeps all the timers running.
+
+**Usage**
+
+```js
+await page.clock.setFixedTime(Date.now());
+await page.clock.setFixedTime(new Date('2020-02-02'));
+await page.clock.setFixedTime('2020-02-02');
+```
+
+```python async
+await page.clock.set_fixed_time(datetime.datetime.now())
+await page.clock.set_fixed_time(datetime.datetime(2020, 2, 2))
+await page.clock.set_fixed_time("2020-02-02")
+```
+
+```python sync
+page.clock.set_fixed_time(datetime.datetime.now())
+page.clock.set_fixed_time(datetime.datetime(2020, 2, 2))
+page.clock.set_fixed_time("2020-02-02")
+```
+
+```java
+page.clock().setFixedTime(new Date());
+page.clock().setFixedTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
+page.clock().setFixedTime("2020-02-02");
+```
+
+```csharp
+await page.Clock.SetFixedTimeAsync(DateTime.Now);
+await page.Clock.SetFixedTimeAsync(new DateTime(2020, 2, 2));
+await page.Clock.SetFixedTimeAsync("2020-02-02");
+```
+
+### param: Clock.setFixedTime.time
+* since: v1.45
+- `time` <[long]|[string]|[Date]>
+
+Time to be set.
+
+## async method: Clock.setSystemTime
+* since: v1.45
+
+Sets current system time but does not trigger any timers.
+
+**Usage**
+
+```js
+await page.clock.setSystemTime(Date.now());
+await page.clock.setSystemTime(new Date('2020-02-02'));
+await page.clock.setSystemTime('2020-02-02');
+```
+
+```python async
+await page.clock.set_system_time(datetime.datetime.now())
+await page.clock.set_system_time(datetime.datetime(2020, 2, 2))
+await page.clock.set_system_time("2020-02-02")
+```
+
+```python sync
+page.clock.set_system_time(datetime.datetime.now())
+page.clock.set_system_time(datetime.datetime(2020, 2, 2))
+page.clock.set_system_time("2020-02-02")
+```
+
+```java
+page.clock().setSystemTime(new Date());
+page.clock().setSystemTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
+page.clock().setSystemTime("2020-02-02");
+```
+
+```csharp
+await page.Clock.SetSystemTimeAsync(DateTime.Now);
+await page.Clock.SetSystemTimeAsync(new DateTime(2020, 2, 2));
+await page.Clock.SetSystemTimeAsync("2020-02-02");
+```
+
+### param: Clock.setSystemTime.time
+* since: v1.45
+- `time` <[long]|[string]|[Date]>

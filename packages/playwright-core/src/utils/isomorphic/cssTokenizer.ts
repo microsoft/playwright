@@ -378,7 +378,7 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const consumeEscape = function() {
-    // Assume the the current character is the \
+    // Assume the current character is the \
     // and the next code point is not a newline.
     consume();
     if (hexdigit(code)) {

@@ -7,16 +7,16 @@ title: "Installation"
 
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
 
-You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest base classes](./test-runners.md#mstest) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.
+You can choose to use [MSTest base classes](./test-runners.md#mstest) or [NUnit base classes](./test-runners.md#nunit) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.
 
 1. Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -41,10 +41,10 @@ cd PlaywrightTests
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -83,10 +83,10 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
 
 <Tabs
   groupId="test-runners"
-  defaultValue="nunit"
+  defaultValue="mstest"
   values={[
+    {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
   ]
 }>
 <TabItem value="nunit">
@@ -132,10 +132,8 @@ public class ExampleTest : PageTest
 
 ```csharp title="UnitTest1.cs"
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.Playwright;
 using Microsoft.Playwright.MSTest;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PlaywrightTests;
 
@@ -182,8 +180,8 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 
 - Playwright is distributed as a .NET Standard 2.0 library. We recommend .NET 8.
 - Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
-- MacOS 12 Monterey, MacOS 13 Ventura, or MacOS 14 Sonoma.
-- Debian 11, Debian 12, Ubuntu 20.04 or Ubuntu 22.04.
+- macOS 13 Ventura, or macOS 14 Sonoma.
+- Debian 11, Debian 12, Ubuntu 20.04 or Ubuntu 22.04, Ubuntu 24.04, on x86-64 and arm64 architecture.
 
 ## What's next
 
@@ -192,4 +190,4 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the NUnit and MSTest base classes](./test-runners.md)
+- [Learn more about the MSTest and NUnit base classes](./test-runners.md)

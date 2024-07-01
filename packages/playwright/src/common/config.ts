@@ -35,7 +35,7 @@ export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
-export type Annotation = { type: string, description?: string, url?: string };
+export type Annotation = { type: string, description?: string };
 
 export const defaultTimeout = 30000;
 
@@ -55,7 +55,6 @@ export class FullConfigInternal {
   cliFailOnFlakyTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
-  shardingSeed: string | null;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
@@ -93,7 +92,6 @@ export class FullConfigInternal {
       workers: 0,
       webServer: null,
     };
-    this.shardingSeed = takeFirst(configCLIOverrides.shardingSeed, userConfig.shardingSeed, null);
     for (const key in userConfig) {
       if (key.startsWith('@'))
         (this.config as any)[key] = (userConfig as any)[key];
@@ -107,7 +105,7 @@ export class FullConfigInternal {
         const cpus = os.cpus().length;
         this.config.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
       } else {
-        this.config.workers = parseInt(workers, 10);
+        this.config.workers = parseWorkers(workers);
       }
     } else {
       this.config.workers = workers;
@@ -221,6 +219,14 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
       return [id, arg];
     return [require.resolve(id, { paths: [rootDir] }), arg];
   });
+}
+
+function parseWorkers(workers: string) {
+  const parsedWorkers = parseInt(workers, 10);
+  if (isNaN(parsedWorkers))
+    throw new Error(`Workers ${workers} must be a number or percentage.`);
+
+  return parsedWorkers;
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {

@@ -314,3 +314,27 @@ test('should return app name / version from manifest', async ({ launchElectronAp
     version: '1.0.0'
   });
 });
+
+test('should report downloads', async ({ launchElectronApp, electronMajorVersion, server }) => {
+  test.skip(electronMajorVersion < 30, 'Depends on https://github.com/electron/electron/pull/41718');
+
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end(`Hello world`);
+  });
+
+  const app = await launchElectronApp('electron-window-app.js', [], {
+    acceptDownloads: true,
+  });
+  const window = await app.firstWindow();
+  await window.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [download] = await Promise.all([
+    window.waitForEvent('download'),
+    window.click('a')
+  ]);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await app.close();
+});

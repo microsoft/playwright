@@ -299,6 +299,7 @@ APIRequestContext:
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
         maxRedirects: number?
+        maxRetries: number?
       returns:
         response: APIResponse
 
@@ -1184,12 +1185,21 @@ BrowserContext:
       returns:
         artifact: Artifact
 
-    createTempFile:
+    createTempFiles:
       parameters:
-        name: string
-        lastModifiedMs: number?
+        rootDirName: string?
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              lastModifiedMs: number?
       returns:
-        writableStream: WritableStream
+        rootDir: WritableStream?
+        writableStreams:
+          type: array
+          items: WritableStream
 
     updateSubscription:
       parameters:
@@ -1204,35 +1214,37 @@ BrowserContext:
           - requestFailed
         enabled: boolean
 
+    clockFastForward:
+      parameters:
+        ticksNumber: number?
+        ticksString: string?
+
     clockInstall:
       parameters:
-        now: number?
-        toFake:
-          type: array?
-          items: string
-        loopLimit: number?
-        shouldAdvanceTime: boolean?
-        advanceTimeDelta: number?
+        timeNumber: number?
+        timeString: string?
 
-    clockJump:
+    clockPauseAt:
       parameters:
         timeNumber: number?
         timeString: string?
 
-    clockRunAll:
-      returns:
-        fakeTime: number
+    clockResume:
 
-    clockRunToLast:
-      returns:
-        fakeTime: number
+    clockRunFor:
+      parameters:
+        ticksNumber: number?
+        ticksString: string?
 
-    clockTick:
+    clockSetFixedTime:
       parameters:
         timeNumber: number?
         timeString: string?
-      returns:
-        fakeTime: number
+
+    clockSetSystemTime:
+      parameters:
+        timeNumber: number?
+        timeString: string?
 
   events:
 
@@ -1591,6 +1603,27 @@ Page:
         slowMo: true
         snapshot: true
 
+    touchscreenTouch:
+      parameters:
+        type:
+          type: enum
+          literals:
+          - touchstart
+          - touchend
+          - touchmove
+          - touchcancel
+        touchPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              x: number
+              y: number
+              id: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?
@@ -1918,7 +1951,6 @@ Frame:
       parameters:
         expression: string
         isFunction: boolean?
-        exposeUtilityScript: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -2183,6 +2215,8 @@ Frame:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string
@@ -2743,6 +2777,8 @@ ElementHandle:
               name: string
               mimeType: string?
               buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
         localPaths:
           type: array?
           items: string
