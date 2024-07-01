@@ -609,7 +609,7 @@ class ArtifactsRecorder {
     if ((tracing as any)[this._startedCollectingArtifacts])
       return;
     (tracing as any)[this._startedCollectingArtifacts] = true;
-    if (this._testInfo._tracing.traceOptions())
+    if (this._testInfo._tracing.traceOptions() && (tracing as any)[kTracingStarted])
       await tracing.stopChunk({ path: this._testInfo._tracing.generateNextTraceRecordingPath() });
   }
 }
