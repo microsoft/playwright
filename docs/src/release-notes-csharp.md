@@ -17,9 +17,9 @@ Utilizing the new [Clock] API allows to manipulate and control time within tests
 ```csharp
 // Initialize clock with some time before the test time and let the page load naturally.
 // `Date.now` will progress as the timers fire.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0)
 });
 await Page.GotoAsync("http://localhost:3333");
 
@@ -28,11 +28,11 @@ await Page.GotoAsync("http://localhost:3333");
 await Page.Clock.PauseAtAsync(new DateTime(2024, 2, 2, 10, 0, 0));
 
 // Assert the page state.
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:00:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 
 // Close the laptop lid again and open it at 10:30am.
 await Page.Clock.FastForwardAsync("30:00");
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:30:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:30:00 AM");
 ```
 
 See [the clock guide](./clock.md) for more details.
