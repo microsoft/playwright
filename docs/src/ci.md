@@ -615,7 +615,7 @@ steps:
   - name: test
     image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
     commands:
-      - npx playwright test --project=$PROJECT
+      - npx playwright test
 ```
 
 ## Caching browsers
