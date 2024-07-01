@@ -24,6 +24,9 @@ import type {
 } from 'playwright/test';
 import type { InlineConfig } from 'vite';
 
+//@ts-ignore This will be "any" if msw is not installed.
+import type { RequestHandler } from 'msw';
+
 export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
   use?: BasePlaywrightTestConfig<T, W>['use'] & {
     ctPort?: number;
@@ -33,8 +36,14 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
+type CommonComponentFixtures = {
+  msw: {
+    use(...handlers: RequestHandler[]): Promise<void>;
+  },
+};
+
 export type TestType<ComponentFixtures> = BaseTestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures & CommonComponentFixtures,
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
