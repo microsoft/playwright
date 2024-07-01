@@ -154,7 +154,7 @@ it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   expect(credentials).toBe('user:pass');
 });
 
-it('should support HTTPCredentials.sendImmediately', async ({ playwright, server }) => {
+it('should support HTTPCredentials.send', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const request = await playwright.request.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
