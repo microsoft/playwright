@@ -601,6 +601,23 @@ steps:
   - 'CI=true'
 ```
 
+### Drone
+* langs: js
+
+To run Playwright tests on Drone, use our public Docker image ([see Dockerfile](./docker.md)).
+
+```yml
+kind: pipeline
+name: default
+type: docker
+
+steps:
+  - name: test
+    image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+    commands:
+      - npx playwright test
+```
+
 ## Caching browsers
 
 Caching browser binaries is not recommended, since the amount of time it takes to restore the cache is comparable to the time it takes to download the binaries. Especially under Linux, [operating system dependencies](./browsers.md#install-system-dependencies) need to be installed, which are not cacheable.
