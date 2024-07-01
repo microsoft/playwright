@@ -116,8 +116,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async close() {
-    // eslint-disable-next-line no-console
-    await this._context.close().catch(error => console.error(error));
+    await this._context.close().catch(() => {});
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
