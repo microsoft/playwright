@@ -29,7 +29,7 @@ import type { Page } from './page';
 import { ConsoleMessage } from './consoleMessage';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
-import { TargetClosedError } from './errors';
+import { TargetClosedError, isTargetClosedError } from './errors';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,
@@ -116,7 +116,13 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async close() {
-    await this._context.close().catch(() => {});
+    try {
+      await this._context.close();
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
