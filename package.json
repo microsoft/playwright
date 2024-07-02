@@ -61,6 +61,7 @@
     "@babel/plugin-transform-optional-chaining": "^7.23.4",
     "@babel/plugin-transform-typescript": "^7.23.6",
     "@babel/preset-react": "^7.23.3",
+    "@playwright/test": "^1.45.0-next",
     "@types/babel__core": "^7.20.2",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",

@@ -34,3 +34,7 @@ test-results
 /tests/installation/.registry.json
 .cache/
 .eslintcache
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
