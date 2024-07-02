@@ -58,6 +58,8 @@ function parseTime(time: string | number | Date): { timeNumber?: number, timeStr
     return { timeNumber: time };
   if (typeof time === 'string')
     return { timeString: time };
+  if (!isFinite(time.getTime()))
+    throw new Error(`Invalid date: ${time}`);
   return { timeNumber: time.getTime() };
 }
 

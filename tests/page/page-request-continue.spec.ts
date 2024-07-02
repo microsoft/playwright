@@ -412,6 +412,27 @@ it('continue should propagate headers to redirects', async ({ page, server, brow
   expect(serverRequest.headers['custom']).toBe('value');
 });
 
+it('redirected requests should report overridden headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31351' }
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox');
+  await server.setRedirect('/redirect', '/empty.html');
+  await page.route('**/redirect', route => {
+    const headers = route.request().headers();
+    headers['custom'] = 'value';
+    void route.fallback({ headers });
+  });
+
+  const [serverRequest, response] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  expect(serverRequest.headers['custom']).toBe('value');
+  expect(response.request().url()).toBe(server.EMPTY_PAGE);
+  expect(response.request().headers()['custom']).toBe('value');
+  expect((await response.request().allHeaders())['custom']).toBe('value');
+});
+
 it('continue should delete headers on redirects', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
   it.fixme(browserName === 'firefox');

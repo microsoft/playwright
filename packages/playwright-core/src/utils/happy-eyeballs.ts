@@ -45,8 +45,9 @@ class HttpsHappyEyeballsAgent extends https.Agent {
   }
 }
 
-export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
-export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
+// These options are aligned with the default Node.js globalAgent options.
+export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent({ keepAlive: true });
+export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent({ keepAlive: true });
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {

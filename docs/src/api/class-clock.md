@@ -41,7 +41,7 @@ await page.Clock.FastForwardAsync("30:00");
 
 ### param: Clock.fastForward.ticks
 * since: v1.45
-- `ticks` <[int]|[string]>
+- `ticks` <[long]|[string]>
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
@@ -65,7 +65,7 @@ Fake timers are used to manually control the flow of time in tests. They allow y
 
 ### option: Clock.install.time
 * since: v1.45
-- `time` <[int]|[string]|[Date]>
+- `time` <[long]|[string]|[Date]>
 
 Time to initialize with, current system time by default.
 
@@ -103,7 +103,7 @@ await page.Clock.RunForAsync("30:00");
 
 ### param: Clock.runFor.ticks
 * since: v1.45
-- `ticks` <[int]|[string]>
+- `ticks` <[long]|[string]>
 
 Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
@@ -136,7 +136,8 @@ page.clock.pause_at("2020-02-02")
 ```
 
 ```java
-page.clock().pauseAt(Instant.parse("2020-02-02"));
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd");
+page.clock().pauseAt(format.parse("2020-02-02"));
 page.clock().pauseAt("2020-02-02");
 ```
 
@@ -147,7 +148,7 @@ await page.Clock.PauseAtAsync("2020-02-02");
 
 ### param: Clock.pauseAt.time
 * since: v1.45
-- `time` <[int]|[string]|[Date]>
+- `time` <[long]|[string]|[Date]>
 
 
 ## async method: Clock.resume
@@ -182,8 +183,8 @@ page.clock.set_fixed_time("2020-02-02")
 ```
 
 ```java
-page.clock().setFixedTime(Instant.now());
-page.clock().setFixedTime(Instant.parse("2020-02-02"));
+page.clock().setFixedTime(new Date());
+page.clock().setFixedTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
 page.clock().setFixedTime("2020-02-02");
 ```
 
@@ -195,7 +196,7 @@ await page.Clock.SetFixedTimeAsync("2020-02-02");
 
 ### param: Clock.setFixedTime.time
 * since: v1.45
-- `time` <[int]|[string]|[Date]>
+- `time` <[long]|[string]|[Date]>
 
 Time to be set.
 
@@ -225,8 +226,8 @@ page.clock.set_system_time("2020-02-02")
 ```
 
 ```java
-page.clock().setSystemTime(Instant.now());
-page.clock().setSystemTime(Instant.parse("2020-02-02"));
+page.clock().setSystemTime(new Date());
+page.clock().setSystemTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
 page.clock().setSystemTime("2020-02-02");
 ```
 
@@ -238,4 +239,4 @@ await page.Clock.SetSystemTimeAsync("2020-02-02");
 
 ### param: Clock.setSystemTime.time
 * since: v1.45
-- `time` <[int]|[string]|[Date]>
+- `time` <[long]|[string]|[Date]>

@@ -866,6 +866,7 @@ function csharpOptionOverloadSuffix(option, type) {
     case 'Buffer': return 'Byte';
     case 'Serializable': return 'Object';
     case 'int': return 'Int';
+    case 'long': return 'Int64';
     case 'Date': return 'Date';
   }
   throw new Error(`CSharp option "${option}" has unsupported type overload "${type}"`);

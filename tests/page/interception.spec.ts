@@ -33,9 +33,8 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, browserName, isAndroid, isElectron }) => {
+it('should intercept after a service worker', async ({ page, server, browserName, isAndroid }) => {
   it.skip(isAndroid);
-  it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);

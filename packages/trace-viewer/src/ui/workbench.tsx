@@ -51,7 +51,8 @@ export const Workbench: React.FunctionComponent<{
   isLive?: boolean,
   status?: UITestStatus,
   inert?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert }) => {
+  openPage?: (url: string, target?: string) => Window | any,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -234,7 +235,8 @@ export const Workbench: React.FunctionComponent<{
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           highlightedLocator={highlightedLocator}
-          setHighlightedLocator={locatorPicked} />
+          setHighlightedLocator={locatorPicked}
+          openPage={openPage} />
         <TabbedPane
           tabs={[
             {

@@ -32,6 +32,7 @@ export type PageWorkerFixtures = {
   browserName: 'chromium' | 'firefox' | 'webkit';
   browserVersion: string;
   browserMajorVersion: number;
+  electronMajorVersion: number;
   isAndroid: boolean;
   isElectron: boolean;
   isWebView2: boolean;

@@ -397,17 +397,17 @@ page.locator("#area").pressSequentially("Hello World!");
 
 ```python async
 # Press keys one by one
-await page.locator('#area').pressSequentially('Hello World!')
+await page.locator('#area').press_sequentially('Hello World!')
 ```
 
 ```python sync
 # Press keys one by one
-page.locator('#area').pressSequentially('Hello World!')
+page.locator('#area').press_sequentially('Hello World!')
 ```
 
 ```csharp
 // Press keys one by one
-await page.Locator("#area").TypeAsync("Hello World!");
+await Page.Locator("#area").PressSequentiallyAsync("Hello World!");
 ```
 
 This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.

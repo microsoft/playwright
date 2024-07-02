@@ -126,6 +126,16 @@ Whether to ignore HTTPS errors when sending network requests.
 Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
 Defaults to `20`. Pass `0` to not follow redirects.
 
+## method: RequestOptions.setMaxRetries
+* since: v1.46
+- returns: <[RequestOptions]>
+
+### param: RequestOptions.setMaxRetries.maxRetries
+* since: v1.46
+- `maxRetries` <[int]>
+
+Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+
 ## method: RequestOptions.setMethod
 * since: v1.18
 - returns: <[RequestOptions]>

@@ -814,21 +814,6 @@ export interface Page {
    * })();
    * ```
    *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await page.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
-   * ```
-   *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
@@ -873,21 +858,6 @@ export interface Page {
    *   `);
    *   await page.click('button');
    * })();
-   * ```
-   *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await page.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
    * ```
    *
    * @param name Name of the function on the window object.
@@ -7637,21 +7607,6 @@ export interface BrowserContext {
    * })();
    * ```
    *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await context.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
-   * ```
-   *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
@@ -7691,21 +7646,6 @@ export interface BrowserContext {
    *   `);
    *   await page.getByRole('button').click();
    * })();
-   * ```
-   *
-   * An example of passing an element handle:
-   *
-   * ```js
-   * await context.exposeBinding('clicked', async (source, element) => {
-   *   console.log(await element.textContent());
-   * }, { handle: true });
-   * await page.setContent(`
-   *   <script>
-   *     document.addEventListener('click', event => window.clicked(event.target));
-   *   </script>
-   *   <div>Click me</div>
-   *   <div>Or click me</div>
-   * `);
    * ```
    *
    * @param name Name of the function on the window object.
@@ -8346,9 +8286,7 @@ export interface BrowserContext {
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
    * ```
    *
-   * @param cookies Adds cookies to the browser context.
-   *
-   * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
+   * @param cookies
    */
   addCookies(cookies: ReadonlyArray<{
     name: string;
@@ -8356,17 +8294,18 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * either url or domain / path are required. Optional.
+     * Either url or domain / path are required. Optional.
      */
     url?: string;
 
     /**
-     * either url or domain / path are required Optional.
+     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either url
+     * or domain / path are required. Optional.
      */
     domain?: string;
 
     /**
-     * either url or domain / path are required Optional.
+     * Either url or domain / path are required Optional.
      */
     path?: string;
 
@@ -15964,6 +15903,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
      * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
      */
@@ -16064,6 +16009,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16144,6 +16095,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16222,6 +16179,12 @@ export interface APIRequestContext {
      * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
      */
     maxRedirects?: number;
+
+    /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
@@ -16346,6 +16309,12 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
      * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
      * explicitly provided. File values can be passed either as
@@ -16424,6 +16393,12 @@ export interface APIRequestContext {
      * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
      */
     maxRedirects?: number;
+
+    /**
+     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
+     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
@@ -19707,6 +19682,29 @@ export interface Touchscreen {
    * @param y
    */
   tap(x: number, y: number): Promise<void>;
+
+  /**
+   * Synthesizes a touch event.
+   * @param type Type of the touch event.
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
+   * touch events for the duration of its movement around the surface.
+   */
+  touch(type: "touchstart"|"touchend"|"touchmove"|"touchcancel", touchPoints: ReadonlyArray<{
+    /**
+     * x coordinate of the event in CSS pixels.
+     */
+    x: number;
+
+    /**
+     * y coordinate of the event in CSS pixels.
+     */
+    y: number;
+
+    /**
+     * Identifier used to track the touch point between events, must be unique within an event. Optional.
+     */
+    id?: number;
+  }>): Promise<void>;
 }
 
 /**

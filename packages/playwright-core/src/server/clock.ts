@@ -26,6 +26,10 @@ export class Clock {
     this._browserContext = browserContext;
   }
 
+  markAsUninstalled() {
+    this._scriptInstalled = false;
+  }
+
   async fastForward(ticks: number | string) {
     await this._installIfNeeded();
     const ticksMillis = parseTicks(ticks);
@@ -144,5 +148,8 @@ function parseTime(epoch: string | number | undefined): number {
     return 0;
   if (typeof epoch === 'number')
     return epoch;
-  return new Date(epoch).getTime();
+  const parsed = new Date(epoch);
+  if (!isFinite(parsed.getTime()))
+    throw new Error(`Invalid date: ${epoch}`);
+  return parsed.getTime();
 }
