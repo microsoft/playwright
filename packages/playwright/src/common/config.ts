@@ -15,16 +15,17 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import os from 'os';
 import type { Config, Fixtures, PlaywrightTestConfig, Project, ReporterDescription } from '../../types/test';
-import type { FullConfig, FullProject, Location } from '../../types/testReporter';
+import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { LastRunInfo } from '../runner/runner';
-import { setTransformConfig } from '../transform/transform';
-import type { Matcher } from '../util';
 import { getPackageJsonPath, mergeObjects } from '../util';
+import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
+import type { FullConfig, FullProject } from '../../types/testReporter';
+import { setTransformConfig } from '../transform/transform';
+import type { LastRunInfo } from '../runner/runner';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;

@@ -15,9 +15,9 @@
  */
 
 import util from 'util';
-import type { PlaywrightTestConfig, ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
-import { serializeCompilationCache, type SerializedCompilationCache } from '../transform/compilationCache';
+import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
+import type { PlaywrightTestConfig, ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
