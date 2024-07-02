@@ -136,7 +136,8 @@ page.clock.pause_at("2020-02-02")
 ```
 
 ```java
-page.clock().pauseAt(Instant.parse("2020-02-02"));
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd");
+page.clock().pauseAt(format.parse("2020-02-02"));
 page.clock().pauseAt("2020-02-02");
 ```
 
@@ -182,8 +183,8 @@ page.clock.set_fixed_time("2020-02-02")
 ```
 
 ```java
-page.clock().setFixedTime(Instant.now());
-page.clock().setFixedTime(Instant.parse("2020-02-02"));
+page.clock().setFixedTime(new Date());
+page.clock().setFixedTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
 page.clock().setFixedTime("2020-02-02");
 ```
 
@@ -225,8 +226,8 @@ page.clock.set_system_time("2020-02-02")
 ```
 
 ```java
-page.clock().setSystemTime(Instant.now());
-page.clock().setSystemTime(Instant.parse("2020-02-02"));
+page.clock().setSystemTime(new Date());
+page.clock().setSystemTime(new SimpleDateFormat("yyy-MM-dd").parse("2020-02-02"));
 page.clock().setSystemTime("2020-02-02");
 ```
 

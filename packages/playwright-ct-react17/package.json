@@ -26,7 +26,8 @@
     "./hooks": {
       "types": "./hooks.d.ts",
       "default": "./hooks.mjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.46.0-next",

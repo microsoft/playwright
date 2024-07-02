@@ -37,7 +37,7 @@ export function getExceptionMessage(exceptionDetails: Protocol.Runtime.Exception
 }
 
 export async function releaseObject(client: CRSession, objectId: string) {
-  await client.send('Runtime.releaseObject', { objectId }).catch(error => {});
+  await client.send('Runtime.releaseObject', { objectId }).catch(error => { });
 }
 
 export async function saveProtocolStream(client: CRSession, handle: string, path: string) {
@@ -91,7 +91,8 @@ export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDet
 
   const err = new Error(message);
   err.stack = stack;
-  err.name = name;
+  const nameOverride = exceptionDetails.exception?.preview?.properties.find(o => o.name === 'name');
+  err.name = nameOverride ? nameOverride.value ?? 'Error' : name;
   return err;
 }
 

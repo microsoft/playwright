@@ -21,6 +21,7 @@ import type * as frames from '../frames';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { PageBinding, PageDelegate } from '../page';
+import { InitScript } from '../page';
 import { Page, Worker } from '../page';
 import type * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
@@ -56,7 +57,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
   private _screencastId: string | undefined;
-  private _initScripts: { script: string, worldName?: string }[] = [];
+  private _initScripts: { initScript: InitScript, worldName?: string }[] = [];
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -113,7 +114,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.addInitScript('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   potentiallyUninitializedPage(): Page {
@@ -406,9 +407,9 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
-  async addInitScript(script: string, worldName?: string): Promise<void> {
-    this._initScripts.push({ script, worldName });
-    await this._session.send('Page.setInitScripts', { scripts: this._initScripts });
+  async addInitScript(initScript: InitScript, worldName?: string): Promise<void> {
+    this._initScripts.push({ initScript, worldName });
+    await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
   }
 
   async removeInitScripts() {
