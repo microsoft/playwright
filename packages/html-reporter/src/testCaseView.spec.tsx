@@ -54,6 +54,7 @@ const testCase: TestCase = {
   annotations: [
     { type: 'annotation', description: 'Annotation text' },
     { type: 'annotation', description: 'Another annotation text' },
+    { type: '_annotation', description: 'Hidden annotation' },
   ],
   tags: [],
   outcome: 'expected',
@@ -65,6 +66,7 @@ const testCase: TestCase = {
 test('should render test case', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
+  await expect(component.getByText('Hidden annotation')).toBeHidden();
   await component.getByText('Annotations').click();
   await expect(component.getByText('Annotation text')).not.toBeVisible();
   await expect(component.getByText('Outer step')).toBeVisible();
