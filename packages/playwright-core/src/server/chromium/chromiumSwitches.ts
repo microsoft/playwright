@@ -20,7 +20,6 @@
 export const chromiumSwitches = [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
-  '--enable-features=NetworkService,NetworkServiceInProcess',
   '--disable-background-timer-throttling',
   '--disable-backgrounding-occluded-windows',
   '--disable-back-forward-cache', // Avoids surprises like main request not being intercepted during page.goBack().
