@@ -26,7 +26,7 @@ export * from './headers';
 export * from './hostPlatform';
 export * from './httpServer';
 export * from './manualPromise';
-export * from './mimeType';
+export * from './isomorphic/mimeType';
 export * from './multimap';
 export * from './network';
 export * from './processLauncher';

@@ -31,7 +31,7 @@ import { getPlaywrightVersion } from '../../utils/userAgent';
 import { urlMatches } from '../../utils/network';
 import { Frame } from '../frames';
 import type { HeadersArray, LifecycleEvent } from '../types';
-import { isTextualMimeType } from '../../utils/mimeType';
+import { isTextualMimeType } from '../../utils/isomorphic/mimeType';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
