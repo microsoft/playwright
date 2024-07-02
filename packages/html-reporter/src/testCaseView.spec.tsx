@@ -74,3 +74,42 @@ test('should render test case', async ({ mount }) => {
   await expect(component.getByText('test.spec.ts:42')).toBeVisible();
   await expect(component.getByText('My test')).toBeVisible();
 });
+
+const linkRenderingTestCase: TestCase = {
+  testId: 'testid',
+  title: 'My test',
+  path: [],
+  projectName: 'chromium',
+  location: { file: 'test.spec.ts', line: 42, column: 0 },
+  annotations: [
+    { type: 'more info', description: 'read https://playwright.dev/docs/intro and https://playwright.dev/docs/api/class-playwright' },
+    { type: 'related issues', description: 'https://github.com/microsoft/playwright/issues/23180, https://github.com/microsoft/playwright/issues/23181' },
+
+  ],
+  tags: [],
+  outcome: 'expected',
+  duration: 10,
+  ok: true,
+  results: [result]
+};
+
+test('should correctly render links in annotations', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  // const container = await(component.getByText('Annotations'));
+
+  const firstLink = await component.getByText('https://playwright.dev/docs/intro').first();
+  await expect(firstLink).toBeVisible();
+  await expect(firstLink).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
+
+  const secondLink = await component.getByText('https://playwright.dev/docs/api/class-playwright').first();
+  await expect(secondLink).toBeVisible();
+  await expect(secondLink).toHaveAttribute('href', 'https://playwright.dev/docs/api/class-playwright');
+
+  const thirdLink = await component.getByText('https://github.com/microsoft/playwright/issues/23180').first();
+  await expect(thirdLink).toBeVisible();
+  await expect(thirdLink).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/23180');
+
+  const fourthLink = await component.getByText('https://github.com/microsoft/playwright/issues/23181').first();
+  await expect(fourthLink).toBeVisible();
+  await expect(fourthLink).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/23181');
+});
