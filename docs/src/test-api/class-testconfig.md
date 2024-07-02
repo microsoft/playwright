@@ -484,7 +484,7 @@ export default defineConfig({
 
 ## property: TestConfig.shardingMode
 
-* since: v1.45
+* since: v1.46
 - type: ?<[ShardingMode]<"partition"|"round-robin"|"duration-round-robin">>
 
 Defines the algorithm to be used for sharding. Defaults to `'partition'`.
