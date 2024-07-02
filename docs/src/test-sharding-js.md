@@ -216,6 +216,8 @@ Shard 4:                ^               ^               ^  : [  4, 8,12 ]
 <details>
 <summary>More complex scenario</summary>
 
+Below is a scenario where tests [ 2 and 3 ], [ 4, 5 and 6 ] and [ 9 and 10 ] are executed in a test group which affects how tests are spread across the shards.
+
 ```ts
 Original Order: [ [1], [2, 3], [4, 5, 6], [7], [8], [9, 10], [11], [12] ]
 Sorted Order:   [ [4, 5, 6], [2, 3], [9, 10], [1], [7], [8], [11], [12] ]
