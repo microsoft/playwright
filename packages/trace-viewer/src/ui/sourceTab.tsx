@@ -23,6 +23,7 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import type { SourceLocation, SourceModel } from './modelUtil';
 import type { StackFrame } from '@protocol/channels';
+import { CopyToClipboard } from './copyToClipboard';
 
 export const SourceTab: React.FunctionComponent<{
   stack: StackFrame[] | undefined,
@@ -82,7 +83,14 @@ export const SourceTab: React.FunctionComponent<{
 
   return <SplitView sidebarSize={200} orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'} sidebarHidden={!showStackFrames}>
     <div className='vbox' data-testid='source-code'>
-      {fileName && <div className='source-tab-file-name'>{fileName}</div>}
+      {fileName && (
+        <div className='source-tab-file-name'>
+          {fileName}
+          <span className='source-copy-to-clipboard'>
+            <CopyToClipboard description='Copy filename' value={getFileName(fileName, targetLine)}/>
+          </span>
+        </div>
+      )}
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
     </div>
     <StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
@@ -99,4 +107,12 @@ export async function calculateSha1(text: string): Promise<string> {
     hexCodes.push(byte);
   }
   return hexCodes.join('');
+}
+
+function getFileName(fullPath?: string, lineNum?: number): string {
+  if (!fullPath)
+    return '';
+  const pathSep = fullPath?.includes('/') ? '/' : '\\';
+  const fileName = fullPath?.split(pathSep).pop() ?? '';
+  return lineNum ? `${fileName}:${lineNum}` : fileName;
 }
