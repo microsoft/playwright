@@ -26,32 +26,27 @@ import { Expandable } from '@web/components/expandable';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
-type TextAttachmentProps = {
-  attachmentText: string;
-  label?: string;
+type ExpandableAttachmentProps = {
+  attachment: Attachment;
 };
 
-const TextAttachment: React.FunctionComponent<TextAttachmentProps> = ({ attachmentText, label }) => {
-  return <div aria-label={label}>
-    {
-      attachmentText ?
-        <CodeMirrorWrapper text={attachmentText} readOnly wrapLines={false}></CodeMirrorWrapper> :
-        <div><i>Loading...</i></div>
-    }
-  </div>;
-};
-
-const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> = ({ attachment }) => {
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
+  const [emptyContentReason, setEmptyContentReason] = React.useState<string>('');
 
   React.useMemo(() => {
+    if (!isTextualMimeType(attachment.contentType)) {
+      setEmptyContentReason('no preview available');
+      return;
+    }
     if (expanded && !loaded) {
+      setEmptyContentReason('loading...');
       fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
         setAttachmentText(text);
         setLoaded(true);
-      });
+      }).catch(err => setEmptyContentReason('failed to load: ' + err.message));
     }
   }, [attachment, expanded, loaded]);
 
@@ -60,15 +55,17 @@ const ExpandableAttachment: React.FunctionComponent<{ attachment: Attachment }> 
       {attachment.name}
       <a href={attachmentURL(attachment) + '&download'}
         className={'codicon codicon-cloud-download'}
-        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
+        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '0.5rem' }}
         onClick={$event => $event.stopPropagation()}>
       </a>
     </>
   } expanded={expanded} expandOnTitleClick={true} setExpanded={exp => setExpanded(exp)}>
-    {isTextualMimeType(attachment.contentType) ?
-      <TextAttachment attachmentText={attachmentText!} label={attachment.name} /> :
-      <div aria-label={attachment.name}><i>no preview available</i></div>
-    }
+    <div aria-label={attachment.name}>
+      { attachmentText ?
+        <CodeMirrorWrapper text={attachmentText!} readOnly wrapLines={false}></CodeMirrorWrapper> :
+        <i>{emptyContentReason}</i>
+      }
+    </div>
   </Expandable>;
 };
 
