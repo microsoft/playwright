@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
+import type { Config, Fixtures, PlaywrightTestConfig, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
@@ -25,6 +25,7 @@ import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/testReporter';
 import { setTransformConfig } from '../transform/transform';
+import type { LastRunInfo } from '../runner/runner';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;
@@ -55,6 +56,9 @@ export class FullConfigInternal {
   cliFailOnFlakyTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
+  shardingMode: Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
+  lastRunFile: string | undefined;
+  lastRunInfo?: LastRunInfo;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
@@ -92,6 +96,8 @@ export class FullConfigInternal {
       workers: 0,
       webServer: null,
     };
+    this.shardingMode = takeFirst(configCLIOverrides.shardingMode, userConfig.shardingMode, 'partition');
+    this.lastRunFile = configCLIOverrides.lastRunFile;
     for (const key in userConfig) {
       if (key.startsWith('@'))
         (this.config as any)[key] = (userConfig as any)[key];
@@ -271,7 +277,7 @@ export function toReporters(reporters: BuiltInReporter | ReporterDescription[] |
   return reporters;
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'blob', 'markdown'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'blob', 'markdown', 'lastrun'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
 
 export type ContextReuseMode = 'none' | 'when-possible';

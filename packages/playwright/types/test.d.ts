@@ -1400,7 +1400,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
-   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   * Learn more about [parallelism](https://playwright.dev/docs/test-parallel) and [sharding](https://playwright.dev/docs/test-sharding) with Playwright Test.
    *
    * **Usage**
    *
@@ -1425,6 +1425,21 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     total: number;
   };
+
+  /**
+   * Defines the algorithm to be used for sharding. Defaults to `'partition'`.
+   * - `'partition'` - divide the set of test groups by number of shards. e.g. first half goes to shard 1/2 and
+   *   seconds half to shard 2/2.
+   * - `'round-robin'` - spread test groups to shards in a round-robin way. e.g. loop over test groups and always
+   *   assign to the shard that has the lowest number of tests.
+   * - `'duration-round-robin'` - use duration info from `.last-run.json` to spread test groups to shards in a
+   *   round-robin way. e.g. loop over test groups and always assign to the shard that has the lowest duration of
+   *   tests. new tests which were not present in the last run will use an average duration time. When no
+   *   `.last-run.json` could be found the behavior is identical to `'round-robin'`.
+   *
+   * Learn more about [sharding](https://playwright.dev/docs/test-sharding) with Playwright Test.
+   */
+  shardingMode?: "partition"|"round-robin"|"duration-round-robin";
 
   /**
    * **NOTE** Use

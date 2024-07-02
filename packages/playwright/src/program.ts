@@ -184,9 +184,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (!config)
     return;
 
-  if (opts.lastFailed) {
+  if (opts.lastFailed || config.shardingMode === 'duration-round-robin') {
     const lastRunInfo = await readLastRunInfo(config);
-    config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+    if (opts.lastFailed)
+      config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+
+    if (config.shardingMode === 'duration-round-robin')
+      config.lastRunInfo = lastRunInfo;
   }
 
   config.cliArgs = args;
@@ -281,6 +285,8 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
+    shardingMode: options.shardingMode ? options.shardingMode : undefined,
+    lastRunFile: options.lastRunFile ? path.resolve(process.cwd(), options.lastRunFile) : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
@@ -347,6 +353,7 @@ const testOptions: [string, string][] = [
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
+  ['--last-run-file', `Path to a json file where the last run information is read from and written to (default: .last-run.json)`],
   ['--list', `Collect all the tests and report them, but do not run`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
@@ -358,6 +365,7 @@ const testOptions: [string, string][] = [
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
+  ['--sharding-mode <mode>', `Sharding algorithm to use; "partition", "round-robin" or "duration-round-robin". Defaults to "partition".`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],

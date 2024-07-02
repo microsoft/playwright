@@ -152,6 +152,7 @@ export class Runner {
 export type LastRunInfo = {
   status: FullResult['status'];
   failedTests: string[];
+  testDurations?: { [testId: string]: number };
 };
 
 async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
@@ -159,10 +160,16 @@ async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) 
   if (!project)
     return;
   const outputDir = project.project.outputDir;
-  await fs.promises.mkdir(outputDir, { recursive: true });
-  const lastRunReportFile = path.join(outputDir, '.last-run.json');
+  const lastRunReportFile = testRun.config.lastRunFile || path.join(outputDir, '.last-run.json');
+  const lastRunReportFileDir = path.dirname(lastRunReportFile);
+  await fs.promises.mkdir(lastRunReportFileDir, { recursive: true });
   const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
-  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
+  const testDurations = testRun.rootSuite?.allTests().reduce((map, t) => {
+    if (t.results.length)
+      map[t.id] = t.results.reduce((a, b) => a + b.duration, 0);
+    return map;
+  }, {} as { [testId: string]: number });
+  const lastRunReport = JSON.stringify({ status, failedTests, testDurations }, undefined, 2);
   await fs.promises.writeFile(lastRunReportFile, lastRunReport);
 }
 
@@ -172,7 +179,7 @@ export async function readLastRunInfo(config: FullConfigInternal): Promise<LastR
     return { status: 'passed', failedTests: [] };
   const outputDir = project.project.outputDir;
   try {
-    const lastRunReportFile = path.join(outputDir, '.last-run.json');
+    const lastRunReportFile = config.lastRunFile || path.join(outputDir, '.last-run.json');
     return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
   } catch {
   }
