@@ -40,6 +40,10 @@ export const TestCaseView: React.FC<{
     return test.tags;
   }, [test]);
 
+  const visibleAnnotations = React.useMemo(() => {
+    return test?.annotations?.filter(annotation => !annotation.type.startsWith('_')) || [];
+  }, [test?.annotations]);
+
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
@@ -52,8 +56,8 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test?.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
+    {!!visibleAnnotations.length && <AutoChip header='Annotations'>
+      {visibleAnnotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({

@@ -159,7 +159,7 @@ You can also filter tests in the configuration file via [`property: TestConfig.g
 
 ## Annotate tests
 
-If you would like to annotate your tests with something more substantial than a tag, you can do that when declaring a test. Annotations have a `type` and a `description` for more context, and will be visible in the test report.
+If you would like to annotate your tests with something more substantial than a tag, you can do that when declaring a test. Annotations have a `type` and a `description` for more context and available in reporter API. Playwright's built-in HTML reporter shows all annotations, except those where `type` starts with `_` symbol.
 
 For example, to annotate a test with an issue url:
 
