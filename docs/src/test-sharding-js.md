@@ -191,7 +191,7 @@ This is the _default_. Test groups are ordered in the way they are discovered. T
 
 This has the effect that tests which share a common prefix are likely to execute on the same shard.
 
-```
+```yaml
          [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
 Shard 1:  ^---------^                                      : [  1, 2, 3 ]
 Shard 2:              ^---------^                          : [  4, 5, 6 ]
@@ -205,7 +205,7 @@ Spreads test groups evenly across shards. It sorts test groups by number of test
 
 Below is an example where every test group represents a single test (e.g. `--fully-parallel`).
 
-```
+```yaml
          [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
 Shard 1:    ^               ^               ^              : [  1, 5, 9 ]
 Shard 2:        ^               ^               ^          : [  2, 6,10 ]
@@ -218,7 +218,7 @@ Shard 4:                ^               ^               ^  : [  4, 8,12 ]
 
 Below is a scenario where tests [ 2 and 3 ], [ 4, 5 and 6 ] and [ 9 and 10 ] are executed in a test group which affects how tests are spread across the shards.
 
-```
+```yaml
 Original Order: [ [1], [2, 3], [4, 5, 6], [7], [8], [9, 10], [11], [12] ]
 Sorted Order:   [ [4, 5, 6], [2, 3], [9, 10], [1], [7], [8], [11], [12] ]
 Shard 1:           ^-----^                                                : [ [ 4,   5,   6] ]
@@ -235,7 +235,7 @@ Very similar to `round-robin`, but uses the duration of a tests previous run as 
 
 As an example, consider we have 12 tests and test 7 and 8 take 5 seconds, test 10 and 11 takes 3 seconds and all other tests take 1 second to execute.
 
-```
+```yaml
 Original Order: [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
 Sorted Order:   [  7,  8, 10, 11,  1,  2,  3,  4,  5,  6,  9, 12]
 Shard 1:           ^                               ^              : [  7, 5 ]
