@@ -32,7 +32,7 @@
   z-index: 10;
 }
 
-.copy-icon.codicon {
+.source-tab-file-name .copy-icon.codicon {
   display: block;
   cursor: pointer;
 }

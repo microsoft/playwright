@@ -81,14 +81,6 @@ export const SourceTab: React.FunctionComponent<{
 
   const showStackFrames = (stack?.length ?? 0) > 1;
 
-  const getFileName = (fullPath?: string, lineNum?: number) => {
-    if (!fullPath)
-      return '';
-    const pathSep = fullPath?.includes('/') ? '/' : '\\';
-    const fileName = fullPath?.split(pathSep).pop() ?? '';
-    return lineNum ? `${fileName}:${lineNum}` : fileName;
-  };
-
   return <SplitView sidebarSize={200} orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'} sidebarHidden={!showStackFrames}>
     <div className='vbox' data-testid='source-code'>
       {fileName && (
@@ -115,4 +107,12 @@ export async function calculateSha1(text: string): Promise<string> {
     hexCodes.push(byte);
   }
   return hexCodes.join('');
+}
+
+function getFileName(fullPath?: string, lineNum?: number): string {
+  if (!fullPath)
+    return '';
+  const pathSep = fullPath?.includes('/') ? '/' : '\\';
+  const fileName = fullPath?.split(pathSep).pop() ?? '';
+  return lineNum ? `${fileName}:${lineNum}` : fileName;
 }
