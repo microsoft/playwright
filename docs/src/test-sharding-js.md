@@ -180,3 +180,71 @@ Supported options:
     reporter: [['html', { open: 'never' }]],
   };
   ```
+
+## Sharding Modes
+
+Playwright offers different sharding modes to alter the behavior how test groups are assigned to shards, which can have an impact on overall execution time and resource utilization.
+
+### `shardingMode: 'partition'`
+
+This is the _default_. Test groups are ordered in the way they are discovered. Test groups are assigned the current shard until it has equal or more than 1/Nth of the overall number of tests. Then the next shard is filled, etc.
+
+This has the effect that tests which share a common prefix are likely to execute on the same shard.
+
+```ts
+         [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
+Shard 1:  ^---------^                                      : [  1, 2, 3 ]
+Shard 2:              ^---------^                          : [  4, 5, 6 ]
+Shard 3:                          ^---------^              : [  7, 8, 9 ]
+Shard 4:                                      ^---------^  : [ 10,11,12 ]
+```
+
+### `shardingMode: 'round-robin'`
+
+Spreads test groups evenly across shards. It sorts test groups by number of tests in descending order, then loops through the test groups and assigns them to the shard with the lowest number of tests.
+
+Below is an example where every test group represents a single test (e.g. `--fully-parallel`).
+
+```ts
+         [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
+Shard 1:    ^               ^               ^              : [  1, 5, 9 ]
+Shard 2:        ^               ^               ^          : [  2, 6,10 ]
+Shard 3:            ^               ^               ^      : [  3, 7,11 ]
+Shard 4:                ^               ^               ^  : [  4, 8,12 ]
+```
+
+<details>
+<summary>More complex scenario</summary>
+
+```ts
+Original Order: [ [1], [2, 3], [4, 5, 6], [7], [8], [9, 10], [11], [12] ]
+Sorted Order:   [ [4, 5, 6], [2, 3], [9, 10], [1], [7], [8], [11], [12] ]
+Shard 1:           ^-----^                                                : [ [ 4,   5,   6] ]
+Shard 2:                      ^--^                       ^                : [ [ 2,  3],  [8] ]
+Shard 3:                              ^---^                    ^          : [ [ 9, 10], [11] ]
+Shard 4:                                       ^    ^                ^    : [ [1], [7], [12] ]
+```
+
+</details>
+
+## `shardingMode: 'duration-round-robin'`
+
+Very similar to `round-robin`, but uses the duration of a tests previous run as cost factor. The duration will be read from `.last-run.json` when available. When a test can not be found in `.last-run.json` it will use the average duration of available tests. When no last run info is available, the behavior is identical to `round-robin`.
+
+As an example, consider we have 12 tests and test 7 and 8 take 5 seconds, test 10 and 11 takes 3 seconds and all other tests take 1 second to execute.
+
+```ts
+Original Order: [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
+Sorted Order:   [  7,  8, 10, 11,  1,  2,  3,  4,  5,  6,  9, 12]
+Shard 1:           ^                               ^              : [  7, 5 ]
+Shard 2:               ^                               ^          : [  8, 6 ]
+Shard 3:                   ^       ^       ^               ^      : [ 10, 1, 3, 9 ]
+Shard 4:                       ^       ^       ^               ^  : [ 11, 2, 4, 12 ]
+```
+
+All shards would have an execution time of around 6 seconds...
+* Shard 1 would execute tests 5 <sup>(1s)</sup> and 7 <sup>(5s)</sup> in 6 seconds.
+* Shard 2 would execute tests 6 <sup>(1s)</sup> and 8 <sup>(5s)</sup> in 6 seconds.
+* Shard 3 would execute tests 1 <sup>(1s)</sup>, 3 <sup>(1s)</sup>, 9 <sup>(1s)</sup> and 10 <sup>(3s)</sup> in 6 seconds.
+* Shard 4 would execute tests 2 <sup>(1s)</sup>, 4 <sup>(1s)</sup>, 11 <sup>(3s)</sup> and 12 <sup>(1s)</sup> in 6 seconds.
+

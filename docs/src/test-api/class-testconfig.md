@@ -469,7 +469,7 @@ export default defineConfig({
 
 Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
 
-Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+Learn more about [parallelism](../test-parallel.md) and [sharding](../test-sharding.md) with Playwright Test.
 
 **Usage**
 
@@ -499,6 +499,8 @@ Defines the algorithm to be used for sharding. Defaults to `'partition'`.
   which were not present in the last run will use an average duration time. When
   no `.last-run.json` could be found the behavior is identical to
   `'round-robin'`.
+
+Learn more about [sharding](../test-sharding.md) with Playwright Test.
 
 
 ## property: TestConfig.testDir
