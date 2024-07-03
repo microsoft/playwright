@@ -37,10 +37,12 @@ function compressReports(reports) {
     if (report.config && report.config.projects) {
       for (const project of report.config.projects) {
         project.metadata = project.metadata || {};
-        if (project.metadata.headful === false)
-          delete project.metadata.headful;
+        if (project.metadata.headless === 'headless')
+          delete project.metadata.headless;
         if (project.metadata.mode === 'default')
           delete project.metadata.mode;
+        if (project.metadata.clock === 'default')
+          delete project.metadata.clock;
         if (project.metadata.platform && project.metadata.platform.toLowerCase() !== 'android')
           delete project.metadata.platform;
         // Cleanup a bunch of data from report that
