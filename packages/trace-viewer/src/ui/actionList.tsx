@@ -102,6 +102,7 @@ export const renderAction = (
       <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
+      {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeBaseUrl(action.params.url)}</div>}
     </div>
     {(showDuration || showBadges) && <div className='spacer'></div>}
     {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
@@ -111,3 +112,8 @@ export const renderAction = (
     </div>}
   </>;
 };
+
+function excludeBaseUrl(url: string): string {
+  const match = url.match(/^(https?:\/\/[^/]+)(.*)$/);
+  return match ? match[2] : url;
+}
