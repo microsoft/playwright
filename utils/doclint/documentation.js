@@ -167,7 +167,7 @@ class Documentation {
   renderLinksInNodes(nodes, classOrMember) {
     if (classOrMember instanceof Member) {
       classOrMember.discouraged = classOrMember.discouraged ? this.renderLinksInText(classOrMember.discouraged, classOrMember) : undefined;
-      classOrMember.deprecated = classOrMember.deprecated ? this.renderLinksInText(classOrMember.deprecated, classOrMember) : undefined
+      classOrMember.deprecated = classOrMember.deprecated ? this.renderLinksInText(classOrMember.deprecated, classOrMember) : undefined;
     }
     md.visitAll(nodes, node => {
       if (!node.text)
@@ -208,7 +208,7 @@ class Documentation {
   }
 }
 
- class Class {
+class Class {
   /**
    * @param {Metainfo} metainfo
    * @param {string} name
@@ -322,7 +322,7 @@ class Documentation {
     for (const e of this.eventsArray)
       e.visit(visitor);
   }
-};
+}
 
 class Member {
   /**
@@ -345,7 +345,7 @@ class Member {
     this.spec = spec;
     this.argsArray = argsArray;
     this.required = required;
-    this.comment =  '';
+    this.comment = '';
     /** @type {!Map<string, !Member>} */
     this.args = new Map();
     this.index();
@@ -473,8 +473,10 @@ class Member {
       this.type.visit(visitor);
     for (const arg of this.argsArray)
       arg.visit(visitor);
+    for (const lang in this.langs.overrides || {})
+      this.langs.overrides?.[lang].visit(visitor);
   }
-};
+}
 
 class Type {
   /**
@@ -509,9 +511,9 @@ class Type {
    * @return {Type}
    */
   static fromParsedType(parsedType, inUnion = false) {
-    if (!inUnion && !parsedType.unionName && isStringUnion(parsedType) ) {
+    if (!inUnion && !parsedType.unionName && isStringUnion(parsedType))
       throw new Error('Enum must have a name:\n' + JSON.stringify(parsedType, null, 2));
-    }
+
 
     if (!inUnion && (parsedType.union || parsedType.unionName)) {
       const type = new Type(parsedType.unionName || '');
@@ -556,15 +558,15 @@ class Type {
     /** @type {Member[] | undefined} */
     this.properties = this.name === 'Object' ? properties : undefined;
     /** @type {Type[] | undefined} */
-    this.union;
+    this.union = undefined;
     /** @type {Type[] | undefined} */
-    this.args;
+    this.args = undefined;
     /** @type {Type | undefined} */
-    this.returnType;
+    this.returnType = undefined;
     /** @type {Type[] | undefined} */
-    this.templates;
+    this.templates = undefined;
     /** @type {string | undefined} */
-    this.expression;
+    this.expression = undefined;
   }
 
   visit(visitor) {
@@ -645,7 +647,7 @@ class Type {
     if (this.returnType)
       this.returnType._collectAllTypes(result);
   }
-};
+}
 
 /**
  * @param {ParsedType | null} type
@@ -931,7 +933,7 @@ function processCodeGroups(spec, language, transformer) {
  * @param {string} codeLang
  * @return {{ highlighter: string, language: string|undefined, codeGroup: string|undefined}}
  */
- function parseCodeLang(codeLang) {
+function parseCodeLang(codeLang) {
   if (codeLang === 'python async')
     return { highlighter: 'py', codeGroup: 'python-async', language: 'python' };
   if (codeLang === 'python sync')
