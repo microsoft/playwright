@@ -96,7 +96,7 @@ This project incorporates components from the projects listed below. The origina
 -	caniuse-lite@1.0.30001579 (https://github.com/browserslist/caniuse-lite)
 -	chalk@2.4.2 (https://github.com/chalk/chalk)
 -	chalk@4.1.2 (https://github.com/chalk/chalk)
--	chokidar@3.5.3 (https://github.com/paulmillr/chokidar)
+-	chokidar@3.6.0 (https://github.com/paulmillr/chokidar)
 -	ci-info@3.8.0 (https://github.com/watson/ci-info)
 -	codemirror-shadow-1@0.0.1 (https://github.com/codemirror/CodeMirror)
 -	color-convert@1.9.3 (https://github.com/Qix-/color-convert)
@@ -3076,7 +3076,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF chalk@4.1.2 AND INFORMATION
 
-%% chokidar@3.5.3 NOTICES AND INFORMATION BEGIN HERE
+%% chokidar@3.6.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3100,7 +3100,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF chokidar@3.5.3 AND INFORMATION
+END OF chokidar@3.6.0 AND INFORMATION
 
 %% ci-info@3.8.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================

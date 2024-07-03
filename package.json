@@ -64,7 +64,7 @@
     "@types/babel__core": "^7.20.2",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",
-    "@types/node": "^18.15.3",
+    "@types/node": "^18.19.39",
     "@types/react": "^18.0.12",
     "@types/react-dom": "^18.0.5",
     "@types/resize-observer-browser": "^0.1.7",
