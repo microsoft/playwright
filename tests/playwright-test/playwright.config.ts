@@ -50,6 +50,6 @@ export default defineConfig({
   ],
   reporter: reporters(),
   metadata: {
-    clock: 'clock-' + (process.env.PW_CLOCK || 'default'),
+    clock: process.env.PW_CLOCK ? 'clock-' + process.env.PW_CLOCK : undefined,
   },
 });

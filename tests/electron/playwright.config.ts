@@ -44,7 +44,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
 
 const metadata = {
   platform: process.platform,
-  headful: true,
+  headless: 'headed',
   browserName: 'electron',
   channel: undefined,
   mode: 'default',

@@ -43,7 +43,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
 
 const metadata = {
   platform: process.platform,
-  headful: true,
+  headless: 'headed',
   browserName: 'webview2',
   channel: undefined,
   mode: 'default',
