@@ -113,7 +113,7 @@ Returns the matching [Request] object.
 ## async method: Response.securityDetails
 * since: v1.13
 - returns: <[null]|[Object]>
-  - `issuer` ?<[string]> Common Name component of the Issuer field.
+  - `issuer` ?<[string]> Common Name component of the Issuer field
     from the certificate. This should only be used for informational purposes. Optional.
   - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
   - `subjectName` ?<[string]> Common Name component of the Subject
