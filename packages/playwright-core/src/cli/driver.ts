@@ -42,7 +42,6 @@ export function runDriver() {
   const isJavaScriptLanguageBinding = !process.env.PW_LANG_NAME || process.env.PW_LANG_NAME === 'javascript';
   const replacer = !isJavaScriptLanguageBinding && (String.prototype as any).toWellFormed ? (key: string, value: any): any => {
     if (typeof value === 'string')
-      // @ts-expect-error
       return value.toWellFormed();
     return value;
   } : undefined;

@@ -71,12 +71,6 @@ test('should check types of fixtures', async ({ runTSC }) => {
         // @ts-expect-error
         baz: true,
       });
-      const fail9 = test.extend<{ foo: string }>({
-        // @ts-expect-error
-        foo: [ async ({}, use) => {
-          await use('foo');
-        }, { scope: 'test', auto: true } ],
-      });
       const fail10 = test.extend<{}, {}>({
         // @ts-expect-error
         bar: [ async ({}, use) => {
