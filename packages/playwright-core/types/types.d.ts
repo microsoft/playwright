@@ -17287,7 +17287,7 @@ export interface Clock {
    * await page.clock.pauseAt('2020-02-02');
    * ```
    *
-   * @param time
+   * @param time Time to pause at.
    */
   pauseAt(time: number|string|Date): Promise<void>;
 
@@ -17322,7 +17322,7 @@ export interface Clock {
    * await page.clock.setFixedTime('2020-02-02');
    * ```
    *
-   * @param time Time to be set.
+   * @param time Time to be set in milliseconds.
    */
   setFixedTime(time: number|string|Date): Promise<void>;
 
@@ -17337,7 +17337,7 @@ export interface Clock {
    * await page.clock.setSystemTime('2020-02-02');
    * ```
    *
-   * @param time
+   * @param time Time to be set in milliseconds.
    */
   setSystemTime(time: number|string|Date): Promise<void>;
 }
