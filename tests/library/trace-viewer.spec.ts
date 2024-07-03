@@ -347,14 +347,12 @@ test('should capture data-url svg iframe', async ({ page, server, runAndTrace })
 });
 
 test('should contain adopted style sheets', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
       const sheet = new CSSStyleSheet();
       sheet.addRule('button', 'color: red');
-      (document as any).adoptedStyleSheets = [sheet];
+      document.adoptedStyleSheets = [sheet];
 
       const sheet2 = new CSSStyleSheet();
       sheet2.addRule(':host', 'color: blue');
@@ -364,7 +362,7 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
           mode: 'open'
         });
         root.append('foo');
-        (root as any).adoptedStyleSheets = [sheet2];
+        root.adoptedStyleSheets = [sheet2];
         document.body.appendChild(element);
       }
     });
@@ -377,22 +375,20 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
 });
 
 test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
       const sheet = new CSSStyleSheet();
       sheet.addRule('button', 'color: red');
-      (document as any).adoptedStyleSheets = [sheet];
+      document.adoptedStyleSheets = [sheet];
     });
     await page.evaluate(() => {
-      const [sheet] = (document as any).adoptedStyleSheets;
+      const [sheet] = document.adoptedStyleSheets;
       sheet.replaceSync(`button { color: blue }`);
     });
-    await page.evaluate(() => {
-      const [sheet] = (document as any).adoptedStyleSheets;
-      sheet.replace(`button { color: #0F0 }`);
+    await page.evaluate(async () => {
+      const [sheet] = document.adoptedStyleSheets;
+      await sheet.replace(`button { color: #0F0 }`);
     });
   });
 
@@ -410,7 +406,30 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
   }
 });
 
-test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {
+test('should work with adopted style sheets and all: unset', async ({ page, runAndTrace, browserName }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31500' });
+  test.fixme(browserName === 'chromium', 'https://issues.chromium.org/u/1/issues/41416124');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const stylesheet = new CSSStyleSheet();
+      // 'all: unset' is the problem here.
+      stylesheet.replaceSync('button { all: unset; border-radius: 24px; background-color: deepskyblue; color: black; padding: 5px }');
+      document.adoptedStyleSheets = [stylesheet];
+    });
+    await page.getByRole('button').click();
+  });
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
+    await expect(frame.locator('button')).toHaveCSS('border-radius', '24px');
+    await expect(frame.locator('button')).toHaveCSS('background-color', 'rgb(0, 191, 255)');
+    await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
+    await expect(frame.locator('button')).toHaveCSS('padding', '5px');
+  }
+});
+
+test('should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <style>
@@ -749,7 +768,7 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
   await expect(snapshotFrame.locator('img')).toHaveJSProperty('naturalWidth', 10);
 });
 
-test('should include metainfo', async ({ showTraceViewer, browserName }) => {
+test('should include metainfo', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
   const callLine = traceViewer.page.locator('.metadata-view .call-line');
