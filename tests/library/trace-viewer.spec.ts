@@ -812,12 +812,12 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await traceViewer.selectAction('apiRequestContext.get');
   await traceViewer.selectAction('apiRequestContext.post');
   await expect(traceViewer.actionTitles).toHaveText([
-    `apiRequestContext.get`,
+    `apiRequestContext.get/simple.json`,
     `page.gotohttp://localhost:${server.PORT}/input/button.html`,
-    `apiRequestContext.head`,
+    `apiRequestContext.head/simplezip.json`,
     `locator.clicklocator('button')`,
     `locator.clicklocator('button')`,
-    `apiRequestContext.post`,
+    `apiRequestContext.post/one-style.css`,
   ]);
 
   await traceViewer.page.locator('text=Metadata').click();
