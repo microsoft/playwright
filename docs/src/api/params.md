@@ -514,6 +514,17 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_
 
 Does not enforce fixed viewport, allows resizing window in the headed mode.
 
+## context-option-clientCertificates
+- `clientCertificates` <[Array]<[Object]>>
+  - `url` <[string]> Glob pattern to match the URLs that the certificate is valid for.
+  - `certs` <[Array]<[Object]>> List of client certificates to be used.
+    - `cert` ?<[string]> Path to the file with the certificate in PEM format.
+    - `key` ?<[string]> Path to the file with the private key in PEM format.
+    - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
+    - `pfx` ?<[string]> PFX or PKCS12 encoded private key and certificate chain.
+
+An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the certificate is issued by a custom certificate authority, the `ca` property should be provided with the path to the file with the certificate authority's certificate. If the certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+
 ## context-option-useragent
 - `userAgent` <[string]>
 

@@ -25,6 +25,7 @@ import type { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { ClientCertificatesProxy, shouldUseMitmSocksProxy } from './socksClientCertificatesInterceptor';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -84,7 +85,13 @@ export abstract class Browser extends SdkObject {
 
   async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
+    let clientCertificateProxy: ClientCertificatesProxy | undefined;
+    if (shouldUseMitmSocksProxy(options)) {
+      clientCertificateProxy = new ClientCertificatesProxy(options);
+      options.proxy = { server: await clientCertificateProxy.listen() };
+    }
     const context = await this.doCreateNewContext(options);
+    context._socksServer = clientCertificateProxy;
     if (options.storageState)
       await context.setStorageState(metadata, options.storageState);
     return context;

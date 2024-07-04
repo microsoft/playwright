@@ -12,6 +12,9 @@ see [APIRequestContext].
 
 Creates new instances of [APIRequestContext].
 
+### option: APIRequest.newContext.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
 ### option: APIRequest.newContext.useragent = %%-context-option-useragent-%%
 * since: v1.16
 

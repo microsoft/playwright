@@ -15591,6 +15591,45 @@ export interface APIRequest {
     baseURL?: string;
 
     /**
+     * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
+     * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
+     * certificate is issued by a custom certificate authority, the `ca` property should be provided with the path to the
+     * file with the certificate authority's certificate. If the certificate is valid only for specific URLs, the `url`
+     * property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+     */
+    clientCertificates?: Array<{
+      /**
+       * Glob pattern to match the URLs that the certificate is valid for.
+       */
+      url: string;
+
+      /**
+       * List of client certificates to be used.
+       */
+      certs: Array<{
+        /**
+         * Path to the file with the certificate in PEM format.
+         */
+        cert?: string;
+
+        /**
+         * Path to the file with the private key in PEM format.
+         */
+        key?: string;
+
+        /**
+         * Passphrase for the private key (PEM or PFX).
+         */
+        passphrase?: string;
+
+        /**
+         * PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfx?: string;
+      }>;
+    }>;
+
+    /**
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
@@ -16740,6 +16779,45 @@ export interface Browser extends EventEmitter {
      * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
+
+    /**
+     * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
+     * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
+     * certificate is issued by a custom certificate authority, the `ca` property should be provided with the path to the
+     * file with the certificate authority's certificate. If the certificate is valid only for specific URLs, the `url`
+     * property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+     */
+    clientCertificates?: Array<{
+      /**
+       * Glob pattern to match the URLs that the certificate is valid for.
+       */
+      url: string;
+
+      /**
+       * List of client certificates to be used.
+       */
+      certs: Array<{
+        /**
+         * Path to the file with the certificate in PEM format.
+         */
+        cert?: string;
+
+        /**
+         * Path to the file with the private key in PEM format.
+         */
+        key?: string;
+
+        /**
+         * Passphrase for the private key (PEM or PFX).
+         */
+        passphrase?: string;
+
+        /**
+         * PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfx?: string;
+      }>;
+    }>;
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
@@ -20172,6 +20250,45 @@ export interface BrowserContextOptions {
    * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
    */
   bypassCSP?: boolean;
+
+  /**
+   * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
+   * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
+   * certificate is issued by a custom certificate authority, the `ca` property should be provided with the path to the
+   * file with the certificate authority's certificate. If the certificate is valid only for specific URLs, the `url`
+   * property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+   */
+  clientCertificates?: Array<{
+    /**
+     * Glob pattern to match the URLs that the certificate is valid for.
+     */
+    url: string;
+
+    /**
+     * List of client certificates to be used.
+     */
+    certs: Array<{
+      /**
+       * Path to the file with the certificate in PEM format.
+       */
+      cert?: string;
+
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      key?: string;
+
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
+
+      /**
+       * PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: string;
+    }>;
+  }>;
 
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See

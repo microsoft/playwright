@@ -28,7 +28,7 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
+import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions, ClientCertificate } from './types';
 import { headersObjectToArray, isRegExp, isString, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type * as api from '../../types/types';
@@ -529,6 +529,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
+    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -547,4 +548,32 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   if (acceptDownloads)
     return 'accept';
   return 'deny';
+}
+
+export async function toClientCertificatesProtocol(clientCertificates?: ClientCertificate[]): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+  if (!clientCertificates)
+    return undefined;
+  return await Promise.all(clientCertificates.map(async clientCertificate => {
+    if (clientCertificate.certs.length === 0)
+      throw new Error('No certs specified for url: ' + clientCertificate.url);
+    return {
+      url: clientCertificate.url,
+      certs: await Promise.all(clientCertificate.certs.map(async cert => {
+        if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
+          throw new Error('None of cert, key, passphrase or pfx is specified');
+        if (cert.cert && !cert.key)
+          throw new Error('cert is specified without key');
+        if (!cert.cert && cert.key)
+          throw new Error('key is specified without cert');
+        if (cert.pfx && (cert.cert || cert.key || cert.passphrase))
+          throw new Error('pfx is specified together with cert, key or passphrase');
+        return {
+          cert: cert.cert ? await fs.promises.readFile(cert.cert) : undefined,
+          key: cert.key ? await fs.promises.readFile(cert.key) : undefined,
+          passphrase: cert.passphrase,
+          pfx: cert.pfx ? await fs.promises.readFile(cert.pfx) : undefined,
+        };
+      }))
+    };
+  }));
 }
