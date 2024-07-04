@@ -724,6 +724,76 @@ test('update', async ({ mount }) => {
 
 </Tabs>
 
+### Handling network requests
+
+Playwright provides a `route` fixture to intercept and handle network requests.
+
+```ts
+test.beforeEach(async ({ route }) => {
+  // install common routes before each test
+  await route('*/**/api/v1/fruits', async route => {
+    const json = [{ name: 'Strawberry', id: 21 }];
+    await route.fulfill({ json });
+  });
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your routes are active
+  // ...
+});
+```
+
+You can also introduce test-specific routes.
+
+```ts
+import { http, HttpResponse } from 'msw';
+
+test('example test', async ({ mount, route }) => {
+  await route('*/**/api/v1/fruits', async route => {
+    const json = [{ name: 'fruit for this single test', id: 42 }];
+    await route.fulfill({ json });
+  });
+
+  // test as usual, your route is active
+  // ...
+});
+```
+
+The `route` fixture works in the same way as [`method: Page.route`]. See the [network mocking guide](./mock.md) for more details.
+
+**Re-using MSW handlers**
+
+If you are using the [MSW library](https://mswjs.io/) to handle network requests during development or testing, you can pass them directly to the `route` fixture.
+
+```ts
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ route }) => {
+  // install common handlers before each test
+  await route(handlers);
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+You can also introduce test-specific handlers.
+
+```ts
+import { http, HttpResponse } from 'msw';
+
+test('example test', async ({ mount, route }) => {
+  await route(http.get('/data', async ({ request }) => {
+    return HttpResponse.json({ value: 'mocked' });
+  }));
+
+  // test as usual, your handler is active
+  // ...
+});
+```
+
 ## Frequently asked questions
 
 ### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
