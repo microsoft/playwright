@@ -55,6 +55,7 @@ export type BrowserOptions = {
 export abstract class Browser extends SdkObject {
 
   static Events = {
+    BeforeClose: 'beforeClose',
     Disconnected: 'disconnected',
   };
 
@@ -66,6 +67,7 @@ export abstract class Browser extends SdkObject {
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
   _isCollocatedWithServer: boolean = true;
+  private _needsBeforeCloseEvent = false;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
     super(parent, 'browser');
@@ -142,7 +144,18 @@ export abstract class Browser extends SdkObject {
     return video?.artifact;
   }
 
+  setNeedsBeforeCloseEvent(needsBeforeCloseEvent: boolean) {
+    this._needsBeforeCloseEvent = needsBeforeCloseEvent;
+  }
+
   _didClose() {
+    if (this._needsBeforeCloseEvent)
+      this.emit(Browser.Events.BeforeClose);
+    else
+      this.beforeCloseFinished();
+  }
+
+  beforeCloseFinished() {
     for (const context of this.contexts())
       context._browserClosed();
     if (this._defaultContext)
