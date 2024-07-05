@@ -19,6 +19,7 @@ import path from 'path';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import https from 'https';
 import type net from 'net';
+import type { BrowserContextOptions } from 'packages/playwright-test';
 
 const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: string }>({
   serverURL: async ({ }, use) => {
@@ -58,23 +59,35 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
 test.skip(({ mode }) => mode !== 'default');
 
 const kClientCertificatesDir = path.join(__dirname, '../config/testserver/client-certificates');
-const kValidationSubTests: any[] = [
-  [[{ url: 'test', certs: [] }], 'No certs specified for url: test'],
-  [[{ url: 'test', certs: [{}] }]], 'None of cert, key, passphrase or pfx is specified',
-  [[{
-    url: 'test', certs: [{
+const kValidationSubTests: [BrowserContextOptions, string ][] = [
+  [{ clientCertificates: [{ url: 'test', certs: [] }] }, 'No certs specified for url: test'],
+  [{ clientCertificates: [{ url: 'test', certs: [{}] }] }, 'None of cert, key, passphrase or pfx is specified'],
+  [{ clientCertificates: [{
+    url: 'test',
+    certs: [{
       cert: 'foo',
       key: 'foo',
       passphrase: 'foo',
       pfx: 'foo',
     }]
-  }], 'pfx is specified together with cert, key or passphrase']
+  }] }, 'pfx is specified together with cert, key or passphrase'],
+  [{
+    proxy: { server: 'http://localhost:8080' },
+    clientCertificates: [{
+      url: 'test',
+      certs: [{
+        cert: 'foo',
+        key: 'foo',
+        passphrase: 'foo',
+        pfx: 'foo',
+      }]
+    }] }, 'Cannot specify both proxy and clientCertificates'],
 ];
 
 test.describe('fetch', () => {
   test('validate input', async ({ playwright }) => {
-    for (const [clientCertificates, expected] of kValidationSubTests)
-      await expect(playwright.request.newContext({ clientCertificates })).rejects.toThrow(expected);
+    for (const [contextOptions, expected] of kValidationSubTests)
+      await expect(playwright.request.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
   test('should fail with no client certificates provided', async ({ playwright, serverURL }) => {
@@ -183,8 +196,8 @@ test.describe('fetch', () => {
 
 test.describe('browser', () => {
   test('validate input', async ({ browser }) => {
-    for (const [clientCertificates, expected] of kValidationSubTests)
-      await expect(browser.newContext({ clientCertificates })).rejects.toThrow(expected);
+    for (const [contextOptions, expected] of kValidationSubTests)
+      await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
   test('should keep supporting http', async ({ browser, server }) => {
