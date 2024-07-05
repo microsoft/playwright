@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import http from 'http';
 import { browserTest as it, expect } from '../config/browserTest';
-import type net from 'net';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
