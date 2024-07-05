@@ -154,7 +154,7 @@ assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
 // `Date.now` will progress as the timers fire.
 await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0)
 });
 await Page.GotoAsync("http://localhost:3333");
 
@@ -352,7 +352,7 @@ assertThat(locator).hasText("2/2/2024, 10:00:02 AM");
 // Initialize clock with a specific time, let the page load naturally.
 await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
 });
 await page.GotoAsync("http://localhost:3333");
 var locator = page.GetByTestId("current-time");
