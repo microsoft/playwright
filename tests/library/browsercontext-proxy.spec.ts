@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import http from 'http';
 import { browserTest as it, expect } from '../config/browserTest';
+import type net from 'net';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
@@ -412,4 +414,40 @@ it('does launch without a port', async ({ contextFactory }) => {
     proxy: { server: 'http://localhost' }
   });
   await context.close();
+});
+
+it('should isolate proxy credentials between contexts on navigation', async ({ contextFactory, browserName, server }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/31525');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31525' });
+
+  server.setRoute('/target.html', async (req, res) => {
+    const authHeader = req.headers['proxy-authorization'];
+
+    if (!authHeader) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="proxy"' });
+      res.end('Proxy authorization required');
+      return;
+    }
+
+    const [username,] = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`Hello <div data-testid=user>${username}</div>!\n`);
+  });
+
+  const context1 = await contextFactory({
+    proxy: { server: server.PREFIX, username: 'user1', password: 'secret1' }
+  });
+  const page1 = await context1.newPage();
+  await page1.goto('http://non-existent.com/target.html');
+  await expect(page1.getByTestId('user')).toHaveText('user1');
+
+  const context2 = await contextFactory({
+    proxy: { server: server.PREFIX, username: 'user2', password: 'secret2' }
+  });
+  const page2 = await context2.newPage();
+  await page2.goto('http://non-existent.com/target.html');
+  await expect(page2.getByTestId('user')).toHaveText('user2');
+
+  await page1.goto('http://non-existent.com/target.html');
+  await expect(page1.getByTestId('user')).toHaveText('user1');
 });
