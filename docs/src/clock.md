@@ -179,9 +179,9 @@ With the help of the clock, you can speed up time and test this feature quickly.
 ```html
 <div id="remaining-time" data-testid="remaining-time"></div>
 <script>
-  const endTime = new Date().getTime() + 5 * 60_000;
+  const endTime = Date.now() + 5 * 60_000;
   const renderTime = () => {
-    const diffInSeconds = Math.round((endTime - new Date().getTime()) / 1000);
+    const diffInSeconds = Math.round((endTime - Date.now()) / 1000);
     if (diffInSeconds <= 0) {
       document.getElementById('remaining-time').textContent =
         'You have been logged out due to inactivity.';
