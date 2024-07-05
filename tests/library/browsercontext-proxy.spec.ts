@@ -416,9 +416,11 @@ it('does launch without a port', async ({ contextFactory }) => {
   await context.close();
 });
 
-it('should isolate proxy credentials between contexts on navigation', async ({ contextFactory, browserName }) => {
+it('should isolate proxy credentials between contexts on navigation', async ({ contextFactory, browserName, server }) => {
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/31525');
-  const server = http.createServer((req, res) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31525' });
+
+  server.setRoute('/target.html', async (req, res) => {
     const authHeader = req.headers['proxy-authorization'];
 
     if (!authHeader) {
@@ -432,19 +434,15 @@ it('should isolate proxy credentials between contexts on navigation', async ({ c
     res.end(`Hello <div data-testid=user>${username}</div>!\n`);
   });
 
-  const serverURL = await new Promise<string>(resolve => server.listen(0, 'localhost', () => {
-    resolve(`http://localhost:${(server.address() as net.AddressInfo).port}`);
-  }));
-
   const context1 = await contextFactory({
-    proxy: { server: serverURL, username: 'user1', password: 'secret1' }
+    proxy: { server: server.PREFIX, username: 'user1', password: 'secret1' }
   });
   const page1 = await context1.newPage();
   await page1.goto('http://non-existent.com/target.html');
   await expect(page1.getByTestId('user')).toHaveText('user1');
 
   const context2 = await contextFactory({
-    proxy: { server: serverURL, username: 'user2', password: 'secret2' }
+    proxy: { server: server.PREFIX, username: 'user2', password: 'secret2' }
   });
   const page2 = await context2.newPage();
   await page2.goto('http://non-existent.com/target.html');
@@ -452,6 +450,4 @@ it('should isolate proxy credentials between contexts on navigation', async ({ c
 
   await page1.goto('http://non-existent.com/target.html');
   await expect(page1.getByTestId('user')).toHaveText('user1');
-
-  await new Promise<void>(resolve => server.close(() => resolve()));
 });
