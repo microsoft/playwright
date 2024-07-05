@@ -85,13 +85,13 @@ export abstract class Browser extends SdkObject {
 
   async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
-    let clientCertificateProxy: ClientCertificatesProxy | undefined;
+    let socksServer: ClientCertificatesProxy | undefined;
     if (shouldUseMitmSocksProxy(options)) {
-      clientCertificateProxy = new ClientCertificatesProxy(options);
-      options.proxy = { server: await clientCertificateProxy.listen() };
+      socksServer = new ClientCertificatesProxy(options);
+      options.proxy = { server: await socksServer.listen() };
     }
     const context = await this.doCreateNewContext(options);
-    context._socksServer = clientCertificateProxy;
+    context._socksServer = socksServer;
     if (options.storageState)
       await context.setStorageState(metadata, options.storageState);
     return context;
