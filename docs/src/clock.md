@@ -152,7 +152,7 @@ assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
 ```csharp
 // Initialize clock with some time before the test time and let the page load naturally.
 // `Date.now` will progress as the timers fire.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
   Time = new DateTime(2024, 2, 2, 8, 0, 0)
 });
@@ -350,7 +350,7 @@ assertThat(locator).hasText("2/2/2024, 10:00:02 AM");
 
 ```csharp
 // Initialize clock with a specific time, let the page load naturally.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
   Time = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
 });
