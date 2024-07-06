@@ -95,7 +95,7 @@ const linkRenderingTestCase: TestCase = {
   results: [result]
 };
 
-test.only('should correctly set the page title and favicon', async ({ mount, page }) => {
+test('should correctly set the page title and favicon', async ({ mount, page }) => {
   await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);
   expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_expected.svg');
   expect(await page.title()).toEqual(`| ${linkRenderingTestCase.title}`);
