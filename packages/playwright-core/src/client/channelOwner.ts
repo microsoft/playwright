@@ -143,7 +143,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return async (params: any) => {
               return await this._wrapApiCall(async apiZone => {
-                const { apiName, frames, csi, callCookie, stepId } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], stepId: undefined } : apiZone;
+                const { apiName, frames, csi, callCookie, stepId } = apiZone.reported || this._type === 'JsonPipe' ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], stepId: undefined } : apiZone;
                 apiZone.reported = true;
                 let currentStepId = stepId;
                 if (csi && apiName) {

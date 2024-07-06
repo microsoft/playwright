@@ -50,6 +50,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     super(parent, type, guid, initializer);
     this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
+    this._channel.on('beforeClose', () => this._beforeClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
@@ -138,16 +139,27 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   async close(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     try {
-      if (this._shouldCloseConnectionOnClose)
+      if (this._shouldCloseConnectionOnClose) {
+        // We cannot run beforeClose when remote disconnects, because there is no physical connection anymore.
+        // However, we can run it for an explicit browser.close() call.
+        await this._instrumentation.runBeforeCloseBrowser(this);
         this._connection.close();
-      else
+      } else {
         await this._channel.close(options);
+      }
       await this._closedPromise;
     } catch (e) {
       if (isTargetClosedError(e))
         return;
       throw e;
     }
+  }
+
+  async _beforeClose() {
+    await this._wrapApiCall(async () => {
+      await this._instrumentation.runBeforeCloseBrowser(this);
+      await this._channel.beforeCloseFinished().catch(() => {});
+    }, true);
   }
 
   _didClose() {
