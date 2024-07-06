@@ -21,6 +21,7 @@ import type {
   PlaywrightTestOptions,
   PlaywrightWorkerArgs,
   PlaywrightWorkerOptions,
+  BrowserContext,
 } from 'playwright/test';
 import type { InlineConfig } from 'vite';
 
@@ -33,8 +34,18 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
+interface RequestHandler {
+  run(args: { request: Request, requestId?: string, resolutionContext?: { baseUrl?: string } }): Promise<{ response?: Response } | null>;
+}
+
+export interface RouteFixture {
+  (...args: Parameters<BrowserContext['route']>): Promise<void>;
+  (handlers: RequestHandler[]): Promise<void>;
+  (handler: RequestHandler): Promise<void>;
+}
+
 export type TestType<ComponentFixtures> = BaseTestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures & { route: RouteFixture },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
