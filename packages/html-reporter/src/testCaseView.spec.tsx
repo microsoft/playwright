@@ -107,7 +107,7 @@ const linkRenderingTestCase: TestCase = {
   results: [result]
 };
 
-test('should correctly render links in annotations', async ({ mount, page }) => {
+test('should correctly render links in annotations', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);
   // const container = await(component.getByText('Annotations'));
 
