@@ -77,6 +77,18 @@ test('should render test case', async ({ mount }) => {
   await expect(component.getByText('My test')).toBeVisible();
 });
 
+test('should correctly set the page title and favicon', async ({ mount, page }) => {
+  await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
+  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_expected.svg');
+  expect(await page.title()).toEqual(`| ${testCase.title}`);
+});
+
+test('should fallback to default title and favicon', async ({ mount, page }) => {
+  await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={undefined} run={0} anchor=''></TestCaseView>);
+  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_default.svg');
+  expect(await page.title()).toEqual('Playwright Test Report');
+});
+
 const linkRenderingTestCase: TestCase = {
   testId: 'testid',
   title: 'My test',
@@ -94,12 +106,6 @@ const linkRenderingTestCase: TestCase = {
   ok: true,
   results: [result]
 };
-
-test('should correctly set the page title and favicon', async ({ mount, page }) => {
-  await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);
-  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_expected.svg');
-  expect(await page.title()).toEqual(`| ${linkRenderingTestCase.title}`);
-});
 
 test('should correctly render links in annotations', async ({ mount, page }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);

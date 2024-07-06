@@ -45,7 +45,7 @@ export const TestCaseView: React.FC<{
   }, [test?.annotations]);
 
   React.useEffect(() => {
-    document.title = `| ${test?.title}` ?? 'Playwright Test Report';
+    document.title = test?.title ? `| ${test.title}` : 'Playwright Test Report';
     setSvgFavicon(test?.outcome);
   }, [test?.outcome, test?.title]);
 
