@@ -47,6 +47,14 @@ export const TestCaseView: React.FC<{
   React.useEffect(() => {
     document.title = test?.title ? `| ${test.title}` : 'Playwright Test Report';
     test?.outcome ? setFavicon({ outcome: test.outcome }) : setFavicon('default');
+    const resetFaviconOnBack = () => {
+      setFavicon('default');
+    };
+
+    window.addEventListener('popstate', resetFaviconOnBack);
+    return () => {
+      window.removeEventListener('popstate', resetFaviconOnBack);
+    };
   }, [test?.outcome, test?.title]);
 
   return <div className='test-case-column vbox'>
