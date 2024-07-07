@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation } from './types';
+import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -46,7 +46,7 @@ export const TestCaseView: React.FC<{
 
   React.useEffect(() => {
     document.title = test?.title ? `| ${test.title}` : 'Playwright Test Report';
-    setSvgFavicon(test?.outcome);
+    test?.outcome ? setFavicon({ outcome: test.outcome }) : setFavicon('default');
   }, [test?.outcome, test?.title]);
 
   return <div className='test-case-column vbox'>
@@ -136,17 +136,13 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
   ) : null;
 };
 
-function setSvgFavicon(outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky'| undefined) {
-  // Find or create a link element for the favicon
+function setFavicon(outcome: Pick<TestCaseSummary, 'outcome'> | 'default') {
   let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
   if (!link) {
     link = document.createElement('link');
     link.rel = 'icon';
     document.getElementsByTagName('head')[0].appendChild(link);
   }
-
-  if (!outcome)
-    link.href = '../logo_default.svg';
-  else
-    link.href = `../logo_${outcome}.svg`;
+  const outcomeValue = outcome instanceof Object ? outcome.outcome : outcome;
+  link.href = `../logo_${outcomeValue}.svg`;
 }
