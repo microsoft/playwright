@@ -226,7 +226,7 @@ class SnapshotHelper {
       this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     }
     const message = `A snapshot doesn't exist at ${this.snapshotPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
-    if (this.updateSnapshots === 'all') {
+    if (['all', 'missing'].includes(this.updateSnapshots)) {
       /* eslint-disable no-console */
       console.log(message);
       return this.createMatcherResult(message, true);

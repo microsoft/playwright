@@ -1150,6 +1150,80 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   expect(comparePNGs(data, whiteImage)).toBe(null);
 });
 
+test('should update expectations with updateSnapshot: all config option', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      updateSnapshots: 'all',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
+});
+
+test('should update expectations with updateSnapshot: missing config option', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      updateSnapshots: 'missing',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
+});
+
+test('should update expectations with updateSnapshot: missing config option and throw for changed ones', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      updateSnapshots: 'missing',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'passed.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+    'failing.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('exists.png');
+      });
+    `,
+    '__screenshots__/failing.spec.js/exists.png': redImage,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__/passed.spec.js/snapshot.png');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
+});
+
 test('should respect comparator name', async ({ runInlineTest }) => {
   const expected = fs.readFileSync(path.join(__dirname, '../image_tools/fixtures/should-match/tiny-antialiasing-sample/tiny-expected.png'));
   const actualURL = pathToFileURL(path.join(__dirname, '../image_tools/fixtures/should-match/tiny-antialiasing-sample/tiny-actual.png'));
