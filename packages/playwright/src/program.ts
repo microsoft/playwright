@@ -171,6 +171,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       workers: cliOverrides.workers,
       timeout: cliOverrides.timeout,
       outputDir: cliOverrides.outputDir,
+      updateSnapshots: cliOverrides.updateSnapshots,
     });
     await stopProfiling('runner');
     if (status === 'restarted')
