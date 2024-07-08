@@ -57,8 +57,9 @@
   white-space: nowrap;
 }
 
-.copy-icon {
+.call-line .copy-icon {
   display: none;
+  margin-left: 5px;
 }
 
 .call-line:hover .copy-icon {
