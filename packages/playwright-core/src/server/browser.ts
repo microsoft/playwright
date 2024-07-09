@@ -89,6 +89,7 @@ export abstract class Browser extends SdkObject {
     if (options.clientCertificates?.length) {
       clientCertificatesProxy = new ClientCertificatesProxy(options);
       options.proxy = { server: await clientCertificatesProxy.listen() };
+      options.ignoreHTTPSErrors = true;
     }
     const context = await this.doCreateNewContext(options);
     context._clientCertificatesProxy = clientCertificatesProxy;

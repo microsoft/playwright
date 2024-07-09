@@ -693,8 +693,6 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
       throw new Error('Cannot specify both proxy and clientCertificates');
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (options.clientCertificates?.length)
-    options.ignoreHTTPSErrors = true;
   verifyGeolocation(options.geolocation);
   verifyClientCertificates(options.clientCertificates);
 }

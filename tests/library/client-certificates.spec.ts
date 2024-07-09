@@ -228,7 +228,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with untrusted client certs', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
+  test('should throw with a untrusted CA', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,

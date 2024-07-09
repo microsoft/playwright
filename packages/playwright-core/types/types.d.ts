@@ -13222,6 +13222,47 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
+     * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
+     * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
+     * certificate is issued by a custom certificate authority, the `ignoreHTTPSErrors` needs to be set. If the
+     * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
+     * URLs that the certificate is valid for.
+     *
+     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+     */
+    clientCertificates?: Array<{
+      /**
+       * Glob pattern to match the URLs that the certificate is valid for.
+       */
+      url: string;
+
+      /**
+       * List of client certificates to be used.
+       */
+      certs: Array<{
+        /**
+         * Path to the file with the certificate in PEM format.
+         */
+        cert?: string;
+
+        /**
+         * Path to the file with the private key in PEM format.
+         */
+        key?: string;
+
+        /**
+         * Passphrase for the private key (PEM or PFX).
+         */
+        passphrase?: string;
+
+        /**
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfx?: string;
+      }>;
+    }>;
+
+    /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
