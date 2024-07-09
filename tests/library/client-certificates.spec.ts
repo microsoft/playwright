@@ -15,19 +15,18 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { expect, playwrightTest as base } from '../config/browserTest';
-import https from 'https';
 import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
+const { createHttpsServer } = require('../../packages/playwright-core/lib/utils');
 
 const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: string }>({
-  serverURL: async ({ }, use) => {
-    const server = https.createServer({
-      key: fs.readFileSync(path.join(kClientCertificatesDir, 'server/server_key.pem')),
-      cert: fs.readFileSync(path.join(kClientCertificatesDir, 'server/server_cert.pem')),
+  serverURL: async ({ asset }, use) => {
+    const server = createHttpsServer({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
       ca: [
-        fs.readFileSync(path.join(kClientCertificatesDir, 'server/server_cert.pem')),
+        fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
       ],
       requestCert: true,
       rejectUnauthorized: false,
@@ -58,20 +57,21 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
 
 test.skip(({ mode }) => mode !== 'default');
 
-const kClientCertificatesDir = path.join(__dirname, '../config/testserver/client-certificates');
 const kDummyFileName = __filename;
-const kValidationSubTests: [BrowserContextOptions, string ][] = [
+const kValidationSubTests: [BrowserContextOptions, string][] = [
   [{ clientCertificates: [{ url: 'test', certs: [] }] }, 'No certs specified for url: test'],
   [{ clientCertificates: [{ url: 'test', certs: [{}] }] }, 'None of cert, key, passphrase or pfx is specified'],
-  [{ clientCertificates: [{
-    url: 'test',
-    certs: [{
-      cert: kDummyFileName,
-      key: kDummyFileName,
-      passphrase: kDummyFileName,
-      pfx: kDummyFileName,
+  [{
+    clientCertificates: [{
+      url: 'test',
+      certs: [{
+        cert: kDummyFileName,
+        key: kDummyFileName,
+        passphrase: kDummyFileName,
+        pfx: kDummyFileName,
+      }]
     }]
-  }] }, 'pfx is specified together with cert, key or passphrase'],
+  }, 'pfx is specified together with cert, key or passphrase'],
   [{
     proxy: { server: 'http://localhost:8080' },
     clientCertificates: [{
@@ -82,7 +82,8 @@ const kValidationSubTests: [BrowserContextOptions, string ][] = [
         passphrase: kDummyFileName,
         pfx: kDummyFileName,
       }]
-    }] }, 'Cannot specify both proxy and clientCertificates'],
+    }]
+  }, 'Cannot specify both proxy and clientCertificates'],
 ];
 
 test.describe('fetch', () => {
@@ -99,13 +100,13 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should keep supporting http', async ({ playwright, server }) => {
+  test('should keep supporting http', async ({ playwright, server, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
         url: server.PREFIX,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -116,33 +117,27 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should throw with a untrusted CA', async ({ playwright, serverURL }) => {
+  test('should throw with a untrusted CA', async ({ playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
-    try {
-      const response = await request.get(serverURL);
-      expect(response.status()).toBe(503);
-      expect(await response.text()).toBe('Self-signed certificate error: self-signed certificate');
-    } catch (error) {
-      expect(error.message).toContain('self-signed certificate');
-    }
+    await expect(request.get(serverURL)).rejects.toThrow('self-signed certificate');
   });
 
-  test('should throw with matching CA but untrusted client certs', async ({ playwright, serverURL }) => {
+  test('should throw with matching CA but untrusted client certs', async ({ playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/bob_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/bob_key.pem'),
+          cert: asset('client-certificates/client/bob_cert.pem'),
+          key: asset('client-certificates/client/bob_key.pem'),
         }],
       }],
     });
@@ -153,13 +148,13 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should work without CA', async ({ playwright, serverURL }) => {
+  test('should work without CA', async ({ playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
       ignoreHTTPSErrors: true,
@@ -171,14 +166,14 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should work in the browser with request interception', async ({ browser, playwright, serverURL }) => {
+  test('should work in the browser with request interception', async ({ browser, playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -201,13 +196,13 @@ test.describe('browser', () => {
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
-  test('should keep supporting http', async ({ browser, server }) => {
+  test('should keep supporting http', async ({ browser, server, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: server.PREFIX,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -217,14 +212,14 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with no client certificates', async ({ browser, serverURLRewrittenToLocalhost }) => {
+  test('should fail with no client certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: 'https://not-matching.com',
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -233,13 +228,13 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with untrusted client certs', async ({ browser, serverURLRewrittenToLocalhost }) => {
+  test('should fail with untrusted client certs', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/bob_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/bob_key.pem'),
+          cert: asset('client-certificates/client/bob_cert.pem'),
+          key: asset('client-certificates/client/bob_key.pem'),
         }],
       }],
     });
@@ -248,14 +243,14 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates', async ({ browser, serverURLRewrittenToLocalhost }) => {
+  test('should pass with matching certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
         certs: [{
-          cert: path.join(kClientCertificatesDir, 'client/alice_cert.pem'),
-          key: path.join(kClientCertificatesDir, 'client/alice_key.pem'),
+          cert: asset('client-certificates/client/alice_cert.pem'),
+          key: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });

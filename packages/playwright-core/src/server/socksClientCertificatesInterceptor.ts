@@ -118,16 +118,13 @@ class SocksProxyConnection {
 
     this.internalTLS.on('error', () => closeBothSockets());
     targetTLS.on('error', error => {
-      if (['DEPTH_ZERO_SELF_SIGNED_CERT', 'ERR_SSL_TLSV13_ALERT_CERTIFICATE_REQUIRED'].includes(error.code)) {
-        this.internalTLS!.write('HTTP/1.1 503 Internal Server Error\r\n');
-        this.internalTLS!.write('Content-Type: text/html; charset=utf-8\r\n');
-        const responseBody = 'Self-signed certificate error: ' + error.message;
-        this.internalTLS!.write('Content-Length: ' + Buffer.byteLength(responseBody) + '\r\n');
-        this.internalTLS!.write('\r\n');
-        this.internalTLS!.write(responseBody);
-        this.internalTLS!.end();
-        return;
-      }
+      this.internalTLS!.write('HTTP/1.1 503 Internal Server Error\r\n');
+      this.internalTLS!.write('Content-Type: text/html; charset=utf-8\r\n');
+      const responseBody = 'Self-signed certificate error: ' + error.message;
+      this.internalTLS!.write('Content-Length: ' + Buffer.byteLength(responseBody) + '\r\n');
+      this.internalTLS!.write('\r\n');
+      this.internalTLS!.write(responseBody);
+      this.internalTLS!.end();
       closeBothSockets();
     });
   }
