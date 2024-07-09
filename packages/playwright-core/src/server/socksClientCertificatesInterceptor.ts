@@ -41,7 +41,7 @@ class SocksProxyConnection {
   firstPackageReceived: boolean = false;
   isTLS: boolean = false;
 
-  target: net.Socket = null!;
+  target!: net.Socket;
 
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
@@ -173,7 +173,7 @@ const kClientCertificatesGlobRegex = Symbol('kClientCertificatesGlobRegex');
 export function clientCertificatesToTLSOptions(
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
   requestURL: string
-): Pick<https.RequestOptions, 'pfx' | 'key' | 'passphrase' | 'cert' | 'ca'> | undefined {
+): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c => {
     let regex: RegExp | undefined = (c as any)[kClientCertificatesGlobRegex];
     if (!regex) {
@@ -185,7 +185,7 @@ export function clientCertificatesToTLSOptions(
   });
   if (!matchingCerts || !matchingCerts.length)
     return;
-  const requestOptions = {
+  const tlsOptions = {
     pfx: [] as { buf: Buffer, passphrase?: string }[],
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
@@ -204,7 +204,6 @@ export function clientCertificatesToTLSOptions(
 }
 
 export function shouldUseMitmSocksProxy(options: {
-  ca?: Buffer[];
   clientCertificates?: channels.BrowserNewContextOptions['clientCertificates'];
 }) {
   if (options.clientCertificates && options.clientCertificates.length > 0)
