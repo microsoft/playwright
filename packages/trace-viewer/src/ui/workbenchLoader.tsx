@@ -58,6 +58,17 @@ export const WorkbenchLoader: React.FunctionComponent<{
     setProcessingErrorMessage(null);
   }, []);
 
+  React.useEffect(() => {
+    const listener = async (e: ClipboardEvent) => {
+      if (!e.clipboardData?.files.length)
+        return;
+      e.preventDefault();
+      processTraceFiles(e.clipboardData.files);
+    };
+    document.addEventListener('paste', listener);
+    return () => document.removeEventListener('paste', listener);
+  });
+
   const handleDropEvent = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     processTraceFiles(event.dataTransfer.files);
