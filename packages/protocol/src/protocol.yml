@@ -904,6 +904,8 @@ Browser:
 
   commands:
 
+    beforeCloseFinished:
+
     close:
       parameters:
         reason: string?
@@ -980,6 +982,8 @@ Browser:
 
 
   events:
+
+    beforeClose:
 
     close:
 

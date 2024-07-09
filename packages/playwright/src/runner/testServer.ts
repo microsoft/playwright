@@ -314,6 +314,7 @@ class TestServerDispatcher implements TestServerInterface {
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
       outputDir: params.outputDir,
+      updateSnapshots: params.updateSnapshots,
       workers: params.workers,
     };
     if (params.trace === 'on')

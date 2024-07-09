@@ -1084,10 +1084,12 @@ export type BrowserInitializer = {
   name: string,
 };
 export interface BrowserEventTarget {
+  on(event: 'beforeClose', callback: (params: BrowserBeforeCloseEvent) => void): this;
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
+  beforeCloseFinished(params?: BrowserBeforeCloseFinishedParams, metadata?: CallMetadata): Promise<BrowserBeforeCloseFinishedResult>;
   close(params: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, metadata?: CallMetadata): Promise<BrowserKillForTestsResult>;
   defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, metadata?: CallMetadata): Promise<BrowserDefaultUserAgentForTestResult>;
@@ -1098,7 +1100,11 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
 }
+export type BrowserBeforeCloseEvent = {};
 export type BrowserCloseEvent = {};
+export type BrowserBeforeCloseFinishedParams = {};
+export type BrowserBeforeCloseFinishedOptions = {};
+export type BrowserBeforeCloseFinishedResult = void;
 export type BrowserCloseParams = {
   reason?: string,
 };
@@ -1386,6 +1392,7 @@ export type BrowserStopTracingResult = {
 };
 
 export interface BrowserEvents {
+  'beforeClose': BrowserBeforeCloseEvent;
   'close': BrowserCloseEvent;
 }
 

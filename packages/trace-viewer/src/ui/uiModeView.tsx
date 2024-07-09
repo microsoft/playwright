@@ -61,8 +61,11 @@ const queryParams = {
   timeout: searchParams.has('timeout') ? +searchParams.get('timeout')! : undefined,
   headed: searchParams.has('headed'),
   outputDir: searchParams.get('outputDir') || undefined,
+  updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
 };
+if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
+  queryParams.updateSnapshots = undefined;
 
 const isMac = navigator.platform === 'MacIntel';
 
@@ -285,6 +288,7 @@ export const UIModeView: React.FC<{}> = ({
         timeout: queryParams.timeout,
         headed: queryParams.headed,
         outputDir: queryParams.outputDir,
+        updateSnapshots: queryParams.updateSnapshots,
         reporters: queryParams.reporters,
         trace: 'on',
       });
