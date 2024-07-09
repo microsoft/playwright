@@ -32,41 +32,41 @@ type ExpandableAttachmentProps = {
 
 const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment }) => {
   const [expanded, setExpanded] = React.useState(false);
-  const [loaded, setLoaded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
-  const [emptyContentReason, setEmptyContentReason] = React.useState<string>('');
+  const [placeholder, setPlaceholder] = React.useState<string | null>(null);
 
-  React.useMemo(() => {
-    if (!isTextualMimeType(attachment.contentType)) {
-      setEmptyContentReason('no preview available');
-      return;
-    }
-    if (expanded && !loaded) {
-      setEmptyContentReason('loading...');
+  const isTextAttachment = isTextualMimeType(attachment.contentType);
+
+  React.useEffect(() => {
+    if (expanded && attachmentText === null && placeholder === null) {
+      setPlaceholder('Loading ...');
       fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
         setAttachmentText(text);
-        setLoaded(true);
-      }).catch(err => setEmptyContentReason('failed to load: ' + err.message));
+        setPlaceholder(null);
+      }).catch(e => {
+        setPlaceholder('Failed to load: ' + e.message);
+      });
     }
-  }, [attachment, expanded, loaded]);
+  }, [expanded, attachmentText, placeholder, attachment]);
 
-  return <Expandable title={
-    <>
-      {attachment.name}
-      <a href={attachmentURL(attachment) + '&download'}
-        className={'codicon codicon-cloud-download'}
-        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '0.5rem' }}
-        onClick={$event => $event.stopPropagation()}>
-      </a>
-    </>
-  } expanded={expanded} expandOnTitleClick={true} setExpanded={exp => setExpanded(exp)}>
-    <div aria-label={attachment.name}>
-      { attachmentText ?
-        <CodeMirrorWrapper text={attachmentText!} readOnly wrapLines={false}></CodeMirrorWrapper> :
-        <i>{emptyContentReason}</i>
-      }
-    </div>
-  </Expandable>;
+  const title = <>
+    {attachment.name} <a style={{ marginLeft: 5 }} href={attachmentURL(attachment) + '&download'}>download</a>
+  </>;
+
+  if (!isTextAttachment)
+    return <div style={{ marginLeft: 20 }}>{title}</div>;
+
+  return <>
+    <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
+      {placeholder && <i>{placeholder}</i>}
+    </Expandable>
+    {expanded && attachmentText !== null && <CodeMirrorWrapper
+      text={attachmentText}
+      readOnly
+      lineNumbers={true}
+      wrapLines={false}>
+    </CodeMirrorWrapper>}
+  </>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{

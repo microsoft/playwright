@@ -23,9 +23,8 @@ test('should contain text attachment', async ({ runUITest }) => {
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('attach test', async () => {
-        await test.info().attach('note', { path: __filename });
-        await test.info().attach('🎭', { body: 'hi tester!', contentType: 'text/plain' });
-        await test.info().attach('escaped', { body: '## Header\\n\\n> TODO: some todo\\n- _Foo_\\n- **Bar**', contentType: 'text/plain' });
+        await test.info().attach('file attachment', { path: __filename });
+        await test.info().attach('text attachment', { body: 'hi tester!', contentType: 'text/plain' });
       });
     `,
   });
@@ -33,23 +32,17 @@ test('should contain text attachment', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  for (const { name, content, displayedAsText } of [
-    { name: 'note', content: 'attach test', displayedAsText: false },
-    { name: '🎭', content: 'hi tester!', displayedAsText: true },
-    { name: 'escaped', content: '## Header\n\n> TODO: some todo\n- _Foo_\n- **Bar**', displayedAsText: true },
-  ]) {
-    await page.getByText(`attach "${name}"`, { exact: true }).click();
-    const downloadPromise = page.waitForEvent('download');
-    await page.locator('.expandable-title', { hasText: name }).click();
-    await expect(page.getByLabel(name)).toContainText(displayedAsText ?
-      content.split('\n')?.[0] :
-      'no preview available'
-    );
-    await page.locator('.expandable-title', { hasText: name }).getByRole('link').click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe(name);
-    expect((await readAllFromStream(await download.createReadStream())).toString()).toContain(content);
-  }
+
+  await page.locator('.tab-attachments').getByText('text attachment').click();
+  await expect(page.locator('.tab-attachments')).toContainText('hi tester!');
+  await page.locator('.tab-attachments').getByText('file attachment').click();
+  await expect(page.locator('.tab-attachments')).not.toContainText('attach test');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'download' }).first().click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('file attachment');
+  expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
 });
 
 test('should contain binary attachment', async ({ runUITest }) => {
@@ -65,9 +58,8 @@ test('should contain binary attachment', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  await page.getByText('attach "data"', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
-  await page.locator('.expandable-title', { hasText: 'data' }).getByRole('link').click();
+  await page.getByRole('link', { name: 'download' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('data');
   expect(await readAllFromStream(await download.createReadStream())).toEqual(Buffer.from([1, 2, 3]));
