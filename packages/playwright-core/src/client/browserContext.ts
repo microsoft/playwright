@@ -529,7 +529,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
-    clientCertificates: await toClientCertificatesProtocol(options.proxy, options.clientCertificates),
+    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -550,25 +550,13 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   return 'deny';
 }
 
-export async function toClientCertificatesProtocol(proxy: BrowserContextOptions['proxy'], clientCertificates?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+export async function toClientCertificatesProtocol(clientCertificates?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
   if (!clientCertificates)
     return undefined;
-  if (proxy)
-    throw new Error('Cannot specify both proxy and clientCertificates');
   return await Promise.all(clientCertificates.map(async clientCertificate => {
-    if (clientCertificate.certs.length === 0)
-      throw new Error('No certs specified for url: ' + clientCertificate.url);
     return {
       url: clientCertificate.url,
       certs: await Promise.all(clientCertificate.certs.map(async cert => {
-        if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
-          throw new Error('None of cert, key, passphrase or pfx is specified');
-        if (cert.cert && !cert.key)
-          throw new Error('cert is specified without key');
-        if (!cert.cert && cert.key)
-          throw new Error('key is specified without cert');
-        if (cert.pfx && (cert.cert || cert.key || cert.passphrase))
-          throw new Error('pfx is specified together with cert, key or passphrase');
         return {
           cert: cert.cert ? await fs.promises.readFile(cert.cert) : undefined,
           key: cert.key ? await fs.promises.readFile(cert.key) : undefined,

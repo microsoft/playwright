@@ -15625,7 +15625,7 @@ export interface APIRequest {
         passphrase?: string;
 
         /**
-         * PFX or PKCS12 encoded private key and certificate chain.
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
          */
         pfx?: string;
       }>;
@@ -16817,7 +16817,7 @@ export interface Browser extends EventEmitter {
         passphrase?: string;
 
         /**
-         * PFX or PKCS12 encoded private key and certificate chain.
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
          */
         pfx?: string;
       }>;
@@ -20290,7 +20290,7 @@ export interface BrowserContextOptions {
       passphrase?: string;
 
       /**
-       * PFX or PKCS12 encoded private key and certificate chain.
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfx?: string;
     }>;

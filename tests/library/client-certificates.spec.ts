@@ -59,16 +59,17 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
 test.skip(({ mode }) => mode !== 'default');
 
 const kClientCertificatesDir = path.join(__dirname, '../config/testserver/client-certificates');
+const kDummyFileName = __filename;
 const kValidationSubTests: [BrowserContextOptions, string ][] = [
   [{ clientCertificates: [{ url: 'test', certs: [] }] }, 'No certs specified for url: test'],
   [{ clientCertificates: [{ url: 'test', certs: [{}] }] }, 'None of cert, key, passphrase or pfx is specified'],
   [{ clientCertificates: [{
     url: 'test',
     certs: [{
-      cert: 'foo',
-      key: 'foo',
-      passphrase: 'foo',
-      pfx: 'foo',
+      cert: kDummyFileName,
+      key: kDummyFileName,
+      passphrase: kDummyFileName,
+      pfx: kDummyFileName,
     }]
   }] }, 'pfx is specified together with cert, key or passphrase'],
   [{
@@ -76,10 +77,10 @@ const kValidationSubTests: [BrowserContextOptions, string ][] = [
     clientCertificates: [{
       url: 'test',
       certs: [{
-        cert: 'foo',
-        key: 'foo',
-        passphrase: 'foo',
-        pfx: 'foo',
+        cert: kDummyFileName,
+        key: kDummyFileName,
+        passphrase: kDummyFileName,
+        pfx: kDummyFileName,
       }]
     }] }, 'Cannot specify both proxy and clientCertificates'],
 ];

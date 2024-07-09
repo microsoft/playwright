@@ -76,7 +76,7 @@ export class APIRequest implements api.APIRequest {
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
       tracesDir,
-      clientCertificates: await toClientCertificatesProtocol(options.proxy, options.clientCertificates),
+      clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     })).request);
     this._contexts.add(context);
     context._request = this;

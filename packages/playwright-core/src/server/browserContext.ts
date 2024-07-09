@@ -689,11 +689,14 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
+    if (options.clientCertificates)
+      throw new Error('Cannot specify both proxy and clientCertificates');
     options.proxy = normalizeProxySettings(options.proxy);
   }
   if (options.clientCertificates?.length)
     options.ignoreHTTPSErrors = true;
   verifyGeolocation(options.geolocation);
+  verifyClientCertificates(options.clientCertificates);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {
@@ -707,6 +710,27 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
     throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
   if (accuracy < 0)
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
+}
+
+export function verifyClientCertificates(clientCertificates?: channels.BrowserNewContextParams['clientCertificates']) {
+  if (!clientCertificates)
+    return;
+  for (const { url, certs } of clientCertificates) {
+    if (!url)
+      throw new Error(`clientCertificates.url is required`);
+    if (!certs.length)
+      throw new Error('No certs specified for url: ' + url);
+    for (const cert of certs) {
+      if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
+        throw new Error('None of cert, key, passphrase or pfx is specified');
+      if (cert.cert && !cert.key)
+        throw new Error('cert is specified without key');
+      if (!cert.cert && cert.key)
+        throw new Error('key is specified without cert');
+      if (cert.pfx && (cert.cert || cert.key || cert.passphrase))
+        throw new Error('pfx is specified together with cert, key or passphrase');
+    }
+  }
 }
 
 export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {

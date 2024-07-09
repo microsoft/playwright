@@ -27,7 +27,7 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
@@ -562,11 +562,14 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       if (!/^\w+:\/\//.test(url))
         url = 'http://' + url;
       proxy.server = url;
+      if (options.clientCertificates)
+        throw new Error('Cannot specify both proxy and clientCertificates');
     }
     if (options.storageState) {
       this._origins = options.storageState.origins;
       this._cookieStore.addCookies(options.storageState.cookies || []);
     }
+    verifyClientCertificates(options.clientCertificates);
     this._options = {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
