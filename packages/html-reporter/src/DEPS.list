@@ -1,6 +1,11 @@
 [*]
 @playwright/experimental-ct-react
 @web/**
+../logo_default.svg
+../logo_expected.svg
+../logo_flaky.svg
+../logo_skipped.svg
+../logo_unexpected.svg
 
 [chip.spec.tsx]
 ***
