@@ -21,7 +21,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket } from '../utils/happy-eyeballs';
-import { assert, globToRegex, isUnderTest } from '../utils';
+import { globToRegex, isUnderTest } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -38,20 +38,24 @@ class SocksConnectionDuplex extends stream.Duplex {
 }
 
 class SocksProxyConnection {
+  private readonly socksProxy: ClientCertificatesProxy;
+  private readonly uid: string;
+  private readonly host: string;
+  private readonly port: number;
   firstPackageReceived: boolean = false;
-  isTLS: boolean = false;
-
   target!: net.Socket;
-
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
   internalTLS: tls.TLSSocket | undefined;
 
-  constructor(private readonly socksProxy: ClientCertificatesProxy, private readonly uid: string, private readonly host: string, private readonly port: number) {}
+  constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
+    this.socksProxy = socksProxy;
+    this.uid = uid;
+    this.host = host;
+    this.port = port;
+  }
 
   async connect() {
-    // WebKit on Darwin doesn't proxy localhost requests through the given proxy.
-    // Workaround: Rewrite to localhost during tests.
     this.target = await createSocket(isUnderTest() ? 'localhost' : this.host, this.port);
     this.target.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
     this.target.on('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
@@ -73,21 +77,18 @@ class SocksProxyConnection {
     if (!this.firstPackageReceived) {
       this.firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-      this.isTLS = data[0] === 0x16;
-      if (this.isTLS)
+      if (data[0] === 0x16)
         this._attachTLSListeners();
       else
         this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
     }
-    if (this.isTLS)
-      this.internal!.push(data);
+    if (this.internal)
+      this.internal.push(data);
     else
       this.target.write(data);
   }
 
   private _attachTLSListeners() {
-    assert(this.isTLS);
-
     this.internal = new SocksConnectionDuplex(data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
     this.internalTLS = new tls.TLSSocket(this.internal, {
       isServer: true,
@@ -160,7 +161,8 @@ export class ClientCertificatesProxy {
   }
 
   public async listen(): Promise<string> {
-    return `socks5://127.0.0.1:${await this._socksProxy.listen(0)}`;
+    const port = await this._socksProxy.listen(0, '127.0.0.1');
+    return `socks5://127.0.0.1:${port}`;
   }
 
   public async close() {
@@ -193,20 +195,12 @@ export function clientCertificatesToTLSOptions(
   for (const { certs } of matchingCerts) {
     for (const cert of certs) {
       if (cert.cert)
-        requestOptions.cert.push(cert.cert);
+        tlsOptions.cert.push(cert.cert);
       if (cert.key)
-        requestOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
+        tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
       if (cert.pfx)
-        requestOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
+        tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
     }
   }
-  return requestOptions;
-}
-
-export function shouldUseMitmSocksProxy(options: {
-  clientCertificates?: channels.BrowserNewContextOptions['clientCertificates'];
-}) {
-  if (options.clientCertificates && options.clientCertificates.length > 0)
-    return true;
-  return false;
+  return tlsOptions;
 }

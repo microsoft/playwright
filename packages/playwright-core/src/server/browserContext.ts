@@ -43,7 +43,7 @@ import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
-import { shouldUseMitmSocksProxy, type ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import { type ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -91,7 +91,7 @@ export abstract class BrowserContext extends SdkObject {
   private _debugger!: Debugger;
   _closeReason: string | undefined;
   readonly clock: Clock;
-  _socksServer: ClientCertificatesProxy | undefined;
+  _clientCertificatesProxy: ClientCertificatesProxy | undefined;
 
   constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -449,7 +449,7 @@ export abstract class BrowserContext extends SdkObject {
         await harRecorder.flush();
       await this.tracing.flush();
 
-      await this._socksServer?.close();
+      await this._clientCertificatesProxy?.close();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -691,7 +691,7 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (shouldUseMitmSocksProxy(options))
+  if (options.clientCertificates?.length)
     options.ignoreHTTPSErrors = true;
   verifyGeolocation(options.geolocation);
 }
