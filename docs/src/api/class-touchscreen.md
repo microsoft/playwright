@@ -17,9 +17,13 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 * since: v1.8
 - `x` <[float]>
 
+X coordinate relative to the main frame's viewport in CSS pixels.
+
 ### param: Touchscreen.tap.y
 * since: v1.8
 - `y` <[float]>
+
+Y coordinate relative to the main frame's viewport in CSS pixels.
 
 ## async method: Touchscreen.touch
 * since: v1.46
