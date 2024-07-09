@@ -20,8 +20,54 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { Expandable } from '@web/components/expandable';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
+
+type ExpandableAttachmentProps = {
+  attachment: Attachment;
+};
+
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+  const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
+  const [emptyContentReason, setEmptyContentReason] = React.useState<string>('');
+
+  React.useMemo(() => {
+    if (!isTextualMimeType(attachment.contentType)) {
+      setEmptyContentReason('no preview available');
+      return;
+    }
+    if (expanded && !loaded) {
+      setEmptyContentReason('loading...');
+      fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
+        setAttachmentText(text);
+        setLoaded(true);
+      }).catch(err => setEmptyContentReason('failed to load: ' + err.message));
+    }
+  }, [attachment, expanded, loaded]);
+
+  return <Expandable title={
+    <>
+      {attachment.name}
+      <a href={attachmentURL(attachment) + '&download'}
+        className={'codicon codicon-cloud-download'}
+        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '0.5rem' }}
+        onClick={$event => $event.stopPropagation()}>
+      </a>
+    </>
+  } expanded={expanded} expandOnTitleClick={true} setExpanded={exp => setExpanded(exp)}>
+    <div aria-label={attachment.name}>
+      { attachmentText ?
+        <CodeMirrorWrapper text={attachmentText!} readOnly wrapLines={false}></CodeMirrorWrapper> :
+        <i>{emptyContentReason}</i>
+      }
+    </div>
+  </Expandable>;
+};
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
@@ -82,7 +128,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
-        <a href={attachmentURL(a) + '&download'}>{a.name}</a>
+        <ExpandableAttachment attachment={a} />
       </div>;
     })}
   </div>;

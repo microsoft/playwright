@@ -34,7 +34,13 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   constructor(scope: BrowserTypeDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
+    browser.setNeedsBeforeCloseEvent(true);
+    this.addObjectListener(Browser.Events.BeforeClose, () => this._dispatchEvent('beforeClose'));
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
+  }
+
+  override _onDispose() {
+    this._object.setNeedsBeforeCloseEvent(false);
   }
 
   _didClose() {
@@ -53,6 +59,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
     await this._object.stopPendingOperations(params.reason);
+  }
+
+  async beforeCloseFinished() {
+    this._object.beforeCloseFinished();
   }
 
   async close(params: channels.BrowserCloseParams, metadata: CallMetadata): Promise<void> {
@@ -99,6 +109,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 
   constructor(scope: RootDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
+    this.addObjectListener(Browser.Events.BeforeClose, () => this.emit('beforeClose'));
     // When we have a remotely-connected browser, each client gets a fresh Selector instance,
     // so that two clients do not interfere between each other.
     this.selectors = new Selectors();
@@ -120,6 +131,10 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 
   async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
     await this._object.stopPendingOperations(params.reason);
+  }
+
+  async beforeCloseFinished() {
+    this._object.beforeCloseFinished();
   }
 
   async close(): Promise<void> {

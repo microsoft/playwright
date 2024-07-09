@@ -93,6 +93,7 @@ export interface TestServerInterface {
     workers?: number | string;
     timeout?: number,
     outputDir?: string;
+    updateSnapshots?: 'all' | 'none' | 'missing';
     reporters?: string[],
     trace?: 'on' | 'off';
     video?: 'on' | 'off';

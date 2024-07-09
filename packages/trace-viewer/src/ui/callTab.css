@@ -57,9 +57,9 @@
   white-space: nowrap;
 }
 
-.copy-icon {
+.call-line .copy-icon {
   display: none;
-  margin-right: 4px;
+  margin-left: 5px;
 }
 
 .call-line:hover .copy-icon {
@@ -71,7 +71,6 @@
   margin-left: 2px;
   text-overflow: ellipsis;
   overflow: hidden;
-  flex: 1;
 }
 
 .call-value::before {

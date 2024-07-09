@@ -15,7 +15,7 @@
  */
 
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '../../utils/isomorphic/stringUtils';
-import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
@@ -89,7 +89,12 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
       }
       selectors = [joinTokens(targetTokens)];
     } else {
-      targetElement = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root) || targetElement;
+      // Note: this matches InjectedScript.retarget().
+      if (!targetElement.matches('input,textarea,select') && !(targetElement as any).isContentEditable) {
+        const interactiveParent = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root);
+        if (interactiveParent && isElementVisible(interactiveParent))
+          targetElement = interactiveParent;
+      }
       if (options.multiple) {
         const withText = generateSelectorFor(injectedScript, targetElement, options);
         const withoutText = generateSelectorFor(injectedScript, targetElement, { ...options, noText: true });

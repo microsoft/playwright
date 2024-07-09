@@ -1235,3 +1235,71 @@ test('should take a screenshot-on-failure in workerStorageState', async ({ runIn
   expect(result.failed).toBe(1);
   expect(fs.existsSync(test.info().outputPath('test-results', 'a-fail', 'test-failed-1.png'))).toBeTruthy();
 });
+
+test('should record trace upon implicit browser.close in a failed test', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31541' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ browser }) => {
+        const page = await browser.newPage();
+        await page.setContent('<script>console.log("from the page");</script>');
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    'browser.newPage',
+    'page.setContent',
+    'expect.toBe',
+    'After Hooks',
+    'Worker Cleanup',
+    '  fixture: browser',
+  ]);
+  // Check console events to make sure that library trace is recorded.
+  expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
+});
+
+test('should record trace upon browser crash', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31537' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ browser }) => {
+        const page = await browser.newPage();
+        await page.setContent('<script>console.log("from the page");</script>');
+        await (browser as any)._channel.killForTests();
+        await page.goto('data:text/html,<div>will not load</div>');
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    'browser.newPage',
+    'page.setContent',
+    'proxy.killForTests',
+    'page.goto',
+    'After Hooks',
+    'Worker Cleanup',
+    '  fixture: browser',
+  ]);
+  // Check console events to make sure that library trace is recorded.
+  expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
+});
