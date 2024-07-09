@@ -13,6 +13,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+import favIconExpected from '../logo_expected.svg';
+import favIconDefault from '../logo_default.svg';
+import favIconUnExpected from '../logo_unexpected.svg';
+import favIconSkipped from '../logo_skipped.svg';
+import favIconFlaky from '../logo_flaky.svg';
+import type { TestCaseSummary } from './types';
 
 export function msToString(ms: number): string {
   if (!isFinite(ms))
@@ -38,4 +44,38 @@ export function msToString(ms: number): string {
 
   const days = hours / 24;
   return days.toFixed(1) + 'd';
+}
+
+export function setFavIcon(outcome: Pick<TestCaseSummary, 'outcome'>) {
+  const link: HTMLLinkElement | null = getLinkIconElement();
+  const outcomeValue = outcome.outcome;
+
+  if (outcomeValue === 'expected') {
+    link.href = favIconExpected;
+  } else if (outcomeValue === 'unexpected') {
+    link.href = favIconUnExpected;
+  } else if (outcomeValue === 'skipped') {
+    link.href = favIconSkipped;
+  } else if (outcomeValue === 'flaky') {
+    link.href = favIconFlaky;
+  } else {
+    link.href = favIconDefault;
+    document.title = 'Playwright Test Report | Summary';
+  }
+}
+
+export function setDefaultFavIconAndTitle() {
+  const link: HTMLLinkElement | null = getLinkIconElement();
+  link.href = favIconDefault;
+  document.title = 'Playwright Test Report | Summary';
+}
+
+function getLinkIconElement() {
+  let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.getElementsByTagName('head')[0].appendChild(link);
+  }
+  return link;
 }

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
+import type { TestCase, TestCaseAnnotation } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -24,7 +24,7 @@ import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { hashStringToInt } from './labelUtils';
-import { msToString } from './uiUtils';
+import { msToString, setDefaultFavIconAndTitle, setFavIcon } from './uiUtils';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -46,9 +46,9 @@ export const TestCaseView: React.FC<{
 
   React.useEffect(() => {
     document.title = test?.title ? `| ${test.title}` : 'Playwright Test Report';
-    test?.outcome ? setFavicon({ outcome: test.outcome }) : setFavicon('default');
+    test?.outcome ? setFavIcon({ outcome: test.outcome }) : setDefaultFavIconAndTitle();
     const resetFaviconOnBack = () => {
-      setFavicon('default');
+      setDefaultFavIconAndTitle();
     };
 
     window.addEventListener('popstate', resetFaviconOnBack);
@@ -144,13 +144,3 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
   ) : null;
 };
 
-function setFavicon(outcome: Pick<TestCaseSummary, 'outcome'> | 'default') {
-  let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    document.getElementsByTagName('head')[0].appendChild(link);
-  }
-  const outcomeValue = outcome instanceof Object ? outcome.outcome : outcome;
-  link.href = `../logo_${outcomeValue}.svg`;
-}

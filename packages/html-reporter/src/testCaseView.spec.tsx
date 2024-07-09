@@ -79,14 +79,14 @@ test('should render test case', async ({ mount }) => {
 
 test('should correctly set the page title and favicon', async ({ mount, page }) => {
   await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
-  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_expected.svg');
+  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toMatch(/\/assets\/logo_expected-[A-Za-z0-9]+\.svg/);
   expect(await page.title()).toEqual(`| ${testCase.title}`);
 });
 
 test('should fallback to default title and favicon', async ({ mount, page }) => {
   await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={undefined} run={0} anchor=''></TestCaseView>);
-  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toEqual('../logo_default.svg');
-  expect(await page.title()).toEqual('Playwright Test Report');
+  expect(await page.locator('link[rel="icon"]').getAttribute('href')).toMatch(/\/assets\/logo_default-[A-Za-z0-9]+\.svg/);
+  expect(await page.title()).toEqual('Playwright Test Report | Summary');
 });
 
 const linkRenderingTestCase: TestCase = {

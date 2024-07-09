@@ -23,6 +23,7 @@ import * as icons from './icons';
 import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
+import { setDefaultFavIconAndTitle } from './uiUtils';
 
 export const HeaderView: React.FC<React.PropsWithChildren<{
   stats: Stats,
@@ -33,6 +34,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
     const popstateFn = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
       setFilterText(params.get('q') || '');
+      setDefaultFavIconAndTitle();
     };
     window.addEventListener('popstate', popstateFn);
 

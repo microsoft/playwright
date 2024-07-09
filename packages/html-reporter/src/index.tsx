@@ -23,6 +23,7 @@ import * as ReactDOM from 'react-dom';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
+import { setDefaultFavIconAndTitle } from './uiUtils';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
@@ -34,6 +35,10 @@ const ReportLoader: React.FC = () => {
     const zipReport = new ZipReport();
     zipReport.load().then(() => setReport(zipReport));
   }, [report]);
+
+  React.useEffect(() => {
+    setDefaultFavIconAndTitle();
+  }, []);
   return <ReportView report={report}></ReportView>;
 };
 
