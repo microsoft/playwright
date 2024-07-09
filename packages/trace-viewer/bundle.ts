@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-/**
- * @returns {import('vite').Plugin}
- */
-export function bundle() {
-  let config;
+import type { Plugin } from 'vite';
+
+export function bundle(): Plugin {
   return {
     name: 'playwright-bundle',
-    config(c) {
-      config = c;
-    },
     transformIndexHtml: {
-      transform(html, ctx) {
+      handler(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
         // Workaround vite issue that we cannot exclude some scripts from preprocessing.
         return html.replace(/(?=<!--)([\s\S]*?)-->/, '').replace('<!-- <script src="stall.js"></script> -->', '<script src="stall.js"></script>');
       },
     },
-  }
+  };
 }

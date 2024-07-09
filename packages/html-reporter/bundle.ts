@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import fs, { existsSync } from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import type { Plugin, UserConfig } from 'vite';
 
 export function bundle(): Plugin {
@@ -26,7 +26,7 @@ export function bundle(): Plugin {
       config = c;
     },
     transformIndexHtml: {
-      transform(html, ctx) {
+      handler(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
         html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
@@ -42,7 +42,7 @@ export function bundle(): Plugin {
       },
     },
     closeBundle: () => {
-      if (existsSync(path.join(config.build!.outDir!, 'index.html'))) {
+      if (fs.existsSync(path.join(config.build!.outDir!, 'index.html'))) {
         const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
         fs.mkdirSync(targetDir, { recursive: true });
         fs.copyFileSync(
