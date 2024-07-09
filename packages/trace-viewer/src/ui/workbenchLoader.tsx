@@ -62,6 +62,10 @@ export const WorkbenchLoader: React.FunctionComponent<{
     const listener = async (e: ClipboardEvent) => {
       if (!e.clipboardData?.files.length)
         return;
+      for (const file of e.clipboardData.files) {
+        if (file.type !== 'application/zip')
+          return;
+      }
       e.preventDefault();
       processTraceFiles(e.clipboardData.files);
     };
