@@ -30,7 +30,7 @@ export type TeleReporterEmitterOptions = {
 
 export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
-  private _rootDir!: string;
+  protected _config!: reporterTypes.FullConfig;
   private _emitterOptions: TeleReporterEmitterOptions;
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
@@ -46,7 +46,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onConfigure(config: reporterTypes.FullConfig) {
-    this._rootDir = config.rootDir;
+    this._config = config;
     this._messageSink({ method: 'onConfigure', params: { config: this._serializeConfig(config) } });
   }
 
@@ -54,7 +54,8 @@ export class TeleReporterEmitter implements ReporterV2 {
     const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
     for (const project of projects)
       this._messageSink({ method: 'onProject', params: { project } });
-    this._messageSink({ method: 'onBegin', params: undefined });
+    const beginParams: teleReceiver.JsonBeginParams = { actualWorkers: this._config.actualWorkers };
+    this._messageSink({ method: 'onBegin', params: beginParams });
   }
 
   onTestBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
@@ -280,6 +281,6 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _relativePath(absolutePath?: string): string | undefined {
     if (!absolutePath)
       return absolutePath;
-    return path.relative(this._rootDir, absolutePath);
+    return path.relative(this._config.rootDir, absolutePath);
   }
 }

@@ -4,6 +4,14 @@
 
 Resolved configuration which is accessible via [`property: TestInfo.config`] and is passed to the test reporters. To see the format of Playwright configuration file, please see [TestConfig] instead.
 
+## property: FullConfig.actualWorkers
+* since: v1.46
+- type: <[int]>
+
+The actual number of worker processes used for running tests. This number depends on the maximum number of workers specified in [`property: TestConfig.workers`], the list of running tests and their mode of parallel or sequential execution.
+
+This property is only available after tests have started running.
+
 ## property: FullConfig.configFile
 * since: v1.20
 - type: ?<[string]>

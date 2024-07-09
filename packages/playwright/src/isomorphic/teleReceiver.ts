@@ -29,6 +29,7 @@ export type JsonStackFrame = { file: string, line: number, column: number };
 export type JsonStdIOType = 'stdout' | 'stderr';
 
 export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'>;
+export type JsonBeginParams = { actualWorkers: number };
 
 export type JsonPattern = {
   s?: string;
@@ -162,7 +163,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onBegin') {
-      this._onBegin();
+      this._onBegin(params);
       return;
     }
     if (method === 'onTestBegin') {
@@ -213,7 +214,8 @@ export class TeleReporterReceiver {
       this._mergeSuiteInto(suite, projectSuite);
   }
 
-  private _onBegin() {
+  private _onBegin(params: JsonBeginParams) {
+    this._config.actualWorkers = params.actualWorkers;
     this._reporter.onBegin?.(this._rootSuite);
   }
 
@@ -578,6 +580,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
+  actualWorkers: 0,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

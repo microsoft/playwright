@@ -168,7 +168,7 @@ export class BaseReporter implements ReporterV2 {
   }
 
   protected generateStartingMessage() {
-    const jobs = this.config.metadata.actualWorkers ?? this.config.workers;
+    const jobs = this.config.actualWorkers ?? this.config.workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     if (!this.totalTestCount)
       return '';

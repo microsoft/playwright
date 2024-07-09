@@ -34,7 +34,7 @@ type BlobReporterOptions = {
   _commandHash: string;
 };
 
-export const currentBlobReportVersion = 2;
+export const currentBlobReportVersion = 3;
 
 export type BlobReportMetadata = {
   version: number;
@@ -49,7 +49,6 @@ export class BlobReporter extends TeleReporterEmitter {
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
   private readonly _options: BlobReporterOptions;
   private readonly _salt: string;
-  private _config!: FullConfig;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
@@ -72,7 +71,6 @@ export class BlobReporter extends TeleReporterEmitter {
       params: metadata
     });
 
-    this._config = config;
     super.onConfigure(config);
   }
 

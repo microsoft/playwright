@@ -661,3 +661,28 @@ test('should merge ct configs', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should expose actualWorkers', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { workers: 42 };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async ({}) => {
+        expect(test.info().config.actualWorkers).toBe(2);
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async ({}) => {
+        expect(test.info().config.actualWorkers).toBe(2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.output).toContain('Running 2 tests using 2 workers');
+});

@@ -1421,7 +1421,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
 
   const events = await extractReport(test.info().outputPath('blob-report', 'report.zip'), test.info().outputPath('tmp'));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
-  expect(metadataEvent.params.version).toBe(2);
+  expect(metadataEvent.params.version).toBe(3);
   expect(metadataEvent.params.userAgent).toBe(getUserAgent());
 });
 

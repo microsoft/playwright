@@ -89,6 +89,7 @@ export async function deserializeConfig(data: SerializedConfig): Promise<FullCon
     addToCompilationCache(data.compilationCache);
 
   const config = await loadConfig(data.location, data.configCLIOverrides);
+  config.setActualWorkers(data.actualWorkers);
   await initializeEsmLoader();
   return config;
 }

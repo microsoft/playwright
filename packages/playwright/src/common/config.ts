@@ -70,6 +70,7 @@ export class FullConfigInternal {
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
     this.config = {
+      actualWorkers: 0,
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
@@ -132,6 +133,10 @@ export class FullConfigInternal {
       external: userConfig.build?.external || [],
     });
     this.config.projects = this.projects.map(p => p.project);
+  }
+
+  setActualWorkers(actualWorkers: number) {
+    this.config.actualWorkers = actualWorkers;
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {

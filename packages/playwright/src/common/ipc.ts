@@ -43,6 +43,8 @@ export type ConfigCLIOverrides = {
 export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
+  // TODO: create a struct to hold this and more properties like cliProjectFilter.
+  actualWorkers: number;
   compilationCache?: SerializedCompilationCache;
 };
 
@@ -131,6 +133,7 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
   const result: SerializedConfig = {
     location: { configDir: config.configDir, resolvedConfigFile: config.config.configFile },
     configCLIOverrides: config.configCLIOverrides,
+    actualWorkers: config.config.actualWorkers,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };
   return result;

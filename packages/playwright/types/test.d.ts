@@ -1708,6 +1708,15 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer: TestConfigWebServer | null;
   /**
+   * The actual number of worker processes used for running tests. This number depends on the maximum number of workers
+   * specified in [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers), the list
+   * of running tests and their mode of parallel or sequential execution.
+   *
+   * This property is only available after tests have started running.
+   */
+  actualWorkers: number;
+
+  /**
    * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */
   configFile?: string;

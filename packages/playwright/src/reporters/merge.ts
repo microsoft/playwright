@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonBeginParams, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -172,6 +172,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
   const configureEvents: JsonEvent[] = [];
   const projectEvents: JsonEvent[] = [];
+  const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
 
   const blobs = await extractAndParseReports(dir, shardReportFiles, internalizer, printStatus);
@@ -214,6 +215,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
+      else if (event.method === 'onBegin')
+        beginEvents.push(event);
       else if (event.method === 'onProject')
         projectEvents.push(event);
       else if (event.method === 'onEnd')
@@ -232,7 +235,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     prologue: [
       mergeConfigureEvents(configureEvents, rootDirOverride),
       ...projectEvents,
-      { method: 'onBegin', params: undefined },
+      mergeBeginEvents(beginEvents),
     ],
     reports,
     epilogue: [
@@ -288,6 +291,20 @@ function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: str
   };
 }
 
+function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
+  let actualWorkers = 0;
+  for (const event of beginEvents) {
+    const params = event.params as JsonBeginParams;
+    actualWorkers += params.actualWorkers;
+  }
+  return {
+    method: 'onBegin',
+    params: {
+      actualWorkers,
+    }
+  };
+}
+
 function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   return {
     ...to,
@@ -295,7 +312,6 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
     metadata: {
       ...to.metadata,
       ...from.metadata,
-      actualWorkers: (to.metadata.actualWorkers || 0) + (from.metadata.actualWorkers || 0),
     },
     workers: to.workers + from.workers,
   };
@@ -548,6 +564,8 @@ class JsonEventPatchers {
 }
 
 class BlobModernizer {
+  private _2to3actualWorkers?: number;
+
   modernize(fromVersion: number, events: JsonEvent[]): JsonEvent[] {
     const result = [];
     for (const event of events)
@@ -573,6 +591,23 @@ class BlobModernizer {
         };
         const project = event.params.project;
         project.suites = project.suites.map(modernizeSuite);
+      }
+      return event;
+    });
+  }
+
+  _modernize_2_to_3(events: JsonEvent[]): JsonEvent[] {
+    // Migrate from onConfigure.config.metadata.actualWorkers to onBegin.actualWorkers.
+    return events.map(event => {
+      if (event.method === 'onConfigure') {
+        const config = event.params.config as JsonConfig;
+        this._2to3actualWorkers = config.metadata.actualWorkers;
+        delete config.metadata.actualWorkers;
+      }
+      if (event.method === 'onBegin') {
+        event.params = event.params || {};
+        if (event.params.actualWorkers === undefined && this._2to3actualWorkers !== undefined)
+          (event.params as JsonBeginParams).actualWorkers = this._2to3actualWorkers;
       }
       return event;
     });

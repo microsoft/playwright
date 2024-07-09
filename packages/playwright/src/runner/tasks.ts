@@ -291,7 +291,7 @@ function createPhasesTask(): Task<TestRun> {
         }
       }
 
-      testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
+      testRun.config.setActualWorkers(Math.min(testRun.config.config.workers, maxConcurrentTestGroups));
     },
   };
 }
