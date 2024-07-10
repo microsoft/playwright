@@ -429,6 +429,32 @@ test('should work with adopted style sheets and all: unset', async ({ page, runA
   }
 });
 
+test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31607' });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <span class="foo" data-testid="green-element">Hi</span>
+      <span class="foo bar" data-testid="red-element">Hello</span>
+      <style>
+        .foo {
+          color: green;
+
+          &.bar {
+            color: red;
+          }
+        }
+      </style>
+      `);
+    await page.evaluate(() => { });
+  });
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
+    await expect(frame.getByTestId('green-element')).toHaveCSS('color', /* green */'rgb(0, 128, 0)');
+    await expect(frame.getByTestId('red-element')).toHaveCSS('color', /* red */'rgb(255, 0, 0)');
+  }
+});
+
 test('should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`

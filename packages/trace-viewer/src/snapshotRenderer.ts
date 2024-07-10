@@ -53,12 +53,11 @@ export class SnapshotRenderer {
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined): string => {
       // Text node.
       if (typeof n === 'string') {
-        const text = escapeText(n);
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
-          return rewriteURLsInStyleSheetForCustomProtocol(text);
-        return text;
+          return rewriteURLsInStyleSheetForCustomProtocol(n);
+        return escapeText(n);
       }
 
       if (!(n as any)._string) {
