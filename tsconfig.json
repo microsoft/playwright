@@ -35,6 +35,6 @@
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-    "packages/html-reporter/"
+    "packages/html-reporter/",
   ]
 }
