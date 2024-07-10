@@ -297,6 +297,8 @@ const keyMap = new Map<string, number>([
   ['Menu', 82],
   ['Notification', 83],
   ['Search', 84],
+  ['ChannelUp', 166],
+  ['ChannelDown', 167],
   ['AppSwitch', 187],
   ['Assist', 219],
   ['Cut', 277],
