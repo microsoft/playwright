@@ -92,7 +92,6 @@ class SocksProxyConnection {
     this.internal = new SocksConnectionDuplex(data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
     const internalTLS = new tls.TLSSocket(this.internal, {
       isServer: true,
-      // openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 -keyout key.pem -out cert.pem -subj "/CN=localhost"
       key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
       cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
     });

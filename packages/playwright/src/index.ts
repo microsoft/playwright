@@ -424,9 +424,9 @@ function resolveFileToConfig(file: string | undefined) {
   const config = test.info().config.configFile;
   if (!config || !file)
     return file;
-  if (!path.isAbsolute(file))
-    return path.resolve(path.dirname(config), file);
-  return file;
+  if (path.isAbsolute(file))
+    return file;
+  return path.resolve(path.dirname(config), file);
 }
 
 type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;

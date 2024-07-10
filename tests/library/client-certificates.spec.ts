@@ -43,6 +43,7 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
         res.end(`Sorry, but you need to provide a client certificate to continue.`);
       }
     });
+    process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS = asset('client-certificates/server/server_cert.pem');
     await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
     await use(`https://localhost:${(server.address() as net.AddressInfo).port}/`);
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -93,7 +94,7 @@ test.describe('fetch', () => {
   });
 
   test('should fail with no client certificates provided', async ({ playwright, serverURL }) => {
-    const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
+    const request = await playwright.request.newContext();
     const response = await request.get(serverURL);
     expect(response.status()).toBe(401);
     expect(await response.text()).toBe('Sorry, but you need to provide a client certificate to continue.');
@@ -117,22 +118,8 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should throw with a untrusted CA', async ({ playwright, serverURL, asset }) => {
+  test('should throw with untrusted client certs', async ({ playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
-      clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
-      }],
-    });
-    await expect(request.get(serverURL)).rejects.toThrow('self-signed certificate');
-  });
-
-  test('should throw with matching CA but untrusted client certs', async ({ playwright, serverURL, asset }) => {
-    const request = await playwright.request.newContext({
-      ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURL,
         certs: [{
@@ -148,7 +135,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should work without CA', async ({ playwright, serverURL, asset }) => {
+  test('pass with trusted client certificates', async ({ playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
         url: serverURL,
@@ -157,7 +144,6 @@ test.describe('fetch', () => {
           keyPath: asset('client-certificates/client/trusted/key.pem'),
         }],
       }],
-      ignoreHTTPSErrors: true,
     });
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
@@ -168,7 +154,6 @@ test.describe('fetch', () => {
 
   test('should work in the browser with request interception', async ({ browser, playwright, serverURL, asset }) => {
     const request = await playwright.request.newContext({
-      ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURL,
         certs: [{
@@ -214,7 +199,6 @@ test.describe('browser', () => {
 
   test('should fail with no client certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
-      ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: 'https://not-matching.com',
         certs: [{
@@ -228,7 +212,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should throw with a untrusted CA', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
+  test('should fail with self-signed client certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
@@ -245,7 +229,6 @@ test.describe('browser', () => {
 
   test('should pass with matching certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
     const page = await browser.newPage({
-      ignoreHTTPSErrors: true,
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
         certs: [{
@@ -260,15 +243,14 @@ test.describe('browser', () => {
   });
 
   test.describe('persistentContext', () => {
-
     test('validate input', async ({ launchPersistent }) => {
+      test.slow();
       for (const [contextOptions, expected] of kValidationSubTests)
         await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
     });
 
     test('should pass with matching certificates', async ({ launchPersistent, serverURLRewrittenToLocalhost, asset }) => {
       const { page } = await launchPersistent({
-        ignoreHTTPSErrors: true,
         clientCertificates: [{
           url: serverURLRewrittenToLocalhost,
           certs: [{

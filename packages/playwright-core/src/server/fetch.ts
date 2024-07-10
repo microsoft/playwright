@@ -16,8 +16,9 @@
 
 import type * as channels from '@protocol/channels';
 import type { LookupAddress } from 'dns';
-import * as http from 'http';
-import * as https from 'https';
+import http from 'http';
+import fs from 'fs';
+import https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
 import url from 'url';
@@ -192,6 +193,7 @@ export abstract class APIRequestContext extends SdkObject {
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline,
+      ...(process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS ? { ca: [fs.readFileSync(process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS)] } : {}),
       ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.toString()),
       __testHookLookup: (params as any).__testHookLookup,
     };
