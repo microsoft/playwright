@@ -50,10 +50,10 @@ export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domconten
 export type ClientCertificate = {
   url: string;
   certs: {
-    cert?: string;
-    key?: string;
+    certPath?: string;
+    keyPath?: string;
+    pfxPath?: string;
     passphrase?: string;
-    pfx?: string;
   }[];
 };
 

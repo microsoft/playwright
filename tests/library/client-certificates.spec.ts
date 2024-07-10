@@ -65,10 +65,10 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
     clientCertificates: [{
       url: 'test',
       certs: [{
-        cert: kDummyFileName,
-        key: kDummyFileName,
+        certPath: kDummyFileName,
+        keyPath: kDummyFileName,
+        pfxPath: kDummyFileName,
         passphrase: kDummyFileName,
-        pfx: kDummyFileName,
       }]
     }]
   }, 'pfx is specified together with cert, key or passphrase'],
@@ -77,10 +77,10 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
     clientCertificates: [{
       url: 'test',
       certs: [{
-        cert: kDummyFileName,
-        key: kDummyFileName,
+        certPath: kDummyFileName,
+        keyPath: kDummyFileName,
+        pfxPath: kDummyFileName,
         passphrase: kDummyFileName,
-        pfx: kDummyFileName,
       }]
     }]
   }, 'Cannot specify both proxy and clientCertificates'],
@@ -105,8 +105,8 @@ test.describe('fetch', () => {
       clientCertificates: [{
         url: server.PREFIX,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -122,8 +122,8 @@ test.describe('fetch', () => {
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -136,8 +136,8 @@ test.describe('fetch', () => {
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: asset('client-certificates/client/bob_cert.pem'),
-          key: asset('client-certificates/client/bob_key.pem'),
+          certPath: asset('client-certificates/client/bob_cert.pem'),
+          keyPath: asset('client-certificates/client/bob_key.pem'),
         }],
       }],
     });
@@ -153,8 +153,8 @@ test.describe('fetch', () => {
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
       ignoreHTTPSErrors: true,
@@ -172,8 +172,8 @@ test.describe('fetch', () => {
       clientCertificates: [{
         url: serverURL,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -201,8 +201,8 @@ test.describe('browser', () => {
       clientCertificates: [{
         url: server.PREFIX,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -218,8 +218,8 @@ test.describe('browser', () => {
       clientCertificates: [{
         url: 'https://not-matching.com',
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -233,8 +233,8 @@ test.describe('browser', () => {
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
         certs: [{
-          cert: asset('client-certificates/client/bob_cert.pem'),
-          key: asset('client-certificates/client/bob_key.pem'),
+          certPath: asset('client-certificates/client/bob_cert.pem'),
+          keyPath: asset('client-certificates/client/bob_key.pem'),
         }],
       }],
     });
@@ -249,8 +249,8 @@ test.describe('browser', () => {
       clientCertificates: [{
         url: serverURLRewrittenToLocalhost,
         certs: [{
-          cert: asset('client-certificates/client/alice_cert.pem'),
-          key: asset('client-certificates/client/alice_key.pem'),
+          certPath: asset('client-certificates/client/alice_cert.pem'),
+          keyPath: asset('client-certificates/client/alice_key.pem'),
         }],
       }],
     });
@@ -272,8 +272,8 @@ test.describe('browser', () => {
         clientCertificates: [{
           url: serverURLRewrittenToLocalhost,
           certs: [{
-            cert: asset('client-certificates/client/alice_cert.pem'),
-            key: asset('client-certificates/client/alice_key.pem'),
+            certPath: asset('client-certificates/client/alice_cert.pem'),
+            keyPath: asset('client-certificates/client/alice_key.pem'),
           }],
         }],
       });

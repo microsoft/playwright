@@ -13245,22 +13245,22 @@ export interface BrowserType<Unused = {}> {
         /**
          * Path to the file with the certificate in PEM format.
          */
-        cert?: string;
+        certPath?: string;
 
         /**
          * Path to the file with the private key in PEM format.
          */
-        key?: string;
+        keyPath?: string;
+
+        /**
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfxPath?: string;
 
         /**
          * Passphrase for the private key (PEM or PFX).
          */
         passphrase?: string;
-
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfx?: string;
       }>;
     }>;
 
@@ -15657,22 +15657,22 @@ export interface APIRequest {
         /**
          * Path to the file with the certificate in PEM format.
          */
-        cert?: string;
+        certPath?: string;
 
         /**
          * Path to the file with the private key in PEM format.
          */
-        key?: string;
+        keyPath?: string;
+
+        /**
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfxPath?: string;
 
         /**
          * Passphrase for the private key (PEM or PFX).
          */
         passphrase?: string;
-
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfx?: string;
       }>;
     }>;
 
@@ -16851,22 +16851,22 @@ export interface Browser extends EventEmitter {
         /**
          * Path to the file with the certificate in PEM format.
          */
-        cert?: string;
+        certPath?: string;
 
         /**
          * Path to the file with the private key in PEM format.
          */
-        key?: string;
+        keyPath?: string;
+
+        /**
+         * Path to the PFX or PKCS12 encoded private key and certificate chain.
+         */
+        pfxPath?: string;
 
         /**
          * Passphrase for the private key (PEM or PFX).
          */
         passphrase?: string;
-
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfx?: string;
       }>;
     }>;
 
@@ -20326,22 +20326,22 @@ export interface BrowserContextOptions {
       /**
        * Path to the file with the certificate in PEM format.
        */
-      cert?: string;
+      certPath?: string;
 
       /**
        * Path to the file with the private key in PEM format.
        */
-      key?: string;
+      keyPath?: string;
+
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
       /**
        * Passphrase for the private key (PEM or PFX).
        */
       passphrase?: string;
-
-      /**
-       * Path to the PFX or PKCS12 encoded private key and certificate chain.
-       */
-      pfx?: string;
     }>;
   }>;
 

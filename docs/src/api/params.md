@@ -518,10 +518,10 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 - `clientCertificates` <[Array]<[Object]>>
   - `url` <[string]> Glob pattern to match the URLs that the certificate is valid for.
   - `certs` <[Array]<[Object]>> List of client certificates to be used.
-    - `cert` ?<[string]> Path to the file with the certificate in PEM format.
-    - `key` ?<[string]> Path to the file with the private key in PEM format.
+    - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
+    - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
+    - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
     - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
-    - `pfx` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
 
 An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the URLs that the certificate is valid for.
 

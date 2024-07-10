@@ -5225,10 +5225,10 @@ export interface PlaywrightTestOptions {
    *       use: {
    *         ...devices['Desktop Edge'],
    *         clientCertificates: [{
-   *           url: 'https://example.com',
+   *           url: 'https://example.com/**',
    *           certs: [{
-   *             cert: 'client/alice_cert.pem',
-   *             key: 'client/alice_key.pem',
+   *             certPath: './cert.pem',
+   *             keyPath: './key.pem',
    *             passphase: 'mysecretpassword',
    *           }],
    *         }],

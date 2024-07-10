@@ -558,10 +558,10 @@ export async function toClientCertificatesProtocol(clientCertificates?: BrowserC
       url: clientCertificate.url,
       certs: await Promise.all(clientCertificate.certs.map(async cert => {
         return {
-          cert: cert.cert ? await fs.promises.readFile(cert.cert) : undefined,
-          key: cert.key ? await fs.promises.readFile(cert.key) : undefined,
+          cert: cert.certPath ? await fs.promises.readFile(cert.certPath) : undefined,
+          key: cert.keyPath ? await fs.promises.readFile(cert.keyPath) : undefined,
+          pfx: cert.pfxPath ? await fs.promises.readFile(cert.pfxPath) : undefined,
           passphrase: cert.passphrase,
-          pfx: cert.pfx ? await fs.promises.readFile(cert.pfx) : undefined,
         };
       }))
     };
