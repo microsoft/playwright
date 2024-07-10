@@ -2,9 +2,8 @@
 
 These certificates are used when client certificates are used with
 Playwright. Playwright then creates a Socks proxy, which sits between
-the browser and the actual target server. The Socks proxy then does the
-TLS upgrade using the certficiates in this directory (locally) while
-maintaining the client certificates to the target server.
+the browser and the actual target server. The Socks proxy uses this certificiate
+to talk to the browser and establishes its own secure TLS connection to the server.
 The certificates are generated via:
 
 ```bash

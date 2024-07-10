@@ -13224,7 +13224,6 @@ export interface BrowserType<Unused = {}> {
     /**
      * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
      * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
-     * certificate is issued by a custom certificate authority, the `ignoreHTTPSErrors` needs to be set. If the
      * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
      * URLs that the certificate is valid for.
      *
@@ -15637,7 +15636,6 @@ export interface APIRequest {
     /**
      * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
      * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
-     * certificate is issued by a custom certificate authority, the `ignoreHTTPSErrors` needs to be set. If the
      * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
      * URLs that the certificate is valid for.
      *
@@ -16832,7 +16830,6 @@ export interface Browser extends EventEmitter {
     /**
      * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
      * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
-     * certificate is issued by a custom certificate authority, the `ignoreHTTPSErrors` needs to be set. If the
      * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
      * URLs that the certificate is valid for.
      *
@@ -20308,7 +20305,6 @@ export interface BrowserContextOptions {
   /**
    * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
    * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
-   * certificate is issued by a custom certificate authority, the `ignoreHTTPSErrors` needs to be set. If the
    * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
    * URLs that the certificate is valid for.
    *

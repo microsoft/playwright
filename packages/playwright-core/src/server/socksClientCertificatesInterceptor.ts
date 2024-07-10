@@ -90,13 +90,14 @@ class SocksProxyConnection {
 
   private _attachTLSListeners() {
     this.internal = new SocksConnectionDuplex(data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
-    this.internalTLS = new tls.TLSSocket(this.internal, {
+    const internalTLS = new tls.TLSSocket(this.internal, {
       isServer: true,
       // openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 -keyout key.pem -out cert.pem -subj "/CN=localhost"
       key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
       cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
     });
-    this.internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
+    this.internalTLS = internalTLS;
+    internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
 
     const targetTLS = tls.connect({
       socket: this.target,
@@ -104,27 +105,27 @@ class SocksProxyConnection {
       ...clientCertificatesToTLSOptions(this.socksProxy.contextOptions.clientCertificates, `https://${this.host}:${this.port}/`),
     });
 
-    this.internalTLS.pipe(targetTLS);
-    targetTLS.pipe(this.internalTLS);
+    internalTLS.pipe(targetTLS);
+    targetTLS.pipe(internalTLS);
 
     // Handle close and errors
     const closeBothSockets = () => {
-      this.internalTLS?.end();
+      internalTLS.end();
       targetTLS.end();
     };
 
-    this.internalTLS.on('end', () => closeBothSockets());
+    internalTLS.on('end', () => closeBothSockets());
     targetTLS.on('end', () => closeBothSockets());
 
-    this.internalTLS.on('error', () => closeBothSockets());
+    internalTLS.on('error', () => closeBothSockets());
     targetTLS.on('error', error => {
-      this.internalTLS!.write('HTTP/1.1 503 Internal Server Error\r\n');
-      this.internalTLS!.write('Content-Type: text/html; charset=utf-8\r\n');
-      const responseBody = 'Self-signed certificate error: ' + error.message;
-      this.internalTLS!.write('Content-Length: ' + Buffer.byteLength(responseBody) + '\r\n');
-      this.internalTLS!.write('\r\n');
-      this.internalTLS!.write(responseBody);
-      this.internalTLS!.end();
+      internalTLS.write('HTTP/1.1 503 Internal Server Error\r\n');
+      internalTLS.write('Content-Type: text/html; charset=utf-8\r\n');
+      const responseBody = 'Playwright client-certificate error: ' + error.message;
+      internalTLS.write('Content-Length: ' + Buffer.byteLength(responseBody) + '\r\n');
+      internalTLS.write('\r\n');
+      internalTLS.write(responseBody);
+      internalTLS.end();
       closeBothSockets();
     });
   }

@@ -40,6 +40,7 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
 import { type ProtocolError, isProtocolError } from './protocolError';
+import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -101,6 +102,14 @@ export abstract class BrowserType extends SdkObject {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
+    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    if (persistent?.clientCertificates?.length) {
+      if (persistent.proxy?.server)
+        throw new Error('Cannot specify both proxy and clientCertificates');
+      clientCertificatesProxy = new ClientCertificatesProxy(persistent);
+      options.proxy = { server: await clientCertificatesProxy.listen() };
+      persistent.ignoreHTTPSErrors = true;
+    }
     const browserLogsCollector = new RecentLogsCollector();
     const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
@@ -131,6 +140,8 @@ export abstract class BrowserType extends SdkObject {
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
     if (persistent && !options.ignoreAllDefaultArgs)
       await browser._defaultContext!._loadDefaultContext(progress);
+    if (persistent)
+      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
     return browser;
   }
 

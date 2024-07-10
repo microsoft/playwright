@@ -258,4 +258,27 @@ test.describe('browser', () => {
     await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
     await page.close();
   });
+
+  test.describe('persistentContext', () => {
+
+    test('validate input', async ({ launchPersistent }) => {
+      for (const [contextOptions, expected] of kValidationSubTests)
+        await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
+    });
+
+    test('should pass with matching certificates', async ({ launchPersistent, serverURLRewrittenToLocalhost, asset }) => {
+      const { page } = await launchPersistent({
+        ignoreHTTPSErrors: true,
+        clientCertificates: [{
+          url: serverURLRewrittenToLocalhost,
+          certs: [{
+            cert: asset('client-certificates/client/alice_cert.pem'),
+            key: asset('client-certificates/client/alice_key.pem'),
+          }],
+        }],
+      });
+      await page.goto(serverURLRewrittenToLocalhost);
+      await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+    });
+  });
 });

@@ -689,7 +689,7 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
-    if (options.clientCertificates)
+    if (!browserOptions.persistent && options.clientCertificates)
       throw new Error('Cannot specify both proxy and clientCertificates');
     options.proxy = normalizeProxySettings(options.proxy);
   }
