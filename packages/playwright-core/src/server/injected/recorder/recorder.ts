@@ -259,6 +259,11 @@ class RecordActionTool implements RecorderTool {
     });
   }
 
+  onContextMenu(event: MouseEvent) {
+    // in case the web page has a custom context menu
+    this.onClick(event);
+  }
+
   onPointerDown(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
