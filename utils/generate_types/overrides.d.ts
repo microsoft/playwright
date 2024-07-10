@@ -299,6 +299,7 @@ export type AndroidKey =
   'Star' | 'Pound' | '*' | '#' |
   'DialUp' | 'DialDown' | 'DialLeft' | 'DialRight' | 'DialCenter' |
   'VolumeUp' | 'VolumeDown' |
+  'ChannelUp' | 'ChannelDown' |
   'Power' |
   'Camera' |
   'Clear' |
