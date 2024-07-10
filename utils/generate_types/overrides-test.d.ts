@@ -210,7 +210,7 @@ export interface PlaywrightTestOptions {
   acceptDownloads: boolean;
   bypassCSP: boolean;
   colorScheme: ColorScheme;
-  clientCertificates: ClientCertificate[];
+  clientCertificates: ClientCertificate[] | undefined;
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;

@@ -5239,7 +5239,7 @@ export interface PlaywrightTestOptions {
    * ```
    *
    */
-  clientCertificates: ClientCertificate[];
+  clientCertificates: ClientCertificate[] | undefined;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
    * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
