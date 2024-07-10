@@ -1113,6 +1113,39 @@ test('trace:retain-on-first-failure should create trace if request context is di
   expect(result.failed).toBe(1);
 });
 
+test('should not corrupt actions when no library trace is present', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: async ({}, use) => {
+          expect(1).toBe(1);
+          await use();
+          expect(2).toBe(2);
+        },
+      });
+      test('fail', async ({ foo }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: foo',
+    '    expect.toBe',
+    'expect.toBe',
+    'After Hooks',
+    '  fixture: foo',
+    '    expect.toBe',
+    'Worker Cleanup',
+  ]);
+});
+
 test('should record trace for manually created context in a failed test', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31541' });
 

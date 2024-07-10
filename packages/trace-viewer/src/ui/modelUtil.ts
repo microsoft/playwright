@@ -223,7 +223,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   //   library context actions.
   // - In the older versions the step id is not stored and the match is perfomed based on
   //   action name and wallTime.
-  const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
+  const matchByStepId = !libraryContexts.length || libraryContexts.some(c => c.actions.some(a => !!a.stepId));
 
   for (const context of libraryContexts) {
     for (const action of context.actions) {
