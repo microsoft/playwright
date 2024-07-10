@@ -49,7 +49,7 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
   },
   serverURLRewrittenToLocalhost: async ({ serverURL, browserName }, use) => {
     const parsed = new URL(serverURL);
-    parsed.hostname = 'i-get-rewritten-to-localhost-on-the-server-side';
+    parsed.hostname = 'local.playwright';
     const shouldRewriteToLocalhost = browserName === 'webkit' && process.platform === 'darwin';
     await use(shouldRewriteToLocalhost ? parsed.toString() : serverURL);
   }

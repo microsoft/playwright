@@ -21,7 +21,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket } from '../utils/happy-eyeballs';
-import { globToRegex, isUnderTest } from '../utils';
+import { globToRegex } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -30,7 +30,7 @@ class SocksConnectionDuplex extends stream.Duplex {
   constructor(private readonly writeCallback: (data: Buffer) => void) {
     super();
   }
-  override _read(): void {}
+  override _read(): void { }
   override _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
     this.writeCallback(chunk);
     callback();
@@ -56,7 +56,7 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    this.target = await createSocket(isUnderTest() ? 'localhost' : this.host, this.port);
+    this.target = await createSocket(this.host === 'local.playwright' ? 'localhost' : this.host, this.port);
     this.target.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
     this.target.on('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     this.socksProxy._socksProxy.socketConnected({

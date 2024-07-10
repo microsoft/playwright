@@ -529,6 +529,11 @@ An array of client certificates to be used. Each certificate object must have `c
 Using Client Certificates in combination with Proxy Servers is not supported.
 :::
 
+:::note
+When using WebKit on macOS, accessing `localhost` might not work as expected.
+Instead, use `playwright.local` as the hostname.
+:::
+
 ## context-option-useragent
 - `userAgent` <[string]>
 

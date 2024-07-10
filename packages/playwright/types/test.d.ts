@@ -5210,6 +5210,9 @@ export interface PlaywrightTestOptions {
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
+   * `playwright.local` as the hostname.
+   *
    * **Usage**
    *
    * ```js

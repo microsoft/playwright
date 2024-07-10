@@ -13229,6 +13229,9 @@ export interface BrowserType<Unused = {}> {
      * URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+     *
+     * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
+     * `playwright.local` as the hostname.
      */
     clientCertificates?: Array<{
       /**
@@ -15639,6 +15642,9 @@ export interface APIRequest {
      * URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+     *
+     * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
+     * `playwright.local` as the hostname.
      */
     clientCertificates?: Array<{
       /**
@@ -16831,6 +16837,9 @@ export interface Browser extends EventEmitter {
      * URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+     *
+     * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
+     * `playwright.local` as the hostname.
      */
     clientCertificates?: Array<{
       /**
@@ -20304,6 +20313,9 @@ export interface BrowserContextOptions {
    * URLs that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
+   * `playwright.local` as the hostname.
    */
   clientCertificates?: Array<{
     /**
