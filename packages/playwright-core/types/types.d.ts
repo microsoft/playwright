@@ -21106,6 +21106,14 @@ type Devices = {
   "iPhone 14 Pro landscape": DeviceDescriptor;
   "iPhone 14 Pro Max": DeviceDescriptor;
   "iPhone 14 Pro Max landscape": DeviceDescriptor;
+  "iPhone 15": DeviceDescriptor;
+  "iPhone 15 landscape": DeviceDescriptor;
+  "iPhone 15 Plus": DeviceDescriptor;
+  "iPhone 15 Plus landscape": DeviceDescriptor;
+  "iPhone 15 Pro": DeviceDescriptor;
+  "iPhone 15 Pro landscape": DeviceDescriptor;
+  "iPhone 15 Pro Max": DeviceDescriptor;
+  "iPhone 15 Pro Max landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;
   "Kindle Fire HDX landscape": DeviceDescriptor;
   "LG Optimus L70": DeviceDescriptor;
