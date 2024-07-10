@@ -30,7 +30,7 @@
     "ct": "playwright test tests/components/test-all.spec.js --reporter=list",
     "test": "playwright test --config=tests/library/playwright.config.ts",
     "eslint": "eslint --cache --report-unused-disable-directives --ext ts,tsx,js,jsx,mjs .",
-    "tsc": "tsc -p .",
+    "tsc": "tsc -p . && tsc -p packages/html-reporter/",
     "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ && npm run lint-tests && npm run test-types && npm run lint-packages",
