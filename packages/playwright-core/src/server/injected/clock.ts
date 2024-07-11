@@ -301,7 +301,11 @@ export class ClockController {
       if (typeof timer.func !== 'function') {
         let error: Error | undefined;
         try {
-          (() => { eval(timer.func); })();
+          // Using global this is not correct here,
+          // but it is already broken since the eval scope is different from the one
+          // on the original call site.
+          // eslint-disable-next-line no-restricted-globals
+          (() => { globalThis.eval(timer.func); })();
         } catch (e) {
           error = e;
         }
