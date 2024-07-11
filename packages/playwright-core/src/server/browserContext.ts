@@ -43,7 +43,7 @@ import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
-import { type ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -247,6 +247,7 @@ export abstract class BrowserContext extends SdkObject {
       // at the same time.
       return;
     }
+    this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
     if (this._isPersistentContext)
       this.onClosePersistent();
@@ -448,8 +449,6 @@ export abstract class BrowserContext extends SdkObject {
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();
       await this.tracing.flush();
-
-      await this._clientCertificatesProxy?.close();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -655,6 +654,17 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
+export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions) {
+  if (!options.clientCertificates?.length)
+    return;
+  if (options.proxy?.server)
+    throw new Error('Cannot specify both proxy and clientCertificates');
+  const clientCertificatesProxy = new ClientCertificatesProxy(options);
+  options.proxy = { server: await clientCertificatesProxy.listen() };
+  options.ignoreHTTPSErrors = true;
+  return clientCertificatesProxy;
+}
+
 export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
@@ -693,6 +703,8 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
       throw new Error('Cannot specify both proxy and clientCertificates');
     options.proxy = normalizeProxySettings(options.proxy);
   }
+  if (!browserOptions.persistent && browserOptions.proxy?.server && options.clientCertificates)
+    throw new Error('Cannot specify both proxy and clientCertificates');
   verifyGeolocation(options.geolocation);
   verifyClientCertificates(options.clientCertificates);
 }
@@ -725,7 +737,7 @@ export function verifyClientCertificates(clientCertificates?: channels.BrowserNe
         throw new Error('cert is specified without key');
       if (!cert.cert && cert.key)
         throw new Error('key is specified without cert');
-      if (cert.pfx && (cert.cert || cert.key || cert.passphrase))
+      if (cert.pfx && (cert.cert || cert.key))
         throw new Error('pfx is specified together with cert, key or passphrase');
     }
   }

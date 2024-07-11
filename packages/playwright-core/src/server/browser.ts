@@ -16,7 +16,7 @@
 
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, createClientCertificatesProxyIfNeeded, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
 import type { ProxySettings } from './types';
@@ -25,7 +25,6 @@ import type { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -85,12 +84,7 @@ export abstract class Browser extends SdkObject {
 
   async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
-    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-    if (options.clientCertificates?.length) {
-      clientCertificatesProxy = new ClientCertificatesProxy(options);
-      options.proxy = { server: await clientCertificatesProxy.listen() };
-      options.ignoreHTTPSErrors = true;
-    }
+    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options);
     const context = await this.doCreateNewContext(options);
     context._clientCertificatesProxy = clientCertificatesProxy;
     if (options.storageState)

@@ -18,7 +18,7 @@ import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import type { BrowserContext } from './browserContext';
-import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import { createClientCertificatesProxyIfNeeded, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import type { BrowserName } from './registry';
 import { registry } from './registry';
 import type { ConnectionTransport } from './transport';
@@ -40,7 +40,6 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
 import { type ProtocolError, isProtocolError } from './protocolError';
-import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -102,14 +101,7 @@ export abstract class BrowserType extends SdkObject {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
-    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-    if (persistent?.clientCertificates?.length) {
-      if (persistent.proxy?.server)
-        throw new Error('Cannot specify both proxy and clientCertificates');
-      clientCertificatesProxy = new ClientCertificatesProxy(persistent);
-      options.proxy = { server: await clientCertificatesProxy.listen() };
-      persistent.ignoreHTTPSErrors = true;
-    }
+    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent ?? {});
     const browserLogsCollector = new RecentLogsCollector();
     const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)

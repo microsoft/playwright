@@ -193,10 +193,11 @@ export abstract class APIRequestContext extends SdkObject {
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline,
-      ...(process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS ? { ca: [fs.readFileSync(process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS)] } : {}),
       ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.toString()),
       __testHookLookup: (params as any).__testHookLookup,
     };
+    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)
+      options.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
     // rejectUnauthorized = undefined is treated as true in Node.js 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;

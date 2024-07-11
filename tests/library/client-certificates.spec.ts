@@ -43,7 +43,7 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
         res.end(`Sorry, but you need to provide a client certificate to continue.`);
       }
     });
-    process.env.PW_DO_NOT_USE_EXTRA_CA_CERTS = asset('client-certificates/server/server_cert.pem');
+    process.env.PWTEST_UNSUPPORTED_CUSTOM_CA = asset('client-certificates/server/server_cert.pem');
     await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
     await use(`https://localhost:${(server.address() as net.AddressInfo).port}/`);
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -80,8 +80,6 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
       certs: [{
         certPath: kDummyFileName,
         keyPath: kDummyFileName,
-        pfxPath: kDummyFileName,
-        passphrase: kDummyFileName,
       }]
     }]
   }, 'Cannot specify both proxy and clientCertificates'],
