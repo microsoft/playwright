@@ -45,7 +45,7 @@ Install the [Pytest plugin](https://anaconda.org/Microsoft/pytest-playwright):
 ```bash
 conda config --add channels conda-forge
 conda config --add channels microsoft
-conda install playwright
+conda install pytest-playwright
 ```
 
 </TabItem>
