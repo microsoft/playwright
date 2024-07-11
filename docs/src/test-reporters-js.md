@@ -102,7 +102,7 @@ List report supports the following configuration options and environment variabl
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
-| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. If a number is specifed, it will also be used as the terminal width.  | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 
 
@@ -140,7 +140,7 @@ Line report supports the following configuration options and environment variabl
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
-| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. If a number is specifed, it will also be used as the terminal width.  | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 
 
@@ -182,7 +182,7 @@ Dot report supports the following configuration options and environment variable
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
-| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise.
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. If a number is specifed, it will also be used as the terminal width.  | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 
 ### HTML reporter
