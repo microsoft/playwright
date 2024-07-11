@@ -108,6 +108,8 @@ export class MockSocksServer {
         host: '127.0.0.1',
         port: 0,
       });
+    });
+    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketRequestedPayload) => {
       const body = '<html><title>Served by the SOCKS proxy</title></html>';
       const data = Buffer.from([
         'HTTP/1.1 200 OK',
@@ -118,6 +120,7 @@ export class MockSocksServer {
         body
       ].join('\r\n'));
       this._socksProxy.sendSocketData({ uid: payload.uid, data });
+      this._socksProxy.sendSocketEnd({ uid: payload.uid });
     });
   }
 
