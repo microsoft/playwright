@@ -118,7 +118,6 @@ export class MockSocksServer {
         body
       ].join('\r\n'));
       this._socksProxy.sendSocketData({ uid: payload.uid, data });
-      this._socksProxy.sendSocketEnd({ uid: payload.uid });
     });
   }
 
