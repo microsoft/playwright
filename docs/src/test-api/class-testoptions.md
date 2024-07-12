@@ -138,6 +138,35 @@ export default defineConfig({
   ]
 });
 ```
+
+## property: TestOptions.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'Microsoft Edge',
+      use: {
+        ...devices['Desktop Edge'],
+        clientCertificates: [{
+          url: 'https://example.com/**',
+          certs: [{
+            certPath: './cert.pem',
+            keyPath: './key.pem',
+            passphase: 'mysecretpassword',
+          }],
+        }],
+      },
+    },
+  ]
+});
+```
+
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.10
 

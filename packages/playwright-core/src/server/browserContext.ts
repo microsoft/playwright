@@ -43,6 +43,7 @@ import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
+import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -90,6 +91,7 @@ export abstract class BrowserContext extends SdkObject {
   private _debugger!: Debugger;
   _closeReason: string | undefined;
   readonly clock: Clock;
+  _clientCertificatesProxy: ClientCertificatesProxy | undefined;
 
   constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -245,6 +247,7 @@ export abstract class BrowserContext extends SdkObject {
       // at the same time.
       return;
     }
+    this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
     if (this._isPersistentContext)
       this.onClosePersistent();
@@ -655,6 +658,18 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
+export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions, browserOptions?: BrowserOptions) {
+  if (!options.clientCertificates?.length)
+    return;
+  if (options.proxy?.server || browserOptions?.proxy?.server)
+    throw new Error('Cannot specify both proxy and clientCertificates');
+  verifyClientCertificates(options.clientCertificates);
+  const clientCertificatesProxy = new ClientCertificatesProxy(options);
+  options.proxy = { server: await clientCertificatesProxy.listen() };
+  options.ignoreHTTPSErrors = true;
+  return clientCertificatesProxy;
+}
+
 export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
@@ -705,6 +720,27 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
     throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
   if (accuracy < 0)
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
+}
+
+export function verifyClientCertificates(clientCertificates?: channels.BrowserNewContextParams['clientCertificates']) {
+  if (!clientCertificates)
+    return;
+  for (const { url, certs } of clientCertificates) {
+    if (!url)
+      throw new Error(`clientCertificates.url is required`);
+    if (!certs.length)
+      throw new Error('No certs specified for url: ' + url);
+    for (const cert of certs) {
+      if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
+        throw new Error('None of cert, key, passphrase or pfx is specified');
+      if (cert.cert && !cert.key)
+        throw new Error('cert is specified without key');
+      if (!cert.cert && cert.key)
+        throw new Error('key is specified without cert');
+      if (cert.pfx && (cert.cert || cert.key))
+        throw new Error('pfx is specified together with cert, key or passphrase');
+    }
+  }
 }
 
 export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {

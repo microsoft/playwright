@@ -16,8 +16,9 @@
 
 import type * as channels from '@protocol/channels';
 import type { LookupAddress } from 'dns';
-import * as http from 'http';
-import * as https from 'https';
+import http from 'http';
+import fs from 'fs';
+import https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
 import url from 'url';
@@ -27,7 +28,7 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
@@ -40,6 +41,7 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { kMaxCookieExpiresDateInSeconds } from './network';
+import { clientCertificatesToTLSOptions } from './socksClientCertificatesInterceptor';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -49,6 +51,7 @@ type FetchRequestOptions = {
   timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   baseURL?: string;
+  clientCertificates?: channels.BrowserNewContextOptions['clientCertificates'];
 };
 
 type HeadersObject = Readonly<{ [name: string]: string }>;
@@ -190,9 +193,12 @@ export abstract class APIRequestContext extends SdkObject {
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline,
+      ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.toString()),
       __testHookLookup: (params as any).__testHookLookup,
     };
-    // rejectUnauthorized = undefined is treated as true in node 12.
+    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)
+      options.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
+    // rejectUnauthorized = undefined is treated as true in Node.js 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;
 
@@ -351,6 +357,7 @@ export abstract class APIRequestContext extends SdkObject {
             maxRedirects: options.maxRedirects - 1,
             timeout: options.timeout,
             deadline: options.deadline,
+            ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, url.toString()),
             __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.
@@ -522,6 +529,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
       timeoutSettings: this._context._timeoutSettings,
       ignoreHTTPSErrors: this._context._options.ignoreHTTPSErrors,
       baseURL: this._context._options.baseURL,
+      clientCertificates: this._context._options.clientCertificates,
     };
   }
 
@@ -557,17 +565,21 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       if (!/^\w+:\/\//.test(url))
         url = 'http://' + url;
       proxy.server = url;
+      if (options.clientCertificates)
+        throw new Error('Cannot specify both proxy and clientCertificates');
     }
     if (options.storageState) {
       this._origins = options.storageState.origins;
       this._cookieStore.addCookies(options.storageState.cookies || []);
     }
+    verifyClientCertificates(options.clientCertificates);
     this._options = {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
+      clientCertificates: options.clientCertificates,
       proxy,
       timeoutSettings,
     };

@@ -331,6 +331,15 @@ scheme.PlaywrightNewRequestParams = tObject({
   userAgent: tOptional(tString),
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+  clientCertificates: tOptional(tArray(tObject({
+    url: tString,
+    certs: tArray(tObject({
+      cert: tOptional(tBinary),
+      key: tOptional(tBinary),
+      passphrase: tOptional(tString),
+      pfx: tOptional(tBinary),
+    })),
+  }))),
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
@@ -532,6 +541,15 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    url: tString,
+    certs: tArray(tObject({
+      cert: tOptional(tBinary),
+      key: tOptional(tBinary),
+      passphrase: tOptional(tString),
+      pfx: tOptional(tBinary),
+    })),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -614,6 +632,15 @@ scheme.BrowserNewContextParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    url: tString,
+    certs: tArray(tObject({
+      cert: tOptional(tBinary),
+      key: tOptional(tBinary),
+      passphrase: tOptional(tString),
+      pfx: tOptional(tBinary),
+    })),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -676,6 +703,15 @@ scheme.BrowserNewContextForReuseParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    url: tString,
+    certs: tArray(tObject({
+      cert: tOptional(tBinary),
+      key: tOptional(tBinary),
+      passphrase: tOptional(tString),
+      pfx: tOptional(tBinary),
+    })),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -2513,6 +2549,15 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    url: tString,
+    certs: tArray(tObject({
+      cert: tOptional(tBinary),
+      key: tOptional(tBinary),
+      passphrase: tOptional(tString),
+      pfx: tOptional(tBinary),
+    })),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),

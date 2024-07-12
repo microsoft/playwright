@@ -18,7 +18,7 @@ import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import type { BrowserContext } from './browserContext';
-import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import { createClientCertificatesProxyIfNeeded, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import type { BrowserName } from './registry';
 import { registry } from './registry';
 import type { ConnectionTransport } from './transport';
@@ -77,10 +77,17 @@ export abstract class BrowserType extends SdkObject {
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
-    const persistent: channels.BrowserNewContextParams = options;
+    const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
-    const browser = await controller.run(progress => {
-      return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+    const browser = await controller.run(async progress => {
+      // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
+      const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent);
+      if (clientCertificatesProxy)
+        options.proxy = persistent.proxy;
+      progress.cleanupWhenAborted(() => clientCertificatesProxy?.close());
+      const browser = await this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
+      return browser;
     }, TimeoutSettings.launchTimeout(options));
     return browser._defaultContext!;
   }

@@ -433,6 +433,21 @@ ContextOptions:
         width: number
         height: number
     ignoreHTTPSErrors: boolean?
+    clientCertificates:
+      type: array?
+      items:
+        type: object
+        properties:
+          url: string
+          certs:
+            type: array
+            items:
+              type: object
+              properties:
+                cert: binary?
+                key: binary?
+                passphrase: string?
+                pfx: binary?
     javaScriptEnabled: boolean?
     bypassCSP: boolean?
     userAgent: string?
@@ -673,6 +688,21 @@ Playwright:
         extraHTTPHeaders:
           type: array?
           items: NameValue
+        clientCertificates:
+          type: array?
+          items:
+            type: object
+            properties:
+              url: string
+              certs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    cert: binary?
+                    key: binary?
+                    passphrase: string?
+                    pfx: binary?
         httpCredentials:
           type: object?
           properties:

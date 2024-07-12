@@ -16,7 +16,7 @@
 
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, createClientCertificatesProxyIfNeeded, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
 import type { ProxySettings } from './types';
@@ -84,7 +84,15 @@ export abstract class Browser extends SdkObject {
 
   async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
-    const context = await this.doCreateNewContext(options);
+    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options, this.options);
+    let context;
+    try {
+      context = await this.doCreateNewContext(options);
+    } catch (error) {
+      await clientCertificatesProxy?.close();
+      throw error;
+    }
+    context._clientCertificatesProxy = clientCertificatesProxy;
     if (options.storageState)
       await context.setStorageState(metadata, options.storageState);
     return context;

@@ -140,6 +140,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
+  clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -155,6 +156,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _combinedContextOptions: [async ({
     acceptDownloads,
     bypassCSP,
+    clientCertificates,
     colorScheme,
     deviceScaleFactor,
     extraHTTPHeaders,
@@ -209,6 +211,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.proxy = proxy;
     if (storageState !== undefined)
       options.storageState = storageState;
+    if (clientCertificates?.length)
+      options.clientCertificates = resolveClientCerticates(clientCertificates);
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
@@ -414,6 +418,28 @@ function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | nu
       continue;
     testInfo.attachments.push({ name, contentType: 'text/plain', body: Buffer.from(value) });
   }
+}
+
+function resolveFileToConfig(file: string | undefined) {
+  const config = test.info().config.configFile;
+  if (!config || !file)
+    return file;
+  if (path.isAbsolute(file))
+    return file;
+  return path.resolve(path.dirname(config), file);
+}
+
+type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;
+
+function resolveClientCerticates(clientCertificates: ClientCertificates): ClientCertificates {
+  for (const { certs } of clientCertificates) {
+    for (const cert of certs) {
+      cert.certPath = resolveFileToConfig(cert.certPath);
+      cert.keyPath = resolveFileToConfig(cert.keyPath);
+      cert.pfxPath = resolveFileToConfig(cert.pfxPath);
+    }
+  }
+  return clientCertificates;
 }
 
 const kTracingStarted = Symbol('kTracingStarted');

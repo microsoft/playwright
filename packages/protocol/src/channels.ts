@@ -576,6 +576,15 @@ export type PlaywrightNewRequestParams = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   httpCredentials?: {
     username: string,
     password: string,
@@ -600,6 +609,15 @@ export type PlaywrightNewRequestOptions = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   httpCredentials?: {
     username: string,
     password: string,
@@ -944,6 +962,15 @@ export type BrowserTypeLaunchPersistentContextParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1017,6 +1044,15 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1131,6 +1167,15 @@ export type BrowserNewContextParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1190,6 +1235,15 @@ export type BrowserNewContextOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1252,6 +1306,15 @@ export type BrowserNewContextForReuseParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1311,6 +1374,15 @@ export type BrowserNewContextForReuseOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -4558,6 +4630,15 @@ export type AndroidDeviceLaunchBrowserParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -4615,6 +4696,15 @@ export type AndroidDeviceLaunchBrowserOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    url: string,
+    certs: {
+      cert?: Binary,
+      key?: Binary,
+      passphrase?: string,
+      pfx?: Binary,
+    }[],
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,

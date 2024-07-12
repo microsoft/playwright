@@ -529,6 +529,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
+    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -547,4 +548,22 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   if (acceptDownloads)
     return 'accept';
   return 'deny';
+}
+
+export async function toClientCertificatesProtocol(clientCertificates?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+  if (!clientCertificates)
+    return undefined;
+  return await Promise.all(clientCertificates.map(async clientCertificate => {
+    return {
+      url: clientCertificate.url,
+      certs: await Promise.all(clientCertificate.certs.map(async cert => {
+        return {
+          cert: cert.certPath ? await fs.promises.readFile(cert.certPath) : undefined,
+          key: cert.keyPath ? await fs.promises.readFile(cert.keyPath) : undefined,
+          pfx: cert.pfxPath ? await fs.promises.readFile(cert.pfxPath) : undefined,
+          passphrase: cert.passphrase,
+        };
+      }))
+    };
+  }));
 }

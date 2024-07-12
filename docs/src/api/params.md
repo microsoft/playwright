@@ -514,6 +514,25 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_
 
 Does not enforce fixed viewport, allows resizing window in the headed mode.
 
+## context-option-clientCertificates
+- `clientCertificates` <[Array]<[Object]>>
+  - `url` <[string]> Glob pattern to match the URLs that the certificate is valid for.
+  - `certs` <[Array]<[Object]>> List of client certificates to be used.
+    - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
+    - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
+    - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
+    - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
+
+An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+
+:::note
+Using Client Certificates in combination with Proxy Servers is not supported.
+:::
+
+:::note
+When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it work by replacing `localhost` with `local.playwright`.
+:::
+
 ## context-option-useragent
 - `userAgent` <[string]>
 

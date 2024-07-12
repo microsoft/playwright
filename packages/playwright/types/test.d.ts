@@ -4823,6 +4823,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
+type ClientCertificate = Exclude<BrowserContextOptions['clientCertificates'], undefined>[0];
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
@@ -5200,6 +5201,45 @@ export interface PlaywrightTestOptions {
    *
    */
   colorScheme: ColorScheme;
+  /**
+   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
+   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
+   * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+   * with a glob pattern to match the URLs that the certificate is valid for.
+   *
+   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'Microsoft Edge',
+   *       use: {
+   *         ...devices['Desktop Edge'],
+   *         clientCertificates: [{
+   *           url: 'https://example.com/**',
+   *           certs: [{
+   *             certPath: './cert.pem',
+   *             keyPath: './key.pem',
+   *             passphase: 'mysecretpassword',
+   *           }],
+   *         }],
+   *       },
+   *     },
+   *   ]
+   * });
+   * ```
+   *
+   */
+  clientCertificates: ClientCertificate[] | undefined;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
    * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
