@@ -174,6 +174,8 @@ test.describe('fetch', () => {
 
 
 test.describe('browser', () => {
+  test.skip(({ browserName, platform, browserMajorVersion }) => browserName === 'chromium' && platform === 'win32' && browserMajorVersion < 128, 'Depends on https://chromium-review.googlesource.com/c/chromium/src/+/5688851');
+
   test('validate input', async ({ browser }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
