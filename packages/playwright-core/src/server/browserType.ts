@@ -40,6 +40,7 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
 import { type ProtocolError, isProtocolError } from './protocolError';
+import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -77,7 +78,7 @@ export abstract class BrowserType extends SdkObject {
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
-    const persistent: channels.BrowserNewContextParams = options;
+    const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
@@ -101,9 +102,22 @@ export abstract class BrowserType extends SdkObject {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
-    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent ?? {});
+    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    if (persistent) {
+      // Note: Any initial requests done by browser will not be intercepted by the client certificates proxy.
+      // We rely when the Page/Frames to ignoreHTTPSErrors to bypass the certificate errors.
+      clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent);
+      options.proxy = persistent.proxy;
+    }
     const browserLogsCollector = new RecentLogsCollector();
-    const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
+    let launchInfo;
+    try {
+      launchInfo = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
+    } catch (error) {
+      await clientCertificatesProxy?.close();
+      throw error;
+    }
+    const { browserProcess, userDataDir, artifactsDir, transport } = launchInfo;
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
@@ -127,13 +141,19 @@ export abstract class BrowserType extends SdkObject {
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
     copyTestHooks(options, browserOptions);
-    const browser = await this._connectToTransport(transport, browserOptions);
+    let browser;
+    try {
+      browser = await this._connectToTransport(transport, browserOptions);
+    } catch (error) {
+      await clientCertificatesProxy?.close();
+      throw error;
+    }
     (browser as any)._userDataDirForTest = userDataDir;
+    if (persistent)
+      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
     if (persistent && !options.ignoreAllDefaultArgs)
       await browser._defaultContext!._loadDefaultContext(progress);
-    if (persistent)
-      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
     return browser;
   }
 

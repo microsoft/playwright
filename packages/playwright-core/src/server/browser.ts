@@ -84,7 +84,7 @@ export abstract class Browser extends SdkObject {
 
   async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
-    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options);
+    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options, this.options);
     const context = await this.doCreateNewContext(options);
     context._clientCertificatesProxy = clientCertificatesProxy;
     if (options.storageState)

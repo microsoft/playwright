@@ -5202,15 +5202,15 @@ export interface PlaywrightTestOptions {
    */
   colorScheme: ColorScheme;
   /**
-   * An array of client certificates to be used. Each certificate object must have `cert` and `key` or `pfx` to load the
-   * client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the
-   * certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the
-   * URLs that the certificate is valid for.
+   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
+   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
+   * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+   * with a glob pattern to match the URLs that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
-   * **NOTE** When using WebKit on macOS, accessing `localhost` might not work as expected. Instead, use
-   * `playwright.local` as the hostname.
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`. Instead, use `playwright.local` as the hostname.
    *
    * **Usage**
    *

@@ -654,10 +654,10 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
-export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions) {
+export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions, browserOptions?: BrowserOptions) {
   if (!options.clientCertificates?.length)
     return;
-  if (options.proxy?.server)
+  if (options.proxy?.server || browserOptions?.proxy?.server)
     throw new Error('Cannot specify both proxy and clientCertificates');
   const clientCertificatesProxy = new ClientCertificatesProxy(options);
   options.proxy = { server: await clientCertificatesProxy.listen() };
@@ -699,12 +699,8 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
-    if (!browserOptions.persistent && options.clientCertificates)
-      throw new Error('Cannot specify both proxy and clientCertificates');
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (!browserOptions.persistent && browserOptions.proxy?.server && options.clientCertificates)
-    throw new Error('Cannot specify both proxy and clientCertificates');
   verifyGeolocation(options.geolocation);
   verifyClientCertificates(options.clientCertificates);
 }
