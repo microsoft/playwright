@@ -531,7 +531,6 @@ Using Client Certificates in combination with Proxy Servers is not supported.
 
 :::note
 When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it work by replacing `localhost` with `local.playwright`.
-Instead, use `playwright.local` as the hostname.
 :::
 
 ## context-option-useragent

@@ -79,18 +79,16 @@ export abstract class BrowserType extends SdkObject {
     const controller = new ProgressController(metadata, this);
     const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
-
-    // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
-    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent);
-    if (clientCertificatesProxy)
-      options.proxy = persistent.proxy;
-
-    const browser = await controller.run(progress => {
+    const browser = await controller.run(async progress => {
+      // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
+      const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent);
+      if (clientCertificatesProxy)
+        options.proxy = persistent.proxy;
       progress.cleanupWhenAborted(() => clientCertificatesProxy?.close());
-      return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+      const browser = await this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+      browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
+      return browser;
     }, TimeoutSettings.launchTimeout(options));
-    browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
-
     return browser._defaultContext!;
   }
 

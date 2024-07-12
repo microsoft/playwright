@@ -659,6 +659,7 @@ export async function createClientCertificatesProxyIfNeeded(options: channels.Br
     return;
   if (options.proxy?.server || browserOptions?.proxy?.server)
     throw new Error('Cannot specify both proxy and clientCertificates');
+  verifyClientCertificates(options.clientCertificates);
   const clientCertificatesProxy = new ClientCertificatesProxy(options);
   options.proxy = { server: await clientCertificatesProxy.listen() };
   options.ignoreHTTPSErrors = true;
@@ -702,7 +703,6 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
     options.proxy = normalizeProxySettings(options.proxy);
   }
   verifyGeolocation(options.geolocation);
-  verifyClientCertificates(options.clientCertificates);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {
