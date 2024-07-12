@@ -507,7 +507,7 @@ export abstract class BrowserContext extends SdkObject {
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, false, 'utility');
+        })`, 'utility');
         if (storage.localStorage.length)
           result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
         originsToSave.delete(origin);
@@ -617,6 +617,10 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
+  }
+
+  async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
+    await Promise.all(this.pages().map(page => page.safeNonStallingEvaluateInAllFrames(expression, world, options)));
   }
 
   async _harStart(page: Page | null, options: channels.RecordHarOptions): Promise<string> {

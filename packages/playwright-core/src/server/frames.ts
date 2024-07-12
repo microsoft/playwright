@@ -581,12 +581,12 @@ export class Frame extends SdkObject {
     });
   }
 
-  nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean | undefined, world: types.World): Promise<any> {
+  nonStallingEvaluateInExistingContext(expression: string, world: types.World): Promise<any> {
     return this.raceAgainstEvaluationStallingEvents(() => {
       const context = this._contextData.get(world)?.context;
       if (!context)
         throw new Error('Frame does not yet have the execution context');
-      return context.evaluateExpression(expression, { isFunction });
+      return context.evaluateExpression(expression, { isFunction: false });
     });
   }
 

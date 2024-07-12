@@ -16,7 +16,6 @@
 
 import type { BrowserContext } from './browserContext';
 import * as clockSource from '../generated/clockSource';
-import { isJavaScriptErrorInEvaluate } from './javascript';
 
 export class Clock {
   private _browserContext: BrowserContext;
@@ -87,25 +86,12 @@ export class Clock {
       ${clockSource.source}
       globalThis.__pwClock = (module.exports.inject())(globalThis);
     })();`;
-    await this._addAndEvaluate(script);
-  }
-
-  private async _addAndEvaluate(script: string) {
     await this._browserContext.addInitScript(script);
-    return await this._evaluateInFrames(script);
+    await this._evaluateInFrames(script);
   }
 
   private async _evaluateInFrames(script: string) {
-    const frames = this._browserContext.pages().map(page => page.frames()).flat();
-    const results = await Promise.all(frames.map(async frame => {
-      try {
-        await frame.nonStallingEvaluateInExistingContext(script, false, 'main');
-      } catch (e) {
-        if (isJavaScriptErrorInEvaluate(e))
-          throw e;
-      }
-    }));
-    return results[0];
+    await this._browserContext.safeNonStallingEvaluateInAllFrames(script, 'main', { throwOnJSErrors: true });
   }
 }
 
