@@ -749,6 +749,17 @@ export class Page extends SdkObject {
     this._frameThrottler.recharge();
   }
 
+  async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
+    await Promise.all(this.frames().map(async frame => {
+      try {
+        await frame.nonStallingEvaluateInExistingContext(expression, world);
+      } catch (e) {
+        if (options.throwOnJSErrors && js.isJavaScriptErrorInEvaluate(e))
+          throw e;
+      }
+    }));
+  }
+
   async hideHighlight() {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
