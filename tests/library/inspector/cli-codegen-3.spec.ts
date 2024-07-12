@@ -559,6 +559,60 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     ]);
   });
 
+  test('should consume contextmenu events, despite a custom context menu', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <button>Right click me.</button>
+      <div id="menu" style="display: none; position: absolute;">
+        <button>Menu option 1</button>
+        <button>Menu option 2</button>
+      </div>
+      <script>
+        const button = document.querySelector('button');
+        button.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          console.log('right-clicked');
+
+          // show custom context menu
+          const menu = document.getElementById("menu");
+          menu.style.display = "block";
+          menu.style.left = \`\${e.pageX}px\`;
+          menu.style.top = \`\${e.pageY}px\`;
+        });
+        const log = [];
+        for (const eventName of ['mousedown', 'mousemove', 'mouseup', 'pointerdown', 'pointermove', 'pointerup', 'click', 'contextmenu']) {
+          button.addEventListener(eventName, e => log.push('button: ' + e.type));
+          menu.addEventListener(eventName, e => log.push('menu: ' + e.type));
+        }
+      </script>
+    `);
+
+    await recorder.hoverOverElement('button');
+    expect(await page.evaluate('log')).toEqual(['button: pointermove', 'button: mousemove']);
+
+    const [message] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', `button: 'right'`),
+      recorder.trustedClick({ button: 'right' }),
+    ]);
+    expect(message.text()).toBe('right-clicked');
+    expect(await page.evaluate('log')).toEqual([
+      // hover
+      'button: pointermove',
+      'button: mousemove',
+      // trusted right click
+      'button: pointerup',
+      'button: pointermove',
+      'button: mousemove',
+      'button: pointerdown',
+      'button: mousedown',
+      'button: contextmenu',
+      'menu: pointerup',
+      'menu: mouseup'
+    ]);
+  });
+
   test('should assert value', async ({ openRecorder }) => {
     const recorder = await openRecorder();
 
