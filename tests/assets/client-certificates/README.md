@@ -49,7 +49,7 @@ openssl req \
 	-days 365 \
 	-subj "/CN=Bob"
 
-# sign with bob_csr.pem
+# sign with self-signed/key.pem
 openssl x509 \
 	-req \
 	-in client/self-signed/csr.pem \
