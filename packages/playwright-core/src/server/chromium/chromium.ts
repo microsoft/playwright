@@ -305,12 +305,9 @@ export class Chromium extends BrowserType {
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
-    }
-    if (options.headless) {
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      // See also https://github.com/microsoft/playwright/issues/30585
-      // and chromium fix at https://issues.chromium.org/issues/338414704.
-      chromeArguments.push('--enable-gpu');
+      if (options.headless)
+        chromeArguments.push('--use-angle');
     }
 
     if (options.devtools)
