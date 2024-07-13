@@ -17,7 +17,7 @@
 import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
-import { msToString } from './uiUtils';
+import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { AttachmentLink, generateTraceUrl } from './links';

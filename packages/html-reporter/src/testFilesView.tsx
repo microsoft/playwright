@@ -19,7 +19,7 @@ import * as React from 'react';
 import type { Filter } from './filter';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
-import { msToString } from './uiUtils';
+import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
 

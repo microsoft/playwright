@@ -39,3 +39,12 @@ export function msToString(ms: number): string {
   const days = hours / 24;
   return days.toFixed(1) + 'd';
 }
+
+// hash string to integer in range [0, 6] for color index, to get same color for same tag
+export function hashStringToInt(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++)
+    hash = str.charCodeAt(i) + ((hash << 8) - hash);
+  return Math.abs(hash % 6);
+}
+

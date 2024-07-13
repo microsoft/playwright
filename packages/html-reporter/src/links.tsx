@@ -20,6 +20,7 @@ import * as icons from './icons';
 import { TreeItem } from './treeItem';
 import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
+import { linkifyText } from './renderUtils';
 
 export function navigate(href: string) {
   window.history.pushState({}, '', href);
@@ -77,9 +78,9 @@ export const AttachmentLink: React.FunctionComponent<{
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
-    {attachment.body && <span>{attachment.name}</span>}
+    {attachment.body && <span>{linkifyText(attachment.name)}</span>}
   </span>} loadChildren={attachment.body ? () => {
-    return [<div className='attachment-body'><CopyToClipboard value={attachment.body!}/>{attachment.body}</div>];
+    return [<div className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
   } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
 
