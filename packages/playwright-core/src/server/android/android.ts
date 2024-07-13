@@ -15,7 +15,6 @@
  */
 
 import { debug } from '../../utilsBundle';
-import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -451,7 +450,7 @@ export class AndroidDevice extends SdkObject<{
   }
 }
 
-class AndroidBrowser extends EventEmitter {
+class AndroidBrowser {
   readonly device: AndroidDevice;
   private _socket: SocketBackend;
   private _receiver: stream.Writable;
@@ -460,8 +459,6 @@ class AndroidBrowser extends EventEmitter {
   onclose?: () => void;
 
   constructor(device: AndroidDevice, socket: SocketBackend) {
-    super();
-    this.setMaxListeners(0);
     this.device = device;
     this._socket = socket;
     this._socket.on('close', () => {
