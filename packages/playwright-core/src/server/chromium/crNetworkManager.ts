@@ -60,25 +60,25 @@ export class CRNetworkManager {
   async addSession(session: CRSession, workerFrame?: frames.Frame, isMain?: boolean) {
     const sessionInfo: SessionInfo = { session, isMain, workerFrame, eventListeners: [] };
     sessionInfo.eventListeners = [
-      eventsHelper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this, sessionInfo)),
-      eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, sessionInfo)),
+      session.addManagedListener('Fetch.requestPaused', this._onRequestPaused.bind(this, sessionInfo)),
+      session.addManagedListener('Fetch.authRequired', this._onAuthRequired.bind(this, sessionInfo)),
+      session.addManagedListener('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, sessionInfo)),
+      session.addManagedListener('Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
+      session.addManagedListener('Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
+      session.addManagedListener('Network.responseReceived', this._onResponseReceived.bind(this, sessionInfo)),
+      session.addManagedListener('Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
+      session.addManagedListener('Network.loadingFinished', this._onLoadingFinished.bind(this, sessionInfo)),
+      session.addManagedListener('Network.loadingFailed', this._onLoadingFailed.bind(this, sessionInfo)),
     ];
     if (this._page) {
       sessionInfo.eventListeners.push(...[
-        eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page!._frameManager.onWebSocketCreated(e.requestId, e.url)),
-        eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page!._frameManager.onWebSocketRequest(e.requestId)),
-        eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page!._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page!._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page!._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-        eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page!._frameManager.webSocketClosed(e.requestId)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page!._frameManager.webSocketError(e.requestId, e.errorMessage)),
+        session.addManagedListener('Network.webSocketCreated', e => this._page!._frameManager.onWebSocketCreated(e.requestId, e.url)),
+        session.addManagedListener('Network.webSocketWillSendHandshakeRequest', e => this._page!._frameManager.onWebSocketRequest(e.requestId)),
+        session.addManagedListener('Network.webSocketHandshakeResponseReceived', e => this._page!._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+        session.addManagedListener('Network.webSocketFrameSent', e => e.response.payloadData && this._page!._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+        session.addManagedListener('Network.webSocketFrameReceived', e => e.response.payloadData && this._page!._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+        session.addManagedListener('Network.webSocketClosed', e => this._page!._frameManager.webSocketClosed(e.requestId)),
+        session.addManagedListener('Network.webSocketFrameError', e => this._page!._frameManager.webSocketError(e.requestId, e.errorMessage)),
       ]);
     }
     this._sessions.set(session, sessionInfo);

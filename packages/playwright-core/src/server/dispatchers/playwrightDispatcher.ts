@@ -19,7 +19,7 @@ import type { Browser } from '../browser';
 import { GlobalAPIRequestContext } from '../fetch';
 import type { Playwright } from '../playwright';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
-import { SocksProxy } from '../../common/socksProxy';
+import type { SocksProxy } from '../../common/socksProxy';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { RootDispatcher } from './dispatcher';
@@ -79,9 +79,9 @@ class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.Socks
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
     this._socksListeners = [
-      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksRequested, (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload)),
-      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', payload)),
-      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload)),
+      socksProxy.addManagedListener('socksRequested', (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload)),
+      socksProxy.addManagedListener('socksData', (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', payload)),
+      socksProxy.addManagedListener('socksClosed', (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload)),
     ];
   }
 

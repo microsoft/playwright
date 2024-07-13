@@ -36,7 +36,7 @@ export class WKWorkers {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this.clear();
     this._sessionListeners = [
-      eventsHelper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
+      session.addManagedListener('Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(this._page, event.url);
         const workerSession = new WKSession(session.connection, event.workerId, (message: any) => {
           session.send('Worker.sendMessageToWorker', {
@@ -59,13 +59,13 @@ export class WKWorkers {
           this._page._removeWorker(event.workerId);
         });
       }),
-      eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
+      session.addManagedListener('Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
         if (!workerSession)
           return;
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
-      eventsHelper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
+      session.addManagedListener('Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
         if (!workerSession)
           return;

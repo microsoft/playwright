@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-import { assert } from '../../utils';
+import { assert, ManagedEventEmitter } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import type { RecentLogsCollector } from '../../utils/debugLogger';
@@ -97,7 +96,11 @@ export class WKConnection {
   }
 }
 
-export class WKSession extends EventEmitter {
+export class WKSession extends ManagedEventEmitter<{
+  [K in keyof Protocol.Events]: [Protocol.Events[K]]
+ } & {
+  [kPageProxyMessageReceived]: [PageProxyMessageReceivedPayload]
+ }> {
   connection: WKConnection;
   readonly sessionId: string;
 
@@ -105,12 +108,6 @@ export class WKSession extends EventEmitter {
   private readonly _rawSend: (message: any) => void;
   private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
   private _crashed: boolean = false;
-
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(connection: WKConnection, sessionId: string, rawSend: (message: any) => void) {
     super();

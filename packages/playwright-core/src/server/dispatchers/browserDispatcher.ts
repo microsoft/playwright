@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Browser } from '../browser';
+import type { Browser } from '../browser';
 import type * as channels from '@protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
@@ -24,7 +24,7 @@ import { Dispatcher } from './dispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
 import type { PageDispatcher } from './pageDispatcher';
 import type { CallMetadata } from '../instrumentation';
-import { BrowserContext } from '../browserContext';
+import type { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { ArtifactDispatcher } from './artifactDispatcher';
@@ -35,8 +35,8 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   constructor(scope: BrowserTypeDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
     browser.setNeedsBeforeCloseEvent(true);
-    this.addObjectListener(Browser.Events.BeforeClose, () => this._dispatchEvent('beforeClose'));
-    this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
+    this.addObjectListener('beforeClose', () => this._dispatchEvent('beforeClose'));
+    this.addObjectListener('disconnected', () => this._didClose());
   }
 
   override _onDispose() {
@@ -109,7 +109,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 
   constructor(scope: RootDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
-    this.addObjectListener(Browser.Events.BeforeClose, () => this.emit('beforeClose'));
+    this.addObjectListener('beforeClose', () => this.emit('beforeClose'));
     // When we have a remotely-connected browser, each client gets a fresh Selector instance,
     // so that two clients do not interfere between each other.
     this.selectors = new Selectors();
@@ -121,7 +121,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
     context.setSelectors(this.selectors);
-    context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
+    context.on('close', () => this._contexts.delete(context));
     return { context: new BrowserContextDispatcher(this, context) };
   }
 

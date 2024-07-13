@@ -17,7 +17,7 @@
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { Electron } from '../electron/electron';
-import { ElectronApplication } from '../electron/electron';
+import type { ElectronApplication } from '../electron/electron';
 import type * as channels from '@protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
@@ -47,11 +47,11 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     super(scope, electronApplication, 'ElectronApplication', {
       context: new BrowserContextDispatcher(scope, electronApplication.context())
     });
-    this.addObjectListener(ElectronApplication.Events.Close, () => {
+    this.addObjectListener('close', () => {
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(ElectronApplication.Events.Console, (message: ConsoleMessage) => {
+    this.addObjectListener('console', (message: ConsoleMessage) => {
       if (!this._subscriptions.has('console'))
         return;
       this._dispatchEvent('console', {

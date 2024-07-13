@@ -18,9 +18,9 @@ import type { Fixtures } from '@playwright/test';
 import path from 'path';
 import { TestServer } from './testserver';
 import { TestProxy } from './proxy';
-import type { SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
 
-import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
+import type { SocksProxy } from '../../packages/playwright-core/src/common/socksProxy';
+const SocksProxyImpl = require('../../packages/playwright-core/lib/common/socksProxy').SocksProxy as any as typeof SocksProxy;
 
 export type ServerWorkerOptions = {
   loopback?: string;
@@ -100,16 +100,16 @@ export class MockSocksServer {
   private _socksProxy: SocksProxy;
 
   constructor() {
-    this._socksProxy = new SocksProxy();
+    this._socksProxy = new SocksProxyImpl();
     this._socksProxy.setPattern('*');
-    this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+    this._socksProxy.addListener('socksRequested', async payload => {
       this._socksProxy.socketConnected({
         uid: payload.uid,
         host: '127.0.0.1',
         port: 0,
       });
     });
-    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketRequestedPayload) => {
+    this._socksProxy.addListener('socksData', async payload => {
       const body = '<html><title>Served by the SOCKS proxy</title></html>';
       const data = Buffer.from([
         'HTTP/1.1 200 OK',

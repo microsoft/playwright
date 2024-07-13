@@ -45,7 +45,6 @@ import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
-import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -92,13 +91,13 @@ export class WKPage implements PageDelegate {
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
-    this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
+    this._page.on('framedetached', (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._eventListeners = [
-      eventsHelper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
-      eventsHelper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
-      eventsHelper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
-      eventsHelper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
-      eventsHelper.addEventListener(this._pageProxySession, 'Screencast.screencastFrame', this._onScreencastFrame.bind(this)),
+      this._pageProxySession.addManagedListener('Target.targetCreated', this._onTargetCreated.bind(this)),
+      this._pageProxySession.addManagedListener('Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
+      this._pageProxySession.addManagedListener('Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
+      this._pageProxySession.addManagedListener('Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+      this._pageProxySession.addManagedListener('Screencast.screencastFrame', this._onScreencastFrame.bind(this)),
     ];
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
@@ -373,33 +372,33 @@ export class WKPage implements PageDelegate {
 
   private _addSessionListeners() {
     this._sessionListeners = [
-      eventsHelper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-      eventsHelper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      eventsHelper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      eventsHelper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
-      eventsHelper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId, event.delay, event.targetIsCurrentFrame)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
-      eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
-      eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
-      eventsHelper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
-      eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-      eventsHelper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page._frameManager.webSocketClosed(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
+      this._session.addManagedListener('Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      this._session.addManagedListener('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      this._session.addManagedListener('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      this._session.addManagedListener('Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      this._session.addManagedListener('Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
+      this._session.addManagedListener('Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
+      this._session.addManagedListener('Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId, event.delay, event.targetIsCurrentFrame)),
+      this._session.addManagedListener('Page.loadEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'load')),
+      this._session.addManagedListener('Page.domContentEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
+      this._session.addManagedListener('Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      this._session.addManagedListener('Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
+      this._session.addManagedListener('Console.messageAdded', event => this._onConsoleMessage(event)),
+      this._session.addManagedListener('Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
+      this._pageProxySession.addManagedListener('Dialog.javascriptDialogOpening', event => this._onDialog(event)),
+      this._session.addManagedListener('Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      this._session.addManagedListener('Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
+      this._session.addManagedListener('Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
+      this._session.addManagedListener('Network.responseReceived', e => this._onResponseReceived(this._session, e)),
+      this._session.addManagedListener('Network.loadingFinished', e => this._onLoadingFinished(e)),
+      this._session.addManagedListener('Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
+      this._session.addManagedListener('Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
+      this._session.addManagedListener('Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
+      this._session.addManagedListener('Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+      this._session.addManagedListener('Network.webSocketFrameSent', e => e.response.payloadData && this._page._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+      this._session.addManagedListener('Network.webSocketFrameReceived', e => e.response.payloadData && this._page._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      this._session.addManagedListener('Network.webSocketClosed', e => this._page._frameManager.webSocketClosed(e.requestId)),
+      this._session.addManagedListener('Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
   private async _updateState<T extends keyof Protocol.CommandParameters>(
@@ -451,7 +450,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
-    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
     this._onFrameNavigated(frameTree.frame, true);
     this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'domcontentloaded');
     this._page._frameManager.frameLifecycleEvent(frameTree.frame.id, 'load');
@@ -462,7 +461,7 @@ export class WKPage implements PageDelegate {
       this._handleFrameTree(child);
   }
 
-  _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
+  _onFrameAttached(frameId: string, parentFrameId: string | undefined): frames.Frame {
     return this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
@@ -552,7 +551,7 @@ export class WKPage implements PageDelegate {
       error.stack = stack;
       error.name = name;
 
-      this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, error, this._page);
+      this._page.emitOnContextOnceInitialized('pageerror', error, this._page);
       return;
     }
 
@@ -606,7 +605,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.emitOnContext('dialog', new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,
@@ -937,7 +936,7 @@ export class WKPage implements PageDelegate {
       this._pageProxySession.send('Screencast.screencastFrameAck', { generation }).catch(e => debugLogger.log('error', e));
     });
     const buffer = Buffer.from(event.data, 'base64');
-    this._page.emit(Page.Events.ScreencastFrame, {
+    this._page.emit('screencastframe', {
       buffer,
       width: event.deviceWidth,
       height: event.deviceHeight,

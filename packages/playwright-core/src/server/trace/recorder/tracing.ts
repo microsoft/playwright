@@ -27,7 +27,7 @@ import type { ElementHandle } from '../../dom';
 import type { APIRequestContext } from '../../fetch';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import { SdkObject } from '../../instrumentation';
-import { Page } from '../../page';
+import type { Page } from '../../page';
 import type * as har from '@trace/har';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
@@ -182,10 +182,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._fs.appendFile(this._state.traceFile, JSON.stringify(event) + '\n');
 
     this._context.instrumentation.addListener(this, this._context);
-    this._eventListeners.push(
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.PageError, this._onPageError.bind(this)),
-    );
+    if (this._context instanceof BrowserContext) {
+      this._eventListeners.push(
+          this._context.addManagedListener('console', this._onConsoleMessage.bind(this)),
+          this._context.addManagedListener('pageerror', this._onPageError.bind(this)),
+      );
+    }
     if (this._state.options.screenshots)
       this._startScreencast();
     if (this._state.options.snapshots)
@@ -199,7 +201,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     for (const page of this._context.pages())
       this._startScreencastInPage(page);
     this._screencastListeners.push(
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startScreencastInPage.bind(this)),
+        this._context.addManagedListener('page', this._startScreencastInPage.bind(this)),
     );
   }
 
@@ -463,7 +465,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     page.setScreencastOptions(kScreencastOptions);
     const prefix = page.guid;
     this._screencastListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {
+        page.addManagedListener('screencastframe', params => {
           const suffix = params.timestamp || Date.now();
           const sha1 = `${prefix}-${suffix}.jpeg`;
           const event: trace.ScreencastFrameTraceEvent = {

@@ -15,7 +15,7 @@
  */
 
 import type { NavigationEvent } from '../frames';
-import { Frame } from '../frames';
+import type { Frame } from '../frames';
 import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -58,13 +58,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     }, gcBucket);
     this._browserContextDispatcher = scope;
     this._frame = frame;
-    this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
+    this.addObjectListener('addlifecycle', lifecycleEvent => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
-    this.addObjectListener(Frame.Events.RemoveLifecycle, lifecycleEvent => {
+    this.addObjectListener('removelifecycle', lifecycleEvent => {
       this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
-    this.addObjectListener(Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+    this.addObjectListener('internalnavigation', (event: NavigationEvent) => {
       if (!event.isPublic)
         return;
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };

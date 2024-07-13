@@ -16,7 +16,8 @@
 
 import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
-import { Page, Worker } from '../page';
+import type { Worker } from '../page';
+import type { Page } from '../page';
 import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { parseError } from '../errors';
@@ -70,25 +71,25 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.adopt(mainFrame);
 
     this._page = page;
-    this.addObjectListener(Page.Events.Close, () => {
+    this.addObjectListener('close', () => {
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
-    this.addObjectListener(Page.Events.Download, (download: Download) => {
+    this.addObjectListener('crash', () => this._dispatchEvent('crash'));
+    this.addObjectListener('download', (download: Download) => {
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });
     });
-    this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
+    this.addObjectListener('filechooser', (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(mainFrame, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
-    this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
-    this.addObjectListener(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
-    this.addObjectListener(Page.Events.LocatorHandlerTriggered, (uid: number) => this._dispatchEvent('locatorHandlerTriggered', { uid }));
-    this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
-    this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
-    this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
+    this.addObjectListener('frameattached', frame => this._onFrameAttached(frame));
+    this.addObjectListener('framedetached', frame => this._onFrameDetached(frame));
+    this.addObjectListener('locatorhandlertriggered', (uid: number) => this._dispatchEvent('locatorHandlerTriggered', { uid }));
+    this.addObjectListener('websocket', webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
+    this.addObjectListener('worker', worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
+    this.addObjectListener('video', (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
     if (page._video)
       this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page._video) });
     // Ensure client knows about all frames.
@@ -338,7 +339,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
     super(scope, worker, 'Worker', {
       url: worker.url()
     });
-    this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
+    this.addObjectListener('close', () => this._dispatchEvent('close'));
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionResult> {

@@ -18,12 +18,12 @@ import type { WebSocket } from '../utilsBundle';
 import type { DispatcherScope, Playwright } from '../server';
 import type * as channels from '@protocol/channels';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
-import { Browser } from '../server/browser';
+import type { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { SocksProxy } from '../common/socksProxy';
 import { assert, isUnderTest } from '../utils';
 import type { LaunchOptions } from '../server/types';
-import { AndroidDevice } from '../server/android/android';
+import type { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 import { startProfiling, stopProfiling } from '../utils';
 import { monotonicTime } from '../utils';
@@ -123,7 +123,7 @@ export class PlaywrightConnection {
       for (const browser of playwright.allBrowsers())
         await browser.close({ reason: 'Connection terminated' });
     });
-    browser.on(Browser.Events.Disconnected, () => {
+    browser.on('disconnected', () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
     });
@@ -139,7 +139,7 @@ export class PlaywrightConnection {
     this._preLaunched.socksProxy?.setPattern(this._options.socksProxyPattern);
 
     const browser = this._preLaunched.browser!;
-    browser.on(Browser.Events.Disconnected, () => {
+    browser.on('disconnected', () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
     });
@@ -158,7 +158,7 @@ export class PlaywrightConnection {
     debugLogger.log('server', `[${this._id}] engaged pre-launched (Android) mode`);
     const playwright = this._preLaunched.playwright!;
     const androidDevice = this._preLaunched.androidDevice!;
-    androidDevice.on(AndroidDevice.Events.Close, () => {
+    androidDevice.on('close', () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Android device disconnected' });
     });
@@ -202,7 +202,7 @@ export class PlaywrightConnection {
         ...this._options.launchOptions,
         headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
       });
-      browser.on(Browser.Events.Disconnected, () => {
+      browser.on('disconnected', () => {
         // Underlying browser did close for some reason - force disconnect the client.
         this.close({ code: 1001, reason: 'Browser closed' });
       });

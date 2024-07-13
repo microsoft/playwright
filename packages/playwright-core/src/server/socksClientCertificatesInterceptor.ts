@@ -139,7 +139,7 @@ export class ClientCertificatesProxy {
   ) {
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
-    this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+    this._socksProxy.addListener('socksRequested', async (payload: SocksSocketRequestedPayload) => {
       try {
         const connection = new SocksProxyConnection(this, payload.uid, payload.host, payload.port);
         await connection.connect();
@@ -148,10 +148,10 @@ export class ClientCertificatesProxy {
         this._socksProxy.socketFailed({ uid: payload.uid, errorCode: error.code });
       }
     });
-    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+    this._socksProxy.addListener('socksData', async (payload: SocksSocketDataPayload) => {
       this._connections.get(payload.uid)?.onData(payload.data);
     });
-    this._socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
+    this._socksProxy.addListener('socksClosed', (payload: SocksSocketClosedPayload) => {
       this._connections.get(payload.uid)?.onClose();
       this._connections.delete(payload.uid);
     });

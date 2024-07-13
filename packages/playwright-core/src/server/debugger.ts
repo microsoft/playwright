@@ -16,21 +16,20 @@
 
 import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
-import { BrowserContext } from './browserContext';
+import type { BrowserContext } from './browserContext';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions, slowMoActions } from '../protocol/debug';
 
 const symbol = Symbol('Debugger');
 
-export class Debugger extends EventEmitter implements InstrumentationListener {
+export class Debugger extends EventEmitter<{
+  pausedstatechanged: []
+}> implements InstrumentationListener {
   private _pauseOnNextStatement = false;
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
   private _context: BrowserContext;
 
-  static Events = {
-    PausedStateChanged: 'pausedstatechanged'
-  };
   private _muted = false;
   private _slowMo: number | undefined;
 
@@ -42,7 +41,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     if (this._enabled)
       this.pauseOnNextStatement();
     context.instrumentation.addListener(this, context);
-    this._context.once(BrowserContext.Events.Close, () => {
+    this._context.once('close', () => {
       this._context.instrumentation.removeListener(this);
     });
     this._slowMo = this._context._browser.options.slowMo;
@@ -83,7 +82,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     const result = new Promise<void>(resolve => {
       this._pausedCallsMetadata.set(metadata, { resolve, sdkObject });
     });
-    this.emit(Debugger.Events.PausedStateChanged);
+    this.emit('pausedstatechanged');
     return result;
   }
 
@@ -98,7 +97,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       resolve();
     }
     this._pausedCallsMetadata.clear();
-    this.emit(Debugger.Events.PausedStateChanged);
+    this.emit('pausedstatechanged');
   }
 
   pauseOnNextStatement() {

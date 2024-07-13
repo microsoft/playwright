@@ -19,7 +19,6 @@ import type { CRSession } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import * as network from '../network';
-import { BrowserContext } from '../browserContext';
 
 export class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
@@ -87,19 +86,19 @@ export class CRServiceWorker extends Worker {
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
-    this._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
+    this._browserContext.emit('requestfinished', { request, response });
   }
 
   requestFailed(request: network.Request, _canceled: boolean) {
-    this._browserContext.emit(BrowserContext.Events.RequestFailed, request);
+    this._browserContext.emit('requestfailed', request);
   }
 
   requestReceivedResponse(response: network.Response) {
-    this._browserContext.emit(BrowserContext.Events.Response, response);
+    this._browserContext.emit('response', response);
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    this._browserContext.emit(BrowserContext.Events.Request, request);
+    this._browserContext.emit('request', request);
     if (route) {
       const r = new network.Route(request, route);
       if (this._browserContext._requestInterceptor?.(r, request))

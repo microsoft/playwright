@@ -18,12 +18,28 @@ import fs from 'fs';
 import path from 'path';
 import type { TestGroup } from './testGroups';
 import { stdioChunkToParams } from '../common/ipc';
-import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, WorkerInitParams } from '../common/ipc';
+import type { ProcessExitData } from './processHost';
 import { ProcessHost } from './processHost';
 import { artifactsFolderName } from '../isomorphic/folders';
 import { removeFolders } from 'playwright-core/lib/utils';
 
 let lastWorkerIndex = 0;
+
+export type WorkerHostEvents = {
+  stdOut: [TestOutputPayload]
+  stdErr: [TestOutputPayload]
+  testBegin: [TestBeginPayload]
+  testEnd: [TestEndPayload]
+  stepBegin: [StepBeginPayload]
+  stepEnd: [StepEndPayload]
+  attach: [AttachmentPayload]
+  done: [DonePayload]
+  teardownErrors: [TeardownErrorsPayload]
+
+  exit: [ProcessExitData]
+  ready: []
+};
 
 export class WorkerHost extends ProcessHost {
   readonly parallelIndex: number;

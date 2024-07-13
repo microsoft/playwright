@@ -25,7 +25,8 @@ import type { ScreenshotOptions } from './screenshotter';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as types from './types';
-import { BrowserContext } from './browserContext';
+import type { BrowserContextEvents } from './browserContext';
+import type { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
@@ -45,6 +46,7 @@ import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSe
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import { TargetClosedError } from './errors';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import type { Download } from './download';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -121,26 +123,24 @@ type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
   },
 };
 
-export class Page extends SdkObject {
-  static Events = {
-    Close: 'close',
-    Crash: 'crash',
-    Download: 'download',
-    FileChooser: 'filechooser',
-    FrameAttached: 'frameattached',
-    FrameDetached: 'framedetached',
-    InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
-    LocatorHandlerTriggered: 'locatorhandlertriggered',
-    ScreencastFrame: 'screencastframe',
-    Video: 'video',
-    WebSocket: 'websocket',
-    Worker: 'worker',
-  };
-
+export class Page extends SdkObject<{
+  close: []
+  crash: []
+  download: [Download]
+  filechooser: [FileChooser]
+  frameattached: [frames.Frame]
+  framedetached: [frames.Frame]
+  internalframenavigatedtonewdocument: [frames.Frame]
+  locatorhandlertriggered: [number]
+  screencastframe: [{ buffer: Buffer, width: number, height: number, timestamp?: number }]
+  video: [Artifact]
+  websocket: [network.WebSocket]
+  worker: [Worker]
+}> {
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedPromise = new ManualPromise<void>();
   private _initialized = false;
-  private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
+  private _eventsToEmitAfterInitialized: { event: string, args: any[] }[] = [];
   private _crashed = false;
   readonly openScope = new LongStandingScope();
   readonly _browserContext: BrowserContext;
@@ -202,7 +202,7 @@ export class Page extends SdkObject {
       this._opener = openerPage;
   }
 
-  reportAsNew(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
+  reportAsNew(error: Error | undefined = undefined, contextEvent: keyof BrowserContext['_events'] = 'page') {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
@@ -214,6 +214,7 @@ export class Page extends SdkObject {
     this.emitOnContext(contextEvent, this);
 
     for (const { event, args } of this._eventsToEmitAfterInitialized)
+      // @ts-ignore
       this._browserContext.emit(event, ...args);
     this._eventsToEmitAfterInitialized = [];
 
@@ -221,7 +222,7 @@ export class Page extends SdkObject {
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
-      this.emit(Page.Events.Close);
+      this.emit('close');
     else
       this.instrumentation.onPageOpen(this);
   }
@@ -230,13 +231,14 @@ export class Page extends SdkObject {
     return this._initialized ? this : undefined;
   }
 
-  emitOnContext(event: string | symbol, ...args: any[]) {
+  emitOnContext<K extends keyof BrowserContextEvents>(event: K, ...args: BrowserContextEvents[K]) {
     if (this._isServerSideOnly)
       return;
+    // @ts-ignore
     this._browserContext.emit(event, ...args);
   }
 
-  emitOnContextOnceInitialized(event: string | symbol, ...args: any[]) {
+  emitOnContextOnceInitialized<K extends keyof BrowserContextEvents>(event: K, ...args: BrowserContextEvents[K]) {
     if (this._isServerSideOnly)
       return;
     // Some events, like console messages, may come before page is ready.
@@ -244,6 +246,7 @@ export class Page extends SdkObject {
     // and dispatch it to the client later, either on the live Page,
     // or on the "errored" Page.
     if (this._initialized)
+      // @ts-ignore
       this._browserContext.emit(event, ...args);
     else
       this._eventsToEmitAfterInitialized.push({ event, args });
@@ -280,7 +283,7 @@ export class Page extends SdkObject {
     this._frameThrottler.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
-    this.emit(Page.Events.Close);
+    this.emit('close');
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError());
@@ -289,7 +292,7 @@ export class Page extends SdkObject {
   _didCrash() {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
-    this.emit(Page.Events.Crash);
+    this.emit('crash');
     this._crashed = true;
     this.instrumentation.onPageClose(this);
     this.openScope.close(new Error('Page crashed'));
@@ -303,12 +306,12 @@ export class Page extends SdkObject {
       // Frame/context may be gone during async processing. Do not throw.
       return;
     }
-    if (!this.listenerCount(Page.Events.FileChooser)) {
+    if (!this.listenerCount('filechooser')) {
       handle.dispose();
       return;
     }
     const fileChooser = new FileChooser(this, handle, multiple);
-    this.emit(Page.Events.FileChooser, fileChooser);
+    this.emit('filechooser', fileChooser);
   }
 
   context(): BrowserContext {
@@ -375,7 +378,7 @@ export class Page extends SdkObject {
       args.forEach(arg => arg.dispose());
       return;
     }
-    this.emitOnContextOnceInitialized(BrowserContext.Events.Console, message);
+    this.emitOnContextOnceInitialized('console', message);
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -460,7 +463,7 @@ export class Page extends SdkObject {
       if (!handler.resolved) {
         if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
           handler.resolved = new ManualPromise();
-          this.emit(Page.Events.LocatorHandlerTriggered, uid);
+          this.emit('locatorhandlertriggered', uid);
         }
       }
       if (handler.resolved) {
@@ -693,7 +696,7 @@ export class Page extends SdkObject {
 
   _addWorker(workerId: string, worker: Worker) {
     this._workers.set(workerId, worker);
-    this.emit(Page.Events.Worker, worker);
+    this.emit('worker', worker);
   }
 
   _removeWorker(workerId: string) {
@@ -721,7 +724,7 @@ export class Page extends SdkObject {
   }
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
-    this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
+    this.emit('internalframenavigatedtonewdocument', frame);
     const origin = frame.origin();
     if (origin)
       this._browserContext.addVisitedOrigin(origin);
@@ -769,11 +772,9 @@ export class Page extends SdkObject {
   }
 }
 
-export class Worker extends SdkObject {
-  static Events = {
-    Close: 'close',
-  };
-
+export class Worker extends SdkObject<{
+  close: [Worker]
+}> {
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value: js.ExecutionContext) => void;
@@ -799,7 +800,7 @@ export class Worker extends SdkObject {
   didClose() {
     if (this._existingExecutionContext)
       this._existingExecutionContext.contextDestroyed('Worker was closed');
-    this.emit(Worker.Events.Close, this);
+    this.emit('close', this);
     this.openScope.close(new Error('Worker closed'));
   }
 

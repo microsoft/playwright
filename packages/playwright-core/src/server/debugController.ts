@@ -28,15 +28,13 @@ import type { Language } from '../utils/isomorphic/locatorGenerators';
 
 const internalMetadata = serverSideCallMetadata();
 
-export class DebugController extends SdkObject {
-  static Events = {
-    StateChanged: 'stateChanged',
-    InspectRequested: 'inspectRequested',
-    SourceChanged: 'sourceChanged',
-    Paused: 'paused',
-    SetModeRequested: 'setModeRequested',
-  };
-
+export class DebugController extends SdkObject<{
+  stateChanged: [{ pageCount: number }]
+  inspectRequested: [{ selector: string, locator: string }]
+  sourceChanged: [{ text: string, header: string | undefined, footer: string | undefined, actions: string[] | undefined }]
+  paused: [{ paused: boolean }]
+  setModeRequested: [{ mode: Mode }]
+}> {
   private _autoCloseTimer: NodeJS.Timeout | undefined;
   // TODO: remove in 1.27
   private _autoCloseAllowed = false;
@@ -193,7 +191,7 @@ export class DebugController extends SdkObject {
         pageCount += context.pages().length;
       }
     }
-    this.emit(DebugController.Events.StateChanged, { pageCount });
+    this.emit('stateChanged', { pageCount });
   }
 
   private async _allRecorders(): Promise<Recorder[]> {
@@ -226,20 +224,20 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setSelector(selector: string): Promise<void> {
     const locator: string = asLocator(this._debugController._sdkLanguage, selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector, locator });
+    this._debugController.emit('inspectRequested', { selector, locator });
   }
 
   override async setSources(sources: Source[]): Promise<void> {
     const source = sources.find(s => s.id === this._debugController._codegenId);
     const { text, header, footer, actions } = source || { text: '' };
-    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions });
+    this._debugController.emit('sourceChanged', { text, header, footer, actions });
   }
 
   override async setPaused(paused: boolean) {
-    this._debugController.emit(DebugController.Events.Paused, { paused });
+    this._debugController.emit('paused', { paused });
   }
 
   override async setMode(mode: Mode) {
-    this._debugController.emit(DebugController.Events.SetModeRequested, { mode });
+    this._debugController.emit('setModeRequested', { mode });
   }
 }

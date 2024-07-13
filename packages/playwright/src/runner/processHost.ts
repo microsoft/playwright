@@ -15,13 +15,13 @@
  */
 
 import child_process from 'child_process';
-import { EventEmitter } from 'events';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
 import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
-import { assert } from 'playwright-core/lib/utils';
+import { assert, ManagedEventEmitter } from 'playwright-core/lib/utils';
 import { esmLoaderRegistered } from '../common/esmLoaderHost';
+import type { WorkerHostEvents } from './workerHost';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -29,7 +29,7 @@ export type ProcessExitData = {
   signal: NodeJS.Signals | null;
 };
 
-export class ProcessHost extends EventEmitter {
+export class ProcessHost extends ManagedEventEmitter<WorkerHostEvents> {
   private process: child_process.ChildProcess | undefined;
   private _didSendStop = false;
   private _processDidExit = false;
@@ -69,7 +69,7 @@ export class ProcessHost extends EventEmitter {
       this._processDidExit = true;
       await this.onExit();
       this._didExitAndRanOnExit = true;
-      this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
+      this.emit('exit', { unexpectedly: !this._didSendStop, code, signal });
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
@@ -91,6 +91,7 @@ export class ProcessHost extends EventEmitter {
             resolve(result);
           }
         } else {
+          // @ts-ignore
           this.emit(method!, params);
         }
       } else {
@@ -148,7 +149,7 @@ export class ProcessHost extends EventEmitter {
       this._didSendStop = true;
     }
     if (!this._didExitAndRanOnExit)
-      await new Promise(f => this.once('exit', f));
+      await new Promise<any>(f => this.once('exit', f));
   }
 
   didSendStop() {

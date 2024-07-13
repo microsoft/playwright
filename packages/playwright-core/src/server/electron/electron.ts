@@ -49,12 +49,10 @@ import { ConsoleMessage } from '../console';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
-export class ElectronApplication extends SdkObject {
-  static Events = {
-    Close: 'close',
-    Console: 'console',
-  };
-
+export class ElectronApplication extends SdkObject<{
+  close: [],
+  console: [ConsoleMessage]
+}> {
   private _browserContext: CRBrowserContext;
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
@@ -83,7 +81,7 @@ export class ElectronApplication extends SdkObject {
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
-    const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
+    const appClosePromise = new Promise<void>(f => this.once('close', f));
     this._browserContext.setCustomCloseHandler(async () => {
       await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
@@ -114,7 +112,7 @@ export class ElectronApplication extends SdkObject {
       return;
     const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
     const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
-    this.emit(ElectronApplication.Events.Console, message);
+    this.emit('console', message);
   }
 
   async initialize() {
@@ -226,7 +224,7 @@ export class Electron extends SdkObject {
         handleSIGINT: true,
         handleSIGTERM: true,
         handleSIGHUP: true,
-        onExit: () => app?.emit(ElectronApplication.Events.Close),
+        onExit: () => app?.emit('close'),
       });
 
       // All waitForLines must be started immediately.

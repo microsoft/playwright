@@ -17,7 +17,9 @@
 import { playwrightTest as it, expect } from '../config/browserTest';
 import net from 'net';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
-import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
+
+import type { SocksProxy } from '../../packages/playwright-core/src/common/socksProxy';
+const SocksProxyImpl = require('../../packages/playwright-core/lib/common/socksProxy').SocksProxy as any as typeof SocksProxy;
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
@@ -291,9 +293,9 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
 
 async function setupSocksForwardingServer(port: number, forwardPort: number) {
   const connections = new Map<string, net.Socket>();
-  const socksProxy = new SocksProxy();
+  const socksProxy = new SocksProxyImpl();
   socksProxy.setPattern('*');
-  socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+  socksProxy.addListener('socksRequested', async (payload: SocksSocketRequestedPayload) => {
     if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(payload.host) || payload.port !== 1337) {
       socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
       return;
@@ -309,10 +311,10 @@ async function setupSocksForwardingServer(port: number, forwardPort: number) {
       socksProxy.socketConnected({ uid: payload.uid, host: target.localAddress, port: target.localPort });
     });
   });
-  socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+  socksProxy.addListener('socksData', async (payload: SocksSocketDataPayload) => {
     connections.get(payload.uid)?.write(payload.data);
   });
-  socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
+  socksProxy.addListener('socksClosed', (payload: SocksSocketClosedPayload) => {
     connections.get(payload.uid)?.destroy();
     connections.delete(payload.uid);
   });

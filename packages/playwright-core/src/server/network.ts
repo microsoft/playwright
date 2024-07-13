@@ -25,7 +25,6 @@ import { SdkObject } from './instrumentation';
 import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 import type { NormalizedContinueOverrides } from './types';
-import { BrowserContext } from './browserContext';
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -257,7 +256,7 @@ export class Route extends SdkObject {
 
   async abort(errorCode: string = 'failed') {
     this._startHandling();
-    this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
+    this._request._context.emit('requestaborted', this._request);
     await this._delegate.abort(errorCode);
     this._endHandling();
   }
@@ -285,7 +284,7 @@ export class Route extends SdkObject {
     }
     const headers = [...(overrides.headers || [])];
     this._maybeAddCorsHeaders(headers);
-    this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
+    this._request._context.emit('requestfulfilled', this._request);
     await this._delegate.fulfill({
       status: overrides.status || 200,
       headers,
@@ -323,7 +322,7 @@ export class Route extends SdkObject {
     }
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
-      this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
+      this._request._context.emit('requestcontinued', this._request);
     await this._delegate.continue(this._request, overrides);
     this._endHandling();
   }
@@ -562,16 +561,14 @@ export class Response extends SdkObject {
   }
 }
 
-export class WebSocket extends SdkObject {
+export class WebSocket extends SdkObject<{
+  close: []
+  socketerror: [string]
+  framereceived: [{ opcode: number, data: string }]
+  framesent: [{ opcode: number, data: string }]
+}> {
   private _url: string;
   private _notified = false;
-
-  static Events = {
-    Close: 'close',
-    SocketError: 'socketerror',
-    FrameReceived: 'framereceived',
-    FrameSent: 'framesent',
-  };
 
   constructor(parent: SdkObject, url: string) {
     super(parent, 'ws');
@@ -593,19 +590,19 @@ export class WebSocket extends SdkObject {
   }
 
   frameSent(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameSent, { opcode, data });
+    this.emit('framesent', { opcode, data });
   }
 
   frameReceived(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameReceived, { opcode, data });
+    this.emit('framereceived', { opcode, data });
   }
 
   error(errorMessage: string) {
-    this.emit(WebSocket.Events.SocketError, errorMessage);
+    this.emit('socketerror', errorMessage);
   }
 
   closed() {
-    this.emit(WebSocket.Events.Close);
+    this.emit('close');
   }
 }
 

@@ -25,7 +25,7 @@ import type { InitScript, Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
-import { ConnectionEvents, FFConnection, type FFSession } from './ffConnection';
+import { FFConnection, type FFSession } from './ffConnection';
 import { FFPage } from './ffPage';
 import type { Protocol } from './protocol';
 import type { SdkObject } from '../instrumentation';
@@ -69,7 +69,7 @@ export class FFBrowser extends Browser {
     this.session = connection.rootSession;
     this._ffPages = new Map();
     this._contexts = new Map();
-    this._connection.on(ConnectionEvents.Disconnected, () => this._onDisconnect());
+    this._connection.on('disconnected', () => this._onDisconnect());
     this.session.on('Browser.attachedToTarget', this._onAttachedToTarget.bind(this));
     this.session.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this.session.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));

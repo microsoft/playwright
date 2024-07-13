@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import { Page } from '../../page';
+import type { BrowserContext } from '../../browserContext';
+import type { Page } from '../../page';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import { debugLogger } from '../../../utils/debugLogger';
@@ -83,7 +83,7 @@ export class Snapshotter {
     for (const page of this._context.pages())
       this._onPage(page);
     this._eventListeners = [
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      this._context.addManagedListener('page', this._onPage.bind(this)),
     ];
 
     const { javaScriptEnabled } = this._context._options;
@@ -160,7 +160,7 @@ export class Snapshotter {
     // Annotate frame hierarchy so that snapshots could include frame ids.
     for (const frame of page.frames())
       this._annotateFrameHierarchy(frame);
-    this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
+    this._eventListeners.push(page.addManagedListener('frameattached', frame => this._annotateFrameHierarchy(frame)));
   }
 
   private async _annotateFrameHierarchy(frame: Frame) {

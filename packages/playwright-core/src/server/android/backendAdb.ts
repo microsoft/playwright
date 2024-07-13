@@ -17,9 +17,8 @@
 import { debug } from '../../utilsBundle';
 import type * as channels from '@protocol/channels';
 import * as net from 'net';
-import { EventEmitter } from 'events';
-import type { Backend, DeviceBackend, SocketBackend } from './android';
-import { assert, createGuid } from '../../utils';
+import type { Backend, DeviceBackend, SocketBackend, SocketBackendEvents } from './android';
+import { assert, createGuid, ManagedEventEmitter } from '../../utils';
 
 export class AdbBackend implements Backend {
   async devices(options: channels.AndroidDevicesOptions = {}): Promise<DeviceBackend[]> {
@@ -112,7 +111,7 @@ function encodeMessage(message: string): Buffer {
   return Buffer.from(lenHex + message);
 }
 
-class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
+class BufferedSocketWrapper extends ManagedEventEmitter<SocketBackendEvents> implements SocketBackend {
   readonly guid = createGuid();
   private _socket: net.Socket;
   private _buffer = Buffer.from([]);

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../browserContext';
+import type { BrowserContext } from '../browserContext';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type * as channels from '@protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
-import { CRBrowserContext } from '../chromium/crBrowser';
+import type { CRBrowserContext } from '../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Recorder } from '../recorder';
 import type { CallMetadata } from '../instrumentation';
@@ -71,7 +71,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       const artifactDispatcher = ArtifactDispatcher.from(parentScope, artifact);
       this._dispatchEvent('video', { artifact: artifactDispatcher });
     };
-    this.addObjectListener(BrowserContext.Events.VideoStarted, onVideo);
+    this.addObjectListener('videostarted', onVideo);
     for (const video of context._browser._idToVideo.values()) {
       if (video.context === context)
         onVideo(video.artifact);
@@ -79,17 +79,17 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });
-    this.addObjectListener(BrowserContext.Events.Page, page => {
+    this.addObjectListener('page', page => {
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });
     });
-    this.addObjectListener(BrowserContext.Events.Close, () => {
+    this.addObjectListener('close', () => {
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(BrowserContext.Events.PageError, (error: Error, page: Page) => {
+    this.addObjectListener('pageerror', (error: Error, page: Page) => {
       this._dispatchEvent('pageError', { error: serializeError(error), page: PageDispatcher.from(this, page) });
     });
-    this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
+    this.addObjectListener('console', (message: ConsoleMessage) => {
       const page = message.page()!;
       if (this._shouldDispatchEvent(page, 'console')) {
         const pageDispatcher = PageDispatcher.from(this, page);
@@ -102,7 +102,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         });
       }
     });
-    this.addObjectListener(BrowserContext.Events.Dialog, (dialog: Dialog) => {
+    this.addObjectListener('dialog', (dialog: Dialog) => {
       if (this._shouldDispatchEvent(dialog.page(), 'dialog'))
         this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
       else
@@ -112,12 +112,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
         this._dispatchEvent('backgroundPage', { page: PageDispatcher.from(this, page) });
-      this.addObjectListener(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('backgroundPage', { page: PageDispatcher.from(this, page) }));
+      this.addObjectListener('backgroundpage', page => this._dispatchEvent('backgroundPage', { page: PageDispatcher.from(this, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) });
-      this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));
+      this.addObjectListener('serviceworker', serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));
     }
-    this.addObjectListener(BrowserContext.Events.Request, (request: Request) =>  {
+    this.addObjectListener('request', (request: Request) =>  {
       // Create dispatcher, if:
       // - There are listeners to the requests.
       // - We are redirected from a reported request so that redirectedTo was updated on client.
@@ -132,7 +132,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
       });
     });
-    this.addObjectListener(BrowserContext.Events.Response, (response: Response) => {
+    this.addObjectListener('response', (response: Response) => {
       const requestDispatcher = existingDispatcher<RequestDispatcher>(response.request());
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(response.request(), 'response'))
         return;
@@ -141,7 +141,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, response.frame()?._page.initializedOrUndefined())
       });
     });
-    this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => {
+    this.addObjectListener('requestfailed', (request: Request) => {
       const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFailed'))
         return;
@@ -152,7 +152,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
       });
     });
-    this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
+    this.addObjectListener('requestfinished', ({ request, response }: { request: Request, response: Response | null }) => {
       const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
       if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFinished'))
         return;

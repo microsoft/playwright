@@ -32,7 +32,7 @@ import type { Progress } from '../progress';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
 import { getAccessibilityTree } from './crAccessibility';
-import { CRBrowserContext } from './crBrowser';
+import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
@@ -44,7 +44,6 @@ import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crP
 import { platformToFontFamilies } from './defaultFontFamilies';
 import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
-import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
 
@@ -131,7 +130,7 @@ export class CRPage implements PageDelegate {
   }
 
   private _reportAsNew(error?: Error) {
-    this._page.reportAsNew(error, this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page);
+    this._page.reportAsNew(error, this._isBackgroundPage ? 'backgroundpage' : 'page');
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
@@ -444,30 +443,30 @@ class FrameSession {
 
   private _addRendererListeners() {
     this._eventListeners.push(...[
-      eventsHelper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
-      eventsHelper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-      eventsHelper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      eventsHelper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId, event.reason)),
-      eventsHelper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-      eventsHelper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
-      eventsHelper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
-      eventsHelper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      eventsHelper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
-      eventsHelper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
-      eventsHelper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
-      eventsHelper.addEventListener(this._client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      eventsHelper.addEventListener(this._client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
-      eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
-      eventsHelper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
-      eventsHelper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+      this._client.addManagedListener('Log.entryAdded', event => this._onLogEntryAdded(event)),
+      this._client.addManagedListener('Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      this._client.addManagedListener('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      this._client.addManagedListener('Page.frameDetached', event => this._onFrameDetached(event.frameId, event.reason)),
+      this._client.addManagedListener('Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      this._client.addManagedListener('Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
+      this._client.addManagedListener('Page.javascriptDialogOpening', event => this._onDialog(event)),
+      this._client.addManagedListener('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      this._client.addManagedListener('Runtime.bindingCalled', event => this._onBindingCalled(event)),
+      this._client.addManagedListener('Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
+      this._client.addManagedListener('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
+      this._client.addManagedListener('Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      this._client.addManagedListener('Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
+      this._client.addManagedListener('Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+      this._client.addManagedListener('Target.attachedToTarget', event => this._onAttachedToTarget(event)),
+      this._client.addManagedListener('Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
     ]);
   }
 
   private _addBrowserListeners() {
     this._eventListeners.push(...[
-      eventsHelper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
-      eventsHelper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
-      eventsHelper.addEventListener(this._client, 'Page.windowOpen', event => this._onWindowOpen(event)),
+      this._client.addManagedListener('Inspector.targetCrashed', event => this._onTargetCrashed()),
+      this._client.addManagedListener('Page.screencastFrame', event => this._onScreencastFrame(event)),
+      this._client.addManagedListener('Page.windowOpen', event => this._onWindowOpen(event)),
     ]);
   }
 
@@ -531,11 +530,11 @@ class FrameSession {
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
           lifecycleEventsEnabled.catch(e => {}).then(() => {
-            this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+            this._eventListeners.push(this._client.addManagedListener('Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
-          this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+          this._eventListeners.push(this._client.addManagedListener('Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
         }
       }),
       this._client.send('Log.enable', {}),
@@ -770,7 +769,7 @@ class FrameSession {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
-    session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
+    session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized('pageerror', exceptionToError(exception.exceptionDetails), this._page));
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
@@ -865,7 +864,7 @@ class FrameSession {
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     if (!this._page._frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.emitOnContext('dialog', new dialog.Dialog(
         this._page,
         event.type,
         event.message,
@@ -876,7 +875,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exceptionDetails), this._page);
+    this._page.emitOnContextOnceInitialized('pageerror', exceptionToError(exceptionDetails), this._page);
   }
 
   async _onTargetCrashed() {
@@ -929,7 +928,7 @@ class FrameSession {
       this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
     });
     const buffer = Buffer.from(payload.data, 'base64');
-    this._page.emit(Page.Events.ScreencastFrame, {
+    this._page.emit('screencastframe', {
       buffer,
       timestamp: payload.metadata.timestamp,
       width: payload.metadata.deviceWidth,
@@ -947,7 +946,7 @@ class FrameSession {
   async _startVideoRecording(options: types.PageScreencastOptions) {
     const screencastId = this._screencastId;
     assert(screencastId);
-    this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
+    this._page.once('close', () => this._stopVideoRecording().catch(() => {}));
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
     await this._startScreencast(this._videoRecorder, {
       format: 'jpeg',

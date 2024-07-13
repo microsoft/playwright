@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { type RegisteredListener, assert, eventsHelper } from '../../utils';
+import { ManagedEventEmitter, type RegisteredListener, assert, eventsHelper } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
@@ -97,7 +97,7 @@ export class CRConnection extends EventEmitter {
 
 type SessionEventListener = (method: string, params?: Object) => void;
 
-export class CRSession extends EventEmitter {
+export class CRSession extends ManagedEventEmitter<{ [K in keyof Protocol.Events]: [Protocol.Events[K]] }> {
   private readonly _connection: CRConnection;
   private _eventListener?: SessionEventListener;
   private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
@@ -105,11 +105,6 @@ export class CRSession extends EventEmitter {
   private readonly _parentSession: CRSession | null;
   private _crashed: boolean = false;
   private _closed = false;
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string, eventListener?: SessionEventListener) {
     super();
@@ -169,6 +164,7 @@ export class CRSession extends EventEmitter {
       Promise.resolve().then(() => {
         if (this._eventListener)
           this._eventListener(object.method!, object.params);
+        // @ts-ignore
         this.emit(object.method!, object.params);
       });
     }
@@ -199,12 +195,10 @@ export class CRSession extends EventEmitter {
   }
 }
 
-export class CDPSession extends EventEmitter {
-  static Events = {
-    Event: 'event',
-    Closed: 'close',
-  };
-
+export class CDPSession extends ManagedEventEmitter<{
+  event: [{ method: string, params: Object | undefined }]
+  closed: [];
+}> {
   readonly guid: string;
   private _session: CRSession;
   private _listeners: RegisteredListener[] = [];
@@ -212,8 +206,8 @@ export class CDPSession extends EventEmitter {
   constructor(parentSession: CRSession, sessionId: string) {
     super();
     this.guid = `cdp-session@${sessionId}`;
-    this._session = parentSession.createChildSession(sessionId, (method, params) => this.emit(CDPSession.Events.Event, { method, params }));
-    this._listeners = [eventsHelper.addEventListener(parentSession, 'Target.detachedFromTarget', (event: Protocol.Target.detachedFromTargetPayload) => {
+    this._session = parentSession.createChildSession(sessionId, (method, params) => this.emit('event', { method, params }));
+    this._listeners = [parentSession.addManagedListener('Target.detachedFromTarget', (event: Protocol.Target.detachedFromTargetPayload) => {
       if (event.sessionId === sessionId)
         this._onClose();
     })];
@@ -235,6 +229,6 @@ export class CDPSession extends EventEmitter {
   private _onClose() {
     eventsHelper.removeEventListeners(this._listeners);
     this._session.dispose();
-    this.emit(CDPSession.Events.Closed);
+    this.emit('closed');
   }
 }

@@ -29,7 +29,6 @@ import { mime } from '../../utilsBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import { getPlaywrightVersion } from '../../utils/userAgent';
 import { urlMatches } from '../../utils/network';
-import { Frame } from '../frames';
 import type { HeadersArray, LifecycleEvent } from '../types';
 import { isTextualMimeType } from '../../utils/isomorphic/mimeType';
 
@@ -93,19 +92,19 @@ export class HarTracer {
     this._started = true;
     const apiRequest = this._context instanceof APIRequestContext ? this._context : this._context.fetchRequest;
     this._eventListeners = [
-      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
-      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
+      apiRequest.addManagedListener('request', (event: APIRequestEvent) => this._onAPIRequest(event)),
+      apiRequest.addManagedListener('requestfinished', (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
     ];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestAborted, request => this._onRequestAborted(request)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFulfilled, request => this._onRequestFulfilled(request)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestContinued, request => this._onRequestContinued(request)),
+          this._context.addManagedListener('page', (page: Page) => this._createPageEntryIfNeeded(page)),
+          this._context.addManagedListener('request', (request: network.Request) => this._onRequest(request)),
+          this._context.addManagedListener('requestfinished', ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
+          this._context.addManagedListener('requestfailed', request => this._onRequestFailed(request)),
+          this._context.addManagedListener('response', (response: network.Response) => this._onResponse(response)),
+          this._context.addManagedListener('requestaborted', request => this._onRequestAborted(request)),
+          this._context.addManagedListener('requestfulfilled', request => this._onRequestFulfilled(request)),
+          this._context.addManagedListener('requestcontinued', request => this._onRequestContinued(request)),
       );
     }
   }
@@ -139,7 +138,7 @@ export class HarTracer {
       };
       (pageEntry as any)[startedDateSymbol] = date;
 
-      page.mainFrame().on(Frame.Events.AddLifecycle, (event: LifecycleEvent) => {
+      page.mainFrame().on('addlifecycle', (event: LifecycleEvent) => {
         if (event === 'load')
           this._onLoad(page, pageEntry!);
         if (event === 'domcontentloaded')

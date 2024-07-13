@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
 import type * as types from './types';
 import type { Progress } from './progress';
 import { debugLogger } from '../utils/debugLogger';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { ManagedEventEmitter, RegisteredListener } from '../utils/eventsHelper';
 import { eventsHelper } from '../utils/eventsHelper';
 
 const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? +process.env.MAX_LOG_LENGTH : Infinity;
@@ -53,10 +52,10 @@ class Helper {
     return null;
   }
 
-  static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
+  static waitForEvent<T extends ManagedEventEmitter<any>, K extends keyof T['_events']>(progress: Progress | null, emitter: T, event: K, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
     const listeners: RegisteredListener[] = [];
     const promise = new Promise((resolve, reject) => {
-      listeners.push(eventsHelper.addEventListener(emitter, event, eventArg => {
+      listeners.push(emitter.addManagedListener(event, eventArg => {
         try {
           if (predicate && !predicate(eventArg))
             return;

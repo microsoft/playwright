@@ -47,11 +47,11 @@ export class SocksInterceptor {
         };
       },
     }) as channels.SocksSupportChannel & EventEmitter;
-    this._handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => this._channel.socksConnected(payload));
-    this._handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => this._channel.socksData(payload));
-    this._handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => this._channel.socksError(payload));
-    this._handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => this._channel.socksFailed(payload));
-    this._handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => this._channel.socksEnd(payload));
+    this._handler.on('socksConnected', (payload: socks.SocksSocketConnectedPayload) => this._channel.socksConnected(payload));
+    this._handler.on('socksData', (payload: socks.SocksSocketDataPayload) => this._channel.socksData(payload));
+    this._handler.on('socksError', (payload: socks.SocksSocketErrorPayload) => this._channel.socksError(payload));
+    this._handler.on('socksFailed', (payload: socks.SocksSocketFailedPayload) => this._channel.socksFailed(payload));
+    this._handler.on('socksEnd', (payload: socks.SocksSocketEndPayload) => this._channel.socksEnd(payload));
     this._channel.on('socksRequested', payload => this._handler.socketRequested(payload));
     this._channel.on('socksClosed', payload => this._handler.socketClosed(payload));
     this._channel.on('socksData', payload => this._handler.sendSocketData(payload));

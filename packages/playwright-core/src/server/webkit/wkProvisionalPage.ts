@@ -43,11 +43,11 @@ export class WKProvisionalPage {
     const wkPage = this._wkPage;
 
     this._sessionListeners = [
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSent(session, e))),
-      eventsHelper.addEventListener(session, 'Network.requestIntercepted', overrideFrameId(e => wkPage._onRequestIntercepted(session, e))),
-      eventsHelper.addEventListener(session, 'Network.responseReceived', overrideFrameId(e => wkPage._onResponseReceived(session, e))),
-      eventsHelper.addEventListener(session, 'Network.loadingFinished', overrideFrameId(e => wkPage._onLoadingFinished(e))),
-      eventsHelper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(session, e))),
+      session.addManagedListener('Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSent(session, e))),
+      session.addManagedListener('Network.requestIntercepted', overrideFrameId(e => wkPage._onRequestIntercepted(session, e))),
+      session.addManagedListener('Network.responseReceived', overrideFrameId(e => wkPage._onResponseReceived(session, e))),
+      session.addManagedListener('Network.loadingFinished', overrideFrameId(e => wkPage._onLoadingFinished(e))),
+      session.addManagedListener('Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(session, e))),
     ];
 
     this.initializationPromise = this._wkPage._initializeSession(session, true, ({ frameTree }) => this._handleFrameTree(frameTree));
@@ -59,7 +59,7 @@ export class WKProvisionalPage {
 
   commit() {
     assert(this._mainFrameId);
-    this._wkPage._onFrameAttached(this._mainFrameId, null);
+    this._wkPage._onFrameAttached(this._mainFrameId, undefined);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

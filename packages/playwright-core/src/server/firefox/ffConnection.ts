@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import type { RecentLogsCollector } from '../../utils/debugLogger';
@@ -23,16 +22,15 @@ import { debugLogger } from '../../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
-
-export const ConnectionEvents = {
-  Disconnected: Symbol('Disconnected'),
-};
+import { ManagedEventEmitter } from '../../utils';
 
 // FFPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
 
-export class FFConnection extends EventEmitter {
+export class FFConnection extends ManagedEventEmitter<{ [K in keyof Protocol.Events]: [Protocol.Events[K]] } & {
+  'disconnected': [],
+}> {
   private _lastId: number;
   private _transport: ConnectionTransport;
   private readonly _protocolLogger: ProtocolLogger;
@@ -83,7 +81,7 @@ export class FFConnection extends EventEmitter {
     this._transport.onclose = undefined;
     this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     this.rootSession.dispose();
-    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
+    Promise.resolve().then(() => this.emit('disconnected'));
   }
 
   close() {
@@ -98,18 +96,13 @@ export class FFConnection extends EventEmitter {
   }
 }
 
-export class FFSession extends EventEmitter {
+export class FFSession extends ManagedEventEmitter<{ [K in keyof Protocol.Events]: [Protocol.Events[K]] }> {
   _connection: FFConnection;
   _disposed = false;
   private _callbacks: Map<number, { resolve: Function, reject: Function, error: ProtocolError }>;
   private _sessionId: string;
   private _rawSend: (message: any) => void;
   private _crashed: boolean = false;
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(connection: FFConnection, sessionId: string, rawSend: (message: any) => void) {
     super();
@@ -161,6 +154,7 @@ export class FFSession extends EventEmitter {
         }
       }
     } else {
+      // @ts-expect-error
       Promise.resolve().then(() => this.emit(object.method!, object.params));
     }
   }

@@ -16,7 +16,7 @@
 
 import type { ChildProcess } from 'child_process';
 import { assert, monotonicTime } from '../../utils';
-import { Page } from '../page';
+import type { Page } from '../page';
 import { launchProcess } from '../../utils/processLauncher';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
@@ -53,7 +53,7 @@ export class VideoRecorder {
   private constructor(page: Page, ffmpegPath: string, progress: Progress) {
     this._progress = progress;
     this._ffmpegPath = ffmpegPath;
-    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.timestamp));
+    page.on('screencastframe', frame => this.writeFrame(frame.buffer, frame.timestamp!));
   }
 
   private async _launch(options: types.PageScreencastOptions) {

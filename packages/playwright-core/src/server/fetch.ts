@@ -28,7 +28,8 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
-import { BrowserContext, verifyClientCertificates } from './browserContext';
+import type { BrowserContext } from './browserContext';
+import { verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
@@ -82,14 +83,11 @@ type SendRequestOptions = https.RequestOptions & {
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
-export abstract class APIRequestContext extends SdkObject {
-  static Events = {
-    Dispose: 'dispose',
-
-    Request: 'request',
-    RequestFinished: 'requestfinished',
-  };
-
+export abstract class APIRequestContext extends SdkObject<{
+  dispose: []
+  request: [APIRequestEvent]
+  requestfinished: [APIRequestFinishedEvent]
+}> {
   readonly fetchResponses: Map<string, Buffer> = new Map();
   readonly fetchLog: Map<string, string[]> = new Map();
   protected static allInstances: Set<APIRequestContext> = new Set();
@@ -114,7 +112,7 @@ export abstract class APIRequestContext extends SdkObject {
     APIRequestContext.allInstances.delete(this);
     this.fetchResponses.clear();
     this.fetchLog.clear();
-    this.emit(APIRequestContext.Events.Dispose);
+    this.emit('dispose');
   }
 
   disposeResponse(fetchUid: string) {
@@ -289,7 +287,7 @@ export abstract class APIRequestContext extends SdkObject {
       cookies: requestCookies,
       postData
     };
-    this.emit(APIRequestContext.Events.Request, requestEvent);
+    this.emit('request', requestEvent);
 
     return new Promise((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
@@ -309,7 +307,7 @@ export abstract class APIRequestContext extends SdkObject {
             cookies,
             body
           };
-          this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
+          this.emit('requestfinished', requestFinishedEvent);
         };
         progress.log(`← ${response.statusCode} ${response.statusMessage}`);
         for (const [name, value] of Object.entries(response.headers))
@@ -447,8 +445,8 @@ export abstract class APIRequestContext extends SdkObject {
         reject(new Error('Request context disposed.'));
         request.destroy();
       };
-      this.on(APIRequestContext.Events.Dispose, disposeListener);
-      request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
+      this.on('dispose', disposeListener);
+      request.on('close', () => this.off('dispose', disposeListener));
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
@@ -508,7 +506,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
   constructor(context: BrowserContext) {
     super(context);
     this._context = context;
-    context.once(BrowserContext.Events.Close, () => this._disposeImpl());
+    context.once('close', () => this._disposeImpl());
   }
 
   override tracing() {

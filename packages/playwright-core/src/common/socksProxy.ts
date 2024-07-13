@@ -19,7 +19,7 @@ import type { AddressInfo } from 'net';
 import net from 'net';
 import { debugLogger } from '../utils/debugLogger';
 import { createSocket } from '../utils/happy-eyeballs';
-import { assert, createGuid,  } from '../utils';
+import { assert, createGuid, ManagedEventEmitter,  } from '../utils';
 
 // https://tools.ietf.org/html/rfc1928
 
@@ -366,13 +366,11 @@ export function parsePattern(pattern: string | undefined): PatternMatcher {
   return (host, port) => matchers.some(matcher => matcher(host, port));
 }
 
-export class SocksProxy extends EventEmitter implements SocksConnectionClient {
-  static Events = {
-    SocksRequested: 'socksRequested',
-    SocksData: 'socksData',
-    SocksClosed: 'socksClosed',
-  };
-
+export class SocksProxy extends ManagedEventEmitter<{
+  'socksRequested': [SocksSocketRequestedPayload],
+  'socksData': [SocksSocketDataPayload],
+  'socksClosed': [SocksSocketClosedPayload],
+}> implements SocksConnectionClient {
   private _server: net.Server;
   private _connections = new Map<string, SocksConnection>();
   private _sockets = new Set<net.Socket>();
@@ -456,7 +454,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       this._handleDirect(payload);
       return;
     }
-    this.emit(SocksProxy.Events.SocksRequested, payload);
+    this.emit('socksRequested', payload);
   }
 
   onSocketData(payload: SocksSocketDataPayload): void {
@@ -465,7 +463,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       direct.write(payload.data);
       return;
     }
-    this.emit(SocksProxy.Events.SocksData, payload);
+    this.emit('socksData', payload);
   }
 
   onSocketClosed(payload: SocksSocketClosedPayload): void {
@@ -475,7 +473,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       this._directSockets.delete(payload.uid);
       return;
     }
-    this.emit(SocksProxy.Events.SocksClosed, payload);
+    this.emit('socksClosed', payload);
   }
 
   socketConnected({ uid, host, port }: SocksSocketConnectedPayload) {
@@ -499,15 +497,13 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 }
 
-export class SocksProxyHandler extends EventEmitter {
-  static Events = {
-    SocksConnected: 'socksConnected',
-    SocksData: 'socksData',
-    SocksError: 'socksError',
-    SocksFailed: 'socksFailed',
-    SocksEnd: 'socksEnd',
-  };
-
+export class SocksProxyHandler extends EventEmitter<{
+  socksConnected: [SocksSocketConnectedPayload],
+  socksData: [SocksSocketDataPayload],
+  socksError: [SocksSocketErrorPayload],
+  socksFailed: [SocksSocketFailedPayload],
+  socksEnd: [SocksSocketEndPayload],
+}> {
   private _sockets = new Map<string, net.Socket>();
   private _patternMatcher: PatternMatcher = () => false;
   private _redirectPortForTest: number | undefined;
@@ -528,7 +524,7 @@ export class SocksProxyHandler extends EventEmitter {
     if (!this._patternMatcher(host, port)) {
       const payload: SocksSocketFailedPayload = { uid, errorCode: 'ERULESET' };
       debugLogger.log('socks', `[${uid}] <= pattern error ${payload.errorCode}`);
-      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+      this.emit('socksFailed', payload);
       return;
     }
 
@@ -540,18 +536,18 @@ export class SocksProxyHandler extends EventEmitter {
       const socket = await createSocket(host, port);
       socket.on('data', data => {
         const payload: SocksSocketDataPayload = { uid, data };
-        this.emit(SocksProxyHandler.Events.SocksData, payload);
+        this.emit('socksData', payload);
       });
       socket.on('error', error => {
         const payload: SocksSocketErrorPayload = { uid, error: error.message };
         debugLogger.log('socks', `[${uid}] <= network socket error ${payload.error}`);
-        this.emit(SocksProxyHandler.Events.SocksError, payload);
+        this.emit('socksError', payload);
         this._sockets.delete(uid);
       });
       socket.on('end', () => {
         const payload: SocksSocketEndPayload = { uid };
         debugLogger.log('socks', `[${uid}] <= network socket closed`);
-        this.emit(SocksProxyHandler.Events.SocksEnd, payload);
+        this.emit('socksEnd', payload);
         this._sockets.delete(uid);
       });
       const localAddress = socket.localAddress;
@@ -559,11 +555,11 @@ export class SocksProxyHandler extends EventEmitter {
       this._sockets.set(uid, socket);
       const payload: SocksSocketConnectedPayload = { uid, host: localAddress!, port: localPort! };
       debugLogger.log('socks', `[${uid}] <= connected to network ${payload.host}:${payload.port}`);
-      this.emit(SocksProxyHandler.Events.SocksConnected, payload);
+      this.emit('socksConnected', payload);
     } catch (error) {
       const payload: SocksSocketFailedPayload = { uid, errorCode: error.code };
       debugLogger.log('socks', `[${uid}] <= connect error ${payload.errorCode}`);
-      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+      this.emit('socksFailed', payload);
     }
   }
 

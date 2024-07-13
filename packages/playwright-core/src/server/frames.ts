@@ -24,9 +24,9 @@ import { eventsHelper } from '../utils/eventsHelper';
 import * as js from './javascript';
 import * as network from './network';
 import type { Dialog } from './dialog';
-import { Page } from './page';
+import type { Page } from './page';
 import * as types from './types';
-import { BrowserContext } from './browserContext';
+import type { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
@@ -156,7 +156,7 @@ export class FrameManager {
       assert(!this._frames.has(frameId));
       const frame = new Frame(this._page, frameId, parentFrame);
       this._frames.set(frameId, frame);
-      this._page.emit(Page.Events.FrameAttached, frame);
+      this._page.emit('frameattached', frame);
       return frame;
     }
   }
@@ -297,7 +297,7 @@ export class FrameManager {
         route.continue(request, { isFallback: true }).catch(() => {});
       return;
     }
-    this._page.emitOnContext(BrowserContext.Events.Request, request);
+    this._page.emitOnContext('request', request);
     if (route) {
       const r = new network.Route(request, route);
       if (this._page._serverRequestInterceptor?.(r, request))
@@ -313,14 +313,14 @@ export class FrameManager {
   requestReceivedResponse(response: network.Response) {
     if (response.request()._isFavicon)
       return;
-    this._page.emitOnContext(BrowserContext.Events.Response, response);
+    this._page.emitOnContext('response', response);
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
-    this._page.emitOnContext(BrowserContext.Events.RequestFinished, { request, response });
+    this._page.emitOnContext('requestfinished', { request, response });
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -334,7 +334,7 @@ export class FrameManager {
     }
     if (request._isFavicon)
       return;
-    this._page.emitOnContext(BrowserContext.Events.RequestFailed, request);
+    this._page.emitOnContext('requestfailed', request);
   }
 
   dialogDidOpen(dialog: Dialog) {
@@ -370,7 +370,7 @@ export class FrameManager {
     frame._onDetached();
     this._frames.delete(frame._id);
     if (!this._page.isClosed())
-      this._page.emit(Page.Events.FrameDetached, frame);
+      this._page.emit('framedetached', frame);
   }
 
   private _inflightRequestFinished(request: network.Request) {
@@ -420,7 +420,7 @@ export class FrameManager {
   onWebSocketRequest(requestId: string) {
     const ws = this._webSockets.get(requestId);
     if (ws && ws.markAsNotified())
-      this._page.emit(Page.Events.WebSocket, ws);
+      this._page.emit('websocket', ws);
   }
 
   onWebSocketResponse(requestId: string, status: number, statusText: string) {
@@ -457,17 +457,15 @@ export class FrameManager {
   }
 
   private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {
-    frame.emit(Frame.Events.InternalNavigation, event);
+    frame.emit('internalnavigation', event);
   }
 }
 
-export class Frame extends SdkObject {
-  static Events = {
-    InternalNavigation: 'internalnavigation',
-    AddLifecycle: 'addlifecycle',
-    RemoveLifecycle: 'removelifecycle',
-  };
-
+export class Frame extends SdkObject<{
+  internalnavigation: [NavigationEvent]
+  addlifecycle: [types.LifecycleEvent]
+  removelifecycle: [types.LifecycleEvent]
+}> {
   _id: string;
   _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   private _firedNetworkIdleSelf = false;
@@ -517,7 +515,7 @@ export class Frame extends SdkObject {
     if (this._firedLifecycleEvents.has(event))
       return;
     this._firedLifecycleEvents.add(event);
-    this.emit(Frame.Events.AddLifecycle, event);
+    this.emit('addlifecycle', event);
     if (this === this._page.mainFrame() && this._url !== 'about:blank')
       debugLogger.log('api', `  "${event}" event fired`);
     this._page.mainFrame()._recalculateNetworkIdle();
@@ -525,7 +523,7 @@ export class Frame extends SdkObject {
 
   _onClearLifecycle() {
     for (const event of this._firedLifecycleEvents)
-      this.emit(Frame.Events.RemoveLifecycle, event);
+      this.emit('removelifecycle', event);
     this._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
     this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
@@ -600,7 +598,7 @@ export class Frame extends SdkObject {
     }
     if (isNetworkIdle && !this._firedLifecycleEvents.has('networkidle')) {
       this._firedLifecycleEvents.add('networkidle');
-      this.emit(Frame.Events.AddLifecycle, 'networkidle');
+      this.emit('addlifecycle', 'networkidle');
       if (this === this._page.mainFrame() && this._url !== 'about:blank')
         debugLogger.log('api', `  "networkidle" event fired`);
     }
@@ -608,7 +606,7 @@ export class Frame extends SdkObject {
       // Usually, networkidle is fired once and not removed after that.
       // However, when we clear them right before a new commit, this is allowed for a particular frame.
       this._firedLifecycleEvents.delete('networkidle');
-      this.emit(Frame.Events.RemoveLifecycle, 'networkidle');
+      this.emit('removelifecycle', 'networkidle');
     }
   }
 
@@ -661,13 +659,13 @@ export class Frame extends SdkObject {
     }
     url = helper.completeUserURL(url);
 
-    const sameDocument = helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (e: NavigationEvent) => !e.newDocument);
+    const sameDocument = helper.waitForEvent(progress, this, 'internalnavigation', (e: NavigationEvent) => !e.newDocument);
     const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
 
     let event: NavigationEvent;
     if (navigateResult.newDocumentId) {
       sameDocument.dispose();
-      event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+      event = await helper.waitForEvent(progress, this, 'internalnavigation', (event: NavigationEvent) => {
         // We are interested either in this specific document, or any other document that
         // did commit and replaced the expected document.
         return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
@@ -685,7 +683,7 @@ export class Frame extends SdkObject {
     }
 
     if (!this._firedLifecycleEvents.has(waitUntil))
-      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+      await helper.waitForEvent(progress, this, 'addlifecycle', (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
     const response = request ? request._finalRequest().response() : null;
@@ -696,7 +694,7 @@ export class Frame extends SdkObject {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
-    const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+    const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, 'internalnavigation', (event: NavigationEvent) => {
       // Any failed navigation results in a rejection.
       if (event.error)
         return true;
@@ -709,7 +707,7 @@ export class Frame extends SdkObject {
       throw navigationEvent.error;
 
     if (!this._firedLifecycleEvents.has(waitUntil))
-      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+      await helper.waitForEvent(progress, this, 'addlifecycle', (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
     return request ? request._finalRequest().response() : null;
@@ -718,7 +716,7 @@ export class Frame extends SdkObject {
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
     if (!this._firedLifecycleEvents.has(waitUntil))
-      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+      await helper.waitForEvent(progress, this, 'addlifecycle', (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -1034,7 +1032,7 @@ export class Frame extends SdkObject {
     let cspMessage: ConsoleMessage | undefined;
     const actionPromise = func().then(r => result = r).catch(e => error = e);
     const errorPromise = new Promise<void>(resolve => {
-      listeners.push(eventsHelper.addEventListener(this._page._browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
+      listeners.push(this._page._browserContext.addManagedListener('console', (message: ConsoleMessage) => {
         if (message.page() !== this._page || message.type() !== 'error')
           return;
         if (message.text().includes('Content-Security-Policy') || message.text().includes('Content Security Policy')) {
@@ -1725,7 +1723,7 @@ class SignalBarrier {
     if (frame.parentFrame())
       return;
     this.retain();
-    const waiter = helper.waitForEvent(null, frame, Frame.Events.InternalNavigation, (e: NavigationEvent) => {
+    const waiter = helper.waitForEvent(null, frame, 'internalnavigation', (e: NavigationEvent) => {
       if (!e.isPublic)
         return false;
       if (!e.error && this._progress)

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-import { createGuid } from '../utils';
+import { createGuid, ManagedEventEmitter } from '../utils';
 import type { APIRequestContext } from './fetch';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -37,7 +36,7 @@ export type Attribution = {
 import type { CallMetadata } from '@protocol/callMetadata';
 export type { CallMetadata } from '@protocol/callMetadata';
 
-export class SdkObject extends EventEmitter {
+export class SdkObject<Events extends Record<string, any[]> = any> extends ManagedEventEmitter<Events> {
   guid: string;
   attribution: Attribution;
   instrumentation: Instrumentation;

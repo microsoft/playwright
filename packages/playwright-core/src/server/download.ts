@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { Page } from './page';
+import type { Page } from './page';
 import { assert } from '../utils';
 import { Artifact } from './artifact';
 
@@ -35,13 +35,13 @@ export class Download {
     this._suggestedFilename = suggestedFilename;
     page._browserContext._downloads.add(this);
     if (suggestedFilename !== undefined)
-      this._page.emit(Page.Events.Download, this);
+      this._page.emit('download', this);
   }
 
   _filenameSuggested(suggestedFilename: string) {
     assert(this._suggestedFilename === undefined);
     this._suggestedFilename = suggestedFilename;
-    this._page.emit(Page.Events.Download, this);
+    this._page.emit('download', this);
   }
 
   suggestedFilename(): string {

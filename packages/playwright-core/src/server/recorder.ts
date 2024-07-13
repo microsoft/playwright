@@ -20,9 +20,9 @@ import type * as channels from '@protocol/channels';
 import type { ActionInContext } from './recorder/codeGenerator';
 import { CodeGenerator } from './recorder/codeGenerator';
 import { toClickOptions, toModifiers } from './recorder/utils';
-import { Page } from './page';
-import { Frame } from './frames';
-import { BrowserContext } from './browserContext';
+import type { Page } from './page';
+import type { Frame } from './frames';
+import type { BrowserContext } from './browserContext';
 import { JavaLanguageGenerator } from './recorder/java';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { JsonlLanguageGenerator } from './recorder/jsonl';
@@ -38,7 +38,7 @@ import type { Point } from '../common/types';
 import type { CallLog, CallLogStatus, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
-import { Debugger } from './debugger';
+import type { Debugger } from './debugger';
 import { EventEmitter } from 'events';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
@@ -156,12 +156,12 @@ export class Recorder implements InstrumentationListener {
       this._pushAllSources()
     ]);
 
-    this._context.once(BrowserContext.Events.Close, () => {
+    this._context.once('close', () => {
       this._contextRecorder.dispose();
       this._context.instrumentation.removeListener(this);
       recorderApp.close().catch(() => {});
     });
-    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], primaryFileName: string }) => {
+    this._contextRecorder.on('change', data => {
       this._recorderSources = data.sources;
       this._pushAllSources();
       this._recorderApp?.setFileIfNeeded(data.primaryFileName);
@@ -224,7 +224,7 @@ export class Recorder implements InstrumentationListener {
 
     if (this._debugger.isPaused())
       this._pausedStateChanged();
-    this._debugger.on(Debugger.Events.PausedStateChanged, () => this._pausedStateChanged());
+    this._debugger.on('pausedstatechanged', () => this._pausedStateChanged());
 
     (this._context as any).recorderAppForTest = recorderApp;
   }
@@ -370,11 +370,9 @@ export class Recorder implements InstrumentationListener {
   }
 }
 
-class ContextRecorder extends EventEmitter {
-  static Events = {
-    Change: 'change'
-  };
-
+class ContextRecorder extends EventEmitter<{
+  change: [{ sources: Source[], primaryFileName: string }]
+}> {
   private _generator: CodeGenerator;
   private _pageAliases = new Map<Page, string>();
   private _lastPopupOrdinal = 0;
@@ -417,12 +415,12 @@ class ContextRecorder extends EventEmitter {
         if (languageGenerator === this._orderedLanguages[0])
           this._throttledOutputFile?.setContent(source.text);
       }
-      this.emit(ContextRecorder.Events.Change, {
+      this.emit('change', {
         sources: this._recorderSources,
         primaryFileName: this._orderedLanguages[0].id
       });
     });
-    context.on(BrowserContext.Events.BeforeClose, () => {
+    context.on('beforeclose', () => {
       this._throttledOutputFile?.flush();
     });
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
@@ -463,10 +461,10 @@ class ContextRecorder extends EventEmitter {
   }
 
   async install() {
-    this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
+    this._context.on('page', (page: Page) => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
-    this._context.on(BrowserContext.Events.Dialog, (dialog: Dialog) => this._onDialog(dialog.page()));
+    this._context.on('dialog', (dialog: Dialog) => this._onDialog(dialog.page()));
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
@@ -505,11 +503,11 @@ class ContextRecorder extends EventEmitter {
       });
       this._pageAliases.delete(page);
     });
-    frame.on(Frame.Events.InternalNavigation, event => {
+    frame.on('internalnavigation', event => {
       if (event.isPublic)
         this._onFrameNavigated(frame, page);
     });
-    page.on(Page.Events.Download, () => this._onDownload(page));
+    page.on('download', () => this._onDownload(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
     const pageAlias = 'page' + suffix;
     this._pageAliases.set(page, pageAlias);

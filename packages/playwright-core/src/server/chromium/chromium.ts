@@ -28,7 +28,6 @@ import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import type { BrowserOptions, BrowserProcess } from '../browser';
-import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
 import type { HTTPRequestParams } from '../../utils/network';
@@ -121,7 +120,7 @@ export class Chromium extends BrowserType {
     progress.throwIfAborted();
     const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
     browser._isCollocatedWithServer = false;
-    browser.on(Browser.Events.Disconnected, doCleanup);
+    browser.on('disconnected', doCleanup);
     return browser;
   }
 

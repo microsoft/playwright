@@ -21,6 +21,7 @@ import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
 import { wsReceiver, wsSender } from '../../utilsBundle';
+import type { ManagedEventEmitter } from '../../utils';
 import { createGuid, makeWaitForNextTask, isUnderTest, getPackageManagerExecCommand } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -53,7 +54,13 @@ export interface DeviceBackend {
   open(command: string): Promise<SocketBackend>;
 }
 
-export interface SocketBackend extends EventEmitter {
+export type SocketBackendEvents = {
+  data: [Buffer],
+  close: []
+  error: [Error]
+};
+
+export interface SocketBackend extends ManagedEventEmitter<SocketBackendEvents> {
   guid: string;
   write(data: Buffer): Promise<void>;
   close(): void;
@@ -96,7 +103,11 @@ export class Android extends SdkObject {
   }
 }
 
-export class AndroidDevice extends SdkObject {
+export class AndroidDevice extends SdkObject<{
+  webViewAdded: [channels.AndroidWebView]
+  webViewRemoved: [string]
+  close: []
+}> {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
@@ -107,12 +118,6 @@ export class AndroidDevice extends SdkObject {
   private _pollingWebViews: NodeJS.Timeout | undefined;
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, channels.AndroidWebView>();
-
-  static Events = {
-    WebViewAdded: 'webViewAdded',
-    WebViewRemoved: 'webViewRemoved',
-    Close: 'close',
-  };
 
   private _browserConnections = new Set<AndroidBrowser>();
   readonly _android: Android;
@@ -256,7 +261,7 @@ export class AndroidDevice extends SdkObject {
     }
     await this._backend.close();
     this._android._deviceClosed(this);
-    this.emit(AndroidDevice.Events.Close);
+    this.emit('close');
   }
 
   async launchBrowser(pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
@@ -420,12 +425,12 @@ export class AndroidDevice extends SdkObject {
 
       const webView = { pid, pkg, socketName };
       this._webViews.set(socketName, webView);
-      this.emit(AndroidDevice.Events.WebViewAdded, webView);
+      this.emit('webViewAdded', webView);
     }
     for (const p of this._webViews.keys()) {
       if (!socketNames.has(p)) {
         this._webViews.delete(p);
-        this.emit(AndroidDevice.Events.WebViewRemoved, p);
+        this.emit('webViewRemoved', p);
       }
     }
   }

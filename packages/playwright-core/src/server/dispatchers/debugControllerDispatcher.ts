@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import { eventsHelper } from '../../utils';
 import type { RegisteredListener } from '../../utils/eventsHelper';
-import { DebugController } from '../debugController';
+import type { DebugController } from '../debugController';
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 
@@ -29,19 +29,19 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     super(connection, debugController, 'DebugController', {});
     this._type_DebugController = true;
     this._listeners = [
-      eventsHelper.addEventListener(this._object, DebugController.Events.StateChanged, params => {
+      this._object.addManagedListener('stateChanged', params => {
         this._dispatchEvent('stateChanged', params);
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator }) => {
+      this._object.addManagedListener('inspectRequested', ({ selector, locator }) => {
         this._dispatchEvent('inspectRequested', { selector, locator });
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
+      this._object.addManagedListener('sourceChanged', ({ text, header, footer, actions }) => {
         this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.Paused, ({ paused }) => {
+      this._object.addManagedListener('paused', ({ paused }) => {
         this._dispatchEvent('paused', ({ paused }));
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.SetModeRequested, ({ mode }) => {
+      this._object.addManagedListener('setModeRequested', ({ mode }) => {
         this._dispatchEvent('setModeRequested', ({ mode }));
       }),
     ];

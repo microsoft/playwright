@@ -23,7 +23,7 @@ import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
-import type { RegisteredListener } from '../..//utils/eventsHelper';
+import type { ManagedEventEmitter, RegisteredListener } from '../..//utils/eventsHelper';
 import { isProtocolError } from '../protocolError';
 
 export const dispatcherSymbol = Symbol('dispatcher');
@@ -44,7 +44,7 @@ function maxDispatchersForBucket(gcBucket: string) {
   }[gcBucket] ?? 10000;
 }
 
-export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends (ManagedEventEmitter<any> & { guid: string }) | { guid: string; _events?: void }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   // Parent is always "isScope".
   private _parent: ParentScopeType | undefined;
@@ -88,8 +88,12 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     return this._parent!;
   }
 
-  addObjectListener(eventName: (string | symbol), handler: (...args: any[]) => void) {
-    this._eventListeners.push(eventsHelper.addEventListener(this._object as unknown as EventEmitter, eventName, handler));
+  addObjectListener<K extends keyof Type['_events']>(
+    eventName: K,
+    handler: (...args: Type['_events'][K]) => void
+  ) {
+    // @ts-ignore
+    this._eventListeners.push(eventsHelper.addEventListener(this._object, eventName, handler));
   }
 
   adopt(child: DispatcherScope) {

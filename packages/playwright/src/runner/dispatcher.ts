@@ -504,13 +504,13 @@ class JobDispatcher {
     worker.runTestGroup(runPayload);
 
     this._listeners = [
-      eventsHelper.addEventListener(worker, 'testBegin', this._onTestBegin.bind(this)),
-      eventsHelper.addEventListener(worker, 'testEnd', this._onTestEnd.bind(this)),
-      eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
-      eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
-      eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
-      eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
-      eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
+      worker.addManagedListener('testBegin', this._onTestBegin.bind(this)),
+      worker.addManagedListener('testEnd', this._onTestEnd.bind(this)),
+      worker.addManagedListener('stepBegin', this._onStepBegin.bind(this)),
+      worker.addManagedListener('stepEnd', this._onStepEnd.bind(this)),
+      worker.addManagedListener('attach', this._onAttach.bind(this)),
+      worker.addManagedListener('done', this._onDone.bind(this)),
+      worker.addManagedListener('exit', this.onExit.bind(this)),
     ];
   }
 

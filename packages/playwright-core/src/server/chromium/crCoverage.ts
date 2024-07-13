@@ -78,9 +78,9 @@ class JSCoverage {
     this._scriptIds.clear();
     this._scriptSources.clear();
     this._eventListeners = [
-      eventsHelper.addEventListener(this._client, 'Debugger.scriptParsed', this._onScriptParsed.bind(this)),
-      eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
-      eventsHelper.addEventListener(this._client, 'Debugger.paused', this._onDebuggerPaused.bind(this)),
+      this._client.addManagedListener('Debugger.scriptParsed', this._onScriptParsed.bind(this)),
+      this._client.addManagedListener('Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
+      this._client.addManagedListener('Debugger.paused', this._onDebuggerPaused.bind(this)),
     ];
     await Promise.all([
       this._client.send('Profiler.enable'),
@@ -164,8 +164,8 @@ class CSSCoverage {
     this._stylesheetURLs.clear();
     this._stylesheetSources.clear();
     this._eventListeners = [
-      eventsHelper.addEventListener(this._client, 'CSS.styleSheetAdded', this._onStyleSheet.bind(this)),
-      eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
+      this._client.addManagedListener('CSS.styleSheetAdded', this._onStyleSheet.bind(this)),
+      this._client.addManagedListener('Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
     ];
     await Promise.all([
       this._client.send('DOM.enable'),

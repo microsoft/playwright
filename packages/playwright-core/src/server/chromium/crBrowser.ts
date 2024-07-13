@@ -192,7 +192,7 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'service_worker') {
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
-      context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
+      context.emit('serviceworker', serviceWorker);
       return;
     }
 
@@ -333,11 +333,6 @@ export class CRBrowser extends Browser {
 }
 
 export class CRBrowserContext extends BrowserContext {
-  static CREvents = {
-    BackgroundPage: 'backgroundpage',
-    ServiceWorker: 'serviceworker',
-  };
-
   declare readonly _browser: CRBrowser;
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {

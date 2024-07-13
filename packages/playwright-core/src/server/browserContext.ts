@@ -25,7 +25,7 @@ import type * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
 import { InitScript } from './page';
-import type { PageDelegate } from './page';
+import type { PageDelegate, Worker } from './page';
 import { Page, PageBinding } from './page';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
@@ -44,27 +44,33 @@ import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import type { ConsoleMessage } from './console';
+import type { Dialog } from './dialog';
 
-export abstract class BrowserContext extends SdkObject {
-  static Events = {
-    Console: 'console',
-    Close: 'close',
-    Dialog: 'dialog',
-    Page: 'page',
-    // Can't use just 'error' due to node.js special treatment of error events.
-    // @see https://nodejs.org/api/events.html#events_error_events
-    PageError: 'pageerror',
-    Request: 'request',
-    Response: 'response',
-    RequestFailed: 'requestfailed',
-    RequestFinished: 'requestfinished',
-    RequestAborted: 'requestaborted',
-    RequestFulfilled: 'requestfulfilled',
-    RequestContinued: 'requestcontinued',
-    BeforeClose: 'beforeclose',
-    VideoStarted: 'videostarted',
-  };
+export type BrowserContextEvents = {
+  console: [ConsoleMessage]
+  close: []
+  dialog: [Dialog]
+  page: [Page]
+  // Can't use just 'error' due to node.js special treatment of error events.
+  // @see https://nodejs.org/api/events.html#events_error_events
+  pageerror: [Error, Page]
+  request: [network.Request]
+  response: [network.Response]
+  requestfailed: [network.Request]
+  requestfinished: [{ request: network.Request, response: network.Response | null}]
+  requestaborted: [network.Request]
+  requestfulfilled: [network.Request]
+  requestcontinued: [network.Request]
+  beforeclose: []
+  videostarted: [Artifact]
 
+  // Chromium only
+  backgroundpage: [Page]
+  serviceworker: [Worker]
+};
+
+export abstract class BrowserContext extends SdkObject<BrowserContextEvents> {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
@@ -136,7 +142,7 @@ export abstract class BrowserContext extends SdkObject {
     // When paused, show inspector.
     if (this._debugger.isPaused())
       Recorder.showInspector(this);
-    this._debugger.on(Debugger.Events.PausedStateChanged, () => {
+    this._debugger.on('pausedstatechanged', () => {
       Recorder.showInspector(this);
     });
 
@@ -252,7 +258,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
-    this.emit(BrowserContext.Events.Close);
+    this.emit('close');
   }
 
   // BrowserContext methods.
@@ -359,7 +365,7 @@ export abstract class BrowserContext extends SdkObject {
 
   async _loadDefaultContextAsIs(progress: Progress): Promise<Page[]> {
     if (!this.pages().length) {
-      const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
+      const waitForEvent = helper.waitForEvent(progress, this, 'page');
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
       const page = (await waitForEvent.promise) as Page;
       if (page._pageIsError)
@@ -443,7 +449,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this._closedStatus === 'open') {
       if (options.reason)
         this._closeReason = options.reason;
-      this.emit(BrowserContext.Events.BeforeClose);
+      this.emit('beforeclose');
       this._closedStatus = 'closing';
 
       for (const harRecorder of this._harRecorders.values())
@@ -615,10 +621,10 @@ export abstract class BrowserContext extends SdkObject {
   async extendInjectedScript(source: string, arg?: any) {
     const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
     const installInPage = (page: Page) => {
-      page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
+      page.on('internalframenavigatedtonewdocument', installInFrame);
       return Promise.all(page.frames().map(installInFrame));
     };
-    this.on(BrowserContext.Events.Page, installInPage);
+    this.on('page', installInPage);
     return Promise.all(this.pages().map(installInPage));
   }
 

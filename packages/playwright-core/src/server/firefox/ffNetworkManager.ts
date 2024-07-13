@@ -38,10 +38,10 @@ export class FFNetworkManager {
     this._page = page;
 
     this._eventListeners = [
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
+      session.addManagedListener('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      session.addManagedListener('Network.responseReceived', this._onResponseReceived.bind(this)),
+      session.addManagedListener('Network.requestFinished', this._onRequestFinished.bind(this)),
+      session.addManagedListener('Network.requestFailed', this._onRequestFailed.bind(this)),
     ];
   }
 

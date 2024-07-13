@@ -18,7 +18,7 @@ import type * as channels from '@protocol/channels';
 import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
-import { WebSocket } from '../network';
+import type { WebSocket } from '../network';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
@@ -164,10 +164,10 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),
     });
-    this.addObjectListener(WebSocket.Events.FrameSent, (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
-    this.addObjectListener(WebSocket.Events.FrameReceived, (event: { opcode: number, data: string }) => this._dispatchEvent('frameReceived', event));
-    this.addObjectListener(WebSocket.Events.SocketError, (error: string) => this._dispatchEvent('socketError', { error }));
-    this.addObjectListener(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
+    this.addObjectListener('framesent', (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
+    this.addObjectListener('framereceived', (event: { opcode: number, data: string }) => this._dispatchEvent('frameReceived', event));
+    this.addObjectListener('socketerror', (error: string) => this._dispatchEvent('socketError', { error }));
+    this.addObjectListener('close', () => this._dispatchEvent('close', {}));
   }
 }
 

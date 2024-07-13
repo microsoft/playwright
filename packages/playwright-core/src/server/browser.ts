@@ -52,13 +52,10 @@ export type BrowserOptions = {
   originalLaunchOptions: types.LaunchOptions;
 };
 
-export abstract class Browser extends SdkObject {
-
-  static Events = {
-    BeforeClose: 'beforeClose',
-    Disconnected: 'disconnected',
-  };
-
+export abstract class Browser extends SdkObject<{
+  beforeClose: []
+  disconnected: []
+}> {
   readonly options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
@@ -140,8 +137,8 @@ export abstract class Browser extends SdkObject {
     pageOrError.then(page => {
       if (page instanceof Page) {
         page._video = artifact;
-        page.emitOnContext(BrowserContext.Events.VideoStarted, artifact);
-        page.emit(Page.Events.Video, artifact);
+        page.emitOnContext('videostarted', artifact);
+        page.emit('video', artifact);
       }
     });
   }
@@ -158,7 +155,7 @@ export abstract class Browser extends SdkObject {
 
   _didClose() {
     if (this._needsBeforeCloseEvent)
-      this.emit(Browser.Events.BeforeClose);
+      this.emit('beforeClose');
     else
       this.beforeCloseFinished();
   }
@@ -168,7 +165,7 @@ export abstract class Browser extends SdkObject {
       context._browserClosed();
     if (this._defaultContext)
       this._defaultContext._browserClosed();
-    this.emit(Browser.Events.Disconnected);
+    this.emit('disconnected');
     this.instrumentation.onBrowserClose(this);
   }
 
@@ -180,7 +177,7 @@ export abstract class Browser extends SdkObject {
       await this.options.browserProcess.close();
     }
     if (this.isConnected())
-      await new Promise(x => this.once(Browser.Events.Disconnected, x));
+      await new Promise<void>(x => this.once('disconnected', x));
   }
 
   async killForTests() {
