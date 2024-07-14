@@ -668,7 +668,7 @@ We recommend [locating by label text](./locators.md#locate-by-label) instead of 
 
 Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
 
-For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by it's "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
+For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by its "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
 - [`method: Locator.click`] will click the label and automatically focus the input field;
 - [`method: Locator.fill`] will fill the input field;
 - [`method: Locator.inputValue`] will return the value of the input field;
