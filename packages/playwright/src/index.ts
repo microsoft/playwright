@@ -537,10 +537,6 @@ class ArtifactsRecorder {
     await this._stopTracing(tracing);
   }
 
-  async willCloseBrowser(browser: Browser) {
-    await Promise.all(browser.contexts().map(context => this._stopTracing(context.tracing)));
-  }
-
   async didFinishTestFunction() {
     const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure());
     if (captureScreenshots)
@@ -762,10 +758,6 @@ class InstrumentationConnector implements TestLifecycleInstrumentation, ClientIn
 
   async runBeforeCloseRequestContext(context: APIRequestContext) {
     await this._artifactsRecorder?.willCloseRequestContext(context);
-  }
-
-  async runBeforeCloseBrowser(browser: Browser) {
-    await this._artifactsRecorder?.willCloseBrowser(browser);
   }
 }
 

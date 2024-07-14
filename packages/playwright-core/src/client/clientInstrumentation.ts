@@ -15,7 +15,6 @@
  */
 
 import type { StackFrame } from '@protocol/channels';
-import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { APIRequestContext } from './fetch';
 
@@ -31,7 +30,6 @@ export interface ClientInstrumentation {
   runAfterCreateRequestContext(context: APIRequestContext): Promise<void>;
   runBeforeCloseBrowserContext(context: BrowserContext): Promise<void>;
   runBeforeCloseRequestContext(context: APIRequestContext): Promise<void>;
-  runBeforeCloseBrowser(browser: Browser): Promise<void>;
 }
 
 export interface ClientInstrumentationListener {
@@ -43,7 +41,6 @@ export interface ClientInstrumentationListener {
   runAfterCreateRequestContext?(context: APIRequestContext): Promise<void>;
   runBeforeCloseBrowserContext?(context: BrowserContext): Promise<void>;
   runBeforeCloseRequestContext?(context: APIRequestContext): Promise<void>;
-  runBeforeCloseBrowser?(browser: Browser): Promise<void>;
 }
 
 export function createInstrumentation(): ClientInstrumentation {

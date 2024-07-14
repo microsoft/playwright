@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import { parseTrace } from '../config/utils';
 
 test('should work with connectOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -167,49 +166,4 @@ test('should print debug log when failed to connect', async ({ runInlineTest }) 
   expect(result.failed).toBe(1);
   expect(result.output).toContain('b-debug-log-string');
   expect(result.results[0].attachments).toEqual([]);
-});
-
-test('should save trace when remote browser is closed', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        globalSetup: './global-setup',
-        use: {
-          trace: 'on',
-          connectOptions: { wsEndpoint: process.env.CONNECT_WS_ENDPOINT },
-        },
-      };
-    `,
-    'global-setup.ts': `
-      import { chromium } from '@playwright/test';
-      module.exports = async () => {
-        const server = await chromium.launchServer();
-        process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
-        return () => server.close();
-      };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ browser }) => {
-        const page = await browser.newPage();
-        await page.setContent('<script>console.log("from the page")</script>');
-        await browser.close();
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-
-  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.zip');
-  const trace = await parseTrace(tracePath);
-  expect(trace.actionTree).toEqual([
-    'Before Hooks',
-    '  fixture: browser',
-    '    browserType.connect',
-    'browser.newPage',
-    'page.setContent',
-    'After Hooks',
-  ]);
-  // Check console events to make sure that library trace is recorded.
-  expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
 });
