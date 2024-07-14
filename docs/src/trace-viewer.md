@@ -7,7 +7,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
-Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright traces after the script has ran. Traces are a great way for debugging your tests when they fail on CI. You can open traces [locally](#opening-the-trace) or in your browser on [trace.playwright.dev](https://trace.playwright.dev).
+Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright traces after the script has run. Traces are a great way for debugging your tests when they fail on CI. You can open traces [locally](#opening-the-trace) or in your browser on [trace.playwright.dev](https://trace.playwright.dev).
 
 ######
 * langs: js
@@ -493,7 +493,7 @@ pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 
 ## Viewing remote traces
 
-You can open remote traces using it's URL. They could be generated on a CI run which makes it easy to view the remote trace without having to manually download the file.
+You can open remote traces using its URL. They could be generated on a CI run which makes it easy to view the remote trace without having to manually download the file.
 
 ```bash js
 npx playwright show-trace https://example.com/trace.zip
