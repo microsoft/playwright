@@ -48,6 +48,14 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('granted');
   });
 
+  it('should grant window-management permission when origin is listed', async ({ page, context, server, browserName }) => {
+    it.fail(browserName === 'firefox');
+
+    await page.goto(server.EMPTY_PAGE);
+    await context.grantPermissions(['window-management'], { origin: server.EMPTY_PAGE });
+    expect(await getPermission(page, 'window-management')).toBe('granted');
+  });
+
   it('should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
