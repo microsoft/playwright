@@ -152,7 +152,6 @@ const attachmentLinkRenderingTestCase: TestCase = {
 
 test('should correctly render links in attachments', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
-  // const container = await(component.getByText('Annotations'));
   await component.getByText('first attachment').click();
   const body = await component.getByText('The body with https://playwright.dev/docs/intro link');
   await expect(body).toBeVisible();
