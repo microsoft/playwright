@@ -641,10 +641,4 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
   }
 }
 
-function projectSuite(suite: Suite): Suite {
-  while (suite.parent?.parent)
-    suite = suite.parent;
-  return suite;
-}
-
 export default HtmlReporter;
