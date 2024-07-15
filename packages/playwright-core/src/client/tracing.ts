@@ -34,8 +34,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean, _live?: boolean } = {}) {
-    await this._wrapApiCall(async () => {
-      this._includeSources = !!options.sources;
+    this._includeSources = !!options.sources;
+    const traceName = await this._wrapApiCall(async () => {
       await this._channel.tracingStart({
         name: options.name,
         snapshots: options.snapshots,
@@ -43,15 +43,14 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         live: options._live,
       });
       const response = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
-      await this._startCollectingStacks(response.traceName);
+      return response.traceName;
     }, true);
+    await this._startCollectingStacks(traceName);
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
-    await this._wrapApiCall(async () => {
-      const { traceName } = await this._channel.tracingStartChunk(options);
-      await this._startCollectingStacks(traceName);
-    }, true);
+    const { traceName } = await this._channel.tracingStartChunk(options);
+    await this._startCollectingStacks(traceName);
   }
 
   private async _startCollectingStacks(traceName: string) {
