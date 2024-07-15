@@ -77,7 +77,7 @@ test('should render test case', async ({ mount }) => {
   await expect(component.getByText('My test')).toBeVisible();
 });
 
-const linkRenderingTestCase: TestCase = {
+const annotationLinkRenderingTestCase: TestCase = {
   testId: 'testid',
   title: 'My test',
   path: [],
@@ -96,8 +96,7 @@ const linkRenderingTestCase: TestCase = {
 };
 
 test('should correctly render links in annotations', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={linkRenderingTestCase} run={0} anchor=''></TestCaseView>);
-  // const container = await(component.getByText('Annotations'));
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={annotationLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
 
   const firstLink = await component.getByText('https://playwright.dev/docs/intro').first();
   await expect(firstLink).toBeVisible();
@@ -114,4 +113,48 @@ test('should correctly render links in annotations', async ({ mount }) => {
   const fourthLink = await component.getByText('https://github.com/microsoft/playwright/issues/23181').first();
   await expect(fourthLink).toBeVisible();
   await expect(fourthLink).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/23181');
+});
+
+const resultWithAttachment: TestResult = {
+  retry: 0,
+  startTime: new Date(0).toUTCString(),
+  duration: 100,
+  errors: [],
+  steps: [{
+    title: 'Outer step',
+    startTime: new Date(100).toUTCString(),
+    duration: 10,
+    location: { file: 'test.spec.ts', line: 62, column: 0 },
+    count: 1,
+    steps: [],
+  }],
+  attachments: [{
+    name: 'first attachment',
+    body: 'The body with https://playwright.dev/docs/intro link and https://github.com/microsoft/playwright/issues/31284.',
+    contentType: 'text/plain'
+  }],
+  status: 'passed',
+};
+
+const attachmentLinkRenderingTestCase: TestCase = {
+  testId: 'testid',
+  title: 'My test',
+  path: [],
+  projectName: 'chromium',
+  location: { file: 'test.spec.ts', line: 42, column: 0 },
+  tags: [],
+  outcome: 'expected',
+  duration: 10,
+  ok: true,
+  annotations: [],
+  results: [resultWithAttachment]
+};
+
+test('should correctly render links in attachments', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  await component.getByText('first attachment').click();
+  const body = await component.getByText('The body with https://playwright.dev/docs/intro link');
+  await expect(body).toBeVisible();
+  await expect(body.locator('a').filter({ hasText: 'playwright.dev' })).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
+  await expect(body.locator('a').filter({ hasText: 'github.com' })).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
 });

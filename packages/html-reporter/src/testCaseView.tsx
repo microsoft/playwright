@@ -23,8 +23,8 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { hashStringToInt } from './labelUtils';
-import { msToString } from './uiUtils';
+import { linkifyText } from './renderUtils';
+import { hashStringToInt, msToString } from './utils';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -68,43 +68,11 @@ export const TestCaseView: React.FC<{
   </div>;
 };
 
-function renderAnnotationDescription(description: string) {
-  const CONTROL_CODES = '\\u0000-\\u0020\\u007f-\\u009f';
-  const WEB_LINK_REGEX = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + CONTROL_CODES + '"]{2,}[^\\s' + CONTROL_CODES + '"\')}\\],:;.!?]', 'ug');
-
-  const result = [];
-  let currentIndex = 0;
-  let match;
-
-  while ((match = WEB_LINK_REGEX.exec(description)) !== null) {
-    const stringBeforeMatch = description.substring(currentIndex, match.index);
-    if (stringBeforeMatch)
-      result.push(stringBeforeMatch);
-
-    const value = match[0];
-    result.push(renderLink(value));
-    currentIndex = match.index + value.length;
-  }
-  const stringAfterMatches = description.substring(currentIndex);
-  if (stringAfterMatches)
-    result.push(stringAfterMatches);
-
-  return result;
-}
-
-function renderLink(text: string) {
-  let link = text;
-  if (link.startsWith('www.'))
-    link = 'https://' + link;
-
-  return <a href={link} target='_blank' rel='noopener noreferrer'>{text}</a>;
-}
-
 function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
-      {description && <span>: {renderAnnotationDescription(description)}</span>}
+      {description && <span>: {linkifyText(description)}</span>}
     </div>
   );
 }

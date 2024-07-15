@@ -16,14 +16,13 @@
 
 import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
-import { msToString } from './uiUtils';
+import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
 import { filterWithToken, type Filter } from './filter';
 import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
-import { hashStringToInt } from './labelUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
