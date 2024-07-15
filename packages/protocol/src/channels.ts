@@ -177,6 +177,11 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  e?: {
+    m: string,
+    n: string,
+    s: string,
+  },
   r?: {
     p: string,
     f: string,
