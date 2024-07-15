@@ -372,15 +372,20 @@ class Member {
     this.args = new Map();
     if (this.kind === 'method')
       this.enclosingMethod = this;
+    const indexType = type => {
+      type.deepProperties().forEach(p => {
+        p.enclosingMethod = this;
+        indexType(p.type);
+      });
+    }
     for (const arg of this.argsArray) {
       this.args.set(arg.name, arg);
       arg.enclosingMethod = this;
       if (arg.name === 'options') {
         // @ts-ignore
         arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
-        // @ts-ignore
-        arg.type.properties.forEach(p => p.enclosingMethod = this);
       }
+      indexType(arg.type);
     }
   }
 
