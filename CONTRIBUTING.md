@@ -160,9 +160,10 @@ npm run test
 Be sure to run `npm run build` or let `npm run watch` run before you re-run the
 tests after making your changes to check them.
 
-- To run all tests in Chromium
+- To run tests in Chromium
 ```bash
 npm run ctest # also `ftest` for firefox and `wtest` for WebKit
+npm run ctest -- page-fill:23 # runs line 23 of page-fill.spec.ts
 ```
 
 - To run the Playwright test runner tests
