@@ -38,6 +38,7 @@ cd playwright
 
 ```bash
 npm ci
+npx playwright install
 ```
 
 3. Build Playwright
