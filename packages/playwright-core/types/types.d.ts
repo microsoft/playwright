@@ -8472,6 +8472,7 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
+   * - `'window-management'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {
