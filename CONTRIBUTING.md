@@ -46,11 +46,15 @@ npm ci
 npm run build
 ```
 
-4. Run all Playwright tests locally. For more information about tests, read [Running & Writing Tests](#running--writing-tests).
+4. Run tests
+
+This will run a test on line `23` in `page-fill.spec.ts`:
 
 ```bash
-npm test
+npm run ctest -- page-fill:23
 ```
+
+See [here](#running--writing-tests) for more information about running and writing tests.
 
 ### Code reviews
 
@@ -95,7 +99,7 @@ footer
 1. *label* is one of the following:
     - `fix` - playwright bug fixes.
     - `feat` - playwright features.
-    - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
+    - `docs` - changes to docs, e.g. `docs(api): ..` to change documentation.
     - `test` - changes to playwright tests infrastructure.
     - `devops` - build-related work, e.g. CI related patches and general changes to the browser build infrastructure
     - `chore` - everything that doesn't fall under previous categories
@@ -121,7 +125,7 @@ All API classes, methods, and events should have a description in [`docs/src`](h
 To run the documentation linter, use:
 
 ```bash
-npm run doc
+npm run doclint
 ```
 
 To build the documentation site locally and test how your changes will look in practice:
@@ -159,10 +163,13 @@ npm run test
 Be sure to run `npm run build` or let `npm run watch` run before you re-run the
 tests after making your changes to check them.
 
-- To run all tests in Chromium
+- To run tests in Chromium
 ```bash
 npm run ctest # also `ftest` for firefox and `wtest` for WebKit
+npm run ctest -- page-fill:23 # runs line 23 of page-fill.spec.ts
 ```
+
+To run tests in WebKit / Firefox, use `wtest` or `ftest`.
 
 - To run the Playwright test runner tests
 ```bash
@@ -206,31 +213,13 @@ npm run ctest -- --headed
 CRPATH=<path-to-executable> npm run ctest
 ```
 
-- To run tests in slow-mode:
-
-```bash
-SLOW_MO=500 npm run wtest -- --headed
-```
-
-- When should a test be marked with `skip` or `fail`?
+- When should a test be marked with `skip` or `fixme`?
 
   - **`skip(condition)`**: This test *should ***never*** work* for `condition`
-    where `condition` is usually a certain browser like `FFOX` (for Firefox),
-    `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
+    where `condition` is usually something like: `test.skip(browserName === 'chromium', 'This does not work because of ...')`.
 
-    For example, the [alt-click downloads test](https://github.com/microsoft/playwright/blob/471ccc72d3f0847caa36f629b394a028c7750d93/test/download.spec.js#L86) is marked
-    with `skip(FFOX)` since an alt-click in Firefox will not produce a download
-    even if a person was driving the browser.
-
-
-  - **`fail(condition)`**: This test *should ***eventually*** work* for `condition`
-    where `condition` is usually a certain browser like `FFOX` (for Firefox),
-    `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
-
-    For example, the [alt-click downloads test](https://github.com/microsoft/playwright/blob/471ccc72d3f0847caa36f629b394a028c7750d93/test/download.spec.js#L86) is marked
-    with `fail(CHROMIUM || WEBKIT)` since Playwright performing these actions
-    currently diverges from what a user would experience driving a Chromium or
-    WebKit.
+  - **`fixme(condition)`**: This test *should ***eventually*** work* for `condition`
+    where `condition` is usually something like: `test.fixme(browserName === 'chromium', 'We are waiting for version x')`.
 
 ## Contributor License Agreement
 
