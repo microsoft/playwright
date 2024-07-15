@@ -92,12 +92,13 @@ class ApiParser {
     const match = spec.text.match(/(event|method|property|async method|optional method|optional async method): ([^.]+)\.(.*)/);
     if (!match)
       throw new Error('Invalid member: ' + spec.text);
+    const metainfo = extractMetainfo(spec);
     const name = match[3];
     let returnType = null;
     let optional = false;
     for (const item of spec.children || []) {
       if (item.type === 'li' && item.liType === 'default') {
-        const parsed = this.parseType(item);
+        const parsed = this.parseType(item, metainfo.since ?? 'v1.0');
         returnType = parsed.type;
         optional = parsed.optional;
       }
@@ -106,7 +107,6 @@ class ApiParser {
       returnType = new docs.Type('void');
 
     const comments = extractComments(spec);
-    const metainfo = extractMetainfo(spec);
     let member;
     if (match[1] === 'event')
       member = docs.Member.createEvent(metainfo, name, returnType, comments);
@@ -188,7 +188,7 @@ class ApiParser {
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new docs.Type('Object', []);
-        options = docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
+        options = docs.Member.createProperty({ langs: {}, since: method.since, deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
         method.argsArray.push(options);
       }
       p.required = false;
@@ -209,25 +209,26 @@ class ApiParser {
       typeStart--;
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
-    const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param));
     const metainfo = extractMetainfo(spec);
     if (metainfo.hidden)
       return null;
+    const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param), metainfo.since ?? 'v1.0');
     return docs.Member.createProperty(metainfo, name, type, comments, !optional);
   }
 
   /**
    * @param {MarkdownLiNode} spec
+   * @param {string} since
    * @return {{ type: docs.Type, optional: boolean }}
    */
-  parseType(spec) {
+  parseType(spec, since) {
     const arg = parseVariable(spec.text);
     const properties = [];
     for (const child of /** @type {MarkdownLiNode[]} */ (spec.children) || []) {
       const { name, text } = parseVariable(/** @type {string} */(child.text));
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
-      const childType = this.parseType(child);
-      properties.push(docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
+      const childType = this.parseType(child, since);
+      properties.push(docs.Member.createProperty({ langs: {}, since, deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
     }
     const type = docs.Type.parse(arg.type, properties);
     return { type, optional: arg.optional };
