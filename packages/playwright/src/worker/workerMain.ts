@@ -319,7 +319,6 @@ export class WorkerMain extends ProcessRunner {
         if (typeof traceFixtureRegistration.fn === 'function')
           throw new Error(`"trace" option cannot be a function`);
         await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
-        await testLifecycleInstrumentation()?.onTestBegin?.();
       });
 
       if (this._isStopped || isSkipped) {
@@ -338,6 +337,8 @@ export class WorkerMain extends ProcessRunner {
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites)
           await this._runBeforeAllHooksForSuite(suite, testInfo);
+
+        await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => testLifecycleInstrumentation()?.onTestBegin?.());
 
         // Run "beforeEach" hooks. Once started with "beforeEach", we must run all "afterEach" hooks as well.
         shouldRunAfterEachHooks = true;
@@ -403,6 +404,12 @@ export class WorkerMain extends ProcessRunner {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
+      try {
+        await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => testLifecycleInstrumentation()?.onTestEnd?.());
+      } catch (error) {
+        firstAfterHooksError = firstAfterHooksError ?? error;
+      }
+
       // Run "afterAll" hooks for suites that are not shared with the next test.
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before worker fixtures teardown.
@@ -461,7 +468,6 @@ export class WorkerMain extends ProcessRunner {
     }
 
     await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
-      await testLifecycleInstrumentation()?.onTestEnd?.();
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
