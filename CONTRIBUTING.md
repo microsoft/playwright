@@ -38,19 +38,12 @@ cd playwright
 
 ```bash
 npm ci
-npx playwright install
 ```
 
 3. Build Playwright
 
 ```bash
 npm run build
-```
-
-4. Run all Playwright tests locally. For more information about tests, read [Running & Writing Tests](#running--writing-tests).
-
-```bash
-npm test
 ```
 
 ### Code reviews
