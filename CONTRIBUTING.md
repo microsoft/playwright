@@ -207,12 +207,6 @@ npm run ctest -- --headed
 CRPATH=<path-to-executable> npm run ctest
 ```
 
-- To run tests in slow-mode:
-
-```bash
-SLOW_MO=500 npm run wtest -- --headed
-```
-
 - When should a test be marked with `skip` or `fail`?
 
   - **`skip(condition)`**: This test *should ***never*** work* for `condition`
