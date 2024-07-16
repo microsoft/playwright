@@ -132,6 +132,9 @@ const resultWithAttachment: TestResult = {
     name: 'first attachment',
     body: 'The body with https://playwright.dev/docs/intro link and https://github.com/microsoft/playwright/issues/31284.',
     contentType: 'text/plain'
+  }, {
+    name: 'attachment with inline link https://github.com/microsoft/playwright/issues/31284',
+    contentType: 'text/plain'
   }],
   status: 'passed',
 };
@@ -157,4 +160,11 @@ test('should correctly render links in attachments', async ({ mount }) => {
   await expect(body).toBeVisible();
   await expect(body.locator('a').filter({ hasText: 'playwright.dev' })).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
   await expect(body.locator('a').filter({ hasText: 'github.com' })).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
+});
+
+test('should correctly render links in attachment name', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  const link = component.getByText('attachment with inline link').locator('a');
+  await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
+  await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
 });
