@@ -117,6 +117,7 @@ class ListReporter extends BaseReporter {
     if (!this._printSteps) {
       if (isTTY)
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      return;
     }
 
     const index = this.getStepIndex(testIndex, result, step);
