@@ -2651,7 +2651,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`method: BrowserType.launch`] now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9
