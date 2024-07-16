@@ -212,7 +212,7 @@ class ListReporter extends BaseReporter {
   private _appendLine(text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS) {
-      process.stdout.write(this._lastRow + ' : ' + line + '\n');
+      process.stdout.write('#' + this._lastRow + ' : ' + line + '\n');
     } else {
       process.stdout.write(line);
       process.stdout.write('\n');
@@ -223,7 +223,7 @@ class ListReporter extends BaseReporter {
   private _updateLine(row: number, text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write(row + ' : ' + line + '\n');
+      process.stdout.write('#' + row + ' : ' + line + '\n');
     else
       this._updateLineForTTY(row, line);
   }
