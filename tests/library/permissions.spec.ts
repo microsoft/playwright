@@ -21,141 +21,137 @@ function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({ name }).then(result => result.state), name);
 }
 
-it.describe('permissions', () => {
-  it.fixme(({ browserName, isWindows }) => browserName === 'webkit' && isWindows, 'Permissions API is disabled on Windows WebKit');
+it('should be prompt by default', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'geolocation')).toBe('prompt');
+});
 
-  it('should be prompt by default', async ({ page, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
-  });
+it('should deny permission when not listed', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions([], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'geolocation')).toBe('denied');
+});
 
-  it('should deny permission when not listed', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions([], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('denied');
-  });
+it('should fail when bad permission is given', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  let error: Error;
+  await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
+  expect(error.message).toContain('Unknown permission: foo');
+});
 
-  it('should fail when bad permission is given', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    let error: Error;
-    await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
-    expect(error.message).toContain('Unknown permission: foo');
-  });
+it('should grant geolocation permission when origin is listed', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'geolocation')).toBe('granted');
+});
 
-  it('should grant geolocation permission when origin is listed', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('granted');
-  });
+it('should grant window-management permission when origin is listed', async ({ page, context, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'Only Chromium supports window management API.');
 
-  it('should grant window-management permission when origin is listed', async ({ page, context, server, browserName }) => {
-    it.skip(browserName !== 'chromium', 'Only Chromium supports window management API.');
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['window-management'], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'window-management')).toBe('granted');
+});
 
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['window-management'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'window-management')).toBe('granted');
-  });
+it('should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(await getPermission(page, 'geolocation')).toBe('prompt');
+});
 
-  it('should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
-  });
+it('should grant notifications permission when listed', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'notifications')).toBe('granted');
+});
 
-  it('should grant notifications permission when listed', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'notifications')).toBe('granted');
-  });
+it('should accumulate when adding', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation']);
+  await context.grantPermissions(['notifications']);
+  expect(await getPermission(page, 'geolocation')).toBe('granted');
+  expect(await getPermission(page, 'notifications')).toBe('granted');
+});
 
-  it('should accumulate when adding', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation']);
-    await context.grantPermissions(['notifications']);
-    expect(await getPermission(page, 'geolocation')).toBe('granted');
-    expect(await getPermission(page, 'notifications')).toBe('granted');
-  });
+it('should clear permissions', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation']);
+  await context.clearPermissions();
+  await context.grantPermissions(['notifications']);
+  expect(await getPermission(page, 'geolocation')).not.toBe('granted');
+  expect(await getPermission(page, 'notifications')).toBe('granted');
+});
 
-  it('should clear permissions', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation']);
-    await context.clearPermissions();
-    await context.grantPermissions(['notifications']);
-    expect(await getPermission(page, 'geolocation')).not.toBe('granted');
-    expect(await getPermission(page, 'notifications')).toBe('granted');
-  });
+it('should grant permission when listed for all domains', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation']);
+  expect(await getPermission(page, 'geolocation')).toBe('granted');
+});
 
-  it('should grant permission when listed for all domains', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation']);
-    expect(await getPermission(page, 'geolocation')).toBe('granted');
-  });
+it('should grant permission when creating context', async ({ server, browser }) => {
+  const context = await browser.newContext({ permissions: ['geolocation'] });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'geolocation')).toBe('granted');
+  await context.close();
+});
 
-  it('should grant permission when creating context', async ({ server, browser }) => {
-    const context = await browser.newContext({ permissions: ['geolocation'] });
-    const page = await context.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    expect(await getPermission(page, 'geolocation')).toBe('granted');
-    await context.close();
-  });
+it('should reset permissions', async ({ page, context, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'geolocation')).toBe('granted');
+  await context.clearPermissions();
+  expect(await getPermission(page, 'geolocation')).toBe('prompt');
+});
 
-  it('should reset permissions', async ({ page, context, server }) => {
-    await page.goto(server.EMPTY_PAGE);
-    await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('granted');
-    await context.clearPermissions();
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
-  });
+it('should trigger permission onchange', async ({ page, context, server, browserName, browserMajorVersion }) => {
+  it.fail(browserName === 'webkit');
 
-  it('should trigger permission onchange', async ({ page, context, server, browserName, browserMajorVersion }) => {
-    it.fail(browserName === 'webkit');
-
-    await page.goto(server.EMPTY_PAGE);
-    await page.evaluate(() => {
-      window['events'] = [];
-      return navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    window['events'] = [];
+    return navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+      window['events'].push(result.state);
+      result.onchange = function() {
         window['events'].push(result.state);
-        result.onchange = function() {
-          window['events'].push(result.state);
-        };
-      });
+      };
     });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt']);
-    await context.grantPermissions([], { origin: server.EMPTY_PAGE });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied']);
-    await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
-    await context.clearPermissions();
-
-    // Note: Chromium 110 stopped triggering "onchange" when clearing permissions.
-    expect(await page.evaluate(() => window['events'])).toEqual(
-        (browserName === 'chromium' && browserMajorVersion === 110) ?
-          ['prompt', 'denied', 'granted'] :
-          ['prompt', 'denied', 'granted', 'prompt']);
   });
+  expect(await page.evaluate(() => window['events'])).toEqual(['prompt']);
+  await context.grantPermissions([], { origin: server.EMPTY_PAGE });
+  expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied']);
+  await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+  expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
+  await context.clearPermissions();
 
-  it('should isolate permissions between browser contexts', async ({ server, browser }) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    const otherContext = await browser.newContext();
-    const otherPage = await otherContext.newPage();
-    await otherPage.goto(server.EMPTY_PAGE);
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    expect(await getPermission(otherPage, 'geolocation')).toBe('prompt');
+  // Note: Chromium 110 stopped triggering "onchange" when clearing permissions.
+  expect(await page.evaluate(() => window['events'])).toEqual(
+      (browserName === 'chromium' && browserMajorVersion === 110) ?
+        ['prompt', 'denied', 'granted'] :
+        ['prompt', 'denied', 'granted', 'prompt']);
+});
 
-    await context.grantPermissions([], { origin: server.EMPTY_PAGE });
-    await otherContext.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await getPermission(page, 'geolocation')).toBe('denied');
-    expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
+it('should isolate permissions between browser contexts', async ({ server, browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const otherContext = await browser.newContext();
+  const otherPage = await otherContext.newPage();
+  await otherPage.goto(server.EMPTY_PAGE);
+  expect(await getPermission(page, 'geolocation')).toBe('prompt');
+  expect(await getPermission(otherPage, 'geolocation')).toBe('prompt');
 
-    await context.clearPermissions();
-    expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
-    await otherContext.close();
-    await context.close();
-  });
+  await context.grantPermissions([], { origin: server.EMPTY_PAGE });
+  await otherContext.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+  expect(await getPermission(page, 'geolocation')).toBe('denied');
+  expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
+
+  await context.clearPermissions();
+  expect(await getPermission(page, 'geolocation')).toBe('prompt');
+  expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
+  await otherContext.close();
+  await context.close();
 });
 
 it('should support clipboard read', async ({ page, context, server, browserName, isWindows, isLinux, headless }) => {
