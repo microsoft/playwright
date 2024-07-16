@@ -277,7 +277,7 @@ class RecordActionTool implements RecorderTool {
       signals: [],
       button: 'right',
       modifiers: 0,
-      clickCount: event.detail
+      clickCount: 0
     });
   }
 
