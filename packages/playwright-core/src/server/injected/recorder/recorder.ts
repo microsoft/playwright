@@ -260,6 +260,9 @@ class RecordActionTool implements RecorderTool {
   }
 
   onContextMenu(event: MouseEvent) {
+    // the 'contextmenu' event is triggered by a right-click or equivalent action,
+    // and it prevents the click event from firing for that action, so we always
+    // convert 'contextmenu' into a right-click.
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
