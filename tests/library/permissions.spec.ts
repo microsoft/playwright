@@ -22,7 +22,7 @@ function getPermission(page, name) {
 }
 
 it.describe('permissions', () => {
-  it.skip(({ browserName }) => browserName === 'webkit', 'Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)');
+  it.fixme(({ browserName, isWindows }) => browserName === 'webkit' && isWindows, 'Permissions API is disabled on Windows WebKit');
 
   it('should be prompt by default', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
@@ -49,7 +49,7 @@ it.describe('permissions', () => {
   });
 
   it('should grant window-management permission when origin is listed', async ({ page, context, server, browserName }) => {
-    it.fail(browserName === 'firefox');
+    it.skip(browserName !== 'chromium', 'Only Chromium supports window management API.');
 
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['window-management'], { origin: server.EMPTY_PAGE });
