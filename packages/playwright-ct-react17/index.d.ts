@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { Locator } from 'playwright/test';
-import type { TestType } from '@playwright/experimental-ct-core';
+import type { TestType, Locator} from '@playwright/experimental-ct-core';
 
 export interface MountOptions<HooksConfig> {
   hooksConfig?: HooksConfig;
@@ -33,5 +32,4 @@ export const test: TestType<{
   ): Promise<MountResult>;
 }>;
 
-export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
-export { expect, devices } from 'playwright/test';
+export { defineConfig, PlaywrightTestConfig, expect, devices } from '@playwright/experimental-ct-core';
