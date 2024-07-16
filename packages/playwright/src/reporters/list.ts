@@ -112,7 +112,7 @@ class ListReporter extends BaseReporter {
     }
 
     const index = this._stepIndex.get(step)!;
-    const title = test.title + colors.dim(stepSuffix(step));
+    const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step);
     const prefix = this._testPrefix(index, '');
     let text = '';
     if (step.error)
