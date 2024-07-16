@@ -56,4 +56,4 @@ export function defineConfig(config: PlaywrightTestConfig, ...configs: Playwrigh
 export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T, W>;
 
-export { expect, devices } from 'playwright/test';
+export { expect, devices, Locator } from 'playwright/test';
