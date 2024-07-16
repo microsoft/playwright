@@ -126,7 +126,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
-    test('render steps in non-TTY mode', async ({ runInlineTest }) => {
+    test.only('render steps in non-TTY mode', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
@@ -144,14 +144,14 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIST_PRINT_STEPS: '1' });
       const text = result.output;
       const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
-      lines.pop(); // Remove last item that contains [v] and time in ms.
       expect(lines).toEqual([
-        '0 :      .2 passes › outer 1.0 › inner 1.1 (Xms)',
-        '1 :      .3 passes › outer 1.0 › inner 1.2 (Xms)',
-        '2 :      .1 passes › outer 1.0 (Xms)',
-        '3 :      .5 passes › outer 2.0 › inner 2.1 (Xms)',
-        '4 :      .6 passes › outer 2.0 › inner 2.2 (Xms)',
-        '5 :      .4 passes › outer 2.0 (Xms)',
+        '0 :      1.1 a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 (Xms)',
+        '1 :      1.2 a.test.ts:3:15 › passes › outer 1.0 › inner 1.2 (Xms)',
+        '2 :      1.3 a.test.ts:3:15 › passes › outer 1.0 (Xms)',
+        '3 :      1.4 a.test.ts:3:15 › passes › outer 2.0 › inner 2.1 (Xms)',
+        '4 :      1.5 a.test.ts:3:15 › passes › outer 2.0 › inner 2.2 (Xms)',
+        '5 :      1.6 a.test.ts:3:15 › passes › outer 2.0 (Xms)',
+        '6 :   ✓  1 a.test.ts:3:15 › passes (Xms)',
       ]);
     });
 
