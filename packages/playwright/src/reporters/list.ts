@@ -77,15 +77,22 @@ class ListReporter extends BaseReporter {
     this._dumpToStdio(test, chunk, process.stderr);
   }
 
+  private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
+    if (this._stepIndex.has(step))
+      return this._stepIndex.get(step)!;
+
+    const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
+    (result as any)[lastStepOrdinalSymbol] = ordinal;
+    const stepIndex = `${testIndex}.${ordinal}`;
+    this._stepIndex.set(step, stepIndex);
+    return stepIndex;
+  }
+
   override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     super.onStepBegin(test, result, step);
     if (step.category !== 'test.step')
       return;
     const testIndex = this._resultIndex.get(result) || '';
-    const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
-    (result as any)[lastStepOrdinalSymbol] = ordinal;
-    const stepIndex = `${testIndex}.${ordinal}`;
-    this._stepIndex.set(step, stepIndex);
 
     if (!this._printSteps) {
       if (isTTY)
@@ -96,7 +103,7 @@ class ListReporter extends BaseReporter {
     if (isTTY) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
-      const prefix = this._testPrefix(stepIndex, '');
+      const prefix = this._testPrefix(this.getStepIndex(testIndex, result, step), '');
       const line = test.title + colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
     }
@@ -113,7 +120,7 @@ class ListReporter extends BaseReporter {
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
 
-    const index = this._stepIndex.get(step)!;
+    const index = this.getStepIndex(testIndex, result, step);
     const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step);
     const prefix = this._testPrefix(index, '');
     let text = '';
