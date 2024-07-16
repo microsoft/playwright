@@ -125,7 +125,7 @@ All API classes, methods, and events should have a description in [`docs/src`](h
 To run the documentation linter, use:
 
 ```bash
-npm run doclint
+npm run doc
 ```
 
 To build the documentation site locally and test how your changes will look in practice:
