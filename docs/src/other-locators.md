@@ -881,7 +881,7 @@ await page.Locator("data-test-id=submit").ClickAsync();
 ```
 
 :::note
-Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css] selector, e.g. `css=[data-test="login"]:enabled`.
+Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css](#css-locator) selector, e.g. `css=[data-test="login"]:enabled`.
 :::
 
 ## Chaining selectors
@@ -918,11 +918,3 @@ We recommend [filtering by another locator](./locators.md#filter-by-childdescend
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
 
 For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
-
-
-[text]: #legacy-text-locator
-[css]: #css-locator
-[xpath]: #xpath-locator
-[react]: #react-locator
-[vue]: #vue-locator
-[id]: #id-data-testid-data-test-id-data-test-selectors
