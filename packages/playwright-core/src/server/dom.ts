@@ -639,6 +639,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
       if (directoryUpload && !inputElement.webkitdirectory)
         throw injected.createStacklessError('File input does not support directories, pass individual files instead');
+      if (!directoryUpload && inputElement.webkitdirectory)
+        throw injected.createStacklessError('[webkitdirectory] input requires passing a path to a directory');
       return inputElement;
     }, { multiple, directoryUpload: !!localDirectory });
     if (result === 'error:notconnected' || !result.asElement())

@@ -120,6 +120,15 @@ it('should throw when uploading a folder in a normal file upload input', async (
   await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
 });
 
+it('should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset }) => {
+  it.skip(isAndroid);
+  it.skip(os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  await expect(input.setInputFiles(asset('file to upload.txt'))).rejects.toThrow('[webkitdirectory] input requires passing a path to a directory');
+});
+
 it('should upload a file after popup', async ({ page, server, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
   await page.goto(server.PREFIX + '/input/fileupload.html');
