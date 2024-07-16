@@ -1320,3 +1320,49 @@ function playwrightConfig(obj: any) {
     `,
   };
 }
+
+test('should trim+sanitize attachment names and paths', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
+      const title = 'long '.repeat(30) + 'title';
+      test(title, async ({ page }) => {
+        await expect.soft(page).toHaveScreenshot();
+        const name = 'long '.repeat(30) + 'name.png';
+        await expect.soft(page).toHaveScreenshot(name);
+        await expect.soft(page).toHaveScreenshot(['dir', name]);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  const attachments = result.output.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments) {
+    attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
+    attachment.name = attachment.name.replace(/\\/g, '/');
+  }
+  expect(attachments).toEqual([
+    {
+      name: 'long-long-long-long-long-l-852e1-long-long-long-long-title-1-actual.png',
+      contentType: 'image/png',
+      path: 'test-results/a-long-long-long-long-long-abd51-g-long-long-long-long-title/long-long-long-long-long-l-852e1-long-long-long-long-title-1-actual.png',
+    },
+    {
+      name: 'long-long-long-long-long-l-6bf1e-ong-long-long-long-name-actual.png',
+      contentType: 'image/png',
+      path: 'test-results/a-long-long-long-long-long-abd51-g-long-long-long-long-title/long-long-long-long-long-l-6bf1e-ong-long-long-long-name-actual.png',
+    },
+    {
+      name: 'dir/long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long name-actual.png',
+      contentType: 'image/png',
+      path: 'test-results/a-long-long-long-long-long-abd51-g-long-long-long-long-title/dir/long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long name-actual.png',
+    },
+  ]);
+});
+
