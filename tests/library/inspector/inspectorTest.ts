@@ -186,10 +186,7 @@ class Recorder {
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   }
 
-  async trustedClick(options?: {
-    button?: 'left' | 'right' | 'middle';
-    clickCount?: number;
-  }) {
+  async trustedClick(options?: { button?: 'left' | 'right' | 'middle' }) {
     await this.page.mouse.down(options);
     await this.page.mouse.up(options);
   }
