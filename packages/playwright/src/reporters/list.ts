@@ -94,18 +94,17 @@ class ListReporter extends BaseReporter {
       return;
     const testIndex = this._resultIndex.get(result) || '';
 
-    if (!this._printSteps) {
-      if (isTTY)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+    if (!isTTY)
       return;
-    }
 
-    if (isTTY) {
+    if (this._printSteps) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
       const prefix = this._testPrefix(this.getStepIndex(testIndex, result, step), '');
       const line = test.title + colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
+    } else {
+      this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
