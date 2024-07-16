@@ -194,6 +194,8 @@ export class Connection extends EventEmitter {
   }
 
   close(cause?: string) {
+    if (this._closedError)
+      return;
     this._closedError = new TargetClosedError(cause);
     for (const callback of this._callbacks.values())
       callback.reject(this._closedError);
