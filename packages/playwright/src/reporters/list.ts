@@ -36,7 +36,7 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { printSteps?: boolean } = {}) {
     super();
-    this._printSteps = isTTY && getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
+    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
   }
 
   override printsToStdio() {
@@ -80,16 +80,16 @@ class ListReporter extends BaseReporter {
     if (step.category !== 'test.step')
       return;
     const testIndex = this._resultIndex.get(result) || '';
+    const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
+    (result as any)[lastStepOrdinalSymbol] = ordinal;
+    const stepIndex = `${testIndex}.${ordinal}`;
+    this._stepIndex.set(step, stepIndex);
+
     if (!this._printSteps) {
       if (isTTY)
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
-
-    const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
-    (result as any)[lastStepOrdinalSymbol] = ordinal;
-    const stepIndex = `${testIndex}.${ordinal}`;
-    this._stepIndex.set(step, stepIndex);
 
     if (isTTY) {
       this._maybeWriteNewLine();
@@ -109,7 +109,6 @@ class ListReporter extends BaseReporter {
     if (!this._printSteps) {
       if (isTTY)
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
-      return;
     }
 
     const index = this._stepIndex.get(step)!;

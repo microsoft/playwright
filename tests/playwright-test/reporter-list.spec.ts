@@ -126,6 +126,35 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
+    test('render steps in non-TTY mode', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await test.step('outer 1.0', async () => {
+              await test.step('inner 1.1', async () => {});
+              await test.step('inner 1.2', async () => {});
+            });
+            await test.step('outer 2.0', async () => {
+              await test.step('inner 2.1', async () => {});
+              await test.step('inner 2.2', async () => {});
+            });
+          });
+        `,
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIST_PRINT_STEPS: '1' });
+      const text = result.output;
+      const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
+      lines.pop(); // Remove last item that contains [v] and time in ms.
+      expect(lines).toEqual([
+        '0 :      .2 passes › outer 1.0 › inner 1.1 (Xms)',
+        '1 :      .3 passes › outer 1.0 › inner 1.2 (Xms)',
+        '2 :      .1 passes › outer 1.0 (Xms)',
+        '3 :      .5 passes › outer 2.0 › inner 2.1 (Xms)',
+        '4 :      .6 passes › outer 2.0 › inner 2.2 (Xms)',
+        '5 :      .4 passes › outer 2.0 (Xms)',
+      ]);
+    });
+
     test('very long console line should not mess terminal', async ({ runInlineTest }) => {
       const TTY_WIDTH = 80;
       const result = await runInlineTest({
