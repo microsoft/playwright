@@ -54,11 +54,13 @@ class ListReporter extends BaseReporter {
 
   override onTestBegin(test: TestCase, result: TestResult) {
     super.onTestBegin(test, result);
+
+    const index = String(this._resultIndex.size + 1);
+    this._resultIndex.set(result, index);
+
     if (!isTTY)
       return;
     this._maybeWriteNewLine();
-    const index = String(this._resultIndex.size + 1);
-    this._resultIndex.set(result, index);
     this._testRows.set(test, this._lastRow);
     const prefix = this._testPrefix(index, '');
     const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
