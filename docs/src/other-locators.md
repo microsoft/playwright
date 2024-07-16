@@ -920,9 +920,9 @@ By default, chained selectors resolve to an element queried by the last selector
 For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
 
 
-[text]: #text-selector
-[css]: #css-selector
-[xpath]: #xpath-selectors
-[react]: #react-selectors
-[vue]: #vue-selectors
+[text]: #legacy-text-locator
+[css]: #css-locator
+[xpath]: #xpath-locator
+[react]: #react-locator
+[vue]: #vue-locator
 [id]: #id-data-testid-data-test-id-data-test-selectors
