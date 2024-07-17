@@ -138,6 +138,7 @@ function createExpect(info: ExpectMetaInfo) {
                 utils,
                 timeout: currentExpectTimeout()
               };
+              (newThis as any).equals = throwUnsupportedExpectMatcherError;
               return (matcher as any).call(newThis, ...args);
             };
           }
@@ -181,6 +182,10 @@ function createExpect(info: ExpectMetaInfo) {
   };
 
   return expectInstance;
+}
+
+function throwUnsupportedExpectMatcherError() {
+  throw new Error('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
 }
 
 expectLibrary.setState({ expand: false });
