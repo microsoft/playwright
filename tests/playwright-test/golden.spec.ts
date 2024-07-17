@@ -145,7 +145,7 @@ test('should generate separate actual results for repeating names', async ({ run
     {
       'name': 'bar/baz-actual.txt',
       'contentType': 'text/plain',
-      'path': 'test-results/a-is-a-test/bar-baz-actual.txt'
+      'path': 'test-results/a-is-a-test/bar/baz-actual.txt'
     },
     {
       'name': 'bar/baz-1-expected.txt',
@@ -155,7 +155,7 @@ test('should generate separate actual results for repeating names', async ({ run
     {
       'name': 'bar/baz-1-actual.txt',
       'contentType': 'text/plain',
-      'path': 'test-results/a-is-a-test/bar-baz-1-actual.txt'
+      'path': 'test-results/a-is-a-test/bar/baz-1-actual.txt'
     }
   ]);
 });
@@ -977,12 +977,12 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     {
       name: 'test/path/snapshot-actual.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test-path-snapshot-actual.png'
+      path: 'a-is-a-test/test/path/snapshot-actual.png'
     },
     {
       name: 'test/path/snapshot-diff.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test-path-snapshot-diff.png'
+      path: 'a-is-a-test/test/path/snapshot-diff.png'
     }
   ]);
 });
