@@ -82,10 +82,15 @@ export type TestFileFilter = {
 };
 
 export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
-  const untrackedFiles = childProcess.execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' }).split('\n').filter(Boolean);
-  const changedFiles = childProcess.execSync(`git diff ${baseCommit} --name-only`, { encoding: 'utf-8' }).split('\n').filter(Boolean);
+  const gitFileList = (command: string) => childProcess.execSync(`git ${command}`, { encoding: 'utf-8' }).split('\n').filter(Boolean).map(file => path.resolve(file));
+  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`);
+  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`);
 
-  return [...untrackedFiles, ...changedFiles, ...affectedTestFiles([...untrackedFiles, ...changedFiles].map(file => path.resolve(file)))];
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
+  return [
+    ...filesWithChanges,
+    ...affectedTestFiles(filesWithChanges),
+  ];
 }
 
 export async function createFileFiltersFromArguments(args: string[], onlyChanged: string | undefined): Promise<TestFileFilter[]> {
