@@ -87,7 +87,7 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
       return childProcess.execSync(
           `git ${command}`,
           { encoding: 'utf-8', stdio: 'pipe' }
-      ).split('\n').filter(Boolean).map(file => path.resolve(file));
+      ).split('\n').filter(Boolean);
     } catch (_error) {
       const error = _error as childProcess.SpawnSyncReturns<string>;
       throw new Error([
@@ -107,8 +107,9 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
 
   const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`);
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`);
+  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
 
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges].map(file => path.join(gitRoot, file));
   return [
     ...filesWithChanges,
     ...affectedTestFiles(filesWithChanges),
