@@ -156,8 +156,15 @@ Examples:
 function getOnlyChangedArg(input: string | boolean | undefined): string | undefined {
   if (typeof input === 'string')
     return input;
-  if (input === true)
-    return process.env.GITHUB_BASE_REF ?? process.env['Build.PullRequest.TargetBranch'] ?? 'HEAD';
+  if (input === true) {
+    if (process.env.CI) {
+      const baseRef = process.env.GITHUB_BASE_REF ?? process.env.BITBUCKET_BRANCH ?? process.env['Build.PullRequest.TargetBranch'];
+      if (!baseRef)
+        throw new Error('You specified --only-changed in a CI environment, but the base reference can not be inferred. Please specify it explicitly, e.g. by setting --only-changed=main');
+      return baseRef;
+    }
+    return 'HEAD';
+  }
 }
 
 
