@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as baseTest, expect } from './playwright-test-fixtures';
+import { test as baseTest, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import { execSync } from 'node:child_process';
 
 const test = baseTest.extend({
@@ -181,4 +181,62 @@ test('should throw nice error message if git doesnt work', async ({ setupReposit
 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('only works with Git repositories');
+});
+
+test('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
+  const git = await setupRepository();
+
+  await writeFiles({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': `
+    `,
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+    'src/button2.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  });
+
+  git('add .');
+  git('commit -m "init components"');
+
+  const result = await runInlineTest({}, { 'workers': 1, 'only-changed': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('No tests found');
+
+  const result2 = await runInlineTest({
+    'src/button2.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Different Button');
+      });
+    `
+  }, { 'workers': 1, 'only-changed': true });
+
+  expect(result2.exitCode).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.output).toContain('button2.test.tsx');
+  expect(result2.output).not.toContain('button.test.tsx');
 });
