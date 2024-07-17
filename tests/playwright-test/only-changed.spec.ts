@@ -36,7 +36,13 @@ const test = baseTest.extend({
         test('fails', () => { expect(question).toBe(answer); });
       `,
         'utils.ts': `
+        export * from './answer';
+        export * from './question';
+      `,
+        'answer.ts': `
         export const answer = 42;
+      `,
+        'question.ts': `
         export const question = "???";
       `,
       });
@@ -120,8 +126,7 @@ test.describe('should be smart about PR base reference from CI', () => {
 test('should understand dependency structure', async ({ runInlineTest, setupRepository, writeFiles }) => {
   await setupRepository();
   await writeFiles({
-    'utils.ts': `
-        export const answer = 42;
+    'question.ts': `
         export const question = "what is the answer to life the universe and everything";
       `,
   });
