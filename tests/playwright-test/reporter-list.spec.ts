@@ -126,7 +126,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       ]);
     });
 
-    test.only('render steps in non-TTY mode', async ({ runInlineTest }) => {
+    test('render steps in non-TTY mode', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
           import { test, expect } from '@playwright/test';
