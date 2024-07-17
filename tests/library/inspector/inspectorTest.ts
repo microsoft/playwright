@@ -186,9 +186,9 @@ class Recorder {
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   }
 
-  async trustedClick() {
-    await this.page.mouse.down();
-    await this.page.mouse.up();
+  async trustedClick(options?: { button?: 'left' | 'right' | 'middle' }) {
+    await this.page.mouse.down(options);
+    await this.page.mouse.up(options);
   }
 
   async focusElement(selector: string): Promise<string> {
