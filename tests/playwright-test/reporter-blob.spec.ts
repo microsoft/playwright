@@ -478,28 +478,36 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
 
   const text = stripAnsi(output);
   expect(text).toContain('Running 10 tests using 3 workers');
-  const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
+  const lines = text.split('\n').filter(l => l.match(/^#.* :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
   expect(lines).toEqual([
-    `0 :      1 a.test.js:3:11 › math 1`,
-    `0 :   ${POSITIVE_STATUS_MARK} 1 a.test.js:3:11 › math 1 (Xms)`,
-    `1 :      2 a.test.js:6:11 › failing 1`,
-    `1 :   ${NEGATIVE_STATUS_MARK} 2 a.test.js:6:11 › failing 1 (Xms)`,
-    `2 :      3 a.test.js:6:11 › failing 1 (retry #1)`,
-    `2 :   ${NEGATIVE_STATUS_MARK} 3 a.test.js:6:11 › failing 1 (retry #1) (Xms)`,
-    `3 :      4 a.test.js:9:11 › flaky 1`,
-    `3 :   ${NEGATIVE_STATUS_MARK} 4 a.test.js:9:11 › flaky 1 (Xms)`,
-    `4 :      5 a.test.js:9:11 › flaky 1 (retry #1)`,
-    `4 :   ${POSITIVE_STATUS_MARK} 5 a.test.js:9:11 › flaky 1 (retry #1) (Xms)`,
-    `5 :      6 a.test.js:12:12 › skipped 1`,
-    `5 :   -  6 a.test.js:12:12 › skipped 1`,
-    `6 :      7 b.test.js:3:11 › math 2`,
-    `6 :   ${POSITIVE_STATUS_MARK} 7 b.test.js:3:11 › math 2 (Xms)`,
-    `7 :      8 b.test.js:6:11 › failing 2`,
-    `7 :   ${NEGATIVE_STATUS_MARK} 8 b.test.js:6:11 › failing 2 (Xms)`,
-    `8 :      9 b.test.js:6:11 › failing 2 (retry #1)`,
-    `8 :   ${NEGATIVE_STATUS_MARK} 9 b.test.js:6:11 › failing 2 (retry #1) (Xms)`,
-    `9 :      10 b.test.js:9:12 › skipped 2`,
-    `9 :   -  10 b.test.js:9:12 › skipped 2`
+    `#0 :      1 a.test.js:3:11 › math 1`,
+    `#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.js:3:11 › math 1 (Xms)`,
+    `#1 :      2 a.test.js:6:11 › failing 1`,
+    `#1 :   ${NEGATIVE_STATUS_MARK} 2 a.test.js:6:11 › failing 1 (Xms)`,
+    `#2 :      3 a.test.js:6:11 › failing 1 (retry #1)`,
+    `#2 :   ${NEGATIVE_STATUS_MARK} 3 a.test.js:6:11 › failing 1 (retry #1) (Xms)`,
+    `#3 :      4 a.test.js:9:11 › flaky 1`,
+    `#3 :   ${NEGATIVE_STATUS_MARK} 4 a.test.js:9:11 › flaky 1 (Xms)`,
+    `#4 :      5 a.test.js:9:11 › flaky 1 (retry #1)`,
+    `#4 :   ${POSITIVE_STATUS_MARK} 5 a.test.js:9:11 › flaky 1 (retry #1) (Xms)`,
+    `#5 :      6 a.test.js:12:12 › skipped 1`,
+    `#5 :   -  6 a.test.js:12:12 › skipped 1`,
+    `#6 :      7 b.test.js:3:11 › math 2`,
+    `#6 :   ${POSITIVE_STATUS_MARK} 7 b.test.js:3:11 › math 2 (Xms)`,
+    `#7 :      8 b.test.js:6:11 › failing 2`,
+    `#7 :   ${NEGATIVE_STATUS_MARK} 8 b.test.js:6:11 › failing 2 (Xms)`,
+    `#8 :      9 b.test.js:6:11 › failing 2 (retry #1)`,
+    `#8 :   ${NEGATIVE_STATUS_MARK} 9 b.test.js:6:11 › failing 2 (retry #1) (Xms)`,
+    `#9 :      10 b.test.js:9:12 › skipped 2`,
+    `#9 :   -  10 b.test.js:9:12 › skipped 2`,
+    `#10 :      11 c.test.js:3:11 › math 3`,
+    `#10 :   ${POSITIVE_STATUS_MARK} 11 c.test.js:3:11 › math 3 (Xms)`,
+    `#11 :      12 c.test.js:6:11 › flaky 2`,
+    `#11 :   ${NEGATIVE_STATUS_MARK} 12 c.test.js:6:11 › flaky 2 (Xms)`,
+    `#12 :      13 c.test.js:6:11 › flaky 2 (retry #1)`,
+    `#12 :   ${POSITIVE_STATUS_MARK} 13 c.test.js:6:11 › flaky 2 (retry #1) (Xms)`,
+    `#13 :      14 c.test.js:9:12 › skipped 3`,
+    `#13 :   -  14 c.test.js:9:12 › skipped 3`,
   ]);
 });
 
