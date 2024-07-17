@@ -155,7 +155,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         connection.close(reason || closeError);
       };
       pipe.on('closed', params => onPipeClosed(params.reason));
-      connection.onmessage = message => pipe.send({ message }).catch(() => onPipeClosed());
+      connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);
 
       pipe.on('message', ({ message }) => {
         try {
@@ -181,7 +181,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         this._didLaunchBrowser(browser, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
         browser._connectHeaders = connectHeaders;
-        browser.on(Events.Browser.Disconnected, closePipe);
+        browser.on(Events.Browser.Disconnected, () => this._wrapApiCall(() => closePipe(), /* isInternal */ true));
         return browser;
       }, deadline);
       if (!result.timedOut) {
