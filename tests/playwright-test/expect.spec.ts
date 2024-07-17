@@ -1056,7 +1056,7 @@ test('should throw error when using .equals()', async ({ runInlineTest }) => {
       test('numeric ranges', () => {
         test.expect(() => {
           test.expect(100).toBeWithinRange(90, 110);
-        }).toThrowError('Playwright Expect matchers are not fully compatible with Jest matchers. See https://aka.ms/playwright/expect-compatibility');
+        }).toThrowError('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
       });
     `
   });
