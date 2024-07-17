@@ -74,3 +74,32 @@ test('should detect changed files', async ({ runInlineTest }) => {
   expect(result.output).toContain('b.spec.ts');
 });
 
+test('should diff based on base commit', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+    'b.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+    async [magicFileCreationSymbol](baseDir) {
+      execSync(`git init --initial-branch=main`, { cwd: baseDir });
+      execSync(`git add .`, { cwd: baseDir });
+      execSync(`git commit -m init`, { cwd: baseDir });
+
+      await writeFile(join(baseDir, 'b.spec.ts'), `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `);
+
+      execSync(`git commit -a -m update`, { cwd: baseDir });
+    }
+  }, { 'only-changed': `HEAD~1` });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('b.spec.ts');
+});
+
