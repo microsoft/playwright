@@ -16,15 +16,6 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it.use({
-  launchOptions: async ({ launchOptions }, use) => {
-    await use({
-      ...launchOptions,
-      proxy: { server: 'per-context' }
-    });
-  }
-});
-
 it.skip(({ mode }) => mode !== 'default');
 
 it('context request should pick up proxy credentials', async ({ browserType, server, proxyServer }) => {
