@@ -185,7 +185,7 @@ function createExpect(info: ExpectMetaInfo) {
 }
 
 function throwUnsupportedExpectMatcherError() {
-  throw new Error('Playwright Expect matchers are not fully compatible with Jest matchers. See https://aka.ms/playwright/expect-compatibility');
+  throw new Error('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
 }
 
 expectLibrary.setState({ expand: false });
