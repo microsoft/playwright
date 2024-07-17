@@ -105,11 +105,12 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
     }
   }
 
-  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`);
-  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`);
-  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
+  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`).map(file => path.join(process.cwd(), file));
 
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges].map(file => path.join(gitRoot, file));
+  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
+  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
+
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
   return [
     ...filesWithChanges,
     ...affectedTestFiles(filesWithChanges),

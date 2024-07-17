@@ -241,26 +241,45 @@ test('should suppport component tests', async ({ runInlineTest, setupRepository,
   expect(result2.output).not.toContain('button.test.tsx');
 });
 
-test('should work the same if being called in subdirectory', async ({ runInlineTest, setupRepository, writeFiles }) => {
-  const git = await setupRepository();
+test.describe('should work the same if being called in subdirectory', () => {
+  test('tracked file', async ({ runInlineTest, setupRepository, writeFiles }) => {
+    const git = await setupRepository();
 
-  await writeFiles({
-    'tests/c.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fails', () => { expect(1).toBe(2); });
-    `
+    await writeFiles({
+      'tests/c.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `
+    });
+    git('add .');
+    git('commit -a -m "add test"');
+
+    const result = await runInlineTest({
+      'tests/c.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `
+    }, { 'only-changed': true }, {}, { cwd: 'tests' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.output).toContain('c.spec.ts');
   });
-  git('add .');
-  git('commit -a -m "add test"');
 
-  const result = await runInlineTest({
-    'tests/c.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fails', () => { expect(1).toBe(3); });
-    `
-  }, { 'only-changed': true }, {}, { cwd: 'tests' });
+  test('untracked file', async ({ runInlineTest, setupRepository }) => {
+    await setupRepository();
 
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('c.spec.ts');
+    const result = await runInlineTest({
+      'tests/c.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `
+    }, { 'only-changed': true }, {}, { cwd: 'tests' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.output).toContain('c.spec.ts');
+  });
 });
+
+
