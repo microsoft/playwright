@@ -36,7 +36,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : null;
+  const cliFileMatcher = (config.cliArgs.length || config.cliOnlyChanged) ? await createFileMatcherFromArguments(config.cliArgs, config.cliOnlyChanged) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
@@ -128,7 +128,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Filter all the projects using grep, testId, file names.
   {
     // Interpret cli parameters.
-    const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
+    const cliFileFilters = await createFileFiltersFromArguments(config.cliArgs, config.cliOnlyChanged);
     const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);

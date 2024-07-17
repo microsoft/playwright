@@ -39,7 +39,7 @@ class FSWatcher {
   private _timer: NodeJS.Timeout | undefined;
 
   async update(config: FullConfigInternal) {
-    const commandLineFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : () => true;
+    const commandLineFileMatcher = (config.cliArgs.length || config.cliOnlyChanged) ? await createFileMatcherFromArguments(config.cliArgs, config.cliOnlyChanged) : () => true;
     const projects = filterProjects(config.projects, config.cliProjectFilter);
     const projectClosure = buildProjectsClosure(projects);
     const projectFilters = new Map<FullProjectInternal, Matcher>();

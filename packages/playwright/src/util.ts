@@ -19,6 +19,7 @@ import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
+import childProcess from 'child_process';
 import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import { formatCallLog } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './../types/test';
@@ -79,7 +80,12 @@ export type TestFileFilter = {
   column: number | null;
 };
 
-export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
+export async function createFileFiltersFromArguments(args: string[], onlyChanged: boolean): Promise<TestFileFilter[]> {
+  if (onlyChanged) {
+    const untrackedFiles = childProcess.execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' }).split('\n').filter(Boolean);
+    args = untrackedFiles;
+  }
+
   return args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
@@ -90,8 +96,8 @@ export function createFileFiltersFromArguments(args: string[]): TestFileFilter[]
   });
 }
 
-export function createFileMatcherFromArguments(args: string[]): Matcher {
-  const filters = createFileFiltersFromArguments(args);
+export async function createFileMatcherFromArguments(args: string[], onlyChanged: boolean): Promise<Matcher> {
+  const filters = await createFileFiltersFromArguments(args, onlyChanged);
   return createFileMatcher(filters.map(filter => filter.re || filter.exact || ''));
 }
 

@@ -49,6 +49,7 @@ export class FullConfigInternal {
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
+  cliOnlyChanged = false;
   cliProjectFilter?: string[];
   cliListOnly = false;
   cliPassWithNoTests?: boolean;

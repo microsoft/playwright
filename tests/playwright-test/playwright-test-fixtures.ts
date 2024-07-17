@@ -56,7 +56,11 @@ type TSCResult = {
   exitCode: number;
 };
 
-export type Files = { [key: string]: string | Buffer };
+export const magicFileCreationSymbol = Symbol();
+export type Files = {
+  [key: string]: string | Buffer;
+  [magicFileCreationSymbol]?: (baseDir: string) => Promise<void>;
+};
 type Params = { [key: string]: string | number | boolean | string[] };
 
 export async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
@@ -83,6 +87,9 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
     await fs.promises.writeFile(fullName, files[name]);
   }));
+
+  if (magicFileCreationSymbol in files)
+    await files[magicFileCreationSymbol](baseDir);
 
   return baseDir;
 }
@@ -232,7 +239,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PWTEST_BOT_NAME: undefined,
     TEST_WORKER_INDEX: undefined,
     TEST_PARALLEL_INDEX: undefined,
-    NODE_OPTIONS: undefined,
+    // NODE_OPTIONS: undefined,
     ...env,
   };
 }

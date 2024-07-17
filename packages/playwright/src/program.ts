@@ -192,6 +192,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
+  config.cliOnlyChanged = !!opts.onlyChanged;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
@@ -352,6 +353,7 @@ const testOptions: [string, string][] = [
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
+  ['--only-changed', `something something docs`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
