@@ -1881,7 +1881,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -1931,7 +1930,6 @@ Frame:
         source: string
         target: string
         force: boolean?
-        noWaitAfter: boolean?
         timeout: number?
         trial: boolean?
         sourcePosition: Point?
@@ -1947,7 +1945,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2011,7 +2008,6 @@ Frame:
         value: string
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2075,7 +2071,6 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2261,7 +2256,6 @@ Frame:
           type: array?
           items: WritableStream
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2272,7 +2266,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2311,7 +2304,6 @@ Frame:
         strict: boolean?
         text: string
         delay: number?
-        noWaitAfter: boolean?
         timeout: number?
       flags:
         slowMo: true
@@ -2323,7 +2315,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -2539,7 +2530,6 @@ ElementHandle:
     check:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -2585,7 +2575,6 @@ ElementHandle:
     dblclick:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2624,7 +2613,6 @@ ElementHandle:
         value: string
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2657,7 +2645,6 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2823,7 +2810,6 @@ ElementHandle:
           type: array?
           items: WritableStream
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2832,7 +2818,6 @@ ElementHandle:
     tap:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2861,7 +2846,6 @@ ElementHandle:
       parameters:
         text: string
         delay: number?
-        noWaitAfter: boolean?
         timeout: number?
       flags:
         slowMo: true
@@ -2871,7 +2855,6 @@ ElementHandle:
     uncheck:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?

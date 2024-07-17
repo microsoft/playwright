@@ -62,11 +62,18 @@ Maximum time in milliseconds. Defaults to `0` - no timeout. The default value ca
 [`method: Page.setDefaultTimeout`] methods.
 
 ## input-no-wait-after
+* deprecated: This option will default to `true` in the future.
 - `noWaitAfter` <[boolean]>
 
 Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
 opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating
 to inaccessible pages. Defaults to `false`.
+
+## input-no-wait-after-removed
+* deprecated: This option has no effect.
+- `noWaitAfter` <[boolean]>
+
+This option has no effect.
 
 ## input-force
 - `force` <[boolean]>
