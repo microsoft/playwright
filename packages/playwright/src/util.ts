@@ -256,6 +256,8 @@ export function resolveReporterOutputPath(defaultValue: string, configDir: strin
 }
 
 export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {
+  if (options.path === undefined && options.body === undefined)
+    return { name, contentType: 'text/plain' };
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
     throw new Error(`Exactly one of "path" and "body" must be specified`);
   if (options.path !== undefined) {
