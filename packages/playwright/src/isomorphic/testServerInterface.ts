@@ -88,6 +88,7 @@ export interface TestServerInterface {
     locations?: string[];
     grep?: string;
     grepInvert?: string;
+    onlyChanged?: string;
     testIds?: string[];
     headed?: boolean;
     workers?: number | string;

@@ -179,6 +179,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       args,
       grep: opts.grep as string | undefined,
       grepInvert: opts.grepInvert as string | undefined,
+      onlyChanged: getOnlyChangedArg(opts.onlyChanged),
       project: opts.project || undefined,
       headed: opts.headed,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,

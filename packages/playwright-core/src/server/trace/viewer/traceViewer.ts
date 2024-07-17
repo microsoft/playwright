@@ -39,6 +39,7 @@ export type TraceViewerRedirectOptions = {
   args?: string[];
   grep?: string;
   grepInvert?: string;
+  onlyChanged?: string;
   project?: string[];
   workers?: number | string;
   headed?: boolean;
@@ -123,6 +124,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('grep', options.grep);
   if (options.grepInvert)
     params.append('grepInvert', options.grepInvert);
+  if (options.onlyChanged)
+    params.append('onlyChanged', options.onlyChanged);
   for (const project of options.project || [])
     params.append('project', project);
   if (options.workers)
