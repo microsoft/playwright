@@ -500,14 +500,14 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
     `#8 :   ${NEGATIVE_STATUS_MARK} 9 b.test.js:6:11 › failing 2 (retry #1) (Xms)`,
     `#9 :      10 b.test.js:9:12 › skipped 2`,
     `#9 :   -  10 b.test.js:9:12 › skipped 2`,
-    '#10 :      11 c.test.js:3:11 › math 3',
-    '#10 :   ✓  11 c.test.js:3:11 › math 3 (Xms)',
-    '#11 :      12 c.test.js:6:11 › flaky 2',
-    '#11 :   ✘  12 c.test.js:6:11 › flaky 2 (Xms)',
-    '#12 :      13 c.test.js:6:11 › flaky 2 (retry #1)',
-    '#12 :   ✓  13 c.test.js:6:11 › flaky 2 (retry #1) (Xms)',
-    '#13 :      14 c.test.js:9:12 › skipped 3',
-    '#13 :   -  14 c.test.js:9:12 › skipped 3',
+    `#10 :      11 c.test.js:3:11 › math 3`,
+    `#10 :   ${POSITIVE_STATUS_MARK} 11 c.test.js:3:11 › math 3 (Xms)`,
+    `#11 :      12 c.test.js:6:11 › flaky 2`,
+    `#11 :   ${NEGATIVE_STATUS_MARK} 12 c.test.js:6:11 › flaky 2 (Xms)`,
+    `#12 :      13 c.test.js:6:11 › flaky 2 (retry #1)`,
+    `#12 :   ${POSITIVE_STATUS_MARK} 13 c.test.js:6:11 › flaky 2 (retry #1) (Xms)`,
+    `#13 :      14 c.test.js:9:12 › skipped 3`,
+    `#13 :   -  14 c.test.js:9:12 › skipped 3`,
   ]);
 });
 
