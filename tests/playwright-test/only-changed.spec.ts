@@ -156,3 +156,11 @@ test('should support watch mode', async ({ setupRepository, writeFiles, runWatch
   await testProcess.waitForOutput('b.spec.ts:3:13 › fails');
   expect(testProcess.output).not.toContain('a.spec');
 });
+
+test('should throw nice error message if git doesnt work', async ({ setupRepository, runInlineTest }) => {
+  await setupRepository();
+  const result = await runInlineTest({}, { 'only-changed': `this-commit-does-not-exist` });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('only works with Git repositories');
+});

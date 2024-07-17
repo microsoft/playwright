@@ -82,7 +82,29 @@ export type TestFileFilter = {
 };
 
 export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
-  const gitFileList = (command: string) => childProcess.execSync(`git ${command}`, { encoding: 'utf-8' }).split('\n').filter(Boolean).map(file => path.resolve(file));
+  function gitFileList(command: string) {
+    try {
+      return childProcess.execSync(
+          `git ${command}`,
+          { encoding: 'utf-8', stdio: 'pipe' }
+      ).split('\n').filter(Boolean).map(file => path.resolve(file));
+    } catch (_error) {
+      const error = _error as childProcess.SpawnSyncReturns<string>;
+      throw new Error([
+        `Encountered error while detecting changed files.`,
+        `--only-changed only works with Git repositories.`,
+        `Make sure that:`,
+        `  - You are running the test in a Git repository.`,
+        `  - The Git binary is in your PATH.`,
+        `  - The passed Git Ref exists in the repository. You passed '${baseCommit}'.`,
+        ``,
+        `Command Output:`,
+        ``,
+        ...error.output,
+      ].join('\n'));
+    }
+  }
+
   const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`);
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`);
 
