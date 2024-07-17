@@ -137,3 +137,22 @@ test('should understand dependency structure', async ({ runInlineTest, setupRepo
   expect(result.output).toContain('a.spec.ts');
   expect(result.output).toContain('b.spec.ts');
 });
+
+test('should support watch mode', async ({ setupRepository, writeFiles, runWatchTest }) => {
+  const git = await setupRepository();
+  await writeFiles({
+    'b.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `,
+  });
+  git('commit -a -m update');
+
+  const testProcess = await runWatchTest({}, { 'only-changed': `HEAD~1` });
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.clearOutput();
+  testProcess.write('r');
+
+  await testProcess.waitForOutput('b.spec.ts:3:13 › fails');
+  expect(testProcess.output).not.toContain('a.spec');
+});

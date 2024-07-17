@@ -246,7 +246,7 @@ type Fixtures = {
   deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runCLICommand: (files: Files, command: string, args?: string[], entryPoint?: string) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
-  runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
+  runWatchTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   interactWithTestRunner: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>
@@ -288,7 +288,7 @@ export const test = base
       },
 
       runWatchTest: async ({ interactWithTestRunner }, use, testInfo: TestInfo) => {
-        await use((files, env, options) => interactWithTestRunner(files, {}, { ...env, PWTEST_WATCH: '1' }, options));
+        await use((files, params, env, options) => interactWithTestRunner(files, params, { ...env, PWTEST_WATCH: '1' }, options));
       },
 
       interactWithTestRunner: async ({ childProcess }, use, testInfo: TestInfo) => {
