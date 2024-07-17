@@ -153,6 +153,13 @@ Examples:
   $ npx playwright merge-reports playwright-report`);
 }
 
+function getOnlyChangedArg(input: string | boolean | undefined): string | undefined {
+  if (typeof input === 'string')
+    return input;
+  if (input === true)
+    return process.env.GITHUB_BASE_REF ?? process.env['Build.PullRequest.TargetBranch'] ?? 'HEAD';
+}
+
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
@@ -192,7 +199,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
-  config.cliOnlyChanged = opts.onlyChanged as string | boolean | undefined;
+  config.cliOnlyChanged = getOnlyChangedArg(opts.onlyChanged);
   config.cliGrepInvert = opts.grepInvert as string | undefined;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;

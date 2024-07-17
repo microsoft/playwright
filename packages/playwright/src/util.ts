@@ -80,15 +80,14 @@ export type TestFileFilter = {
   column: number | null;
 };
 
-export async function detectChangedFiles(onlyChangedParam: string | true): Promise<string[]> {
-  const baseCommit = onlyChangedParam === true ? 'HEAD' : onlyChangedParam;
+export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
   const untrackedFiles = childProcess.execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' }).split('\n').filter(Boolean);
   const changedFiles = childProcess.execSync(`git diff ${baseCommit} --name-only`, { encoding: 'utf-8' }).split('\n').filter(Boolean);
 
   return [...untrackedFiles, ...changedFiles];
 }
 
-export async function createFileFiltersFromArguments(args: string[], onlyChanged: string | boolean | undefined): Promise<TestFileFilter[]> {
+export async function createFileFiltersFromArguments(args: string[], onlyChanged: string | undefined): Promise<TestFileFilter[]> {
   if (onlyChanged)
     args = await detectChangedFiles(onlyChanged);
 
