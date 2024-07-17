@@ -138,6 +138,7 @@ function createExpect(info: ExpectMetaInfo) {
                 utils,
                 timeout: currentExpectTimeout()
               };
+              (newThis as any).equals = throwUnsupportedExpectMatcherError;
               return (matcher as any).call(newThis, ...args);
             };
           }
@@ -181,6 +182,10 @@ function createExpect(info: ExpectMetaInfo) {
   };
 
   return expectInstance;
+}
+
+function throwUnsupportedExpectMatcherError() {
+  throw new Error('Playwright Expect matchers are not fully compatible with Jest matchers. See https://aka.ms/playwright/expect-compatibility');
 }
 
 expectLibrary.setState({ expand: false });
