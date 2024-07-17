@@ -47,6 +47,8 @@ const test = baseTest.extend({
       `,
       });
       git(`init --initial-branch=main`);
+      git(`config --local user.name "Robert Botman"`);
+      git(`config --local user.email "botty@mcbotface.com"`);
       git(`add .`);
       git(`commit -m init`);
       return git;
