@@ -30,6 +30,6 @@
   },
   "scripts": {},
   "dependencies": {
-    "playwright": "1.56.0-next"
+    "playwright": "file:../packages/playwright"
   }
 }

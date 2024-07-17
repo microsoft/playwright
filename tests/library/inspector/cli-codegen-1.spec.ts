@@ -249,6 +249,69 @@ await page.Locator("canvas").ClickAsync(new LocatorClickOptions
     expect(message.text()).toBe('click 250 250');
   });
 
+  test.only('should make a down-move-up sequence on a canvas', async ({
+    openRecorder,
+  }) => {
+    const { recorder, page } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <canvas width="500" height="500" style="margin: 42px"/>
+      <script>
+      document.querySelector("canvas").addEventListener("mouseup", event => {
+        const rect = event.target.getBoundingClientRect();
+        console.log("mouseup", event.clientX - rect.left, event.clientY - rect.top);
+      })
+      </script>
+    `);
+
+    const locator = await recorder.hoverOverElement('canvas', {
+      position: { x: 250, y: 250 },
+    });
+    expect(locator).toBe(`locator('canvas')`);
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'move'),
+      (async () => {
+        await page.locator('canvas').hover({ position: { x: 250, y: 250 } });
+        await page.mouse.down();
+        await page.mouse.move(500, 500, { steps: 5 });
+        await page.mouse.up();
+      })(),
+    ]);
+
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('canvas').hover({
+    position: {
+      x: 250,
+      y: 250
+    }
+  });
+  await page.mouse.down();
+  await page.mouse.move(500, 500, { steps: 10 });
+  await page.mouse.up();`);
+
+//     expect(sources.get('Python')!.text).toContain(`
+//     page.locator("canvas").click(position={"x":250,"y":250})`);
+
+//     expect(sources.get('Python Async')!.text).toContain(`
+//     await page.locator("canvas").click(position={"x":250,"y":250})`);
+
+//     expect(sources.get('Java')!.text).toContain(`
+//       page.locator("canvas").click(new Locator.ClickOptions()
+//         .setPosition(250, 250));`);
+
+//     expect(sources.get('C#')!.text).toContain(`
+// await page.Locator("canvas").ClickAsync(new LocatorClickOptions
+// {
+//     Position = new Position
+//     {
+//         X = 250,
+//         Y = 250,
+//     },
+// });`);
+    // expect(message.text()).toBe('move 500 500');
+  });
+
   test('should work with TrustedTypes', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
