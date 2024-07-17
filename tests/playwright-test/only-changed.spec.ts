@@ -14,31 +14,42 @@
  * limitations under the License.
  */
 
-import { test, expect, magicFileCreationSymbol } from './playwright-test-fixtures';
+import { test as baseTest, expect } from './playwright-test-fixtures';
 import { execSync } from 'node:child_process';
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 
-test('should detect untracked files', async ({ runInlineTest }) => {
+const test = baseTest.extend({
+  setupRepository: async ({ writeFiles }, use, testInfo) => {
+    const baseDir = testInfo.outputPath();
+
+    const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir });
+
+    await use(async () => {
+      await writeFiles({
+        'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+        'b.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+      });
+      git(`init --initial-branch=main`);
+      git(`add .`);
+      git(`commit -m init`);
+      return git;
+    });
+  },
+});
+
+test('should detect untracked files', async ({ runInlineTest, setupRepository }) => {
+  await setupRepository();
+
   const result = await runInlineTest({
-    'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
-    'b.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
-    async [magicFileCreationSymbol](baseDir) {
-      execSync(`git init --initial-branch=main`, { cwd: baseDir });
-      execSync(`git add .`, { cwd: baseDir });
-      execSync(`git commit -m init`, { cwd: baseDir });
-
-      await writeFile(join(baseDir, 'c.spec.ts'), `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `);
-    }
+    'c.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `
   }, { 'only-changed': true });
 
   expect(result.exitCode).toBe(1);
@@ -47,26 +58,13 @@ test('should detect untracked files', async ({ runInlineTest }) => {
 });
 
 
-test('should detect changed files', async ({ runInlineTest }) => {
+test('should detect changed files', async ({ runInlineTest, setupRepository }) => {
+  await setupRepository();
   const result = await runInlineTest({
-    'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
-    async [magicFileCreationSymbol](baseDir) {
-      execSync(`git init --initial-branch=main`, { cwd: baseDir });
-      execSync(`git add .`, { cwd: baseDir });
-      execSync(`git commit -m init`, { cwd: baseDir });
-
-      await writeFile(join(baseDir, 'b.spec.ts'), `
-        import { test, expect } from '@playwright/test';
         test('fails', () => { expect(1).toBe(3); });
-      `);
-    }
+      `,
   }, { 'only-changed': true });
 
   expect(result.exitCode).toBe(1);
@@ -74,29 +72,16 @@ test('should detect changed files', async ({ runInlineTest }) => {
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should diff based on base commit', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
+test('should diff based on base commit', async ({ runInlineTest, setupRepository, writeFiles }) => {
+  const git = await setupRepository();
+  await writeFiles({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
-      `,
-    async [magicFileCreationSymbol](baseDir) {
-      execSync(`git init --initial-branch=main`, { cwd: baseDir });
-      execSync(`git add .`, { cwd: baseDir });
-      execSync(`git commit -m init`, { cwd: baseDir });
-
-      await writeFile(join(baseDir, 'b.spec.ts'), `
-        import { test, expect } from '@playwright/test';
         test('fails', () => { expect(1).toBe(3); });
-      `);
-
-      execSync(`git commit -a -m update`, { cwd: baseDir });
-    }
-  }, { 'only-changed': `HEAD~1` });
+      `,
+  });
+  git('commit -a -m update');
+  const result = await runInlineTest({}, { 'only-changed': `HEAD~1` });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -104,67 +89,24 @@ test('should diff based on base commit', async ({ runInlineTest }) => {
 });
 
 test.describe('should be smart about PR base reference from CI', () => {
-  test('GitHub Actions', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(2); });
-        `,
-      'b.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(2); });
-        `,
-      async [magicFileCreationSymbol](baseDir) {
-        execSync(`git init --initial-branch=main`, { cwd: baseDir });
-        execSync(`git add .`, { cwd: baseDir });
-        execSync(`git commit -m init`, { cwd: baseDir });
+  function testCIEnvironment(name: string, envVar: string) {
+    test(name, async ({ runInlineTest, setupRepository, writeFiles }) => {
+      const git = await setupRepository();
+      await writeFiles({
+        'b.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `,
+      });
+      git('commit -a -m update');
+      const result = await runInlineTest({}, { 'only-changed': true }, { [envVar]: 'HEAD~1' });
 
-        await writeFile(join(baseDir, 'b.spec.ts'), `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(3); });
-        `);
-
-        execSync(`git commit -a -m update`, { cwd: baseDir });
-      }
-    }, { 'only-changed': true }, { GITHUB_BASE_REF: 'HEAD~1' });
-
-    expect(result.exitCode).toBe(1);
-    expect(result.failed).toBe(1);
-    expect(result.output).toContain('b.spec.ts');
-  });
-
-
-  test('Azure DevOps', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(2); });
-        `,
-      'b.spec.ts': `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(2); });
-        `,
-      async [magicFileCreationSymbol](baseDir) {
-        execSync(`git init --initial-branch=main`, { cwd: baseDir });
-        execSync(`git add .`, { cwd: baseDir });
-        execSync(`git commit -m init`, { cwd: baseDir });
-
-        await writeFile(join(baseDir, 'b.spec.ts'), `
-          import { test, expect } from '@playwright/test';
-          test('fails', () => { expect(1).toBe(3); });
-        `);
-
-        execSync(`git commit -a -m update`, { cwd: baseDir });
-      }
-    }, {
-      'only-changed': true
-    }, {
-      // see https://learn.microsoft.com/en-us/azure/devops/pipelines/release/variables?view=azure-devops&tabs=batch#primary-artifact
-      'Build.PullRequest.TargetBranch': 'HEAD~1'
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.output).toContain('b.spec.ts');
     });
+  }
 
-    expect(result.exitCode).toBe(1);
-    expect(result.failed).toBe(1);
-    expect(result.output).toContain('b.spec.ts');
-  });
+  testCIEnvironment('Github Actions', 'GITHUB_BASE_REF');
+  testCIEnvironment('Azure DevOps', 'Build.PullRequest.TargetBranch');
 });

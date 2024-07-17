@@ -56,11 +56,7 @@ type TSCResult = {
   exitCode: number;
 };
 
-export const magicFileCreationSymbol = Symbol();
-export type Files = {
-  [key: string]: string | Buffer;
-  [magicFileCreationSymbol]?: (baseDir: string) => Promise<void>;
-};
+export type Files = { [key: string]: string | Buffer; };
 type Params = { [key: string]: string | number | boolean | string[] };
 
 export async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
@@ -87,9 +83,6 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
     await fs.promises.writeFile(fullName, files[name]);
   }));
-
-  if (magicFileCreationSymbol in files)
-    await files[magicFileCreationSymbol](baseDir);
 
   return baseDir;
 }
