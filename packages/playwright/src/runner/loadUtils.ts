@@ -36,7 +36,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = (config.cliArgs.length || config.cliOnlyChanged) ? await createFileMatcherFromArguments(config.cliArgs, config.cliOnlyChanged) : null;
+  const cliFileMatcher = config.cliArgs.length ? await createFileMatcherFromArguments(config.cliArgs, undefined) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();

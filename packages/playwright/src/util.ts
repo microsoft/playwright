@@ -26,6 +26,7 @@ import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
+import { affectedTestFiles } from './transform/compilationCache';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -84,7 +85,7 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
   const untrackedFiles = childProcess.execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' }).split('\n').filter(Boolean);
   const changedFiles = childProcess.execSync(`git diff ${baseCommit} --name-only`, { encoding: 'utf-8' }).split('\n').filter(Boolean);
 
-  return [...untrackedFiles, ...changedFiles];
+  return [...untrackedFiles, ...changedFiles, ...affectedTestFiles([...untrackedFiles, ...changedFiles].map(file => path.resolve(file)))];
 }
 
 export async function createFileFiltersFromArguments(args: string[], onlyChanged: string | undefined): Promise<TestFileFilter[]> {

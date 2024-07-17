@@ -27,11 +27,17 @@ const test = baseTest.extend({
       await writeFiles({
         'a.spec.ts': `
         import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
+        import { answer, question } from './utils';
+        test('fails', () => { expect(question).toBe(answer); });
       `,
         'b.spec.ts': `
         import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(2); });
+        import { answer, question } from './utils';
+        test('fails', () => { expect(question).toBe(answer); });
+      `,
+        'utils.ts': `
+        export const answer = 42;
+        export const question = "???";
       `,
       });
       git(`init --initial-branch=main`);
@@ -109,4 +115,20 @@ test.describe('should be smart about PR base reference from CI', () => {
 
   testCIEnvironment('Github Actions', 'GITHUB_BASE_REF');
   testCIEnvironment('Azure DevOps', 'Build.PullRequest.TargetBranch');
+});
+
+test('should understand dependency structure', async ({ runInlineTest, setupRepository, writeFiles }) => {
+  await setupRepository();
+  await writeFiles({
+    'utils.ts': `
+        export const answer = 42;
+        export const question = "what is the answer to life the universe and everything";
+      `,
+  });
+  const result = await runInlineTest({}, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.output).toContain('a.spec.ts');
+  expect(result.output).toContain('b.spec.ts');
 });
