@@ -22,6 +22,11 @@ Here are the most common options available in the command line.
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
+- Run only test files that have local changes
+  ```bash
+  npx playwright test --only-changed
+  ```
+
 - Run files that have `my-spec` or `my-spec-2` in the file name
   ```bash
   npx playwright test my-spec my-spec-2
@@ -93,6 +98,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
 | `--no-deps` | Ignore the dependencies between projects and behave as if they were not specified. |
 | `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
+| `--only-changed [ref]` | Only run tests that have been changed between `HEAD` and `ref`. Defaults to running all uncommitted changes. Only supports Git. |
 | `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
 | `--project <name>` | Only run tests from the specified [projects](./test-projects.md), supports '*' wildcard. Defaults to running all projects defined in the configuration file.|
 | `--quiet` | Whether to suppress stdout and stderr from the tests. |
