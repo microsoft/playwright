@@ -83,7 +83,9 @@ export type TestFileFilter = {
 export async function createFileFiltersFromArguments(args: string[], onlyChanged: boolean): Promise<TestFileFilter[]> {
   if (onlyChanged) {
     const untrackedFiles = childProcess.execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' }).split('\n').filter(Boolean);
-    args = untrackedFiles;
+    const changedFiles = childProcess.execSync('git diff --name-only', { encoding: 'utf-8' }).split('\n').filter(Boolean);
+
+    args = [...untrackedFiles, ...changedFiles];
   }
 
   return args.map(arg => {

@@ -19,7 +19,7 @@ import { execSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-test('should filter by file name', async ({ runInlineTest }) => {
+test('should detect untracked files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -45,3 +45,32 @@ test('should filter by file name', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('c.spec.ts');
 });
+
+
+test('should detect changed files', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+    'b.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(2); });
+      `,
+    async [magicFileCreationSymbol](baseDir) {
+      execSync(`git init --initial-branch=main`, { cwd: baseDir });
+      execSync(`git add .`, { cwd: baseDir });
+      execSync(`git commit -m init`, { cwd: baseDir });
+
+      await writeFile(join(baseDir, 'b.spec.ts'), `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(3); });
+      `);
+    }
+  }, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('b.spec.ts');
+});
+
