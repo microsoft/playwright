@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './pageTest';
+import { browserTest as test, expect } from '../config/browserTest';
 
 test.skip(!!process.env.PW_CLOCK);
 

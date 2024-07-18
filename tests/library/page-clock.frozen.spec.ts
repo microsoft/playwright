@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { browserTest as it, expect } from '../config/browserTest';
 
 it('clock should be frozen', async ({ page }) => {
   it.skip(process.env.PW_CLOCK !== 'frozen');
