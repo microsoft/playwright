@@ -144,7 +144,7 @@ test('should throw nice error message if git doesnt work', async ({ setupReposit
   expect(result.output).toContain('only works with Git repositories');
 });
 
-test.skip('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
+test('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
   const git = await setupRepository();
 
   await writeFiles({
@@ -203,16 +203,9 @@ test.skip('should suppport component tests', async ({ runInlineTest, setupReposi
 
   git('commit -am "update button2 test"');
 
-  // this doesn't work. we do know about dependencies in the Vite bundle,
-  // but only after the Vite build ran.
-  // Right now, --only-changed is interpreted *before* Vite build.
-  // We can either move the build (risky, big architecture change)
-  // or re-apply --only-changed after the build.
-  // Let's try the latter.
-
   const result3 = await runInlineTest({
     'src/button.tsx': `
-      export const Button = () => <button>Different Button</button>;
+      export const Button = () => <button>And another different Button</button>;
     `
   }, { 'workers': 1, 'only-changed': true });
 

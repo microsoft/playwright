@@ -119,7 +119,9 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
+export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
+  const baseCommit = testRun.config.cliOnlyChanged;
+
   function gitFileList(command: string) {
     try {
       return childProcess.execSync(
@@ -149,9 +151,14 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
 
   const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
+
+  for (const plugin of testRun.config.plugins)
+    await plugin.instance?.populateDependencies?.();
+  const affectedFiles = affectedTestFiles(filesWithChanges);
+
   return [
     ...filesWithChanges,
-    ...affectedTestFiles(filesWithChanges),
+    ...affectedFiles,
   ];
 }
 

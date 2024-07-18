@@ -69,6 +69,10 @@ export function createPlugin(): TestRunnerPlugin {
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
     },
+
+    populateDependencies: async () => {
+      await buildBundle(config, configDir);
+    },
   };
 }
 
@@ -165,6 +169,12 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
     });
     await build(buildConfig);
     buildInfo.deps = Object.fromEntries(depsCollector.entries());
+  }
+
+  {
+    for (const [importingFile, components] of componentsByImportingFile) {
+      setExternalDependencies(importingFile, components)
+    }
   }
 
   {

@@ -23,6 +23,7 @@ export interface TestRunnerPlugin {
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
+  populateDependencies?(): Promise<void>;
 }
 
 export type TestRunnerPluginRegistration = {
