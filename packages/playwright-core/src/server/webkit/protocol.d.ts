@@ -8647,7 +8647,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       savedResultIndex?: number;
     }
     /**
-     * Creates an additional reference to all saved values in the Console using the the given string as a prefix instead of $.
+     * Creates an additional reference to all saved values in the Console using the given string as a prefix instead of $.
      */
     export type setSavedResultAliasParameters = {
       /**

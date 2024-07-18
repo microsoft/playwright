@@ -550,7 +550,7 @@ percentage [0 - 100] for scroll driven animations
     export type enableReturnValue = {
     }
     /**
-     * Returns the current time of the an animation.
+     * Returns the current time of the animation.
      */
     export type getCurrentTimeParameters = {
       /**
@@ -9952,7 +9952,7 @@ provided URL.
        */
       path?: string;
       /**
-       * If specified, deletes only cookies with the the given name and partitionKey where
+       * If specified, deletes only cookies with the given name and partitionKey where
 all partition key attributes match the cookie partition key attribute.
        */
       partitionKey?: CookiePartitionKey;
