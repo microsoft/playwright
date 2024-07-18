@@ -222,11 +222,11 @@ class SnapshotHelper {
 
   handleMissing(actual: Buffer | string): ImageMatcherResult {
     const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
-    if (isWriteMissingMode) {
+    if (isWriteMissingMode)
       writeFileSync(this.expectedPath, actual);
-      writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
-    }
+    this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+    writeFileSync(this.actualPath, actual);
+    this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
