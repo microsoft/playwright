@@ -59,7 +59,7 @@ namespace PlaywrightTests;
 public class ExampleTests : PageTest
 {
     [TestMethod]
-    public async Task NavigatetoLoginPage()
+    public async Task NavigateToLoginPage()
     {
         await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
         await Expect(Page).ToHaveURLAsync(new Regex(".*/login"));
