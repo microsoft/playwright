@@ -48,7 +48,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
     } else {
       // ver[0] >= 20
       const LAST_STABLE_MAC_MAJOR_VERSION = 14;
-      // Best-effort support for MacOS beta versions.
+      // Best-effort support for macOS beta versions.
       macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
       // BigSur is the first version that might run on Apple Silicon.
       if (os.cpus().some(cpu => cpu.model.includes('Apple')))

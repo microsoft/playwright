@@ -15215,7 +15215,7 @@ Parts of the URL other than those constituting origin are ignored.
       browserContextId?: Browser.BrowserContextID;
       /**
        * Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
-not supported on MacOS yet, false by default).
+not supported on macOS yet, false by default).
        */
       enableBeginFrameControl?: boolean;
       /**

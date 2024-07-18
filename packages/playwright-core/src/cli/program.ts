@@ -362,7 +362,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   // In headful mode, use host device scale factor for things to look nice.
   // In headless, keep things the way it works in Playwright by default.
-  // Assume high-dpi on MacOS. TODO: this is not perfect.
+  // Assume high-dpi on macOS. TODO: this is not perfect.
   if (!headless)
     contextOptions.deviceScaleFactor = os.platform() === 'darwin' ? 2 : 1;
 

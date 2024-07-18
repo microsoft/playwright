@@ -509,7 +509,7 @@ class RecordActionTool implements RecorderTool {
     // Backspace, Delete, AltGraph are changing input, will handle it there.
     if (['Backspace', 'Delete', 'AltGraph'].includes(event.key))
       return false;
-    // Ignore the QWERTZ shortcut for creating a at sign on MacOS
+    // Ignore the QWERTZ shortcut for creating a at sign on macOS
     if (event.key === '@' && event.code === 'KeyL')
       return false;
     // Allow and ignore common used shortcut for pasting.
