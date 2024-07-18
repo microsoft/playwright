@@ -35,7 +35,8 @@ export const chromiumSwitches = [
   // Translate - https://github.com/microsoft/playwright/issues/16126
   // HttpsUpgrades - https://github.com/microsoft/playwright/pull/27605
   // PaintHolding - https://github.com/microsoft/playwright/issues/28023
-  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding',
+  // PlzDedicatedWorker - https://issues.chromium.org/u/1/issues/352584425 / https://issues.chromium.org/u/1/issues/352528978
+  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,PlzDedicatedWorker',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
