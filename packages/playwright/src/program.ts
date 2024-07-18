@@ -158,6 +158,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const cliOverrides = overridesFromOptions(opts);
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
+    if (opts.onlyChanged)
+      throw new Error('--only-changed is not supported in UI mode');
+
     const status = await testServer.runUIMode(opts.config, {
       host: opts.uiHost,
       port: opts.uiPort ? +opts.uiPort : undefined,

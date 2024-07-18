@@ -243,4 +243,8 @@ test.describe('should work the same if being called in subdirectory', () => {
   });
 });
 
-
+test('UI mode is not supported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({}, { 'only-changed': true, 'ui': true });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('--only-changed is not supported in UI mode');
+});
