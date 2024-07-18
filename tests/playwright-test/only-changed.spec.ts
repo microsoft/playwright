@@ -203,6 +203,13 @@ test.only('should suppport component tests', async ({ runInlineTest, setupReposi
 
   git('commit -am "update button2 test"');
 
+  // this doesn't work. we do know about dependencies in the Vite bundle,
+  // but only after the Vite build ran.
+  // Right now, --only-changed is interpreted *before* Vite build.
+  // We can either move the build (risky, big architecture change)
+  // or re-apply --only-changed after the build.
+  // Let's try the latter.
+
   const result3 = await runInlineTest({
     'src/button.tsx': `
       export const Button = () => <button>Different Button</button>;
