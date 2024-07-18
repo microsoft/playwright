@@ -144,7 +144,7 @@ test('should throw nice error message if git doesnt work', async ({ setupReposit
   expect(result.output).toContain('only works with Git repositories');
 });
 
-test('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
+test.only('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
   const git = await setupRepository();
 
   await writeFiles({
@@ -200,6 +200,17 @@ test('should suppport component tests', async ({ runInlineTest, setupRepository,
   expect(result2.failed).toBe(1);
   expect(result2.output).toContain('button2.test.tsx');
   expect(result2.output).not.toContain('button.test.tsx');
+
+  git('commit -am "update button2 test"');
+
+  const result3 = await runInlineTest({
+    'src/button.tsx': `
+      export const Button = () => <button>Different Button</button>;
+    `
+  }, { 'workers': 1, 'only-changed': true });
+
+  expect(result3.exitCode).toBe(1);
+  expect(result3.failed).toBe(2);
 });
 
 test.describe('should work the same if being called in subdirectory', () => {
