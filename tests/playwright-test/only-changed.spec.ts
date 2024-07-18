@@ -144,7 +144,7 @@ test('should throw nice error message if git doesnt work', async ({ setupReposit
   expect(result.output).toContain('only works with Git repositories');
 });
 
-test.only('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
+test.skip('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
   const git = await setupRepository();
 
   await writeFiles({

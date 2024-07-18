@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import childProcess from 'child_process';
 import path from 'path';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
@@ -28,7 +29,7 @@ import type { TestRun } from './tasks';
 import { requireOrImport } from '../transform/transform';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
-import { dependenciesForTestFile } from '../transform/compilationCache';
+import { affectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
@@ -36,7 +37,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = config.cliArgs.length ? await createFileMatcherFromArguments(config.cliArgs, undefined) : null;
+  const cliFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
@@ -118,7 +119,43 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
+  function gitFileList(command: string) {
+    try {
+      return childProcess.execSync(
+          `git ${command}`,
+          { encoding: 'utf-8', stdio: 'pipe' }
+      ).split('\n').filter(Boolean);
+    } catch (_error) {
+      const error = _error as childProcess.SpawnSyncReturns<string>;
+      throw new Error([
+        `Encountered error while detecting changed files.`,
+        `--only-changed only works with Git repositories.`,
+        `Make sure that:`,
+        `  - You are running the test in a Git repository.`,
+        `  - The Git binary is in your PATH.`,
+        `  - The passed Git Ref exists in the repository. You passed '${baseCommit}'.`,
+        ``,
+        `Command Output:`,
+        ``,
+        ...error.output,
+      ].join('\n'));
+    }
+  }
+
+  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`).map(file => path.join(process.cwd(), file));
+
+  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
+  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
+
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
+  return [
+    ...filesWithChanges,
+    ...affectedTestFiles(filesWithChanges),
+  ];
+}
+
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, onlyChangedFiles?: string[]): Promise<Suite> {
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
@@ -128,7 +165,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Filter all the projects using grep, testId, file names.
   {
     // Interpret cli parameters.
-    const cliFileFilters = await createFileFiltersFromArguments(config.cliArgs, config.cliOnlyChanged);
+    const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
+    const onlyChangedFilters = onlyChangedFiles ? createFileFiltersFromArguments(onlyChangedFiles) : undefined;
     const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
@@ -137,7 +175,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const [project, fileSuites] of testRun.projectSuites) {
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher, onlyChangedFilters });
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -223,14 +261,16 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Suite {
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher, onlyChangedFilters?: TestFileFilter[] }): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher)
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.onlyChangedFilters?.length)
     return projectSuite;
 
   const result = projectSuite._deepClone();
   if (options.cliFileFilters.length)
     filterByFocusedLine(result, options.cliFileFilters);
+  if (options.onlyChangedFilters?.length)
+    filterByFocusedLine(result, options.onlyChangedFilters);
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
   filterTestsRemoveEmptySuites(result, (test: TestCase) => {

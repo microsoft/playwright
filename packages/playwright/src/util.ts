@@ -81,46 +81,7 @@ export type TestFileFilter = {
   column: number | null;
 };
 
-export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
-  function gitFileList(command: string) {
-    try {
-      return childProcess.execSync(
-          `git ${command}`,
-          { encoding: 'utf-8', stdio: 'pipe' }
-      ).split('\n').filter(Boolean);
-    } catch (_error) {
-      const error = _error as childProcess.SpawnSyncReturns<string>;
-      throw new Error([
-        `Encountered error while detecting changed files.`,
-        `--only-changed only works with Git repositories.`,
-        `Make sure that:`,
-        `  - You are running the test in a Git repository.`,
-        `  - The Git binary is in your PATH.`,
-        `  - The passed Git Ref exists in the repository. You passed '${baseCommit}'.`,
-        ``,
-        `Command Output:`,
-        ``,
-        ...error.output,
-      ].join('\n'));
-    }
-  }
-
-  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`).map(file => path.join(process.cwd(), file));
-
-  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
-  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
-
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
-  return [
-    ...filesWithChanges,
-    ...affectedTestFiles(filesWithChanges),
-  ];
-}
-
-export async function createFileFiltersFromArguments(args: string[], onlyChanged: string | undefined): Promise<TestFileFilter[]> {
-  if (onlyChanged)
-    args = await detectChangedFiles(onlyChanged);
-
+export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
   return args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
@@ -131,8 +92,8 @@ export async function createFileFiltersFromArguments(args: string[], onlyChanged
   });
 }
 
-export async function createFileMatcherFromArguments(args: string[], onlyChanged: string | undefined): Promise<Matcher> {
-  const filters = await createFileFiltersFromArguments(args, onlyChanged);
+export function createFileMatcherFromArguments(args: string[]): Matcher {
+  const filters = createFileFiltersFromArguments(args);
   return createFileMatcher(filters.map(filter => filter.re || filter.exact || ''));
 }
 
