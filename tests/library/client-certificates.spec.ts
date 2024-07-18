@@ -249,6 +249,21 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset }) => {
+    const page = await browser.newPage({
+      clientCertificates: [{
+        url: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certs: [{
+          certPath: asset('client-certificates/client/trusted/cert.pem'),
+          keyPath: asset('client-certificates/client/trusted/key.pem'),
+        }],
+      }],
+    });
+    await page.goto(httpsServer.EMPTY_PAGE);
+    await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
+    await page.close();
+  });
+
   test.describe('persistentContext', () => {
     test('validate input', async ({ launchPersistent }) => {
       test.slow();

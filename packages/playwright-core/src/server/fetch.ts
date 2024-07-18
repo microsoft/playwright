@@ -26,7 +26,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
-import { assert, createGuid, monotonicTime } from '../utils';
+import { assert, createGuid, isUnderTest, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
@@ -196,7 +196,7 @@ export abstract class APIRequestContext extends SdkObject {
       ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.toString()),
       __testHookLookup: (params as any).__testHookLookup,
     };
-    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)
+    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
       options.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
     // rejectUnauthorized = undefined is treated as true in Node.js 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
