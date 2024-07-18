@@ -249,7 +249,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should not ignoreHTTPSErrors by default', async ({ browser, httpsServer, asset }) => {
+  test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
