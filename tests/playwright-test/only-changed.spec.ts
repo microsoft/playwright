@@ -47,6 +47,8 @@ const test = baseTest.extend({
       `,
       });
       git(`init --initial-branch=main`);
+      if (process.platform === 'win32')
+        git(`config --global core.autocrlf true`);
       git(`config --local user.name "Robert Botman"`);
       git(`config --local user.email "botty@mcbotface.com"`);
       git(`add .`);
