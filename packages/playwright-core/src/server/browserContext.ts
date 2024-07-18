@@ -661,7 +661,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
 export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions, browserOptions?: BrowserOptions) {
   if (!options.clientCertificates?.length)
     return;
-  if (options.proxy?.server || browserOptions?.proxy?.server)
+  if ((options.proxy?.server && options.proxy?.server !== 'per-context') || (browserOptions?.proxy?.server && browserOptions?.proxy?.server !== 'http://per-context'))
     throw new Error('Cannot specify both proxy and clientCertificates');
   verifyClientCertificates(options.clientCertificates);
   const clientCertificatesProxy = new ClientCertificatesProxy(options);

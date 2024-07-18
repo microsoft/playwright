@@ -56,6 +56,15 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
   }
 });
 
+test.use({
+  launchOptions: async ({ launchOptions }, use) => {
+    await use({
+      ...launchOptions,
+      proxy: { server: 'per-context' }
+    });
+  }
+});
+
 test.skip(({ mode }) => mode !== 'default');
 
 const kDummyFileName = __filename;
@@ -174,8 +183,6 @@ test.describe('fetch', () => {
 
 
 test.describe('browser', () => {
-  test.skip(({ browserName, platform, browserMajorVersion }) => browserName === 'chromium' && platform === 'win32' && browserMajorVersion < 128, 'Depends on https://chromium-review.googlesource.com/c/chromium/src/+/5688851');
-
   test('validate input', async ({ browser }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
