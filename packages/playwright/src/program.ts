@@ -164,7 +164,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       args,
       grep: opts.grep as string | undefined,
       grepInvert: opts.grepInvert as string | undefined,
-      onlyChanged: opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged,
       project: opts.project || undefined,
       headed: opts.headed,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
@@ -192,7 +191,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
-  config.cliOnlyChanged = getOnlyChangedArg(opts.onlyChanged);
+  config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
