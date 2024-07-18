@@ -29,7 +29,7 @@ import type { ConsoleEntry } from './consoleTab';
 type TimelineBar = {
   action?: ActionTraceEventInContext;
   resource?: Entry;
-  consoleMessage?: ConsoleEntry
+  consoleMessage?: ConsoleEntry;
   leftPosition: number;
   rightPosition: number;
   leftTime: number;
@@ -116,7 +116,7 @@ export const Timeline: React.FunctionComponent<{
     for (const bar of bars) {
       if (highlightedAction)
         bar.active = bar.action === highlightedAction;
-      if (highlightedEntry)
+      else if (highlightedEntry)
         bar.active = bar.resource === highlightedEntry;
       else if (highlightedConsoleEntry)
         bar.active = bar.consoleMessage === highlightedConsoleEntry;
