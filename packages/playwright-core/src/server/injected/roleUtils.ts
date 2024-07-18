@@ -534,7 +534,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   // also step 2d "skip to rule Embedded Control" section:
   //   If traversal of the current node is due to recursion and the current node is an embedded control...
   // Note this is not strictly by the spec, because spec only applies this logic when "aria-label" is present.
-  // However, browsers and and wpt test name_heading-combobox-focusable-alternative-manual.html follow this behavior,
+  // However, browsers and wpt test name_heading-combobox-focusable-alternative-manual.html follow this behavior,
   // and there is an issue filed for this: https://github.com/w3c/accname/issues/64
   if (!!options.embeddedInLabel || !!options.embeddedInLabelledBy || options.embeddedInTargetElement === 'descendant') {
     const isOwnLabel = [...(element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || []].includes(element as any);
