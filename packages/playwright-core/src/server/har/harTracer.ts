@@ -438,7 +438,7 @@ export class HarTracer {
       status: response.status(),
       statusText: response.statusText(),
       httpVersion: response.httpVersion(),
-      // These are bad values that will be overwritten bellow.
+      // These are bad values that will be overwritten below.
       cookies: [],
       headers: [],
       content: {
