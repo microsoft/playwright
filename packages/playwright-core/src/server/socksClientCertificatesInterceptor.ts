@@ -121,13 +121,14 @@ class SocksProxyConnection {
 
     internalTLS.on('error', () => closeBothSockets());
     targetTLS.on('error', error => {
-      internalTLS.write('HTTP/1.1 503 Internal Server Error\r\n');
-      internalTLS.write('Content-Type: text/html; charset=utf-8\r\n');
       const responseBody = 'Playwright client-certificate error: ' + error.message;
-      internalTLS.write('Content-Length: ' + Buffer.byteLength(responseBody) + '\r\n');
-      internalTLS.write('\r\n');
-      internalTLS.write(responseBody);
-      internalTLS.end();
+      internalTLS.end([
+        'HTTP/1.1 503 Internal Server Error',
+        'Content-Type: text/html; charset=utf-8',
+        'Content-Length: ' + Buffer.byteLength(responseBody),
+        '\r\n',
+        responseBody,
+      ].join('\r\n'));
       closeBothSockets();
     });
   }
