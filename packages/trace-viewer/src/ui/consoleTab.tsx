@@ -107,13 +107,17 @@ export const ConsoleTab: React.FunctionComponent<{
   boundaries: Boundaries,
   consoleModel: ConsoleTabModel,
   selectedTime: Boundaries | undefined,
-}> = ({ consoleModel, boundaries }) => {
+  onEntryHovered: (entry: ConsoleEntry | undefined) => void,
+  onAccepted: (entry: ConsoleEntry) => void,
+}> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
   if (!consoleModel.entries.length)
     return <PlaceholderPanel text='No console entries' />;
 
   return <div className='console-tab'>
     <ConsoleListView
       name='console'
+      onAccepted={onAccepted}
+      onHighlighted={onEntryHovered}
       items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}

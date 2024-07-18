@@ -89,7 +89,6 @@ export function ListView<T>({
     <div
       className='list-view-content'
       tabIndex={0}
-      onDoubleClick={() => selectedItem && onAccepted?.(selectedItem, items.indexOf(selectedItem))}
       onKeyDown={event => {
         if (selectedItem && event.key === 'Enter') {
           onAccepted?.(selectedItem, items.indexOf(selectedItem));
@@ -143,6 +142,7 @@ export function ListView<T>({
         const rendered = render(item, index);
         return <div
           key={id?.(item, index) || index}
+          onDoubleClick={() => onAccepted?.(item, index)}
           role='listitem'
           className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix + warningSuffix + infoSuffix}
           onClick={() => onSelected?.(item, index)}
