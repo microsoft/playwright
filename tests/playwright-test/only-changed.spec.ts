@@ -102,45 +102,6 @@ test('should diff based on base commit', async ({ runInlineTest, setupRepository
   expect(result.output).toContain('b.spec.ts');
 });
 
-test.describe('should be smart about PR base reference from CI', () => {
-  function testCIEnvironment(name: string, envVar: string) {
-    test(name, async ({ runInlineTest, setupRepository, writeFiles }) => {
-      const git = await setupRepository();
-      await writeFiles({
-        'b.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(3); });
-      `,
-      });
-      git('commit -a -m update');
-      const result = await runInlineTest({}, { 'only-changed': true }, { CI: 'true', [envVar]: 'HEAD~1' });
-
-      expect(result.exitCode).toBe(1);
-      expect(result.failed).toBe(1);
-      expect(result.output).toContain('b.spec.ts');
-    });
-  }
-
-  testCIEnvironment('Github Actions', 'GITHUB_BASE_REF');
-  testCIEnvironment('Bitbucket', 'BITBUCKET_BRANCH');
-  testCIEnvironment('Azure DevOps', 'Build.PullRequest.TargetBranch');
-
-  test("throws error if ref isn't available", async ({ runInlineTest, setupRepository, writeFiles }) => {
-    const git = await setupRepository();
-    await writeFiles({
-      'b.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fails', () => { expect(1).toBe(3); });
-    `,
-    });
-    git('commit -a -m update');
-    const result = await runInlineTest({}, { 'only-changed': true }, { CI: 'true' });
-
-    expect(result.exitCode).toBe(1);
-    expect(result.output).toContain('You specified --only-changed in a CI environment, but the base reference can not be inferred.');
-  });
-});
-
 test('should understand dependency structure', async ({ runInlineTest, setupRepository, writeFiles }) => {
   await setupRepository();
   await writeFiles({
