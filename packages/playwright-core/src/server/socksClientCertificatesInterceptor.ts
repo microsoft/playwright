@@ -21,7 +21,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket } from '../utils/happy-eyeballs';
-import { globToRegex } from '../utils';
+import { globToRegex, isUnderTest } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -98,11 +98,14 @@ class SocksProxyConnection {
     this.internalTLS = internalTLS;
     internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
 
-    const targetTLS = tls.connect({
+    const tlsOptions: tls.ConnectionOptions = {
       socket: this.target,
-      rejectUnauthorized: this.socksProxy.contextOptions.ignoreHTTPSErrors === true ? false : true,
-      ...clientCertificatesToTLSOptions(this.socksProxy.contextOptions.clientCertificates, `https://${this.host}:${this.port}/`),
-    });
+      rejectUnauthorized: this.socksProxy.ignoreHTTPSErrors === true ? false : true,
+      ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
+    };
+    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
+      tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
+    const targetTLS = tls.connect(tlsOptions);
 
     internalTLS.pipe(targetTLS);
     targetTLS.pipe(internalTLS);
@@ -133,10 +136,14 @@ class SocksProxyConnection {
 export class ClientCertificatesProxy {
   _socksProxy: SocksProxy;
   private _connections: Map<string, SocksProxyConnection> = new Map();
+  ignoreHTTPSErrors: boolean | undefined;
+  clientCertificates: { url: string; certs: { cert?: channels.Binary; key?: channels.Binary; passphrase?: string; pfx?: channels.Binary; }[]; }[] | undefined;
 
   constructor(
-    public readonly contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
+    contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
   ) {
+    this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
+    this.clientCertificates = contextOptions.clientCertificates;
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
     this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
