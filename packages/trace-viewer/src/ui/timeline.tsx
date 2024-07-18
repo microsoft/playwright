@@ -24,10 +24,12 @@ import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';
+import type { ConsoleEntry } from './consoleTab';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
   resource?: Entry;
+  consoleMessage?: ConsoleEntry;
   leftPosition: number;
   rightPosition: number;
   leftTime: number;
@@ -38,14 +40,16 @@ type TimelineBar = {
 
 export const Timeline: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
+  consoleEntries: ConsoleEntry[] | undefined,
   boundaries: Boundaries,
   highlightedAction: ActionTraceEventInContext | undefined,
   highlightedEntry: Entry | undefined,
+  highlightedConsoleEntry: ConsoleEntry | undefined,
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language,
-}> = ({ model, boundaries, onSelected, highlightedAction, highlightedEntry, selectedTime, setSelectedTime, sdkLanguage }) => {
+}> = ({ model, boundaries, consoleEntries, onSelected, highlightedAction, highlightedEntry, highlightedConsoleEntry, selectedTime, setSelectedTime, sdkLanguage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -92,13 +96,34 @@ export const Timeline: React.FunctionComponent<{
         error: false,
       });
     }
+
+    for (const consoleMessage of consoleEntries || []) {
+      bars.push({
+        consoleMessage,
+        leftTime: consoleMessage.timestamp,
+        rightTime: consoleMessage.timestamp,
+        leftPosition: timeToPosition(measure.width, boundaries, consoleMessage.timestamp),
+        rightPosition: timeToPosition(measure.width, boundaries, consoleMessage.timestamp),
+        active: false,
+        error: consoleMessage.isError,
+      });
+    }
+
     return bars;
-  }, [model, boundaries, measure]);
+  }, [model, consoleEntries, boundaries, measure]);
 
   React.useMemo(() => {
-    for (const bar of bars)
-      bar.active = (!!highlightedAction && bar.action === highlightedAction) || (!!highlightedEntry && bar.resource === highlightedEntry);
-  }, [bars, highlightedAction, highlightedEntry]);
+    for (const bar of bars) {
+      if (highlightedAction)
+        bar.active = bar.action === highlightedAction;
+      else if (highlightedEntry)
+        bar.active = bar.resource === highlightedEntry;
+      else if (highlightedConsoleEntry)
+        bar.active = bar.consoleMessage === highlightedConsoleEntry;
+      else
+        bar.active = false;
+    }
+  }, [bars, highlightedAction, highlightedEntry, highlightedConsoleEntry]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
@@ -229,11 +254,12 @@ export const Timeline: React.FunctionComponent<{
           return <div key={index}
             className={'timeline-bar' + (bar.action ? ' action' : '')
                                       + (bar.resource ? ' network' : '')
+                                      + (bar.consoleMessage ? ' console-message' : '')
                                       + (bar.active ? ' active' : '')
                                       + (bar.error ? ' error' : '')}
             style={{
               left: bar.leftPosition,
-              width: Math.max(1, bar.rightPosition - bar.leftPosition),
+              width: Math.max(5, bar.rightPosition - bar.leftPosition),
               top: barTop(bar),
               bottom: 0,
             }}

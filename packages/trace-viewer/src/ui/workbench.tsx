@@ -20,6 +20,7 @@ import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
@@ -57,6 +58,7 @@ export const Workbench: React.FunctionComponent<{
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
+  const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspecting] = React.useState(false);
@@ -167,7 +169,13 @@ export const Workbench: React.FunctionComponent<{
     id: 'console',
     title: 'Console',
     count: consoleModel.entries.length,
-    render: () => <ConsoleTab consoleModel={consoleModel} boundaries={boundaries} selectedTime={selectedTime} />
+    render: () => <ConsoleTab
+      consoleModel={consoleModel}
+      boundaries={boundaries}
+      selectedTime={selectedTime}
+      onAccepted={m => setSelectedTime({ minimum: m.timestamp, maximum: m.timestamp })}
+      onEntryHovered={setHighlightedConsoleMessage}
+    />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
@@ -218,9 +226,11 @@ export const Workbench: React.FunctionComponent<{
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     <Timeline
       model={model}
+      consoleEntries={consoleModel.entries}
       boundaries={boundaries}
       highlightedAction={highlightedAction}
       highlightedEntry={highlightedEntry}
+      highlightedConsoleEntry={highlightedConsoleMessage}
       onSelected={onActionSelected}
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
