@@ -22,8 +22,8 @@ import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import './timeline.css';
-import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';
+import { WorkbenchContext } from './workbenchContext';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
@@ -44,8 +44,8 @@ export const Timeline: React.FunctionComponent<{
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
-  sdkLanguage: Language,
-}> = ({ model, boundaries, onSelected, highlightedAction, highlightedEntry, selectedTime, setSelectedTime, sdkLanguage }) => {
+}> = ({ model, boundaries, onSelected, highlightedAction, highlightedEntry, selectedTime, setSelectedTime }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();

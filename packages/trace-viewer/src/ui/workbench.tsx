@@ -120,13 +120,10 @@ export const Workbench: React.FunctionComponent<{
     return model?.actions.map(a => a.attachments || []).flat() || [];
   }, [model]);
 
-  const sdkLanguage = model?.sdkLanguage || 'javascript';
-
   const inspectorTab: TabbedPaneTabModel = {
     id: 'inspector',
     title: 'Locator',
     render: () => <InspectorTab
-      sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator} />,
@@ -134,7 +131,7 @@ export const Workbench: React.FunctionComponent<{
   const callTab: TabbedPaneTabModel = {
     id: 'call',
     title: 'Call',
-    render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
+    render: () => <CallTab action={activeAction} />
   };
   const logTab: TabbedPaneTabModel = {
     id: 'log',
@@ -145,7 +142,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
+    render: () => <ErrorsTab errorsModel={errorsModel} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else
@@ -222,7 +219,6 @@ export const Workbench: React.FunctionComponent<{
       highlightedAction={highlightedAction}
       highlightedEntry={highlightedEntry}
       onSelected={onActionSelected}
-      sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
@@ -230,7 +226,6 @@ export const Workbench: React.FunctionComponent<{
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
         <SnapshotTab
           action={activeAction}
-          sdkLanguage={sdkLanguage}
           testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
@@ -250,7 +245,6 @@ export const Workbench: React.FunctionComponent<{
                   <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
                 </div>}
                 <ActionList
-                  sdkLanguage={sdkLanguage}
                   actions={model?.actions || []}
                   selectedAction={model ? selectedAction : undefined}
                   selectedTime={selectedTime}

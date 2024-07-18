@@ -19,8 +19,8 @@ import * as React from 'react';
 import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
-import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
+import { WorkbenchContext } from './workbenchContext';
 
 type ErrorDescription = {
   action?: modelUtil.ActionTraceEventInContext;
@@ -44,9 +44,9 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
-  sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource }) => {
+}> = ({ errorsModel, revealInSource }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 

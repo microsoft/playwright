@@ -29,17 +29,18 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
+import { WorkbenchContext } from './workbenchContext';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  sdkLanguage: Language,
   testIdAttributeName: string,
   isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
   openPage?: (url: string, target?: string) => Window | any,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
+}> = ({ action, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
@@ -166,7 +167,6 @@ export const SnapshotTab: React.FunctionComponent<{
   >
     <InspectModeController
       isInspecting={isInspecting}
-      sdkLanguage={sdkLanguage}
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
@@ -174,7 +174,6 @@ export const SnapshotTab: React.FunctionComponent<{
       iteration={loadingRef.current.iteration} />
     <InspectModeController
       isInspecting={isInspecting}
-      sdkLanguage={sdkLanguage}
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
@@ -229,12 +228,12 @@ function renderTitle(snapshotTitle: string): string {
 export const InspectModeController: React.FunctionComponent<{
   iframe: HTMLIFrameElement | null,
   isInspecting: boolean,
-  sdkLanguage: Language,
   testIdAttributeName: string,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
   iteration: number,
-}> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator, iteration }) => {
+}> = ({ iframe, isInspecting, testIdAttributeName, highlightedLocator, setHighlightedLocator, iteration }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   React.useEffect(() => {
     const recorders: { recorder: Recorder, frameSelector: string }[] = [];
     const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';

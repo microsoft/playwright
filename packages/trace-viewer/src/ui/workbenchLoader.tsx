@@ -22,6 +22,7 @@ import './workbenchLoader.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
 import { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import { WorkbenchContext } from './workbenchContext';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -165,7 +166,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} inert={showFileUploadDropArea} />
+    <WorkbenchContext.Provider value={{ sdkLanguage: model?.sdkLanguage || 'javascript' }}>
+      <Workbench model={model} inert={showFileUploadDropArea} />
+    </WorkbenchContext.Provider>
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
       <div style={{ paddingTop: 20 }}>

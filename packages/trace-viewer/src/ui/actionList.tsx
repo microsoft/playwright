@@ -25,13 +25,13 @@ import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from '../geometry';
+import { WorkbenchContext } from './workbenchContext';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
-  sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEventInContext) => void,
   onHighlighted: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole: () => void,
@@ -45,12 +45,12 @@ export const ActionList: React.FC<ActionListProps> = ({
   selectedAction,
   selectedTime,
   setSelectedTime,
-  sdkLanguage,
   onSelected,
   onHighlighted,
   revealConsole,
   isLive,
 }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const { rootItem, itemMap } = React.useMemo(() => modelUtil.buildActionTree(actions), [actions]);
 

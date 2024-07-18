@@ -24,11 +24,12 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { ActionTraceEventInContext } from './modelUtil';
+import { WorkbenchContext } from './workbenchContext';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
-  sdkLanguage: Language | undefined,
-}> = ({ action, sdkLanguage }) => {
+}> = ({ action }) => {
+  const { sdkLanguage } = React.useContext(WorkbenchContext);
   if (!action)
     return <PlaceholderPanel text='No action selected' />;
   const params = { ...action.params };
