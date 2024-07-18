@@ -6882,7 +6882,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       delay: number;
       /**
-       * Whether the naviation will happen in the same frame.
+       * Whether the navigation will happen in the same frame.
        */
       targetIsCurrentFrame: boolean;
     }

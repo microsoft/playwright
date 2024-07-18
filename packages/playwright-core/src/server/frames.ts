@@ -50,7 +50,7 @@ type ContextData = {
 
 type DocumentInfo = {
   // Unfortunately, we don't have documentId when we find out about
-  // a pending navigation from things like frameScheduledNavigaiton.
+  // a pending navigation from things like frameScheduledNavigation.
   documentId: string | undefined,
   request: network.Request | undefined,
 };
