@@ -10158,7 +10158,7 @@ attribute, user, password.
        */
       query: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
@@ -12835,7 +12835,7 @@ reloading an unintended target in case there's a racing navigation.
        */
       query: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
@@ -17855,7 +17855,7 @@ If execution is currently not paused, this parameter has no effect.
        */
       query: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**

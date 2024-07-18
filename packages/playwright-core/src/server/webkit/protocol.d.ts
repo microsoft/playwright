@@ -2905,7 +2905,7 @@ export module Protocol {
        */
       nodeIds?: NodeId[];
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
     }
@@ -3493,7 +3493,7 @@ might return multiple quads for inline nodes.
        */
       eventName?: string;
       /**
-       * If true, eventName is case sensitive. Defaults to true.
+       * If true, eventName is case-sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
@@ -3517,7 +3517,7 @@ might return multiple quads for inline nodes.
        */
       eventName?: string;
       /**
-       * If true, eventName is case sensitive. Defaults to true.
+       * If true, eventName is case-sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
@@ -4168,7 +4168,7 @@ might return multiple quads for inline nodes.
        */
       symbol: string;
       /**
-       * If true, symbol is case sensitive. Defaults to true.
+       * If true, symbol is case-sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
@@ -4191,7 +4191,7 @@ might return multiple quads for inline nodes.
        */
       symbol: string;
       /**
-       * If true, symbol is case sensitive. Defaults to true.
+       * If true, symbol is case-sensitive. Defaults to true.
        */
       caseSensitive?: boolean;
       /**
@@ -4274,7 +4274,7 @@ might return multiple quads for inline nodes.
        */
       query: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
@@ -4458,7 +4458,7 @@ might return multiple quads for inline nodes.
       url: string;
       shouldBlackbox: boolean;
       /**
-       * If true, <code>url</code> is case sensitive.
+       * If true, <code>url</code> is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
@@ -7146,7 +7146,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       query: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
@@ -7173,7 +7173,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       text: string;
       /**
-       * If true, search is case sensitive.
+       * If true, search is case-sensitive.
        */
       caseSensitive?: boolean;
       /**
