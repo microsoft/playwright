@@ -137,7 +137,7 @@ it('should throw if page argument is passed', async ({ browserType, server, crea
 
   const options = { args: [server.EMPTY_PAGE] };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);
-  expect(error.message).toContain('can not specify page');
+  expect(error.message).toContain('cannot specify page');
 });
 
 it('should have passed URL when launching with ignoreDefaultArgs: true', async ({ browserType, server, createUserDataDir, toImpl, mode, browserName }) => {

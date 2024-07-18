@@ -58,7 +58,7 @@ export class WebKit extends BrowserType {
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
     if (args.find(arg => !arg.startsWith('-')))
-      throw new Error('Arguments can not specify page to be opened');
+      throw new Error('Arguments cannot specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
     if (process.platform === 'win32')
       webkitArguments.push('--disable-accelerated-compositing');

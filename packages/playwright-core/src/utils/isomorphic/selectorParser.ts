@@ -115,7 +115,7 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   result.push(chunk);
   if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
-    throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
+    throw new InvalidSelectorError(`Cannot capture the selector before diving into the frame. Only use * after the last frame has been selected`);
   return result;
 }
 

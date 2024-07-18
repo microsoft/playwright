@@ -162,7 +162,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
 
   async read(length: number): Promise<Buffer> {
     await this._connectPromise;
-    assert(!this._isSocket, 'Can not read by length in socket mode');
+    assert(!this._isSocket, 'Cannot read by length in socket mode');
     while (this._buffer.length < length)
       await new Promise<void>(f => this._notifyReader = f);
     const result = this._buffer.slice(0, length);

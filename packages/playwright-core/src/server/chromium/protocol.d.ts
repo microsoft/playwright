@@ -18051,7 +18051,7 @@ or caught exceptions, no exceptions. Initial pause on exceptions state is `none`
     /**
      * Edits JavaScript source live.
 
-In general, functions that are currently on the stack can not be edited with
+In general, functions that are currently on the stack cannot be edited with
 a single exception: If the edited function is the top-most stack frame and
 that is the only activation of that function on the stack. In this case
 the live edit will be successful and a `Debugger.restartFrame` for the
@@ -18739,7 +18739,7 @@ NOTE: If you change anything here, make sure to also update
        */
       value?: any;
       /**
-       * Primitive value which can not be JSON-stringified does not have `value`, but gets this
+       * Primitive value which cannot be JSON-stringified does not have `value`, but gets this
 property.
        */
       unserializableValue?: UnserializableValue;
@@ -18930,7 +18930,7 @@ unserializable primitive value or neither of (for undefined) them should be spec
        */
       value?: any;
       /**
-       * Primitive value which can not be JSON-stringified.
+       * Primitive value which cannot be JSON-stringified.
        */
       unserializableValue?: UnserializableValue;
       /**

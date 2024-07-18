@@ -299,7 +299,7 @@ export class Chromium extends BrowserType {
     if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
-      throw new Error('Arguments can not specify page to be opened');
+      throw new Error('Arguments cannot specify page to be opened');
     const chromeArguments = [...chromiumSwitches];
 
     if (os.platform() === 'darwin') {

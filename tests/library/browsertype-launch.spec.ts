@@ -58,7 +58,7 @@ it('should throw if page argument is passed', async ({ browserType, browserName 
 
   let waitError: Error | undefined;
   await browserType.launch({ args: ['http://example.com'] }).catch(e => waitError = e);
-  expect(waitError!.message).toContain('can not specify page');
+  expect(waitError!.message).toContain('cannot specify page');
 });
 
 it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, isWindows }) => {

@@ -280,7 +280,7 @@ it('should not set a cookie with blank page URL', async function({ context, serv
     error = e;
   }
   expect(error.message).toContain(
-      `Blank page can not have cookie "example-cookie-blank"`
+      `Blank page cannot have cookie "example-cookie-blank"`
   );
 });
 
@@ -291,7 +291,7 @@ it('should not set a cookie on a data URL page', async function({ context }) {
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain('Data URL page can not have cookie "example-cookie"');
+  expect(error.message).toContain('Data URL page cannot have cookie "example-cookie"');
 });
 
 it('should default to setting secure cookie for HTTPS websites', async ({ context, page, server }) => {

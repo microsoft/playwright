@@ -63,8 +63,8 @@ export function rewriteCookies(cookies: channels.SetNetworkCookie[]): channels.S
     assert(!(c.expires && c.expires > 0 && c.expires > kMaxCookieExpiresDateInSeconds), 'Cookie should have a valid expires, only -1 or a positive number for the unix timestamp in seconds is allowed');
     const copy = { ...c };
     if (copy.url) {
-      assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
-      assert(!copy.url.startsWith('data:'), `Data URL page can not have cookie "${c.name}"`);
+      assert(copy.url !== 'about:blank', `Blank page cannot have cookie "${c.name}"`);
+      assert(!copy.url.startsWith('data:'), `Data URL page cannot have cookie "${c.name}"`);
       const url = new URL(copy.url);
       copy.domain = url.hostname;
       copy.path = url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);

@@ -196,7 +196,7 @@ it('should not allow capturing before enter-frame', async ({ page, server }) => 
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('*css=iframe >> internal:control=enter-frame >> div');
   const error = await await button.click().catch(e => e);
-  expect(error.message).toContain('Can not capture the selector before diving into the frame');
+  expect(error.message).toContain('Cannot capture the selector before diving into the frame');
 });
 
 it('should capture after the enter-frame', async ({ page, server }) => {
