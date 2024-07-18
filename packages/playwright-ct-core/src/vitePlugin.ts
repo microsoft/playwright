@@ -173,7 +173,12 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
 
   {
     for (const [importingFile, components] of componentsByImportingFile) {
-      setExternalDependencies(importingFile, components)
+      const deps = new Set<string>();
+      for (const component of components) {
+        for (const d of buildInfo.deps[component])
+          deps.add(d);
+      }
+      setExternalDependencies(importingFile, [...deps]);
     }
   }
 

@@ -152,8 +152,12 @@ test('should suppport component tests', async ({ runInlineTest, setupRepository,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
     `,
+    'src/contents.ts': `
+      export const content = "Button";
+    `,
     'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
+      import {content} from './contents';
+      export const Button = () => <button>{content}</button>;
     `,
     'src/button.test.tsx': `
       import { test, expect } from '@playwright/experimental-ct-react';
@@ -204,8 +208,8 @@ test('should suppport component tests', async ({ runInlineTest, setupRepository,
   git('commit -am "update button2 test"');
 
   const result3 = await runInlineTest({
-    'src/button.tsx': `
-      export const Button = () => <button>And another different Button</button>;
+    'src/contents.ts': `
+      export const content = 'Changed Content';
     `
   }, { 'workers': 1, 'only-changed': true });
 
