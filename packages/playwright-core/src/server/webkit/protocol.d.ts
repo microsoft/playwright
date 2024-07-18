@@ -8997,7 +8997,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       isProvisional?: boolean;
       /**
-       * Whether the target is paused on start and has to be explicitely resumed by inspector.
+       * Whether the target is paused on start and has to be explicitly resumed by inspector.
        */
       isPaused?: boolean;
     }
