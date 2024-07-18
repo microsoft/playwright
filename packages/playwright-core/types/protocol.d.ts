@@ -6095,7 +6095,7 @@ Does nothing if no override is set.
     }
     export type setDocumentCookieDisabledParameters = {
       /**
-       * Whether document.coookie API should be disabled.
+       * Whether document.cookie API should be disabled.
        */
       disabled: boolean;
     }
@@ -12420,7 +12420,7 @@ option, use with caution.
        */
       cookieName: string;
       /**
-       * URL to match cooke domain and path.
+       * URL to match cookie domain and path.
        */
       url: string;
     }
