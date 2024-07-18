@@ -6795,7 +6795,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       children?: AXNode[];
       /**
-       * True if this AXNode corresponds with the ObjectId passed into acessibilitySnapshot.
+       * True if this AXNode corresponds with the ObjectId passed into accessibilitySnapshot.
        */
       found?: boolean;
     }
