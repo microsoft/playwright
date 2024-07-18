@@ -231,7 +231,6 @@ Performs the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -267,7 +266,7 @@ await page.GetByRole(AriaRole.Checkbox).CheckAsync();
 ### option: Locator.check.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.check.timeout = %%-input-timeout-%%
@@ -317,7 +316,7 @@ await page.GetByRole(AriaRole.Textbox).ClearAsync();
 ### option: Locator.clear.force = %%-input-force-%%
 * since: v1.28
 
-### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ### option: Locator.clear.timeout = %%-input-timeout-%%
@@ -483,8 +482,6 @@ This method double clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -510,7 +507,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.dblclick.timeout = %%-input-timeout-%%
@@ -709,7 +706,7 @@ Locator of the element to drag to.
 ### option: Locator.dragTo.force = %%-input-force-%%
 * since: v1.18
 
-### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.18
 
 ### option: Locator.dragTo.timeout = %%-input-timeout-%%
@@ -986,7 +983,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.fill.timeout = %%-input-timeout-%%
@@ -1248,7 +1245,6 @@ This method hovers over the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -1273,7 +1269,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.hover.trial = %%-input-trial-%%
 * since: v1.14
 
-### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Locator.innerHTML
@@ -1876,7 +1872,7 @@ String of characters to sequentially press into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.38
 
 ### option: Locator.pressSequentially.timeout = %%-input-timeout-%%
@@ -2133,7 +2129,6 @@ This method checks or unchecks an element by performing the following steps:
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -2145,7 +2140,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Locator.setChecked.position = %%-input-position-%%
@@ -2286,7 +2281,7 @@ This method expects [Locator] to point to an
 ### param: Locator.setInputFiles.files = %%-input-files-%%
 * since: v1.14
 
-### option: Locator.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-%%
@@ -2306,7 +2301,6 @@ This method taps the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -2326,7 +2320,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.tap.timeout = %%-input-timeout-%%
@@ -2376,7 +2370,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Locator.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.type.timeout = %%-input-timeout-%%
@@ -2420,7 +2414,6 @@ This method unchecks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -2434,7 +2427,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%

@@ -16,7 +16,6 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 import type { ElementHandle } from 'playwright-core';
-import type { ServerResponse } from 'http';
 
 it.use({ hasTouch: true });
 
@@ -83,27 +82,13 @@ it('should not send mouse events when touchend is canceled', async ({ page }) =>
   ]);
 });
 
-it('should wait for a navigation caused by a tap', async ({ page, server }) => {
+it('should not wait for a navigation caused by a tap', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`
-  <a href="/intercept-this.html">link</a>;
-`);
-  const responsePromise = new Promise<ServerResponse>(resolve => {
-    server.setRoute('/intercept-this.html', (handler, response) => {
-      resolve(response);
-    });
-  });
-  let resolved = false;
-  const tapPromise = page.tap('a').then(() => resolved = true);
-  const response = await responsePromise;
-  // make sure the tap doesn't resolve too early
-  await new Promise(x => setTimeout(x, 100));
-  expect(resolved).toBe(false);
-
-  response.end('foo');
-
-  await tapPromise;
-  expect(resolved).toBe(true);
+  await page.setContent(`<a href="/intercept-this.html">link</a>;`);
+  await Promise.all([
+    new Promise(resolve => server.setRoute('/intercept-this.html', resolve)),
+    page.tap('a'),
+  ]);
 });
 
 it('should work with modifiers', async ({ page  }) => {

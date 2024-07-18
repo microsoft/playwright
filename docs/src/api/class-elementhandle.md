@@ -164,7 +164,6 @@ This method checks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -178,7 +177,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
@@ -251,8 +250,6 @@ This method double clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -278,7 +275,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.dblclick.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.dblclick.timeout = %%-input-timeout-%%
@@ -537,7 +534,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: ElementHandle.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
@@ -573,7 +570,6 @@ This method hovers over the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -598,7 +594,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.hover.trial = %%-input-trial-%%
 * since: v1.11
 
-### option: ElementHandle.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: ElementHandle.innerHTML
@@ -920,7 +916,6 @@ This method checks or unchecks an element by performing the following steps:
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -932,7 +927,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: ElementHandle.setChecked.position = %%-input-position-%%
@@ -961,7 +956,7 @@ This method expects [ElementHandle] to point to an
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-%%
@@ -978,7 +973,6 @@ This method taps the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -998,7 +992,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.tap.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.tap.timeout = %%-input-timeout-%%
@@ -1039,7 +1033,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
@@ -1058,7 +1052,6 @@ This method checks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -1072,7 +1065,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%

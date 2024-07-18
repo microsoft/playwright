@@ -198,7 +198,6 @@ This method checks an element matching [`param: selector`] by performing the fol
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -210,7 +209,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.check.position = %%-input-position-%%
@@ -303,7 +302,6 @@ This method double clicks an element matching [`param: selector`] by performing 
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
    if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -328,7 +326,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.dblclick.position = %%-input-position-%%
@@ -463,7 +461,7 @@ Optional event-specific initialization properties.
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
 
 ### option: Frame.dragAndDrop.strict = %%-input-strict-%%
@@ -856,7 +854,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Frame.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.fill.strict = %%-input-strict-%%
@@ -1130,7 +1128,6 @@ This method hovers over an element matching [`param: selector`] by performing th
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -1159,7 +1156,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.trial = %%-input-trial-%%
 * since: v1.11
 
-### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Frame.innerHTML
@@ -1583,7 +1580,6 @@ This method checks or unchecks an element matching [`param: selector`] by perfor
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -1598,7 +1594,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Frame.setChecked.position = %%-input-position-%%
@@ -1652,7 +1648,7 @@ This method expects [`param: selector`] to point to an
 ### param: Frame.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.setInputFiles.strict = %%-input-strict-%%
@@ -1675,7 +1671,6 @@ This method taps an element matching [`param: selector`] by performing the follo
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -1693,7 +1688,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.tap.position = %%-input-position-%%
@@ -1762,7 +1757,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.type.strict = %%-input-strict-%%
@@ -1787,7 +1782,6 @@ This method checks an element matching [`param: selector`] by performing the fol
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -1799,7 +1793,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.uncheck.position = %%-input-position-%%

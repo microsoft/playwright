@@ -161,16 +161,15 @@ export class FrameManager {
     }
   }
 
-  async waitForSignalsCreatedBy<T>(progress: Progress | null, noWaitAfter: boolean | undefined, action: () => Promise<T>, source?: 'input'): Promise<T> {
-    if (noWaitAfter)
+  async waitForSignalsCreatedBy<T>(progress: Progress | null, waitAfter: boolean, action: () => Promise<T>): Promise<T> {
+    if (!waitAfter)
       return action();
     const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
     if (progress)
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
     const result = await action();
-    if (source === 'input')
-      await this._page._delegate.inputActionEpilogue();
+    await this._page._delegate.inputActionEpilogue();
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
@@ -1154,21 +1153,21 @@ export class Frame extends SdkObject {
     });
   }
 
-  async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async click(metadata: CallMetadata, selector: string, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._click(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async dblclick(metadata: CallMetadata, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async dblclick(metadata: CallMetadata, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._dblclick(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async dragAndDrop(metadata: CallMetadata, source: string, target: string,  options: types.DragActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async dragAndDrop(metadata: CallMetadata, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performLocatorHandlersCheckpoint */, async handle => {
@@ -1177,6 +1176,7 @@ export class Frame extends SdkObject {
           await this._page.mouse.down();
         }, {
           ...options,
+          waitAfter: 'disabled',
           position: options.sourcePosition,
           timeout: progress.timeUntilDeadline(),
         });
@@ -1188,6 +1188,7 @@ export class Frame extends SdkObject {
           await this._page.mouse.up();
         }, {
           ...options,
+          waitAfter: 'disabled',
           position: options.targetPosition,
           timeout: progress.timeUntilDeadline(),
         });
@@ -1195,7 +1196,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions) {
     if (!this._page._browserContext._options.hasTouch)
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
     const controller = new ProgressController(metadata, this);
@@ -1204,7 +1205,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async fill(metadata: CallMetadata, selector: string, value: string, options: types.NavigatingActionWaitOptions & { force?: boolean }) {
+  async fill(metadata: CallMetadata, selector: string, value: string, options: types.TimeoutOptions & types.StrictOptions & { force?: boolean }) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._fill(progress, value, options)));
@@ -1325,14 +1326,14 @@ export class Frame extends SdkObject {
     return this._elementState(metadata, selector, 'checked', options, scope);
   }
 
-  async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._hover(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<string[]> {
+  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: { noWaitAfter?: boolean } & types.CommonActionOptions = {}): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._selectOption(progress, elements, values, options));
@@ -1343,32 +1344,32 @@ export class Frame extends SdkObject {
     const inputFileItems = await prepareFilesForUpload(this, params);
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params.strict, true /* performLocatorHandlersCheckpoint */, handle => handle._setInputFiles(progress, inputFileItems, params)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params.strict, true /* performLocatorHandlersCheckpoint */, handle => handle._setInputFiles(progress, inputFileItems)));
     }, this._page._timeoutSettings.timeout(params));
   }
 
-  async type(metadata: CallMetadata, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+  async type(metadata: CallMetadata, selector: string, text: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performLocatorHandlersCheckpoint */, handle => handle._type(progress, text, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async press(metadata: CallMetadata, selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+  async press(metadata: CallMetadata, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performLocatorHandlersCheckpoint */, handle => handle._press(progress, key, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async check(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async check(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._setChecked(progress, true, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async uncheck(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async uncheck(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._setChecked(progress, false, options)));
