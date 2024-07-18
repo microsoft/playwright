@@ -2896,7 +2896,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of
-   * the last redirect. If can not go back, returns `null`.
+   * the last redirect. If cannot go back, returns `null`.
    *
    * Navigate to the previous page in history.
    * @param options
@@ -2926,7 +2926,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of
-   * the last redirect. If can not go forward, returns `null`.
+   * the last redirect. If cannot go forward, returns `null`.
    *
    * Navigate to the next page in history.
    * @param options

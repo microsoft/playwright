@@ -43,7 +43,7 @@ You can also reuse the signed-in state in the tests with [setup project](./auth.
 
 ### Avoid testing third-party dependencies
 
-Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
+Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you cannot control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
 
 Instead, use the [Playwright Network API](/network.md#handle-requests) and guarantee the response needed.
 
