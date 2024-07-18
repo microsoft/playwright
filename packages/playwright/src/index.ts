@@ -207,7 +207,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (storageState !== undefined)
       options.storageState = storageState;
     if (clientCertificates?.length)
-      options.clientCertificates = resolveClientCerticates(clientCertificates);
+      options.clientCertificates = resolveClientCertificates(clientCertificates);
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
@@ -478,7 +478,7 @@ function resolveFileToConfig(file: string | undefined) {
 
 type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;
 
-function resolveClientCerticates(clientCertificates: ClientCertificates): ClientCertificates {
+function resolveClientCertificates(clientCertificates: ClientCertificates): ClientCertificates {
   for (const { certs } of clientCertificates) {
     for (const cert of certs) {
       cert.certPath = resolveFileToConfig(cert.certPath);

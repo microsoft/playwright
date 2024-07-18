@@ -1,4 +1,4 @@
-# Certfificates for Socks Proxy
+# Certificates for Socks Proxy
 
 These certificates are used when client certificates are used with
 Playwright. Playwright then creates a Socks proxy, which sits between
