@@ -101,6 +101,7 @@ class SocksProxyConnection {
     const tlsOptions: tls.ConnectionOptions = {
       socket: this.target,
       rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+      servername: this.host,
       ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
     };
     if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())

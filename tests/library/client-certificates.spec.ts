@@ -31,7 +31,9 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
       requestCert: true,
       rejectUnauthorized: false,
     }, (req, res) => {
-      const cert = (req.socket as import('tls').TLSSocket).getPeerCertificate();
+      const tlsSocket = req.socket as import('tls').TLSSocket;
+      expect((tlsSocket as any).servername).toBe('localhost');
+      const cert = tlsSocket.getPeerCertificate();
       if ((req as any).client.authorized) {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(`Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!`);
