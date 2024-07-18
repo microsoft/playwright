@@ -252,7 +252,9 @@ export class WKPage implements PageDelegate {
     if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
       this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
+      const provisionalPage = this._provisionalPage;
       this._provisionalPage = null;
+      this._maybeCancelNavigationRequest(provisionalPage);
     } else if (this._session.sessionId === targetId) {
       this._session.dispose();
       eventsHelper.removeEventListeners(this._sessionListeners);
@@ -1015,10 +1017,41 @@ export class WKPage implements PageDelegate {
     return context.createHandle(result.object) as dom.ElementHandle;
   }
 
+  private _maybeCancelNavigationRequest(provisionalPage: WKProvisionalPage) {
+    const navigationRequest = provisionalPage.pendingNavigationRequest();
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.request === navigationRequest) {
+        // Make sure the request completes if the provisional navigation is canceled.
+        this._onLoadingFailed(provisionalPage._session, {
+          requestId: requestId,
+          errorText: 'Provisiolal navigation canceled.',
+          timestamp: 0,
+          canceled: true
+        });
+        return;
+      }
+    }
+  }
+
+  _changeRequestId(navigationRequest: network.Request, newRequestId: string) {
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.request === navigationRequest) {
+        this._requestIdToRequest.delete(requestId);
+        request.changeRequestId(newRequestId);
+        this._requestIdToRequest.set(newRequestId, request);
+        // Simply ignore this event as it has already been dispatched from the original process
+        // and there will ne no requestIntercepted event from the provisional process as it resumes
+        // existing network load (that has already received reponse headers).
+        return;
+      }
+    }
+  }
+
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
 
+    // navigation too?
     // We do not support intercepting redirects.
     if (this._page.needsRequestInterception() && !event.redirectResponse)
       this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
@@ -1155,6 +1188,12 @@ export class WKPage implements PageDelegate {
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
     if (!request)
+      return;
+
+    // If a provisional page was created after Cross-Origin-Opener-Policy headers were received, it
+    // will take over the request (with a new id). We'll only fail it if the provisional navigation
+    // fails/get canceled.
+    if (this._provisionalPage?.pendingNavigationRequest() === request.request)
       return;
 
     const response = request.request._existingResponse();

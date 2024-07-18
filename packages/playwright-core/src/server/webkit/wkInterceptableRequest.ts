@@ -42,7 +42,7 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
 export class WKInterceptableRequest {
   private readonly _session: WKSession;
   readonly request: network.Request;
-  private readonly _requestId: string;
+  private _requestId: string;
   _timestamp: number;
   _wallTime: number;
 
@@ -57,6 +57,10 @@ export class WKInterceptableRequest {
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+  }
+
+  changeRequestId(requestId: string) {
+    this._requestId = requestId;
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
