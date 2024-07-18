@@ -100,7 +100,7 @@ class SocksProxyConnection {
 
     const tlsOptions: tls.ConnectionOptions = {
       socket: this.target,
-      rejectUnauthorized: this.socksProxy.ignoreHTTPSErrors === true ? false : true,
+      rejectUnauthorized: !!this.socksProxy.ignoreHTTPSErrors,
       ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
     };
     if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
@@ -137,7 +137,7 @@ export class ClientCertificatesProxy {
   _socksProxy: SocksProxy;
   private _connections: Map<string, SocksProxyConnection> = new Map();
   ignoreHTTPSErrors: boolean | undefined;
-  clientCertificates: { url: string; certs: { cert?: channels.Binary; key?: channels.Binary; passphrase?: string; pfx?: channels.Binary; }[]; }[] | undefined;
+  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'];
 
   constructor(
     contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
