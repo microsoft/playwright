@@ -6508,7 +6508,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebSecurityEnabled"|"DeviceOrientationEventEnabled"|"SpeechRecognitionEnabled"|"PointerLockEnabled"|"NotificationsEnabled"|"FullScreenEnabled"|"InputTypeMonthEnabled"|"InputTypeWeekEnabled";
     /**
-     * A user preference that can be overriden by Web Inspector, like an accessibility preference.
+     * A user preference that can be overridden by Web Inspector, like an accessibility preference.
      */
     export interface UserPreference {
       /**
@@ -6913,7 +6913,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type defaultUserPreferencesDidChangePayload = {
       /**
-       * List of user preferences that can be overriden and their new system (default) values.
+       * List of user preferences that can be overridden and their new system (default) values.
        */
       preferences: UserPreference[];
     }

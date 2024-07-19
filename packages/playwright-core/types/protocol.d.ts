@@ -11815,7 +11815,7 @@ for easy understanding and comparison.
       dir?: string;
       display?: string;
       /**
-       * The overrided display mode controlled by the user.
+       * The overridden display mode controlled by the user.
        */
       displayOverrides?: string[];
       /**
@@ -19245,7 +19245,7 @@ execution. Overrides `setPauseOnException` state.
       silent?: boolean;
       /**
        * Whether the result is expected to be a JSON object which should be sent by value.
-Can be overriden by `serializationOptions`.
+Can be overridden by `serializationOptions`.
        */
       returnByValue?: boolean;
       /**
