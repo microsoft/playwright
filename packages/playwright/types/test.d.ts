@@ -5229,7 +5229,7 @@ export interface PlaywrightTestOptions {
    *           certs: [{
    *             certPath: './cert.pem',
    *             keyPath: './key.pem',
-   *             passphase: 'mysecretpassword',
+   *             passphrase: 'mysecretpassword',
    *           }],
    *         }],
    *       },
