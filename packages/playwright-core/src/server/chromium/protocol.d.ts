@@ -11518,7 +11518,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
       timestamp?: Network.TimeSinceEpoch;
     }
     /**
-     * Javascript dialog type.
+     * JavaScript dialog type.
      */
     export type DialogType = "alert"|"confirm"|"prompt"|"beforeunload";
     /**
