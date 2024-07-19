@@ -228,7 +228,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
   // the test runner steps enables us to find parent steps.
   // - In the newer versions the actions are matched by explicit step id stored in the
   //   library context actions.
-  // - In the older versions the step id is not stored and the match is perfomed based on
+  // - In the older versions the step id is not stored and the match is performed based on
   //   action name and wallTime.
   const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
 
