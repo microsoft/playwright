@@ -268,7 +268,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     if (input.placeholder) {
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: kPlaceholderScoreExact });
       for (const alternative of suitableTextAlternatives(input.placeholder))
-        candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(alternative.text, false)}]`, score: kPlaceholderScore - alternative.scoreBouns });
+        candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(alternative.text, false)}]`, score: kPlaceholderScore - alternative.scoreBounds });
     }
   }
 
@@ -277,7 +277,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     const labelText = label.normalized;
     candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
     for (const alternative of suitableTextAlternatives(labelText))
-      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(alternative.text, false), score: kLabelScore - alternative.scoreBouns });
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(alternative.text, false), score: kLabelScore - alternative.scoreBounds });
   }
 
   const ariaRole = getAriaRole(element);
@@ -308,14 +308,14 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   if (title) {
     candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(title, true)}]`, score: kTitleScoreExact }]);
     for (const alternative of suitableTextAlternatives(title))
-      candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBouns }]);
+      candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBounds }]);
   }
 
   const alt = element.getAttribute('alt');
   if (alt && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
     candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alt, true)}]`, score: kAltTextScoreExact }]);
     for (const alternative of suitableTextAlternatives(alt))
-      candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBouns }]);
+      candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBounds }]);
   }
 
   const text = elementText(injectedScript._evaluator._cacheText, element).normalized;
@@ -325,11 +325,11 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       if (text.length <= 80)
         candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
       for (const alternative of alternatives)
-        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
+        candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBounds }]);
     }
     const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
     for (const alternative of alternatives)
-      candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBouns }]);
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBounds }]);
     if (text.length <= 80) {
       const re = new RegExp('^' + escapeRegExp(text) + '$');
       candidates.push([cssToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
@@ -342,7 +342,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     if (ariaName) {
       candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact }]);
       for (const alternative of suitableTextAlternatives(ariaName))
-        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBouns }]);
+        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBounds }]);
     }
   }
 
@@ -527,14 +527,14 @@ function trimWordBoundary(text: string, maxLength: number) {
 }
 
 function suitableTextAlternatives(text: string) {
-  let result: { text: string, scoreBouns: number }[] = [];
+  let result: { text: string, scoreBounds: number }[] = [];
 
   {
     const match = text.match(/^([\d.,]+)[^.,\w]/);
     const leadingNumberLength = match ? match[1].length : 0;
     if (leadingNumberLength) {
       const alt = trimWordBoundary(text.substring(leadingNumberLength).trimStart(), 80);
-      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+      result.push({ text: alt, scoreBounds: alt.length <= 30 ? 2 : 1 });
     }
   }
 
@@ -543,20 +543,20 @@ function suitableTextAlternatives(text: string) {
     const trailingNumberLength = match ? match[1].length : 0;
     if (trailingNumberLength) {
       const alt = trimWordBoundary(text.substring(0, text.length - trailingNumberLength).trimEnd(), 80);
-      result.push({ text: alt, scoreBouns: alt.length <= 30 ? 2 : 1 });
+      result.push({ text: alt, scoreBounds: alt.length <= 30 ? 2 : 1 });
     }
   }
 
   if (text.length <= 30) {
-    result.push({ text, scoreBouns: 0 });
+    result.push({ text, scoreBounds: 0 });
   } else {
-    result.push({ text: trimWordBoundary(text, 80), scoreBouns: 0 });
-    result.push({ text: trimWordBoundary(text, 30), scoreBouns: 1 });
+    result.push({ text: trimWordBoundary(text, 80), scoreBounds: 0 });
+    result.push({ text: trimWordBoundary(text, 30), scoreBounds: 1 });
   }
 
   result = result.filter(r => r.text);
   if (!result.length)
-    result.push({ text: text.substring(0, 80), scoreBouns: 0 });
+    result.push({ text: text.substring(0, 80), scoreBounds: 0 });
 
   return result;
 }
