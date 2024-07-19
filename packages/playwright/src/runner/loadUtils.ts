@@ -152,7 +152,7 @@ export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
   const [gitRoot] = gitFileList('rev-parse --show-toplevel');
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
 
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges].map(toPosixPath);
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
 
   for (const plugin of testRun.config.plugins)
     await plugin.instance?.populateDependencies?.();
@@ -161,7 +161,7 @@ export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
   return [
     ...filesWithChanges,
     ...affectedFiles,
-  ];
+  ].map(toPosixPath);
 }
 
 export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, onlyChangedFiles?: string[]): Promise<Suite> {
