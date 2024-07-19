@@ -183,8 +183,8 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     if (traceFileToContexts.size > 1)
       makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
     // Align action times across runner and library contexts within each trace file.
-    const map = mergeActionsAndUpdateTimingSameTrace(contexts);
-    result.push(...map.values());
+    const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
+    result.push(...actions);
   }
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -211,11 +211,18 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
   }
 }
 
-function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
+function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionTraceEventInContext[] {
   const map = new Map<string, ActionTraceEventInContext>();
 
   const libraryContexts = contexts.filter(context => context.origin === 'library');
   const testRunnerContexts = contexts.filter(context => context.origin === 'testRunner');
+
+  // With library-only or test-runner-only traces there is nothing to match.
+  if (!testRunnerContexts.length || !libraryContexts.length) {
+    return contexts.map(context => {
+      return context.actions.map(action => ({ ...action, context }));
+    }).flat();
+  }
 
   // Library actions are replaced with corresponding test runner steps. Matching with
   // the test runner steps enables us to find parent steps.
@@ -223,7 +230,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
   //   library context actions.
   // - In the older versions the step id is not stored and the match is perfomed based on
   //   action name and wallTime.
-  const matchByStepId = !libraryContexts.length || libraryContexts.some(c => c.actions.some(a => !!a.stepId));
+  const matchByStepId = libraryContexts.some(c => c.actions.some(a => !!a.stepId));
 
   for (const context of libraryContexts) {
     for (const action of context.actions) {
@@ -264,7 +271,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
       map.set(key, { ...action, context });
     }
   }
-  return map;
+  return [...map.values()];
 }
 
 function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: number) {

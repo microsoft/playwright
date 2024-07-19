@@ -1236,3 +1236,14 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
   await expect(newPage.getByText('hello')).toBeVisible();
   await newPage.close();
 });
+
+test('should show similar actions from library-only trace', async ({ showTraceViewer, asset }) => {
+  const traceViewer = await showTraceViewer([asset('trace-library-1.46.zip')]);
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.setContent/,
+    /locator.getAttributelocator\('div'\)/,
+    /locator.isVisiblelocator\('div'\)/,
+    /locator.getAttributelocator\('div'\)/,
+    /locator.isVisiblelocator\('div'\)/,
+  ]);
+});
