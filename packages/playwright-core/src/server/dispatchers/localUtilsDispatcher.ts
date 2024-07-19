@@ -352,11 +352,11 @@ class HarBackend {
             const boundary = multipartBoundary(headers);
             if (!boundary)
               continue;
-            const candidataBoundary = multipartBoundary(candidate.request.headers);
-            if (!candidataBoundary)
+            const candidateBoundary = multipartBoundary(candidate.request.headers);
+            if (!candidateBoundary)
               continue;
             // Try to match multipart/form-data ignroing boundary as it changes between requests.
-            if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidataBoundary, ''))
+            if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidateBoundary, ''))
               continue;
           }
         }
