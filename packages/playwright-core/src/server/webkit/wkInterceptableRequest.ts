@@ -40,9 +40,9 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
 };
 
 export class WKInterceptableRequest {
-  private readonly _session: WKSession;
-  readonly request: network.Request;
+  private _session: WKSession;
   private _requestId: string;
+  readonly request: network.Request;
   _timestamp: number;
   _wallTime: number;
 
@@ -59,7 +59,8 @@ export class WKInterceptableRequest {
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 
-  changeRequestId(requestId: string) {
+  adoptRequestFromNewProcess(newSession: WKSession, requestId: string) {
+    this._session = newSession;
     this._requestId = requestId;
   }
 

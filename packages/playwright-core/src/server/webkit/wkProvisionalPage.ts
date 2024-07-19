@@ -22,11 +22,10 @@ import type { Protocol } from './protocol';
 import { assert } from '../../utils';
 import type * as network from '../network';
 
-
 export class WKProvisionalPage {
   readonly _session: WKSession;
   private readonly _wkPage: WKPage;
-  private _existingNavigationRequest: network.Request | undefined;
+  private _coopNavigationRequest: network.Request | undefined;
   private _sessionListeners: RegisteredListener[] = [];
   private _mainFrameId: string | null = null;
   readonly initializationPromise: Promise<void>;
@@ -34,13 +33,16 @@ export class WKProvisionalPage {
   constructor(session: WKSession, page: WKPage) {
     this._session = session;
     this._wkPage = page;
+    // Cross-Origin-Opener-Policy (COOP) request starts in one process and once response headers
+    // have been received, continues in another.
+    //
     // Network.requestWillBeSent and requestIntercepted (if intercepting) from the original web process
     // will always come before a provisional page is created based on the response COOP headers.
     // Thereafter we'll receive targetCreated (provisional) and later on in some order loadingFailed from the
     // original process and requestWillBeSent from the provisional one. We should ignore loadingFailed
     // as the original request continues in the provisional process. But if the provisional load is later
     // canceled we should dispatch loadingFailed to the client.
-    this._existingNavigationRequest = page._page.mainFrame().pendingDocument()?.request;
+    this._coopNavigationRequest = page._page.mainFrame().pendingDocument()?.request;
 
     const overrideFrameId = (handler: (p: any) => void) => {
       return (payload: any) => {
@@ -63,8 +65,8 @@ export class WKProvisionalPage {
     this.initializationPromise = this._wkPage._initializeSession(session, true, ({ frameTree }) => this._handleFrameTree(frameTree));
   }
 
-  pendingNavigationRequest(): network.Request | undefined {
-    return this._existingNavigationRequest;
+  coopNavigationRequest(): network.Request | undefined {
+    return this._coopNavigationRequest;
   }
 
   dispose() {
@@ -77,10 +79,10 @@ export class WKProvisionalPage {
   }
 
   private _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
-    if (this._existingNavigationRequest && this._existingNavigationRequest.url() === event.request.url) {
+    if (this._coopNavigationRequest && this._coopNavigationRequest.url() === event.request.url) {
       // If it's a continuation of the main frame navigation request after COOP headers were received,
       // take over original request, and replace its request id with the new one.
-      this._wkPage._changeRequestId(this._existingNavigationRequest, event.requestId);
+      this._wkPage._adoptRequestFromNewProcess(this._coopNavigationRequest, this._session, event.requestId);
       // Simply ignore this event as it has already been dispatched from the original process
       // and there will ne no requestIntercepted event from the provisional process as it resumes
       // existing network load (that has already received reponse headers).
@@ -90,12 +92,12 @@ export class WKProvisionalPage {
   }
 
   private _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload): void {
-    this._existingNavigationRequest = undefined;
+    this._coopNavigationRequest = undefined;
     this._wkPage._onLoadingFinished(event);
   }
 
   private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
-    this._existingNavigationRequest = undefined;
+    this._coopNavigationRequest = undefined;
     this._wkPage._onLoadingFailed(this._session, event);
   }
 
