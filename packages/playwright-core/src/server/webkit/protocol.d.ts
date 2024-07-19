@@ -8265,7 +8265,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface TypeDescription {
       /**
-       * If true, we were able to correlate the offset successfuly with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
+       * If true, we were able to correlate the offset successfully with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
        */
       isValid: boolean;
       /**
