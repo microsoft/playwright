@@ -3769,7 +3769,7 @@ The property is always undefined now.
        */
       nodeId: NodeId;
       /**
-       * A ttribute name.
+       * Attribute name.
        */
       name: string;
     }
