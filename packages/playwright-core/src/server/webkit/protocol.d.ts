@@ -8763,7 +8763,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     
     /**
-     * Starts recording video to speified file.
+     * Starts recording video to specified file.
      */
     export type startVideoParameters = {
       /**
