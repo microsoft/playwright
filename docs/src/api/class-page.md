@@ -688,7 +688,7 @@ Raw JavaScript content to be injected into frame.
 * since: v1.8
 - `type` <[string]>
 
-Script type. Use 'module' in order to load a Javascript ES6 module. See
+Script type. Use 'module' in order to load a JavaScript ES6 module. See
 [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Page.addStyleTag

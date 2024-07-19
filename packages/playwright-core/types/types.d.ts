@@ -1887,7 +1887,7 @@ export interface Page {
     path?: string;
 
     /**
-     * Script type. Use 'module' in order to load a Javascript ES6 module. See
+     * Script type. Use 'module' in order to load a JavaScript ES6 module. See
      * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
@@ -5581,7 +5581,7 @@ export interface Frame {
     path?: string;
 
     /**
-     * Script type. Use 'module' in order to load a Javascript ES6 module. See
+     * Script type. Use 'module' in order to load a JavaScript ES6 module. See
      * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
