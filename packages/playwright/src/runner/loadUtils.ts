@@ -33,6 +33,8 @@ import { affectedTestFiles, dependenciesForTestFile } from '../transform/compila
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
+const toPosixPath = (s: string) => s.replaceAll(path.sep, path.posix.sep);
+
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
   const fsCache = new Map();
@@ -150,7 +152,7 @@ export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
   const [gitRoot] = gitFileList('rev-parse --show-toplevel');
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
 
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
+  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges].map(toPosixPath);
 
   for (const plugin of testRun.config.plugins)
     await plugin.instance?.populateDependencies?.();
