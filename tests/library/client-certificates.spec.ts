@@ -249,7 +249,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset }) => {
+  test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         url: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
@@ -259,7 +259,7 @@ test.describe('browser', () => {
         }],
       }],
     });
-    await page.goto(httpsServer.EMPTY_PAGE);
+    await page.goto(browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE);
     await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
     await page.close();
   });
