@@ -2920,7 +2920,7 @@ export module Protocol {
       resultCount: number;
     }
     /**
-     * Returns search results from given <code>fromIndex</code> to given <code>toIndex</code> from the sarch with the given identifier.
+     * Returns search results from given <code>fromIndex</code> to given <code>toIndex</code> from the search with the given identifier.
      */
     export type getSearchResultsParameters = {
       /**
