@@ -56,7 +56,7 @@ type TSCResult = {
   exitCode: number;
 };
 
-export type Files = { [key: string]: string | Buffer; };
+export type Files = { [key: string]: string | Buffer };
 type Params = { [key: string]: string | number | boolean | string[] };
 
 export async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
@@ -233,7 +233,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PWTEST_BOT_NAME: undefined,
     TEST_WORKER_INDEX: undefined,
     TEST_PARALLEL_INDEX: undefined,
-    // NODE_OPTIONS: undefined,
+    NODE_OPTIONS: undefined,
     ...env,
   };
 }
