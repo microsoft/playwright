@@ -516,7 +516,7 @@ class FrameSession {
           // Note: frames might be removed before we send these.
           this._client._sendMayFail('Page.createIsolatedWorld', {
             frameId: frame._id,
-            grantUniveralAccess: true,
+            grantUniversalAccess: true,
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())

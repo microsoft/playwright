@@ -12403,7 +12403,7 @@ iframes, shadow DOM, external resources, and element-inline styles.
        * Whether or not universal access should be granted to the isolated world. This is a powerful
 option, use with caution.
        */
-      grantUniveralAccess?: boolean;
+      grantUniversalAccess?: boolean;
     }
     export type createIsolatedWorldReturnValue = {
       /**
