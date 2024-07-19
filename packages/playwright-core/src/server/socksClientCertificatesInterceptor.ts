@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type net from 'net';
+import net from 'net';
 import path from 'path';
 import type https from 'https';
 import fs from 'fs';
@@ -100,9 +100,13 @@ class SocksProxyConnection {
 
     const tlsOptions: tls.ConnectionOptions = {
       socket: this.target,
+      host: this.host,
+      port: this.port,
       rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
       ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
     };
+    if (!net.isIP(this.host))
+      tlsOptions.servername = this.host;
     if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
       tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
     const targetTLS = tls.connect(tlsOptions);
