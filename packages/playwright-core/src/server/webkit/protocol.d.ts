@@ -1920,7 +1920,7 @@ export module Protocol {
        */
       binding: string;
       /**
-       * A more descriptive name for the type of binding that represents this paritcular data relationship
+       * A more descriptive name for the type of binding that represents this particular data relationship
        */
       type?: string;
       /**
