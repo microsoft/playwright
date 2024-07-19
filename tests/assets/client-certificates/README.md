@@ -10,7 +10,8 @@ openssl req \
 	-out server/server_cert.pem \
 	-nodes \
 	-days 365 \
-	-subj "/CN=localhost/O=Client\ Certificate\ Demo"
+	-subj "/CN=localhost/O=Client\ Certificate\ Demo" \
+	-addext "subjectAltName=DNS:localhost,DNS:local.playwright"
 ```
 
 ## Trusted client-certificate (server signed/valid)
