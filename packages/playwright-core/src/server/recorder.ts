@@ -230,7 +230,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   _pausedStateChanged() {
-    // If we are called upon page.pause, we don't have metadatas, populate them.
+    // If we are called upon page.pause, we don't have metadata, populate them.
     for (const { metadata, sdkObject } of this._debugger.pausedDetails()) {
       if (!this._currentCallsMetadata.has(metadata))
         this.onBeforeCall(sdkObject, metadata);

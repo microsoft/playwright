@@ -17,10 +17,10 @@
 import type { ClientSideCallMetadata } from '@protocol/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
 
-export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
+export function serializeClientSideCallMetadata(metadata: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
   const fileNames = new Map<string, number>();
   const stacks: SerializedStack[] = [];
-  for (const m of metadatas) {
+  for (const m of metadata) {
     if (!m.stack || !m.stack.length)
       continue;
     const stack: SerializedStackFrame[] = [];
