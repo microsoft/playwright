@@ -32,7 +32,8 @@ const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: str
       rejectUnauthorized: false,
     }, (req, res) => {
       const tlsSocket = req.socket as import('tls').TLSSocket;
-      expect((tlsSocket as any).servername).toBe('localhost');
+      // @ts-expect-error
+      expect(['localhost', 'local.playwright'].includes((tlsSocket).servername)).toBe(true);
       const cert = tlsSocket.getPeerCertificate();
       if ((req as any).client.authorized) {
         res.writeHead(200, { 'Content-Type': 'text/html' });
