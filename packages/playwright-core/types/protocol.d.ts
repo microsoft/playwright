@@ -9690,7 +9690,7 @@ the response with the corresponding reason.
     /**
      * Fired when 103 Early Hints headers is received in addition to the common response.
 Not every responseReceived event will have an responseReceivedEarlyHints fired.
-Only one responseReceivedEarlyHints may be fired for eached responseReceived event.
+Only one responseReceivedEarlyHints may be fired for each responseReceived event.
      */
     export type responseReceivedEarlyHintsPayload = {
       /**
