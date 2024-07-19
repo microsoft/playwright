@@ -8397,7 +8397,7 @@ records.
     export interface ServiceWorkerRouterInfo {
       /**
        * ID of the rule matched. If there is a matched rule, this field will
-be set, otherwiser no value will be set.
+be set, otherwise no value will be set.
        */
       ruleIdMatched?: number;
       /**
