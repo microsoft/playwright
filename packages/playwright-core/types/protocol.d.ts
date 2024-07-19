@@ -854,7 +854,7 @@ Explainer: https://github.com/WICG/attribution-reporting-api
     }
     /**
      * Details for issues about documents in Quirks Mode
-or Limited Quirks Mode that affects page layouting.
+or Limited Quirks Mode that affects page layout.
      */
     export interface QuirksModeIssueDetails {
       /**
@@ -12517,7 +12517,7 @@ as an ad. Only sent if frame is labelled as an ad and id is available.
       frameTree: FrameTree;
     }
     /**
-     * Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
+     * Returns metrics relating to the layout of the page, such as viewport bounds/scale.
      */
     export type getLayoutMetricsParameters = {
     }
