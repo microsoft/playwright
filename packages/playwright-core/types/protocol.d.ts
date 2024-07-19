@@ -17061,7 +17061,7 @@ manifestId.
     export type installReturnValue = {
     }
     /**
-     * Uninstals the given manifest_id and closes any opened app windows.
+     * Uninstalls the given manifest_id and closes any opened app windows.
      */
     export type uninstallParameters = {
       manifestId: string;
