@@ -12,6 +12,3 @@ common/
 
 [internalsForTest.ts]
 **
-
-[util.ts]
-transform/
