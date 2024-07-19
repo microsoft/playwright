@@ -172,18 +172,6 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   }
 
   {
-    // TODO: find a way of merging this with below
-    for (const [importingFile, components] of componentsByImportingFile) {
-      const deps = new Set<string>();
-      for (const component of components) {
-        for (const d of buildInfo.deps[component])
-          deps.add(d);
-      }
-      setExternalDependencies(importingFile, [...deps]);
-    }
-  }
-
-  {
     // Update dependencies based on the vite build.
     for (const [importingFile, components] of componentsByImportingFile) {
       const deps = new Set<string>();
