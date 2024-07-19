@@ -685,9 +685,7 @@ it('should return security details directly from response', async ({ contextFact
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
-it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform === 'win32');
-
+it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
   const server = http2.createSecureServer({
     key: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'key.pem')),
     cert: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'cert.pem')),
