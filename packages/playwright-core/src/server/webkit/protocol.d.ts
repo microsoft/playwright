@@ -1209,7 +1209,7 @@ export module Protocol {
     export type forcePseudoStateReturnValue = {
     }
     /**
-     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet recieved, those nodes will be sent to the frontend immediately.
+     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet received, those nodes will be sent to the frontend immediately.
      */
     export type setLayoutContextTypeChangedModeParameters = {
       /**
