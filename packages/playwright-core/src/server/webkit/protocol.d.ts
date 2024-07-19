@@ -877,7 +877,7 @@ export module Protocol {
        */
       sourceURL?: string;
       /**
-       * @-rule's header text range in the enclosing stylesheet (if available). This is from the first non-whitespace character after the @ declarartion to the last non-whitespace character before an opening curly bracket or semicolon.
+       * @-rule's header text range in the enclosing stylesheet (if available). This is from the first non-whitespace character after the @ declaration to the last non-whitespace character before an opening curly bracket or semicolon.
        */
       range?: SourceRange;
     }
