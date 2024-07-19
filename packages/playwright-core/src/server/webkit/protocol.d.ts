@@ -907,7 +907,7 @@ export module Protocol {
      */
     export interface FontVariationAxis {
       /**
-       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is ommited when there is no name, or the name matches the tag exactly.
+       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is omitted when there is no name, or the name matches the tag exactly.
        */
       name?: string;
       /**
