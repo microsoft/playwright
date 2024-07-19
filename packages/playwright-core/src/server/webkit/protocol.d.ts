@@ -8210,7 +8210,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       constructorName?: string;
       /**
-       * Pointer to the StructureRepresentation of the protoype if one exists.
+       * Pointer to the StructureRepresentation of the prototype if one exists.
        */
       prototypeStructure?: StructureDescription;
       /**
