@@ -26,6 +26,35 @@ Now, if you run these shards in parallel on different jobs, your test suite comp
 
 Note that Playwright can only shard tests that can be run in parallel. By default, this means Playwright will shard test files. Learn about other options in the [parallelism guide](./test-parallel.md).
 
+## Sharing Playwright Installations
+
+To save computation time and reduce redundant installations, you can share Playwright installations across different shards using `yarn`, `npm`, and `npx`.
+
+### Using Yarn
+You can install Playwright globally using Yarn:
+```bash
+yarn global add playwright
+yarn playwright install
+```
+
+### Using npm
+
+You can install Playwright globally using npm:
+```bash
+npm install -g playwright
+playwright install
+```
+
+### Using npx
+
+You can install Playwright on-demand using npx:
+```bash
+npx playwright install
+```
+
+By sharing these installations, you avoid redundant downloads and setups, saving both time and computational resources. This approach is especially useful in CI/CD pipelines and multi-project environments where test sharding is employed.
+
+
 ## Merging reports from multiple shards
 
 In the previous example, each test shard has its own test report. If you want to have a combined report showing all the test results from all the shards, you can merge them.
