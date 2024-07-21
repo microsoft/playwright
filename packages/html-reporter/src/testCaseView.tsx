@@ -19,19 +19,26 @@ import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { ProjectLink } from './links';
+import { Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { linkifyText } from './renderUtils';
 import { hashStringToInt, msToString } from './utils';
+import * as icons from './icons';
+import { useSearchParams } from './use-search-params';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
   anchor: 'video' | 'diff' | '',
   run: number,
-}> = ({ projectNames, test, run, anchor }) => {
+  prevTestId: string
+  nextTestId: string
+}> = ({ projectNames, test, run, anchor, prevTestId, nextTestId }) => {
+  const searchParams = useSearchParams();
+  const q = searchParams.get('q') ?? '';
+
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
 
   const labels = React.useMemo(() => {
@@ -46,7 +53,15 @@ export const TestCaseView: React.FC<{
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && (
+      <div className='test-case-title-wrapper'>
+        <div className='test-case-title'>{test?.title}</div>
+        <div className="test-case-navigation">
+          <Link href={`#?q=${q}&testId=${prevTestId}`} title="Prev test case">{icons.leftArrow()}</Link>
+          <Link href={`#?q=${q}&testId=${nextTestId}`} title="Next test case">{icons.rightArrow()}</Link>
+        </div>
+      </div>
+    )}
     {test && <div className='hbox'>
       <div className='test-case-location'>{test.location.file}:{test.location.line}</div>
       <div style={{ flex: 'auto' }}></div>

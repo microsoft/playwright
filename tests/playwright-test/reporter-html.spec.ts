@@ -2437,6 +2437,111 @@ for (const useIntermediateMergeReport of [false] as const) {
       await testFilePathLink.click();
       await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
+
+    test.describe('test details navigation', () => {
+      test('should allow navigating between test cases', async ({ page, runInlineTest, showReport }) => {
+        await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('first test', async ({}) => {
+              expect(1).toBe(1);
+            });
+          `,
+          'b.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('second test', async ({}) => {
+              expect(1).toBe(2);
+            });
+          `,
+          'c.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('third test', async ({}) => {
+              expect(1).toBe(2);
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        await showReport();
+
+        await page.getByText('first test').click();
+        await expect(page.locator('.test-case-title')).toHaveText('first test');
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('second test');
+
+        await page.getByTitle('Prev test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('first test');
+
+        await page.getByTitle('Next test case').click();
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('third test');
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('first test');
+
+        await page.getByTitle('Prev test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('third test');
+      });
+
+      test('filters should be preserved when navigating between test cases', async ({ page, runInlineTest, showReport }) => {
+        await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('@regression first failed test', async ({}) => {
+              expect(1).toBe(2);
+            });
+
+            test('@regression first passed test', async ({}) => {
+              expect(1).toBe(1);
+            });
+          `,
+          'b.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('@smoke second failed test', async ({}) => {
+              expect(1).toBe(2);
+            });
+
+            test('@smoke second passed test', async ({}) => {
+              expect(1).toBe(1);
+            });
+          `,
+          'c.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('third failed test', async ({}) => {
+              expect(1).toBe(2);
+            });
+
+            test('third passed test', async ({}) => {
+              expect(1).toBe(1);
+            });
+          `
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        await showReport();
+
+        await page.locator('.subnav-item:has-text("Failed")').click();
+        await page.getByText('@regression first failed test').click();
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('@smoke second failed test');
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('third failed test');
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('@regression first failed test');
+
+        await page.locator('.subnav-item:has-text("All")').click();
+        await page.locator('.label:has-text("smoke")').first().click();
+        await page.getByText('@smoke second failed test').click();
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('@smoke second passed test');
+
+        await page.getByTitle('Next test case').click();
+        await expect(page.locator('.test-case-title')).toHaveText('@smoke second failed test');
+      });
+    });
   });
 }
 

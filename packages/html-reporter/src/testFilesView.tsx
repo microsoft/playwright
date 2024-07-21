@@ -30,18 +30,18 @@ export const TestFilesView: React.FC<{
   filter: Filter,
   filteredStats: FilteredStats,
   projectNames: string[],
-}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, filteredStats }) => {
-  const filteredFiles = React.useMemo(() => {
+  filteredFiles: TestFileSummary[]
+}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, filteredStats, filteredFiles }) => {
+  const filesSummary = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
-    for (const file of report?.files || []) {
-      const tests = file.tests.filter(t => filter.matches(t));
-      visibleTests += tests.length;
-      if (tests.length)
-        result.push({ file, defaultExpanded: visibleTests < 200 });
+    for (const file of filteredFiles) {
+      visibleTests += file.tests.length;
+      result.push({ file, defaultExpanded: visibleTests < 200 });
     }
     return result;
-  }, [report, filter]);
+  }, [filteredFiles]);
+
   return <>
     <div className='mt-2 mx-1' style={{ display: 'flex' }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
@@ -53,7 +53,7 @@ export const TestFilesView: React.FC<{
     {report && !!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
-    {report && filteredFiles.map(({ file, defaultExpanded }) => {
+    {report && filesSummary.map(({ file, defaultExpanded }) => {
       return <TestFileView
         key={`file-${file.fileId}`}
         report={report}

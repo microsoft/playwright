@@ -64,7 +64,7 @@ const testCase: TestCase = {
 };
 
 test('should render test case', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor='' prevTestId='' nextTestId=''></TestCaseView>);
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
   await expect(component.getByText('Hidden annotation')).toBeHidden();
   await component.getByText('Annotations').click();
@@ -96,7 +96,7 @@ const annotationLinkRenderingTestCase: TestCase = {
 };
 
 test('should correctly render links in annotations', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={annotationLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={annotationLinkRenderingTestCase} run={0} anchor='' prevTestId='' nextTestId=''></TestCaseView>);
 
   const firstLink = await component.getByText('https://playwright.dev/docs/intro').first();
   await expect(firstLink).toBeVisible();
@@ -154,7 +154,7 @@ const attachmentLinkRenderingTestCase: TestCase = {
 };
 
 test('should correctly render links in attachments', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor='' prevTestId='' nextTestId=''></TestCaseView>);
   await component.getByText('first attachment').click();
   const body = await component.getByText('The body with https://playwright.dev/docs/intro link');
   await expect(body).toBeVisible();
@@ -163,8 +163,24 @@ test('should correctly render links in attachments', async ({ mount }) => {
 });
 
 test('should correctly render links in attachment name', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor='' prevTestId='' nextTestId=''></TestCaseView>);
   const link = component.getByText('attachment with inline link').locator('a');
   await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
   await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
 });
+
+test('should correctly render navigation links', async ({ mount, page }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor='' prevTestId='prev-test-id' nextTestId='next-test-id'></TestCaseView>);
+
+  const prevLink = component.getByRole('link').and(page.getByTitle('Prev test case'));
+  const nextLink = component.getByRole('link').and(page.getByTitle('Next test case'));
+  expect(prevLink).toBeVisible();
+  expect(nextLink).toBeVisible();
+
+  await prevLink.click();
+  await expect(page).toHaveURL(/testId=prev-test-id/);
+
+  await nextLink.click();
+  await expect(page).toHaveURL(/testId=next-test-id/);
+});
+

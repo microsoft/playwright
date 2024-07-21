@@ -34,12 +34,24 @@
   color: var(--color-fg-default);
 }
 
+.test-case-title-wrapper {
+  display: grid;
+  grid-template-columns: auto 32px;
+  gap: 8px;
+  padding: 8px;
+}
+
 .test-case-title {
   flex: none;
-  padding: 8px;
   font-weight: 400;
   font-size: 32px !important;
   line-height: 1.25 !important;
+}
+
+.test-case-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .test-case-location,
