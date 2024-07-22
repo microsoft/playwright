@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import childProcess from 'child_process';
 import path from 'path';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
@@ -29,11 +28,10 @@ import type { TestRun } from './tasks';
 import { requireOrImport } from '../transform/transform';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
-import { affectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
+import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
-const toPosixPath = (s: string) => s.replaceAll(path.sep, path.posix.sep);
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
@@ -119,49 +117,6 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
     const suites = files.map(file => fileSuiteByFile.get(file)).filter(Boolean) as Suite[];
     testRun.projectSuites.set(project, suites);
   }
-}
-
-export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
-  const baseCommit = testRun.config.cliOnlyChanged;
-
-  function gitFileList(command: string) {
-    try {
-      return childProcess.execSync(
-          `git ${command}`,
-          { encoding: 'utf-8', stdio: 'pipe' }
-      ).split('\n').filter(Boolean);
-    } catch (_error) {
-      const error = _error as childProcess.SpawnSyncReturns<string>;
-      throw new Error([
-        `Encountered error while detecting changed files.`,
-        `--only-changed only works with Git repositories.`,
-        `Make sure that:`,
-        `  - You are running the test in a Git repository.`,
-        `  - The Git binary is in your PATH.`,
-        `  - The passed Git Ref exists in the repository. You passed '${baseCommit}'.`,
-        ``,
-        `Command Output:`,
-        ``,
-        ...error.output,
-      ].join('\n'));
-    }
-  }
-
-  const untrackedFiles = gitFileList(`ls-files --others --exclude-standard`).map(file => path.join(process.cwd(), file));
-
-  const [gitRoot] = gitFileList('rev-parse --show-toplevel');
-  const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
-
-  const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
-
-  for (const plugin of testRun.config.plugins)
-    await plugin.instance?.populateDependencies?.();
-  const affectedFiles = affectedTestFiles(filesWithChanges);
-
-  return [
-    ...filesWithChanges,
-    ...affectedFiles,
-  ].map(toPosixPath);
 }
 
 export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, onlyChangedFiles?: string[]): Promise<Suite> {

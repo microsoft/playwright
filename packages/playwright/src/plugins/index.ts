@@ -20,10 +20,10 @@ import type { ReporterV2 } from '../reporters/reporterV2';
 export interface TestRunnerPlugin {
   name: string;
   setup?(config: FullConfig, configDir: string, reporter: ReporterV2): Promise<void>;
+  populateDependencies?(): Promise<void>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
-  populateDependencies?(): Promise<void>;
 }
 
 export type TestRunnerPluginRegistration = {

@@ -26,11 +26,12 @@ import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import { collectProjectsAndTestFiles, createRootSuite, detectChangedFiles, loadFileSuites, loadGlobalHook } from './loadUtils';
+import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
+import { detectChangedFiles } from './vcs';
 
 const readDirAsync = promisify(fs.readdir);
 

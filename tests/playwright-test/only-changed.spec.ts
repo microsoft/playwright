@@ -18,49 +18,47 @@ import { test as baseTest, expect, playwrightCtConfigText } from './playwright-t
 import { execSync } from 'node:child_process';
 
 const test = baseTest.extend({
-  setupRepository: async ({ writeFiles }, use, testInfo) => {
+  git: async ({ writeFiles }, use, testInfo) => {
     const baseDir = testInfo.outputPath();
 
     const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir });
 
-    await use(async () => {
-      await writeFiles({
-        'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        import { answer, question } from './utils';
-        test('fails', () => { expect(question).toBe(answer); });
-      `,
-        'b.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        import { answer, question } from './utils';
-        test('fails', () => { expect(question).toBe(answer); });
-      `,
-        'utils.ts': `
-        export * from './answer';
-        export * from './question';
-      `,
-        'answer.ts': `
-        export const answer = 42;
-      `,
-        'question.ts': `
-        export const question = "???";
-      `,
-      });
-      git(`init --initial-branch=main`);
-      git(`config --local user.name "Robert Botman"`);
-      git(`config --local user.email "botty@mcbotface.com"`);
-      git(`add .`);
-      git(`commit -m init`);
-      return git;
+    await writeFiles({
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'utils.ts': `
+      export * from './answer';
+      export * from './question';
+    `,
+      'answer.ts': `
+      export const answer = 42;
+    `,
+      'question.ts': `
+      export const question = "???";
+    `,
     });
+
+    git(`init --initial-branch=main`);
+    git(`config --local user.name "Robert Botman"`);
+    git(`config --local user.email "botty@mcbotface.com"`);
+    git(`add .`);
+    git(`commit -m init`);
+
+    await use((command: string) => git(command));
   },
 });
 
 test.slow();
 
-test('should detect untracked files', async ({ runInlineTest, setupRepository }) => {
-  await setupRepository();
-
+test('should detect untracked files', async ({ runInlineTest, git }) => {
   const result = await runInlineTest({
     'c.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -74,8 +72,7 @@ test('should detect untracked files', async ({ runInlineTest, setupRepository })
 });
 
 
-test('should detect changed files', async ({ runInlineTest, setupRepository }) => {
-  await setupRepository();
+test('should detect changed files', async ({ runInlineTest, git }) => {
   const result = await runInlineTest({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -88,8 +85,7 @@ test('should detect changed files', async ({ runInlineTest, setupRepository }) =
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should diff based on base commit', async ({ runInlineTest, setupRepository, writeFiles }) => {
-  const git = await setupRepository();
+test('should diff based on base commit', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -104,8 +100,7 @@ test('should diff based on base commit', async ({ runInlineTest, setupRepository
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should understand dependency structure', async ({ runInlineTest, setupRepository, writeFiles }) => {
-  await setupRepository();
+test('should understand dependency structure', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'question.ts': `
         export const question = "what is the answer to life the universe and everything";
@@ -119,8 +114,7 @@ test('should understand dependency structure', async ({ runInlineTest, setupRepo
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should support watch mode', async ({ setupRepository, writeFiles, runWatchTest }) => {
-  const git = await setupRepository();
+test('should support watch mode', async ({ git, writeFiles, runWatchTest }) => {
   await writeFiles({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -138,17 +132,16 @@ test('should support watch mode', async ({ setupRepository, writeFiles, runWatch
   expect(testProcess.output).not.toContain('a.spec');
 });
 
-test('should throw nice error message if git doesnt work', async ({ setupRepository, runInlineTest }) => {
-  await setupRepository();
+test('should throw nice error message if git doesnt work', async ({ git, runInlineTest }) => {
   const result = await runInlineTest({}, { 'only-changed': `this-commit-does-not-exist` });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('only works with Git repositories');
+  expect(result.output, 'contains our error message').toContain('Cannot detect changed files for --only-changed mode');
+  expect(result.output, 'contains command').toContain('git diff this-commit-does-not-exist --name-only');
+  expect(result.output, 'contains git command output').toContain('unknown revision or path not in the working tree');
 });
 
-test('should suppport component tests', async ({ runInlineTest, setupRepository, writeFiles }) => {
-  const git = await setupRepository();
-
+test('should suppport component tests', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
@@ -220,9 +213,7 @@ test('should suppport component tests', async ({ runInlineTest, setupRepository,
 });
 
 test.describe('should work the same if being called in subdirectory', () => {
-  test('tracked file', async ({ runInlineTest, setupRepository, writeFiles }) => {
-    const git = await setupRepository();
-
+  test('tracked file', async ({ runInlineTest, git, writeFiles }) => {
     await writeFiles({
       'tests/c.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -244,9 +235,7 @@ test.describe('should work the same if being called in subdirectory', () => {
     expect(result.output).toContain('c.spec.ts');
   });
 
-  test('untracked file', async ({ runInlineTest, setupRepository }) => {
-    await setupRepository();
-
+  test('untracked file', async ({ runInlineTest, git }) => {
     const result = await runInlineTest({
       'tests/c.spec.ts': `
         import { test, expect } from '@playwright/test';
