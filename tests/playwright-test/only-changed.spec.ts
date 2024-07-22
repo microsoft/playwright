@@ -37,23 +37,11 @@ test('should detect untracked files', async ({ runInlineTest, git, writeFiles })
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
+    test('fails', () => { expect(1).toBe(2); });
   `,
     'b.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
-  `,
-    'utils.ts': `
-    export * from './answer';
-    export * from './question';
-  `,
-    'answer.ts': `
-    export const answer = 42;
-  `,
-    'question.ts': `
-    export const question = "???";
+    test('fails', () => { expect(1).toBe(2); });
   `,
   });
 
@@ -77,23 +65,11 @@ test('should detect changed files', async ({ runInlineTest, git, writeFiles }) =
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
+    test('fails', () => { expect(1).toBe(2); });
   `,
     'b.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
-  `,
-    'utils.ts': `
-    export * from './answer';
-    export * from './question';
-  `,
-    'answer.ts': `
-    export const answer = 42;
-  `,
-    'question.ts': `
-    export const question = "???";
+    test('fails', () => { expect(1).toBe(2); });
   `,
   });
 
@@ -116,23 +92,11 @@ test('should diff based on base commit', async ({ runInlineTest, git, writeFiles
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
+    test('fails', () => { expect(1).toBe(2); });
   `,
     'b.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
-  `,
-    'utils.ts': `
-    export * from './answer';
-    export * from './question';
-  `,
-    'answer.ts': `
-    export const answer = 42;
-  `,
-    'question.ts': `
-    export const question = "???";
+    test('fails', () => { expect(1).toBe(2); });
   `,
   });
 
@@ -197,23 +161,11 @@ test('should support watch mode', async ({ git, writeFiles, runWatchTest }) => {
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
+    test('fails', () => { expect(1).toBe(2); });
   `,
     'b.spec.ts': `
     import { test, expect } from '@playwright/test';
-    import { answer, question } from './utils';
-    test('fails', () => { expect(question).toBe(answer); });
-  `,
-    'utils.ts': `
-    export * from './answer';
-    export * from './question';
-  `,
-    'answer.ts': `
-    export const answer = 42;
-  `,
-    'question.ts': `
-    export const question = "???";
+    test('fails', () => { expect(1).toBe(2); });
   `,
   });
 
@@ -322,23 +274,11 @@ test.describe('should work the same if being called in subdirectory', () => {
     await writeFiles({
       'a.spec.ts': `
       import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
+      test('fails', () => { expect(1).toBe(2); });
     `,
       'b.spec.ts': `
       import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
-    `,
-      'utils.ts': `
-      export * from './answer';
-      export * from './question';
-    `,
-      'answer.ts': `
-      export const answer = 42;
-    `,
-      'question.ts': `
-      export const question = "???";
+      test('fails', () => { expect(1).toBe(2); });
     `,
     });
 
@@ -370,23 +310,11 @@ test.describe('should work the same if being called in subdirectory', () => {
     await writeFiles({
       'a.spec.ts': `
       import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
+      test('fails', () => { expect(1).toBe(2); });
     `,
       'b.spec.ts': `
       import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
-    `,
-      'utils.ts': `
-      export * from './answer';
-      export * from './question';
-    `,
-      'answer.ts': `
-      export const answer = 42;
-    `,
-      'question.ts': `
-      export const question = "???";
+      test('fails', () => { expect(1).toBe(2); });
     `,
     });
 
