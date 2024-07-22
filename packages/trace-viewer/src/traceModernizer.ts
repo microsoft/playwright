@@ -22,6 +22,15 @@ import type * as traceV6 from './versions/traceV6';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
+export class TraceVersionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TraceVersionError';
+  }
+}
+
+const latestVersion: trace.VERSION = 7;
+
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
   private _snapshotStorage: SnapshotStorage;
@@ -71,6 +80,8 @@ export class TraceModernizer {
     const contextEntry = this._contextEntry;
     switch (event.type) {
       case 'context-options': {
+        if (event.version > latestVersion)
+          throw new TraceVersionError('The trace was created by a newer version of Playwright and is not supported by this version of the viewer. Please use latest Playwright to open the trace.');
         this._version = event.version;
         contextEntry.origin = event.origin;
         contextEntry.browserName = event.browserName;
@@ -181,9 +192,8 @@ export class TraceModernizer {
     let version = this._version || event.version;
     if (version === undefined)
       return [event];
-    const lastVersion: trace.VERSION = 7;
     let events = [event];
-    for (; version < lastVersion; ++version)
+    for (; version < latestVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
     return events;
   }
