@@ -144,7 +144,7 @@ export class Runner {
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
     const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
     if (override)
-      return await override(resolvedFiles, this._config, result.suite);
+      return await override(resolvedFiles, this._config);
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }
