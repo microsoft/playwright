@@ -41,6 +41,7 @@ import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
+import { SettingsView } from './settingsView';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -66,6 +67,11 @@ export const Workbench: React.FunctionComponent<{
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [showRouteActions, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
+
+  const filteredActions = React.useMemo(() => {
+    return (model?.actions || []).filter(action => showRouteActions || action.class !== 'Route');
+  }, [model, showRouteActions]);
 
   const setSelectedAction = React.useCallback((action: ActionTraceEventInContext | undefined) => {
     setSelectedActionImpl(action);
@@ -261,7 +267,7 @@ export const Workbench: React.FunctionComponent<{
                 </div>}
                 <ActionList
                   sdkLanguage={sdkLanguage}
-                  actions={model?.actions || []}
+                  actions={filteredActions}
                   selectedAction={model ? selectedAction : undefined}
                   selectedTime={selectedTime}
                   setSelectedTime={setSelectedTime}
@@ -277,8 +283,15 @@ export const Workbench: React.FunctionComponent<{
               title: 'Metadata',
               component: <MetadataView model={model}/>
             },
+            {
+              id: 'settings',
+              title: 'Settings',
+              component: <SettingsView settings={[showRouteActionsSetting]}/>,
+            }
           ]}
-          selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
+          selectedTab={selectedNavigatorTab}
+          setSelectedTab={setSelectedNavigatorTab}
+        />
       </SplitView>
       <TabbedPane
         tabs={tabs}

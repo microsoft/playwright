@@ -139,15 +139,29 @@ export function copy(text: string) {
   textArea.remove();
 }
 
-export function useSetting<S>(name: string | undefined, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
-  const value = name ? settings.getObject(name, defaultValue) : defaultValue;
-  const [state, setState] = React.useState<S>(value);
-  const setStateWrapper = (value: React.SetStateAction<S>) => {
+export type Setting<T> = {
+  value: T;
+  set: (value: T) => void;
+  name: string;
+  title: string;
+};
+
+export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
+  if (name)
+    defaultValue = settings.getObject(name, defaultValue);
+  const [value, setValue] = React.useState<S>(defaultValue);
+  const setValueWrapper = React.useCallback((value: React.SetStateAction<S>) => {
     if (name)
       settings.setObject(name, value);
-    setState(value);
+    setValue(value);
+  }, [name, setValue]);
+  const setting = {
+    value,
+    set: setValueWrapper,
+    name: name || '',
+    title: title || name || '',
   };
-  return [state, setStateWrapper];
+  return [value, setValueWrapper, setting];
 }
 
 export class Settings {

@@ -1332,3 +1332,39 @@ test('should show correct request start time', {
   expect(parseMillis(duration)).toBeGreaterThan(1000);
   expect(parseMillis(start)).toBeLessThan(1000);
 });
+
+test('should allow hiding route actions', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30970' },
+}, async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.route('**/*', async route => {
+      await route.fulfill({ contentType: 'text/html', body: 'Yo, page!' });
+    });
+    await page.goto(server.EMPTY_PAGE);
+  });
+
+  // Routes are visible by default.
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.route/,
+    /page.goto.*empty.html/,
+    /route.fulfill/,
+  ]);
+
+  await traceViewer.page.getByText('Settings').click();
+  await expect(traceViewer.page.getByRole('checkbox', { name: 'Show route actions' })).toBeChecked();
+  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
+  await traceViewer.page.getByText('Actions', { exact: true }).click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.route/,
+    /page.goto.*empty.html/,
+  ]);
+
+  await traceViewer.page.getByText('Settings').click();
+  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).check();
+  await traceViewer.page.getByText('Actions', { exact: true }).click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.route/,
+    /page.goto.*empty.html/,
+    /route.fulfill/,
+  ]);
+});
