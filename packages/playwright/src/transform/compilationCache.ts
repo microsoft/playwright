@@ -211,20 +211,24 @@ export function fileDependenciesForTest() {
   return fileDependencies;
 }
 
-export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
-  if (fileDependencies.has(dependency))
-    testFileCollector.add(dependency);
+export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {
+  const isTestFile = (file: string) => fileDependencies.has(file);
+
+  if (isTestFile(changedFile))
+    testFileCollector.add(changedFile);
+
   for (const [testFile, deps] of fileDependencies) {
-    if (deps.has(dependency))
+    if (deps.has(changedFile))
       testFileCollector.add(testFile);
   }
+
   for (const [importingFile, depsOfImportingFile] of externalDependencies) {
-    if (depsOfImportingFile.has(dependency)) {
-      if (fileDependencies.has(importingFile))
+    if (depsOfImportingFile.has(changedFile)) {
+      if (isTestFile(importingFile))
         testFileCollector.add(importingFile);
 
       for (const [testFile, depsOfTestFile] of fileDependencies) {
-        if (depsOfTestFile.has(importingFile) && fileDependencies.has(importingFile))
+        if (depsOfTestFile.has(importingFile))
           testFileCollector.add(testFile);
       }
     }
