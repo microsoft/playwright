@@ -198,7 +198,7 @@ test('should throw nice error message if git doesnt work', async ({ git, runInli
   expect(result.output, 'contains git command output').toContain('unknown revision or path not in the working tree');
 });
 
-test('should suppport component tests', async ({ runInlineTest, git, writeFiles }) => {
+test.only('should suppport component tests', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
@@ -211,9 +211,12 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
       import {content} from './contents';
       export const Button = () => <button>{content}</button>;
     `,
+    'src/helper.ts': `
+      export { Button } from "./button";
+    `,
     'src/button.test.tsx': `
       import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
+      import { Button } from './helper';
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
@@ -222,7 +225,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
     `,
     'src/button2.test.tsx': `
       import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
+      import { Button } from './helper';
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
@@ -243,7 +246,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
   const result2 = await runInlineTest({
     'src/button2.test.tsx': `
       import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
+      import { Button } from './helper';
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
