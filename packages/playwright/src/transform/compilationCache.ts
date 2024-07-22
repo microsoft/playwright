@@ -248,8 +248,11 @@ export function internalDependenciesForTestFile(filename: string): Set<string> |
 
 export function dependenciesForTestFile(filename: string): Set<string> {
   const result = new Set<string>();
-  for (const dep of fileDependencies.get(filename) || [])
-    result.add(dep);
+  for (const testDependency of fileDependencies.get(filename) || []) {
+    result.add(testDependency);
+    for (const externalDependency of externalDependencies.get(testDependency) || [])
+      result.add(externalDependency);
+  }
   for (const dep of externalDependencies.get(filename) || [])
     result.add(dep);
   return result;
