@@ -119,7 +119,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, onlyChangedFiles?: string[]): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, additionalFileMatcher?: Matcher): Promise<Suite> {
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
@@ -130,16 +130,16 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   {
     // Interpret cli parameters.
     const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
-    const onlyChangedFilters = onlyChangedFiles ? createFileFiltersFromArguments(onlyChangedFiles) : undefined;
     const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
     // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
-      const projectSuite = createProjectSuite(project, fileSuites);
+      const filteredFileSuites = additionalFileMatcher ? fileSuites.filter(fileSuite => additionalFileMatcher(fileSuite.location!.file)) : fileSuites;
+      const projectSuite = createProjectSuite(project, filteredFileSuites);
       projectSuites.set(project, projectSuite);
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher, onlyChangedFilters });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -225,16 +225,14 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher, onlyChangedFilters?: TestFileFilter[] }): Suite {
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.onlyChangedFilters?.length)
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher)
     return projectSuite;
 
   const result = projectSuite._deepClone();
   if (options.cliFileFilters.length)
     filterByFocusedLine(result, options.cliFileFilters);
-  if (options.onlyChangedFilters?.length)
-    filterByFocusedLine(result, options.onlyChangedFilters);
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
   filterTestsRemoveEmptySuites(result, (test: TestCase) => {

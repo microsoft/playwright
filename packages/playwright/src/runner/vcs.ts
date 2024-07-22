@@ -17,12 +17,9 @@
 import childProcess from 'child_process';
 import { toPosixPath } from 'playwright-core/lib/utils';
 import { affectedTestFiles } from '../transform/compilationCache';
-import type { TestRun } from './tasks';
 import path from 'path';
 
-export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
-  const baseCommit = testRun.config.cliOnlyChanged;
-
+export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
   function gitFileList(command: string) {
     try {
       return childProcess.execSync(
@@ -46,9 +43,6 @@ export async function detectChangedFiles(testRun: TestRun): Promise<string[]> {
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
 
   const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
-
-  for (const plugin of testRun.config.plugins)
-    await plugin.instance?.populateDependencies?.();
   const affectedFiles = affectedTestFiles(filesWithChanges);
 
   return [

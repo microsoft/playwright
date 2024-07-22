@@ -229,8 +229,16 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
     setup: async (testRun, errors, softErrors) => {
       await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter, options.additionalFileMatcher);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
-      const changedFiles = testRun.config.cliOnlyChanged ? await detectChangedFiles(testRun) : undefined;
-      testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly, changedFiles);
+
+      let cliOnlyChangedMatcher: Matcher | undefined = undefined;
+      if (testRun.config.cliOnlyChanged) {
+        for (const plugin of testRun.config.plugins)
+          await plugin.instance?.populateDependencies?.();
+        const changedFiles = await detectChangedFiles(testRun.config.cliOnlyChanged);
+        cliOnlyChangedMatcher = file => changedFiles.includes(file);
+      }
+
+      testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly, cliOnlyChangedMatcher);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
       if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard) {
