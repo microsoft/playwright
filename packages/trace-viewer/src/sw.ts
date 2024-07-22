@@ -19,6 +19,7 @@ import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
+import { TraceVersionError } from './traceModernizer';
 
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
@@ -57,6 +58,8 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
     console.error(error);
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
+    if (error instanceof TraceVersionError)
+      throw new Error(`Could not load trace from ${traceFileName || traceUrl}. ${error.message}`);
     if (traceFileName)
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
