@@ -218,9 +218,15 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
     if (deps.has(dependency))
       testFileCollector.add(testFile);
   }
-  for (const [testFile, deps] of externalDependencies) {
-    if (deps.has(dependency))
-      testFileCollector.add(testFile);
+  for (const [importingFile, deps] of externalDependencies) {
+    if (deps.has(dependency)) {
+      testFileCollector.add(importingFile);
+
+      for (const [testFile, deps] of fileDependencies) {
+        if (deps.has(importingFile))
+          testFileCollector.add(testFile);
+      }
+    }
   }
 }
 
