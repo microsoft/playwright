@@ -76,6 +76,12 @@ test('should render test case', async ({ mount }) => {
   await expect(component.getByText('My test')).toBeVisible();
 });
 
+test('should render copy buttons for annotations', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
+  await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
+  await expect(component.getByRole('button').first()).toBeVisible();
+});
+
 const annotationLinkRenderingTestCase: TestCase = {
   testId: 'testid',
   title: 'My test',
