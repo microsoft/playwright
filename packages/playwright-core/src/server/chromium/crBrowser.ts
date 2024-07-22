@@ -434,7 +434,6 @@ export class CRBrowserContext extends BrowserContext {
       // chrome-specific permissions we have.
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
-      ['window-management', 'windowManagement']
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
