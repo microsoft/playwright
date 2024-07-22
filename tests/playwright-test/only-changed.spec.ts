@@ -17,40 +17,15 @@
 import { test as baseTest, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import { execSync } from 'node:child_process';
 
-const test = baseTest.extend({
-  git: async ({ writeFiles }, use, testInfo) => {
+const test = baseTest.extend<{ git(command: string): void }>({
+  git: async ({}, use, testInfo) => {
     const baseDir = testInfo.outputPath();
 
     const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir });
 
-    await writeFiles({
-      'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
-    `,
-      'b.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      import { answer, question } from './utils';
-      test('fails', () => { expect(question).toBe(answer); });
-    `,
-      'utils.ts': `
-      export * from './answer';
-      export * from './question';
-    `,
-      'answer.ts': `
-      export const answer = 42;
-    `,
-      'question.ts': `
-      export const question = "???";
-    `,
-    });
-
     git(`init --initial-branch=main`);
     git(`config --local user.name "Robert Botman"`);
     git(`config --local user.email "botty@mcbotface.com"`);
-    git(`add .`);
-    git(`commit -m init`);
 
     await use((command: string) => git(command));
   },
@@ -58,7 +33,33 @@ const test = baseTest.extend({
 
 test.slow();
 
-test('should detect untracked files', async ({ runInlineTest, git }) => {
+test('should detect untracked files', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
   const result = await runInlineTest({
     'c.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -72,7 +73,33 @@ test('should detect untracked files', async ({ runInlineTest, git }) => {
 });
 
 
-test('should detect changed files', async ({ runInlineTest, git }) => {
+test('should detect changed files', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
   const result = await runInlineTest({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -86,6 +113,32 @@ test('should detect changed files', async ({ runInlineTest, git }) => {
 });
 
 test('should diff based on base commit', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
   await writeFiles({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -102,6 +155,32 @@ test('should diff based on base commit', async ({ runInlineTest, git, writeFiles
 
 test('should understand dependency structure', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  await writeFiles({
     'question.ts': `
         export const question = "what is the answer to life the universe and everything";
       `,
@@ -116,12 +195,38 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
 
 test('should support watch mode', async ({ git, writeFiles, runWatchTest }) => {
   await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  await writeFiles({
     'b.spec.ts': `
         import { test, expect } from '@playwright/test';
         test('fails', () => { expect(1).toBe(3); });
       `,
   });
-  git('commit -a -m update');
+  git(`commit -a -m update`);
 
   const testProcess = await runWatchTest({}, { 'only-changed': `HEAD~1` });
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -174,8 +279,8 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
     `,
   });
 
-  git('add .');
-  git('commit -m "init components"');
+  git(`add .`);
+  git(`commit -m "init"`);
 
   const result = await runInlineTest({}, { 'workers': 1, 'only-changed': true });
 
@@ -200,7 +305,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
   expect(result2.output).toContain('button2.test.tsx');
   expect(result2.output).not.toContain('button.test.tsx');
 
-  git('commit -am "update button2 test"');
+  git(`commit -am "update button2 test"`);
 
   const result3 = await runInlineTest({
     'src/contents.ts': `
@@ -215,13 +320,39 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 test.describe('should work the same if being called in subdirectory', () => {
   test('tracked file', async ({ runInlineTest, git, writeFiles }) => {
     await writeFiles({
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'utils.ts': `
+      export * from './answer';
+      export * from './question';
+    `,
+      'answer.ts': `
+      export const answer = 42;
+    `,
+      'question.ts': `
+      export const question = "???";
+    `,
+    });
+
+    git(`add .`);
+    git(`commit -m init`);
+
+    await writeFiles({
       'tests/c.spec.ts': `
         import { test, expect } from '@playwright/test';
         test('fails', () => { expect(1).toBe(2); });
       `
     });
-    git('add .');
-    git('commit -a -m "add test"');
+    git(`add .`);
+    git(`commit -a -m "add test"`);
 
     const result = await runInlineTest({
       'tests/c.spec.ts': `
@@ -235,7 +366,33 @@ test.describe('should work the same if being called in subdirectory', () => {
     expect(result.output).toContain('c.spec.ts');
   });
 
-  test('untracked file', async ({ runInlineTest, git }) => {
+  test('untracked file', async ({ runInlineTest, git, writeFiles }) => {
+    await writeFiles({
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { answer, question } from './utils';
+      test('fails', () => { expect(question).toBe(answer); });
+    `,
+      'utils.ts': `
+      export * from './answer';
+      export * from './question';
+    `,
+      'answer.ts': `
+      export const answer = 42;
+    `,
+      'question.ts': `
+      export const question = "???";
+    `,
+    });
+
+    git(`add .`);
+    git(`commit -m init`);
+
     const result = await runInlineTest({
       'tests/c.spec.ts': `
         import { test, expect } from '@playwright/test';
