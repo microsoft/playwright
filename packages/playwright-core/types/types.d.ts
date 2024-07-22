@@ -1887,7 +1887,7 @@ export interface Page {
     path?: string;
 
     /**
-     * Script type. Use 'module' in order to load a Javascript ES6 module. See
+     * Script type. Use 'module' in order to load a JavaScript ES6 module. See
      * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
@@ -2896,7 +2896,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of
-   * the last redirect. If can not go back, returns `null`.
+   * the last redirect. If cannot go back, returns `null`.
    *
    * Navigate to the previous page in history.
    * @param options
@@ -2926,7 +2926,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of
-   * the last redirect. If can not go forward, returns `null`.
+   * the last redirect. If cannot go forward, returns `null`.
    *
    * Navigate to the next page in history.
    * @param options
@@ -5581,7 +5581,7 @@ export interface Frame {
     path?: string;
 
     /**
-     * Script type. Use 'module' in order to load a Javascript ES6 module. See
+     * Script type. Use 'module' in order to load a JavaScript ES6 module. See
      * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
@@ -19011,7 +19011,7 @@ export interface Request {
   }>>;
 
   /**
-   * Returns the value of the header matching the name. The name is case insensitive.
+   * Returns the value of the header matching the name. The name is case-insensitive.
    * @param name Name of the header.
    */
   headerValue(name: string): Promise<null|string>;
@@ -19272,7 +19272,7 @@ export interface Response {
   }>>;
 
   /**
-   * Returns the value of the header matching the name. The name is case insensitive. If multiple headers have the same
+   * Returns the value of the header matching the name. The name is case-insensitive. If multiple headers have the same
    * name (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is
    * used. If no headers are found, `null` is returned.
    * @param name Name of the header.
@@ -19280,7 +19280,7 @@ export interface Response {
   headerValue(name: string): Promise<null|string>;
 
   /**
-   * Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+   * Returns all values of the headers matching the name, for example `set-cookie`. The name is case-insensitive.
    * @param name Name of the header.
    */
   headerValues(name: string): Promise<Array<string>>;

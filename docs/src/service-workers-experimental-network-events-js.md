@@ -21,7 +21,7 @@ Playwright's inspection and routing of requests made by Service Workers are **ex
 
 Set the `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS` environment variable to `1` (or any other value) to enable the feature. Only Chrome/Chromium are currently supported.
 
-If you're using (or are interested in using this this feature), please comment on [this issue](https://github.com/microsoft/playwright/issues/15684) letting us know your use case.
+If you're using (or are interested in using this feature), please comment on [this issue](https://github.com/microsoft/playwright/issues/15684) letting us know your use case.
 
 ## Service Worker Fetch
 

@@ -763,7 +763,7 @@ pwsh bin/Debug/netX/playwright.ps1 install
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
 - `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
-- `~/Library/Caches/ms-playwright` on MacOS
+- `~/Library/Caches/ms-playwright` on macOS
 - `~/.cache/ms-playwright` on Linux
 
 These browsers will take a few hundred megabytes of disk space when installed:
