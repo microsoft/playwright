@@ -19,7 +19,7 @@ import { toPosixPath } from 'playwright-core/lib/utils';
 import { affectedTestFiles } from '../transform/compilationCache';
 import path from 'path';
 
-export async function detectChangedFiles(baseCommit: string): Promise<string[]> {
+export async function detectChangedFiles(baseCommit: string): Promise<Set<string>> {
   function gitFileList(command: string) {
     try {
       return childProcess.execSync(
@@ -45,8 +45,8 @@ export async function detectChangedFiles(baseCommit: string): Promise<string[]> 
   const filesWithChanges = [...untrackedFiles, ...trackedFilesWithChanges];
   const affectedFiles = affectedTestFiles(filesWithChanges);
 
-  return [
+  return new Set([
     ...filesWithChanges,
     ...affectedFiles,
-  ].map(toPosixPath);
+  ].map(toPosixPath));
 }
