@@ -19,8 +19,7 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
-  it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
