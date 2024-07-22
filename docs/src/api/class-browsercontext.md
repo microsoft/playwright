@@ -980,7 +980,6 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 * `'notifications'`
 * `'payment-handler'`
 * `'storage-access'`
-* `'window-management'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8
