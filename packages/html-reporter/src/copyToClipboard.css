@@ -26,7 +26,21 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border-radius: 4px;
+}
+
+.copy-icon svg {
+  margin: 0;
+}
+
+.copy-icon.small {
+  color: var(--color-fg-muted);
+}
+
+.copy-icon.small svg {
+  height: 14px;
+  width: 14px;
 }
 
 .copy-icon:not(:disabled):hover {
