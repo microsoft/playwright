@@ -48,7 +48,7 @@ export function createPlugin(): TestRunnerPlugin {
       configDir = configDirectory;
     },
 
-    begin: async () => {
+    begin: async (suite: Suite) => {
       const result = await buildBundle(config, configDir);
       if (!result)
         return;
