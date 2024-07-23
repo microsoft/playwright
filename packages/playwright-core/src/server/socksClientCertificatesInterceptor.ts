@@ -26,17 +26,6 @@ import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketReque
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
 
-class SocksConnectionDuplex extends stream.Duplex {
-  constructor(private readonly writeCallback: (data: Buffer) => void) {
-    super();
-  }
-  override _read(): void { }
-  override _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-    this.writeCallback(chunk);
-    callback();
-  }
-}
-
 class SocksProxyConnection {
   private readonly socksProxy: ClientCertificatesProxy;
   private readonly uid: string;
@@ -89,7 +78,13 @@ class SocksProxyConnection {
   }
 
   private _attachTLSListeners() {
-    this.internal = new SocksConnectionDuplex(data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
+    this.internal = new stream.Duplex({
+      read: () => {},
+      write: (data, encoding, callback) => {
+        this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
+        callback();
+      }
+    });
     const internalTLS = new tls.TLSSocket(this.internal, {
       isServer: true,
       key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
