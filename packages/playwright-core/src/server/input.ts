@@ -308,7 +308,6 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
 
 export interface RawTouchscreen {
   tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>): Promise<void>;
-  touch(type: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], modifiers: Set<types.KeyboardModifier>): Promise<void>;
 }
 
 export class Touchscreen {
@@ -326,20 +325,5 @@ export class Touchscreen {
     if (!this._page._browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
-  }
-  async touch(type: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], metadata?: CallMetadata) {
-    if (metadata && touchPoints.length === 1)
-      metadata.point = { x: touchPoints[0].x, y: touchPoints[0].y };
-    if (!this._page._browserContext._options.hasTouch)
-      throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
-    const ids = new Set<number>();
-    for (const point of touchPoints) {
-      if (point.id !== undefined) {
-        if (ids.has(point.id))
-          throw new Error(`Duplicate touch point id: ${point.id}`);
-        ids.add(point.id);
-      }
-    }
-    await this._raw.touch(type, touchPoints, this._page.keyboard._modifiers());
   }
 }

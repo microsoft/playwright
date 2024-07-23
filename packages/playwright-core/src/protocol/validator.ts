@@ -1278,15 +1278,6 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tNumber,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
-scheme.PageTouchscreenTouchParams = tObject({
-  type: tEnum(['touchstart', 'touchend', 'touchmove', 'touchcancel']),
-  touchPoints: tArray(tObject({
-    x: tNumber,
-    y: tNumber,
-    id: tOptional(tNumber),
-  })),
-});
-scheme.PageTouchscreenTouchResult = tOptional(tObject({}));
 scheme.PageAccessibilitySnapshotParams = tObject({
   interestingOnly: tOptional(tBoolean),
   root: tOptional(tChannel(['ElementHandle'])),
