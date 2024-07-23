@@ -414,8 +414,7 @@ it('does launch without a port', async ({ contextFactory }) => {
   await context.close();
 });
 
-it('should isolate proxy credentials between contexts on navigation', async ({ contextFactory, browserName, server }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/31525');
+it('should isolate proxy credentials between contexts on navigation', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31525' });
 
   server.setRoute('/target.html', async (req, res) => {
