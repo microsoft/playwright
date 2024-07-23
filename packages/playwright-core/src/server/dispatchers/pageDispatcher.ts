@@ -265,10 +265,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.touchscreen.tap(params.x, params.y, metadata);
   }
 
-  async touchscreenTouch(params: channels.PageTouchscreenTouchParams, metadata: CallMetadata) {
-    await this._page.touchscreen.touch(params.type, params.touchPoints, metadata);
-  }
-
   async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
