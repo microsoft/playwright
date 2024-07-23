@@ -261,6 +261,8 @@ class TestServerDispatcher implements TestServerInterface {
     }
 
     config.cliArgs = params.locations || [];
+    config.cliGrep = params.grep;
+    config.cliGrepInvert = params.grepInvert;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     config.cliListOnly = true;
 
