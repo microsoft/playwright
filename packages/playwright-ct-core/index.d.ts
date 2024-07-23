@@ -38,14 +38,13 @@ interface RequestHandler {
   run(args: { request: Request, requestId?: string, resolutionContext?: { baseUrl?: string } }): Promise<{ response?: Response } | null>;
 }
 
-export interface RouteFixture {
-  (...args: Parameters<BrowserContext['route']>): Promise<void>;
-  (handlers: RequestHandler[]): Promise<void>;
-  (handler: RequestHandler): Promise<void>;
+export interface RouterFixture {
+  route(...args: Parameters<BrowserContext['route']>): Promise<void>;
+  use(...handlers: RequestHandler[]): Promise<void>;
 }
 
 export type TestType<ComponentFixtures> = BaseTestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures & { route: RouteFixture },
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures & { router: RouterFixture },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 

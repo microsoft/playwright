@@ -134,25 +134,14 @@ export class Router {
     };
   }
 
-  async handle(...args: any[]) {
-    // Multiple RequestHandlers.
-    if (Array.isArray(args[0])) {
-      const handlers = args[0] as RequestHandler[];
-      this._requestHandlers = handlers.concat(this._requestHandlers);
-      await this._updateRequestHandlersRoute();
-      return;
-    }
-    // Single RequestHandler.
-    if (args.length === 1 && typeof args[0] === 'object') {
-      const handlers = [args[0] as RequestHandler];
-      this._requestHandlers = handlers.concat(this._requestHandlers);
-      await this._updateRequestHandlersRoute();
-      return;
-    }
-    // Arguments of BrowserContext.route(url, handler, options?).
-    const routeArgs = args as RouteArgs;
+  async route(...routeArgs: RouteArgs) {
     this._routes.push(routeArgs);
-    await this._context.route(...routeArgs);
+    return await this._context.route(...routeArgs);
+  }
+
+  async use(...handlers: RequestHandler[]) {
+    this._requestHandlers = handlers.concat(this._requestHandlers);
+    await this._updateRequestHandlersRoute();
   }
 
   async dispose() {
