@@ -726,8 +726,8 @@ export function verifyClientCertificates(clientCertificates?: channels.BrowserNe
   if (!clientCertificates)
     return;
   for (const cert of clientCertificates) {
-    if (!cert.url)
-      throw new Error(`clientCertificates.url is required`);
+    if (!cert.origin)
+      throw new Error(`clientCertificates.origin is required`);
     if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
       throw new Error('None of cert, key, passphrase or pfx is specified');
     if (cert.cert && !cert.key)

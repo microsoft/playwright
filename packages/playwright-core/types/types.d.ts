@@ -13172,8 +13172,8 @@ export interface BrowserType<Unused = {}> {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -13182,9 +13182,9 @@ export interface BrowserType<Unused = {}> {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
        * Path to the file with the certificate in PEM format.
@@ -15583,8 +15583,8 @@ export interface APIRequest {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -15593,9 +15593,9 @@ export interface APIRequest {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
        * Path to the file with the certificate in PEM format.
@@ -16776,8 +16776,8 @@ export interface Browser extends EventEmitter {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -16786,9 +16786,9 @@ export interface Browser extends EventEmitter {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
        * Path to the file with the certificate in PEM format.
@@ -20226,8 +20226,8 @@ export interface BrowserContextOptions {
    *
    * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
    * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-   * with a glob pattern to match the URLs that the certificate is valid for.
+   * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+   * provided with a glob pattern to match the origins that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -20236,9 +20236,9 @@ export interface BrowserContextOptions {
    */
   clientCertificates?: Array<{
     /**
-     * Glob pattern to match the URLs that the certificate is valid for.
+     * Glob pattern to match against the request origin that the certificate is valid for.
      */
-    url: string;
+    origin: string;
 
     /**
      * Path to the file with the certificate in PEM format.

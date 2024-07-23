@@ -48,7 +48,7 @@ export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 export type ClientCertificate = {
-  url: string;
+  origin: string;
   certPath?: string;
   keyPath?: string;
   pfxPath?: string;

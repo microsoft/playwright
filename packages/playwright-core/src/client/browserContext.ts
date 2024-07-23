@@ -555,7 +555,7 @@ export async function toClientCertificatesProtocol(certs?: BrowserContextOptions
     return undefined;
   return await Promise.all(certs.map(async cert => {
     return {
-      url: cert.url,
+      origin: cert.origin,
       cert: cert.certPath ? await fs.promises.readFile(cert.certPath) : undefined,
       key: cert.keyPath ? await fs.promises.readFile(cert.keyPath) : undefined,
       pfx: cert.pfxPath ? await fs.promises.readFile(cert.pfxPath) : undefined,

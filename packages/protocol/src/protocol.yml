@@ -445,7 +445,7 @@ ContextOptions:
       items:
         type: object
         properties:
-          url: string
+          origin: string
           cert: binary?
           key: binary?
           passphrase: string?
@@ -695,7 +695,7 @@ Playwright:
           items:
             type: object
             properties:
-              url: string
+              origin: string
               cert: binary?
               key: binary?
               passphrase: string?

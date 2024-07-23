@@ -193,7 +193,7 @@ export abstract class APIRequestContext extends SdkObject {
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline,
-      ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.toString()),
+      ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
     if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
@@ -357,7 +357,7 @@ export abstract class APIRequestContext extends SdkObject {
             maxRedirects: options.maxRedirects - 1,
             timeout: options.timeout,
             deadline: options.deadline,
-            ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, url.toString()),
+            ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, url.origin),
             __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.

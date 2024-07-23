@@ -582,7 +582,7 @@ export type PlaywrightNewRequestParams = {
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -613,7 +613,7 @@ export type PlaywrightNewRequestOptions = {
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -964,7 +964,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -1044,7 +1044,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -1159,7 +1159,7 @@ export type BrowserNewContextParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -1225,7 +1225,7 @@ export type BrowserNewContextOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -1294,7 +1294,7 @@ export type BrowserNewContextForReuseParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -1360,7 +1360,7 @@ export type BrowserNewContextForReuseOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -4566,7 +4566,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,
@@ -4630,7 +4630,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
+    origin: string,
     cert?: Binary,
     key?: Binary,
     passphrase?: string,

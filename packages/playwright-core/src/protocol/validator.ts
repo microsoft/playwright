@@ -337,7 +337,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
+    origin: tString,
     cert: tOptional(tBinary),
     key: tOptional(tBinary),
     passphrase: tOptional(tString),
@@ -545,7 +545,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
+    origin: tString,
     cert: tOptional(tBinary),
     key: tOptional(tBinary),
     passphrase: tOptional(tString),
@@ -631,7 +631,7 @@ scheme.BrowserNewContextParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
+    origin: tString,
     cert: tOptional(tBinary),
     key: tOptional(tBinary),
     passphrase: tOptional(tString),
@@ -700,7 +700,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
+    origin: tString,
     cert: tOptional(tBinary),
     key: tOptional(tBinary),
     passphrase: tOptional(tString),
@@ -2518,7 +2518,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
+    origin: tString,
     cert: tOptional(tBinary),
     key: tOptional(tBinary),
     passphrase: tOptional(tString),

@@ -5208,8 +5208,8 @@ export interface PlaywrightTestOptions {
    *
    * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
    * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-   * with a glob pattern to match the URLs that the certificate is valid for.
+   * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+   * provided with a glob pattern to match the origins that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -5225,7 +5225,7 @@ export interface PlaywrightTestOptions {
    * export default defineConfig({
    *   use: {
    *     clientCertificates: [{
-   *       url: 'https://example.com',
+   *       origin: 'https://example.com',
    *       certPath: './cert.pem',
    *       keyPath: './key.pem',
    *       passphrase: 'mysecretpassword',

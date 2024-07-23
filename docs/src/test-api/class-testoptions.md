@@ -150,7 +150,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     clientCertificates: [{
-      url: 'https://example.com',
+      origin: 'https://example.com',
       certPath: './cert.pem',
       keyPath: './key.pem',
       passphrase: 'mysecretpassword',
