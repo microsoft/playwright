@@ -15,7 +15,6 @@
  */
 
 import childProcess from 'child_process';
-import { toPosixPath } from 'playwright-core/lib/utils';
 import { affectedTestFiles } from '../transform/compilationCache';
 import path from 'path';
 
@@ -48,5 +47,5 @@ export async function detectChangedFiles(baseCommit: string): Promise<Set<string
   return new Set([
     ...filesWithChanges,
     ...affectedFiles,
-  ].map(toPosixPath));
+  ]);
 }
