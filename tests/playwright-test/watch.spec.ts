@@ -690,11 +690,15 @@ test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles 
       import './button.css';
       export const Button = () => <button>Button</button>;
     `,
+    'src/helper.tsx': `
+      import { Button } from "./button";
+      export const buttonInstance = <Button></Button>
+    `,
     'src/button.spec.tsx': `
       import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
+      import { buttonInstance } from './helper';
       test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
+        const component = await mount(buttonInstance);
         await expect(component).toHaveText('Button', { timeout: 1000 });
       });
     `,
