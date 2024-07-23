@@ -18,12 +18,12 @@ import childProcess from 'child_process';
 import { affectedTestFiles } from '../transform/compilationCache';
 import path from 'path';
 
-export async function detectChangedFiles(baseCommit: string): Promise<Set<string>> {
+export async function detectChangedFiles(baseCommit: string, configDir: string): Promise<Set<string>> {
   function gitFileList(command: string) {
     try {
       return childProcess.execSync(
           `git ${command}`,
-          { encoding: 'utf-8', stdio: 'pipe' }
+          { encoding: 'utf-8', stdio: 'pipe', cwd: configDir }
       ).split('\n').filter(Boolean);
     } catch (_error) {
       const error = _error as childProcess.SpawnSyncReturns<string>;
