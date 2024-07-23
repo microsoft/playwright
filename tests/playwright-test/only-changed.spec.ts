@@ -57,6 +57,7 @@ test('should detect untracked files', async ({ runInlineTest, git, writeFiles })
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
+  expect(result.passed).toBe(0);
   expect(result.output).toContain('c.spec.ts');
 });
 
@@ -85,6 +86,7 @@ test('should detect changed files', async ({ runInlineTest, git, writeFiles }) =
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
+  expect(result.passed).toBe(0);
   expect(result.output).toContain('b.spec.ts');
 });
 
@@ -114,6 +116,7 @@ test('should diff based on base commit', async ({ runInlineTest, git, writeFiles
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
+  expect(result.passed).toBe(0);
   expect(result.output).toContain('b.spec.ts');
 });
 
@@ -153,6 +156,7 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(2);
+  expect(result.passed).toBe(0);
   expect(result.output).toContain('a.spec.ts');
   expect(result.output).toContain('b.spec.ts');
 });
@@ -241,6 +245,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
   expect(result.output).toContain('No tests found');
 
   const result2 = await runInlineTest({
@@ -257,6 +262,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
   expect(result2.exitCode).toBe(1);
   expect(result2.failed).toBe(1);
+  expect(result2.passed).toBe(0);
   expect(result2.output).toContain('button2.test.tsx');
   expect(result2.output).not.toContain('button.test.tsx');
 
@@ -270,6 +276,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
   expect(result3.exitCode).toBe(1);
   expect(result3.failed).toBe(2);
+  expect(result3.passed).toBe(0);
 });
 
 test.describe('should work the same if being called in subdirectory', () => {
@@ -306,6 +313,7 @@ test.describe('should work the same if being called in subdirectory', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.failed).toBe(1);
+    expect(result.passed).toBe(0);
     expect(result.output).toContain('c.spec.ts');
   });
 
@@ -333,6 +341,7 @@ test.describe('should work the same if being called in subdirectory', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.failed).toBe(1);
+    expect(result.passed).toBe(0);
     expect(result.output).toContain('c.spec.ts');
   });
 });
