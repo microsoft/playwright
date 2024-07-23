@@ -32,6 +32,7 @@ import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
+
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
   const config = testRun.config;
   const fsCache = new Map();
@@ -118,7 +119,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 }
 
-export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean, additionalFileMatcher?: Matcher): Promise<Suite> {
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
@@ -135,7 +136,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
     // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
-      const projectSuite = createProjectSuite(project, fileSuites);
+      const filteredFileSuites = additionalFileMatcher ? fileSuites.filter(fileSuite => additionalFileMatcher(fileSuite.location!.file)) : fileSuites;
+      const projectSuite = createProjectSuite(project, filteredFileSuites);
       projectSuites.set(project, projectSuite);
       const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
       filteredProjectSuites.set(project, filteredProjectSuite);
