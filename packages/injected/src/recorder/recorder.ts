@@ -202,7 +202,7 @@ class RecordActionTool implements RecorderTool {
       y: number;
       selector: string;
     }
-  }
+  };
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;

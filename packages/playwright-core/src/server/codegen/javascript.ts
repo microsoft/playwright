@@ -110,15 +110,22 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const modifiers = toKeyboardModifiers(action.modifiers);
         const hoverOptionsString = formatOptions({
           position: { x: action.hover.x, y: action.hover.y },
-          ...(modifiers.length ? { modifiers } : {})
         }, false);
         const buttonOptionsString = formatOptions(options, false);
-        return [
+        const dx = action.up.x - action.down.x;
+        const dy = action.up.y - action.down.y;
+        const magnitude = Math.hypot(dx, dy); // important for accuracy, but slows down the test
+        const move = [
           `await ${subject}.${this._asLocator(action.hover.selector)}.hover(${hoverOptionsString});`,
           `await ${subject}.mouse.down(${buttonOptionsString});`,
-          `await ${subject}.mouse.move(${action.up.x}, ${action.up.y}, { steps: 10 });`,
-          `await ${subject}.mouse.up(${buttonOptionsString});`
-        ].join('\n');
+          `await ${subject}.mouse.move(${action.up.x}, ${action.up.y}, { steps: ${Math.round(magnitude)} });`,
+          `await ${subject}.mouse.up(${buttonOptionsString});`,
+        ];
+        if (modifiers.length){
+          move.unshift(...modifiers.map(modifier => `await page.keyboard.down(${quote(modifier)});`));
+          move.push(...modifiers.map(modifier => `await page.keyboard.up(${quote(modifier)});`));
+        }
+        return move.join('\n');
       case 'navigate':
         return `await ${subject}.goto(${quote(action.url)});`;
       case 'select':

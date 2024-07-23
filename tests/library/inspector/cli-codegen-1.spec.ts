@@ -287,7 +287,7 @@ await page.Locator("canvas").ClickAsync(new LocatorClickOptions
     }
   });
   await page.mouse.down();
-  await page.mouse.move(500, 500, { steps: 10 });
+  await page.mouse.move(500, 500, { steps: 283 });
   await page.mouse.up();`);
 
 //     expect(sources.get('Python')!.text).toContain(`
