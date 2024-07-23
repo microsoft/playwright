@@ -196,15 +196,13 @@ export function clientCertificatesToTLSOptions(
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
   };
-  for (const { certs } of matchingCerts) {
-    for (const cert of certs) {
-      if (cert.cert)
-        tlsOptions.cert.push(cert.cert);
-      if (cert.key)
-        tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
-      if (cert.pfx)
-        tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
-    }
+  for (const cert of matchingCerts) {
+    if (cert.cert)
+      tlsOptions.cert.push(cert.cert);
+    if (cert.key)
+      tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
+    if (cert.pfx)
+      tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
   }
   return tlsOptions;
 }

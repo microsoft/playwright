@@ -13166,9 +13166,13 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
      * with a glob pattern to match the URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
@@ -13183,29 +13187,24 @@ export interface BrowserType<Unused = {}> {
       url: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -15578,9 +15577,13 @@ export interface APIRequest {
     baseURL?: string;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
      * with a glob pattern to match the URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
@@ -15595,29 +15598,24 @@ export interface APIRequest {
       url: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -16772,9 +16770,13 @@ export interface Browser extends EventEmitter {
     bypassCSP?: boolean;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+     * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
      * with a glob pattern to match the URLs that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
@@ -16789,29 +16791,24 @@ export interface Browser extends EventEmitter {
       url: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -20223,9 +20220,13 @@ export interface BrowserContextOptions {
   bypassCSP?: boolean;
 
   /**
+   * TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
    * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
    * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
+   * certficiate is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
    * with a glob pattern to match the URLs that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
@@ -20240,29 +20241,24 @@ export interface BrowserContextOptions {
     url: string;
 
     /**
-     * List of client certificates to be used.
+     * Path to the file with the certificate in PEM format.
      */
-    certs: Array<{
-      /**
-       * Path to the file with the certificate in PEM format.
-       */
-      certPath?: string;
+    certPath?: string;
 
-      /**
-       * Path to the file with the private key in PEM format.
-       */
-      keyPath?: string;
+    /**
+     * Path to the file with the private key in PEM format.
+     */
+    keyPath?: string;
 
-      /**
-       * Path to the PFX or PKCS12 encoded private key and certificate chain.
-       */
-      pfxPath?: string;
+    /**
+     * Path to the PFX or PKCS12 encoded private key and certificate chain.
+     */
+    pfxPath?: string;
 
-      /**
-       * Passphrase for the private key (PEM or PFX).
-       */
-      passphrase?: string;
-    }>;
+    /**
+     * Passphrase for the private key (PEM or PFX).
+     */
+    passphrase?: string;
   }>;
 
   /**
