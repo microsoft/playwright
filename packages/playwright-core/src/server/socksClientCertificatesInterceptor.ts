@@ -35,7 +35,6 @@ class SocksProxyConnection {
   target!: net.Socket;
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
-  internalTLS: tls.TLSSocket | undefined;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
     this.socksProxy = socksProxy;
@@ -85,50 +84,51 @@ class SocksProxyConnection {
         callback();
       }
     });
-    const internalTLS = new tls.TLSSocket(this.internal, {
-      isServer: true,
+    const dummyServer = tls.createServer({
       key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
       cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
     });
-    this.internalTLS = internalTLS;
-    internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
+    dummyServer.emit('connection', this.internal);
+    dummyServer.on('secureConnection', internalTLS => {
+      internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
 
-    const tlsOptions: tls.ConnectionOptions = {
-      socket: this.target,
-      host: this.host,
-      port: this.port,
-      rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
-      ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
-    };
-    if (!net.isIP(this.host))
-      tlsOptions.servername = this.host;
-    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
-      tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
-    const targetTLS = tls.connect(tlsOptions);
+      const tlsOptions: tls.ConnectionOptions = {
+        socket: this.target,
+        host: this.host,
+        port: this.port,
+        rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+        ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
+      };
+      if (!net.isIP(this.host))
+        tlsOptions.servername = this.host;
+      if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
+        tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
+      const targetTLS = tls.connect(tlsOptions);
 
-    internalTLS.pipe(targetTLS);
-    targetTLS.pipe(internalTLS);
+      internalTLS.pipe(targetTLS);
+      targetTLS.pipe(internalTLS);
 
-    // Handle close and errors
-    const closeBothSockets = () => {
-      internalTLS.end();
-      targetTLS.end();
-    };
+      // Handle close and errors
+      const closeBothSockets = () => {
+        internalTLS.end();
+        targetTLS.end();
+      };
 
-    internalTLS.on('end', () => closeBothSockets());
-    targetTLS.on('end', () => closeBothSockets());
+      internalTLS.on('end', () => closeBothSockets());
+      targetTLS.on('end', () => closeBothSockets());
 
-    internalTLS.on('error', () => closeBothSockets());
-    targetTLS.on('error', error => {
-      const responseBody = 'Playwright client-certificate error: ' + error.message;
-      internalTLS.end([
-        'HTTP/1.1 503 Internal Server Error',
-        'Content-Type: text/html; charset=utf-8',
-        'Content-Length: ' + Buffer.byteLength(responseBody),
-        '\r\n',
-        responseBody,
-      ].join('\r\n'));
-      closeBothSockets();
+      internalTLS.on('error', () => closeBothSockets());
+      targetTLS.on('error', error => {
+        const responseBody = 'Playwright client-certificate error: ' + error.message;
+        internalTLS.end([
+          'HTTP/1.1 503 Internal Server Error',
+          'Content-Type: text/html; charset=utf-8',
+          'Content-Length: ' + Buffer.byteLength(responseBody),
+          '\r\n',
+          responseBody,
+        ].join('\r\n'));
+        closeBothSockets();
+      });
     });
   }
 }
