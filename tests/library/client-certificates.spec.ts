@@ -64,7 +64,8 @@ const test = base.extend<TestOptions>({
       const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
-    await new Promise<void>(resolve => server?.close(() => resolve()));
+    if (server)
+      await new Promise<void>(resolve => server.close(() => resolve()));
   },
 });
 
@@ -260,7 +261,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('support http2', async ({ browser, startCCServer, asset }) => {
+  test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
+    test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
     const serverURL = await startCCServer({ http2: true });
     const page = await browser.newPage({
       clientCertificates: [{
