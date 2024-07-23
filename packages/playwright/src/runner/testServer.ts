@@ -22,12 +22,10 @@ import type { Transport, HttpServer } from 'playwright-core/lib/utils';
 import type * as reporterTypes from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
-import { InternalReporter } from '../reporters/internalReporter';
 import { createReporterForTestServer, createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
-import { Multiplexer } from '../reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import { Watcher } from '../fsWatcher';
 import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
@@ -40,6 +38,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import { serializeError } from '../util';
 import { cacheDir } from '../transform/compilationCache';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
+import { InternalReporter } from '../reporters/internalReporter';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -102,9 +101,13 @@ class TestServerDispatcher implements TestServerInterface {
 
   private async _collectingReporter() {
     const report: ReportEntry[] = [];
-    const wireReporter = await createReporterForTestServer(this._serializer, e => report.push(e));
-    const reporter = new InternalReporter(wireReporter);
-    return { reporter, report };
+    const collectingReporter = await createReporterForTestServer(this._serializer, e => report.push(e));
+    return { collectingReporter, report };
+  }
+
+  private async _collectingInternalReporter() {
+    const { collectingReporter, report } = await this._collectingReporter();
+    return { reporter: new InternalReporter(collectingReporter), report };
   }
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
@@ -145,9 +148,9 @@ class TestServerDispatcher implements TestServerInterface {
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     await this.runGlobalTeardown();
 
-    const { reporter, report } = await this._collectingReporter();
     const { config, error } = await this._loadConfig();
     if (!config) {
+      const { reporter, report } = await this._collectingInternalReporter();
       // Produce dummy config when it has an error.
       reporter.onConfigure(baseFullConfig);
       reporter.onError(error!);
@@ -156,13 +159,14 @@ class TestServerDispatcher implements TestServerInterface {
     }
 
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    const listReporter = new InternalReporter(new ListReporter());
-    const taskRunner = createTaskRunnerForWatchSetup(config, new Multiplexer([reporter, listReporter]));
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config, reporter);
+    const { collectingReporter, report } = await this._collectingReporter();
+    const listReporter = new ListReporter();
+    const taskRunner = createTaskRunnerForWatchSetup(config, [collectingReporter, listReporter]);
+    taskRunner.reporter.onConfigure(config.config);
+    const testRun = new TestRun(config);
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    await taskRunner.reporter.onEnd({ status });
+    await taskRunner.reporter.onExit();
     if (status !== 'passed') {
       await globalCleanup();
       return { report, status };
@@ -181,7 +185,7 @@ class TestServerDispatcher implements TestServerInterface {
   async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
     if (this._devServerHandle)
       return { status: 'failed', report: [] };
-    const { reporter, report } = await this._collectingReporter();
+    const { reporter, report } = await this._collectingInternalReporter();
     const { config, error } = await this._loadConfig();
     if (!config) {
       reporter.onError(error!);
@@ -209,7 +213,7 @@ class TestServerDispatcher implements TestServerInterface {
       this._devServerHandle = undefined;
       return { status: 'passed', report: [] };
     } catch (e) {
-      const { reporter, report } = await this._collectingReporter();
+      const { reporter, report } = await this._collectingInternalReporter();
       reporter.onError(serializeError(e));
       return { status: 'failed', report };
     }
@@ -222,20 +226,21 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
-    const { reporter, report } = await this._collectingReporter();
     const { config, error } = await this._loadConfig();
     if (!config) {
+      const { reporter, report } = await this._collectingInternalReporter();
       reporter.onError(error!);
       return { status: 'failed', report };
     }
 
+    const { collectingReporter, report } = await this._collectingReporter();
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    const taskRunner = createTaskRunnerForListFiles(config, reporter);
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config, reporter);
+    const taskRunner = createTaskRunnerForListFiles(config, [collectingReporter]);
+    taskRunner.reporter.onConfigure(config.config);
+    const testRun = new TestRun(config);
     const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    await taskRunner.reporter.onEnd({ status });
+    await taskRunner.reporter.onExit();
     return { report, status };
   }
 
@@ -253,11 +258,11 @@ class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
     };
-    const { reporter, report } = await this._collectingReporter();
     const { config, error } = await this._loadConfig(overrides);
     if (!config) {
+      const { reporter, report } = await this._collectingInternalReporter();
       reporter.onError(error!);
-      return { report: [], status: 'failed' };
+      return { report, status: 'failed' };
     }
 
     config.cliArgs = params.locations || [];
@@ -266,12 +271,13 @@ class TestServerDispatcher implements TestServerInterface {
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     config.cliListOnly = true;
 
-    const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: false });
-    const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config.config);
+    const { collectingReporter, report } = await this._collectingReporter();
+    const taskRunner = createTaskRunnerForList(config, [collectingReporter], 'out-of-process', { failOnLoadErrors: false });
+    const testRun = new TestRun(config);
+    taskRunner.reporter.onConfigure(config.config);
     const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    await taskRunner.reporter.onEnd({ status });
+    await taskRunner.reporter.onExit();
 
     const projectDirs = new Set<string>();
     const projectOutputs = new Set<string>();
@@ -343,14 +349,13 @@ class TestServerDispatcher implements TestServerInterface {
     const reporters = await createReporters(config, 'test', true);
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
     reporters.push(wireReporter);
-    const reporter = new InternalReporter(new Multiplexer(reporters));
-    const taskRunner = createTaskRunnerForTestServer(config, reporter);
-    const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config.config);
+    const taskRunner = createTaskRunnerForTestServer(config, reporters);
+    const testRun = new TestRun(config);
+    taskRunner.reporter.onConfigure(config.config);
     const stop = new ManualPromise();
     const run = taskRunner.run(testRun, 0, stop).then(async status => {
-      await reporter.onEnd({ status });
-      await reporter.onExit();
+      await taskRunner.reporter.onEnd({ status });
+      await taskRunner.reporter.onExit();
       this._testRun = undefined;
       return status;
     });

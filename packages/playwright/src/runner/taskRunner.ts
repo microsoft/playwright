@@ -20,20 +20,26 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { InternalReporter } from '../reporters/internalReporter';
+import { Multiplexer } from '../reporters/multiplexer';
 
-type TaskPhase<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;
+type TaskPhase<Context> = (reporter: ReporterV2, context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;
 export type Task<Context> = { setup?: TaskPhase<Context>, teardown?: TaskPhase<Context> };
 
 export class TaskRunner<Context> {
   private _tasks: { name: string, task: Task<Context> }[] = [];
-  private _reporter: ReporterV2;
+  readonly reporter: InternalReporter;
   private _hasErrors = false;
   private _interrupted = false;
   private _isTearDown = false;
   private _globalTimeoutForError: number;
 
-  constructor(reporter: ReporterV2, globalTimeoutForError: number) {
-    this._reporter = reporter;
+  static create<Context>(reporters: ReporterV2[], globalTimeoutForError: number = 0) {
+    return new TaskRunner<Context>(createInternalReporter(reporters), globalTimeoutForError);
+  }
+
+  private constructor(reporter: InternalReporter, globalTimeoutForError: number) {
+    this.reporter = reporter;
     this._globalTimeoutForError = globalTimeoutForError;
   }
 
@@ -50,7 +56,7 @@ export class TaskRunner<Context> {
   async runDeferCleanup(context: Context, deadline: number, cancelPromise = new ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
-    const teardownRunner = new TaskRunner<Context>(this._reporter, this._globalTimeoutForError);
+    const teardownRunner = new TaskRunner<Context>(this.reporter, this._globalTimeoutForError);
     teardownRunner._isTearDown = true;
 
     let currentTaskName: string | undefined;
@@ -65,13 +71,13 @@ export class TaskRunner<Context> {
         const softErrors: TestError[] = [];
         try {
           teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: { setup: task.teardown } });
-          await task.setup?.(context, errors, softErrors);
+          await task.setup?.(this.reporter, context, errors, softErrors);
         } catch (e) {
           debug('pw:test:task')(`error in "${name}": `, e);
           errors.push(serializeError(e));
         } finally {
           for (const error of [...softErrors, ...errors])
-            this._reporter.onError?.(error);
+            this.reporter.onError?.(error);
           if (errors.length) {
             if (!this._isTearDown)
               this._interrupted = true;
@@ -99,7 +105,7 @@ export class TaskRunner<Context> {
     if (sigintWatcher.hadSignal() || cancelPromise?.isDone()) {
       status = 'interrupted';
     } else if (timeoutWatcher.timedOut()) {
-      this._reporter.onError?.({ message: colors.red(`Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run`) });
+      this.reporter.onError?.({ message: colors.red(`Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run`) });
       status = 'timedout';
     } else if (this._hasErrors) {
       status = 'failed';
@@ -139,4 +145,8 @@ class TimeoutWatcher {
   disarm() {
     clearTimeout(this._timer);
   }
+}
+
+function createInternalReporter(reporters: ReporterV2[]): InternalReporter {
+  return new InternalReporter(new Multiplexer(reporters));
 }

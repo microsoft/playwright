@@ -17,7 +17,6 @@
 import readline from 'readline';
 import { createGuid, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import { InternalReporter } from '../reporters/internalReporter';
 import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
@@ -112,15 +111,14 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     p.project.retries = 0;
 
   // Perform global setup.
-  const reporter = new InternalReporter(new ListReporter());
-  const testRun = new TestRun(config, reporter);
-  const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
-  reporter.onConfigure(config.config);
+  const testRun = new TestRun(config);
+  const taskRunner = createTaskRunnerForWatchSetup(config, [new ListReporter()]);
+  taskRunner.reporter.onConfigure(config.config);
   const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
   if (status !== 'passed')
     await globalCleanup();
-  await reporter.onEnd({ status });
-  await reporter.onExit();
+  await taskRunner.reporter.onEnd({ status });
+  await taskRunner.reporter.onExit();
   if (status !== 'passed')
     return status;
 
@@ -280,10 +278,9 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     title?: string,
   }) {
   printConfiguration(config, options?.title);
-  const reporter = new InternalReporter(new ListReporter());
-  const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
-  const testRun = new TestRun(config, reporter);
-  reporter.onConfigure(config.config);
+  const taskRunner = createTaskRunnerForWatch(config, [new ListReporter()], options?.additionalFileMatcher);
+  const testRun = new TestRun(config);
+  taskRunner.reporter.onConfigure(config.config);
   const taskStatus = await taskRunner.run(testRun, 0);
   let status: FullResult['status'] = 'passed';
 
@@ -301,8 +298,8 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     status = 'failed';
   if (status === 'passed' && taskStatus !== 'passed')
     status = taskStatus;
-  await reporter.onEnd({ status });
-  await reporter.onExit();
+  await taskRunner.reporter.onEnd({ status });
+  await taskRunner.reporter.onExit();
 }
 
 function affectedProjectsClosure(projectClosure: FullProjectInternal[], affected: FullProjectInternal[]): Set<FullProjectInternal> {
