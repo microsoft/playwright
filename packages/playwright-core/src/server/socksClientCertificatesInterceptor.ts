@@ -97,7 +97,7 @@ class SocksProxyConnection {
         host: this.host,
         port: this.port,
         rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
-        ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
+        ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}`),
       };
       if (!net.isIP(this.host))
         tlsOptions.servername = this.host;
@@ -183,7 +183,7 @@ export function clientCertificatesToTLSOptions(
   const matchingCerts = clientCertificates?.filter(c => {
     let regex: RegExp | undefined = (c as any)[kClientCertificatesGlobRegex];
     if (!regex) {
-      regex = globToRegex(c.url);
+      regex = globToRegex(c.origin);
       (c as any)[kClientCertificatesGlobRegex] = regex;
     }
     regex.lastIndex = 0;
@@ -196,15 +196,13 @@ export function clientCertificatesToTLSOptions(
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
   };
-  for (const { certs } of matchingCerts) {
-    for (const cert of certs) {
-      if (cert.cert)
-        tlsOptions.cert.push(cert.cert);
-      if (cert.key)
-        tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
-      if (cert.pfx)
-        tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
-    }
+  for (const cert of matchingCerts) {
+    if (cert.cert)
+      tlsOptions.cert.push(cert.cert);
+    if (cert.key)
+      tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
+    if (cert.pfx)
+      tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
   }
   return tlsOptions;
 }

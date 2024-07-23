@@ -79,27 +79,22 @@ test.skip(({ mode }) => mode !== 'default');
 
 const kDummyFileName = __filename;
 const kValidationSubTests: [BrowserContextOptions, string][] = [
-  [{ clientCertificates: [{ url: 'test', certs: [] }] }, 'No certs specified for url: test'],
-  [{ clientCertificates: [{ url: 'test', certs: [{}] }] }, 'None of cert, key, passphrase or pfx is specified'],
+  [{ clientCertificates: [{ origin: 'test' }] }, 'None of cert, key, passphrase or pfx is specified'],
   [{
     clientCertificates: [{
-      url: 'test',
-      certs: [{
-        certPath: kDummyFileName,
-        keyPath: kDummyFileName,
-        pfxPath: kDummyFileName,
-        passphrase: kDummyFileName,
-      }]
+      origin: 'test',
+      certPath: kDummyFileName,
+      keyPath: kDummyFileName,
+      pfxPath: kDummyFileName,
+      passphrase: kDummyFileName,
     }]
   }, 'pfx is specified together with cert, key or passphrase'],
   [{
     proxy: { server: 'http://localhost:8080' },
     clientCertificates: [{
-      url: 'test',
-      certs: [{
-        certPath: kDummyFileName,
-        keyPath: kDummyFileName,
-      }]
+      origin: 'test',
+      certPath: kDummyFileName,
+      keyPath: kDummyFileName,
     }]
   }, 'Cannot specify both proxy and clientCertificates'],
 ];
@@ -122,11 +117,9 @@ test.describe('fetch', () => {
   test('should keep supporting http', async ({ playwright, server, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: server.PREFIX,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(server.PREFIX).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const response = await request.get(server.PREFIX + '/one-style.html');
@@ -140,11 +133,9 @@ test.describe('fetch', () => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/self-signed/cert.pem'),
-          keyPath: asset('client-certificates/client/self-signed/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/self-signed/cert.pem'),
+        keyPath: asset('client-certificates/client/self-signed/key.pem'),
       }],
     });
     const response = await request.get(serverURL);
@@ -158,11 +149,9 @@ test.describe('fetch', () => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const response = await request.get(serverURL);
@@ -176,11 +165,9 @@ test.describe('fetch', () => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const page = await browser.newPage({ ignoreHTTPSErrors: true });
@@ -205,11 +192,9 @@ test.describe('browser', () => {
   test('should keep supporting http', async ({ browser, server, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
-        url: server.PREFIX,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(server.PREFIX).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(server.PREFIX + '/one-style.html');
@@ -222,11 +207,9 @@ test.describe('browser', () => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: 'https://not-matching.com',
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: 'https://not-matching.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(serverURL);
@@ -238,11 +221,9 @@ test.describe('browser', () => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/self-signed/cert.pem'),
-          keyPath: asset('client-certificates/client/self-signed/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/self-signed/cert.pem'),
+        keyPath: asset('client-certificates/client/self-signed/key.pem'),
       }],
     });
     await page.goto(serverURL);
@@ -254,11 +235,9 @@ test.describe('browser', () => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(serverURL);
@@ -269,11 +248,9 @@ test.describe('browser', () => {
   test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
     const page = await browser.newPage({
       clientCertificates: [{
-        url: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE);
@@ -292,11 +269,9 @@ test.describe('browser', () => {
       const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
       const { page } = await launchPersistent({
         clientCertificates: [{
-          url: serverURL,
-          certs: [{
-            certPath: asset('client-certificates/client/trusted/cert.pem'),
-            keyPath: asset('client-certificates/client/trusted/key.pem'),
-          }],
+          origin: new URL(serverURL).origin,
+          certPath: asset('client-certificates/client/trusted/cert.pem'),
+          keyPath: asset('client-certificates/client/trusted/key.pem'),
         }],
       });
       await page.goto(serverURL);

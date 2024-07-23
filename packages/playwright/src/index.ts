@@ -479,12 +479,10 @@ function resolveFileToConfig(file: string | undefined) {
 type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;
 
 function resolveClientCerticates(clientCertificates: ClientCertificates): ClientCertificates {
-  for (const { certs } of clientCertificates) {
-    for (const cert of certs) {
-      cert.certPath = resolveFileToConfig(cert.certPath);
-      cert.keyPath = resolveFileToConfig(cert.keyPath);
-      cert.pfxPath = resolveFileToConfig(cert.pfxPath);
-    }
+  for (const cert of clientCertificates) {
+    cert.certPath = resolveFileToConfig(cert.certPath);
+    cert.keyPath = resolveFileToConfig(cert.keyPath);
+    cert.pfxPath = resolveFileToConfig(cert.pfxPath);
   }
   return clientCertificates;
 }
