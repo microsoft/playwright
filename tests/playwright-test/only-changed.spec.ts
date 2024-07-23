@@ -132,6 +132,10 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
     import { answer, question } from './utils';
     test('fails', () => { expect(question).toBe(answer); });
   `,
+    'c.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
     'utils.ts': `
     export * from './answer';
     export * from './question';
@@ -159,6 +163,7 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
   expect(result.passed).toBe(0);
   expect(result.output).toContain('a.spec.ts');
   expect(result.output).toContain('b.spec.ts');
+  expect(result.output).not.toContain('c.spec.ts');
 });
 
 test('should support watch mode', async ({ git, writeFiles, runWatchTest }) => {
@@ -236,6 +241,14 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
         await expect(component).toHaveText('Button');
       });
     `,
+    'src/button3.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<p>Hello World</p>);
+        await expect(component).toHaveText('Hello World');
+      });
+    `,
   });
 
   git(`add .`);
@@ -265,6 +278,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
   expect(result2.passed).toBe(0);
   expect(result2.output).toContain('button2.test.tsx');
   expect(result2.output).not.toContain('button.test.tsx');
+  expect(result2.output).not.toContain('button3.test.tsx');
 
   git(`commit -am "update button2 test"`);
 
