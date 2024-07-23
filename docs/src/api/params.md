@@ -469,7 +469,7 @@ Defaults to `20`. Pass `0` to not follow redirects.
 * langs: js, python, csharp
 - `maxRetries` <[int]>
 
-Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
 
 ## evaluate-expression
 - `expression` <[string]>
