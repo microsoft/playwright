@@ -31,7 +31,7 @@ import type { Matcher } from '../util';
 import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
-import { detectChangedFiles } from './vcs';
+import { detectChangedTests } from './vcs';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -234,7 +234,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       if (testRun.config.cliOnlyChanged && options.filterOnlyChanged) {
         for (const plugin of testRun.config.plugins)
           await plugin.instance?.populateDependencies?.();
-        const changedFiles = await detectChangedFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
+        const changedFiles = await detectChangedTests(testRun.config.cliOnlyChanged, testRun.config.configDir);
         cliOnlyChangedMatcher = file => changedFiles.has(file);
       }
 
