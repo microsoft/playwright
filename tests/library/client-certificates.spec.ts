@@ -42,27 +42,29 @@ const test = base.extend<TestOptions>({
         ],
         requestCert: true,
         rejectUnauthorized: false,
+        allowHTTP1: true,
       }, (req: (http2.Http2ServerRequest | http.IncomingMessage), res: http2.Http2ServerResponse | http.ServerResponse) => {
         const tlsSocket = req.socket as import('tls').TLSSocket;
         // @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/62336
         expect(['localhost', 'local.playwright'].includes((tlsSocket).servername)).toBe(true);
+        const prefix = `ALPN protocol: ${tlsSocket.alpnProtocol}\n`;
         const cert = tlsSocket.getPeerCertificate();
         if (tlsSocket.authorized) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(`Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!`);
+          res.end(prefix + `Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!`);
         } else if (cert.subject) {
           res.writeHead(403, { 'Content-Type': 'text/html' });
-          res.end(`Sorry ${cert.subject.CN}, certificates from ${cert.issuer.CN} are not welcome here.`);
+          res.end(prefix + `Sorry ${cert.subject.CN}, certificates from ${cert.issuer.CN} are not welcome here.`);
         } else {
           res.writeHead(401, { 'Content-Type': 'text/html' });
-          res.end(`Sorry, but you need to provide a client certificate to continue.`);
+          res.end(prefix + `Sorry, but you need to provide a client certificate to continue.`);
         }
       });
       await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
       const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
-    await new Promise<void>(resolve => server.close(() => resolve()));
+    await new Promise<void>(resolve => server?.close(() => resolve()));
   },
 });
 
@@ -110,7 +112,7 @@ test.describe('fetch', () => {
     const request = await playwright.request.newContext();
     const response = await request.get(serverURL);
     expect(response.status()).toBe(401);
-    expect(await response.text()).toBe('Sorry, but you need to provide a client certificate to continue.');
+    expect(await response.text()).toContain('Sorry, but you need to provide a client certificate to continue.');
     await request.dispose();
   });
 
@@ -141,7 +143,7 @@ test.describe('fetch', () => {
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
     expect(response.status()).toBe(403);
-    expect(await response.text()).toBe('Sorry Bob, certificates from Bob are not welcome here.');
+    expect(await response.text()).toContain('Sorry Bob, certificates from Bob are not welcome here.');
     await request.dispose();
   });
 
@@ -157,7 +159,7 @@ test.describe('fetch', () => {
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
     expect(response.status()).toBe(200);
-    expect(await response.text()).toBe('Hello Alice, your certificate was issued by localhost!');
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
     await request.dispose();
   });
 
@@ -256,6 +258,52 @@ test.describe('browser', () => {
     await page.goto(browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE);
     await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
     await page.close();
+  });
+
+  test('support http2', async ({ browser, startCCServer, asset }) => {
+    const serverURL = await startCCServer({ http2: true });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    {
+      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: h2')).toBeVisible();
+    }
+    {
+      await page.goto(serverURL);
+      await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: h2')).toBeVisible();
+    }
+    await page.close();
+  });
+
+  test('support http2 if the browser only supports http1.1', async ({ browserType, browserName, startCCServer, asset }) => {
+    test.skip(browserName !== 'chromium');
+    const serverURL = await startCCServer({ http2: true });
+    const browser = await browserType.launch({ args: ['--disable-http2'] });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    {
+      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: http/1.1')).toBeVisible();
+    }
+    {
+      await page.goto(serverURL);
+      await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: http/1.1')).toBeVisible();
+    }
+    await browser.close();
   });
 
   test.describe('persistentContext', () => {
