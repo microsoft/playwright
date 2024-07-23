@@ -30,20 +30,18 @@ import { debugLogger } from '../utils/debugLogger';
 class ALPNCache {
   private _cache = new Map<string, ManualPromise<string>>();
 
-  get(host: string, port: number, success: (protocol: string) => void, error: (error: Error) => void): void {
+  get(host: string, port: number, success: (protocol: string) => void) {
     const cacheKey = `${host}:${port}`;
     {
       const result = this._cache.get(cacheKey);
       if (result) {
         result.then(success);
-        result.catch(error);
         return;
       }
     }
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    result.catch(error);
     const socket = tls.connect({
       host,
       port,
@@ -57,13 +55,12 @@ class ALPNCache {
       socket.end();
     });
     socket.on('error', error => {
-      result.reject(error);
+      debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
+      result.resolve('http/1.1');
       socket.end();
     });
   }
 }
-
-const alpnCache = new ALPNCache();
 
 class SocksProxyConnection {
   private readonly socksProxy: ClientCertificatesProxy;
@@ -123,16 +120,17 @@ class SocksProxyConnection {
         callback();
       }
     });
-    alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, serverRequestedAlpnProtocol => {
-      debugLogger.log('socks', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${serverRequestedAlpnProtocol}`);
+    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
+      debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       const dummyServer = tls.createServer({
         key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
         cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
-        ALPNProtocols: serverRequestedAlpnProtocol === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
+        ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
+      this.internal?.on('close', () => dummyServer.close());
       dummyServer.emit('connection', this.internal);
       dummyServer.on('secureConnection', internalTLS => {
-        debugLogger.log('socks', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
+        debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
         internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
         const tlsOptions: tls.ConnectionOptions = {
           socket: this.target,
@@ -162,7 +160,7 @@ class SocksProxyConnection {
 
         internalTLS.on('error', () => closeBothSockets());
         targetTLS.on('error', error => {
-          debugLogger.log('socks', `error when connecting to target: ${error.message}`);
+          debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
           if (internalTLS?.alpnProtocol === 'h2') {
           // https://github.com/nodejs/node/issues/46152
           // TODO: http2.performServerHandshake does not work here for some reason.
@@ -179,9 +177,6 @@ class SocksProxyConnection {
           closeBothSockets();
         });
       });
-
-    }, error => {
-      this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message });
     });
   }
 }
@@ -191,10 +186,12 @@ export class ClientCertificatesProxy {
   private _connections: Map<string, SocksProxyConnection> = new Map();
   ignoreHTTPSErrors: boolean | undefined;
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'];
+  alpnCache: ALPNCache;
 
   constructor(
     contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
   ) {
+    this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
     this.clientCertificates = contextOptions.clientCertificates;
     this._socksProxy = new SocksProxy();
@@ -262,11 +259,4 @@ export function clientCertificatesToTLSOptions(
 
 function rewriteToLocalhostIfNeeded(host: string): string {
   return host === 'local.playwright' ? 'localhost' : host;
-}
-
-// For testing.
-if (require.main === module) {
-  const proxy = new ClientCertificatesProxy({ clientCertificates: [], ignoreHTTPSErrors: false });
-  // eslint-disable-next-line no-console
-  proxy.listen().then(url => console.log('Listening on', url));
 }
