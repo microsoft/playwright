@@ -79,6 +79,8 @@ export interface TestServerInterface {
   listTests(params: {
     projects?: string[];
     locations?: string[];
+    grep?: string;
+    grepInvert?: string;
   }): Promise<{
     report: ReportEntry[],
     status: reporterTypes.FullResult['status']
