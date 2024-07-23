@@ -50,8 +50,8 @@
 
 .test-case-navigation {
   display: flex;
-  align-items: center;
   gap: 8px;
+  padding-top: 8px;
 }
 
 .test-case-location,
@@ -65,6 +65,7 @@
   flex: none;
   align-items: center;
   padding: 0 8px;
+  height: 16px;
 }
 
 .test-case-annotation {

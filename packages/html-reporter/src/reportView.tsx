@@ -28,7 +28,7 @@ import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
-import { useSearchParams } from './use-search-params';
+import { useSearchParams } from './useSearchParams';
 
 declare global {
   interface Window {
@@ -47,11 +47,10 @@ export const ReportView: React.FC<{
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
 
-  const reportData = report?.json();
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
   const filteredFiles = React.useMemo(() => {
-    const files = reportData?.files ?? [];
+    const files = report?.json().files ?? [];
 
     return files
         .map(file => {
@@ -59,21 +58,21 @@ export const ReportView: React.FC<{
           return { ...file, tests };
         })
         .filter(file => file.tests.length !== 0);
-  }, [filter, reportData?.files]);
+  }, [filter, report]);
 
   const filteredStats = React.useMemo(() => computeStats(filteredFiles), [filteredFiles]);
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {reportData && <HeaderView stats={reportData.stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-      {reportData?.metadata && <MetadataView {...reportData.metadata as Metainfo} />}
+      {report?.json() && <HeaderView stats={report?.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json().metadata && <MetadataView {...report.json().metadata as Metainfo} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesView
-          report={reportData}
+          report={report?.json()}
           filter={filter}
           expandedFiles={expandedFiles}
           setExpandedFiles={setExpandedFiles}
-          projectNames={reportData?.projectNames ?? []}
+          projectNames={report?.json().projectNames ?? []}
           filteredStats={filteredStats}
           filteredFiles={filteredFiles}
         />
@@ -83,7 +82,6 @@ export const ReportView: React.FC<{
           <TestCaseViewLoader
             report={report}
             filteredFiles={filteredFiles}
-            filter={filter}
           />
         )}
       </Route>
@@ -94,8 +92,7 @@ export const ReportView: React.FC<{
 const TestCaseViewLoader: React.FC<{
   report: LoadedReport,
   filteredFiles: TestFileSummary[],
-  filter: Filter
-}> = ({ report, filteredFiles, filter }) => {
+}> = ({ report, filteredFiles }) => {
   const searchParams = useSearchParams();
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId') ?? '';

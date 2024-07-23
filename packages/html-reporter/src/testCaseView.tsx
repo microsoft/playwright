@@ -26,7 +26,7 @@ import { TestResultView } from './testResultView';
 import { linkifyText } from './renderUtils';
 import { hashStringToInt, msToString } from './utils';
 import * as icons from './icons';
-import { useSearchParams } from './use-search-params';
+import { useSearchParams } from './useSearchParams';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],

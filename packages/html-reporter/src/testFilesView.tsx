@@ -68,8 +68,7 @@ export const TestFilesView: React.FC<{
           const newExpanded = new Map(expandedFiles);
           newExpanded.set(fileId, expanded);
           setExpandedFiles(newExpanded);
-        }}
-        filter={filter}>
+        }}>
       </TestFileView>;
     })}
   </>;

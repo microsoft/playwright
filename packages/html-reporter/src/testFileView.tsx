@@ -18,20 +18,19 @@ import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
-import { filterWithToken, type Filter } from './filter';
+import { filterWithToken } from './filter';
 import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
-import { useSearchParams } from './use-search-params';
+import { useSearchParams } from './useSearchParams';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
   file: TestFileSummary;
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
-  filter: Filter;
-}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+}>> = ({ file, report, isFileExpanded, setFileExpanded }) => {
   const searchParams = useSearchParams();
   const q = searchParams.get('q') ?? '';
 
