@@ -26,14 +26,14 @@ test('should load font with routes', async ({ mount, page }) => {
 });
 
 test.describe('request handlers', () => {
-  test('should handle requests', async ({ page, mount, route }) => {
+  test('should handle requests', async ({ page, mount, router }) => {
     let respond: (() => void) = () => {};
     const promise = new Promise<void>(f => respond = f);
 
     let postReceived: ((body: string) => void) = () => {};
     const postBody = new Promise<string>(f => postReceived = f);
 
-    await route([
+    await router.use(
       http.get('/data.json', async () => {
         await promise;
         return HttpResponse.json({ name: 'John Doe' });
@@ -42,7 +42,7 @@ test.describe('request handlers', () => {
         postReceived(await request.text());
         return HttpResponse.text('ok');
       }),
-    ]);
+    );
 
     const component = await mount(<Fetcher />);
     await expect(component.getByTestId('name')).toHaveText('<none>');
@@ -54,15 +54,15 @@ test.describe('request handlers', () => {
     expect(await postBody).toBe('hello from the page');
   });
 
-  test('should add dynamically', async ({ page, mount, route }) => {
-    await route('**/data.json', async route => {
+  test('should add dynamically', async ({ page, mount, router }) => {
+    await router.route('**/data.json', async route => {
       await route.fulfill({ body: JSON.stringify({ name: '<original>' }) });
     });
 
     const component = await mount(<Fetcher />);
     await expect(component.getByTestId('name')).toHaveText('<original>');
 
-    await route(
+    await router.use(
       http.get('/data.json', async () => {
         return HttpResponse.json({ name: 'John Doe' });
       }),
@@ -72,12 +72,12 @@ test.describe('request handlers', () => {
     await expect(component.getByTestId('name')).toHaveText('John Doe');
   });
 
-  test('should passthrough', async ({ page, mount, route }) => {
-    await route('**/data.json', async route => {
+  test('should passthrough', async ({ page, mount, router }) => {
+    await router.route('**/data.json', async route => {
       await route.fulfill({ body: JSON.stringify({ name: '<original>' }) });
     });
 
-    await route(
+    await router.use(
       http.get('/data.json', async () => {
         return passthrough();
       }),
@@ -87,13 +87,13 @@ test.describe('request handlers', () => {
     await expect(component.getByTestId('name')).toHaveText('<error>');
   });
 
-  test('should fallback when nothing is returned', async ({ page, mount, route }) => {
-    await route('**/data.json', async route => {
+  test('should fallback when nothing is returned', async ({ page, mount, router }) => {
+    await router.route('**/data.json', async route => {
       await route.fulfill({ body: JSON.stringify({ name: '<original>' }) });
     });
 
     let called = false;
-    await route(
+    await router.use(
       http.get('/data.json', async () => {
         called = true;
       }),
@@ -104,12 +104,12 @@ test.describe('request handlers', () => {
     expect(called).toBe(true);
   });
 
-  test('should bypass(request)', async ({ page, mount, route }) => {
-    await route('**/data.json', async route => {
+  test('should bypass(request)', async ({ page, mount, router }) => {
+    await router.route('**/data.json', async route => {
       await route.fulfill({ body: JSON.stringify({ name: `<original>` }) });
     });
 
-    await route(
+    await router.use(
       http.get('/data.json', async ({ request }) => {
         return await fetch(bypass(request));
       }),
@@ -119,7 +119,7 @@ test.describe('request handlers', () => {
     await expect(component.getByTestId('name')).toHaveText('<error>');
   });
 
-  test('should bypass(url) and get cookies', async ({ page, mount, route, browserName }) => {
+  test('should bypass(url) and get cookies', async ({ page, mount, router, browserName }) => {
     let cookie = '';
     const server = new httpServer.Server();
     server.on('request', (req, res) => {
@@ -129,7 +129,7 @@ test.describe('request handlers', () => {
     await new Promise<void>(f => server.listen(0, f));
     const port = (server.address() as net.AddressInfo).port;
 
-    await route('**/data.json', async route => {
+    await router.route('**/data.json', async route => {
       await route.fulfill({ body: JSON.stringify({ name: `<original>` }) });
     });
 
@@ -137,7 +137,7 @@ test.describe('request handlers', () => {
     await expect(component.getByTestId('name')).toHaveText('<original>');
 
     await page.evaluate(() => document.cookie = 'foo=bar');
-    await route(
+    await router.use(
       http.get('/data.json', async ({ request }) => {
         if (browserName !== 'webkit') {
           // WebKit does not have cookies while intercepting.
@@ -153,12 +153,12 @@ test.describe('request handlers', () => {
     await new Promise(f => server.close(f));
   });
 
-  test('should ignore navigation requests', async ({ page, mount, route }) => {
-    await route('**/newpage', async route => {
+  test('should ignore navigation requests', async ({ page, mount, router }) => {
+    await router.route('**/newpage', async route => {
       await route.fulfill({ body: `<div>original</div>`, contentType: 'text/html' });
     });
 
-    await route(
+    await router.use(
       http.get('/newpage', async ({ request }) => {
         return new Response(`<div>intercepted</div>`, {
           headers: new Headers({ 'Content-Type': 'text/html' }),
@@ -171,11 +171,8 @@ test.describe('request handlers', () => {
     await expect(page.locator('div')).toHaveText('original');
   });
 
-  test('should throw when calling fetch(bypass) outside of a handler', async ({ page, route, baseURL }) => {
-    await route(
-      http.get('/data.json', async () => {
-      }),
-    );
+  test('should throw when calling fetch(bypass) outside of a handler', async ({ page, router, baseURL }) => {
+    await router.use(http.get('/data.json', async () => {}));
 
     const error = await fetch(bypass(baseURL + '/hello')).catch(e => e);
     expect(error.message).toContain(`Cannot call fetch(bypass()) outside of a request handler`);

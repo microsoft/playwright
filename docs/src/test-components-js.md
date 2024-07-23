@@ -726,51 +726,18 @@ test('update', async ({ mount }) => {
 
 ### Handling network requests
 
-Playwright provides a `route` fixture to intercept and handle network requests.
+Playwright provides an **experimental** `router` fixture to intercept and handle network requests. There are two ways to use the `router` fixture:
+* Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`]. See the [network mocking guide](./mock.md) for more details.
+* Call `router.use(handlers)` and pass [MSW library](https://mswjs.io/) request handlers to it.
 
-```ts
-test.beforeEach(async ({ route }) => {
-  // install common routes before each test
-  await route('*/**/api/v1/fruits', async route => {
-    const json = [{ name: 'Strawberry', id: 21 }];
-    await route.fulfill({ json });
-  });
-});
-
-test('example test', async ({ mount }) => {
-  // test as usual, your routes are active
-  // ...
-});
-```
-
-You can also introduce test-specific routes.
-
-```ts
-import { http, HttpResponse } from 'msw';
-
-test('example test', async ({ mount, route }) => {
-  await route('*/**/api/v1/fruits', async route => {
-    const json = [{ name: 'fruit for this single test', id: 42 }];
-    await route.fulfill({ json });
-  });
-
-  // test as usual, your route is active
-  // ...
-});
-```
-
-The `route` fixture works in the same way as [`method: Page.route`]. See the [network mocking guide](./mock.md) for more details.
-
-**Re-using MSW handlers**
-
-If you are using the [MSW library](https://mswjs.io/) to handle network requests during development or testing, you can pass them directly to the `route` fixture.
+Here is an example of reusing your existing MSW handlers in the test.
 
 ```ts
 import { handlers } from '@src/mocks/handlers';
 
-test.beforeEach(async ({ route }) => {
+test.beforeEach(async ({ router }) => {
   // install common handlers before each test
-  await route(handlers);
+  await router.use(...handlers);
 });
 
 test('example test', async ({ mount }) => {
@@ -779,13 +746,13 @@ test('example test', async ({ mount }) => {
 });
 ```
 
-You can also introduce test-specific handlers.
+You can also introduce a one-off handler for a specific test.
 
 ```ts
 import { http, HttpResponse } from 'msw';
 
-test('example test', async ({ mount, route }) => {
-  await route(http.get('/data', async ({ request }) => {
+test('example test', async ({ mount, router }) => {
+  await router.use(http.get('/data', async ({ request }) => {
     return HttpResponse.json({ value: 'mocked' });
   }));
 

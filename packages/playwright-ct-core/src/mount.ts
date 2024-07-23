@@ -19,8 +19,8 @@ import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } fr
 import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
 import type { ImportRef } from './injected/importRegistry';
 import { wrapObject } from './injected/serializers';
-import { Router } from './route';
-import type { RouteFixture } from '../index';
+import { Router } from './router';
+import type { RouterFixture } from '../index';
 
 let boundCallbacksForMount: Function[] = [];
 
@@ -31,7 +31,7 @@ interface MountResult extends Locator {
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   mount: (component: any, options: any) => Promise<MountResult>;
-  route: RouteFixture;
+  router: RouterFixture;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions;
 type BaseTestFixtures = {
@@ -80,9 +80,9 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
     boundCallbacksForMount = [];
   },
 
-  route: async ({ context, baseURL }, use) => {
+  router: async ({ context, baseURL }, use) => {
     const router = new Router(context, baseURL);
-    await use((...args) => router.handle(...args));
+    await use(router);
     await router.dispose();
   },
 };
