@@ -118,7 +118,6 @@ export function createTaskRunnerForFindRelatedTests(config: FullConfigInternal, 
   for (const plugin of config.plugins)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   taskRunner.addTask('load tests', createLoadTask(mode, { filterOnly: false, populatePluginDependencies: true, failOnLoadErrors: false }));
-  taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
 }
 
