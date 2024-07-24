@@ -19,7 +19,8 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, browserName }) {
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
