@@ -725,21 +725,17 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
 export function verifyClientCertificates(clientCertificates?: channels.BrowserNewContextParams['clientCertificates']) {
   if (!clientCertificates)
     return;
-  for (const { url, certs } of clientCertificates) {
-    if (!url)
-      throw new Error(`clientCertificates.url is required`);
-    if (!certs.length)
-      throw new Error('No certs specified for url: ' + url);
-    for (const cert of certs) {
-      if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
-        throw new Error('None of cert, key, passphrase or pfx is specified');
-      if (cert.cert && !cert.key)
-        throw new Error('cert is specified without key');
-      if (!cert.cert && cert.key)
-        throw new Error('key is specified without cert');
-      if (cert.pfx && (cert.cert || cert.key))
-        throw new Error('pfx is specified together with cert, key or passphrase');
-    }
+  for (const cert of clientCertificates) {
+    if (!cert.origin)
+      throw new Error(`clientCertificates.origin is required`);
+    if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
+      throw new Error('None of cert, key, passphrase or pfx is specified');
+    if (cert.cert && !cert.key)
+      throw new Error('cert is specified without key');
+    if (!cert.cert && cert.key)
+      throw new Error('key is specified without cert');
+    if (cert.pfx && (cert.cert || cert.key))
+      throw new Error('pfx is specified together with cert, key or passphrase');
   }
 }
 

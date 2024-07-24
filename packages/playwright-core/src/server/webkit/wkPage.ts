@@ -250,6 +250,7 @@ export class WKPage implements PageDelegate {
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId, crashed } = event;
     if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
+      this._maybeCancelCoopNavigationRequest(this._provisionalPage);
       this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
@@ -1013,6 +1014,33 @@ export class WKPage implements PageDelegate {
     if (!result || result.object.subtype === 'null')
       throw new Error('Frame has been detached.');
     return context.createHandle(result.object) as dom.ElementHandle;
+  }
+
+  private _maybeCancelCoopNavigationRequest(provisionalPage: WKProvisionalPage) {
+    const navigationRequest = provisionalPage.coopNavigationRequest();
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.request === navigationRequest) {
+        // Make sure the request completes if the provisional navigation is canceled.
+        this._onLoadingFailed(provisionalPage._session, {
+          requestId: requestId,
+          errorText: 'Provisiolal navigation canceled.',
+          timestamp: request._timestamp,
+          canceled: true,
+        });
+        return;
+      }
+    }
+  }
+
+  _adoptRequestFromNewProcess(navigationRequest: network.Request, newSession: WKSession, newRequestId: string) {
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.request === navigationRequest) {
+        this._requestIdToRequest.delete(requestId);
+        request.adoptRequestFromNewProcess(newSession, newRequestId);
+        this._requestIdToRequest.set(newRequestId, request);
+        return;
+      }
+    }
   }
 
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {

@@ -21,19 +21,44 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket } from '../utils/happy-eyeballs';
-import { globToRegex, isUnderTest } from '../utils';
+import { globToRegex, isUnderTest, ManualPromise } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
+import { debugLogger } from '../utils/debugLogger';
 
-class SocksConnectionDuplex extends stream.Duplex {
-  constructor(private readonly writeCallback: (data: Buffer) => void) {
-    super();
-  }
-  override _read(): void { }
-  override _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-    this.writeCallback(chunk);
-    callback();
+class ALPNCache {
+  private _cache = new Map<string, ManualPromise<string>>();
+
+  get(host: string, port: number, success: (protocol: string) => void) {
+    const cacheKey = `${host}:${port}`;
+    {
+      const result = this._cache.get(cacheKey);
+      if (result) {
+        result.then(success);
+        return;
+      }
+    }
+    const result = new ManualPromise<string>();
+    this._cache.set(cacheKey, result);
+    result.then(success);
+    const socket = tls.connect({
+      host,
+      port,
+      servername: net.isIP(host) ? undefined : host,
+      ALPNProtocols: ['h2', 'http/1.1'],
+      rejectUnauthorized: false,
+    });
+    socket.on('secureConnect', () => {
+      // The server may not respond with ALPN, in which case we default to http/1.1.
+      result.resolve(socket.alpnProtocol || 'http/1.1');
+      socket.end();
+    });
+    socket.on('error', error => {
+      debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
+      result.resolve('http/1.1');
+      socket.end();
+    });
   }
 }
 
@@ -46,7 +71,6 @@ class SocksProxyConnection {
   target!: net.Socket;
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
-  internalTLS: tls.TLSSocket | undefined;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
     this.socksProxy = socksProxy;
@@ -56,7 +80,7 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    this.target = await createSocket(this.host === 'local.playwright' ? 'localhost' : this.host, this.port);
+    this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
     this.target.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
     this.target.on('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     this.socksProxy._socksProxy.socketConnected({
@@ -89,51 +113,70 @@ class SocksProxyConnection {
   }
 
   private _attachTLSListeners() {
-    this.internal = new SocksConnectionDuplex(data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
-    const internalTLS = new tls.TLSSocket(this.internal, {
-      isServer: true,
-      key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
-      cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
+    this.internal = new stream.Duplex({
+      read: () => {},
+      write: (data, encoding, callback) => {
+        this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data });
+        callback();
+      }
     });
-    this.internalTLS = internalTLS;
-    internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
+    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
+      debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
+      const dummyServer = tls.createServer({
+        key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
+        cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
+        ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
+      });
+      this.internal?.on('close', () => dummyServer.close());
+      dummyServer.emit('connection', this.internal);
+      dummyServer.on('secureConnection', internalTLS => {
+        debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
+        internalTLS.on('close', () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid }));
+        const tlsOptions: tls.ConnectionOptions = {
+          socket: this.target,
+          host: this.host,
+          port: this.port,
+          rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+          ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
+          ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}`),
+        };
+        if (!net.isIP(this.host))
+          tlsOptions.servername = this.host;
+        if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
+          tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
+        const targetTLS = tls.connect(tlsOptions);
 
-    const tlsOptions: tls.ConnectionOptions = {
-      socket: this.target,
-      host: this.host,
-      port: this.port,
-      rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
-      ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}/`),
-    };
-    if (!net.isIP(this.host))
-      tlsOptions.servername = this.host;
-    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
-      tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
-    const targetTLS = tls.connect(tlsOptions);
+        internalTLS.pipe(targetTLS);
+        targetTLS.pipe(internalTLS);
 
-    internalTLS.pipe(targetTLS);
-    targetTLS.pipe(internalTLS);
+        // Handle close and errors
+        const closeBothSockets = () => {
+          internalTLS.end();
+          targetTLS.end();
+        };
 
-    // Handle close and errors
-    const closeBothSockets = () => {
-      internalTLS.end();
-      targetTLS.end();
-    };
+        internalTLS.on('end', () => closeBothSockets());
+        targetTLS.on('end', () => closeBothSockets());
 
-    internalTLS.on('end', () => closeBothSockets());
-    targetTLS.on('end', () => closeBothSockets());
-
-    internalTLS.on('error', () => closeBothSockets());
-    targetTLS.on('error', error => {
-      const responseBody = 'Playwright client-certificate error: ' + error.message;
-      internalTLS.end([
-        'HTTP/1.1 503 Internal Server Error',
-        'Content-Type: text/html; charset=utf-8',
-        'Content-Length: ' + Buffer.byteLength(responseBody),
-        '\r\n',
-        responseBody,
-      ].join('\r\n'));
-      closeBothSockets();
+        internalTLS.on('error', () => closeBothSockets());
+        targetTLS.on('error', error => {
+          debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
+          if (internalTLS?.alpnProtocol === 'h2') {
+          // https://github.com/nodejs/node/issues/46152
+          // TODO: http2.performServerHandshake does not work here for some reason.
+          } else {
+            const responseBody = 'Playwright client-certificate error: ' + error.message;
+            internalTLS.end([
+              'HTTP/1.1 503 Internal Server Error',
+              'Content-Type: text/html; charset=utf-8',
+              'Content-Length: ' + Buffer.byteLength(responseBody),
+              '\r\n',
+              responseBody,
+            ].join('\r\n'));
+          }
+          closeBothSockets();
+        });
+      });
     });
   }
 }
@@ -143,10 +186,12 @@ export class ClientCertificatesProxy {
   private _connections: Map<string, SocksProxyConnection> = new Map();
   ignoreHTTPSErrors: boolean | undefined;
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'];
+  alpnCache: ALPNCache;
 
   constructor(
     contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
   ) {
+    this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
     this.clientCertificates = contextOptions.clientCertificates;
     this._socksProxy = new SocksProxy();
@@ -183,16 +228,16 @@ const kClientCertificatesGlobRegex = Symbol('kClientCertificatesGlobRegex');
 
 export function clientCertificatesToTLSOptions(
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
-  requestURL: string
+  origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c => {
     let regex: RegExp | undefined = (c as any)[kClientCertificatesGlobRegex];
     if (!regex) {
-      regex = globToRegex(c.url);
+      regex = globToRegex(c.origin);
       (c as any)[kClientCertificatesGlobRegex] = regex;
     }
     regex.lastIndex = 0;
-    return regex.test(requestURL);
+    return regex.test(origin);
   });
   if (!matchingCerts || !matchingCerts.length)
     return;
@@ -201,15 +246,17 @@ export function clientCertificatesToTLSOptions(
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
   };
-  for (const { certs } of matchingCerts) {
-    for (const cert of certs) {
-      if (cert.cert)
-        tlsOptions.cert.push(cert.cert);
-      if (cert.key)
-        tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
-      if (cert.pfx)
-        tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
-    }
+  for (const cert of matchingCerts) {
+    if (cert.cert)
+      tlsOptions.cert.push(cert.cert);
+    if (cert.key)
+      tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
+    if (cert.pfx)
+      tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
   }
   return tlsOptions;
+}
+
+function rewriteToLocalhostIfNeeded(host: string): string {
+  return host === 'local.playwright' ? 'localhost' : host;
 }

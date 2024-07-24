@@ -166,8 +166,4 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       modifiers: toModifiersMask(modifiers),
     });
   }
-
-  async touch(eventType: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], modifiers: Set<types.KeyboardModifier>) {
-    throw new Error('Not implemented yet.');
-  }
 }

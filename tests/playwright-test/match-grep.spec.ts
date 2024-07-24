@@ -99,3 +99,8 @@ test('should be case sensitive by default with a regex', async ({ runInlineTest 
   const result = await runInlineTest(files, { 'grep': '/TesT Cc/' });
   expect(result.passed).toBe(0);
 });
+
+test('excluded tests should not be shown in UI', async ({ runInlineTest, runTSC }) => {
+  const result = await runInlineTest(files, { 'grep': 'Test AA' });
+  expect(result.passed).toBe(3);
+});

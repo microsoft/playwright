@@ -582,13 +582,11 @@ export type PlaywrightNewRequestParams = {
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   httpCredentials?: {
     username: string,
@@ -615,13 +613,11 @@ export type PlaywrightNewRequestOptions = {
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   httpCredentials?: {
     username: string,
@@ -968,13 +964,11 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1050,13 +1044,11 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1167,13 +1159,11 @@ export type BrowserNewContextParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1235,13 +1225,11 @@ export type BrowserNewContextOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1306,13 +1294,11 @@ export type BrowserNewContextForReuseParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1374,13 +1360,11 @@ export type BrowserNewContextForReuseOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -1967,7 +1951,6 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseClick(params: PageMouseClickParams, metadata?: CallMetadata): Promise<PageMouseClickResult>;
   mouseWheel(params: PageMouseWheelParams, metadata?: CallMetadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
-  touchscreenTouch(params: PageTouchscreenTouchParams, metadata?: CallMetadata): Promise<PageTouchscreenTouchResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
   startJSCoverage(params: PageStartJSCoverageParams, metadata?: CallMetadata): Promise<PageStartJSCoverageResult>;
@@ -2335,18 +2318,6 @@ export type PageTouchscreenTapOptions = {
 
 };
 export type PageTouchscreenTapResult = void;
-export type PageTouchscreenTouchParams = {
-  type: 'touchstart' | 'touchend' | 'touchmove' | 'touchcancel',
-  touchPoints: {
-    x: number,
-    y: number,
-    id?: number,
-  }[],
-};
-export type PageTouchscreenTouchOptions = {
-
-};
-export type PageTouchscreenTouchResult = void;
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,
@@ -4595,13 +4566,11 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -4661,13 +4630,11 @@ export type AndroidDeviceLaunchBrowserOptions = {
   },
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
-    url: string,
-    certs: {
-      cert?: Binary,
-      key?: Binary,
-      passphrase?: string,
-      pfx?: Binary,
-    }[],
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,

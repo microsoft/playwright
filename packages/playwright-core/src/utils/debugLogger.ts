@@ -24,6 +24,7 @@ const debugLoggerColorMap = {
   'download': 34, // green
   'browser': 0, // reset
   'socks': 92, // purple
+  'client-certificates': 92, // purple
   'error': 160, // red,
   'channel': 33, // blue
   'server': 45, // cyan

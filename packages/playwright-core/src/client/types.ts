@@ -48,13 +48,11 @@ export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 export type ClientCertificate = {
-  url: string;
-  certs: {
-    certPath?: string;
-    keyPath?: string;
-    pfxPath?: string;
-    passphrase?: string;
-  }[];
+  origin: string;
+  certPath?: string;
+  keyPath?: string;
+  pfxPath?: string;
+  passphrase?: string;
 };
 
 export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads'> & {

@@ -469,7 +469,7 @@ Defaults to `20`. Pass `0` to not follow redirects.
 * langs: js, python, csharp
 - `maxRetries` <[int]>
 
-Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
 
 ## evaluate-expression
 - `expression` <[string]>
@@ -523,14 +523,17 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-clientCertificates
 - `clientCertificates` <[Array]<[Object]>>
-  - `url` <[string]> Glob pattern to match the URLs that the certificate is valid for.
-  - `certs` <[Array]<[Object]>> List of client certificates to be used.
-    - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
-    - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
-    - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
-    - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
+  - `origin` <[string]> Glob pattern to match against the request origin that the certificate is valid for.
+  - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
+  - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
+  - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
+  - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
 
-An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided with a glob pattern to match the URLs that the certificate is valid for.
+TLS Client Authentication allows the server to request a client certificate and verify it.
+
+**Details**
+
+An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be provided with a glob pattern to match the origins that the certificate is valid for.
 
 :::note
 Using Client Certificates in combination with Proxy Servers is not supported.

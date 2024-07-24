@@ -69,6 +69,10 @@ export function createPlugin(): TestRunnerPlugin {
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
     },
+
+    populateDependencies: async () => {
+      await buildBundle(config, configDir);
+    },
   };
 }
 
@@ -157,7 +161,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, jsxInJS);
 
   if (sourcesDirty) {
-    // Only add out own plugin when we actually build / transform.
+    // Only add our own plugin when we actually build / transform.
     log('build');
     const depsCollector = new Map<string, string[]>();
     const buildConfig = mergeConfig(viteConfig, {

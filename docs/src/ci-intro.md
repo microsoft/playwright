@@ -383,6 +383,43 @@ jobs:
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
+### Fail-Fast
+* langs: js
+
+Even with sharding enabled, large test suites can take very long to execute. Running changed tests first on PRs will give you a faster feedback loop and use less CI resources.
+
+```yml js title=".github/workflows/playwright.yml"
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run changed Playwright tests
+      run: npx playwright test --only-changed=$GITHUB_BASE_REF
+      if: github.event_name == 'pull_request'
+    - name: Run Playwright tests
+      run: npx playwright test
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+```
 
 ## Create a Repo and Push to GitHub
 

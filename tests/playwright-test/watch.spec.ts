@@ -179,20 +179,20 @@ test('should perform initial run', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
 test('should quit on Q', async ({ runWatchTest }) => {
-  const testProcess = await runWatchTest({}, {});
+  const testProcess = await runWatchTest({});
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.write('q');
   await testProcess!.exited;
 });
 
 test('should print help on H', async ({ runWatchTest }) => {
-  const testProcess = await runWatchTest({}, {});
+  const testProcess = await runWatchTest({});
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.write('h');
   await testProcess.waitForOutput('to quit');
@@ -204,7 +204,7 @@ test('should run tests on Enter', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
@@ -220,7 +220,7 @@ test('should run tests on R', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
@@ -244,7 +244,7 @@ test('should run failed tests on F', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('fails', () => { expect(1).toBe(2); });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
@@ -267,7 +267,7 @@ test('should respect file filter P', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -291,7 +291,7 @@ test('should respect project filter C', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('[bar] › a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -317,7 +317,7 @@ test('should respect file filter P and split files', async ({ runWatchTest }) =>
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -341,7 +341,7 @@ test('should respect title filter T', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('title 2', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › title 1');
   await testProcess.waitForOutput('b.test.ts:3:11 › title 2');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -369,7 +369,7 @@ test('should re-run failed tests on F > R', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('fails', () => { expect(1).toBe(2); });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
@@ -401,7 +401,7 @@ test('should run on changed files', async ({ runWatchTest, writeFiles }) => {
       import { test, expect } from '@playwright/test';
       test('fails', () => { expect(1).toBe(2); });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
@@ -434,7 +434,7 @@ test('should run on changed deps', async ({ runWatchTest, writeFiles }) => {
     'helper.ts': `
       console.log('old helper');
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:4:11 › passes');
   await testProcess.waitForOutput('old helper');
@@ -467,7 +467,7 @@ test('should run on changed deps in ESM', async ({ runWatchTest, writeFiles }) =
     'helper.ts': `
       console.log('old helper');
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:7 › passes');
   await testProcess.waitForOutput('b.test.ts:4:7 › passes');
   await testProcess.waitForOutput('old helper');
@@ -498,7 +498,7 @@ test('should re-run changed files on R', async ({ runWatchTest, writeFiles }) =>
       import { test, expect } from '@playwright/test';
       test('fails', () => { expect(1).toBe(2); });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
@@ -533,7 +533,7 @@ test('should not trigger on changes to non-tests', async ({ runWatchTest, writeF
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -559,7 +559,7 @@ test('should only watch selected projects', async ({ runWatchTest, writeFiles })
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {}, { additionalArgs: ['--project=foo'] });
+  }, undefined, undefined, { additionalArgs: ['--project=foo'] });
   await testProcess.waitForOutput('npx playwright test --project foo');
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('[bar]');
@@ -589,7 +589,7 @@ test('should watch filtered files', async ({ runWatchTest, writeFiles }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {}, { additionalArgs: ['a.test.ts'] });
+  }, undefined, undefined, { additionalArgs: ['a.test.ts'] });
   await testProcess.waitForOutput('npx playwright test a.test.ts');
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('b.test');
@@ -617,7 +617,7 @@ test('should not watch unfiltered files', async ({ runWatchTest, writeFiles }) =
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  }, {}, { additionalArgs: ['a.test.ts'] });
+  }, undefined, undefined, { additionalArgs: ['a.test.ts'] });
   await testProcess.waitForOutput('npx playwright test a.test.ts');
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('b.test');
@@ -661,7 +661,7 @@ test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
         await expect(component).toHaveText('hello');
       });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('button.spec.tsx:4:11 › pass');
   await testProcess.waitForOutput('link.spec.tsx:3:11 › pass');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -709,7 +709,7 @@ test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles 
         await expect(component).toHaveText('hello');
       });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('button.spec.tsx:4:11 › pass');
   await testProcess.waitForOutput('link.spec.tsx:3:11 › pass');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -753,7 +753,7 @@ test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, wr
         await expect(component).toHaveText('hello');
       });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('button.spec.tsx:4:7 › pass');
   await testProcess.waitForOutput('link.spec.tsx:3:7 › pass');
   await testProcess.waitForOutput('Waiting for file changes.');
@@ -786,7 +786,7 @@ test('should run global teardown before exiting', async ({ runWatchTest }) => {
       test('passes', async () => {
       });
     `,
-  }, {});
+  });
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.write('\x1B');

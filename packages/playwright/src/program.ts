@@ -153,12 +153,14 @@ Examples:
   $ npx playwright merge-reports playwright-report`);
 }
 
-
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
+    if (opts.onlyChanged)
+      throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
+
     const status = await testServer.runUIMode(opts.config, {
       host: opts.uiHost,
       port: opts.uiPort ? +opts.uiPort : undefined,
@@ -192,6 +194,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
+  config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
@@ -352,6 +355,7 @@ const testOptions: [string, string][] = [
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
+  ['--only-changed [ref]', `Only run tests that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],

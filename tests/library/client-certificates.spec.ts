@@ -15,48 +15,58 @@
  */
 
 import fs from 'fs';
+import http2 from 'http2';
+import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
 const { createHttpsServer } = require('../../packages/playwright-core/lib/utils');
 
-const test = base.extend<{ serverURL: string, serverURLRewrittenToLocalhost: string }>({
-  serverURL: async ({ asset }, use) => {
-    const server = createHttpsServer({
-      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
-      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
-      ca: [
-        fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
-      ],
-      requestCert: true,
-      rejectUnauthorized: false,
-    }, (req, res) => {
-      const tlsSocket = req.socket as import('tls').TLSSocket;
-      // @ts-expect-error
-      expect(['localhost', 'local.playwright'].includes((tlsSocket).servername)).toBe(true);
-      const cert = tlsSocket.getPeerCertificate();
-      if ((req as any).client.authorized) {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(`Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!`);
-      } else if (cert.subject) {
-        res.writeHead(403, { 'Content-Type': 'text/html' });
-        res.end(`Sorry ${cert.subject.CN}, certificates from ${cert.issuer.CN} are not welcome here.`);
-      } else {
-        res.writeHead(401, { 'Content-Type': 'text/html' });
-        res.end(`Sorry, but you need to provide a client certificate to continue.`);
-      }
-    });
+type TestOptions = {
+  startCCServer(options?: {
+    http2?: boolean;
+    useFakeLocalhost?: boolean;
+  }): Promise<string>,
+};
+
+const test = base.extend<TestOptions>({
+  startCCServer: async ({ asset, browserName }, use) => {
     process.env.PWTEST_UNSUPPORTED_CUSTOM_CA = asset('client-certificates/server/server_cert.pem');
-    await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
-    await use(`https://localhost:${(server.address() as net.AddressInfo).port}/`);
-    await new Promise<void>(resolve => server.close(() => resolve()));
+    let server: http.Server | http2.Http2Server | undefined;
+    await use(async options => {
+      server = (options?.http2 ? http2.createSecureServer : createHttpsServer)({
+        key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+        cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+        ca: [
+          fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+        ],
+        requestCert: true,
+        rejectUnauthorized: false,
+        allowHTTP1: true,
+      }, (req: (http2.Http2ServerRequest | http.IncomingMessage), res: http2.Http2ServerResponse | http.ServerResponse) => {
+        const tlsSocket = req.socket as import('tls').TLSSocket;
+        // @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/62336
+        expect(['localhost', 'local.playwright'].includes((tlsSocket).servername)).toBe(true);
+        const prefix = `ALPN protocol: ${tlsSocket.alpnProtocol}\n`;
+        const cert = tlsSocket.getPeerCertificate();
+        if (tlsSocket.authorized) {
+          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.end(prefix + `Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!`);
+        } else if (cert.subject) {
+          res.writeHead(403, { 'Content-Type': 'text/html' });
+          res.end(prefix + `Sorry ${cert.subject.CN}, certificates from ${cert.issuer.CN} are not welcome here.`);
+        } else {
+          res.writeHead(401, { 'Content-Type': 'text/html' });
+          res.end(prefix + `Sorry, but you need to provide a client certificate to continue.`);
+        }
+      });
+      await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
+      const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
+      return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
+    });
+    if (server)
+      await new Promise<void>(resolve => server.close(() => resolve()));
   },
-  serverURLRewrittenToLocalhost: async ({ serverURL, browserName }, use) => {
-    const parsed = new URL(serverURL);
-    parsed.hostname = 'local.playwright';
-    const shouldRewriteToLocalhost = browserName === 'webkit' && process.platform === 'darwin';
-    await use(shouldRewriteToLocalhost ? parsed.toString() : serverURL);
-  }
 });
 
 test.use({
@@ -72,27 +82,22 @@ test.skip(({ mode }) => mode !== 'default');
 
 const kDummyFileName = __filename;
 const kValidationSubTests: [BrowserContextOptions, string][] = [
-  [{ clientCertificates: [{ url: 'test', certs: [] }] }, 'No certs specified for url: test'],
-  [{ clientCertificates: [{ url: 'test', certs: [{}] }] }, 'None of cert, key, passphrase or pfx is specified'],
+  [{ clientCertificates: [{ origin: 'test' }] }, 'None of cert, key, passphrase or pfx is specified'],
   [{
     clientCertificates: [{
-      url: 'test',
-      certs: [{
-        certPath: kDummyFileName,
-        keyPath: kDummyFileName,
-        pfxPath: kDummyFileName,
-        passphrase: kDummyFileName,
-      }]
+      origin: 'test',
+      certPath: kDummyFileName,
+      keyPath: kDummyFileName,
+      pfxPath: kDummyFileName,
+      passphrase: kDummyFileName,
     }]
   }, 'pfx is specified together with cert, key or passphrase'],
   [{
     proxy: { server: 'http://localhost:8080' },
     clientCertificates: [{
-      url: 'test',
-      certs: [{
-        certPath: kDummyFileName,
-        keyPath: kDummyFileName,
-      }]
+      origin: 'test',
+      certPath: kDummyFileName,
+      keyPath: kDummyFileName,
     }]
   }, 'Cannot specify both proxy and clientCertificates'],
 ];
@@ -103,22 +108,21 @@ test.describe('fetch', () => {
       await expect(playwright.request.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
-  test('should fail with no client certificates provided', async ({ playwright, serverURL }) => {
+  test('should fail with no client certificates provided', async ({ playwright, startCCServer }) => {
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext();
     const response = await request.get(serverURL);
     expect(response.status()).toBe(401);
-    expect(await response.text()).toBe('Sorry, but you need to provide a client certificate to continue.');
+    expect(await response.text()).toContain('Sorry, but you need to provide a client certificate to continue.');
     await request.dispose();
   });
 
   test('should keep supporting http', async ({ playwright, server, asset }) => {
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: server.PREFIX,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(server.PREFIX).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const response = await request.get(server.PREFIX + '/one-style.html');
@@ -128,48 +132,45 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should throw with untrusted client certs', async ({ playwright, serverURL, asset }) => {
+  test('should throw with untrusted client certs', async ({ playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/self-signed/cert.pem'),
-          keyPath: asset('client-certificates/client/self-signed/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/self-signed/cert.pem'),
+        keyPath: asset('client-certificates/client/self-signed/key.pem'),
       }],
     });
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
     expect(response.status()).toBe(403);
-    expect(await response.text()).toBe('Sorry Bob, certificates from Bob are not welcome here.');
+    expect(await response.text()).toContain('Sorry Bob, certificates from Bob are not welcome here.');
     await request.dispose();
   });
 
-  test('pass with trusted client certificates', async ({ playwright, serverURL, asset }) => {
+  test('pass with trusted client certificates', async ({ playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
     expect(response.status()).toBe(200);
-    expect(await response.text()).toBe('Hello Alice, your certificate was issued by localhost!');
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
     await request.dispose();
   });
 
-  test('should work in the browser with request interception', async ({ browser, playwright, serverURL, asset }) => {
+  test('should work in the browser with request interception', async ({ browser, playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       clientCertificates: [{
-        url: serverURL,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     const page = await browser.newPage({ ignoreHTTPSErrors: true });
@@ -194,11 +195,9 @@ test.describe('browser', () => {
   test('should keep supporting http', async ({ browser, server, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
-        url: server.PREFIX,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(server.PREFIX).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(server.PREFIX + '/one-style.html');
@@ -207,47 +206,44 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with no client certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
+  test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: 'https://not-matching.com',
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: 'https://not-matching.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
-    await page.goto(serverURLRewrittenToLocalhost);
+    await page.goto(serverURL);
     await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
     await page.close();
   });
 
-  test('should fail with self-signed client certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
+  test('should fail with self-signed client certificates', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: serverURLRewrittenToLocalhost,
-        certs: [{
-          certPath: asset('client-certificates/client/self-signed/cert.pem'),
-          keyPath: asset('client-certificates/client/self-signed/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/self-signed/cert.pem'),
+        keyPath: asset('client-certificates/client/self-signed/key.pem'),
       }],
     });
-    await page.goto(serverURLRewrittenToLocalhost);
+    await page.goto(serverURL);
     await expect(page.getByText('Sorry Bob, certificates from Bob are not welcome here')).toBeVisible();
     await page.close();
   });
 
-  test('should pass with matching certificates', async ({ browser, serverURLRewrittenToLocalhost, asset }) => {
+  test('should pass with matching certificates', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       clientCertificates: [{
-        url: serverURLRewrittenToLocalhost,
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
-    await page.goto(serverURLRewrittenToLocalhost);
+    await page.goto(serverURL);
     await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
     await page.close();
   });
@@ -255,16 +251,64 @@ test.describe('browser', () => {
   test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
     const page = await browser.newPage({
       clientCertificates: [{
-        url: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
-        certs: [{
-          certPath: asset('client-certificates/client/trusted/cert.pem'),
-          keyPath: asset('client-certificates/client/trusted/key.pem'),
-        }],
+        origin: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
     await page.goto(browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE);
     await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
     await page.close();
+  });
+
+  test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
+    test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
+    const serverURL = await startCCServer({ http2: true });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    // TODO: We should investigate why http2 is not supported in WebKit on Linux.
+    // https://bugs.webkit.org/show_bug.cgi?id=276990
+    const expectedProtocol = browserName === 'webkit' && process.platform === 'linux' ? 'http/1.1' : 'h2';
+    {
+      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
+      await expect(page.getByText(`ALPN protocol: ${expectedProtocol}`)).toBeVisible();
+    }
+    {
+      await page.goto(serverURL);
+      await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+      await expect(page.getByText(`ALPN protocol: ${expectedProtocol}`)).toBeVisible();
+    }
+    await page.close();
+  });
+
+  test('support http2 if the browser only supports http1.1', async ({ browserType, browserName, startCCServer, asset }) => {
+    test.skip(browserName !== 'chromium');
+    const serverURL = await startCCServer({ http2: true });
+    const browser = await browserType.launch({ args: ['--disable-http2'] });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    {
+      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: http/1.1')).toBeVisible();
+    }
+    {
+      await page.goto(serverURL);
+      await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+      await expect(page.getByText('ALPN protocol: http/1.1')).toBeVisible();
+    }
+    await browser.close();
   });
 
   test.describe('persistentContext', () => {
@@ -274,17 +318,16 @@ test.describe('browser', () => {
         await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
     });
 
-    test('should pass with matching certificates', async ({ launchPersistent, serverURLRewrittenToLocalhost, asset }) => {
+    test('should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName }) => {
+      const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
       const { page } = await launchPersistent({
         clientCertificates: [{
-          url: serverURLRewrittenToLocalhost,
-          certs: [{
-            certPath: asset('client-certificates/client/trusted/cert.pem'),
-            keyPath: asset('client-certificates/client/trusted/key.pem'),
-          }],
+          origin: new URL(serverURL).origin,
+          certPath: asset('client-certificates/client/trusted/cert.pem'),
+          keyPath: asset('client-certificates/client/trusted/key.pem'),
         }],
       });
-      await page.goto(serverURLRewrittenToLocalhost);
+      await page.goto(serverURL);
       await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
     });
   });

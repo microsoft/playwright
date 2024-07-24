@@ -148,22 +148,14 @@ export default defineConfig({
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  projects: [
-    {
-      name: 'Microsoft Edge',
-      use: {
-        ...devices['Desktop Edge'],
-        clientCertificates: [{
-          url: 'https://example.com/**',
-          certs: [{
-            certPath: './cert.pem',
-            keyPath: './key.pem',
-            passphrase: 'mysecretpassword',
-          }],
-        }],
-      },
-    },
-  ]
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
 });
 ```
 

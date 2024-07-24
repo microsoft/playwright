@@ -337,13 +337,11 @@ scheme.PlaywrightNewRequestParams = tObject({
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
-    certs: tArray(tObject({
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    })),
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
   }))),
   httpCredentials: tOptional(tObject({
     username: tString,
@@ -547,13 +545,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
-    certs: tArray(tObject({
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    })),
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
   }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
@@ -635,13 +631,11 @@ scheme.BrowserNewContextParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
-    certs: tArray(tObject({
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    })),
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
   }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
@@ -706,13 +700,11 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
-    certs: tArray(tObject({
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    })),
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
   }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
@@ -1278,15 +1270,6 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tNumber,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
-scheme.PageTouchscreenTouchParams = tObject({
-  type: tEnum(['touchstart', 'touchend', 'touchmove', 'touchcancel']),
-  touchPoints: tArray(tObject({
-    x: tNumber,
-    y: tNumber,
-    id: tOptional(tNumber),
-  })),
-});
-scheme.PageTouchscreenTouchResult = tOptional(tObject({}));
 scheme.PageAccessibilitySnapshotParams = tObject({
   interestingOnly: tOptional(tBoolean),
   root: tOptional(tChannel(['ElementHandle'])),
@@ -2535,13 +2518,11 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
-    url: tString,
-    certs: tArray(tObject({
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    })),
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
   }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),

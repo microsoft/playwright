@@ -174,7 +174,7 @@ export const UIModeView: React.FC<{}> = ({
         if (status !== 'passed')
           return;
 
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
         teleSuiteUpdater.processListReport(result.report);
 
         testServerConnection.onReport(params => {
@@ -199,7 +199,7 @@ export const UIModeView: React.FC<{}> = ({
     commandQueue.current = commandQueue.current.then(async () => {
       setIsLoading(true);
       try {
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
         teleSuiteUpdater.processListReport(result.report);
       } catch (e) {
         // eslint-disable-next-line no-console

@@ -13166,10 +13166,14 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -13178,34 +13182,29 @@ export interface BrowserType<Unused = {}> {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -15578,10 +15577,14 @@ export interface APIRequest {
     baseURL?: string;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -15590,34 +15593,29 @@ export interface APIRequest {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -15934,8 +15932,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16040,8 +16038,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16126,8 +16124,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16212,8 +16210,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16340,8 +16338,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16426,8 +16424,8 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error
-     * will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
      */
     maxRetries?: number;
 
@@ -16772,10 +16770,14 @@ export interface Browser extends EventEmitter {
     bypassCSP?: boolean;
 
     /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-     * with a glob pattern to match the URLs that the certificate is valid for.
+     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+     * provided with a glob pattern to match the origins that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -16784,34 +16786,29 @@ export interface Browser extends EventEmitter {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match the URLs that the certificate is valid for.
+       * Glob pattern to match against the request origin that the certificate is valid for.
        */
-      url: string;
+      origin: string;
 
       /**
-       * List of client certificates to be used.
+       * Path to the file with the certificate in PEM format.
        */
-      certs: Array<{
-        /**
-         * Path to the file with the certificate in PEM format.
-         */
-        certPath?: string;
+      certPath?: string;
 
-        /**
-         * Path to the file with the private key in PEM format.
-         */
-        keyPath?: string;
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
 
-        /**
-         * Path to the PFX or PKCS12 encoded private key and certificate chain.
-         */
-        pfxPath?: string;
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
 
-        /**
-         * Passphrase for the private key (PEM or PFX).
-         */
-        passphrase?: string;
-      }>;
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
     }>;
 
     /**
@@ -19755,29 +19752,6 @@ export interface Touchscreen {
    * @param y Y coordinate relative to the main frame's viewport in CSS pixels.
    */
   tap(x: number, y: number): Promise<void>;
-
-  /**
-   * Synthesizes a touch event.
-   * @param type Type of the touch event.
-   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
-   * touch events for the duration of its movement around the surface.
-   */
-  touch(type: "touchstart"|"touchend"|"touchmove"|"touchcancel", touchPoints: ReadonlyArray<{
-    /**
-     * x coordinate of the event in CSS pixels.
-     */
-    x: number;
-
-    /**
-     * y coordinate of the event in CSS pixels.
-     */
-    y: number;
-
-    /**
-     * Identifier used to track the touch point between events, must be unique within an event. Optional.
-     */
-    id?: number;
-  }>): Promise<void>;
 }
 
 /**
@@ -20246,10 +20220,14 @@ export interface BrowserContextOptions {
   bypassCSP?: boolean;
 
   /**
+   * TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
    * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
    * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * private key is encrypted. If the certificate is valid only for specific URLs, the `url` property should be provided
-   * with a glob pattern to match the URLs that the certificate is valid for.
+   * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
+   * provided with a glob pattern to match the origins that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -20258,34 +20236,29 @@ export interface BrowserContextOptions {
    */
   clientCertificates?: Array<{
     /**
-     * Glob pattern to match the URLs that the certificate is valid for.
+     * Glob pattern to match against the request origin that the certificate is valid for.
      */
-    url: string;
+    origin: string;
 
     /**
-     * List of client certificates to be used.
+     * Path to the file with the certificate in PEM format.
      */
-    certs: Array<{
-      /**
-       * Path to the file with the certificate in PEM format.
-       */
-      certPath?: string;
+    certPath?: string;
 
-      /**
-       * Path to the file with the private key in PEM format.
-       */
-      keyPath?: string;
+    /**
+     * Path to the file with the private key in PEM format.
+     */
+    keyPath?: string;
 
-      /**
-       * Path to the PFX or PKCS12 encoded private key and certificate chain.
-       */
-      pfxPath?: string;
+    /**
+     * Path to the PFX or PKCS12 encoded private key and certificate chain.
+     */
+    pfxPath?: string;
 
-      /**
-       * Passphrase for the private key (PEM or PFX).
-       */
-      passphrase?: string;
-    }>;
+    /**
+     * Passphrase for the private key (PEM or PFX).
+     */
+    passphrase?: string;
   }>;
 
   /**
