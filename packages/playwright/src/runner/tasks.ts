@@ -231,7 +231,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       let cliOnlyChangedMatcher: Matcher | undefined = undefined;
       if (testRun.config.cliOnlyChanged && options.filterOnlyChanged) {
         for (const plugin of testRun.config.plugins)
-          await plugin.instance?.populateDependencies?.();
+          await plugin.instance?.populateDependencies?.(testRun.config.config, testRun.config.configDir);
         const changedFiles = await detectChangedTests(testRun.config.cliOnlyChanged, testRun.config.configDir);
         cliOnlyChangedMatcher = file => changedFiles.has(file);
       }
