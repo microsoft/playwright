@@ -106,18 +106,16 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporters: ReporterV2[], mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporters: ReporterV2[], mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean, populatePluginDependencies?: boolean }): TaskRunner<TestRun> {
   const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+
+  if (options.populatePluginDependencies) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', createReportBeginTask());
-  return taskRunner;
-}
-
-export function createTaskRunnerForFindRelatedTests(config: FullConfigInternal, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>([], config.config.globalTimeout);
-  for (const plugin of config.plugins)
-    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
-  taskRunner.addTask('load tests', createLoadTask(mode, { filterOnly: false, populatePluginDependencies: true, failOnLoadErrors: false }));
   return taskRunner;
 }
 
@@ -155,6 +153,8 @@ function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TestR
 function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestRun> {
   return {
     setup: async (reporter, { rootSuite }) => {
+      if (!plugin.instance)
+        throw new Error('Plugin not initialized');
       await plugin.instance?.begin?.(rootSuite!);
     },
     teardown: async () => {
@@ -237,8 +237,12 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { popula
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
       if (options.populatePluginDependencies || testRun.config.cliOnlyChanged) {
-        for (const plugin of testRun.config.plugins)
-          await plugin.instance?.populateDependencies?.();
+        for (const plugin of testRun.config.plugins) {
+          if (!plugin.instance)
+            throw new Error('Plugin not initialized');
+
+          await plugin.instance.populateDependencies?.();
+        }
       }
 
       let cliOnlyChangedMatcher: Matcher | undefined = undefined;
