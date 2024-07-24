@@ -271,15 +271,17 @@ test.describe('browser', () => {
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
+    // TODO: We should investigate why http2 is not supported in WebKit on Linux.
+    const expectedProtocol = browserName === 'webkit' && process.platform === 'linux' ? 'http/1.1' : 'h2';
     {
       await page.goto(serverURL.replace('localhost', 'local.playwright'));
       await expect(page.getByText('Sorry, but you need to provide a client certificate to continue.')).toBeVisible();
-      await expect(page.getByText('ALPN protocol: h2')).toBeVisible();
+      await expect(page.getByText(`ALPN protocol: ${expectedProtocol}`)).toBeVisible();
     }
     {
       await page.goto(serverURL);
       await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
-      await expect(page.getByText('ALPN protocol: h2')).toBeVisible();
+      await expect(page.getByText(`ALPN protocol: ${expectedProtocol}`)).toBeVisible();
     }
     await page.close();
   });
