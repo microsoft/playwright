@@ -108,7 +108,7 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process', options: { populatePluginDependencies?: boolean }): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
+  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process', options: { populatePluginDependencies?: boolean } = {}): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
     const config = this._config;
     const errors: TestError[] = [];
     const reporters = [wrapReporterAsV2({
