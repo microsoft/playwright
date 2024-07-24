@@ -22,13 +22,11 @@ export const SettingsView: React.FunctionComponent<{
   settings: Setting<boolean>[],
 }> = ({ settings }) => {
   return <div className='vbox settings-view'>
-    {settings.map(setting => {
-      return <div key={setting.name} className='setting'>
+    {settings.map(([value, set, title]) => {
+      return <div key={title} className='setting'>
         <label>
-          <input type='checkbox' checked={setting.value} onClick={() => {
-            setting.set(!setting.value);
-          }}/>
-          {setting.title}
+          <input type='checkbox' checked={value} onClick={() => set(!value)}/>
+          {title}
         </label>
       </div>;
     })}
