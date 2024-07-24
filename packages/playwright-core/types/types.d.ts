@@ -13172,8 +13172,8 @@ export interface BrowserType<Unused = {}> {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
-     * provided with a glob pattern to match the origins that the certificate is valid for.
+     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
+     * the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -13182,7 +13182,7 @@ export interface BrowserType<Unused = {}> {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match against the request origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -15583,8 +15583,8 @@ export interface APIRequest {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
-     * provided with a glob pattern to match the origins that the certificate is valid for.
+     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
+     * the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -15593,7 +15593,7 @@ export interface APIRequest {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match against the request origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -16776,8 +16776,8 @@ export interface Browser extends EventEmitter {
      *
      * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
      * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
-     * provided with a glob pattern to match the origins that the certificate is valid for.
+     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
+     * the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -16786,7 +16786,7 @@ export interface Browser extends EventEmitter {
      */
     clientCertificates?: Array<{
       /**
-       * Glob pattern to match against the request origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -20226,8 +20226,8 @@ export interface BrowserContextOptions {
    *
    * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
    * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. If the certificate is valid only for specific origins, the `origin` property should be
-   * provided with a glob pattern to match the origins that the certificate is valid for.
+   * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
+   * the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -20236,7 +20236,7 @@ export interface BrowserContextOptions {
    */
   clientCertificates?: Array<{
     /**
-     * Glob pattern to match against the request origin that the certificate is valid for.
+     * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
      */
     origin: string;
 

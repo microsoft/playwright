@@ -21,7 +21,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket } from '../utils/happy-eyeballs';
-import { globToRegex, isUnderTest, ManualPromise } from '../utils';
+import { isUnderTest, ManualPromise } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -224,20 +224,16 @@ export class ClientCertificatesProxy {
   }
 }
 
-const kClientCertificatesGlobRegex = Symbol('kClientCertificatesGlobRegex');
-
 export function clientCertificatesToTLSOptions(
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c => {
-    let regex: RegExp | undefined = (c as any)[kClientCertificatesGlobRegex];
-    if (!regex) {
-      regex = globToRegex(c.origin);
-      (c as any)[kClientCertificatesGlobRegex] = regex;
+    try {
+      return new URL(c.origin).origin === origin;
+    } catch (error) {
+      return c.origin === origin;
     }
-    regex.lastIndex = 0;
-    return regex.test(origin);
   });
   if (!matchingCerts || !matchingCerts.length)
     return;

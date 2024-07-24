@@ -248,6 +248,20 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should pass with matching certificates and trailing slash', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: serverURL,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByText('Hello Alice, your certificate was issued by localhost!')).toBeVisible();
+    await page.close();
+  });
+
   test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
     const page = await browser.newPage({
       clientCertificates: [{
