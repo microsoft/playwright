@@ -143,9 +143,8 @@ export class Runner {
       return { errors: result.errors, testFiles: [] };
 
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-    if (override)
-      return await override(resolvedFiles, this._config);
+    for (const plugin of this._config.plugins)
+      await plugin.instance?.populateDependencies?.();
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }

@@ -32,7 +32,6 @@ const defineConfig = (...configs) => {
       cli: {
         'clear-cache': clearCacheCommand,
         'dev-server': runDevServerCommand,
-        'find-related-test-files': findRelatedTestFilesCommand,
       },
     }
   };
