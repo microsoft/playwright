@@ -523,7 +523,7 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-clientCertificates
 - `clientCertificates` <[Array]<[Object]>>
-  - `origin` <[string]> Exact origin that the certificate is valid for.
+  - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
   - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
   - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
   - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
