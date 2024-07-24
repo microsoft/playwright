@@ -13182,7 +13182,7 @@ export interface BrowserType<Unused = {}> {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -15593,7 +15593,7 @@ export interface APIRequest {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -16786,7 +16786,7 @@ export interface Browser extends EventEmitter {
      */
     clientCertificates?: Array<{
       /**
-       * Exact origin that the certificate is valid for.
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
        */
       origin: string;
 
@@ -20236,7 +20236,7 @@ export interface BrowserContextOptions {
    */
   clientCertificates?: Array<{
     /**
-     * Exact origin that the certificate is valid for.
+     * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
      */
     origin: string;
 

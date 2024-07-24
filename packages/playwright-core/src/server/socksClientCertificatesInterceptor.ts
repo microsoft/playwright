@@ -228,7 +228,13 @@ export function clientCertificatesToTLSOptions(
   clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
-  const matchingCerts = clientCertificates?.filter(c => c.origin === origin);
+  const matchingCerts = clientCertificates?.filter(c => {
+    try {
+      return new URL(c.origin).origin === origin;
+    } catch (error) {
+      return c.origin === origin;
+    }
+  });
   if (!matchingCerts || !matchingCerts.length)
     return;
   const tlsOptions = {
