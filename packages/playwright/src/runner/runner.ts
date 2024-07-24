@@ -120,14 +120,7 @@ export class Runner {
     const testRun = new TestRun(config);
     taskRunner.reporter.onConfigure(config.config);
 
-    const taskStatus = await taskRunner.run(testRun, 0);
-    let status: FullResult['status'] = testRun.failureTracker.result();
-    if (status === 'passed' && taskStatus !== 'passed')
-      status = taskStatus;
-    const modifiedResult = await taskRunner.reporter.onEnd({ status });
-    if (modifiedResult && modifiedResult.status)
-      status = modifiedResult.status;
-    await taskRunner.reporter.onExit();
+    const status = await taskRunner.run(testRun, 0);
     return { status, suite: testRun.rootSuite, errors };
   }
 
