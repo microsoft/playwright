@@ -245,7 +245,7 @@ test('should run added test in watched file', async ({ runUITest, writeFiles }) 
   });
 
   await expect.poll(dumpTestTree(page)).toBe(`
-    ▼ ◯ a.test.ts 👁 <=
+    ▼ ✅ a.test.ts 👁 <=
         ✅ foo
         ✅ bar
   `);

@@ -314,9 +314,14 @@ export const UIModeView: React.FC<{}> = ({
 
   // Watch implementation.
   React.useEffect(() => {
-    if (!testServerConnection)
+    if (!testServerConnection || !teleSuiteUpdater)
       return;
-    const disposable = testServerConnection.onTestFilesChanged(params => {
+    const disposable = testServerConnection.onTestFilesChanged(async params => {
+      await updateList();
+
+      const testModel = teleSuiteUpdater.asModel();
+      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
+
       const testIds: string[] = [];
       const set = new Set(params.testFiles);
       if (watchAll) {
@@ -339,7 +344,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', new Set(testIds));
     });
     return () => disposable.dispose();
-  }, [runTests, testServerConnection, testTree, watchAll, watchedTreeIds]);
+  }, [runTests, updateList, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters]);
 
   // Shortcuts.
   React.useEffect(() => {
