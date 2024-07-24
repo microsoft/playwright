@@ -22,7 +22,7 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
+import { TestRun, createTaskRunner, createTaskRunnerForFindRelatedTests, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { runWatchModeLoop } from './watchMode';
 import type { Suite } from '../common/test';
@@ -138,18 +138,10 @@ export class Runner {
   }
 
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
-    const result = await this.loadAllTests(mode);
-    if (result.status !== 'passed' || !result.suite)
-      return { errors: result.errors, testFiles: [] };
+    const taskRunner = createTaskRunnerForFindRelatedTests(this._config, mode);
+    await taskRunner.run(new TestRun(this._config), 0);
 
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-
-    for (const plugin of this._config.plugins) {
-      if (!plugin.instance)
-        plugin.instance = typeof plugin.factory === 'function' ? await plugin.factory() : plugin.factory;
-
-      await plugin.instance.populateDependencies?.(this._config.config, this._config.configDir);
-    }
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }

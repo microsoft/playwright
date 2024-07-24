@@ -48,7 +48,7 @@ export function createPlugin(): TestRunnerPlugin {
       configDir = configDirectory;
     },
 
-    populateDependencies: async (config: FullConfig, configDir: string) => {
+    populateDependencies: async () => {
       await buildBundle(config, configDir);
     },
 
