@@ -93,6 +93,7 @@ export const UIModeView: React.FC<{}> = ({
   const [isDisconnected, setIsDisconnected] = React.useState(false);
   const [hasBrowsers, setHasBrowsers] = React.useState(true);
   const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
+  const [teleSuiteUpdater, setTeleSuiteUpdater] = React.useState<TeleSuiteUpdater>();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -157,20 +158,7 @@ export const UIModeView: React.FC<{}> = ({
       pathSeparator,
     });
 
-    const updateList = () => {
-      commandQueue.current = commandQueue.current.then(async () => {
-        setIsLoading(true);
-        try {
-          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
-          teleSuiteUpdater.processListReport(result.report);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.log(e);
-        } finally {
-          setIsLoading(false);
-        }
-      });
-    };
+    setTeleSuiteUpdater(teleSuiteUpdater);
 
     setTestModel(undefined);
     setIsLoading(true);
@@ -189,7 +177,6 @@ export const UIModeView: React.FC<{}> = ({
         const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
         teleSuiteUpdater.processListReport(result.report);
 
-        testServerConnection.onListChanged(updateList);
         testServerConnection.onReport(params => {
           teleSuiteUpdater.processTestReportEvent(params);
         });
@@ -204,6 +191,29 @@ export const UIModeView: React.FC<{}> = ({
       clearTimeout(throttleTimer);
     };
   }, [testServerConnection]);
+
+  const updateList = React.useCallback(async () => {
+    if (!testServerConnection || !teleSuiteUpdater)
+      return;
+
+    commandQueue.current = commandQueue.current.then(async () => {
+      setIsLoading(true);
+      try {
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args });
+        teleSuiteUpdater.processListReport(result.report);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+    await commandQueue.current;
+  }, [testServerConnection, teleSuiteUpdater]);
+
+  React.useEffect(() => {
+    testServerConnection?.onListChanged(updateList);
+  }, [testServerConnection, updateList]);
 
   // Update project filter default values.
   React.useEffect(() => {
