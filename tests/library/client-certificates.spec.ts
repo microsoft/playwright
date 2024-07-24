@@ -272,6 +272,7 @@ test.describe('browser', () => {
       }],
     });
     // TODO: We should investigate why http2 is not supported in WebKit on Linux.
+    // https://bugs.webkit.org/show_bug.cgi?id=276990
     const expectedProtocol = browserName === 'webkit' && process.platform === 'linux' ? 'http/1.1' : 'h2';
     {
       await page.goto(serverURL.replace('localhost', 'local.playwright'));
