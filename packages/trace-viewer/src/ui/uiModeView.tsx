@@ -157,7 +157,7 @@ export const UIModeView: React.FC<{}> = ({
       pathSeparator,
     });
 
-    const updateList = async () => {
+    const updateList = () => {
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
