@@ -48,6 +48,10 @@ export function createPlugin(): TestRunnerPlugin {
       configDir = configDirectory;
     },
 
+    populateDependencies: async (config: FullConfig, configDir: string) => {
+      await buildBundle(config, configDir);
+    },
+
     begin: async (suite: Suite) => {
       const result = await buildBundle(config, configDir);
       if (!result)
@@ -68,10 +72,6 @@ export function createPlugin(): TestRunnerPlugin {
     end: async () => {
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
-    },
-
-    populateDependencies: async () => {
-      await buildBundle(config, configDir);
     },
   };
 }

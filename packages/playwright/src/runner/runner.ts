@@ -143,8 +143,13 @@ export class Runner {
       return { errors: result.errors, testFiles: [] };
 
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    for (const plugin of this._config.plugins)
-      await plugin.instance?.populateDependencies?.();
+
+    for (const plugin of this._config.plugins) {
+      if (!plugin.instance)
+        plugin.instance = typeof plugin.factory === 'function' ? await plugin.factory() : plugin.factory;
+
+      await plugin.instance.populateDependencies?.(this._config.config, this._config.configDir);
+    }
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }
