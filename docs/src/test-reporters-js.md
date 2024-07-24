@@ -429,6 +429,8 @@ npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
 * [GitHub Actions Reporter](https://www.npmjs.com/package/@estruyf/github-actions-reporter)
 * [GitHub Pull Request Comment](https://github.com/marketplace/actions/playwright-report-comment)
+* [Mail Reporter](https://www.npmjs.com/package/playwright-mail-reporter)
+* [Microsoft Teams Reporter](https://www.npmjs.com/package/playwright-msteams-reporter)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
