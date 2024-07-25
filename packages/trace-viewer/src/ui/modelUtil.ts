@@ -59,7 +59,6 @@ export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
   readonly browserName: string;
-  readonly baseURL?: string;
   readonly channel?: string;
   readonly platform?: string;
   readonly wallTime?: number;
@@ -84,7 +83,6 @@ export class MultiTraceModel {
     const libraryContext = contexts.find(context => context.origin === 'library');
 
     this.browserName = libraryContext?.browserName || '';
-    this.baseURL = libraryContext?.options.baseURL;
     this.sdkLanguage = libraryContext?.sdkLanguage;
     this.channel = libraryContext?.channel;
     this.testIdAttributeName = libraryContext?.testIdAttributeName;
