@@ -43,6 +43,7 @@ export type ContextCreatedTraceEvent = {
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
   testIdAttributeName?: string,
+  baseURL?: string,
 };
 
 export type ScreencastFrameTraceEvent = {

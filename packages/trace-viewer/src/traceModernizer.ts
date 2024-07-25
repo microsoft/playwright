@@ -85,6 +85,7 @@ export class TraceModernizer {
         this._version = event.version;
         contextEntry.origin = event.origin;
         contextEntry.browserName = event.browserName;
+        contextEntry.baseURL = event.baseURL;
         contextEntry.channel = event.channel;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;

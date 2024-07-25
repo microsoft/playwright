@@ -25,6 +25,12 @@ export const MetadataView: React.FunctionComponent<{
   if (!model)
     return <></>;
   return <div className='metadata-view vbox'>
+    {model.baseURL && (
+      <>
+        <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
+        <div className='call-line'>baseURL:<a className='call-value string' href={model.baseURL} title={model.baseURL} target="_blank">{model.baseURL}</a></div>
+      </>
+    )}
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
     {!!model.wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={new Date(model.wallTime).toLocaleString()}>{new Date(model.wallTime).toLocaleString()}</span></div>}
     <div className='call-line'>duration:<span className='call-value number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>

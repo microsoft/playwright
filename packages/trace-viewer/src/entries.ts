@@ -24,6 +24,7 @@ export type ContextEntry = {
   startTime: number;
   endTime: number;
   browserName: string;
+  baseURL?: string;
   channel?: string;
   platform?: string;
   wallTime: number;
