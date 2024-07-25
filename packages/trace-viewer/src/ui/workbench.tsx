@@ -68,7 +68,7 @@ export const Workbench: React.FunctionComponent<{
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [, , showRouteActionsSettingInternal] = useSetting(showRouteActionsSetting ? '' : 'show-route-actions', true, 'Show route actions');
+  const [, , showRouteActionsSettingInternal] = useSetting(showRouteActionsSetting ? undefined : 'show-route-actions', true, 'Show route actions');
 
   const showSettings = !showRouteActionsSetting;
   showRouteActionsSetting ||= showRouteActionsSettingInternal;
