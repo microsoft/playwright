@@ -408,6 +408,29 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
+    test('should reject waitForEvent before browser.close finishes', async ({ connect, startRemoteServer, server }) => {
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const newPage = await browser.newPage();
+      let rejected = false;
+      const promise = newPage.waitForEvent('download').catch(() => rejected = true);
+      await browser.close();
+      expect(rejected).toBe(true);
+      await promise;
+    });
+
+    test('should reject waitForEvent before browser.onDisconnect fires', async ({ connect, startRemoteServer, server }) => {
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const newPage = await browser.newPage();
+      const log: string[] = [];
+      const promise = newPage.waitForEvent('download').catch(() => log.push('rejected'));
+      browser.on('disconnected', () => log.push('disconnected'));
+      await remoteServer.close();
+      await promise;
+      await expect.poll(() => log).toEqual(['rejected', 'disconnected']);
+    });
+
     test('should respect selectors', async ({ playwright, connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
