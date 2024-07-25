@@ -17,6 +17,7 @@
 
 import http from 'http';
 import https from 'https';
+import http2 from 'http2';
 import type net from 'net';
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
@@ -169,6 +170,14 @@ export function createHttpsServer(...args: any[]): https.Server {
   return server;
 }
 
+export function createHttp2Server(  onRequestHandler?: (request: http2.Http2ServerRequest, response: http2.Http2ServerResponse) => void,): http2.Http2SecureServer;
+export function createHttp2Server(options: http2.SecureServerOptions, onRequestHandler?: (request: http2.Http2ServerRequest, response: http2.Http2ServerResponse) => void,): http2.Http2SecureServer;
+export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
+  const server = http2.createSecureServer(...args);
+  decorateServer(server);
+  return server;
+}
+
 export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void) {
   let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onLog, onStdErr);
   if (statusCode === 404 && url.pathname === '/') {
@@ -200,7 +209,7 @@ async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (dat
   });
 }
 
-function decorateServer(server: http.Server | http.Server) {
+function decorateServer(server: net.Server) {
   const sockets = new Set<net.Socket>();
   server.on('connection', socket => {
     sockets.add(socket);
