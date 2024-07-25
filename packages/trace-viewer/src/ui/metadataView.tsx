@@ -27,7 +27,7 @@ export const MetadataView: React.FunctionComponent<{
   return <div className='metadata-view vbox'>
     {model.baseURL && (
       <>
-        <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
+        <div className='call-section' style={{ paddingTop: 2 }}>Config</div>
         <div className='call-line'>baseURL:<a className='call-value string' href={model.baseURL} title={model.baseURL} target="_blank">{model.baseURL}</a></div>
       </>
     )}
