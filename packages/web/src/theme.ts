@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { settings } from './uiUtils';
+import React from 'react';
+import { type Setting, settings } from './uiUtils';
 
 export function applyTheme() {
   if ((document as any).playwrightThemeInitialized)
@@ -63,4 +64,14 @@ export function removeThemeListener(listener: (theme: Theme) => void) {
 
 export function currentTheme(): Theme {
   return document.body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+}
+
+export function useDarkModeSetting() {
+  const [theme, setTheme] = React.useState(currentTheme() === 'dark-mode');
+  return [theme, (value: boolean) => {
+    const current = currentTheme() === 'dark-mode';
+    if (current !== value)
+      toggleTheme();
+    setTheme(value);
+  }, 'Dark mode'] as Setting<boolean>;
 }

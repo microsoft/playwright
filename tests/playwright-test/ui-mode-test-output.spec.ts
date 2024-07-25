@@ -45,7 +45,8 @@ test('should work after theme switch', async ({ runUITest, writeFiles }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('output')).toContainText(`Hello world 1`);
 
-  await page.getByTitle('Toggle color mode').click();
+  await page.getByText('Settings', { exact: true }).click();
+  await page.getByLabel('Dark mode').click();
   await writeFiles({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

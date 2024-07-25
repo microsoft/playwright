@@ -18,6 +18,15 @@
   background-color: var(--vscode-sideBar-background);
 }
 
+.ui-mode-sidebar > .settings-toolbar {
+  border-top: 1px solid var(--vscode-panel-border);
+  cursor: pointer;
+}
+
+.ui-mode-sidebar > .settings-view {
+  margin: 0 0 3px 23px;
+}
+
 .ui-mode-sidebar input[type=search] {
   flex: auto;
 }

@@ -16,13 +16,22 @@
 
 .settings-view {
   flex: none;
+  margin-top: 4px;
 }
 
 .settings-view .setting label {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 6px 2px;
+  margin: 4px 2px;
+}
+
+.settings-view .setting:first-of-type label {
+  margin-top: 2px;
+}
+
+.settings-view .setting:last-of-type label {
+  margin-bottom: 2px;
 }
 
 .settings-view .setting input {
