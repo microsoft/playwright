@@ -30,6 +30,10 @@ test.slow();
 
 let traceFile: string;
 
+test.use({
+  baseURL: 'https://example.com',
+});
+
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
@@ -1367,4 +1371,13 @@ test('should allow hiding route actions', {
     /page.goto.*empty.html/,
     /route.fulfill/,
   ]);
+});
+
+test('should show baseURL in metadata pane', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
+}, async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('page.evaluate');
+  await traceViewer.showMetadataTab();
+  await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
