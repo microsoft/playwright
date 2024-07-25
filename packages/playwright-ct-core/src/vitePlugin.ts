@@ -84,7 +84,7 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     runDevServer: async (config: FullConfigInternal) => {
-      await runDevServer(config);
+      return await runDevServer(config);
     }
   };
 }
