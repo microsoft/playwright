@@ -179,7 +179,7 @@ class SocksProxyConnection {
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
           const responseBody = 'Playwright client-certificate error: ' + error.message;
           if (internalTLS?.alpnProtocol === 'h2') {
-            // This method is available only in Node.js 18+
+            // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
               this._interceptClose = true;
               // @ts-expect-error
