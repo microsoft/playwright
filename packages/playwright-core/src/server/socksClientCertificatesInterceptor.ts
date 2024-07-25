@@ -27,6 +27,16 @@ import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
 import { debugLogger } from '../utils/debugLogger';
 
+let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
+function loadDummyServerCertsIfNeeded() {
+  if (dummyServerTlsOptions)
+    return;
+  dummyServerTlsOptions = {
+    key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
+  };
+}
+
 class ALPNCache {
   private _cache = new Map<string, ManualPromise<string>>();
 
@@ -122,8 +132,7 @@ class SocksProxyConnection {
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       const dummyServer = tls.createServer({
-        key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
-        cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
+        ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
       this.internal?.on('close', () => dummyServer.close());
@@ -211,6 +220,7 @@ export class ClientCertificatesProxy {
       this._connections.get(payload.uid)?.onClose();
       this._connections.delete(payload.uid);
     });
+    loadDummyServerCertsIfNeeded();
   }
 
   public async listen(): Promise<string> {
