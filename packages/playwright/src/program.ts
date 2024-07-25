@@ -97,8 +97,10 @@ function addDevServerCommand(program: Command) {
     const configInternal = await loadConfigFromFileRestartIfNeeded(options.config);
     if (!configInternal)
       return;
-    const { config } = configInternal;
-    const implementation = (config as any)['@playwright/test']?.['cli']?.['dev-server'];
+
+    await testServer.setupPlugins(configInternal);
+
+    const implementation = configInternal.plugins.map(p => p.instance!).find(p => p.runDevServer)?.runDevServer;
     if (implementation) {
       await implementation(configInternal);
     } else {

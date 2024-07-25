@@ -192,7 +192,10 @@ class TestServerDispatcher implements TestServerInterface {
       reporter.onError(error!);
       return { status: 'failed', report };
     }
-    const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
+
+    await setupPlugins(config);
+
+    const devServerCommand = config.plugins.map(p => p.instance!).find(p => p.runDevServer)?.runDevServer;
     if (!devServerCommand) {
       reporter.onError({ message: 'No dev-server command found in the configuration' });
       return { status: 'failed', report };
@@ -515,7 +518,7 @@ export async function resolveCtDirs(config: FullConfigInternal) {
   };
 }
 
-export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
+export async function setupPlugins(config: FullConfigInternal) {
   const errors: reporterTypes.TestError[] = [];
   const errorReporter = wrapReporterAsV2({
     onError(error: reporterTypes.TestError) {
@@ -526,6 +529,10 @@ export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
   await taskRunner.run(new TestRun(config), 0);
   if (errors.length > 0)
     throw new Error('Failed to clear cache: ' + errors);
+}
+
+export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
+  await setupPlugins(config);
 
   for (const plugin of config.plugins) {
     if (!plugin.instance)

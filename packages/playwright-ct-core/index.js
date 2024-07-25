@@ -16,7 +16,6 @@
 
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
-const { runDevServerCommand } = require('./lib/cliOverrides');
 const { createPlugin } = require('./lib/vitePlugin');
 
 const defineConfig = (...configs) => {
@@ -29,9 +28,6 @@ const defineConfig = (...configs) => {
       babelPlugins: [
         [require.resolve('./lib/tsxTransform')]
       ],
-      cli: {
-        'dev-server': runDevServerCommand,
-      },
     }
   };
 };

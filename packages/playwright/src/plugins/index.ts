@@ -15,6 +15,7 @@
  */
 
 import type { FullConfig, Suite } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export interface TestRunnerPlugin {
@@ -26,7 +27,7 @@ export interface TestRunnerPlugin {
   teardown?(): Promise<void>;
 
   clearCache?(): Promise<void>;
-  runDevServer?(): Promise<void>;
+  runDevServer?(config: FullConfigInternal): Promise<() => Promise<void>>;
 }
 
 export type TestRunnerPluginRegistration = {
