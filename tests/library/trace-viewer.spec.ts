@@ -30,12 +30,10 @@ test.slow();
 
 let traceFile: string;
 
-test.use({
-  baseURL: 'https://example.com',
-});
-
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    baseURL: 'https://example.com',
+  });
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
   await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
