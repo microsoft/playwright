@@ -20,7 +20,7 @@ import type https from 'https';
 import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
-import { createSocket } from '../utils/happy-eyeballs';
+import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
 import { isUnderTest, ManualPromise } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
@@ -42,22 +42,21 @@ class ALPNCache {
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    const socket = tls.connect({
+    createTLSSocket({
       host,
       port,
       servername: net.isIP(host) ? undefined : host,
       ALPNProtocols: ['h2', 'http/1.1'],
       rejectUnauthorized: false,
-    });
-    socket.on('secureConnect', () => {
-      // The server may not respond with ALPN, in which case we default to http/1.1.
-      result.resolve(socket.alpnProtocol || 'http/1.1');
-      socket.end();
-    });
-    socket.on('error', error => {
+    }).then(socket => {
+      socket.on('secureConnect', () => {
+        // The server may not respond with ALPN, in which case we default to http/1.1.
+        result.resolve(socket.alpnProtocol || 'http/1.1');
+        socket.end();
+      });
+    }).catch(error => {
       debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
       result.resolve('http/1.1');
-      socket.end();
     });
   }
 }
