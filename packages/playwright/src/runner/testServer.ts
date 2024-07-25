@@ -23,7 +23,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles, createTaskRunnerForPluginSetup } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -39,6 +39,7 @@ import { serializeError } from '../util';
 import { cacheDir } from '../transform/compilationCache';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { InternalReporter } from '../reporters/internalReporter';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -515,11 +516,24 @@ export async function resolveCtDirs(config: FullConfigInternal) {
 }
 
 export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
-  const override = (config.config as any)['@playwright/test']?.['cli']?.['clear-cache'];
-  if (override) {
-    await override(config);
-    return;
+  const errors: reporterTypes.TestError[] = [];
+  const errorReporter = wrapReporterAsV2({
+    onError(error: reporterTypes.TestError) {
+      errors.push(error);
+    }
+  });
+  const taskRunner = createTaskRunnerForPluginSetup(config, [errorReporter]);
+  await taskRunner.run(new TestRun(config), 0);
+  if (errors.length > 0)
+    throw new Error('Failed to clear cache: ' + errors);
+
+  for (const plugin of config.plugins) {
+    if (!plugin.instance)
+      throw new Error('Plugin not initialized');
+
+    await plugin.instance.clearCache?.();
   }
+
   await removeFolderAndLogToConsole(cacheDir);
 }
 

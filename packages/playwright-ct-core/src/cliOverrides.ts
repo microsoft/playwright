@@ -15,18 +15,8 @@
  * limitations under the License.
  */
 
-import { cacheDir } from 'playwright/lib/transform/compilationCache';
-import { resolveDirs } from './viteUtils';
 import { runDevServer } from './devServer';
 import type { FullConfigInternal } from 'playwright/lib/common/config';
-import { removeFolderAndLogToConsole } from 'playwright/lib/runner/testServer';
-
-export async function clearCacheCommand(config: FullConfigInternal) {
-  const dirs = await resolveDirs(config.configDir, config.config);
-  if (dirs)
-    await removeFolderAndLogToConsole(dirs.outDir);
-  await removeFolderAndLogToConsole(cacheDir);
-}
 
 export async function runDevServerCommand(config: FullConfigInternal) {
   return await runDevServer(config);

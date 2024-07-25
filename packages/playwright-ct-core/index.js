@@ -16,7 +16,7 @@
 
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
-const { clearCacheCommand, runDevServerCommand, findRelatedTestFilesCommand } = require('./lib/cliOverrides');
+const { runDevServerCommand } = require('./lib/cliOverrides');
 const { createPlugin } = require('./lib/vitePlugin');
 
 const defineConfig = (...configs) => {
@@ -30,7 +30,6 @@ const defineConfig = (...configs) => {
         [require.resolve('./lib/tsxTransform')]
       ],
       cli: {
-        'clear-cache': clearCacheCommand,
         'dev-server': runDevServerCommand,
       },
     }

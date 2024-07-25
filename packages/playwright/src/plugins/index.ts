@@ -24,6 +24,9 @@ export interface TestRunnerPlugin {
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
+
+  clearCache?(): Promise<void>;
+  runDevServer?(): Promise<void>;
 }
 
 export type TestRunnerPluginRegistration = {

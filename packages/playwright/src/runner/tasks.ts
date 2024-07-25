@@ -106,6 +106,15 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
+export function createTaskRunnerForPluginSetup(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+
+  for (const plugin of config.plugins)
+    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+
+  return taskRunner;
+}
+
 export function createTaskRunnerForList(config: FullConfigInternal, reporters: ReporterV2[], mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean, populatePluginDependencies?: boolean }): TaskRunner<TestRun> {
   const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
 
