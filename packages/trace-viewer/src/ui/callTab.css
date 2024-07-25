@@ -73,6 +73,14 @@
   overflow: hidden;
 }
 
+a.call-value {
+  text-decoration: none;
+}
+
+a.call-value:hover {
+  text-decoration: underline;
+}
+
 .call-value::before {
   content: '\00a0';
 }

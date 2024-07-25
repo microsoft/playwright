@@ -44,6 +44,7 @@ class TraceViewerPage {
   consoleStacks: Locator;
   stackFrames: Locator;
   networkRequests: Locator;
+  metadataTab: Locator;
   snapshotContainer: Locator;
 
   constructor(public page: Page) {
@@ -57,6 +58,7 @@ class TraceViewerPage {
     this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
     this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
+    this.metadataTab = page.locator('.metadata-view');
   }
 
   async actionIconsText(action: string) {
@@ -91,6 +93,10 @@ class TraceViewerPage {
 
   async showNetworkTab() {
     await this.page.click('text="Network"');
+  }
+
+  async showMetadataTab() {
+    await this.page.click('text="Metadata"');
   }
 
   @step
