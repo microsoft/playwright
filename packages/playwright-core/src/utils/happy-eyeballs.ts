@@ -62,7 +62,7 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
           reject(err);
         if (socket)
           resolve(socket);
-      }, false).catch(err => reject(err));
+      }, /* useTLS */ false).catch(err => reject(err));
     }
   });
 }
