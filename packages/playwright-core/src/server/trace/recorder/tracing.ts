@@ -109,7 +109,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._contextCreatedEvent.browserName = context._browser.options.name;
       this._contextCreatedEvent.channel = context._browser.options.channel;
       this._contextCreatedEvent.options = context._options;
-      this._contextCreatedEvent.baseURL = context._options.baseURL;
     }
   }
 

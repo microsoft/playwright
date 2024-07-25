@@ -84,7 +84,7 @@ export class MultiTraceModel {
     const libraryContext = contexts.find(context => context.origin === 'library');
 
     this.browserName = libraryContext?.browserName || '';
-    this.baseURL = libraryContext?.baseURL;
+    this.baseURL = libraryContext?.options.baseURL;
     this.sdkLanguage = libraryContext?.sdkLanguage;
     this.channel = libraryContext?.channel;
     this.testIdAttributeName = libraryContext?.testIdAttributeName;
