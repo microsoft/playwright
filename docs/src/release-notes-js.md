@@ -67,17 +67,17 @@ This fixture is only available in [component tests](./test-components#handling-n
 
 ### UI Mode / Trace Viewer Updates
 
-- Allow hiding Route actions like `route.continue` in Trace Viewer settings
-- Show request method/status in the network details tab
-- Add "Copy to Clipboard" button in the Sources Stacktrace tab
-- Display Text Attachments in attachments pane
-- Display `baseURL` in metadata pane
+- New testing options pane in the UI mode to control test execution, for example "single worker" or "headed browser".
+- New setting to show/hide routing actions like `route.continue`.
+- Request method and status are shown in the network details tab.
+- New button to copy source file location to clipboard.
+- Content of text attachments is now rendered inline in the attachments pane.
+- Metadata pane now displays the `baseURL`.
 
 ### Miscellaneous
 
-- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error
-- HTML Report: Allow rendering multiple links in test annotation description
-- HTML Report: Allow rendering links in test attachment name and body
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
+- Improved link rendering inside annotations and attachments in the html report.
 
 ### Browser Versions
 
