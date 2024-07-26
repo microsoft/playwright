@@ -243,10 +243,6 @@ export const UIModeView: React.FC<{}> = ({
     await commandQueue.current;
   }, [testServerConnection, teleSuiteUpdater]);
 
-  React.useEffect(() => {
-    testServerConnection?.onListChanged(updateList);
-  }, [testServerConnection, updateList]);
-
   // Update project filter default values.
   React.useEffect(() => {
     if (!testModel)

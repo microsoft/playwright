@@ -27,7 +27,7 @@ import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, create
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
-import { Watcher } from '../fsWatcher';
+import { type FSEvent, Watcher } from '../fsWatcher';
 import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import { Runner } from './runner';
 import type { ConfigCLIOverrides } from '../common/ipc';
@@ -86,13 +86,15 @@ class TestServerDispatcher implements TestServerInterface {
           gracefullyProcessExitDoNotHang(0);
       },
     };
-    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
-    this._testWatcher = new Watcher('flat', events => {
-      const collector = new Set<string>();
-      events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
-    });
+    this._globalWatcher = new Watcher('deep', events => this._checkForChangedTestFiles(events));
+    this._testWatcher = new Watcher('flat', events => this._checkForChangedTestFiles(events));
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
+  }
+
+  private _checkForChangedTestFiles(events: FSEvent[]) {
+    const collector = new Set<string>();
+    events.forEach(f => collectAffectedTestFiles(f.file, collector));
+    this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
