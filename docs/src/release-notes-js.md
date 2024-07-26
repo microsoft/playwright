@@ -6,6 +6,90 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.46
+
+### TLS Client Certificates
+
+Playwright now allows to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+
+The following snippet sets up a client certificate for `https://example.com`:
+
+```ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // ...
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
+  // ...
+});
+```
+
+You can also provide client certificates to a particular [test project](./api/class-testproject#test-project-use) or as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
+
+### Component Testing: New `router` fixture
+
+This release introduces an experimental `router` fixture to intercept and handle network requests in component testing.
+There are two ways to use the router fixture:
+
+- Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`].
+- Call `router.use(handlers)` and pass [MSW library](https://mswjs.io) request handlers to it.
+
+Here is an example of reusing your existing MSW handlers in the test.
+
+```ts
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ router }) => {
+  // install common handlers before each test
+  await router.use(...handlers);
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+This fixture is only available in [component tests](./test-components#handling-network-requests).
+
+### Test runner
+
+- New CLI option `--only-changed` to only run test files that have been changed since the last commit or from a specific git "ref".
+- New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
+- New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
+
+### UI Mode / Trace Viewer Updates
+
+- New testing options pane in the UI mode to control test execution, for example "single worker" or "headed browser".
+- New setting to show/hide routing actions like `route.continue`.
+- Request method and status are shown in the network details tab.
+- New button to copy source file location to clipboard.
+- Content of text attachments is now rendered inline in the attachments pane.
+- Metadata pane now displays the `baseURL`.
+
+### Miscellaneous
+
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
+- Improved link rendering inside annotations and attachments in the html report.
+
+### Browser Versions
+
+- Chromium 128.0.6613.7
+- Mozilla Firefox 128.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 127
+- Microsoft Edge 127
+
 ## Version 1.45
 
 <LiteYouTube
