@@ -61,7 +61,7 @@ export async function runDevServer(config: FullConfigInternal): Promise<() => Pr
     projectOutputs.add(p.project.outputDir);
   }
 
-  const globalWatcher = new Watcher('deep', async () => {
+  const globalWatcher = new Watcher(async () => {
     const registry: ComponentRegistry = new Map();
     await populateComponentsFromTests(registry);
     // compare componentRegistry to registry key sets.
