@@ -37,7 +37,7 @@
         "mac12": "2009",
         "mac12-arm64": "2009"
       },
-      "browserVersion": "17.4"
+      "browserVersion": "18.0"
     },
     {
       "name": "ffmpeg",
