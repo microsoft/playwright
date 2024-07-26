@@ -559,7 +559,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     ]);
   });
 
-  test('should consume contextmenu events, despite a custom context menu', async ({ page, openRecorder }) => {
+  test('should consume contextmenu events, despite a custom context menu', async ({ page, openRecorder, browserName, platform }) => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -597,20 +597,36 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
       recorder.trustedClick({ button: 'right' }),
     ]);
     expect(message.text()).toBe('right-clicked');
-    expect(await page.evaluate('log')).toEqual([
-      // hover
-      'button: pointermove',
-      'button: mousemove',
-      // trusted right click
-      'button: pointerup',
-      'button: pointermove',
-      'button: mousemove',
-      'button: pointerdown',
-      'button: mousedown',
-      'button: contextmenu',
-      'menu: pointerup',
-      'menu: mouseup'
-    ]);
+    if (browserName === 'chromium' && platform === 'win32') {
+      expect(await page.evaluate('log')).toEqual([
+        // hover
+        'button: pointermove',
+        'button: mousemove',
+        // trusted right click
+        'button: pointermove',
+        'button: mousemove',
+        'button: pointerdown',
+        'button: mousedown',
+        'button: pointerup',
+        'button: mouseup',
+        'button: contextmenu',
+      ]);
+    } else {
+      expect(await page.evaluate('log')).toEqual([
+        // hover
+        'button: pointermove',
+        'button: mousemove',
+        // trusted right click
+        'button: pointerup',
+        'button: pointermove',
+        'button: mousemove',
+        'button: pointerdown',
+        'button: mousedown',
+        'button: contextmenu',
+        'menu: pointerup',
+        'menu: mouseup',
+      ]);
+    }
   });
 
   test('should assert value', async ({ openRecorder }) => {
