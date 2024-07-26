@@ -10,9 +10,9 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### TLS Client Certificates
 
-TLS Client Authentication allows the server to request a client certificate and verify it.
-This release allows you to specify them for the browser and when using the [APIRequestContext] (API Testing).
-The following snippet will add a client certificate for `https://example.com` which gets used in the test runs:
+Playwright now allows to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+
+The following snippet sets up a client certificate for `https://example.com`:
 
 ```ts
 import { defineConfig } from '@playwright/test';
@@ -31,11 +31,11 @@ export default defineConfig({
 });
 ```
 
-Its also possible to manually specify them per-project ([project "use section"](./api/class-testproject#test-project-use)) or when creating a new context or APIRequestContext manually via [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
+You can also provide client certificates to a particular [test project](./api/class-testproject#test-project-use) or as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
 
 ### Component Testing: New `router` fixture
 
-This release introduces a `router` fixture to intercept and handle network requests.
+This release introduces an experimental `router` fixture to intercept and handle network requests.
 There are two ways to use the router fixture:
 
 - Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`].
@@ -57,18 +57,19 @@ test('example test', async ({ mount }) => {
 });
 ```
 
-For more information, see the [component testing docs](./test-components#handling-network-requests).
+This fixture is only available in [component tests](./test-components#handling-network-requests).
 
 ### Test runner
 
-- New CLI option `--only-changed=<sha>` to only run test files that have been changed between working tree and "ref".
-- Allow [boxing for fixtures](./test-fixtures#box-fixtures) to minimize the fixture exposure to the reporters UI
+- New CLI option `--only-changed` to only run test files that have been changed since the last commit or from a specific git "ref".
+- New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
+- New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
 
 ### Miscellaneous
 
 - Show request method/status in the network details tab in Trace Viewer
 - Allow hiding Route actions like `route.continue` in Trace Viewer
-- Support for `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on `ECONNRESET`
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` error.
 
 ### Browser Versions
 
