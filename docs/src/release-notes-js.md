@@ -6,6 +6,81 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.46
+
+### TLS Client Certificates
+
+TLS Client Authentication allows the server to request a client certificate and verify it.
+This release allows you to specify them for the browser and when using the [APIRequestContext] (API Testing).
+The following snippet will add a client certificate for `https://example.com` which gets used in the test runs:
+
+```ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // ...
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
+  // ...
+});
+```
+
+Its also possible to manually specify them per-project ([project "use section"](./api/class-testproject#test-project-use)) or when creating a new context or APIRequestContext manually via [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
+
+### Component Testing: New `router` fixture
+
+This release introduces a `router` fixture to intercept and handle network requests.
+There are two ways to use the router fixture:
+
+- Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`].
+- Call `router.use(handlers)` and pass [MSW library](https://mswjs.io) request handlers to it.
+
+Here is an example of reusing your existing MSW handlers in the test.
+
+```ts
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ router }) => {
+  // install common handlers before each test
+  await router.use(...handlers);
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+For more information, see the [component testing docs](./test-components#handling-network-requests).
+
+### Test runner
+
+- New CLI option `--only-changed=<sha>` to only run test files that have been changed between working tree and "ref".
+- Allow [boxing for fixtures](./test-fixtures#box-fixtures) to minimize the fixture exposure to the reporters UI
+
+### Miscellaneous
+
+- Show request method/status in the network details tab in Trace Viewer
+- Allow hiding Route actions like `route.continue` in Trace Viewer
+- Support for `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on `ECONNRESET`
+
+### Browser Versions
+
+- Chromium 128.0.6613.7
+- Mozilla Firefox 128.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 127
+- Microsoft Edge 127
+
 ## Version 1.45
 
 <LiteYouTube
