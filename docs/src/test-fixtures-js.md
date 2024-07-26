@@ -675,7 +675,7 @@ test('passes', async ({ database, page, a11y }) => {
 
 ## Box fixtures
 
-Usually, custom fixtures are reported as separate steps in in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. You can minimize the fixture exposure in the UI by "boxing" it.
+Usually, custom fixtures are reported as separate steps in in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. For frequently-used fixtures, this can mean lots of noise. You can stop the fixtures steps from being shown in the UI by "boxing" it.
 
 ```js
 import { test as base } from '@playwright/test';
@@ -687,11 +687,11 @@ export const test = base.extend({
 });
 ```
 
-This is useful for non-interesting helper fixtures. For example, an auto fixture that sets up some common data can be safely hidden from a test report.
+This is useful for non-interesting helper fixtures. For example, an [automatic](./test-fixtures.md#automatic-fixtures) fixture that sets up some common data can be safely hidden from a test report.
 
 ## Custom fixture title
 
-You can assign a custom title to a fixture that will be shown instead of the usual fixture name in various test reports and error messages.
+Instead of the usual fixture name, you can give fixtures a custom title that will be shown in test reports and error messages.
 
 ```js
 import { test as base } from '@playwright/test';
