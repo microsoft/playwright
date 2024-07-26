@@ -25,6 +25,7 @@ const { createHttpsServer, createHttp2Server } = require('../../packages/playwri
 type TestOptions = {
   startCCServer(options?: {
     http2?: boolean;
+    enableHTTP1FallbackWhenUsingHttp2?: boolean;
     useFakeLocalhost?: boolean;
   }): Promise<string>,
 };
@@ -42,7 +43,7 @@ const test = base.extend<TestOptions>({
         ],
         requestCert: true,
         rejectUnauthorized: false,
-        allowHTTP1: true,
+        allowHTTP1: options?.enableHTTP1FallbackWhenUsingHttp2,
       }, (req: (http2.Http2ServerRequest | http.IncomingMessage), res: http2.Http2ServerResponse | http.ServerResponse) => {
         const tlsSocket = req.socket as import('tls').TLSSocket;
         const parts: { key: string, value: any }[] = [];
@@ -279,7 +280,8 @@ test.describe('browser', () => {
 
   test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
     test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
-    const serverURL = await startCCServer({ http2: true });
+    const enableHTTP1FallbackWhenUsingHttp2 = browserName === 'webkit' && process.platform === 'linux';
+    const serverURL = await startCCServer({ http2: true, enableHTTP1FallbackWhenUsingHttp2 });
     const page = await browser.newPage({
       clientCertificates: [{
         origin: new URL(serverURL).origin,
@@ -289,7 +291,7 @@ test.describe('browser', () => {
     });
     // TODO: We should investigate why http2 is not supported in WebKit on Linux.
     // https://bugs.webkit.org/show_bug.cgi?id=276990
-    const expectedProtocol = browserName === 'webkit' && process.platform === 'linux' ? 'http/1.1' : 'h2';
+    const expectedProtocol = enableHTTP1FallbackWhenUsingHttp2 ? 'http/1.1' : 'h2';
     {
       await page.goto(serverURL.replace('localhost', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
@@ -306,7 +308,7 @@ test.describe('browser', () => {
 
   test('support http2 if the browser only supports http1.1', async ({ browserType, browserName, startCCServer, asset }) => {
     test.skip(browserName !== 'chromium');
-    const serverURL = await startCCServer({ http2: true });
+    const serverURL = await startCCServer({ http2: true, enableHTTP1FallbackWhenUsingHttp2: true });
     const browser = await browserType.launch({ args: ['--disable-http2'] });
     const page = await browser.newPage({
       clientCertificates: [{
@@ -326,6 +328,25 @@ test.describe('browser', () => {
       await expect(page.getByTestId('alpn-protocol')).toHaveText('http/1.1');
     }
     await browser.close();
+  });
+
+  test('should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName }) => {
+    test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
+    test.fixme(browserName === 'webkit' && process.platform === 'linux', 'WebKit on Linux does not support http2 https://bugs.webkit.org/show_bug.cgi?id=276990');
+    test.skip(+process.versions.node.split('.')[0] < 20, 'http2.performServerHandshake is not supported in older Node.js versions');
+
+    process.env.PWTEST_UNSUPPORTED_CUSTOM_CA = asset('empty.html');
+    const serverURL = await startCCServer({ http2: true });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
+    await page.close();
   });
 
   test.describe('persistentContext', () => {
