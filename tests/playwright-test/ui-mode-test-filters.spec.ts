@@ -234,6 +234,7 @@ test('should only show tests selected with --grep', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree, undefined, {
     additionalArgs: ['--grep', 'fails'],
   });
+  await expect.poll(dumpTestTree(page)).toContain('fails');
   await expect.poll(dumpTestTree(page)).not.toContain('passes');
 });
 

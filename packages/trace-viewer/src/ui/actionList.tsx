@@ -107,8 +107,8 @@ export const renderAction = (
     {(showDuration || showBadges) && <div className='spacer'></div>}
     {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
-      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className="action-icon-value">{errors}</span></div>}
-      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className="action-icon-value">{warnings}</span></div>}
+      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
+      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
     </div>}
   </>;
 };

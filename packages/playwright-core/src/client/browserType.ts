@@ -151,8 +151,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
             page._onClose();
           context._onClose();
         }
-        browser?._didClose();
         connection.close(reason || closeError);
+        // Give a chance to any API call promises to reject upon page/context closure.
+        // This happens naturally when we receive page.onClose and browser.onClose from the server
+        // in separate tasks. However, upon pipe closure we used to dispatch them all synchronously
+        // here and promises did not have a chance to reject.
+        // The order of rejects vs closure is a part of the API contract and our test runner
+        // relies on it to attribute rejections to the right test.
+        setTimeout(() => browser?._didClose(), 0);
       };
       pipe.on('closed', params => onPipeClosed(params.reason));
       connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);

@@ -139,12 +139,7 @@ export function copy(text: string) {
   textArea.remove();
 }
 
-export type Setting<T> = {
-  value: T;
-  set: (value: T) => void;
-  name: string;
-  title: string;
-};
+export type Setting<T> = readonly [T, (value: T) => void, string];
 
 export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
   if (name)
@@ -155,12 +150,7 @@ export function useSetting<S>(name: string | undefined, defaultValue: S, title?:
       settings.setObject(name, value);
     setValue(value);
   }, [name, setValue]);
-  const setting = {
-    value,
-    set: setValueWrapper,
-    name: name || '',
-    title: title || name || '',
-  };
+  const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
   return [value, setValueWrapper, setting];
 }
 

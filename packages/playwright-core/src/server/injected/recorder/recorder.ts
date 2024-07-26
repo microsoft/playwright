@@ -230,6 +230,9 @@ class RecordActionTool implements RecorderTool {
     // So we check the hovered element instead, and if it is a range input, we skip click handling
     if (isRangeInput(this._hoveredElement))
       return;
+    // Right clicks are handled by 'contextmenu' event if its auxclick
+    if (event.button === 2 && event.type === 'auxclick')
+      return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))

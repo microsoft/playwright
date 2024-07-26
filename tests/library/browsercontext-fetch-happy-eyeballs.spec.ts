@@ -35,8 +35,12 @@ const __testHookLookup = (hostname: string): LookupAddress[] => {
 
 let interceptedHostnameLookup: string | undefined;
 
-it.beforeEach(() => {
+it.beforeEach(({ server }) => {
   interceptedHostnameLookup = undefined;
+  // Force a new connection every time, so that we can intercept the hostname lookup.
+  server.setExtraHeaders('/simple.json', {
+    'Connection': 'close',
+  });
 });
 
 it('get should work', async ({ context, server }) => {

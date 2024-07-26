@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1127",
+      "revision": "1128",
       "installByDefault": true,
-      "browserVersion": "127.0.6533.57"
+      "browserVersion": "128.0.6613.7"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1243",
+      "revision": "1244",
       "installByDefault": false,
-      "browserVersion": "128.0.6613.0"
+      "browserVersion": "129.0.6616.0"
     },
     {
       "name": "firefox",
@@ -37,7 +37,7 @@
         "mac12": "2009",
         "mac12-arm64": "2009"
       },
-      "browserVersion": "17.4"
+      "browserVersion": "18.0"
     },
     {
       "name": "ffmpeg",

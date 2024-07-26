@@ -20,6 +20,7 @@ import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
 import { ManualPromise } from './manualPromise';
+import { assert } from './debug';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305
@@ -66,7 +67,41 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
   });
 }
 
-async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
+export async function createTLSSocket(options: tls.ConnectionOptions): Promise<tls.TLSSocket> {
+  return new Promise((resolve, reject) => {
+    assert(options.host, 'host is required');
+    if (net.isIP(options.host)) {
+      const socket = tls.connect(options)
+      socket.on('connect', () => resolve(socket));
+      socket.on('error', error => reject(error));
+    } else {
+      createConnectionAsync(options, (err, socket) => {
+        if (err)
+          reject(err);
+        if (socket)
+          resolve(socket);
+      }, true).catch(err => reject(err));
+    }
+  });
+}
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: tls.TLSSocket) => void) | undefined, 
+  useTLS: true
+): Promise<void>;
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, 
+  useTLS: false
+): Promise<void>;
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: any) => void) | undefined, 
+  useTLS: boolean
+): Promise<void> {
   const lookup = (options as any).__testHookLookup || lookupAddresses;
   const hostname = clientRequestArgsToHostName(options);
   const addresses = await lookup(hostname);

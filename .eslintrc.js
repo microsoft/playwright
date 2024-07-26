@@ -30,6 +30,7 @@ module.exports = {
             "avoidEscape": true,
             "allowTemplateLiterals": true
         }],
+        "jsx-quotes": [2, "prefer-single"],
         "no-extra-semi": 2,
         "@typescript-eslint/semi": [2],
         "comma-style": [2, "last"],
