@@ -675,27 +675,30 @@ test('passes', async ({ database, page, a11y }) => {
 
 ## Box fixtures
 
-You can minimize the fixture exposure to the reporters UI and error messages via boxing it:
+Usually, custom fixtures are reported as separate steps in in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. You can minimize the fixture exposure in the UI by "boxing" it.
 
 ```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  _helperFixture: [async ({}, use, testInfo) => {
+  helperFixture: [async ({}, use, testInfo) => {
+    // ...
   }, { box: true }],
 });
 ```
 
+This is useful for non-interesting helper fixtures. For example, an auto fixture that sets up some common data can be safely hidden from a test report.
+
 ## Custom fixture title
 
-You can assign a custom title to a fixture to be used in error messages and in the
-reporters UI:
+You can assign a custom title to a fixture that will be shown instead of the usual fixture name in various test reports and error messages.
 
 ```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  _innerFixture: [async ({}, use, testInfo) => {
+  innerFixture: [async ({}, use, testInfo) => {
+    // ...
   }, { title: 'my fixture' }],
 });
 ```
