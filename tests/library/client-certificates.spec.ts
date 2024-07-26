@@ -280,7 +280,8 @@ test.describe('browser', () => {
 
   test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
     test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
-    const serverURL = await startCCServer({ http2: true });
+    const enableHTTP1FallbackWhenUsingHttp2 = browserName === 'webkit' && process.platform === 'linux';
+    const serverURL = await startCCServer({ http2: true, enableHTTP1FallbackWhenUsingHttp2 });
     const page = await browser.newPage({
       clientCertificates: [{
         origin: new URL(serverURL).origin,
@@ -290,7 +291,7 @@ test.describe('browser', () => {
     });
     // TODO: We should investigate why http2 is not supported in WebKit on Linux.
     // https://bugs.webkit.org/show_bug.cgi?id=276990
-    const expectedProtocol = browserName === 'webkit' && process.platform === 'linux' ? 'http/1.1' : 'h2';
+    const expectedProtocol = enableHTTP1FallbackWhenUsingHttp2 ? 'http/1.1' : 'h2';
     {
       await page.goto(serverURL.replace('localhost', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
