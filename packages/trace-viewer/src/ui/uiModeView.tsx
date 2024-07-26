@@ -224,25 +224,6 @@ export const UIModeView: React.FC<{}> = ({
     };
   }, [testServerConnection]);
 
-  const updateList = React.useCallback(async () => {
-    if (!testServerConnection || !teleSuiteUpdater)
-      return;
-
-    commandQueue.current = commandQueue.current.then(async () => {
-      setIsLoading(true);
-      try {
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
-        teleSuiteUpdater.processListReport(result.report);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
-      } finally {
-        setIsLoading(false);
-      }
-    });
-    await commandQueue.current;
-  }, [testServerConnection, teleSuiteUpdater]);
-
   // Update project filter default values.
   React.useEffect(() => {
     if (!testModel)
@@ -345,7 +326,19 @@ export const UIModeView: React.FC<{}> = ({
     if (!testServerConnection || !teleSuiteUpdater)
       return;
     const disposable = testServerConnection.onTestFilesChanged(async params => {
-      await updateList();
+      commandQueue.current = commandQueue.current.then(async () => {
+        setIsLoading(true);
+        try {
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+          teleSuiteUpdater.processListReport(result.report);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(e);
+        } finally {
+          setIsLoading(false);
+        }
+      });
+      await commandQueue.current;
 
       const testModel = teleSuiteUpdater.asModel();
       const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
@@ -372,7 +365,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', new Set(testIds));
     });
     return () => disposable.dispose();
-  }, [runTests, updateList, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters]);
+  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters]);
 
   // Shortcuts.
   React.useEffect(() => {
