@@ -15,7 +15,7 @@
 # See src/server/injected/README.md.
 lib/**/injected/
 # Include all binaries that we ship with the package.
-!bin/*
+!bin/**/*
 # Include FFMPEG
 !third_party/ffmpeg/*
 # Include generated types and entrypoint.
