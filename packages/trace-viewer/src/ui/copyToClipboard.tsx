@@ -15,23 +15,24 @@
  */
 
 import * as React from 'react';
+import { ToolbarButton } from '@web/components/toolbarButton';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,
   description?: string,
 }> = ({ value, description }) => {
-  const [iconClassName, setIconClassName] = React.useState('codicon-clippy');
+  const [icon, setIcon] = React.useState('copy');
 
   const handleCopy = React.useCallback(() => {
     navigator.clipboard.writeText(value).then(() => {
-      setIconClassName('codicon-check');
+      setIcon('check');
       setTimeout(() => {
-        setIconClassName('codicon-clippy');
+        setIcon('copy');
       }, 3000);
     }, () => {
-      setIconClassName('codicon-close');
+      setIcon('close');
     });
 
   }, [value]);
-  return <span title={description ? description : 'Copy'} className={`copy-icon codicon ${iconClassName}`} onClick={handleCopy}/>;
+  return <ToolbarButton title={description ? description : 'Copy'} icon={icon} onClick={handleCopy}/>;
 };
