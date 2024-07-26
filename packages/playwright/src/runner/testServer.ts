@@ -23,7 +23,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles, createTaskRunnerForPluginSetup } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -39,6 +39,7 @@ import { serializeError } from '../util';
 import { cacheDir } from '../transform/compilationCache';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { InternalReporter } from '../reporters/internalReporter';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -191,7 +192,10 @@ class TestServerDispatcher implements TestServerInterface {
       reporter.onError(error!);
       return { status: 'failed', report };
     }
-    const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
+
+    await setupPlugins(config);
+
+    const devServerCommand = config.plugins.map(p => p.instance!).find(p => p.runDevServer)?.runDevServer;
     if (!devServerCommand) {
       reporter.onError({ message: 'No dev-server command found in the configuration' });
       return { status: 'failed', report };
@@ -514,12 +518,29 @@ export async function resolveCtDirs(config: FullConfigInternal) {
   };
 }
 
+export async function setupPlugins(config: FullConfigInternal) {
+  const errors: reporterTypes.TestError[] = [];
+  const errorReporter = wrapReporterAsV2({
+    onError(error: reporterTypes.TestError) {
+      errors.push(error);
+    }
+  });
+  const taskRunner = createTaskRunnerForPluginSetup(config, [errorReporter]);
+  await taskRunner.run(new TestRun(config), 0);
+  if (errors.length > 0)
+    throw new Error('Failed to clear cache: ' + errors);
+}
+
 export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
-  const override = (config.config as any)['@playwright/test']?.['cli']?.['clear-cache'];
-  if (override) {
-    await override(config);
-    return;
+  await setupPlugins(config);
+
+  for (const plugin of config.plugins) {
+    if (!plugin.instance)
+      throw new Error('Plugin not initialized');
+
+    await plugin.instance.clearCache?.();
   }
+
   await removeFolderAndLogToConsole(cacheDir);
 }
 

@@ -108,7 +108,7 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process'): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
+  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process', options: { populatePluginDependencies?: boolean } = {}): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
     const config = this._config;
     const errors: TestError[] = [];
     const reporters = [wrapReporterAsV2({
@@ -116,18 +116,9 @@ export class Runner {
         errors.push(error);
       }
     })];
-    const taskRunner = createTaskRunnerForList(config, reporters, mode, { failOnLoadErrors: true });
+    const taskRunner = createTaskRunnerForList(config, reporters, mode, { ...options, failOnLoadErrors: true });
     const testRun = new TestRun(config);
-    taskRunner.reporter.onConfigure(config.config);
-
-    const taskStatus = await taskRunner.run(testRun, 0);
-    let status: FullResult['status'] = testRun.failureTracker.result();
-    if (status === 'passed' && taskStatus !== 'passed')
-      status = taskStatus;
-    const modifiedResult = await taskRunner.reporter.onEnd({ status });
-    if (modifiedResult && modifiedResult.status)
-      status = modifiedResult.status;
-    await taskRunner.reporter.onExit();
+    const status = await taskRunner.run(testRun, 0);
     return { status, suite: testRun.rootSuite, errors };
   }
 
@@ -138,14 +129,11 @@ export class Runner {
   }
 
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
-    const result = await this.loadAllTests(mode);
+    const result = await this.loadAllTests(mode, { populatePluginDependencies: true });
     if (result.status !== 'passed' || !result.suite)
       return { errors: result.errors, testFiles: [] };
 
     const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-    if (override)
-      return await override(resolvedFiles, this._config);
     return { testFiles: affectedTestFiles(resolvedFiles) };
   }
 }

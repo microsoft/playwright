@@ -31,6 +31,9 @@ import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
+import { removeFolderAndLogToConsole } from 'playwright/lib/runner/testServer';
+import { runDevServer } from './devServer';
+import type { FullConfigInternal } from 'playwright/lib/common/config';
 
 const log = debug('pw:vite');
 
@@ -46,6 +49,10 @@ export function createPlugin(): TestRunnerPlugin {
     setup: async (configObject: FullConfig, configDirectory: string) => {
       config = configObject;
       configDir = configDirectory;
+    },
+
+    populateDependencies: async () => {
+      await buildBundle(config, configDir);
     },
 
     begin: async (suite: Suite) => {
@@ -70,9 +77,15 @@ export function createPlugin(): TestRunnerPlugin {
         await new Promise(f => stoppableServer.stop(f));
     },
 
-    populateDependencies: async () => {
-      await buildBundle(config, configDir);
+    clearCache: async () => {
+      const dirs = await resolveDirs(configDir, config);
+      if (dirs)
+        await removeFolderAndLogToConsole(dirs.outDir);
     },
+
+    runDevServer: async (config: FullConfigInternal) => {
+      return await runDevServer(config);
+    }
   };
 }
 
