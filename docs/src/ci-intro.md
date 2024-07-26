@@ -386,7 +386,7 @@ jobs:
 ### Fail-Fast
 * langs: js
 
-Even with sharding enabled, large test suites can take very long to execute. Running changed tests first on PRs will give you a faster feedback loop and use less CI resources.
+Even with sharding enabled, large test suites can take very long to execute. Running changed test files first on PRs will give you a faster feedback loop and use less CI resources.
 
 ```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
