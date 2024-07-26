@@ -35,7 +35,7 @@ You can also provide client certificates to a particular [test project](./api/cl
 
 ### Component Testing: New `router` fixture
 
-This release introduces an experimental `router` fixture to intercept and handle network requests.
+This release introduces an experimental `router` fixture to intercept and handle network requests in component testing.
 There are two ways to use the router fixture:
 
 - Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`].
@@ -65,11 +65,19 @@ This fixture is only available in [component tests](./test-components#handling-n
 - New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
 - New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
 
+### UI Mode / Trace Viewer Updates
+
+- Allow hiding Route actions like `route.continue` in Trace Viewer settings
+- Show request method/status in the network details tab
+- Add "Copy to Clipboard" button in the Sources Stacktrace tab
+- Display Text Attachments in attachments pane
+- Display `baseURL` in metadata pane
+
 ### Miscellaneous
 
-- Show request method/status in the network details tab in Trace Viewer
-- Allow hiding Route actions like `route.continue` in Trace Viewer
-- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` error.
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error
+- HTML Report: Allow rendering multiple links in test annotation description
+- HTML Report: Allow rendering links in test attachment name and body
 
 ### Browser Versions
 
