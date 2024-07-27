@@ -697,7 +697,7 @@ test('update', async ({ mount }) => {
 
 ```js
 test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
+  const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
     on: { callback: () => {} },
@@ -711,7 +711,7 @@ test('update', async ({ mount }) => {
 
 ```js
 test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
+  const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
     on: { callback: () => {} },
