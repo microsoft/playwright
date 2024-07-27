@@ -368,7 +368,7 @@ class PageTarget {
       onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
     };
     this._eventListeners = [
-      helper.addObserver(this._updateModalDialogs.bind(this), 'tabmodal-dialog-loaded'),
+      helper.addObserver(this._updateModalDialogs.bind(this), 'common-dialog-loaded'),
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
       helper.addEventListener(this._linkedBrowser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
       helper.addEventListener(this._linkedBrowser, 'WillChangeBrowserRemoteness', event => this._willChangeBrowserRemoteness()),
@@ -499,7 +499,7 @@ class PageTarget {
   }
 
   _updateModalDialogs() {
-    const prompts = new Set(this._linkedBrowser.tabModalPromptBox ? this._linkedBrowser.tabModalPromptBox.listPrompts() : []);
+    const prompts = new Set(this._linkedBrowser.tabDialogBox.getContentDialogManager().dialogs.map(dialog => dialog.frameContentWindow.Dialog));
     for (const dialog of this._dialogs.values()) {
       if (!prompts.has(dialog.prompt())) {
         this._dialogs.delete(dialog.id());
