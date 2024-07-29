@@ -64,5 +64,7 @@ test('test the server connection', async ({ testServerConnection, writeFiles }, 
   });
 
   await expect.poll(() => testServerConnection.events).toHaveLength(1);
-  expect(testServerConnection.events).toEqual([['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]]);
+  expect(testServerConnection.events).toEqual([
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]
+  ]);
 });
