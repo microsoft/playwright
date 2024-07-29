@@ -1288,7 +1288,7 @@ it('should not work after context dispose', async ({ context, server }) => {
   expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain('Test ended.');
 });
 
-it('should retrty ECONNRESET', {
+it('should retry on ECONNRESET', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
 }, async ({ context, server }) => {
   let requestCount = 0;
