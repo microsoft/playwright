@@ -30,16 +30,16 @@ class TestServerConnectionUnderTest extends TestServerConnection {
 }
 
 const test = baseTest.extend<{ testServerConnection: TestServerConnectionUnderTest }>({
-  testServerConnection: async ({ runUITest }, use) => {
-    const { page } = await runUITest({}, undefined, { useWeb: true });
+  testServerConnection: async ({ startCLICommand }, use) => {
+    const testServerProcess = await startCLICommand({}, 'test-server');
 
-    const ws = new URL(page.url()).searchParams.get('ws');
-    const wsUrl = new URL(`../${ws}`, page.url());
-    wsUrl.protocol = 'ws:';
+    await testServerProcess.waitForOutput('Listening on');
+    const line = testServerProcess.output.split('\n').find(l => l.includes('Listening on'));
+    const wsEndpoint = line!.split(' ')[2];
 
-    await page.close(); // stop UI so there's only one websocket consumer.
+    await use(new TestServerConnectionUnderTest(wsEndpoint));
 
-    await use(new TestServerConnectionUnderTest(wsUrl.toString()));
+    await testServerProcess.kill();
   }
 });
 
