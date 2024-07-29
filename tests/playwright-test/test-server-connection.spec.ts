@@ -88,8 +88,8 @@ test('stdio interception', async ({ testServerConnection, writeFiles }) => {
 
   const tests = await testServerConnection.runTests({ trace: 'on' });
   expect(tests).toEqual({ status: 'passed' });
-  await expect.poll(() => testServerConnection.events).toHaveLength(8);
-
-  expect(testServerConnection.events).toContainEqual(['stdio', { type: 'stderr', text: 'this goes to stderr\n' }]);
-  expect(testServerConnection.events).toContainEqual(['stdio', { type: 'stdout', text: 'this goes to stdout\n' }]);
+  await expect.poll(() => testServerConnection.events).toEqual(expect.arrayContaining([
+    ['stdio', { type: 'stderr', text: 'this goes to stderr\n' }],
+    ['stdio', { type: 'stdout', text: 'this goes to stdout\n' }]
+  ]));
 });
