@@ -13,31 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect } from './ui-mode-fixtures';
+import { test as baseTest, expect } from './ui-mode-fixtures';
 
 import { TestServerConnection } from '../../packages/playwright/src/isomorphic/testServerConnection';
 
-test('test the server connection', async ({ runUITest, writeFiles }, testInfo) => {
-  const { page } = await runUITest({
+class TestServerConnectionUnderTest extends TestServerConnection {
+  events: [string, any][] = [];
+
+  constructor(wsUrl: string) {
+    super(wsUrl);
+    this.onTestFilesChanged(params => this.events.push(['testFilesChanged', params]));
+    this.onStdio(params => this.events.push(['stdio', params]));
+    this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
+    this.onReport(params => this.events.push(['report', params]));
+  }
+}
+
+const test = baseTest.extend<{ testServerConnection: TestServerConnectionUnderTest }>({
+  testServerConnection: async ({ runUITest }, use) => {
+    const { page } = await runUITest({}, undefined, { useWeb: true });
+
+    const ws = new URL(page.url()).searchParams.get('ws');
+    const wsUrl = new URL(`../${ws}`, page.url());
+    wsUrl.protocol = 'ws:';
+
+    await page.close(); // stop UI so there's only one websocket consumer.
+
+    await use(new TestServerConnectionUnderTest(wsUrl.toString()));
+  }
+});
+
+test('test the server connection', async ({ testServerConnection, writeFiles }, testInfo) => {
+  await writeFiles({
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('foo', () => {});
       `,
-  }, undefined, { useWeb: true });
-
-  const ws = new URL(page.url()).searchParams.get('ws');
-  const wsUrl = new URL(`../${ws}`, page.url());
-  wsUrl.protocol = 'ws:';
-
-  await page.close(); // stop UI so there's only one websocket consumer.
-
-  const testServerConnection = new TestServerConnection(wsUrl.toString());
-
-  const events: [string, any][] = [];
-  testServerConnection.onTestFilesChanged(params => events.push(['testFilesChanged', params]));
-  testServerConnection.onStdio(params => events.push(['stdio', params]));
-  testServerConnection.onLoadTraceRequested(params => events.push(['loadTraceRequested', params]));
-  testServerConnection.onReport(params => events.push(['report', params]));
+  });
 
   const tests = await testServerConnection.listTests({});
   expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
@@ -51,7 +63,6 @@ test('test the server connection', async ({ runUITest, writeFiles }, testInfo) =
       `,
   });
 
-  await expect.poll(() => events).toHaveLength(1);
-
-  expect(events).toEqual([['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]]);
+  await expect.poll(() => testServerConnection.events).toHaveLength(1);
+  expect(testServerConnection.events).toEqual([['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]]);
 });
