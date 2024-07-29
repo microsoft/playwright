@@ -43,7 +43,7 @@ const test = baseTest.extend<{ testServerConnection: TestServerConnectionUnderTe
   }
 });
 
-test('test file watching', async ({ testServerConnection, writeFiles }, testInfo) => {
+test('file watching', async ({ testServerConnection, writeFiles }, testInfo) => {
   await writeFiles({
     'utils.ts': `
       export const expected = 42;
@@ -71,5 +71,41 @@ test('test file watching', async ({ testServerConnection, writeFiles }, testInfo
   await expect.poll(() => testServerConnection.events).toHaveLength(1);
   expect(testServerConnection.events).toEqual([
     ['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]
+  ]);
+});
+
+test('test run events', async ({ testServerConnection, writeFiles }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+        console.log("this goes to stdio");
+        console.error("this goes to stderr");
+        expect(true).toBe(true);
+      });
+      `,
+  });
+
+  const tests = await testServerConnection.runTests({ trace: 'on' });
+  expect(tests).toEqual({ status: 'passed' });
+  await expect.poll(() => testServerConnection.events).toHaveLength(16);
+
+  expect(testServerConnection.events).toEqual([
+    ['report', expect.objectContaining({ method: 'onConfigure' })],
+    ['report', expect.objectContaining({ method: 'onProject' })],
+    ['report', expect.objectContaining({ method: 'onBegin' })],
+    ['report', expect.objectContaining({ method: 'onTestBegin' })],
+    ['report', expect.objectContaining({ method: 'onStepBegin' })],
+    ['report', expect.objectContaining({ method: 'onStepEnd' })],
+    ['report', expect.objectContaining({ method: 'onStdIO' })],
+    ['report', expect.objectContaining({ method: 'onStdIO' })],
+    ['report', expect.objectContaining({ method: 'onStepBegin' })],
+    ['report', expect.objectContaining({ method: 'onStepEnd' })],
+    ['report', expect.objectContaining({ method: 'onStepBegin' })],
+    ['report', expect.objectContaining({ method: 'onStepEnd' })],
+    ['report', expect.objectContaining({ method: 'onStepBegin' })],
+    ['report', expect.objectContaining({ method: 'onStepEnd' })],
+    ['report', expect.objectContaining({ method: 'onTestEnd' })],
+    ['report', expect.objectContaining({ method: 'onEnd' })],
   ]);
 });
