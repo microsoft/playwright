@@ -17,22 +17,28 @@ import { test, expect } from './ui-mode-fixtures';
 
 import { TestServerConnection } from '../../packages/playwright/src/isomorphic/testServerConnection';
 
-test('test the server connection', async ({ runUITest, writeFiles }) => {
+test('test the server connection', async ({ runUITest, writeFiles }, testInfo) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('foo', () => {});
       `,
-  });
+  }, undefined, { useWeb: true });
 
   const ws = new URL(page.url()).searchParams.get('ws');
   const wsUrl = new URL(`../${ws}`, page.url());
   wsUrl.protocol = 'ws:';
 
+  await page.close(); // stop UI so there's only one websocket consumer.
+
   const testServerConnection = new TestServerConnection(wsUrl.toString());
 
   const events: [string, any][] = [];
   testServerConnection.onTestFilesChanged(params => events.push(['testFilesChanged', params]));
+  testServerConnection.onStdio(params => events.push(['stdio', params]));
+
+  const tests = await testServerConnection.listTests({});
+  expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
 
   await testServerConnection.watch({ fileNames: ['a.test.ts'] });
 
@@ -43,5 +49,7 @@ test('test the server connection', async ({ runUITest, writeFiles }) => {
       `,
   });
 
-  await expect.poll(() => events).toEqual([['testFilesChanged', [{ fileNames: ['a.test.ts'] }]]]);
+  await expect.poll(() => events).toHaveLength(1);
+
+  expect(events).toEqual([['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]]);
 });
