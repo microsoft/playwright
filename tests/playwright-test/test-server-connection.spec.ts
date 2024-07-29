@@ -36,6 +36,8 @@ test('test the server connection', async ({ runUITest, writeFiles }, testInfo) =
   const events: [string, any][] = [];
   testServerConnection.onTestFilesChanged(params => events.push(['testFilesChanged', params]));
   testServerConnection.onStdio(params => events.push(['stdio', params]));
+  testServerConnection.onLoadTraceRequested(params => events.push(['loadTraceRequested', params]));
+  testServerConnection.onReport(params => events.push(['report', params]));
 
   const tests = await testServerConnection.listTests({});
   expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
