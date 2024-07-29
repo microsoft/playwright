@@ -201,7 +201,7 @@ class SocksProxyConnection {
               'HTTP/1.1 503 Internal Server Error',
               'Content-Type: text/html; charset=utf-8',
               'Content-Length: ' + Buffer.byteLength(responseBody),
-              '\r\n',
+              '',
               responseBody,
             ].join('\r\n'));
             closeBothSockets();
