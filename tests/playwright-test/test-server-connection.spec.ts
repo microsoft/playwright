@@ -15,7 +15,7 @@
  */
 import { test as baseTest, expect } from './ui-mode-fixtures';
 
-import { TestServerConnection } from '../../packages/playwright/src/isomorphic/testServerConnection';
+import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 
 class TestServerConnectionUnderTest extends TestServerConnection {
   events: [string, any][] = [];

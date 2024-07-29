@@ -321,11 +321,11 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, runningState, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
 
-  // Watch implementation.
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
       return;
     const disposable = testServerConnection.onTestFilesChanged(async params => {
+      // fetch the new list of tests
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
@@ -340,6 +340,10 @@ export const UIModeView: React.FC<{}> = ({
       });
       await commandQueue.current;
 
+      if (params.testFiles.length === 0)
+        return;
+
+      // run affected watched tests
       const testModel = teleSuiteUpdater.asModel();
       const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
 
