@@ -55,7 +55,9 @@ export const Workbench: React.FunctionComponent<{
   inert?: boolean,
   showRouteActionsSetting?: Setting<boolean>,
   openPage?: (url: string, target?: string) => Window | any,
-}> = ({ showRouteActionsSetting, model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage }) => {
+  onOpenExternally?: (location: modelUtil.SourceLocation) => void,
+  revealSource?: boolean,
+}> = ({ showRouteActionsSetting, model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage, onOpenExternally, revealSource }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -63,7 +65,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
-  const [isInspecting, setIsInspecting] = React.useState(false);
+  const [isInspecting, setIsInspectingState] = React.useState(false);
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
@@ -87,6 +89,7 @@ export const Workbench: React.FunctionComponent<{
 
   React.useEffect(() => {
     setSelectedTime(undefined);
+    setRevealedStack(undefined);
   }, [model]);
 
   React.useEffect(() => {
@@ -118,13 +121,24 @@ export const Workbench: React.FunctionComponent<{
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);
     if (tab !== 'inspector')
-      setIsInspecting(false);
+      setIsInspectingState(false);
   }, [setSelectedPropertiesTab]);
+
+  const setIsInspecting = React.useCallback((value: boolean) => {
+    if (!isInspecting && value)
+      selectPropertiesTab('inspector');
+    setIsInspectingState(value);
+  }, [setIsInspectingState, selectPropertiesTab, isInspecting]);
 
   const locatorPicked = React.useCallback((locator: string) => {
     setHighlightedLocator(locator);
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
+
+  React.useEffect(() => {
+    if (revealSource)
+      selectPropertiesTab('source');
+  }, [revealSource, selectPropertiesTab]);
 
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
@@ -174,7 +188,9 @@ export const Workbench: React.FunctionComponent<{
       sources={sources}
       rootDir={rootDir}
       stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
-      fallbackLocation={fallbackLocation} />
+      fallbackLocation={fallbackLocation}
+      onOpenExternally={onOpenExternally}
+    />
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
@@ -302,13 +318,6 @@ export const Workbench: React.FunctionComponent<{
         tabs={tabs}
         selectedTab={selectedPropertiesTab}
         setSelectedTab={selectPropertiesTab}
-        leftToolbar={[
-          <ToolbarButton title='Pick locator' icon='target' toggled={isInspecting} onClick={() => {
-            if (!isInspecting)
-              selectPropertiesTab('inspector');
-            setIsInspecting(!isInspecting);
-          }} />
-        ]}
         rightToolbar={[
           sidebarLocation === 'bottom' ?
             <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
