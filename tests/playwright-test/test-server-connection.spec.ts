@@ -25,7 +25,6 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onTestFilesChanged(params => this.events.push(['testFilesChanged', params]));
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
-    this.onReport(params => this.events.push(['report', params]));
   }
 }
 
@@ -74,12 +73,13 @@ test('file watching', async ({ testServerConnection, writeFiles }, testInfo) => 
   ]);
 });
 
-test('test run events', async ({ testServerConnection, writeFiles }) => {
+test('stdio interception', async ({ testServerConnection, writeFiles }) => {
+  await testServerConnection.initialize({ interceptStdio: true });
   await writeFiles({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('foo', () => {
-        console.log("this goes to stdio");
+        console.log("this goes to stdout");
         console.error("this goes to stderr");
         expect(true).toBe(true);
       });
@@ -88,24 +88,8 @@ test('test run events', async ({ testServerConnection, writeFiles }) => {
 
   const tests = await testServerConnection.runTests({ trace: 'on' });
   expect(tests).toEqual({ status: 'passed' });
-  await expect.poll(() => testServerConnection.events).toHaveLength(16);
+  await expect.poll(() => testServerConnection.events).toHaveLength(8);
 
-  expect(testServerConnection.events).toEqual([
-    ['report', expect.objectContaining({ method: 'onConfigure' })],
-    ['report', expect.objectContaining({ method: 'onProject' })],
-    ['report', expect.objectContaining({ method: 'onBegin' })],
-    ['report', expect.objectContaining({ method: 'onTestBegin' })],
-    ['report', expect.objectContaining({ method: 'onStepBegin' })],
-    ['report', expect.objectContaining({ method: 'onStepEnd' })],
-    ['report', expect.objectContaining({ method: 'onStdIO' })],
-    ['report', expect.objectContaining({ method: 'onStdIO' })],
-    ['report', expect.objectContaining({ method: 'onStepBegin' })],
-    ['report', expect.objectContaining({ method: 'onStepEnd' })],
-    ['report', expect.objectContaining({ method: 'onStepBegin' })],
-    ['report', expect.objectContaining({ method: 'onStepEnd' })],
-    ['report', expect.objectContaining({ method: 'onStepBegin' })],
-    ['report', expect.objectContaining({ method: 'onStepEnd' })],
-    ['report', expect.objectContaining({ method: 'onTestEnd' })],
-    ['report', expect.objectContaining({ method: 'onEnd' })],
-  ]);
+  expect(testServerConnection.events).toContainEqual(['stdio', { type: 'stderr', text: 'this goes to stderr\n' }]);
+  expect(testServerConnection.events).toContainEqual(['stdio', { type: 'stdout', text: 'this goes to stdout\n' }]);
 });
