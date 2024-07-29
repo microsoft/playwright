@@ -24,6 +24,7 @@ const { createHttpsServer, createHttp2Server } = require('../../packages/playwri
 
 type TestOptions = {
   startCCServer(options?: {
+    host?: string;
     http2?: boolean;
     enableHTTP1FallbackWhenUsingHttp2?: boolean;
     useFakeLocalhost?: boolean;
@@ -63,7 +64,7 @@ const test = base.extend<TestOptions>({
         }
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
       });
-      await new Promise<void>(f => server.listen(0, 'localhost', () => f()));
+      await new Promise<void>(f => server.listen(0, options?.host ?? 'localhost', () => f()));
       const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
@@ -248,6 +249,29 @@ test.describe('browser', () => {
     });
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
+  test('should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const baseOptions = {
+      certPath: asset('client-certificates/client/trusted/cert.pem'),
+      keyPath: asset('client-certificates/client/trusted/key.pem'),
+    };
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        ...baseOptions,
+      }, {
+        origin: new URL(serverURL).origin.replace('localhost', '127.0.0.1'),
+        ...baseOptions,
+      }],
+    });
+    for (const url of [serverURL, serverURL.replace('localhost', '127.0.0.1')]) {
+      const response = await page.request.get(url);
+      expect(response.status()).toBe(200);
+      expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
+    }
     await page.close();
   });
 
