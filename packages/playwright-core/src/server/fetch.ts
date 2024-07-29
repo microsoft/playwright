@@ -168,7 +168,10 @@ export abstract class APIRequestContext extends SdkObject {
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
+    // When `clientCertificates` is present, we set the `proxy` property to our own socks proxy
+    // for the browser to use. However, we don't need it here, because we already respect
+    // `clientCertificates` when fetching from Node.js.
+    if (proxy && !defaults.clientCertificates?.length && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
       const proxyOpts = url.parse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
         agent = new SocksProxyAgent({
