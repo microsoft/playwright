@@ -168,7 +168,7 @@ export abstract class APIRequestContext extends SdkObject {
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
+    if (proxy && !defaults.clientCertificates?.length && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
       const proxyOpts = url.parse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
         agent = new SocksProxyAgent({
