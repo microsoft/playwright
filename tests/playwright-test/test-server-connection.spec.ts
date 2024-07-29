@@ -43,11 +43,17 @@ const test = baseTest.extend<{ testServerConnection: TestServerConnectionUnderTe
   }
 });
 
-test('test the server connection', async ({ testServerConnection, writeFiles }, testInfo) => {
+test('test file watching', async ({ testServerConnection, writeFiles }, testInfo) => {
   await writeFiles({
+    'utils.ts': `
+      export const expected = 42;
+      `,
     'a.test.ts': `
       import { test } from '@playwright/test';
-      test('foo', () => {});
+      import { expected } from "./utils";
+      test('foo', () => {
+        expect(123).toBe(expected);
+      });
       `,
   });
 
@@ -57,9 +63,8 @@ test('test the server connection', async ({ testServerConnection, writeFiles }, 
   await testServerConnection.watch({ fileNames: ['a.test.ts'] });
 
   await writeFiles({
-    'a.test.ts': `
-      import { test } from '@playwright/test';
-      test('bar', () => {});
+    'utils.ts': `
+      export const expected = 123;
       `,
   });
 
