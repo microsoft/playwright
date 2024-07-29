@@ -191,3 +191,8 @@ export class Settings {
 }
 
 export const settings = new Settings();
+
+// inspired by https://www.npmjs.com/package/clsx
+export function clsx(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}

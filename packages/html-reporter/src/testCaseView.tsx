@@ -25,6 +25,7 @@ import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { linkifyText } from './renderUtils';
 import { hashStringToInt, msToString } from './utils';
+import { clsx } from '@web/uiUtils';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -90,7 +91,7 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
     <>
       {labels.map(label => (
         <a key={label} style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=${label}`} >
-          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(label))}>
+          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={clsx('label', 'label-color-' + hashStringToInt(label))}>
             {label.slice(1)}
           </span>
         </a>

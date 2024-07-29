@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { useMeasure, useSetting } from '../uiUtils';
+import { clsx, useMeasure, useSetting } from '../uiUtils';
 import './splitView.css';
 import * as React from 'react';
 
@@ -75,7 +75,7 @@ export const SplitView: React.FC<React.PropsWithChildren<SplitViewProps>> = ({
       resizerStyle = { right: resizing ? 0 : size - 4, left: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
   }
 
-  return <div className={'split-view ' + orientation + (sidebarIsFirst ? ' sidebar-first' : '') } ref={ref}>
+  return <div className={clsx('split-view', orientation, sidebarIsFirst && 'sidebar-first') } ref={ref}>
     <div className='split-view-main'>{childrenArray[0]}</div>
     { !sidebarHidden && <div style={{ flexBasis: size }} className='split-view-sidebar'>{childrenArray[1]}</div> }
     { !sidebarHidden && <div
