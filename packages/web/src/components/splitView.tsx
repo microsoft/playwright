@@ -38,8 +38,8 @@ export const SplitView: React.FC<React.PropsWithChildren<SplitViewProps>> = ({
   settingName,
   children
 }) => {
-  const [hSize, setHSize] = useSetting<number>(settingName ? settingName + '.' + orientation + ':size' : undefined, Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio);
-  const [vSize, setVSize] = useSetting<number>(settingName ? settingName + '.' + orientation + ':size' : undefined, Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio);
+  const [hSize, setHSize] = useSetting<number>((settingName ?? 'dont-persist') + '.' + orientation + ':size', Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio, undefined, !settingName);
+  const [vSize, setVSize] = useSetting<number>((settingName ?? 'dont-persist') + '.' + orientation + ':size', Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio, undefined, !settingName);
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
