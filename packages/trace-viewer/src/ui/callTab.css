@@ -55,16 +55,16 @@
   overflow: hidden;
   line-height: 18px;
   white-space: nowrap;
+  max-height: 18px;
 }
 
-.call-line .copy-icon {
+.call-line:not(:hover) .toolbar-button.copy {
   display: none;
-  margin-left: 5px;
 }
 
-.call-line:hover .copy-icon {
-  display: block;
-  cursor: pointer;
+.call-line .toolbar-button.copy {
+  margin-left: 5px;
+  transform: scale(0.8);
 }
 
 .call-value {

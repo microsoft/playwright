@@ -26,6 +26,7 @@ export interface ToolbarButtonProps {
   onClick: (e: React.MouseEvent) => void,
   style?: React.CSSProperties,
   testId?: string,
+  className?: string,
 }
 
 export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>> = ({
@@ -37,8 +38,9 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   onClick = () => {},
   style,
   testId,
+  className,
 }) => {
-  let className = `toolbar-button ${icon}`;
+  className = (className || '') + ` toolbar-button ${icon}`;
   if (toggled)
     className += ' toggled';
   return <button
