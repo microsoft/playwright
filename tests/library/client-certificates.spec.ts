@@ -274,7 +274,7 @@ test.describe('browser', () => {
       }],
     });
     await page.goto(browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE);
-    await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
+    await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
     await page.close();
   });
 
