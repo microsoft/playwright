@@ -64,7 +64,7 @@ const test = base.extend<TestOptions>({
         }
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
       });
-      await new Promise<void>(f => server.listen(0, options.host ?? 'localhost', () => f()));
+      await new Promise<void>(f => server.listen(0, options?.host ?? 'localhost', () => f()));
       const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
