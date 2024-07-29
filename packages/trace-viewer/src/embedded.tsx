@@ -17,7 +17,6 @@
 import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
-import React from 'react';
 import * as ReactDOM from 'react-dom';
 import { EmbeddedWorkbenchLoader } from './ui/embeddedWorkbenchLoader';
 
