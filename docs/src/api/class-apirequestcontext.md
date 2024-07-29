@@ -180,6 +180,9 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
+### option: APIRequestContext.delete.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.dispose
 * since: v1.16
 
