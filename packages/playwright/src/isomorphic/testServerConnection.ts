@@ -23,14 +23,12 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   readonly onClose: events.Event<void>;
   readonly onReport: events.Event<any>;
   readonly onStdio: events.Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
-  readonly onListChanged: events.Event<void>;
   readonly onTestFilesChanged: events.Event<{ testFiles: string[] }>;
   readonly onLoadTraceRequested: events.Event<{ traceUrl: string }>;
 
   private _onCloseEmitter = new events.EventEmitter<void>();
   private _onReportEmitter = new events.EventEmitter<any>();
   private _onStdioEmitter = new events.EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
-  private _onListChangedEmitter = new events.EventEmitter<void>();
   private _onTestFilesChangedEmitter = new events.EventEmitter<{ testFiles: string[] }>();
   private _onLoadTraceRequestedEmitter = new events.EventEmitter<{ traceUrl: string }>();
 
@@ -44,7 +42,6 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     this.onClose = this._onCloseEmitter.event;
     this.onReport = this._onReportEmitter.event;
     this.onStdio = this._onStdioEmitter.event;
-    this.onListChanged = this._onListChangedEmitter.event;
     this.onTestFilesChanged = this._onTestFilesChangedEmitter.event;
     this.onLoadTraceRequested = this._onLoadTraceRequestedEmitter.event;
 
@@ -103,8 +100,6 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._onReportEmitter.fire(params);
     else if (method === 'stdio')
       this._onStdioEmitter.fire(params);
-    else if (method === 'listChanged')
-      this._onListChangedEmitter.fire(params);
     else if (method === 'testFilesChanged')
       this._onTestFilesChangedEmitter.fire(params);
     else if (method === 'loadTraceRequested')

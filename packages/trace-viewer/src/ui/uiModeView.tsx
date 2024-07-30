@@ -94,6 +94,7 @@ export const UIModeView: React.FC<{}> = ({
   const [isDisconnected, setIsDisconnected] = React.useState(false);
   const [hasBrowsers, setHasBrowsers] = React.useState(true);
   const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
+  const [teleSuiteUpdater, setTeleSuiteUpdater] = React.useState<TeleSuiteUpdater>();
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
@@ -191,20 +192,7 @@ export const UIModeView: React.FC<{}> = ({
       pathSeparator,
     });
 
-    const updateList = async () => {
-      commandQueue.current = commandQueue.current.then(async () => {
-        setIsLoading(true);
-        try {
-          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
-          teleSuiteUpdater.processListReport(result.report);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.log(e);
-        } finally {
-          setIsLoading(false);
-        }
-      });
-    };
+    setTeleSuiteUpdater(teleSuiteUpdater);
 
     setTestModel(undefined);
     setIsLoading(true);
@@ -223,7 +211,6 @@ export const UIModeView: React.FC<{}> = ({
         const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
         teleSuiteUpdater.processListReport(result.report);
 
-        testServerConnection.onListChanged(updateList);
         testServerConnection.onReport(params => {
           teleSuiteUpdater.processTestReportEvent(params);
         });
@@ -336,11 +323,32 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, runningState, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
 
-  // Watch implementation.
   React.useEffect(() => {
-    if (!testServerConnection)
+    if (!testServerConnection || !teleSuiteUpdater)
       return;
-    const disposable = testServerConnection.onTestFilesChanged(params => {
+    const disposable = testServerConnection.onTestFilesChanged(async params => {
+      // fetch the new list of tests
+      commandQueue.current = commandQueue.current.then(async () => {
+        setIsLoading(true);
+        try {
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+          teleSuiteUpdater.processListReport(result.report);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(e);
+        } finally {
+          setIsLoading(false);
+        }
+      });
+      await commandQueue.current;
+
+      if (params.testFiles.length === 0)
+        return;
+
+      // run affected watched tests
+      const testModel = teleSuiteUpdater.asModel();
+      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
+
       const testIds: string[] = [];
       const set = new Set(params.testFiles);
       if (watchAll) {
@@ -363,7 +371,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', new Set(testIds));
     });
     return () => disposable.dispose();
-  }, [runTests, testServerConnection, testTree, watchAll, watchedTreeIds]);
+  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters]);
 
   // Shortcuts.
   React.useEffect(() => {

@@ -125,6 +125,10 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   );
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
+  return startPlaywrightChildProcess(childProcess, baseDir, args, env, options);
+}
+
+function startPlaywrightChildProcess(childProcess: CommonFixtures['childProcess'], baseDir: string, args: string[], env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   return childProcess({
     command: ['node', cliEntrypoint, ...args],
     env: cleanEnv(env),
@@ -246,6 +250,7 @@ type Fixtures = {
   deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runCLICommand: (files: Files, command: string, args?: string[], entryPoint?: string) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
+  startCLICommand: (files: Files, command: string, args?: string[], options?: RunOptions) => Promise<TestChildProcess>;
   runWatchTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   interactWithTestRunner: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
@@ -283,6 +288,15 @@ export const test = base
         await use(async (files: Files, command: string, args?: string[], entryPoint?: string) => {
           const baseDir = await writeFiles(testInfo, files, true);
           return await runPlaywrightCLI(childProcess, [command, ...(args || [])], baseDir, { PWTEST_CACHE_DIR: cacheDir }, entryPoint);
+        });
+        await removeFolders([cacheDir]);
+      },
+
+      startCLICommand: async ({ childProcess }, use, testInfo: TestInfo) => {
+        const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+        await use(async (files: Files, command: string, args?: string[], options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files, true);
+          return startPlaywrightChildProcess(childProcess, baseDir, [command, ...(args || [])], { PWTEST_CACHE_DIR: cacheDir }, options);
         });
         await removeFolders([cacheDir]);
       },
