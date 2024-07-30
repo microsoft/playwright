@@ -96,7 +96,12 @@ export const SourceTab: React.FunctionComponent<{
 
   const showStackFrames = (stack?.length ?? 0) > 1;
 
-  return <SplitView sidebarSize={200} orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'} sidebarHidden={!showStackFrames}>
+  return <SplitView
+    sidebarSize={200}
+    orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'}
+    sidebarHidden={!showStackFrames}
+    sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
+  >
     <div className='vbox' data-testid='source-code'>
       { fileName && <Toolbar>
         <span className='source-tab-file-name'>{fileName}</span>
@@ -105,7 +110,6 @@ export const SourceTab: React.FunctionComponent<{
       </Toolbar> }
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
     </div>
-    <StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
   </SplitView>;
 };
 
