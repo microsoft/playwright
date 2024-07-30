@@ -163,7 +163,7 @@ export function useSetting<S>(name: string, defaultValue: S, title?: string, don
 export class Settings {
   onChangeEmitter = new EventTarget();
 
-  sessionSettings: Record<string, any> = {};
+  sessionSettings = new Map<string, any>();
 
   getString(name: string, defaultValue: string): string {
     return localStorage[name] || defaultValue;
@@ -178,7 +178,7 @@ export class Settings {
 
   getObject<T>(name: string, defaultValue: T): T {
     if (!localStorage[name])
-      return this.sessionSettings[name] ?? defaultValue;
+      return this.sessionSettings.has(name) ? this.sessionSettings.get(name) : defaultValue;
     try {
       return JSON.parse(localStorage[name]);
     } catch {
@@ -188,7 +188,7 @@ export class Settings {
 
   setObject<T>(name: string, value: T, dontPersist = false) {
     if (dontPersist) {
-      this.sessionSettings[name] = value;
+      this.sessionSettings.set(name, value);
       this.onChangeEmitter.dispatchEvent(new Event(name));
       return;
     }
