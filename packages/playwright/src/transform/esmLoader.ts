@@ -27,7 +27,7 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
-    if (resolved !== undefined)
+    if (resolved !== undefined && fs.statSync(resolved).isFile())
       specifier = url.pathToFileURL(resolved).toString();
   }
   const result = await defaultResolve(specifier, context, defaultResolve);
