@@ -19571,6 +19571,12 @@ export interface Route {
     maxRedirects?: number;
 
     /**
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
+
+    /**
      * If set changes the request method (e.g. GET or POST).
      */
     method?: string;
