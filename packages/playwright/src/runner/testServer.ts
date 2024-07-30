@@ -296,12 +296,12 @@ class TestServerDispatcher implements TestServerInterface {
     }
 
     if (this._watchTestDirs)
-      this.updateWatcher(false);
+      await this.updateWatcher(false);
     return { report, status };
   }
 
-  private updateWatcher(reportPending: boolean) {
-    this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
+  private async updateWatcher(reportPending: boolean) {
+    await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
@@ -376,7 +376,7 @@ class TestServerDispatcher implements TestServerInterface {
       this._watchedTestDependencies.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
     }
-    this.updateWatcher(true);
+    await this.updateWatcher(true);
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {

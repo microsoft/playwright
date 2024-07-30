@@ -31,7 +31,7 @@ export class Watcher {
     this._onChange = onChange;
   }
 
-  update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean) {
+  async update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean) {
     if (JSON.stringify([this._watchedPaths, this._ignoredFolders]) === JSON.stringify(watchedPaths, ignoredFolders))
       return;
 
@@ -56,6 +56,8 @@ export class Watcher {
       this._collector.push({ event, file });
       this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
     });
+
+    await new Promise((resolve, reject) => this._fsWatcher!.once("ready", resolve).once("error", reject));
   }
 
   async close() {

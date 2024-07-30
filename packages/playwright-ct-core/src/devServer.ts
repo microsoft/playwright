@@ -80,6 +80,6 @@ export async function runDevServer(config: FullConfigInternal): Promise<() => Pr
     if (rootModule)
       devServer.moduleGraph.onFileChange(rootModule.file!);
   });
-  globalWatcher.update([...projectDirs], [...projectOutputs], false);
+  await globalWatcher.update([...projectDirs], [...projectOutputs], false);
   return () => Promise.all([devServer.close(), globalWatcher.close()]).then(() => {});
 }
