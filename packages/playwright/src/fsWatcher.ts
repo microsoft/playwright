@@ -57,7 +57,7 @@ export class Watcher {
       this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
     });
 
-    await new Promise((resolve, reject) => this._fsWatcher!.once("ready", resolve).once("error", reject));
+    await new Promise((resolve, reject) => this._fsWatcher!.once('ready', resolve).once('error', reject));
   }
 
   async close() {
