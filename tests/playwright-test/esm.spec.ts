@@ -15,6 +15,7 @@
  */
 
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import * as fs from 'fs/promises';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -774,4 +775,45 @@ test('should exit after merge-reports', async ({ runInlineTest, mergeReports }) 
   expect(result.exitCode).toBe(0);
   const { exitCode } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['-c', 'merge.config.ts'] });
   expect(exitCode).toBe(0);
+});
+
+test('should not trip over directory imports resolved to paths', async ({ runInlineTest, writeFiles }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
+
+  await writeFiles({
+    '@acme/lib/package.json': JSON.stringify({
+      'name': '@acme/lib',
+      'type': 'module',
+      'exports': {
+        '.': './lib.js',
+      },
+    }),
+    '@acme/lib/lib.js': `
+      export const greet = () => console.log('hello playwright');
+    `,
+    'tests/hello.test.ts': `
+      import { greet } from '@acme/lib';
+      import { test } from '@playwright/test';
+      test('hello', async ({}) => {
+        greet();
+      });
+    `,
+    'tests/tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        'paths': {
+          '@acme/*': ['../@acme/*'],
+        }
+      }
+    })
+  });
+
+  await fs.mkdir(testInfo.outputPath('node_modules', '@acme'), { recursive: true });
+  await fs.symlink('../../@acme/lib', testInfo.outputPath('node_modules', '@acme', 'lib'));
+
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
