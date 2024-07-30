@@ -141,7 +141,7 @@ export function copy(text: string) {
 
 export type Setting<T> = readonly [T, (value: T) => void, string];
 
-export function useSetting<S>(name: string, defaultValue: S, title?: string, dontPersist?: boolean): [S, (v: S) => void, Setting<S>] {
+export function useSetting<S>(name: string, defaultValue: S, title?: string): [S, (v: S) => void, Setting<S>] {
   const subscribe = React.useCallback((onStoreChange: () => void) => {
     settings.onChangeEmitter.addEventListener(name, onStoreChange);
     return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
@@ -150,8 +150,8 @@ export function useSetting<S>(name: string, defaultValue: S, title?: string, don
   const value = React.useSyncExternalStore(subscribe, () => settings.getObject(name, defaultValue));
 
   const setValueWrapper = React.useCallback((value: S) => {
-    settings.setObject(name, value, dontPersist);
-  }, [name, dontPersist]);
+    settings.setObject(name, value);
+  }, [name]);
 
   const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
   return [value, setValueWrapper, setting];
@@ -159,8 +159,6 @@ export function useSetting<S>(name: string, defaultValue: S, title?: string, don
 
 export class Settings {
   onChangeEmitter = new EventTarget();
-
-  sessionSettings = new Map<string, any>();
 
   getString(name: string, defaultValue: string): string {
     return localStorage[name] || defaultValue;
@@ -175,7 +173,7 @@ export class Settings {
 
   getObject<T>(name: string, defaultValue: T): T {
     if (!localStorage[name])
-      return this.sessionSettings.has(name) ? this.sessionSettings.get(name) : defaultValue;
+      return defaultValue;
     try {
       return JSON.parse(localStorage[name]);
     } catch {
@@ -183,18 +181,9 @@ export class Settings {
     }
   }
 
-  setObject<T>(name: string, value: T, dontPersist = false) {
-    if (dontPersist) {
-      this.sessionSettings.set(name, value);
-      this.onChangeEmitter.dispatchEvent(new Event(name));
-      return;
-    }
-
+  setObject<T>(name: string, value: T) {
     localStorage[name] = JSON.stringify(value);
     this.onChangeEmitter.dispatchEvent(new Event(name));
-
-    if (dontPersist)
-      return;
 
     if ((window as any).saveSettings)
       (window as any).saveSettings();
