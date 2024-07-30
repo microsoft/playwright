@@ -36,7 +36,7 @@ import { AttachmentsTab } from './attachmentsTab';
 import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting, msToString, type Setting } from '@web/uiUtils';
+import { useSetting, msToString } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
@@ -53,11 +53,11 @@ export const Workbench: React.FunctionComponent<{
   isLive?: boolean,
   status?: UITestStatus,
   inert?: boolean,
-  showRouteActionsSetting?: Setting<boolean>,
   openPage?: (url: string, target?: string) => Window | any,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ showRouteActionsSetting, model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage, onOpenExternally, revealSource }) => {
+  showSettings?: boolean,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -70,11 +70,7 @@ export const Workbench: React.FunctionComponent<{
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [, , showRouteActionsSettingInternal] = useSetting(showRouteActionsSetting ? undefined : 'show-route-actions', true, 'Show route actions');
-
-  const showSettings = !showRouteActionsSetting;
-  showRouteActionsSetting ||= showRouteActionsSettingInternal;
-  const showRouteActions = showRouteActionsSetting[0];
+  const [showRouteActions, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
 
   const filteredActions = React.useMemo(() => {
     return (model?.actions || []).filter(action => showRouteActions || action.class !== 'Route');

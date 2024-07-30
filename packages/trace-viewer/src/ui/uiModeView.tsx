@@ -446,7 +446,6 @@ export const UIModeView: React.FC<{}> = ({
         </div>
         <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
           <TraceView
-            showRouteActionsSetting={showRouteActionsSetting}
             item={selectedItem}
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}

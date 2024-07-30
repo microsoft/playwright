@@ -25,15 +25,13 @@ import type { ContextEntry } from '../entries';
 import type { SourceLocation } from './modelUtil';
 import { idForAction, MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
-import { type Setting } from '@web/uiUtils';
 
 export const TraceView: React.FC<{
-  showRouteActionsSetting: Setting<boolean>,
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
   rootDir?: string,
   onOpenExternally?: (location: SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ showRouteActionsSetting, item, rootDir, onOpenExternally, revealSource }) => {
+}> = ({ item, rootDir, onOpenExternally, revealSource }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -91,7 +89,6 @@ export const TraceView: React.FC<{
 
   return <Workbench
     key='workbench'
-    showRouteActionsSetting={showRouteActionsSetting}
     model={model?.model}
     showSourcesFirst={true}
     rootDir={rootDir}

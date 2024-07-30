@@ -141,26 +141,32 @@ export function copy(text: string) {
 
 export type Setting<T> = readonly [T, (value: T) => void, string];
 
-export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
-  if (name)
-    defaultValue = settings.getObject(name, defaultValue);
-  const [value, setValue] = React.useState<S>(defaultValue);
-  const setValueWrapper = React.useCallback((value: React.SetStateAction<S>) => {
-    if (name)
-      settings.setObject(name, value);
-    setValue(value);
-  }, [name, setValue]);
+export function useSetting<S>(name: string, defaultValue: S, title?: string): [S, (v: S) => void, Setting<S>] {
+  const subscribe = React.useCallback((onStoreChange: () => void) => {
+    settings.onChangeEmitter.addEventListener(name, onStoreChange);
+    return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
+  }, [name]);
+
+  const value = React.useSyncExternalStore(subscribe, () => settings.getObject(name, defaultValue));
+
+  const setValueWrapper = React.useCallback((value: S) => {
+    settings.setObject(name, value);
+  }, [name]);
+
   const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
   return [value, setValueWrapper, setting];
 }
 
 export class Settings {
+  onChangeEmitter = new EventTarget();
+
   getString(name: string, defaultValue: string): string {
     return localStorage[name] || defaultValue;
   }
 
   setString(name: string, value: string) {
     localStorage[name] = value;
+    this.onChangeEmitter.dispatchEvent(new Event(name));
     if ((window as any).saveSettings)
       (window as any).saveSettings();
   }
@@ -177,6 +183,8 @@ export class Settings {
 
   setObject<T>(name: string, value: T) {
     localStorage[name] = JSON.stringify(value);
+    this.onChangeEmitter.dispatchEvent(new Event(name));
+
     if ((window as any).saveSettings)
       (window as any).saveSettings();
   }
