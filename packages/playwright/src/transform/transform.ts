@@ -82,14 +82,14 @@ function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
-export function resolveHook(filename: string, specifier: string): string | undefined {
+export function resolveHook(filename: string, specifier: string, dontResolveDirectories = false): string | undefined {
   if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
   if (!shouldTransform(filename))
     return;
 
   if (isRelativeSpecifier(specifier))
-    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
+    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier), dontResolveDirectories);
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
@@ -132,7 +132,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.pathsBase!, candidate);
-        const existing = resolveImportSpecifierExtension(candidate);
+        const existing = resolveImportSpecifierExtension(candidate, dontResolveDirectories);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
           pathMatchedByLongestPrefix = existing;
@@ -146,7 +146,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`
     // Do not handle module imports like `import 'fs'`
-    return resolveImportSpecifierExtension(specifier);
+    return resolveImportSpecifierExtension(specifier, dontResolveDirectories);
   }
 }
 

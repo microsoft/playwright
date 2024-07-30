@@ -304,7 +304,7 @@ const kExtLookups = new Map([
   ['.mjs', ['.mts']],
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
-export function resolveImportSpecifierExtension(resolved: string): string | undefined {
+export function resolveImportSpecifierExtension(resolved: string, dontResolveDirectories: boolean): string | undefined {
   if (fileExists(resolved))
     return resolved;
 
@@ -320,13 +320,16 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
   }
 
   if (dirExists(resolved)) {
+    if (dontResolveDirectories)
+      return;
+
     // If we import a package, let Node.js figure out the correct import based on package.json.
     if (fileExists(path.join(resolved, 'package.json')))
       return resolved;
 
     // Otherwise, try to find a corresponding index file.
     const dirImport = path.join(resolved, 'index');
-    return resolveImportSpecifierExtension(dirImport);
+    return resolveImportSpecifierExtension(dirImport, dontResolveDirectories);
   }
 }
 
