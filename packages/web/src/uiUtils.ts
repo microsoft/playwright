@@ -142,15 +142,12 @@ export function copy(text: string) {
 export type Setting<T> = readonly [T, (value: T) => void, string];
 
 export function useSetting<S>(name: string, defaultValue: S, title?: string, dontPersist?: boolean): [S, (v: S) => void, Setting<S>] {
-  const value = React.useSyncExternalStore(
-      function subscribe(callback) {
-        settings.onChangeEmitter.addEventListener(name, callback);
-        return () => settings.onChangeEmitter.removeEventListener(name, callback);
-      },
-      () => {
-        return settings.getObject(name, defaultValue);
-      }
-  );
+  const subscribe = React.useCallback((onStoreChange: () => void) => {
+    settings.onChangeEmitter.addEventListener(name, onStoreChange);
+    return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
+  }, [name]);
+
+  const value = React.useSyncExternalStore(subscribe, () => settings.getObject(name, defaultValue));
 
   const setValueWrapper = React.useCallback((value: S) => {
     settings.setObject(name, value, dontPersist);
