@@ -29,7 +29,9 @@ class TestServerConnectionUnderTest extends TestServerConnection {
 }
 
 const test = baseTest.extend<{ testServerConnection: TestServerConnectionUnderTest }>({
-  testServerConnection: async ({ startCLICommand }, use) => {
+  testServerConnection: async ({ startCLICommand }, use, testInfo) => {
+    testInfo.skip(process.version.startsWith('18'), 'WebSocket not available in Node 18');
+
     const testServerProcess = await startCLICommand({}, 'test-server');
 
     await testServerProcess.waitForOutput('Listening on');
