@@ -148,7 +148,7 @@ class SocksProxyConnection {
           port: this.port,
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
-          ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}`),
+          ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin),
         };
         if (!net.isIP(this.host))
           tlsOptions.servername = this.host;
