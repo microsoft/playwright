@@ -79,3 +79,11 @@ test('should be able to close context when page crashes', async ({ isAndroid, is
   await page.waitForEvent('crash');
   await page.context().close();
 });
+
+test('should not hang when page crashed', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31907' });
+
+  const expectPromise = expect(page.getByText('child')).toBeVisible();
+  await page.goto('chrome://crash').catch(e => {});
+  await expectPromise;
+});
