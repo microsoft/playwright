@@ -26,7 +26,7 @@ import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
-import logo from '../../recorder/public/playwright-logo.svg';
+import logo from '@web/assets/playwright-logo.svg';
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
 link.href = logo;
