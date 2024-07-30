@@ -96,6 +96,8 @@ export const UIModeView: React.FC<{}> = ({
   const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
+  const [revealSource, setRevealSource] = React.useState(false);
+  const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const [runWorkers, setRunWorkers] = React.useState(queryParams.workers);
   const singleWorkerSetting = React.useMemo(() => {
@@ -435,7 +437,13 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          <TraceView showRouteActionsSetting={showRouteActionsSetting} item={selectedItem} rootDir={testModel?.config?.rootDir} />
+          <TraceView
+            showRouteActionsSetting={showRouteActionsSetting}
+            item={selectedItem}
+            rootDir={testModel?.config?.rootDir}
+            revealSource={revealSource}
+            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+          />
         </div>
       </div>
       <div className='vbox ui-mode-sidebar'>
@@ -487,6 +495,7 @@ export const UIModeView: React.FC<{}> = ({
           isLoading={isLoading}
           requestedCollapseAllCount={collapseAllCount}
           setFilterText={setFilterText}
+          onRevealSource={onRevealSource}
         />
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
           <span

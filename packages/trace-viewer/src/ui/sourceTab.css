@@ -23,21 +23,9 @@
 }
 
 .source-tab-file-name {
-  height: 24px;
-  margin-left: 8px;
+  padding-left: 8px;
+  height: 100%;
   display: flex;
   align-items: center;
-  background-color: var(--vscode-breadcrumb-background);
-  box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
-  z-index: 10;
-}
-
-.source-tab-file-name .copy-icon.codicon {
-  display: block;
-  cursor: pointer;
-}
-
-.source-copy-to-clipboard {
-  display: block;
-  padding-left: 4px;
+  flex: 1 1 auto;
 }

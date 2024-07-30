@@ -29,7 +29,8 @@ const eventsSymbol = Symbol('events');
 export type SourceLocation = {
   file: string;
   line: number;
-  source: SourceModel;
+  column: number;
+  source?: SourceModel;
 };
 
 export type SourceModel = {
