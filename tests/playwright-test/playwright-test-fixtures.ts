@@ -125,7 +125,7 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   );
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
-  return startPlaywrightTest(childProcess, baseDir, args, env, options);
+  return startPlaywrightChildProcess(childProcess, baseDir, args, env, options);
 }
 
 function startPlaywrightChildProcess(childProcess: CommonFixtures['childProcess'], baseDir: string, args: string[], env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
