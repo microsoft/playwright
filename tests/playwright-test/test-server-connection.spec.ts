@@ -61,7 +61,7 @@ test('file watching', async ({ testServerConnection, writeFiles }, testInfo) => 
   const tests = await testServerConnection.listTests({});
   expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
 
-  await testServerConnection.watch({ fileNames: ['a.test.ts'] });
+  await testServerConnection.watch({ fileNames: [testInfo.outputPath('a.test.ts')] });
 
   await writeFiles({
     'utils.ts': `
