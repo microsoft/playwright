@@ -26,6 +26,12 @@ import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
+import logo from '@web/assets/playwright-logo.svg';
+const link = document.createElement('link');
+link.rel = 'shortcut icon';
+link.href = logo;
+document.head.appendChild(link);
+
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
   React.useEffect(() => {
