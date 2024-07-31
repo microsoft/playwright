@@ -85,5 +85,5 @@ test('should not hang when page crashed', async ({ page }) => {
 
   const expectPromise = expect(page.getByText('child')).toBeVisible();
   await page.goto('chrome://crash').catch(e => {});
-  await expectPromise;
+  await expect(expectPromise).rejects.toThrowError();
 });
