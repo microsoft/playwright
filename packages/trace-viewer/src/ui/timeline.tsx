@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { msToString, useMeasure } from '@web/uiUtils';
+import { clsx, msToString, useMeasure } from '@web/uiUtils';
 import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
@@ -252,11 +252,12 @@ export const Timeline: React.FunctionComponent<{
       <div className='timeline-bars'>{
         bars.map((bar, index) => {
           return <div key={index}
-            className={'timeline-bar' + (bar.action ? ' action' : '')
-                                      + (bar.resource ? ' network' : '')
-                                      + (bar.consoleMessage ? ' console-message' : '')
-                                      + (bar.active ? ' active' : '')
-                                      + (bar.error ? ' error' : '')}
+            className={clsx('timeline-bar',
+                bar.action && 'action',
+                bar.resource && 'network',
+                bar.consoleMessage && 'console-message',
+                bar.active && 'active',
+                bar.error && 'error')}
             style={{
               left: bar.leftPosition,
               width: Math.max(5, bar.rightPosition - bar.leftPosition),

@@ -59,8 +59,9 @@ const checkerboardStyle: React.CSSProperties = {
 };
 
 export const ImageDiffView: React.FC<{
- diff: ImageDiff,
-}> = ({ diff }) => {
+  diff: ImageDiff,
+  noTargetBlank?: boolean,
+}> = ({ diff, noTargetBlank }) => {
   const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs'>(diff.diff ? 'diff' : 'actual');
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
 
@@ -117,10 +118,10 @@ export const ImageDiffView: React.FC<{
           <ImageWithSize image={actualImage} title='Actual' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
       </div>
-      <div style={{ alignSelf: 'start', lineHeight: '18px' }}>
+      <div style={{ alignSelf: 'start', lineHeight: '18px', marginLeft: '15px' }}>
         <div>{diff.diff && <a target='_blank' href={diff.diff.attachment.path}>{diff.diff.attachment.name}</a>}</div>
-        <div><a target='_blank' href={diff.actual!.attachment.path}>{diff.actual!.attachment.name}</a></div>
-        <div><a target='_blank' href={diff.expected!.attachment.path}>{diff.expected!.attachment.name}</a></div>
+        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.actual!.attachment.path}>{diff.actual!.attachment.name}</a></div>
+        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.expected!.attachment.path}>{diff.expected!.attachment.name}</a></div>
       </div>
     </>}
   </div>;

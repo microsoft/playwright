@@ -49,9 +49,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     }
   }, [expanded, attachmentText, placeholder, attachment]);
 
-  const title = <>
+  const title = <span style={{ marginLeft: 5 }}>
     {attachment.name} <a style={{ marginLeft: 5 }} href={attachmentURL(attachment) + '&download'}>download</a>
-  </>;
+  </span>;
 
   if (!isTextAttachment)
     return <div style={{ marginLeft: 20 }}>{title}</div>;
@@ -93,8 +93,8 @@ export const AttachmentsTab: React.FunctionComponent<{
         const entry = diffMap.get(name) || { expected: undefined, actual: undefined, diff: undefined };
         entry[type] = attachment;
         diffMap.set(name, entry);
-      }
-      if (attachment.contentType.startsWith('image/')) {
+        attachments.delete(attachment);
+      } else if (attachment.contentType.startsWith('image/')) {
         screenshots.add(attachment);
         attachments.delete(attachment);
       }
@@ -109,11 +109,11 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...diffMap.values()].map(({ expected, actual, diff }) => {
       return <>
         {expected && actual && <div className='attachments-section'>Image diff</div>}
-        {expected && actual && <ImageDiffView diff={{
+        {expected && actual && <ImageDiffView noTargetBlank={true} diff={{
           name: 'Image diff',
-          expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
-          actual: { attachment: { ...actual, path: attachmentURL(actual) } },
-          diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
+          expected: { attachment: { ...expected, path: attachmentURL(expected) + '&download' }, title: 'Expected' },
+          actual: { attachment: { ...actual, path: attachmentURL(actual) + '&download' } },
+          diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) + '&download' } } : undefined,
         }} />}
       </>;
     })}

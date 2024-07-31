@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import React from 'react';
 import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
