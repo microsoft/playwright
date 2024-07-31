@@ -778,6 +778,7 @@ test('should exit after merge-reports', async ({ runInlineTest, mergeReports }) 
 });
 
 test('should not trip over directory imports resolved to paths', async ({ runInlineTest, writeFiles }, testInfo) => {
+  test.skip(process.platform === 'win32', 'Symlinks are not supported on Windows');
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
 
   await writeFiles({
