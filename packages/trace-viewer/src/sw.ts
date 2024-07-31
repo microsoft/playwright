@@ -130,13 +130,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath.startsWith('/sha1/')) {
-      const download = url.searchParams.has('download');
       // Sha1 for sources is based on the file path, can't load it of a random model.
       const sha1 = relativePath.slice('/sha1/'.length);
       for (const trace of loadedTraces.values()) {
         const blob = await trace.traceModel.resourceForSha1(sha1);
         if (blob)
-          return new Response(blob, { status: 200, headers: download ? downloadHeadersForAttachment(trace.traceModel, sha1) : undefined });
+          return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
       }
       return new Response(null, { status: 404 });
     }
@@ -157,14 +156,15 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   return snapshotServer.serveResource(lookupUrls, request.method, snapshotUrl);
 }
 
-function downloadHeadersForAttachment(traceModel: TraceModel, sha1: string): Headers | undefined {
-  const attachment = traceModel.attachmentForSha1(sha1);
-  if (!attachment)
+function downloadHeaders(searchParams: URLSearchParams): Headers | undefined {
+  const name = searchParams.get('dn');
+  const contentType = searchParams.get('dct');
+  if (!name)
     return;
   const headers = new Headers();
-  headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(attachment.name)}`);
-  if (attachment.contentType)
-    headers.set('Content-Type', attachment.contentType);
+  headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(name)}`);
+  if (contentType)
+    headers.set('Content-Type', contentType);
   return headers;
 }
 

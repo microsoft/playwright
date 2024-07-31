@@ -34,17 +34,15 @@ const latestVersion: trace.VERSION = 7;
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
   private _snapshotStorage: SnapshotStorage;
-  private _attachments: Map<string, trace.AfterActionTraceEventAttachment>;
   private _actionMap = new Map<string, ActionEntry>();
   private _version: number | undefined;
   private _pageEntries = new Map<string, PageEntry>();
   private _jsHandles = new Map<string, { preview: string }>();
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
 
-  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage, attachments: Map<string, trace.AfterActionTraceEventAttachment>) {
+  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
     this._snapshotStorage = snapshotStorage;
-    this._attachments = attachments;
   }
 
   appendTrace(trace: string) {
@@ -129,8 +127,6 @@ export class TraceModernizer {
         existing!.attachments = event.attachments;
         if (event.point)
           existing!.point = event.point;
-        for (const attachment of event.attachments?.filter(a => a.sha1) || [])
-          this._attachments.set(attachment.sha1!, attachment);
         break;
       }
       case 'action': {
