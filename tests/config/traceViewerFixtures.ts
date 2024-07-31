@@ -58,7 +58,7 @@ class TraceViewerPage {
     this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
     this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
-    this.metadataTab = page.locator('.metadata-view');
+    this.metadataTab = page.getByTestId('metadata-view');
   }
 
   async actionIconsText(action: string) {
