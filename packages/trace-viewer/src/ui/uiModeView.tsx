@@ -458,84 +458,83 @@ export const UIModeView: React.FC<{}> = ({
           />
         </div>
       </div>}
-      sidebar={
-        <div className='vbox ui-mode-sidebar'>
-          <Toolbar noShadow={true} noMinHeight={true}>
-            <img src='playwright-logo.svg' alt='Playwright logo' />
-            <div className='section-title'>Playwright</div>
-            <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-            <ToolbarButton icon='terminal' title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
-            {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
-          </Toolbar>
-          <FiltersView
-            filterText={filterText}
-            setFilterText={setFilterText}
-            statusFilters={statusFilters}
-            setStatusFilters={setStatusFilters}
-            projectFilters={projectFilters}
-            setProjectFilters={setProjectFilters}
-            testModel={testModel}
-            runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
-          <Toolbar noMinHeight={true}>
-            {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-            {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-              <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
-            </div>}
-            {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-              <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
-            </div>}
-            <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-            <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
-            <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
-              setWatchedTreeIds({ value: new Set() });
-              setWatchAll(!watchAll);
-            }}></ToolbarButton>
-            <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
-              setCollapseAllCount(collapseAllCount + 1);
-            }} />
-          </Toolbar>
-          <TestListView
-            filterText={filterText}
-            testModel={testModel}
-            testTree={testTree}
-            testServerConnection={testServerConnection}
-            runningState={runningState}
-            runTests={runTests}
-            onItemSelected={setSelectedItem}
-            watchAll={watchAll}
-            watchedTreeIds={watchedTreeIds}
-            setWatchedTreeIds={setWatchedTreeIds}
-            isLoading={isLoading}
-            requestedCollapseAllCount={collapseAllCount}
-            setFilterText={setFilterText}
-            onRevealSource={onRevealSource}
+      sidebar={<div className='vbox ui-mode-sidebar'>
+        <Toolbar noShadow={true} noMinHeight={true}>
+          <img src='playwright-logo.svg' alt='Playwright logo' />
+          <div className='section-title'>Playwright</div>
+          <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='terminal' title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
+        </Toolbar>
+        <FiltersView
+          filterText={filterText}
+          setFilterText={setFilterText}
+          statusFilters={statusFilters}
+          setStatusFilters={setStatusFilters}
+          projectFilters={projectFilters}
+          setProjectFilters={setProjectFilters}
+          testModel={testModel}
+          runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
+        <Toolbar noMinHeight={true}>
+          {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
+          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
+          </div>}
+          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
+          </div>}
+          <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
+            setWatchedTreeIds({ value: new Set() });
+            setWatchAll(!watchAll);
+          }}></ToolbarButton>
+          <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
+            setCollapseAllCount(collapseAllCount + 1);
+          }} />
+        </Toolbar>
+        <TestListView
+          filterText={filterText}
+          testModel={testModel}
+          testTree={testTree}
+          testServerConnection={testServerConnection}
+          runningState={runningState}
+          runTests={runTests}
+          onItemSelected={setSelectedItem}
+          watchAll={watchAll}
+          watchedTreeIds={watchedTreeIds}
+          setWatchedTreeIds={setWatchedTreeIds}
+          isLoading={isLoading}
+          requestedCollapseAllCount={collapseAllCount}
+          setFilterText={setFilterText}
+          onRevealSource={onRevealSource}
+        />
+        <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
+          <span
+            className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
+            style={{ marginLeft: 5 }}
+            title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
           />
-          <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
-            <span
-              className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
-              style={{ marginLeft: 5 }}
-              title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
-            />
-            <div className='section-title'>Testing Options</div>
-          </Toolbar>
-          {testingOptionsVisible && <SettingsView settings={[
-            singleWorkerSetting,
-            showBrowserSetting,
-            updateSnapshotsSetting,
-          ]} />}
-          <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
-            <span
-              className={`codicon codicon-${settingsVisible ? 'chevron-down' : 'chevron-right'}`}
-              style={{ marginLeft: 5 }}
-              title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
-            />
-            <div className='section-title'>Settings</div>
-          </Toolbar>
-          {settingsVisible && <SettingsView settings={[
-            darkModeSetting,
-            showRouteActionsSetting,
-          ]} />}
-        </div>
+          <div className='section-title'>Testing Options</div>
+        </Toolbar>
+        {testingOptionsVisible && <SettingsView settings={[
+          singleWorkerSetting,
+          showBrowserSetting,
+          updateSnapshotsSetting,
+        ]} />}
+        <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
+          <span
+            className={`codicon codicon-${settingsVisible ? 'chevron-down' : 'chevron-right'}`}
+            style={{ marginLeft: 5 }}
+            title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
+          />
+          <div className='section-title'>Settings</div>
+        </Toolbar>
+        {settingsVisible && <SettingsView settings={[
+          darkModeSetting,
+          showRouteActionsSetting,
+        ]} />}
+      </div>
       }
     />
   </div>;
