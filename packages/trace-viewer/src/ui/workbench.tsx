@@ -293,9 +293,15 @@ export const Workbench: React.FunctionComponent<{
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
-      <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
-        <SnapshotTab
+    <SplitView
+      sidebarSize={250}
+      orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
+      main={<SplitView
+        sidebarSize={250}
+        orientation='horizontal'
+        sidebarIsFirst
+        settingName='actionListSidebar'
+        main={<SnapshotTab
           action={activeAction}
           sdkLanguage={sdkLanguage}
           testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
@@ -303,14 +309,16 @@ export const Workbench: React.FunctionComponent<{
           setIsInspecting={setIsInspecting}
           highlightedLocator={highlightedLocator}
           setHighlightedLocator={locatorPicked}
-          openPage={openPage} />
-        <TabbedPane
-          tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
-          selectedTab={selectedNavigatorTab}
-          setSelectedTab={setSelectedNavigatorTab}
-        />
-      </SplitView>
-      <TabbedPane
+          openPage={openPage} />}
+        sidebar={
+          <TabbedPane
+            tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
+            selectedTab={selectedNavigatorTab}
+            setSelectedTab={setSelectedNavigatorTab}
+          />
+        }
+      />}
+      sidebar={<TabbedPane
         tabs={tabs}
         selectedTab={selectedPropertiesTab}
         setSelectedTab={selectPropertiesTab}
@@ -324,7 +332,7 @@ export const Workbench: React.FunctionComponent<{
             }} />
         ]}
         mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
-      />
-    </SplitView>
+      />}
+    />
   </div>;
 };

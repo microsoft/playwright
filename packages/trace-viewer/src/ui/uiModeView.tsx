@@ -433,8 +433,13 @@ export const UIModeView: React.FC<{}> = ({
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
     </div>}
-    <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
-      <div className='vbox'>
+    <SplitView
+      sidebarSize={250}
+      minSidebarSize={150}
+      orientation='horizontal'
+      sidebarIsFirst={true}
+      settingName='testListSidebar'
+      main={<div className='vbox'>
         <div className={clsx('vbox', !isShowingOutput && 'hidden')}>
           <Toolbar>
             <div className='section-title' style={{ flex: 'none' }}>Output</div>
@@ -452,8 +457,8 @@ export const UIModeView: React.FC<{}> = ({
             onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
           />
         </div>
-      </div>
-      <div className='vbox ui-mode-sidebar'>
+      </div>}
+      sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
           <div className='section-title'>Playwright</div>
@@ -530,6 +535,7 @@ export const UIModeView: React.FC<{}> = ({
           showRouteActionsSetting,
         ]} />}
       </div>
-    </SplitView>
+      }
+    />
   </div>;
 };
