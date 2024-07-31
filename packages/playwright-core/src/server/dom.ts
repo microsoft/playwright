@@ -23,7 +23,7 @@ import type * as frames from './frames';
 import type { InjectedScript, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import * as js from './javascript';
-import { Page } from './page';
+import type { Page } from './page';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
@@ -56,8 +56,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     super(frame, delegate, world || 'content-script');
     this.frame = frame;
     this.world = world;
-
-    this.frame._page.on(Page.Events.Crash, () => this.contextDestroyed('Page crashed'));
   }
 
   override adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {

@@ -112,10 +112,11 @@ export class FrameManager {
       this.frameAttached(kDummyFrameId, null);
   }
 
-  dispose() {
+  dispose(reason: string) {
     for (const frame of this._frames.values()) {
+      frame.dispose(reason);
       frame._stopNetworkIdleTimer();
-      frame._invalidateNonStallingEvaluations('Target crashed');
+      frame._invalidateNonStallingEvaluations(reason);
     }
   }
 
@@ -1565,10 +1566,14 @@ export class Frame extends SdkObject {
   _onDetached() {
     this._stopNetworkIdleTimer();
     this._detachedScope.close(new Error('Frame was detached'));
+    this.dispose('Frame was detached');
+  }
+
+  dispose(reason: string) {
     for (const data of this._contextData.values()) {
       if (data.context)
-        data.context.contextDestroyed('Frame was detached');
-      data.contextPromise.resolve({ destroyedReason: 'Frame was detached' });
+        data.context.contextDestroyed(reason);
+      data.contextPromise.resolve({ destroyedReason: reason });
     }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);

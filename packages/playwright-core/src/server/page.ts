@@ -276,7 +276,7 @@ export class Page extends SdkObject {
   }
 
   _didClose() {
-    this._frameManager.dispose();
+    this._frameManager.dispose('Page closed');
     this._frameThrottler.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
@@ -287,7 +287,7 @@ export class Page extends SdkObject {
   }
 
   _didCrash() {
-    this._frameManager.dispose();
+    this._frameManager.dispose('Page crashed');
     this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
     this._crashed = true;
