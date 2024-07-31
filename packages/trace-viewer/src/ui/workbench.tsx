@@ -296,6 +296,28 @@ export const Workbench: React.FunctionComponent<{
     <SplitView
       sidebarSize={250}
       orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
+      main={<SplitView
+        sidebarSize={250}
+        orientation='horizontal'
+        sidebarIsFirst
+        settingName='actionListSidebar'
+        main={<SnapshotTab
+          action={activeAction}
+          sdkLanguage={sdkLanguage}
+          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+          isInspecting={isInspecting}
+          setIsInspecting={setIsInspecting}
+          highlightedLocator={highlightedLocator}
+          setHighlightedLocator={locatorPicked}
+          openPage={openPage} />}
+        sidebar={
+          <TabbedPane
+            tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
+            selectedTab={selectedNavigatorTab}
+            setSelectedTab={setSelectedNavigatorTab}
+          />
+        }
+      />}
       sidebar={<TabbedPane
         tabs={tabs}
         selectedTab={selectedPropertiesTab}
@@ -311,30 +333,6 @@ export const Workbench: React.FunctionComponent<{
         ]}
         mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
       />}
-    >
-      <SplitView
-        sidebarSize={250}
-        orientation='horizontal'
-        sidebarIsFirst={true}
-        settingName='actionListSidebar'
-        sidebar={
-          <TabbedPane
-            tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
-            selectedTab={selectedNavigatorTab}
-            setSelectedTab={setSelectedNavigatorTab}
-          />
-        }
-      >
-        <SnapshotTab
-          action={activeAction}
-          sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedLocator={highlightedLocator}
-          setHighlightedLocator={locatorPicked}
-          openPage={openPage} />
-      </SplitView>
-    </SplitView>
+    />
   </div>;
 };

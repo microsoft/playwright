@@ -439,6 +439,25 @@ export const UIModeView: React.FC<{}> = ({
       orientation='horizontal'
       sidebarIsFirst={true}
       settingName='testListSidebar'
+      main={<div className='vbox'>
+        <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
+          <Toolbar>
+            <div className='section-title' style={{ flex: 'none' }}>Output</div>
+            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
+            <div className='spacer'></div>
+            <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
+          </Toolbar>
+          <XtermWrapper source={xtermDataSource}></XtermWrapper>
+        </div>
+        <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
+          <TraceView
+            item={selectedItem}
+            rootDir={testModel?.config?.rootDir}
+            revealSource={revealSource}
+            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+          />
+        </div>
+      </div>}
       sidebar={
         <div className='vbox ui-mode-sidebar'>
           <Toolbar noShadow={true} noMinHeight={true}>
@@ -518,26 +537,6 @@ export const UIModeView: React.FC<{}> = ({
           ]} />}
         </div>
       }
-    >
-      <div className='vbox'>
-        <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
-          <Toolbar>
-            <div className='section-title' style={{ flex: 'none' }}>Output</div>
-            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
-            <div className='spacer'></div>
-            <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
-          </Toolbar>
-          <XtermWrapper source={xtermDataSource}></XtermWrapper>
-        </div>
-        <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          <TraceView
-            item={selectedItem}
-            rootDir={testModel?.config?.rootDir}
-            revealSource={revealSource}
-            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
-          />
-        </div>
-      </div>
-    </SplitView>
+    />
   </div>;
 };

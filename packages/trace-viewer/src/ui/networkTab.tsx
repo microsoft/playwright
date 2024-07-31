@@ -107,10 +107,9 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
+        main={<NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} />}
         sidebar={grid}
-      >
-        <NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} />
-      </SplitView>}
+      />}
   </>;
 };
 

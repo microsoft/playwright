@@ -169,6 +169,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     </Toolbar>
     <SplitView
       sidebarSize={200}
+      main={<CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true} />}
       sidebar={<TabbedPane
         rightToolbar={selectedTab === 'locator' ? [<ToolbarButton icon='files' title='Copy' onClick={() => copy(locator)} />] : []}
         tabs={[
@@ -186,9 +187,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         selectedTab={selectedTab}
         setSelectedTab={setSelectedTab}
       />}
-    >
-      <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true} />
-    </SplitView>
+    />
   </div>;
 };
 
