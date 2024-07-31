@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import { clsx } from '@web/uiUtils';
 import './tag.css';
 
 export const TagView: React.FC<{ tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }> = ({ tag, style, onClick }) => {
   return <span
-    className={`tag tag-color-${tagNameToColor(tag)}`}
+    className={clsx('tag', `tag-color-${tagNameToColor(tag)}`)}
     onClick={onClick}
     style={{ margin: '6px 0 0 6px', ...style }}
     title={`Click to filter by tag: ${tag}`}

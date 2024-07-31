@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { clsx } from '@web/uiUtils';
 import './tabbedPane.css';
 import { Toolbar } from './toolbar';
 import * as React from 'react';
@@ -99,7 +100,7 @@ export const TabbedPaneTab: React.FunctionComponent<{
   selected?: boolean,
   onSelect: (id: string) => void
 }> = ({ id, title, count, errorCount, selected, onSelect }) => {
-  return <div className={'tabbed-pane-tab ' + (selected ? 'selected' : '')}
+  return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
     onClick={() => onSelect(id)}
     title={title}
     key={id}>

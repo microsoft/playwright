@@ -30,7 +30,7 @@ import { Toolbar } from '@web/components/toolbar';
 import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
 import { useDarkModeSetting } from '@web/theme';
-import { settings, useSetting } from '@web/uiUtils';
+import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
 import { TestServerConnection } from '@testIsomorphic/testServerConnection';
@@ -435,7 +435,7 @@ export const UIModeView: React.FC<{}> = ({
     </div>}
     <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
       <div className='vbox'>
-        <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
+        <div className={clsx('vbox', !isShowingOutput && 'hidden')}>
           <Toolbar>
             <div className='section-title' style={{ flex: 'none' }}>Output</div>
             <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
@@ -444,7 +444,7 @@ export const UIModeView: React.FC<{}> = ({
           </Toolbar>
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
-        <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
+        <div className={clsx('vbox', isShowingOutput && 'hidden')}>
           <TraceView
             item={selectedItem}
             rootDir={testModel?.config?.rootDir}

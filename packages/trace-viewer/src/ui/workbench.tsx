@@ -36,7 +36,7 @@ import { AttachmentsTab } from './attachmentsTab';
 import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting, msToString } from '@web/uiUtils';
+import { useSetting, msToString, clsx } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
@@ -251,7 +251,7 @@ export const Workbench: React.FunctionComponent<{
     title: 'Actions',
     component: <div className='vbox'>
       {status && <div className='workbench-run-status'>
-        <span className={`codicon ${testStatusIcon(status)}`}></span>
+        <span className={clsx('codicon', testStatusIcon(status))}></span>
         <div>{testStatusText(status)}</div>
         <div className='spacer'></div>
         <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
