@@ -50,7 +50,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   }, [expanded, attachmentText, placeholder, attachment]);
 
   const title = <span style={{ marginLeft: 5 }}>
-    {attachment.name} <a style={{ marginLeft: 5 }} href={attachmentURL(attachment) + '&download'}>download</a>
+    {attachment.name} <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>
   </span>;
 
   if (!isTextAttachment)
@@ -111,9 +111,9 @@ export const AttachmentsTab: React.FunctionComponent<{
         {expected && actual && <div className='attachments-section'>Image diff</div>}
         {expected && actual && <ImageDiffView noTargetBlank={true} diff={{
           name: 'Image diff',
-          expected: { attachment: { ...expected, path: attachmentURL(expected) + '&download' }, title: 'Expected' },
-          actual: { attachment: { ...actual, path: attachmentURL(actual) + '&download' } },
-          diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) + '&download' } } : undefined,
+          expected: { attachment: { ...expected, path: downloadURL(expected) }, title: 'Expected' },
+          actual: { attachment: { ...actual, path: downloadURL(actual) } },
+          diff: diff ? { attachment: { ...diff, path: downloadURL(diff) } } : undefined,
         }} />}
       </>;
     })}
@@ -134,8 +134,19 @@ export const AttachmentsTab: React.FunctionComponent<{
   </div>;
 };
 
-function attachmentURL(attachment: Attachment) {
-  if (attachment.sha1)
-    return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(attachment.traceUrl);
-  return 'file?path=' + encodeURIComponent(attachment.path!);
+function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
+  const params = new URLSearchParams(queryParams);
+  if (attachment.sha1) {
+    params.set('trace', attachment.traceUrl);
+    return 'sha1/' + attachment.sha1 + '?' + params.toString();
+  }
+  params.set('path', attachment.path!);
+  return 'file?' + params.toString();
+}
+
+function downloadURL(attachment: Attachment) {
+  const params = { dn: attachment.name } as Record<string, string>;
+  if (attachment.contentType)
+    params.dct = attachment.contentType;
+  return attachmentURL(attachment, params);
 }
