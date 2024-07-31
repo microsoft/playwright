@@ -133,13 +133,11 @@ const BodyTab: React.FunctionComponent<{
 };
 
 function statusClass(statusCode: number): string {
-  if (statusCode < 300 || statusCode === 304) {
+  if (statusCode < 300 || statusCode === 304)
     return 'green-circle';
-  } else if (statusCode < 400) {
+  if (statusCode < 400)
     return 'yellow-circle';
-  } else {
-    return 'red-circle';
-  }
+  return 'red-circle';
 }
 
 function formatBody(body: string | null, contentType: string): string {
