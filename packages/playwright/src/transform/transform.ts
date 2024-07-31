@@ -89,7 +89,7 @@ export function resolveHook(filename: string, specifier: string, dontResolveDire
     return;
 
   if (isRelativeSpecifier(specifier))
-    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier), dontResolveDirectories);
+    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier), false);
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
