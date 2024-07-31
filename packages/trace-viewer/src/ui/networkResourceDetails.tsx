@@ -80,8 +80,10 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    <div className='network-request-details-general'>Status Code: <span className={statusClass(resource.response.status)}>
-      {`${resource.response.status} ${resource.response.statusText}`}</span></div>
+    <div className='network-request-details-general' style={{ display: 'flex' }}>
+      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+        {`${resource.response.status} ${resource.response.statusText}`}
+      </span></div>
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}

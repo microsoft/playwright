@@ -70,8 +70,8 @@
   width: 12px;
   height: 12px;
   border-radius: 6px;
-  vertical-align: text-top;
   margin-right: 2px;
+  align-self: center;
 }
 
 .green-circle::before {
