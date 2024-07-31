@@ -25,7 +25,7 @@ import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
 import type { Matcher } from '../util';
-import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupportIfNeeded } from './compilationCache';
+import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupport } from './compilationCache';
 
 const version = require('../../package.json').version;
 
@@ -201,33 +201,33 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
 }
 
 export async function requireOrImport(file: string) {
-  const revertBabelRequire = installTransform();
+  installTransformIfNeeded();
   const isModule = fileIsModule(file);
-  try {
-    const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
-    if (isModule)
-      return await esmImport();
-    const result = require(file);
-    const depsCollector = currentFileDepsCollector();
-    if (depsCollector) {
-      const module = require.cache[file];
-      if (module)
-        collectCJSDependencies(module, depsCollector);
-    }
-    return result;
-  } finally {
-    revertBabelRequire();
+  const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
+  if (isModule)
+    return await esmImport();
+  const result = require(file);
+  const depsCollector = currentFileDepsCollector();
+  if (depsCollector) {
+    const module = require.cache[file];
+    if (module)
+      collectCJSDependencies(module, depsCollector);
   }
+  return result;
 }
 
-function installTransform(): () => void {
-  installSourceMapSupportIfNeeded();
+let transformInstalled = false;
 
-  let reverted = false;
+function installTransformIfNeeded() {
+  if (transformInstalled)
+    return;
+  transformInstalled = true;
+
+  installSourceMapSupport();
 
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
-    if (!reverted && parent) {
+    if (parent) {
       const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined)
         specifier = resolved;
@@ -236,17 +236,11 @@ function installTransform(): () => void {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  const revertPirates = pirates.addHook((code: string, filename: string) => {
+  pirates.addHook((code: string, filename: string) => {
     if (!shouldTransform(filename))
       return code;
     return transformHook(code, filename).code;
   }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts'] });
-
-  return () => {
-    reverted = true;
-    (Module as any)._resolveFilename = originalResolveFilename;
-    revertPirates();
-  };
 }
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {

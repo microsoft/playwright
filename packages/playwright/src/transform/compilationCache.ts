@@ -64,13 +64,7 @@ const fileDependencies = new Map<string, Set<string>>();
 // Dependencies resolved by the external bundler.
 const externalDependencies = new Map<string, Set<string>>();
 
-let sourceMapSupportInstalled = false;
-
-export function installSourceMapSupportIfNeeded() {
-  if (sourceMapSupportInstalled)
-    return;
-  sourceMapSupportInstalled = true;
-
+export function installSourceMapSupport() {
   Error.stackTraceLimit = 200;
 
   sourceMapSupport.install({
