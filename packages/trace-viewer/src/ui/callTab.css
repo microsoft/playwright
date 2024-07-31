@@ -105,7 +105,3 @@ a.call-value:hover {
   padding: 5px;
   line-height: 17px;
 }
-
-.metadata-view {
-  flex-shrink: 0;
-}
