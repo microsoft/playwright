@@ -20,7 +20,8 @@ import './copyToClipboard.css';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,
-}> = ({ value }) => {
+  variant: 'small' | 'large'
+}> = ({ value, variant }) => {
   type IconType = 'copy' | 'check' | 'cross';
   const [icon, setIcon] = React.useState<IconType>('copy');
   const handleCopy = React.useCallback(() => {
@@ -34,5 +35,5 @@ export const CopyToClipboard: React.FunctionComponent<{
     });
   }, [value]);
   const iconElement = icon === 'check' ? icons.check() : icon === 'cross' ? icons.cross() : icons.copy();
-  return <button className='copy-icon' onClick={handleCopy}>{iconElement}</button>;
+  return <button className={`copy-icon ${variant}`} onClick={handleCopy}>{iconElement}</button>;
 };
