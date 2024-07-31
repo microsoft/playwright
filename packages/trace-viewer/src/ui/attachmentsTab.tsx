@@ -20,7 +20,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { linkifyText } from '@web/renderUtils';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 
@@ -36,6 +36,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
 
   const isTextAttachment = isTextualMimeType(attachment.contentType);
+  const hasContent = attachment.sha1 || attachment.path;
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
@@ -50,22 +51,17 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   }, [expanded, attachmentText, placeholder, attachment]);
 
   const title = <span style={{ marginLeft: 5 }}>
-    {attachment.name} <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>
+    {linkifyText(attachment.name)} {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
-  if (!isTextAttachment)
+  if (!isTextAttachment || !hasContent)
     return <div style={{ marginLeft: 20 }}>{title}</div>;
 
   return <>
     <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
       {placeholder && <i>{placeholder}</i>}
     </Expandable>
-    {expanded && attachmentText !== null && <CodeMirrorWrapper
-      text={attachmentText}
-      readOnly
-      lineNumbers={true}
-      wrapLines={false}>
-    </CodeMirrorWrapper>}
+    {expanded && attachmentText !== null && <pre style={{ marginLeft: 25 }}>{linkifyText(attachmentText)}</pre>}
   </>;
 };
 

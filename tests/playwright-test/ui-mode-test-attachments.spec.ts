@@ -99,6 +99,32 @@ test('should contain string attachment', async ({ runUITest }) => {
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
 });
 
+test('should linkify string attachments', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        await test.info().attach('First attachment with inline url: https://playwright.dev/');
+        await test.info().attach('Second attachment', { body: '##A title\\nAnd a link https://example.com/ to be highlighted.' });
+      });
+    `,
+  });
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByText('Attachments').click();
+
+  const firstAttachment = page.getByText('First attachment with inline url: https://playwright.dev/', { exact: true });
+  await expect(firstAttachment).toBeVisible();
+  await expect(firstAttachment.locator('a')).toHaveAttribute('href', 'https://playwright.dev/');
+
+  const secondAttachment = page.getByText('Second attachment download');
+  await secondAttachment.click();
+  const body = page.getByText('And a link https://example.com/ to be highlighted.');
+  await expect(body).toBeVisible();
+  await expect(body.locator('a')).toHaveAttribute('href', 'https://example.com/');
+});
+
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {
     const chunks: Buffer[] = [];
