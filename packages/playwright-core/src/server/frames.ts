@@ -1571,8 +1571,7 @@ export class Frame extends SdkObject {
 
   dispose(reason: string) {
     for (const data of this._contextData.values()) {
-      if (data.context)
-        data.context.contextDestroyed(reason);
+      data.context?.contextDestroyed(reason);
       data.contextPromise.resolve({ destroyedReason: reason });
     }
     if (this._parentFrame)
