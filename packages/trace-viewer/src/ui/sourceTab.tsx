@@ -103,7 +103,7 @@ export const SourceTab: React.FunctionComponent<{
     main={<div className='vbox' data-testid='source-code'>
       { fileName && <Toolbar>
         <span className='source-tab-file-name'>{fileName}</span>
-        <CopyToClipboard description='Copy filename' value={getFileName(fileName, targetLine)}/>
+        <CopyToClipboard description='Copy filename' value={getFileName(fileName)}/>
         {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
       </Toolbar> }
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
@@ -124,10 +124,9 @@ export async function calculateSha1(text: string): Promise<string> {
   return hexCodes.join('');
 }
 
-function getFileName(fullPath?: string, lineNum?: number): string {
+function getFileName(fullPath?: string): string {
   if (!fullPath)
     return '';
   const pathSep = fullPath?.includes('/') ? '/' : '\\';
-  const fileName = fullPath?.split(pathSep).pop() ?? '';
-  return lineNum ? `${fileName}:${lineNum}` : fileName;
+  return fullPath?.split(pathSep).pop() ?? '';
 }
