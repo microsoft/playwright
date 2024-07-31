@@ -495,8 +495,6 @@ export class Frame extends SdkObject {
     this._currentDocument = { documentId: undefined, request: undefined };
     this.selectors = new FrameSelectors(this);
 
-    this._page.on(Page.Events.Crash, () => this._onDetached());
-
     this._contextData.set('main', { contextPromise: new ManualPromise(), context: null });
     this._contextData.set('utility', { contextPromise: new ManualPromise(), context: null });
     this._setContext('main', null);
