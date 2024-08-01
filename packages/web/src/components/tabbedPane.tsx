@@ -62,17 +62,8 @@ export const TabbedPane: React.FunctionComponent<{
             setSelectedTab(tabs[e.currentTarget.selectedIndex].id);
           }}>
             {tabs.map(tab => {
-              let suffix = '';
-              if (tab.count === 1)
-                suffix = ' 🔵';
-              else if (tab.count)
-                suffix = ` 🔵✖️${tab.count}`;
-              if (tab.errorCount === 1)
-                suffix = ` 🔴`;
-              else if (tab.errorCount)
-                suffix = ` 🔴✖️${tab.errorCount}`;
-              return <option value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
-            })}
+              return <option value={tab.id} selected={tab.id === selectedTab}>{tab.title}</option>;
+          })}
           </select>
         </div>}
         {rightToolbar && <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>
