@@ -114,10 +114,13 @@ export class FrameManager {
 
   dispose(reason: string) {
     for (const frame of this._frames.values()) {
-      frame.dispose(reason);
+      frame._onDetached(reason);
       frame._stopNetworkIdleTimer();
       frame._invalidateNonStallingEvaluations(reason);
+      this.clearWebSockets(frame);
     }
+
+    this.closeOpenDialogs();
   }
 
   mainFrame(): Frame {
@@ -1563,10 +1566,10 @@ export class Frame extends SdkObject {
     ]);
   }
 
-  _onDetached() {
+  _onDetached(reason = 'Frame was detached') {
     this._stopNetworkIdleTimer();
-    this._detachedScope.close(new Error('Frame was detached'));
-    this.dispose('Frame was detached');
+    this._detachedScope.close(new Error(reason));
+    this.dispose(reason);
   }
 
   dispose(reason: string) {

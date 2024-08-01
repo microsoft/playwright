@@ -284,6 +284,7 @@ export class Page extends SdkObject {
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError());
+    this._clearWorkers();
   }
 
   _didCrash() {
@@ -293,6 +294,7 @@ export class Page extends SdkObject {
     this._crashed = true;
     this.instrumentation.onPageClose(this);
     this.openScope.close(new Error('Page crashed'));
+    this._clearWorkers();
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
