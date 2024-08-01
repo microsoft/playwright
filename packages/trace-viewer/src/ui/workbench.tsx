@@ -33,6 +33,7 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
+import { AnnotationsTab } from './annotationsTab';
 import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
@@ -52,12 +53,13 @@ export const Workbench: React.FunctionComponent<{
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
+  annotations?: { type: string; description?: string; }[];
   inert?: boolean,
   openPage?: (url: string, target?: string) => Window | any,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
@@ -223,6 +225,17 @@ export const Workbench: React.FunctionComponent<{
     sourceTab,
     attachmentsTab,
   ];
+
+  if (annotations !== undefined) {
+    const annotationsTab: TabbedPaneTabModel = {
+      id: 'annotations',
+      title: 'Annotations',
+      count: annotations.length,
+      render: () => <AnnotationsTab annotations={annotations} />
+    };
+    tabs.push(annotationsTab);
+  }
+
   if (showSourcesFirst) {
     const sourceTabIndex = tabs.indexOf(sourceTab);
     tabs.splice(sourceTabIndex, 1);

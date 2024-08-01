@@ -20,7 +20,7 @@ import * as icons from './icons';
 import { TreeItem } from './treeItem';
 import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
-import { linkifyText } from './renderUtils';
+import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
 
 export function navigate(href: string) {

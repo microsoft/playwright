@@ -97,6 +97,7 @@ export const TraceView: React.FC<{
     fallbackLocation={item.testFile}
     isLive={model?.isLive}
     status={item.treeItem?.status}
+    annotations={item.testCase?.annotations || []}
     onOpenExternally={onOpenExternally}
     revealSource={revealSource}
   />;
