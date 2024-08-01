@@ -90,6 +90,8 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
         // iframes w/ snapshots, etc.
         if (location && location.protocol === 'data:')
           return;
+        if (window.top !== window)
+          return;
         Object.entries(settings).map(([k, v]) => localStorage[k] = v);
         (window as any).saveSettings = () => {
           (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
