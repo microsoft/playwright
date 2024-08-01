@@ -10,7 +10,7 @@ env:
 jobs:
   publish-driver-release:
     name: "publish playwright driver to CDN"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     permissions:
       id-token: write  # This is required for OIDC login (azure/login) to succeed

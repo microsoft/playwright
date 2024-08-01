@@ -31,7 +31,7 @@ function build {
   mkdir -p ./output/playwright-${SUFFIX}
   tar -xzf ./output/playwright-core.tgz -C ./output/playwright-${SUFFIX}/
 
-  curl ${NODE_URL} -o ./output/${NODE_DIR}.${ARCHIVE}
+  curl --retry 10 --retry-all-errors ${NODE_URL} -o ./output/${NODE_DIR}.${ARCHIVE}
   NPM_PATH=""
   if [[ "${ARCHIVE}" == "zip" ]]; then
     cd ./output
