@@ -1357,7 +1357,6 @@ test('should allow hiding route actions', {
   await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
   await traceViewer.page.getByText('Actions', { exact: true }).click();
   await expect(traceViewer.actionTitles).toHaveText([
-    /page.route/,
     /page.goto.*empty.html/,
   ]);
 

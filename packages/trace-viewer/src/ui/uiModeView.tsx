@@ -99,6 +99,7 @@ export const UIModeView: React.FC<{}> = ({
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
+  const showTestingOptions = false;
 
   const [runWorkers, setRunWorkers] = React.useState(queryParams.workers);
   const singleWorkerSetting = React.useMemo(() => {
@@ -509,19 +510,21 @@ export const UIModeView: React.FC<{}> = ({
           setFilterText={setFilterText}
           onRevealSource={onRevealSource}
         />
-        <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
-          <span
-            className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
-            style={{ marginLeft: 5 }}
-            title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
-          />
-          <div className='section-title'>Testing Options</div>
-        </Toolbar>
-        {testingOptionsVisible && <SettingsView settings={[
-          singleWorkerSetting,
-          showBrowserSetting,
-          updateSnapshotsSetting,
-        ]} />}
+        {showTestingOptions && <>
+          <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
+            <span
+              className={`codicon codicon-${testingOptionsVisible ? 'chevron-down' : 'chevron-right'}`}
+              style={{ marginLeft: 5 }}
+              title={testingOptionsVisible ? 'Hide Testing Options' : 'Show Testing Options'}
+            />
+            <div className='section-title'>Testing Options</div>
+          </Toolbar>
+          {testingOptionsVisible && <SettingsView settings={[
+            singleWorkerSetting,
+            showBrowserSetting,
+            updateSnapshotsSetting,
+          ]} />}
+        </>}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
           <span
             className={`codicon codicon-${settingsVisible ? 'chevron-down' : 'chevron-right'}`}
