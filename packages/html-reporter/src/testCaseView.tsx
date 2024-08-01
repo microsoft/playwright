@@ -23,7 +23,7 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { linkifyText } from './renderUtils';
+import { linkifyText } from '@web/renderUtils';
 import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 
