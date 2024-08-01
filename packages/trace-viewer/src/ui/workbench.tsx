@@ -23,7 +23,7 @@ import { ErrorsTab, useErrorsTabModel } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import { isRouteAction } from './modelUtil';
 import type { StackFrame } from '@protocol/channels';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
@@ -45,12 +45,12 @@ import type { UITestStatus } from './testUtils';
 import { SettingsView } from './settingsView';
 
 export const Workbench: React.FunctionComponent<{
-  model?: MultiTraceModel,
+  model?: modelUtil.MultiTraceModel,
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
-  initialSelection?: ActionTraceEventInContext,
-  onSelectionChanged?: (action: ActionTraceEventInContext) => void,
+  initialSelection?: modelUtil.ActionTraceEventInContext,
+  onSelectionChanged?: (action: modelUtil.ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
@@ -60,9 +60,9 @@ export const Workbench: React.FunctionComponent<{
   revealSource?: boolean,
   showSettings?: boolean,
 }> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
-  const [selectedAction, setSelectedActionImpl] = React.useState<ActionTraceEventInContext | undefined>(undefined);
+  const [selectedAction, setSelectedActionImpl] = React.useState<modelUtil.ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
-  const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
+  const [highlightedAction, setHighlightedAction] = React.useState<modelUtil.ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -75,10 +75,10 @@ export const Workbench: React.FunctionComponent<{
   const [showRouteActions, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
 
   const filteredActions = React.useMemo(() => {
-    return (model?.actions || []).filter(action => showRouteActions || action.class !== 'Route');
+    return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
   }, [model, showRouteActions]);
 
-  const setSelectedAction = React.useCallback((action: ActionTraceEventInContext | undefined) => {
+  const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedActionImpl(action);
     setRevealedStack(action?.stack);
   }, [setSelectedActionImpl, setRevealedStack]);
@@ -111,7 +111,7 @@ export const Workbench: React.FunctionComponent<{
     }
   }, [model, selectedAction, setSelectedAction, initialSelection]);
 
-  const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
+  const onActionSelected = React.useCallback((action: modelUtil.ActionTraceEventInContext) => {
     setSelectedAction(action);
     onSelectionChanged?.(action);
   }, [setSelectedAction, onSelectionChanged]);
