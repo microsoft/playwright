@@ -1131,7 +1131,9 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
 }
-export type BrowserCloseEvent = {};
+export type BrowserCloseEvent = {
+  reason?: string,
+};
 export type BrowserCloseParams = {
   reason?: string,
 };

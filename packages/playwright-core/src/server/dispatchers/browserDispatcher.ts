@@ -34,11 +34,11 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   constructor(scope: BrowserTypeDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
-    this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
+    this.addObjectListener(Browser.Events.Disconnected, ({ reason }) => this._didClose(reason));
   }
 
-  _didClose() {
-    this._dispatchEvent('close');
+  _didClose(reason?: string) {
+    this._dispatchEvent('close', { reason });
     this._dispose();
   }
 

@@ -49,7 +49,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
     this._name = initializer.name;
-    this._channel.on('close', () => this._didClose());
+    this._channel.on('close', ({ reason }) => this._didClose(reason));
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
@@ -136,10 +136,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
-    this._closeReason = options.reason;
     try {
       if (this._shouldCloseConnectionOnClose)
-        this._connection.close();
+        this._connection.close(options.reason);
       else
         await this._channel.close(options);
       await this._closedPromise;
@@ -150,8 +149,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     }
   }
 
-  _didClose() {
+  _didClose(reason?: string) {
     this._isConnected = false;
+    this._closeReason = reason;
     this.emit(Events.Browser.Disconnected, this);
   }
 }

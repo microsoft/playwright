@@ -608,7 +608,9 @@ scheme.BrowserInitializer = tObject({
   version: tString,
   name: tString,
 });
-scheme.BrowserCloseEvent = tOptional(tObject({}));
+scheme.BrowserCloseEvent = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserCloseParams = tObject({
   reason: tOptional(tString),
 });

@@ -1009,6 +1009,8 @@ Browser:
   events:
 
     close:
+      parameters:
+        reason: string?
 
 ConsoleMessage:
   type: mixin
