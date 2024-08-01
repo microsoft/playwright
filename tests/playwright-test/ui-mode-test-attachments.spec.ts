@@ -99,6 +99,55 @@ test('should contain string attachment', async ({ runUITest }) => {
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
 });
 
+test('should linkify string attachments', async ({ runUITest, server }) => {
+  server.setRoute('/one.html', (req, res) => res.end());
+  server.setRoute('/two.html', (req, res) => res.end());
+  server.setRoute('/three.html', (req, res) => res.end());
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        await test.info().attach('Inline url: ${server.PREFIX + '/one.html'}');
+        await test.info().attach('Second', { body: 'Inline link ${server.PREFIX + '/two.html'} to be highlighted.' });
+        await test.info().attach('Third', { body: '[markdown link](${server.PREFIX + '/three.html'})', contentType: 'text/markdown' });
+      });
+    `,
+  });
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByText('Attachments').click();
+
+  const attachmentsPane = page.locator('.attachments-tab');
+
+  {
+    const url = server.PREFIX + '/one.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText(url).click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
+
+  {
+    await attachmentsPane.getByText('Second download').click();
+    const url = server.PREFIX + '/two.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText(url).click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
+
+  {
+    await attachmentsPane.getByText('Third download').click();
+    const url = server.PREFIX + '/three.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText('[markdown link]').click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
+});
+
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {
     const chunks: Buffer[] = [];

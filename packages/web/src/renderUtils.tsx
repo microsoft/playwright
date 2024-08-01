@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-export function linkifyText(description: string) {
-  const CONTROL_CODES = '\\u0000-\\u0020\\u007f-\\u009f';
-  const WEB_LINK_REGEX = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + CONTROL_CODES + '"]{2,}[^\\s' + CONTROL_CODES + '"\')}\\],:;.!?]', 'ug');
+import { kWebLinkRe } from './uiUtils';
 
+export function linkifyText(description: string) {
   const result = [];
   let currentIndex = 0;
   let match;
 
-  while ((match = WEB_LINK_REGEX.exec(description)) !== null) {
+  while ((match = kWebLinkRe.exec(description)) !== null) {
     const stringBeforeMatch = description.substring(currentIndex, match.index);
     if (stringBeforeMatch)
       result.push(stringBeforeMatch);

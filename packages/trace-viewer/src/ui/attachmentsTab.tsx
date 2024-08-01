@@ -23,6 +23,7 @@ import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
+import { linkifyText } from '@web/renderUtils';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
@@ -36,6 +37,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
 
   const isTextAttachment = isTextualMimeType(attachment.contentType);
+  const hasContent = !!attachment.sha1 || !!attachment.path;
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
@@ -50,10 +52,10 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   }, [expanded, attachmentText, placeholder, attachment]);
 
   const title = <span style={{ marginLeft: 5 }}>
-    {attachment.name} <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>
+    {linkifyText(attachment.name)} {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
-  if (!isTextAttachment)
+  if (!isTextAttachment || !hasContent)
     return <div style={{ marginLeft: 20 }}>{title}</div>;
 
   return <>
@@ -63,6 +65,8 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     {expanded && attachmentText !== null && <CodeMirrorWrapper
       text={attachmentText}
       readOnly
+      mimeType={attachment.contentType}
+      linkify={true}
       lineNumbers={true}
       wrapLines={false}>
     </CodeMirrorWrapper>}
