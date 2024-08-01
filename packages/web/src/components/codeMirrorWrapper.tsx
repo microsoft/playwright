@@ -18,7 +18,7 @@ import './codeMirrorWrapper.css';
 import * as React from 'react';
 import type { CodeMirror } from './codeMirrorModule';
 import { ansi2html } from '../ansi2html';
-import { useMeasure } from '../uiUtils';
+import { useMeasure, kWebLinkRe } from '../uiUtils';
 
 export type SourceHighlight = {
   line: number;
@@ -26,11 +26,13 @@ export type SourceHighlight = {
   message?: string;
 };
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown';
 
 export interface SourceProps {
   text: string;
   language?: Language;
+  mimeType?: string;
+  linkify?: boolean;
   readOnly?: boolean;
   // 1-based
   highlight?: SourceHighlight[];
@@ -45,6 +47,8 @@ export interface SourceProps {
 export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   text,
   language,
+  mimeType,
+  linkify,
   readOnly,
   highlight,
   revealLine,
@@ -63,24 +67,13 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     (async () => {
       // Always load the module first.
       const CodeMirror = await modulePromise;
+      defineCustomMode(CodeMirror);
 
       const element = codemirrorElement.current;
       if (!element)
         return;
 
-      let mode = '';
-      if (language === 'javascript')
-        mode = 'javascript';
-      if (language === 'python')
-        mode = 'python';
-      if (language === 'java')
-        mode = 'text/x-java';
-      if (language === 'csharp')
-        mode = 'text/x-csharp';
-      if (language === 'html')
-        mode = 'htmlmixed';
-      if (language === 'css')
-        mode = 'css';
+      const mode = languageToMode(language) || mimeTypeToMode(mimeType) || (linkify ? 'text/linkified' : '');
 
       if (codemirrorRef.current
         && mode === codemirrorRef.current.cm.getOption('mode')
@@ -106,7 +99,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       setCodemirror(cm);
       return cm;
     })();
-  }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly, isFocused]);
+  }, [modulePromise, codemirror, codemirrorElement, language, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused]);
 
   React.useEffect(() => {
     if (codemirrorRef.current)
@@ -175,5 +168,69 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     };
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
-  return <div className='cm-wrapper' ref={codemirrorElement}></div>;
+  return <div className='cm-wrapper' ref={codemirrorElement} onClick={onCodeMirrorClick}></div>;
 };
+
+function onCodeMirrorClick(event: React.MouseEvent) {
+  if (!(event.target instanceof HTMLElement))
+    return;
+  let url: string | undefined;
+  if (event.target.classList.contains('cm-linkified')) {
+    // 'text/linkified' custom mode
+    url = event.target.textContent!;
+  } else if (event.target.classList.contains('cm-link') && event.target.nextElementSibling?.classList.contains('cm-url')) {
+    // 'markdown' mode
+    url = event.target.nextElementSibling.textContent!.slice(1, -1);
+  }
+  if (url) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.open(url, '_blank');
+  }
+}
+
+let customModeDefined = false;
+function defineCustomMode(cm: CodeMirror) {
+  if (customModeDefined)
+    return;
+  customModeDefined = true;
+  (cm as any).defineSimpleMode('text/linkified', {
+    start: [
+      { regex: kWebLinkRe, token: 'linkified' },
+    ],
+  });
+}
+
+function mimeTypeToMode(mimeType: string | undefined): string | undefined {
+  if (!mimeType)
+    return;
+  if (mimeType.includes('javascript') || mimeType.includes('json'))
+    return 'javascript';
+  if (mimeType.includes('python'))
+    return 'python';
+  if (mimeType.includes('csharp'))
+    return 'text/x-csharp';
+  if (mimeType.includes('java'))
+    return 'text/x-java';
+  if (mimeType.includes('markdown'))
+    return 'markdown';
+  if (mimeType.includes('html') || mimeType.includes('svg'))
+    return 'htmlmixed';
+  if (mimeType.includes('css'))
+    return 'css';
+}
+
+function languageToMode(language: Language | undefined): string | undefined {
+  if (!language)
+    return;
+  return {
+    javascript: 'javascript',
+    jsonl: 'javascript',
+    python: 'python',
+    csharp: 'text/x-csharp',
+    java: 'text/x-java',
+    markdown: 'markdown',
+    html: 'htmlmixed',
+    css: 'css',
+  }[language];
+}
