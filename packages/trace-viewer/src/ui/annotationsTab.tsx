@@ -22,10 +22,10 @@ import { linkifyText } from '@web/renderUtils';
 type Annotation = { type: string; description?: string; };
 
 export const AnnotationsTab: React.FunctionComponent<{
-  annotations: Annotation[] | undefined,
+  annotations: Annotation[],
 }> = ({ annotations }) => {
 
-  if (!annotations || !annotations.length)
+  if (!annotations.length)
     return <PlaceholderPanel text='No annotations' />;
 
   return <div className='annotations-tab'>

@@ -230,7 +230,7 @@ export const Workbench: React.FunctionComponent<{
     const annotationsTab: TabbedPaneTabModel = {
       id: 'annotations',
       title: 'Annotations',
-      count: annotations?.length ?? 0,
+      count: annotations.length,
       render: () => <AnnotationsTab annotations={annotations} />
     };
     tabs.push(annotationsTab);
