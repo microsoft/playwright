@@ -80,11 +80,10 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    <div className='network-request-details-general'>{`Status Code: ${
-      resource.response.status >= 200 && resource.response.status < 400
-        ? `🟢 ${resource.response.status} ${resource.response.statusText}`
-        : `🔴 ${resource.response.status} ${resource.response.statusText}`
-    }`}</div>
+    <div className='network-request-details-general' style={{ display: 'flex' }}>
+      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+        {`${resource.response.status} ${resource.response.statusText}`}
+      </span></div>
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
@@ -134,6 +133,14 @@ const BodyTab: React.FunctionComponent<{
     {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} language={responseBody.language} readOnly lineNumbers={true}/>}
   </div>;
 };
+
+function statusClass(statusCode: number): string {
+  if (statusCode < 300 || statusCode === 304)
+    return 'green-circle';
+  if (statusCode < 400)
+    return 'yellow-circle';
+  return 'red-circle';
+}
 
 function formatBody(body: string | null, contentType: string): string {
   if (body === null)
