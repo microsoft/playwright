@@ -147,7 +147,7 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
     const dir = await (window as any).showDirectoryPicker();
     return dir.name;
     // In headless it throws (aborted), in headed it stalls (Test ended) and waits for the picker to be accepted.
-  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): The user aborted a request|Test ended)/));
+  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): .*The user aborted a request|Test ended)/));
   // The dialog will not be accepted, so we just wait for some time to
   // to give the browser a chance to crash.
   await page.waitForTimeout(3_000);
