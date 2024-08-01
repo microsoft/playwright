@@ -61,3 +61,27 @@
 .tab-network .tabbed-pane-tab.selected {
   font-weight: bold;
 }
+
+.green-circle::before,
+.red-circle::before,
+.yellow-circle::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  margin-right: 2px;
+  align-self: center;
+}
+
+.green-circle::before {
+  background-color: var(--vscode-charts-green);
+}
+
+.red-circle::before {
+  background-color: var(--vscode-charts-red);
+}
+
+.yellow-circle::before {
+  background-color: var(--vscode-charts-yellow);
+}
