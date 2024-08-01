@@ -183,3 +183,6 @@ export class Settings {
 }
 
 export const settings = new Settings();
+
+const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
+export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');

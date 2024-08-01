@@ -174,3 +174,9 @@ body.dark-mode .CodeMirror span.cm-type {
   margin: 3px 10px;
   padding: 5px;
 }
+
+.CodeMirror span.cm-link, span.cm-linkified {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: underline;
+  cursor: pointer;
+}
