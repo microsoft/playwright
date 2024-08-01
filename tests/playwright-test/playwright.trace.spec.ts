@@ -1178,3 +1178,51 @@ test('should record trace for manually created context in a failed test', async 
   // Check console events to make sure that library trace is recorded.
   expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
 });
+
+test('should not nest top level expect into unfinished api calls ', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31959' }
+}, async ({ runInlineTest, server }) => {
+  server.setRoute('/index', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script>fetch('/api')</script><div>Hello!</div>`);
+  });
+  server.setRoute('/hang', () => {});
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.route('**/api', async route => {
+          const response = await route.fetch({ url: '${server.PREFIX}/hang' });
+          await route.fulfill({ response });
+        });
+        await page.goto('${server.PREFIX}/index');
+        await expect(page.getByText('Hello!')).toBeVisible();
+        await page.unrouteAll({ behavior: 'ignoreErrors' });
+      });
+    `,
+  }, { trace: 'on' });
+  expect(result.exitCode).toBe(0);
+  expect(result.failed).toBe(0);
+
+  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'page.route',
+    'page.goto',
+    '  route.fetch',
+    '    page.unrouteAll',
+    'expect.toBeVisible',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});
+
+
