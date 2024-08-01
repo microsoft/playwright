@@ -41,9 +41,9 @@ test('should display annotations', async ({ runUITest }) => {
   await expect(annotations.getByText('suite annotation')).toBeVisible();
   await expect(annotations.getByText('bug report')).toBeVisible();
   await expect(annotations.locator('.annotation-item').filter({ hasText: 'bug report' }).locator('a'))
-    .toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/30095');
+      .toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/30095');
   await expect(annotations.getByText('test repo')).toBeVisible();
   await expect(annotations.locator('.annotation-item').filter({ hasText: 'test repo' }).locator('a'))
-    .toHaveAttribute('href', 'https://github.com/microsoft/playwright');
+      .toHaveAttribute('href', 'https://github.com/microsoft/playwright');
 });
 
