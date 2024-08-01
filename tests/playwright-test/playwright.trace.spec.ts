@@ -1198,7 +1198,7 @@ test('expect during fetch', async ({ page, server }) => {
 });
 
 test('should not nest top level expect into unfinished api calls ', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31959'}
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31959' }
 }, async ({ runInlineTest, server }) => {
   server.setRoute('/index', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
