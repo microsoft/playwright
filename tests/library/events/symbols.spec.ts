@@ -34,7 +34,7 @@ test('should support symbols', () => {
 
   ee.emit(foo);
 
-  ee.removeAllListeners();
+  void ee.removeAllListeners();
   expect(ee.listeners(foo).length).toEqual(0);
 
   ee.on(foo, listener);

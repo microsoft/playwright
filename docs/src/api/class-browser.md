@@ -296,6 +296,18 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
 
+## async method: Browser.removeAllListeners
+* since: v1.47
+
+Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+
+### param: Browser.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Browser.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
+
 ## async method: Browser.startTracing
 * since: v1.11
 * langs: java, js, python

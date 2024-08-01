@@ -1016,6 +1016,18 @@ Creates a new page in the browser context.
 
 Returns all open pages in the context.
 
+## async method: BrowserContext.removeAllListeners
+* since: v1.47
+
+Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+
+### param: BrowserContext.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: BrowserContext.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
+
 ## property: BrowserContext.request
 * since: v1.16
 * langs:

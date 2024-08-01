@@ -28,7 +28,7 @@ class MyEE extends EventEmitter {
     super();
     this.once(1, cb);
     this.emit(1);
-    this.removeAllListeners();
+    void this.removeAllListeners();
   }
 }
 

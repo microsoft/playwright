@@ -23,7 +23,7 @@
  */
 
 type EventType = string | symbol;
-type Listener = (...args: any[]) => void;
+type Listener = (...args: any[]) => any;
 type EventMap = Record<EventType, Listener | Listener[]>;
 import { EventEmitter as OriginalEventEmitter } from 'events';
 import type { EventEmitter as EventEmitterType } from 'events';
@@ -34,6 +34,8 @@ export class EventEmitter implements EventEmitterType {
   private _events: EventMap | undefined = undefined;
   private _eventsCount = 0;
   private _maxListeners: number | undefined = undefined;
+  readonly _pendingHandlers = new Map<EventType, Set<Promise<void>>>();
+  private _rejectionHandler: ((error: Error) => void) | undefined;
 
   constructor() {
     if (this._events === undefined || this._events === Object.getPrototypeOf(this)._events) {
@@ -66,15 +68,32 @@ export class EventEmitter implements EventEmitterType {
       return false;
 
     if (typeof handler === 'function') {
-      Reflect.apply(handler, this, args);
+      this._callHandler(type, handler, args);
     } else {
       const len = handler.length;
       const listeners = handler.slice();
       for (let i = 0; i < len; ++i)
-        Reflect.apply(listeners[i], this, args);
+        this._callHandler(type, listeners[i], args);
     }
-
     return true;
+  }
+
+  private _callHandler(type: EventType, handler: Listener, args: any[]): void {
+    const promise = Reflect.apply(handler, this, args);
+    if (!(promise instanceof Promise))
+      return;
+    let set = this._pendingHandlers.get(type);
+    if (!set) {
+      set = new Set();
+      this._pendingHandlers.set(type, set);
+    }
+    set.add(promise);
+    promise.catch(e => {
+      if (this._rejectionHandler)
+        this._rejectionHandler(e);
+      else
+        throw e;
+    }).finally(() => set.delete(promise));
   }
 
   addListener(type: EventType, listener: Listener): this {
@@ -214,10 +233,34 @@ export class EventEmitter implements EventEmitterType {
     return this.removeListener(type, listener);
   }
 
-  removeAllListeners(type?: string): this {
+  removeAllListeners(type?: EventType): this;
+  removeAllListeners(type: EventType | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type?: string, options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): this | Promise<void> {
+    this._removeAllListeners(type);
+    if (!options)
+      return this;
+
+    if (options.behavior === 'wait') {
+      const errors: Error[] = [];
+      this._rejectionHandler = error => errors.push(error);
+      // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
+      return this._waitFor(type).then(() => {
+        if (errors.length)
+          throw errors[0];
+      });
+    }
+
+    if (options.behavior === 'ignoreErrors')
+      this._rejectionHandler = () => {};
+
+    // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
+    return Promise.resolve();
+  }
+
+  private _removeAllListeners(type?: string) {
     const events = this._events;
     if (!events)
-      return this;
+      return;
 
     // not listening for removeListener, no need to emit
     if (!events.removeListener) {
@@ -230,7 +273,7 @@ export class EventEmitter implements EventEmitterType {
         else
           delete events[type];
       }
-      return this;
+      return;
     }
 
     // emit removeListener for all listeners on all events
@@ -241,12 +284,12 @@ export class EventEmitter implements EventEmitterType {
         key = keys[i];
         if (key === 'removeListener')
           continue;
-        this.removeAllListeners(key);
+        this._removeAllListeners(key);
       }
-      this.removeAllListeners('removeListener');
+      this._removeAllListeners('removeListener');
       this._events = Object.create(null);
       this._eventsCount = 0;
-      return this;
+      return;
     }
 
     const listeners = events[type];
@@ -258,8 +301,6 @@ export class EventEmitter implements EventEmitterType {
       for (let i = listeners.length - 1; i >= 0; i--)
         this.removeListener(type, listeners[i]);
     }
-
-    return this;
   }
 
   listeners(type: EventType): Listener[] {
@@ -286,6 +327,18 @@ export class EventEmitter implements EventEmitterType {
     return this._eventsCount > 0 && this._events ? Reflect.ownKeys(this._events) : [];
   }
 
+  private async _waitFor(type?: EventType) {
+    let promises: Promise<void>[] = [];
+    if (type) {
+      promises = [...(this._pendingHandlers.get(type) || [])];
+    } else {
+      promises = [];
+      for (const [, pending] of this._pendingHandlers)
+        promises.push(...pending);
+    }
+    await Promise.all(promises);
+  }
+
   private _listeners(target: EventEmitter, type: EventType, unwrap: boolean): Listener[] {
     const events = target._events;
 
@@ -310,7 +363,7 @@ function checkListener(listener: any) {
 
 class OnceWrapper {
   private _fired = false;
-  readonly wrapperFunction: (...args: any[]) => void;
+  readonly wrapperFunction: (...args: any[]) => Promise<void> | void;
   readonly _listener: Listener;
   private _eventEmitter: EventEmitter;
   private _eventType: EventType;

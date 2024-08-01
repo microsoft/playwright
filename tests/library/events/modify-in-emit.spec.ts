@@ -72,7 +72,7 @@ test('add and remove listeners', () => {
   e.on('foo', callback1);
   e.on('foo', callback2);
   expect(e.listeners('foo')).toHaveLength(2);
-  e.removeAllListeners('foo');
+  void e.removeAllListeners('foo');
   expect(e.listeners('foo')).toHaveLength(0);
 });
 
