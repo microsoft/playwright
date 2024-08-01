@@ -148,8 +148,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
           for (const page of context.pages())
-            page._onClose();
-          context._onClose();
+            page._onClose(reason);
+          context._onClose(reason);
         }
         connection.close(reason || closeError);
         // Give a chance to any API call promises to reject upon page/context closure.
