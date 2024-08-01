@@ -1179,24 +1179,6 @@ test('should record trace for manually created context in a failed test', async 
   expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
 });
 
-test('expect during fetch', async ({ page, server }) => {
-  server.setRoute('/index', (req, res) => {
-    console.log('index');
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<script>fetch('/api')</script><div>Hello!</div>`);
-  });
-  server.setRoute('/hang', async (req, res) => {
-    console.log('Hanging request');
-  });
-  await page.route('**/api', async route => {
-    const response = await route.fetch({ url: server.PREFIX + '/hang' });
-    await route.fulfill({ response });
-  });
-  await page.goto(server.PREFIX + '/index');
-  await expect(page.getByText('Hello!')).toBeVisible();
-  await page.unrouteAll({ behavior: 'ignoreErrors' });
-});
-
 test('should not nest top level expect into unfinished api calls ', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31959' }
 }, async ({ runInlineTest, server }) => {
