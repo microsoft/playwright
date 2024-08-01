@@ -815,7 +815,9 @@ scheme.BrowserContextConsoleEvent = tObject({
   }),
   page: tChannel(['Page']),
 });
-scheme.BrowserContextCloseEvent = tOptional(tObject({}));
+scheme.BrowserContextCloseEvent = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserContextDialogEvent = tObject({
   dialog: tChannel(['Dialog']),
 });
@@ -1045,7 +1047,9 @@ scheme.PageInitializer = tObject({
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
-scheme.PageCloseEvent = tOptional(tObject({}));
+scheme.PageCloseEvent = tObject({
+  reason: tOptional(tString),
+});
 scheme.PageCrashEvent = tOptional(tObject({}));
 scheme.PageDownloadEvent = tObject({
   url: tString,

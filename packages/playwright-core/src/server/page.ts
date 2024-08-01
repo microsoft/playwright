@@ -221,7 +221,7 @@ export class Page extends SdkObject {
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
-      this.emit(Page.Events.Close);
+      this.emit(Page.Events.Close, { reason: this._closeReason });
     else
       this.instrumentation.onPageOpen(this);
   }
@@ -280,7 +280,7 @@ export class Page extends SdkObject {
     this._frameThrottler.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
-    this.emit(Page.Events.Close);
+    this.emit(Page.Events.Close, { reason: this._closeReason });
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError());

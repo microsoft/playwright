@@ -1285,6 +1285,8 @@ BrowserContext:
         page: Page
 
     close:
+      parameters:
+        reason: string?
 
     dialog:
       parameters:
@@ -1737,6 +1739,8 @@ Page:
         binding: BindingCall
 
     close:
+      parameters:
+        reason: string?
 
     crash:
 

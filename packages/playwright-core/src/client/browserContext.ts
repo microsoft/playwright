@@ -88,7 +88,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.clock = new Clock(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', ({ reason }) => this._onClose(reason));
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
     this._channel.on('backgroundPage', ({ page }) => {
@@ -431,7 +431,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return CDPSession.from(result.session);
   }
 
-  _onClose() {
+  _onClose(reason?: string) {
+    this._closeReason = reason;
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
@@ -447,7 +448,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async close(options: { reason?: string } = {}): Promise<void> {
     if (this._closeWasCalled)
       return;
-    this._closeReason = options.reason;
     this._closeWasCalled = true;
     await this._wrapApiCall(async () => {
       await this.request.dispose(options);

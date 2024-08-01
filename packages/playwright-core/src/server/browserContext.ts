@@ -252,7 +252,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
-    this.emit(BrowserContext.Events.Close);
+    this.emit(BrowserContext.Events.Close, { reason: this._closeReason });
   }
 
   // BrowserContext methods.

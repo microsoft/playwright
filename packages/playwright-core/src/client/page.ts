@@ -129,7 +129,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._opener = Page.fromNullable(initializer.opener);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', ({ reason }) => this._onClose(reason));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
@@ -218,8 +218,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.emit(Events.Page.Worker, worker);
   }
 
-  _onClose() {
+  _onClose(reason?: string) {
     this._closed = true;
+    this._closeReason = reason;
     this._browserContext._pages.delete(this);
     this._browserContext._backgroundPages.delete(this);
     this._disposeHarRouters();
@@ -598,11 +599,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
-    this._closeReason = options.reason;
     this._closeWasCalled = true;
     try {
       if (this._ownedContext)
-        await this._ownedContext.close();
+        await this._ownedContext.close(options);
       else
         await this._channel.close(options);
     } catch (e) {

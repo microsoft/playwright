@@ -1545,7 +1545,9 @@ export type BrowserContextConsoleEvent = {
   },
   page: PageChannel,
 };
-export type BrowserContextCloseEvent = {};
+export type BrowserContextCloseEvent = {
+  reason?: string,
+};
 export type BrowserContextDialogEvent = {
   dialog: DialogChannel,
 };
@@ -1963,7 +1965,9 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
 };
-export type PageCloseEvent = {};
+export type PageCloseEvent = {
+  reason?: string,
+};
 export type PageCrashEvent = {};
 export type PageDownloadEvent = {
   url: string,

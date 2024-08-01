@@ -70,8 +70,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.adopt(mainFrame);
 
     this._page = page;
-    this.addObjectListener(Page.Events.Close, () => {
-      this._dispatchEvent('close');
+    this.addObjectListener(Page.Events.Close, params => {
+      this._dispatchEvent('close', params);
       this._dispose();
     });
     this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
