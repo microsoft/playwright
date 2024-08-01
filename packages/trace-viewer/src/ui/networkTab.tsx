@@ -25,6 +25,7 @@ import { context, type MultiTraceModel } from './modelUtil';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
 import type { ContextEntry } from '../entries';
+import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 
 type NetworkTabModel = {
   resources: Entry[],
@@ -68,17 +69,23 @@ export const NetworkTab: React.FunctionComponent<{
 }> = ({ boundaries, networkModel, onEntryHovered }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
+  const [filterState, setFilterState] = React.useState(defaultFilterState);
 
   const { renderedEntries } = React.useMemo(() => {
-    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap));
+    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
     if (sorting)
       sort(renderedEntries, sorting);
     return { renderedEntries };
-  }, [networkModel.resources, networkModel.contextIdMap, sorting, boundaries]);
+  }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
   });
+
+  const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
+    setFilterState(newFilterState);
+    setSelectedEntry(undefined);
+  }, []);
 
   if (!networkModel.resources.length)
     return <PlaceholderPanel text='No network calls' />;
@@ -100,6 +107,7 @@ export const NetworkTab: React.FunctionComponent<{
     setSorting={setSorting}
   />;
   return <>
+    <NetworkFilters filterState={filterState} onFilterStateChange={onFilterStateChange} />
     {!selectedEntry && grid}
     {selectedEntry &&
       <SplitView
@@ -344,4 +352,22 @@ function comparator(sortBy: ColumnName) {
 
   if (sortBy === 'contextId')
     return (a: RenderedEntry, b: RenderedEntry) => a.contextId.localeCompare(b.contextId);
+}
+
+const resourceTypePredicates: Record<ResourceType, (contentType: string) => boolean> = {
+  'All': () => true,
+  'Fetch': contentType => contentType === 'application/json',
+  'HTML': contentType => contentType === 'text/html',
+  'CSS': contentType => contentType === 'text/css',
+  'JS': contentType => contentType.includes('javascript'),
+  'Font': contentType => contentType.includes('font'),
+  'Image': contentType => contentType.includes('image'),
+};
+
+function filterEntry({ searchValue, resourceType }: FilterState) {
+  return (entry: RenderedEntry) => {
+    const typePredicate = resourceTypePredicates[resourceType];
+
+    return typePredicate(entry.contentType) && entry.name.url.toLowerCase().includes(searchValue.toLowerCase());
+  };
 }
