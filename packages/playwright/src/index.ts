@@ -261,6 +261,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           title: renderApiCall(apiName, params),
           apiName,
           params,
+          canNestByTime: true,
         });
         userData.userObject = step;
         out.stepId = step.stepId;
