@@ -78,10 +78,10 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    <div className='network-request-details-general' style={{ display: 'flex' }}>
+    {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
       Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
         {`${resource.response.status} ${resource.response.statusText}`}
-      </span></div>
+      </span></div>}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
@@ -118,6 +118,8 @@ const BodyTab: React.FunctionComponent<{
           const formattedBody = formatBody(await response.text(), resource.response.content.mimeType);
           setResponseBody({ text: formattedBody, mimeType: resource.response.content.mimeType });
         }
+      } else {
+        setResponseBody(null);
       }
     };
 

@@ -93,7 +93,7 @@ export const NetworkTab: React.FunctionComponent<{
     columnTitle={columnTitle}
     columnWidths={columnWidths}
     setColumnWidths={setColumnWidths}
-    isError={item => item.status.code >= 400}
+    isError={item => item.status.code >= 400 || item.status.code === -1}
     isInfo={item => !!item.route}
     render={(item, column) => renderCell(item, column)}
     sorting={sorting}
