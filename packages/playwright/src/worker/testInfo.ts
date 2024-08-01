@@ -33,7 +33,7 @@ export interface TestStepInternal {
   complete(result: { error?: Error, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
-  category: 'hook' | 'fixture' | 'test.step' | 'expect' | string;
+  category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'pw:api' | string;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
@@ -252,7 +252,7 @@ export class TestInfoImpl implements TestInfo {
       parentStep = this._findLastStageStep();
     } else {
       parentStep = zones.zoneData<TestStepInternal>('stepZone');
-      if (!parentStep && data.category !== 'test.step') {
+      if (!parentStep && data.category === 'pw:api') {
         // API steps (but not test.step calls) can be nested by time, instead of by stack.
         // However, do not nest chains of route.continue by checking the title.
         parentStep = this._findLastNonFinishedStep(step => step.title !== data.title);
