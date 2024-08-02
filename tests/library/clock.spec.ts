@@ -1060,6 +1060,18 @@ it.describe('stubTimers', () => {
     expect(prev).toBe(0);
   });
 
+  it('replace Event.prototype.timeStamp', async ({ install }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31924' });
+    const clock = install();
+    await clock.runFor(1000);
+    const event1 = new Event('foo');
+    expect(event1.timeStamp).toBe(1000);
+    await clock.runFor(1000);
+    const event2 = new Event('foo');
+    expect(event2.timeStamp).toBe(2000);
+    expect(event1.timeStamp).toBe(1000);
+  });
+
   it('uninstalls global performance.now', async ({ install }) => {
     const oldNow = performance.now;
     const clock = install();
