@@ -348,7 +348,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       expect(browser.isConnected()).toBe(false);
       const error = await page.waitForNavigation().catch(e => e);
-      expect(error.message).toContain(kTargetClosedErrorMessage);
+      expect(error.message).toContain('page.waitForNavigation: Browser closed');
     });
 
     test('should reject navigation when browser closes', async ({ connect, startRemoteServer, server }) => {
