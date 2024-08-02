@@ -392,7 +392,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(pageClosed).toBeTruthy();
     });
 
-    test('should terminate network waiters', async ({ connect, startRemoteServer, server }) => {
+    test('should terminate network waiters', async ({ connect, startRemoteServer, server, browserName }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const newPage = await browser.newPage();
@@ -403,7 +403,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       for (let i = 0; i < 2; i++) {
         const message = results[i].message;
-        expect(message).toContain(kTargetClosedErrorMessage);
+        expect(message).toContain(browserName === 'firefox' ? 'Browser closed' : kTargetClosedErrorMessage);
         expect(message).not.toContain('Timeout');
       }
     });
