@@ -21,6 +21,7 @@ export class amazonPage extends BasePage {
     await this.page.waitForTimeout(2000)
     await this.page.getByPlaceholder("Search Amazon.in").fill(searchText)
     await this.page.getByLabel(searchText).first().click()
+    await this.page.waitForTimeout(2000)
   }
   
 }
