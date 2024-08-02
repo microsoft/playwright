@@ -697,6 +697,14 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Intl = api[method]!;
     } else if (method === 'performance') {
       (globalObject as any).performance = api[method]!;
+      const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
+      Object.defineProperty(Event.prototype, 'timeStamp', {
+        get() {
+          if (!this[kEventTimeStamp])
+            this[kEventTimeStamp] = api.performance?.now();
+          return this[kEventTimeStamp];
+        }
+      });
     } else {
       (globalObject as any)[method] = (...args: any[]) => {
         return (api[method] as any).apply(api, args);
