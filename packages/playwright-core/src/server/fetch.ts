@@ -220,7 +220,7 @@ export abstract class APIRequestContext extends SdkObject {
         let text = fetchResponse.body.toString('utf8');
         if (text.length > 1000)
           text = text.substring(0, 997) + '...';
-        responseText = `\nResponse text:\n${text}`
+        responseText = `\nResponse text:\n${text}`;
       }
       throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
     }
