@@ -214,8 +214,16 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
-      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}`);
+    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
+      let responseText = '';
+      if (fetchResponse.body.byteLength) {
+        let text = fetchResponse.body.toString('utf8');
+        if (text.length > 1000)
+          text = text.substring(0, 997) + '...';
+        responseText = `\nResponse text:\n${text}`;
+      }
+      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
+    }
     return { ...fetchResponse, fetchUid };
   }
 
