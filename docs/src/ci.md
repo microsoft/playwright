@@ -59,7 +59,6 @@ export default defineConfig({
 });
 ```
 
-
 ## CI configurations
 
 ### GitHub Actions
@@ -410,6 +409,46 @@ jobs:
       env:
         # This might depend on your test-runner
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
+```
+
+#### Fail-Fast
+* langs: js
+
+Large test suites can take very long to execute. By executing a preliminary test run with the `--only-changed` flag, you can run test files that are likely to fail first.
+This will give you a faster feedback loop and slightly lower CI consumption while working on Pull Requests.
+To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph. This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
+
+```yml js title=".github/workflows/playwright.yml" {20-23}
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run changed Playwright tests
+      run: npx playwright test --only-changed=$GITHUB_BASE_REF
+      if: github.event_name == 'pull_request'
+    - name: Run Playwright tests
+      run: npx playwright test
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
 ```
 
 ### Docker
