@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./playwright-logo.svg" type="image/svg+xml">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <title>Playwright Trace Viewer</title>
+    <script type="module" crossorigin src="./index.D7JIa5vL.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/testServerConnection-CLJOcN3M.js">
+    <link rel="stylesheet" crossorigin href="./testServerConnection.0WapKERv.css">
+    <link rel="stylesheet" crossorigin href="./index.CrbWWHbf.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <dialog id="fallback-error">
+      <p>The Playwright Trace Viewer must be loaded over the <code>http://</code> or <code>https://</code> protocols.</p>
+      <p>For more information, please see the <a href="https://aka.ms/playwright/trace-viewer-file-protocol">docs</a>.</p>
+    </dialog>
+    <script>
+      if (!/^https?:/.test(window.location.protocol))
+        document.getElementById("fallback-error").show();
+    </script>
+  </body>
+</html>

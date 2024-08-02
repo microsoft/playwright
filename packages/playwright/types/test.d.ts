@@ -367,7 +367,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitly
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
    * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
    * behavior.
    */
@@ -4811,19 +4811,18 @@ export type WorkerFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) =
 type TestFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | TestFixture<R, Args>;
 type WorkerFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | WorkerFixture<R, Args>;
 export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extends KeyValue = {}, PW extends KeyValue = {}> = {
-  [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker', timeout?: number | undefined, title?: string, box?: boolean }];
+  [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker', timeout?: number | undefined }];
 } & {
-  [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test', timeout?: number | undefined, title?: string, box?: boolean }];
+  [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test', timeout?: number | undefined }];
 } & {
-  [K in Exclude<keyof W, keyof PW>]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean }];
+  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 } & {
-  [K in Exclude<keyof T, keyof PT>]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean }];
+  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
-type ClientCertificate = Exclude<BrowserContextOptions['clientCertificates'], undefined>[0];
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
@@ -5201,41 +5200,6 @@ export interface PlaywrightTestOptions {
    *
    */
   colorScheme: ColorScheme;
-  /**
-   * TLS Client Authentication allows the server to request a client certificate and verify it.
-   *
-   * **Details**
-   *
-   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-   * the certificate is valid for.
-   *
-   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-   *
-   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
-   * work by replacing `localhost` with `local.playwright`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   use: {
-   *     clientCertificates: [{
-   *       origin: 'https://example.com',
-   *       certPath: './cert.pem',
-   *       keyPath: './key.pem',
-   *       passphrase: 'mysecretpassword',
-   *     }],
-   *   },
-   * });
-   * ```
-   *
-   */
-  clientCertificates: ClientCertificate[] | undefined;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
    * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
