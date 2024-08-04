@@ -16,7 +16,7 @@
 
 import path from 'path';
 import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
-const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
+import { spawnAsync } from '@playwright-core/utils';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({

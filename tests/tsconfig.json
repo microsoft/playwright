@@ -16,8 +16,9 @@
           "@recorder/*": ["packages/recorder/src/*"],
           "@trace/*": ["packages/trace/src/*"],
           "@web/*": ["packages/web/src/*"],
+          "@playwright-core/*": ["packages/playwright-core/lib/*"],
         },
     },
-    "include": ["**/*.spec.js", "**/*.ts"],
+    "include": ["**/*.spec.js", "**/*.ts", "global.d.ts"],
     "exclude": ["components/", "installation/fixture-scripts/"]
 }

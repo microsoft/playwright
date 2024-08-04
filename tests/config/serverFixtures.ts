@@ -20,7 +20,7 @@ import { TestServer } from './testserver';
 import { TestProxy } from './proxy';
 import type { SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
 
-import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
+import { SocksProxy } from '@playwright-core/common/socksProxy';
 
 export type ServerWorkerOptions = {
   loopback?: string;

@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 import type { AttributeSelector } from '../../packages/playwright-core/src/utils/isomorphic/selectorParser';
-import { parseAttributeSelector } from '../../packages/playwright-core/lib/utils/isomorphic/selectorParser';
+import { parseAttributeSelector } from '@playwright-core/utils/isomorphic/selectorParser';
 
 const parse = (selector: string) => parseAttributeSelector(selector, false);
 const serialize = (parsed: AttributeSelector) => {

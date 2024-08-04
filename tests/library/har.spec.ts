@@ -22,7 +22,7 @@ import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
-const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
+import { createHttp2Server } from '@playwright-core/utils';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');

@@ -20,7 +20,7 @@ import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
-const { createHttpsServer, createHttp2Server } = require('../../packages/playwright-core/lib/utils');
+import { createHttpsServer, createHttp2Server } from '@playwright-core/utils';
 
 type TestOptions = {
   startCCServer(options?: {

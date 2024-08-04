@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { MultiMap } from '../../packages/playwright-core/lib/utils/multimap';
+import { MultiMap } from '@playwright-core/utils';
 import { test, expect } from './pageTest';
 
 function leakedJSHandles(): string {
-  const map = new MultiMap();
+  const map = new MultiMap<Error, string>();
   for (const [h, e] of (globalThis as any).leakedJSHandles) {
     const name = `[${h.worldNameForTest()}] ${h.preview()}`;
     if (name === '[main] UtilityScript' || name === '[utility] UtilityScript' || name === '[electron] UtilityScript' || name === '[main] InjectedScript' || name === '[utility] InjectedScript' || name === '[electron] ElectronModule')

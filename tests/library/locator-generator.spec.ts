@@ -15,8 +15,8 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import { asLocator, asLocators } from '../../packages/playwright-core/lib/utils/isomorphic/locatorGenerators';
-import { locatorOrSelectorAsSelector as parseLocator } from '../../packages/playwright-core/lib/utils/isomorphic/locatorParser';
+import { asLocator, asLocators } from '@playwright-core/utils/isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector as parseLocator } from '@playwright-core/utils/isomorphic/locatorParser';
 import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -27,7 +27,7 @@ function generate(locator: Locator | FrameLocator) {
 
 function generateForSelector(selector: string) {
   const result: any = {};
-  for (const lang of ['javascript', 'python', 'java', 'csharp']) {
+  for (const lang of ['javascript', 'python', 'java', 'csharp'] as const) {
     const locatorString = asLocator(lang, selector, false);
     expect.soft(parseLocator(lang, locatorString, 'data-testid'), lang + ' mismatch').toBe(selector);
     result[lang] = locatorString;
@@ -38,9 +38,9 @@ function generateForSelector(selector: string) {
 async function generateForNode(pageOrFrame: Page | Frame, target: string): Promise<string> {
   const selector = await pageOrFrame.locator(target).evaluate(e => (window as any).playwright.selector(e));
   const result: any = {};
-  for (const lang of ['javascript', 'python', 'java', 'csharp']) {
+  for (const lang of ['javascript', 'python', 'java', 'csharp'] as const) {
     const locatorString = asLocator(lang, selector, false);
-    expect.soft(parseLocator(lang, locatorString)).toBe(selector);
+    expect.soft(parseLocator(lang, locatorString, 'data-testid')).toBe(selector);
     result[lang] = locatorString;
   }
   return result;
@@ -563,24 +563,24 @@ it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
   // Exact
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span")`)).toBe(selector);
-  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world")).locator("span")`)).toBe(selector);
-  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`)).toBe(selector);
-  expect.soft(parseLocator('python', `locator("div").filter(has_text="Goodbye world").locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span")`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world")).locator("span")`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('python', `locator("div").filter(has_text="Goodbye world").locator("span")`, 'data-testid')).toBe(selector);
 
   // Quotes
-  expect.soft(parseLocator('javascript', `locator("div").filter({ hasText: "Goodbye world" }).locator("span")`)).toBe(selector);
-  expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).not.toBe(selector);
+  expect.soft(parseLocator('javascript', `locator("div").filter({ hasText: "Goodbye world" }).locator("span")`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`, 'data-testid')).not.toBe(selector);
 
   // Whitespace
-  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasText =    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
-  expect.soft(parseLocator('java', `  locator("div"  ).  filter(  new    Locator. FilterOptions    ( ) .setHasText(   "Goodbye world" ) ).locator(   "span")`)).toBe(selector);
-  expect.soft(parseLocator('javascript', `locator\n('div')\n\n.filter({ hasText  : 'Goodbye world'\n }\n).locator('span')\n`)).toBe(selector);
-  expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasText =    "Goodbye world" }).Locator(  "span"   )`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('java', `  locator("div"  ).  filter(  new    Locator. FilterOptions    ( ) .setHasText(   "Goodbye world" ) ).locator(   "span")`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('javascript', `locator\n('div')\n\n.filter({ hasText  : 'Goodbye world'\n }\n).locator('span')\n`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`, 'data-testid')).toBe(selector);
 
   // Extra symbols
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
-  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
-  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
-  expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`, 'data-testid')).not.toBe(selector);
+  expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world"))..locator("span")`, 'data-testid')).not.toBe(selector);
+  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`, 'data-testid')).not.toBe(selector);
+  expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`, 'data-testid')).not.toBe(selector);
 });

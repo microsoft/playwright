@@ -17,7 +17,7 @@
 import type http from 'http';
 import path from 'path';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
-import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
+import { createHttpServer } from '@playwright-core/utils';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
 

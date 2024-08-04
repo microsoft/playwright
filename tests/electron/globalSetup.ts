@@ -15,7 +15,7 @@
  */
 
 import assert from 'assert';
-import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
+import { spawnAsync } from '@playwright-core/utils';
 
 export default async () => {
   const result = await spawnAsync('npx', ['electron', require.resolve('./electron-print-chromium-version.js'), '--no-sandbox'], {

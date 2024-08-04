@@ -19,8 +19,7 @@ import type { Server } from 'http';
 import type http from 'http';
 import https from 'https';
 import path from 'path';
-import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
-import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
+import { spawnAsync, createHttpServer } from '@playwright-core/utils';
 
 const kPublicNpmRegistry = 'https://registry.npmjs.org';
 const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
