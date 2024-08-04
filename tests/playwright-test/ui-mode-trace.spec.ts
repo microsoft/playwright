@@ -112,7 +112,7 @@ test('should locate sync assertions in source', async ({ runUITest }) => {
   });
 
   await page.getByText('trace test').dblclick();
-  await page.getByText('expect.toBe').click();
+  await page.getByTestId('actions-tree').getByRole('listitem').filter({ hasText: 'expect.toBe' }).click();
 
   await expect(
       page.locator('.CodeMirror .source-line-running'),

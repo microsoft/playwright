@@ -22,15 +22,14 @@ type ToolbarProps = {
   noShadow?: boolean;
   noMinHeight?: boolean;
   className?: string;
-  onClick?: (e: React.MouseEvent) => void;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 export const Toolbar: React.FC<React.PropsWithChildren<ToolbarProps>> = ({
   noShadow,
   children,
   noMinHeight,
   className,
-  onClick,
+  ...props
 }) => {
-  return <div className={clsx('toolbar', noShadow && 'no-shadow', noMinHeight && 'no-min-height', className)} onClick={onClick}>{children}</div>;
+  return <div className={clsx('toolbar', noShadow && 'no-shadow', noMinHeight && 'no-min-height', className)} {...props}>{children}</div>;
 };

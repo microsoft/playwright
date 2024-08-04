@@ -291,6 +291,14 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
 test('should popup snapshot', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
+  });
+  await traceViewer.snapshotFrame('page.goto');
+  await expect(traceViewer.page.getByTestId('snapshot-breadcrumb')).toHaveText('page.goto');
+});
+
+test('should show active action title', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
     await page.setContent('hello');
   });
   await traceViewer.snapshotFrame('page.setContent');

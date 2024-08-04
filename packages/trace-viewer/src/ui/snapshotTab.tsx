@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, prevInList } from './modelUtil';
+import { context, parentAction, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure } from '@web/uiUtils';
@@ -50,7 +50,7 @@ export const SnapshotTab: React.FunctionComponent<{
 
     // if the action has no beforeSnapshot, use the last available afterSnapshot.
     let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
-    let a = action;
+    let a: ActionTraceEvent | undefined = action;
     while (!beforeSnapshot && a) {
       a = prevInList(a);
       beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
@@ -180,27 +180,51 @@ export const SnapshotTab: React.FunctionComponent<{
       setHighlightedLocator={setHighlightedLocator}
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
-    <Toolbar>
-      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
-      {['action', 'before', 'after'].map(tab => {
-        return <TabbedPaneTab
-          id={tab}
-          title={renderTitle(tab)}
-          selected={snapshotTab === tab}
-          onSelect={() => setSnapshotTab(tab as 'action' | 'before' | 'after')}
-        ></TabbedPaneTab>;
-      })}
-      <div style={{ flex: 'auto' }}></div>
-      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
-        if (!openPage)
-          openPage = window.open;
-        const win = openPage(popoutUrl || '', '_blank');
-        win?.addEventListener('DOMContentLoaded', () => {
-          const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-          new ConsoleAPI(injectedScript);
-        });
-      }}></ToolbarButton>
-    </Toolbar>
+    <div className='hbox' style={{ flex: '0 0 auto' }}>
+      <Toolbar style={{
+        flex: '0 1 0',
+        minWidth: 'min-content',
+        flexGrow: 1
+      }}>
+        <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
+        {['action', 'before', 'after'].map(tab => {
+          return <TabbedPaneTab
+            id={tab}
+            title={renderTitle(tab)}
+            selected={snapshotTab === tab}
+            onSelect={() => setSnapshotTab(tab as 'action' | 'before' | 'after')}
+          ></TabbedPaneTab>;
+        })}
+      </Toolbar>
+      <Toolbar
+        style={{
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          direction: 'rtl',
+          flexGrow: 0,
+          flexShrink: 1,
+        }}
+        data-testid='snapshot-breadcrumb'>
+        {actionToBreadcrumb(action)}
+      </Toolbar>
+      <Toolbar style={{
+        flex: '0 1 0',
+        minWidth: 'min-content',
+        flexGrow: 1,
+        justifyContent: 'flex-end',
+      }}>
+        <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
+          if (!openPage)
+            openPage = window.open;
+          const win = openPage(popoutUrl || '', '_blank');
+          win?.addEventListener('DOMContentLoaded', () => {
+            const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+            new ConsoleAPI(injectedScript);
+          });
+        }}></ToolbarButton>
+      </Toolbar>
+    </div>
     <div ref={ref} className='snapshot-wrapper'>
       <div className='snapshot-container' style={{
         width: snapshotContainerSize.width + 'px',
@@ -216,6 +240,17 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
   </div>;
 };
+
+function actionToBreadcrumb(action: ActionTraceEvent | undefined): React.ReactNode {
+  if (!action)
+    return '';
+  const parts = [];
+  while (action) {
+    parts.push(action.apiName);
+    action = parentAction(action);
+  }
+  return parts.reverse().join(' › ');
+}
 
 function renderTitle(snapshotTitle: string): string {
   if (snapshotTitle === 'before')
