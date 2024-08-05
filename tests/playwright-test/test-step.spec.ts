@@ -542,7 +542,7 @@ fixture   |  fixture: browser
 `);
 });
 
-test('should nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
+test('should not nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
@@ -566,7 +566,7 @@ fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 pw:api    |page.route @ a.test.ts:4
 pw:api    |page.goto(http://localhost:1234) @ a.test.ts:5
-pw:api    |  route.fulfill @ a.test.ts:4
+pw:api    |route.fulfill @ a.test.ts:4
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1154,7 +1154,7 @@ pw:api    |    browserContext.newPage
 fixture   |  fixture: request
 pw:api    |    apiRequest.newContext
 pw:api    |page.waitForNavigation @ a.test.ts:5
-pw:api    |  page.goto(data:text/html,<button></button>) @ a.test.ts:6
+pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
 pw:api    |page.click(button) @ a.test.ts:8
 pw:api    |locator.getByRole('button').click @ a.test.ts:9
 pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:10
