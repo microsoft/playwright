@@ -19,7 +19,7 @@ import * as os from 'os';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import * as path from 'path';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import { removeFolders } from '../typed-imports/playwright-core/utils';
+import { removeFolders } from '../typed-imports';
 import { baseTest } from './baseTest';
 import { type RemoteServerOptions, type PlaywrightServer, RunServer, RemoteServer } from './remoteServer';
 import type { Log } from '../../packages/trace/src/har';

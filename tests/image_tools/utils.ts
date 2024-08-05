@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PNG } from '../typed-imports/playwright-core/utilsBundle';
+import { PNG } from '../typed-imports';
 import { ImageChannel } from 'playwright-core/lib/image_tools/imageChannel';
 
 // mulberry32

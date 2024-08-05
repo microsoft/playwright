@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 import type { AttributeSelector } from '../../packages/playwright-core/src/selectorParser';
-import { parseAttributeSelector } from '../typed-imports/playwright-core/selectorParser';
+import { parseAttributeSelector } from '../typed-imports';
 
 const parse = (selector: string) => parseAttributeSelector(selector, false);
 const serialize = (parsed: AttributeSelector) => {

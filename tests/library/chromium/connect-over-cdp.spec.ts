@@ -18,7 +18,7 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
-import { getUserAgent } from '../../typed-imports/playwright-core/utils';
+import { getUserAgent } from '../../typed-imports';
 import { suppressCertificateWarning } from '../../config/utils';
 
 test.skip(({ mode }) => mode === 'service2');

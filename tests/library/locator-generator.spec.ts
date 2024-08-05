@@ -15,8 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import { asLocator, asLocators } from '../typed-imports/playwright-core/locatorGenerators';
-import { locatorOrSelectorAsSelector as parseLocator } from '../typed-imports/playwright-core/locatorParser';
+import { asLocator, asLocators, locatorOrSelectorAsSelector as parseLocator  } from '../typed-imports';
 import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
 it.skip(({ mode }) => mode !== 'default');

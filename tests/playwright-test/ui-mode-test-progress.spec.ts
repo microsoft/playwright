@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '../typed-imports/playwright-core/utils';
+import { ManualPromise } from '../typed-imports';
 import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });

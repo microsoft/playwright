@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from '../playwright-test/stable-test-runner';
-import { PNG } from '../typed-imports/playwright-core/utilsBundle';
+import { PNG } from '../typed-imports';
 import { compare } from 'playwright-core/lib/image_tools/compare';
 import fs from 'fs';
 import path from 'path';

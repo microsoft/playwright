@@ -22,7 +22,7 @@
 
 import events from 'events';
 import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
-import { setUnderTest } from '../../typed-imports/playwright-core/utils';
+import { setUnderTest } from '../../typed-imports';
 import { test, expect } from '@playwright/test';
 import * as common from './utils';
 

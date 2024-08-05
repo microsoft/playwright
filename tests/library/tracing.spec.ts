@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { jpegjs } from '../typed-imports/playwright-core/utilsBundle';
+import { jpegjs } from '../typed-imports';
 import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTraceRaw } from '../config/utils';

@@ -19,9 +19,8 @@ import fs from 'fs';
 import path from 'path';
 import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
-import { PNG, jpegjs } from '../typed-imports/playwright-core/utilsBundle';
+import { PNG, jpegjs, rewriteErrorMessage } from '../typed-imports';
 import { registry } from '../../packages/playwright-core/lib/server';
-import { rewriteErrorMessage } from '../typed-imports/playwright-core/utils';
 import { parseTraceRaw } from '../config/utils';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
