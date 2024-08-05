@@ -40,7 +40,7 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      const { fileDependencies } = require(path.join(path.dirname(require.resolve('playwright')), 'lib/internalsForTest.js'));
       export default () => {
         console.log('###' + JSON.stringify(fileDependencies()) + '###');
       };
