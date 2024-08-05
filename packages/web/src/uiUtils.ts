@@ -141,17 +141,25 @@ export function copy(text: string) {
 
 export type Setting<T> = readonly [T, (value: T) => void, string];
 
-export function useSetting<S>(name: string, defaultValue: S, title?: string): [S, (v: S) => void, Setting<S>] {
-  const subscribe = React.useCallback((onStoreChange: () => void) => {
-    settings.onChangeEmitter.addEventListener(name, onStoreChange);
-    return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
-  }, [name]);
 
-  const value = React.useSyncExternalStore(subscribe, () => settings.getObject(name, defaultValue));
+export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
+  if (name)
+    defaultValue = settings.getObject(name, defaultValue);
+  const [value, setValue] = React.useState<S>(defaultValue);
+  const setValueWrapper = React.useCallback((value: React.SetStateAction<S>) => {
+    if (name)
+      settings.setObject(name, value);
+    else
+      setValue(value);
+  }, [name, setValue]);
 
-  const setValueWrapper = React.useCallback((value: S) => {
-    settings.setObject(name, value);
-  }, [name]);
+  React.useEffect(() => {
+    if (name) {
+      const onStoreChange = () => setValue(settings.getObject(name, defaultValue));
+      settings.onChangeEmitter.addEventListener(name, onStoreChange);
+      return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
+    }
+  }, [defaultValue, name]);
 
   const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
   return [value, setValueWrapper, setting];
