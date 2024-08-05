@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.6.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.10.0" />
   </ItemGroup>
 
 </Project>
