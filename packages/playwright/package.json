@@ -28,6 +28,7 @@
     "./lib/runner/testServer": "./lib/runner/testServer.js",
     "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
     "./lib/transform/transform": "./lib/transform/transform.js",
+    "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",
