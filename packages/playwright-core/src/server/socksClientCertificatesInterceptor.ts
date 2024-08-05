@@ -22,7 +22,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { isUnderTest, ManualPromise } from '../utils';
+import { ManualPromise } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -152,8 +152,6 @@ class SocksProxyConnection {
         };
         if (!net.isIP(this.host))
           tlsOptions.servername = this.host;
-        if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
-          tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
         const targetTLS = tls.connect(tlsOptions);
 
         targetTLS.on('secureConnect', () => {
