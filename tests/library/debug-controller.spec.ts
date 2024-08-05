@@ -16,7 +16,7 @@
 
 import { expect, playwrightTest as baseTest } from '../config/browserTest';
 import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/playwrightServer';
-import { createGuid } from '@playwright-core/utils';
+import { createGuid } from '../typed-imports/playwright-core/utils';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';

@@ -20,13 +20,13 @@ import os from 'os';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent, getPlaywrightVersion } from '@playwright-core/utils';
+import { getUserAgent, getPlaywrightVersion } from '../typed-imports/playwright-core/utils';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
-import { createHttpServer } from '@playwright-core/utils';
+import { createHttpServer } from '../typed-imports/playwright-core/utils';
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { RunServer } from '../config/remoteServer';
 

@@ -16,7 +16,7 @@
  */
 
 import { expect, browserTest } from '../config/browserTest';
-import { PNG } from '@playwright-core/utilsBundle';
+import { PNG } from '../typed-imports/playwright-core/utilsBundle';
 import { verifyViewport } from '../config/utils';
 
 browserTest.describe('page screenshot', () => {

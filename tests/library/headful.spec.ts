@@ -15,7 +15,7 @@
  */
 
 import { compare } from 'playwright-core/lib/image_tools/compare';
-import { PNG } from '@playwright-core/utilsBundle';
+import { PNG } from '../typed-imports/playwright-core/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
 it.use({ headless: false });

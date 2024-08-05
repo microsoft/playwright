@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { MultiMap } from '@playwright-core/utils';
+import { MultiMap } from '../typed-imports/playwright-core/utils';
 import { test, expect } from './pageTest';
 
 function leakedJSHandles(): string {

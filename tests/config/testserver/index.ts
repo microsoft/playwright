@@ -24,7 +24,7 @@ import url from 'url';
 import util from 'util';
 import ws from 'ws';
 import zlib, { gzip } from 'zlib';
-import { createHttpServer, createHttpsServer } from '@playwright-core/utils';
+import { createHttpServer, createHttpsServer } from '../../typed-imports/playwright-core/utils';
 
 const fulfillSymbol = Symbol('fulfil callback');
 const rejectSymbol = Symbol('reject callback');

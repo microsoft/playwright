@@ -21,7 +21,7 @@ import { test as baseTest, expect as baseExpect, createImage } from './playwrigh
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
 import { msToString } from '../../packages/web/src/uiUtils';
-import { spawnAsync } from '@playwright-core/utils';
+import { spawnAsync } from '../typed-imports/playwright-core/utils';
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {

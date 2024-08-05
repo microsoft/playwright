@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { join } from 'path';
-import { PNG } from '@playwright-core/utilsBundle';
+import { PNG } from '../typed-imports/playwright-core/utilsBundle';
 
 import { androidTest as test, expect } from './androidTest';
 

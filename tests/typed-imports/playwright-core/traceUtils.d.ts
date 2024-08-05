@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
-import { spawnAsync } from '../typed-imports/playwright-core/utils';
-
-export default async () => {
-  const result = await spawnAsync('npx', ['electron', require.resolve('./electron-print-chromium-version.js'), '--no-sandbox'], {
-    shell: true,
-  });
-  const chromiumVersion = result.stdout.trim();
-  assert(result.code === 0);
-  assert(chromiumVersion.length > 0);
-  process.env.ELECTRON_CHROMIUM_VERSION = chromiumVersion;
-};
+export * from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
