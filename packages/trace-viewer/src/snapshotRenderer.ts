@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
 
 function isNodeNameAttributesChildNodesSnapshot(n: NodeSnapshot): n is NodeNameAttributesChildNodesSnapshot {
@@ -57,7 +58,7 @@ export class SnapshotRenderer {
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
           return rewriteURLsInStyleSheetForCustomProtocol(n);
-        return escapeText(n);
+        return escapeHTML(n);
       }
 
       if (!(n as any)._string) {
@@ -106,7 +107,7 @@ export class SnapshotRenderer {
               attrValue = 'link://' + value;
             else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
               attrValue = rewriteURLForCustomProtocol(value);
-            builder.push(' ', attrName, '="', escapeAttribute(attrValue), '"');
+            builder.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
           }
           builder.push('>');
           for (const child of children)
@@ -193,14 +194,6 @@ export class SnapshotRenderer {
 }
 
 const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-
-function escapeAttribute(s: string): string {
-  return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
-}
-function escapeText(s: string): string {
-  return s.replace(/[&<]/ug, char => (escaped as any)[char]);
-}
 
 function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   if (!(snapshot as any)._nodes) {

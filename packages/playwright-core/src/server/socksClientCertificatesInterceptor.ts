@@ -22,7 +22,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { ManualPromise, rewriteErrorMessage } from '../utils';
+import { escapeHTML, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -152,7 +152,9 @@ class SocksProxyConnection {
         const handleError = (error: Error) => {
           error = rewriteOpenSSLErrorIfNeeded(error);
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
-          const responseBody = 'Playwright client-certificate error: ' + error.message.replaceAll('\n', '<br>');
+          const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
+              .replaceAll('\n', ' <br>')
+              .replaceAll(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
           if (internalTLS?.alpnProtocol === 'h2') {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
@@ -304,11 +306,8 @@ export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
     return error;
   return rewriteErrorMessage(error, [
     'Unsupported TLS certificate.',
-    'Node.js (OpenSSL) has deprecated certifiates with the security algorithm of the given client-certifiate.',
-    'To fix this issue, you need to modernise the certificates by running the following command:',
-    'openssl pkcs12 -in oldPfxFile.pfx -nodes -legacy -out decryptedPfxFile.tmp',
-    'openssl pkcs12 -in decryptedPfxFile.tmp -export -out newPfxFile.pfx',
-    'Then, you can use the newPfxFile.pfx in your client-certificates configuration.',
-    'For more information, please refer to OpenSSL: https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
+    'Most likely, the security algorithm of the given certificate was deprecated by OpenSSL.',
+    'For more details, see https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
+    'You could probably modernize the certificate by following the steps at https://github.com/nodejs/node/issues/40672#issuecomment-1243648223',
   ].join('\n'));
 }

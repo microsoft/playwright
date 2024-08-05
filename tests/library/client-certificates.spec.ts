@@ -200,7 +200,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should pass with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
+  test('should fail with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -317,7 +317,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName }) => {
+  test('should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
