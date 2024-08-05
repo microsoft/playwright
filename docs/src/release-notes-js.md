@@ -33,6 +33,18 @@ export default defineConfig({
 
 You can also provide client certificates to a particular [test project](./api/class-testproject#test-project-use) or as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
 
+### `--only-changed` cli option
+
+New CLI option `--only-changed` allows to only run test files that have been changed since the last git commit or from a specific git "ref".
+
+```sh
+# Only run test files with uncommitted changes
+npx playwright test --only-changed
+
+# Only run test files changed relative to the "main" branch
+npx playwrigh test --only-changed=main
+```
+
 ### Component Testing: New `router` fixture
 
 This release introduces an experimental `router` fixture to intercept and handle network requests in component testing.
@@ -59,29 +71,24 @@ test('example test', async ({ mount }) => {
 
 This fixture is only available in [component tests](./test-components#handling-network-requests).
 
-### Test runner
-
-- New CLI option `--only-changed` to only run test files that have been changed since the last commit or from a specific git "ref".
-- New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
-- New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
-
 ### UI Mode / Trace Viewer Updates
 
-- New testing options pane in the UI mode to control test execution, for example "single worker" or "headed browser".
-- New setting to show/hide routing actions like `route.continue`.
+- Test annotations are now shown in UI mode.
+- Content of text attachments is now rendered inline in the attachments pane.
+- New setting to show/hide routing actions like [`method: Route.continue`].
 - Request method and status are shown in the network details tab.
 - New button to copy source file location to clipboard.
-- Content of text attachments is now rendered inline in the attachments pane.
 - Metadata pane now displays the `baseURL`.
 
 ### Miscellaneous
 
 - New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
-- Improved link rendering inside annotations and attachments in the html report.
+- New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
+- New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
 
 ### Browser Versions
 
-- Chromium 128.0.6613.7
+- Chromium 128.0.6613.18
 - Mozilla Firefox 128.0
 - WebKit 18.0
 
