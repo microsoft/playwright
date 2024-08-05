@@ -40,7 +40,7 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { kMaxCookieExpiresDateInSeconds } from './network';
-import { clientCertificatesToTLSOptions } from './socksClientCertificatesInterceptor';
+import { clientCertificatesToTLSOptions, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -452,7 +452,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
-      request.on('error', reject);
+      request.on('error', error => reject(rewriteOpenSSLErrorIfNeeded(error)));
 
       const disposeListener = () => {
         reject(new Error('Request context disposed.'));

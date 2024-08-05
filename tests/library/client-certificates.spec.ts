@@ -169,6 +169,51 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
+  test('pass with trusted client certificates in pfx format', async ({ playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer();
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert.pfx'),
+        passphrase: 'secure'
+      }],
+    });
+    const response = await request.get(serverURL);
+    expect(response.url()).toBe(serverURL);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
+    await request.dispose();
+  });
+
+  test('should throw a http error if the pfx passphrase is incorect', async ({ playwright, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert.pfx'),
+        passphrase: 'this-password-is-incorrect'
+      }],
+    });
+    await expect(request.get(serverURL)).rejects.toThrow('mac verify failure');
+    await request.dispose();
+  });
+
+  test('should fail with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert-legacy.pfx'),
+        passphrase: 'secure'
+      }],
+    });
+    await expect(request.get(serverURL)).rejects.toThrow('Unsupported TLS certificate');
+    await request.dispose();
+  });
+
   test('should work in the browser with request interception', async ({ browser, playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
@@ -269,6 +314,21 @@ test.describe('browser', () => {
     });
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
+  test('should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert-legacy.pfx'),
+        passphrase: 'secure'
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByText('Unsupported TLS certificate.')).toBeVisible();
     await page.close();
   });
 
