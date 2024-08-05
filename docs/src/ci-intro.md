@@ -59,7 +59,7 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
     - uses: actions/upload-artifact@v4
-      if: always()
+      if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
