@@ -22,7 +22,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { ManualPromise } from '../utils';
+import { ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -150,8 +150,9 @@ class SocksProxyConnection {
         };
 
         const handleError = (error: Error) => {
-          debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
-          const responseBody = 'Playwright client-certificate error: ' + error.message;
+          error = rewriteOpenSSLErrorIfNeeded(error);
+          debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
+          const responseBody = 'Playwright client-certificate error: ' + error.message.replaceAll('\n', '<br>');
           if (internalTLS?.alpnProtocol === 'h2') {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
@@ -296,4 +297,18 @@ export function clientCertificatesToTLSOptions(
 
 function rewriteToLocalhostIfNeeded(host: string): string {
   return host === 'local.playwright' ? 'localhost' : host;
+}
+
+export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
+  if (error.message !== 'unsupported')
+    return error;
+  return rewriteErrorMessage(error, [
+    'Unsupported TLS certificate.',
+    'Node.js (OpenSSL) has deprecated certifiates with the security algorithm of the given client-certifiate.',
+    'To fix this issue, you need to modernise the certificates by running the following command:',
+    'openssl pkcs12 -in oldPfxFile.pfx -nodes -legacy -out decryptedPfxFile.tmp',
+    'openssl pkcs12 -in decryptedPfxFile.tmp -export -out newPfxFile.pfx',
+    'Then, you can use the newPfxFile.pfx in your client-certificates configuration.',
+    'For more information, please refer to OpenSSL: https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
+  ].join('\n'));
 }
