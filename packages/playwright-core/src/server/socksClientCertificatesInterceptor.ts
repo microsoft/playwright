@@ -153,8 +153,7 @@ class SocksProxyConnection {
           error = rewriteOpenSSLErrorIfNeeded(error);
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
           const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
-              .replaceAll('\n', ' <br>')
-              .replaceAll(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+              .replaceAll('\n', ' <br>');
           if (internalTLS?.alpnProtocol === 'h2') {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
