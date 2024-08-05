@@ -142,34 +142,14 @@ class SocksProxyConnection {
       dummyServer.emit('connection', this.internal);
       dummyServer.on('secureConnection', internalTLS => {
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
-        const tlsOptions: tls.ConnectionOptions = {
-          socket: this.target,
-          host: this.host,
-          port: this.port,
-          rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
-          ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
-          ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin),
-        };
-        if (!net.isIP(this.host))
-          tlsOptions.servername = this.host;
-        const targetTLS = tls.connect(tlsOptions);
 
-        targetTLS.on('secureConnect', () => {
-          internalTLS.pipe(targetTLS);
-          targetTLS.pipe(internalTLS);
-        });
-
-        // Handle close and errors
+        let targetTLS: tls.TLSSocket | undefined = undefined;
         const closeBothSockets = () => {
           internalTLS.end();
-          targetTLS.end();
+          targetTLS?.end();
         };
 
-        internalTLS.on('end', () => closeBothSockets());
-        targetTLS.on('end', () => closeBothSockets());
-
-        internalTLS.on('error', () => closeBothSockets());
-        targetTLS.on('error', error => {
+        const handleError = (error: Error) => {
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
           const responseBody = 'Playwright client-certificate error: ' + error.message;
           if (internalTLS?.alpnProtocol === 'h2') {
@@ -204,7 +184,38 @@ class SocksProxyConnection {
             ].join('\r\n'));
             closeBothSockets();
           }
+        };
+
+        let secureContext: tls.SecureContext;
+        try {
+          secureContext = tls.createSecureContext(clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin));
+        } catch (error) {
+          handleError(error);
+          return;
+        }
+
+        const tlsOptions: tls.ConnectionOptions = {
+          socket: this.target,
+          host: this.host,
+          port: this.port,
+          rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+          ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
+          servername: !net.isIP(this.host) ? this.host : undefined,
+          secureContext,
+        };
+
+        targetTLS = tls.connect(tlsOptions);
+
+        targetTLS.on('secureConnect', () => {
+          internalTLS.pipe(targetTLS);
+          targetTLS.pipe(internalTLS);
         });
+
+        internalTLS.on('end', () => closeBothSockets());
+        targetTLS.on('end', () => closeBothSockets());
+
+        internalTLS.on('error', () => closeBothSockets());
+        targetTLS.on('error', handleError);
       });
     });
   }

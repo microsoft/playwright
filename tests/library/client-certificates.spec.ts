@@ -257,6 +257,36 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert.pfx'),
+        passphrase: 'secure'
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
+  test('should throw a http error if the pfx passphrase is incorect', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        pfxPath: asset('client-certificates/client/trusted/cert.pfx'),
+        passphrase: 'this-password-is-incorrect'
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByText('Playwright client-certificate error: mac verify failure')).toBeVisible();
+    await page.close();
+  });
+
   test('should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer({ host: '127.0.0.1' });
     const baseOptions = {
