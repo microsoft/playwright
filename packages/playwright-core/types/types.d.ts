@@ -3760,7 +3760,8 @@ export interface Page {
 
     /**
      * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
-     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+     * `minimal`.
      */
     updateMode?: "full"|"minimal";
 
