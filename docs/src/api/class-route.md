@@ -39,7 +39,7 @@ Optional error code. Defaults to `failed`, could be one of the following:
   - alias-java: resume
   - alias-python: continue_
 
-Continues route's request with optional overrides.
+Sends route's request to the network with optional overrides.
 
 **Usage**
 
@@ -104,6 +104,8 @@ await page.RouteAsync("**/*", async route =>
 
 Note that any overrides such as [`option: url`] or [`option: headers`] only apply to the request being routed. If this request results in a redirect, overrides will not be applied to the new redirected request. If you want to propagate a header through redirects, use the combination of [`method: Route.fetch`] and [`method: Route.fulfill`] instead.
 
+[`method: Route.continue`] will immediately send the request to the network, other matching handlers won't be invoked. Use [`method: Route.fallback`] If you want next matching handler in the chain to be invoked.
+
 ### option: Route.continue.url
 * since: v1.8
 - `url` <[string]>
@@ -146,12 +148,14 @@ If set changes the request HTTP headers. Header values will be converted to a st
 ## async method: Route.fallback
 * since: v1.23
 
+Continues route's request with optional overrides. The method is similar to [`method: Route.continue`] with the difference that other matching handlers will be invoked before sending the request.
+
+**Usage**
+
 When several routes match the given pattern, they run in the order opposite to their registration.
 That way the last registered route can always override all the previous ones. In the example below,
 request will be handled by the bottom-most handler first, then it'll fall back to the previous one and
 in the end will be aborted by the first registered route.
-
-**Usage**
 
 ```js
 await page.route('**/*', async route => {
@@ -385,6 +389,8 @@ await page.RouteAsync("**/*", async route =>
     await route.FallbackAsync(new() { Headers = headers });
 });
 ```
+
+Use [`method: Route.continue`] to immediately send the request to the network, other matching handlers won't be invoked in that case.
 
 ### option: Route.fallback.url
 * since: v1.23

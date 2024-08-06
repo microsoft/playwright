@@ -19440,7 +19440,7 @@ export interface Route {
   abort(errorCode?: string): Promise<void>;
 
   /**
-   * Continues route's request with optional overrides.
+   * Sends route's request to the network with optional overrides.
    *
    * **Usage**
    *
@@ -19463,6 +19463,11 @@ export interface Route {
    * through redirects, use the combination of
    * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
    * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
+   *
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) will immediately send the
+   * request to the network, other matching handlers won't be invoked. Use
+   * [route.fallback([options])](https://playwright.dev/docs/api/class-route#route-fallback) If you want next matching
+   * handler in the chain to be invoked.
    * @param options
    */
   continue(options?: {
@@ -19488,12 +19493,16 @@ export interface Route {
   }): Promise<void>;
 
   /**
+   * Continues route's request with optional overrides. The method is similar to
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) with the difference that
+   * other matching handlers will be invoked before sending the request.
+   *
+   * **Usage**
+   *
    * When several routes match the given pattern, they run in the order opposite to their registration. That way the
    * last registered route can always override all the previous ones. In the example below, request will be handled by
    * the bottom-most handler first, then it'll fall back to the previous one and in the end will be aborted by the first
    * registered route.
-   *
-   * **Usage**
    *
    * ```js
    * await page.route('**\/*', async route => {
@@ -19550,6 +19559,8 @@ export interface Route {
    * });
    * ```
    *
+   * Use [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) to immediately send the
+   * request to the network, other matching handlers won't be invoked in that case.
    * @param options
    */
   fallback(options?: {
