@@ -66,7 +66,7 @@ jobs:
         retention-days: 30
 ```
 
-If this doesn't make sense to you, give GitHub's [Understanding GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) guide a read. Looking at the list of steps in `jobs.test.steps`, you can see that the workflow performs these steps:
+The workflow performs these steps:
 
 1. Clone your repository
 2. Install Node.js
@@ -74,6 +74,8 @@ If this doesn't make sense to you, give GitHub's [Understanding GitHub Actions](
 4. Install Playwright Browsers
 5. Run Playwright tests
 6. Upload HTML report to the GitHub UI
+
+To learn more about this, see ["Understanding GitHub Actions"](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
 
 ## Setting up GitHub Actions
 * langs: python, java, csharp
