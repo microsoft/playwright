@@ -43,12 +43,8 @@ export const SplitView: React.FC<SplitViewProps> = ({
   main,
 }) => {
   const defaultSize = Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio;
-  const hSetting = useSetting<number>((settingName ?? 'unused') + '.' + orientation + ':size', defaultSize);
-  const vSetting = useSetting<number>((settingName ?? 'unused') + '.' + orientation + ':size', defaultSize);
-  const hState = React.useState(defaultSize);
-  const vState = React.useState(defaultSize);
-  const [hSize, setHSize] = settingName ? hSetting : hState;
-  const [vSize, setVSize] = settingName ? vSetting : vState;
+  const [hSize, setHSize] = useSetting<number>(settingName ? settingName + '.' + orientation + ':size' : undefined, defaultSize);
+  const [vSize, setVSize] = useSetting<number>(settingName ? settingName + '.' + orientation + ':size' : undefined, defaultSize);
 
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
   const [measure, ref] = useMeasure<HTMLDivElement>();
@@ -80,8 +76,8 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
   return <div className={clsx('split-view', orientation, sidebarIsFirst && 'sidebar-first')} ref={ref}>
     <div className='split-view-main'>{main}</div>
-    { !sidebarHidden && <div style={{ flexBasis: size }} className='split-view-sidebar'>{sidebar}</div> }
-    { !sidebarHidden && <div
+    {!sidebarHidden && <div style={{ flexBasis: size }} className='split-view-sidebar'>{sidebar}</div>}
+    {!sidebarHidden && <div
       style={resizerStyle}
       className='split-view-resizer'
       onMouseDown={event => setResizing({ offset: orientation === 'vertical' ? event.clientY : event.clientX, size })}
@@ -103,6 +99,6 @@ export const SplitView: React.FC<SplitViewProps> = ({
             setHSize(size * window.devicePixelRatio);
         }
       }}
-    ></div> }
+    ></div>}
   </div>;
 };
