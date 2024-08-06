@@ -19424,6 +19424,11 @@ export interface Route {
    * through redirects, use the combination of
    * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
    * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
+   *
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) will immediately send the
+   * request to the netwok, other matching handlers won't be invoked. Use
+   * [route.fallback([options])](https://playwright.dev/docs/api/class-route#route-fallback) If you want next matching
+   * handler in the chain to be invoked.
    * @param options
    */
   continue(options?: {
