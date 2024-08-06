@@ -21,7 +21,7 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert, createGuid } from '../../utils';
 import * as network from '../network';
-import type { InitScript, PageBinding, PageDelegate, Worker } from '../page';
+import type { InitScript, PageDelegate, Worker } from '../page';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
@@ -491,19 +491,9 @@ export class CRBrowserContext extends BrowserContext {
       await (page._delegate as CRPage).addInitScript(initScript);
   }
 
-  async doRemoveInitScripts() {
+  async doRemoveNonInternalInitScripts() {
     for (const page of this.pages())
-      await (page._delegate as CRPage).removeInitScripts();
-  }
-
-  async doExposeBinding(binding: PageBinding) {
-    for (const page of this.pages())
-      await (page._delegate as CRPage).exposeBinding(binding);
-  }
-
-  async doRemoveExposedBindings() {
-    for (const page of this.pages())
-      await (page._delegate as CRPage).removeExposedBindings();
+      await (page._delegate as CRPage).removeNonInternalInitScripts();
   }
 
   async doUpdateRequestInterception(): Promise<void> {
