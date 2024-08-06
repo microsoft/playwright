@@ -781,6 +781,16 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## remove-all-listeners-options-behavior
+* langs: js
+* since: v1.47
+- `behavior` <[RemoveAllListenersBehavior]<"wait"|"ignoreErrors"|"default">>
+
+Specifies whether to wait for already running listeners and what to do if they throw errors:
+* `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+* `'wait'` - wait for current listener calls (if any) to finish
+* `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+
 ## unroute-all-options-behavior
 * langs: js, csharp, python
 * since: v1.41
@@ -790,6 +800,7 @@ Specifies whether to wait for already running handlers and what to do if they th
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
 * `'wait'` - wait for current handler calls (if any) to finish
 * `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers after unrouting are silently caught
+
 
 ## select-options-values
 * langs: java, js, csharp

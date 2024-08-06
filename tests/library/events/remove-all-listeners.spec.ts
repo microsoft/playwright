@@ -58,8 +58,8 @@ test('listeners', () => {
   const barListeners = ee.listeners('bar');
   const bazListeners = ee.listeners('baz');
   ee.on('removeListener', expectWrapper(['bar', 'baz', 'baz']));
-  ee.removeAllListeners('bar');
-  ee.removeAllListeners('baz');
+  void ee.removeAllListeners('bar');
+  void ee.removeAllListeners('baz');
 
   let listeners = ee.listeners('foo');
   expect(Array.isArray(listeners)).toBeTruthy();
@@ -91,7 +91,7 @@ test('removeAllListeners removes all listeners', () => {
   ee.on('bar', () => { });
   ee.on('removeListener', expectWrapper(['foo', 'bar', 'removeListener']));
   ee.on('removeListener', expectWrapper(['foo', 'bar']));
-  ee.removeAllListeners();
+  void ee.removeAllListeners();
 
   let listeners = ee.listeners('foo');
   expect(Array.isArray(listeners)).toBeTruthy();
@@ -120,7 +120,7 @@ test('listener count after removeAllListeners', () => {
   ee.on('baz', () => { });
   ee.on('baz', () => { });
   expect(ee.listeners('baz').length).toEqual(expectLength + 1);
-  ee.removeAllListeners('baz');
+  void ee.removeAllListeners('baz');
   expect(ee.listeners('baz').length).toEqual(0);
 });
 
