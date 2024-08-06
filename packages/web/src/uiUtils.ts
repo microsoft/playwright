@@ -157,10 +157,10 @@ export function useSetting<S>(name: string, defaultValue: S, title?: string): [S
   return [value, setValueWrapper, setting];
 }
 
-export function useSettingOrState<S>(name: string | undefined, defaultValue: S, title?: string, persist?: boolean): [S, (v: S) => void, Setting<S>] {
-  const setting = useSetting(name ?? 'unused', defaultValue, title);
+export function useSettingOrState<S>(name: string | undefined, defaultValue: S, persist?: boolean): [S, (v: S) => void] {
+  const [settingValue, settingSet] = useSetting(name ?? 'unused', defaultValue);
   const state = React.useState(defaultValue);
-  return persist ? setting : [...state, [...state, title ?? '']];
+  return persist ? [settingValue, settingSet] : state;
 }
 
 export class Settings {

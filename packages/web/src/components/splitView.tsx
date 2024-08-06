@@ -43,8 +43,8 @@ export const SplitView: React.FC<SplitViewProps> = ({
   main,
 }) => {
   const defaultSize = Math.max(minSidebarSize, sidebarSize) * window.devicePixelRatio;
-  const [hSize, setHSize] = useSettingOrState(settingName + '.' + orientation + ':size', defaultSize, undefined, !!settingName);
-  const [vSize, setVSize] = useSettingOrState(settingName + '.' + orientation + ':size', defaultSize, undefined, !!settingName);
+  const [hSize, setHSize] = useSettingOrState(settingName + '.' + orientation + ':size', defaultSize, !!settingName);
+  const [vSize, setVSize] = useSettingOrState(settingName + '.' + orientation + ':size', defaultSize, !!settingName);
 
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
   const [measure, ref] = useMeasure<HTMLDivElement>();
