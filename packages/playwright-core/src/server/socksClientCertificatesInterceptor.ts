@@ -92,9 +92,14 @@ class SocksProxyConnection {
   }
 
   async connect() {
+    debugLogger.log('client-certificates', `Connecting to ${this.host}:${this.port}`);
     this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
     this.target.on('close', this._targetCloseEventListener);
-    this.target.on('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
+    this.target.on('error', error => {
+      debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
+      this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message });
+    });
+    debugLogger.log('client-certificates', `Connected to ${this.host}:${this.port}`);
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
       host: this.target.localAddress!,
@@ -113,10 +118,13 @@ class SocksProxyConnection {
     if (!this.firstPackageReceived) {
       this.firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-      if (data[0] === 0x16)
+      if (data[0] === 0x16) {
+        debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses TLS`);
         this._attachTLSListeners();
-      else
+      } else {
+        debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses HTTP`);
         this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
+      }
     }
     if (this.internal)
       this.internal.push(data);
@@ -151,7 +159,7 @@ class SocksProxyConnection {
 
         const handleError = (error: Error) => {
           error = rewriteOpenSSLErrorIfNeeded(error);
-          debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
+          debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} TLS error: ${error.message}`);
           const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
               .replaceAll('\n', ' <br>');
           if (internalTLS?.alpnProtocol === 'h2') {
@@ -209,6 +217,7 @@ class SocksProxyConnection {
         targetTLS = tls.connect(tlsOptions);
 
         targetTLS.on('secureConnect', () => {
+          debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} secure connection established`);
           internalTLS.pipe(targetTLS);
           targetTLS.pipe(internalTLS);
         });
