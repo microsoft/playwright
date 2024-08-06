@@ -29,8 +29,6 @@ New-Item -ItemType Directory -Force -Path playwright\.auth
 Add-Content -path .gitignore "`r`nplaywright/.auth"
 ```
 
-Note that you need to delete the stored state when it expires. If you don't need to keep the state between test runs, write the browser state under [`property: TestProject.outputDir`], which is automatically cleaned up before every test run.
-
 ## Basic: shared account in all tests
 * langs: js
 
@@ -115,6 +113,8 @@ test('test', async ({ page }) => {
   // page is authenticated
 });
 ```
+
+Note that you need to delete the stored state when it expires. If you don't need to keep the state between test runs, write the browser state under [`property: TestProject.outputDir`], which is automatically cleaned up before every test run.
 
 ### Authenticating in UI mode
 * langs: js
