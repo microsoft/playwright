@@ -57,6 +57,16 @@ export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
 
+let _singleTSConfig: string | undefined;
+
+export function setSingleTSConfig(value: string | undefined) {
+  _singleTSConfig = value;
+}
+
+export function singleTSConfig(): string | undefined {
+  return _singleTSConfig;
+}
+
 function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
   // When no explicit baseUrl is set, resolve paths relative to the tsconfig file.
   // See https://www.typescriptlang.org/tsconfig#paths
@@ -71,12 +81,12 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
 }
 
 function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
-  const cwd = path.dirname(file);
-  if (!cachedTSConfigs.has(cwd)) {
-    const loaded = tsConfigLoader({ cwd });
-    cachedTSConfigs.set(cwd, loaded.map(validateTsConfig));
+  const tsconfigPathOrDirecotry = _singleTSConfig || path.dirname(file);
+  if (!cachedTSConfigs.has(tsconfigPathOrDirecotry)) {
+    const loaded = tsConfigLoader(tsconfigPathOrDirecotry);
+    cachedTSConfigs.set(tsconfigPathOrDirecotry, loaded.map(validateTsConfig));
   }
-  return cachedTSConfigs.get(cwd)!;
+  return cachedTSConfigs.get(tsconfigPathOrDirecotry)!;
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';

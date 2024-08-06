@@ -641,3 +641,55 @@ test('should respect tsconfig project references', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should respect --tsconfig option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { foo } from '~/foo';
+      export default {
+        testDir: './tests' + foo,
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./does-not-exist/*"],
+        },
+      },
+    }`,
+    'tsconfig.special.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-root/*"],
+        },
+      },
+    }`,
+    'mapped-from-root/foo.ts': `
+      export const foo = 42;
+    `,
+    'tests42/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["../should-be-ignored/*"],
+        },
+      },
+    }`,
+    'tests42/a.test.ts': `
+      import { foo } from '~/foo';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'should-be-ignored/foo.ts': `
+      export const foo = 43;
+    `,
+  }, { tsconfig: 'tsconfig.special.json' });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
+});
