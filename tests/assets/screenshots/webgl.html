@@ -35,8 +35,9 @@ function attributeSetFloats(gl, prog, attr_name, rsize, arr) {
 	gl.vertexAttribPointer(attr, rsize, gl.FLOAT, false, 0, 0);
 }
 
+var preserveDrawingBuffer = new URLSearchParams(location.search).get('preserveDrawingBuffer') !== null
 var gl = document.getElementById("webgl")
-	.getContext("experimental-webgl");
+	.getContext("webgl", { preserveDrawingBuffer });
 gl.clearColor(0.8, 0.8, 0.8, 1);
 gl.clear(gl.COLOR_BUFFER_BIT);
 

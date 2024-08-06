@@ -404,6 +404,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           }
         };
 
+        if (nodeName === 'CANVAS') {
+          const canvas = node as HTMLCanvasElement;
+          attrs['__playwright_canvas_'] = canvas.toDataURL('image/webp', 1);
+        }
+
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
           attrs[kShadowAttribute] = 'open';
 

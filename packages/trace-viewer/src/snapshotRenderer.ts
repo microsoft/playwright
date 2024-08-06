@@ -278,6 +278,16 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         }
       }
 
+      for (const element of root.querySelectorAll('canvas')) {
+        const canvas = element as HTMLCanvasElement;
+        const img = new Image();
+        img.onload = () => {
+          const context = canvas.getContext('2d');
+          context?.drawImage(img, 0, 0);
+        };
+        img.src = canvas.getAttribute('__playwright_canvas_')!;
+      }
+
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
         if (body && window.customElements) {

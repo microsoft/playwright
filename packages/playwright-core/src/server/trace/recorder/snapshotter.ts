@@ -107,7 +107,7 @@ export class Snapshotter {
 
   async captureSnapshot(page: Page, callId: string, snapshotName: string, element?: ElementHandle): Promise<void> {
     // Prepare expression synchronously.
-    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
+    const expression = `window["${this._snapshotStreamer}"].captureSnapshot()`;
 
     // In a best-effort manner, without waiting for it, mark target element.
     element?.callFunctionNoReply((element: Element, callId: string) => {

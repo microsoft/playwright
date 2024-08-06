@@ -1378,3 +1378,20 @@ test('should show baseURL in metadata pane', {
   await traceViewer.showMetadataTab();
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
+
+test.describe('should show canvas', () => {
+  test('works for 2D', async ({ page, runAndTrace, server }) => {
+    const traceViewer = await runAndTrace(async () => {
+      await page.goto(server.PREFIX + '/screenshots/canvas.html');
+    });
+
+    await expect(traceViewer.snapshotContainer).toHaveScreenshot();
+  });
+
+  test('webgl works with preserveDrawingBuffer', async ({ runAndTrace, page, server }) => {
+    const traceViewer = await runAndTrace(async () => {
+      await page.goto(server.PREFIX + '/screenshots/webgl.html?preserveDrawingBuffer');
+    });
+    await expect(traceViewer.snapshotContainer).toHaveScreenshot();
+  });
+});

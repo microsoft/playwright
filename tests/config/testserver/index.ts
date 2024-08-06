@@ -237,6 +237,9 @@ export class TestServer {
       filePath = path.join(this._dirPath, pathName.substring(1));
     }
 
+    if (filePath.lastIndexOf('?') !== -1)
+      filePath = filePath.substring(0, filePath.lastIndexOf('?'));
+
     if (this._cachedPathPrefix !== null && filePath.startsWith(this._cachedPathPrefix)) {
       if (request.headers['if-modified-since']) {
         response.statusCode = 304; // not modified
