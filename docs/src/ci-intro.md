@@ -161,7 +161,7 @@ jobs:
       run: dotnet test
 ```
 
-If this doesn't make sense to you, give GitHub's [Understanding GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) guide a read.
+To learn more about this, see ["Understanding GitHub Actions"](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
 
 Looking at the list of steps in `jobs.test.steps`, you can see that the workflow performs these steps:
 
