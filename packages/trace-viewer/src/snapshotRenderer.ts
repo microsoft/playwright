@@ -285,7 +285,13 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           const context = canvas.getContext('2d');
           context?.drawImage(img, 0, 0);
         };
-        img.src = canvas.getAttribute('__playwright_canvas_')!;
+        const url = new URL(window.location.href);
+        const index = url.pathname.lastIndexOf('/snapshot/');
+        if (index !== -1)
+          url.pathname = url.pathname.substring(0, index + 1);
+        url.pathname += `sha1/${canvas.getAttribute('__playwright_canvas_sha_')}`;
+        url.searchParams.set('ct', canvas.getAttribute('__playwright_canvas_mime_')!);
+        img.src = url.toString();
       }
 
       {

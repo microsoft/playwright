@@ -112,11 +112,11 @@ export class TraceModel {
     return this._backend.hasEntry(filename);
   }
 
-  async resourceForSha1(sha1: string): Promise<Blob | undefined> {
+  async resourceForSha1(sha1: string, contentTypeOverride?: string | null): Promise<Blob | undefined> {
     const blob = await this._backend.readBlob('resources/' + sha1);
     if (!blob)
       return;
-    return new Blob([blob], { type: this._resourceToContentType.get(sha1) || 'application/octet-stream' });
+    return new Blob([blob], { type: contentTypeOverride || this._resourceToContentType.get(sha1) || 'application/octet-stream' });
   }
 
   storage(): SnapshotStorage {

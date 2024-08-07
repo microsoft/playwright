@@ -151,6 +151,14 @@ export class Snapshotter {
           snapshot.resourceOverrides.push({ url, ref: content });
         }
       }
+
+      for (const [sha1, contents] of Object.entries(data.canvasRenderResults)) {
+        this._delegate.onSnapshotterBlob({
+          sha1, buffer: Buffer.from(contents, 'base64')
+        });
+        snapshot.resourceOverrides.push({ url: 'TODO: this is required but unused', sha1 });
+      }
+
       this._delegate.onFrameSnapshot(snapshot);
     });
     await Promise.all(snapshots);

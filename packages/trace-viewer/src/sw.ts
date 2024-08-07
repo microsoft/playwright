@@ -133,7 +133,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       // Sha1 for sources is based on the file path, can't load it of a random model.
       const sha1 = relativePath.slice('/sha1/'.length);
       for (const trace of loadedTraces.values()) {
-        const blob = await trace.traceModel.resourceForSha1(sha1);
+        const blob = await trace.traceModel.resourceForSha1(sha1, url.searchParams.get('ct'));
         if (blob)
           return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
       }

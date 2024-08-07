@@ -29,6 +29,7 @@ export type SnapshotData = {
   url: string,
   timestamp: number,
   collectionTime: number,
+  canvasRenderResults: Record<string, string>,
 };
 
 export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: boolean) {
@@ -86,6 +87,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
+    private _capturedCanvases = new Set<string>();
 
     constructor() {
       const invalidateCSSGroupingRule = (rule: CSSGroupingRule) => {
@@ -319,14 +321,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       this._handleMutations(this._observer.takeRecords());
 
       const definedCustomElements = new Set<string>();
+      const canvasRenderResults: Record<string, string> = {};
 
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
         const nodeName = nodeType === Node.DOCUMENT_FRAGMENT_NODE ? 'template' : node.nodeName;
 
         if (nodeType !== Node.ELEMENT_NODE &&
-            nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
-            nodeType !== Node.TEXT_NODE)
+          nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
+          nodeType !== Node.TEXT_NODE)
           return;
         if (nodeName === 'SCRIPT')
           return;
@@ -406,7 +409,19 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         if (nodeName === 'CANVAS') {
           const canvas = node as HTMLCanvasElement;
-          attrs['__playwright_canvas_'] = canvas.toDataURL('image/webp', 1);
+          const requestedMIME = 'image/webp';
+          const dataURL = canvas.toDataURL(requestedMIME);
+          const actualMIME = dataURL.substring('data:'.length, dataURL.indexOf(';'));
+          const contentsB64 = dataURL.substring(dataURL.indexOf(',') + 1);
+          const sha = '' + contentsB64.length; // TODO
+
+          attrs['__playwright_canvas_sha_'] = sha;
+          attrs['__playwright_canvas_mime_'] = actualMIME;
+
+          if (!this._capturedCanvases.has(sha)) {
+            this._capturedCanvases.add(sha);
+            canvasRenderResults[sha] = contentsB64;
+          }
         }
 
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
@@ -579,6 +594,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         url: location.href,
         timestamp,
         collectionTime: 0,
+        canvasRenderResults,
       };
 
       for (const sheet of this._staleStyleSheets) {
