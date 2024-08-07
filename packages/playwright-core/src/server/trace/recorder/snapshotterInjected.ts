@@ -408,6 +408,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         };
 
         if (nodeName === 'CANVAS') {
+          const start = performance.now();
+
           const canvas = node as HTMLCanvasElement;
           const requestedMIME = 'image/webp';
           const dataURL = canvas.toDataURL(requestedMIME);
@@ -422,6 +424,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             this._capturedCanvases.add(sha);
             canvasRenderResults[sha] = contentsB64;
           }
+
+          const duration = performance.now() - start;
+          attrs['__playwright_canvas_time_'] = duration + 'ms';
         }
 
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
