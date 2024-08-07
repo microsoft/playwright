@@ -92,15 +92,17 @@ it('page.goBack should work for file urls', async ({ page, server, asset, browse
 });
 
 it('goBack/goForward should work with bfcache-able pages', async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/cached/one-style.html');
-  await page.setContent(`<a href=${JSON.stringify(server.PREFIX + '/cached/one-style.html?foo')}>click me</a>`);
+  await page.goto(server.PREFIX + '/cached/bfcached.html');
+  await page.setContent(`<a href=${JSON.stringify(server.PREFIX + '/cached/bfcached.html?foo')}>click me</a>`);
   await page.click('a');
 
   let response = await page.goBack();
-  expect(response.url()).toBe(server.PREFIX + '/cached/one-style.html');
+  expect(response.url()).toBe(server.PREFIX + '/cached/bfcached.html');
+  // BFCache should be disabled.
+  expect(await page.evaluate('window.didShow')).toEqual({ persisted: false });
 
   response = await page.goForward();
-  expect(response.url()).toBe(server.PREFIX + '/cached/one-style.html?foo');
+  expect(response.url()).toBe(server.PREFIX + '/cached/bfcached.html?foo');
 });
 
 it('page.reload should work', async ({ page, server }) => {

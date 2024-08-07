@@ -86,7 +86,7 @@ export abstract class BrowserContext extends SdkObject {
   private _customCloseHandler?: () => Promise<any>;
   readonly _tempDirs: string[] = [];
   private _settingStorageState = false;
-  readonly initScripts: InitScript[] = [];
+  initScripts: InitScript[] = [];
   private _routesInFlight = new Set<network.Route>();
   private _debugger!: Debugger;
   _closeReason: string | undefined;
@@ -271,9 +271,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
-  protected abstract doRemoveInitScripts(): Promise<void>;
-  protected abstract doExposeBinding(binding: PageBinding): Promise<void>;
-  protected abstract doRemoveExposedBindings(): Promise<void>;
+  protected abstract doRemoveNonInternalInitScripts(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
@@ -320,15 +318,16 @@ export abstract class BrowserContext extends SdkObject {
     }
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    await this.doExposeBinding(binding);
+    await this.doAddInitScript(binding.initScript);
+    const frames = this.pages().map(page => page.frames()).flat();
+    await Promise.all(frames.map(frame => frame.evaluateExpression(binding.initScript.source).catch(e => {})));
   }
 
   async _removeExposedBindings() {
-    for (const key of this._pageBindings.keys()) {
-      if (!key.startsWith('__pw'))
+    for (const [key, binding] of this._pageBindings) {
+      if (!binding.internal)
         this._pageBindings.delete(key);
     }
-    await this.doRemoveExposedBindings();
   }
 
   async grantPermissions(permissions: string[], origin?: string) {
@@ -414,8 +413,8 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _removeInitScripts(): Promise<void> {
-    this.initScripts.splice(0, this.initScripts.length);
-    await this.doRemoveInitScripts();
+    this.initScripts = this.initScripts.filter(script => script.internal);
+    await this.doRemoveNonInternalInitScripts();
   }
 
   async setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
