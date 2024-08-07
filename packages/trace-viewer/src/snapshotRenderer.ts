@@ -285,7 +285,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           const context = canvas.getContext('2d');
           context?.drawImage(img, 0, 0);
         };
-        const url = new URL(window.location.href);
+        const url = new URL(unwrapPopoutUrl(window.location.href));
         const index = url.pathname.lastIndexOf('/snapshot/');
         if (index !== -1)
           url.pathname = url.pathname.substring(0, index + 1);
