@@ -3340,6 +3340,17 @@ Specifies the maximum number of times this handler should be called. Unlimited b
 
 By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of this behavior, so that overlay can stay visible after the handler has run.
 
+## async method: Page.removeAllListeners
+* since: v1.47
+
+Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+
+### param: Page.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Page.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
 
 ## async method: Page.removeLocatorHandler
 * since: v1.44
@@ -3594,7 +3605,7 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 * since: v1.32
 - `updateMode` <[HarMode]<"full"|"minimal">>
 
-When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `minimal`.
 
 ### option: Page.routeFromHAR.updateContent
 * since: v1.32

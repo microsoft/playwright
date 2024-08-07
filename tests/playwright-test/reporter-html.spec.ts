@@ -83,7 +83,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.getByTestId('overall-duration'), 'should contain humanized total time with at most 1 decimal place').toContainText(/^Total time: \d+(\.\d)?(ms|s|m)$/);
       await expect(page.getByTestId('project-name'), 'should contain project name').toContainText('project-name');
 
-      await expect(page.locator('.metadata-view')).not.toBeVisible();
+      await expect(page.getByTestId('metadata-view')).not.toBeVisible();
     });
 
     test('should allow navigating to testId=test.id', async ({ runInlineTest, page, showReport }) => {

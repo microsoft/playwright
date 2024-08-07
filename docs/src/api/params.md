@@ -524,9 +524,9 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 ## context-option-clientCertificates
 - `clientCertificates` <[Array]<[Object]>>
   - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
-  - `certPath` ?<[string]> Path to the file with the certificate in PEM format.
-  - `keyPath` ?<[string]> Path to the file with the private key in PEM format.
-  - `pfxPath` ?<[string]> Path to the PFX or PKCS12 encoded private key and certificate chain.
+  - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
+  - `keyPath` ?<[path]> Path to the file with the private key in PEM format.
+  - `pfxPath` ?<[path]> Path to the PFX or PKCS12 encoded private key and certificate chain.
   - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
 
 TLS Client Authentication allows the server to request a client certificate and verify it.
@@ -781,6 +781,16 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## remove-all-listeners-options-behavior
+* langs: js
+* since: v1.47
+- `behavior` <[RemoveAllListenersBehavior]<"wait"|"ignoreErrors"|"default">>
+
+Specifies whether to wait for already running listeners and what to do if they throw errors:
+* `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+* `'wait'` - wait for current listener calls (if any) to finish
+* `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+
 ## unroute-all-options-behavior
 * langs: js, csharp, python
 * since: v1.41
@@ -790,6 +800,7 @@ Specifies whether to wait for already running handlers and what to do if they th
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
 * `'wait'` - wait for current handler calls (if any) to finish
 * `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers after unrouting are silently caught
+
 
 ## select-options-values
 * langs: java, js, csharp

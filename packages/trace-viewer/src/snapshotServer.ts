@@ -37,7 +37,7 @@ export class SnapshotServer {
       return new Response(null, { status: 404 });
     const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
-    return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html' } });
+    return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {

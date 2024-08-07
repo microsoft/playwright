@@ -865,6 +865,19 @@ export interface Page {
    * @param options
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type?: string): this;
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
   /**
    * Emitted when the page closes.
    */
@@ -3760,7 +3773,8 @@ export interface Page {
 
     /**
      * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
-     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+     * `minimal`.
      */
     updateMode?: "full"|"minimal";
 
@@ -7660,6 +7674,19 @@ export interface BrowserContext {
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type?: string): this;
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
   /**
    * **NOTE** Only works with Chromium browser's persistent context.
    *
@@ -8910,6 +8937,665 @@ export interface BrowserContext {
   request: APIRequestContext;
 
   tracing: Tracing;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * - extends: [EventEmitter]
+ *
+ * A Browser is created via
+ * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). An example
+ * of using a {@link Browser} to create a {@link Page}:
+ *
+ * ```js
+ * const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+ *
+ * (async () => {
+ *   const browser = await firefox.launch();
+ *   const page = await browser.newPage();
+ *   await page.goto('https://example.com');
+ *   await browser.close();
+ * })();
+ * ```
+ *
+ */
+export interface Browser {
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type?: string): this;
+  /**
+   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * @param type
+   * @param options
+   */
+  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
+   * following:
+   * - Browser application is closed or crashed.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   */
+  on(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
+   * following:
+   * - Browser application is closed or crashed.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   */
+  addListener(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
+   * following:
+   * - Browser application is closed or crashed.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   */
+  prependListener(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
+   */
+  browserType(): BrowserType;
+
+  /**
+   * In case this browser is obtained using
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch), closes the
+   * browser and all of its pages (if any were opened).
+   *
+   * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from
+   * the browser server.
+   *
+   * **NOTE** This is similar to force quitting the browser. Therefore, you should call
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
+   * any {@link BrowserContext}'s you explicitly created earlier with
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
+   * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
+   *
+   * The {@link Browser} object itself is considered to be disposed and cannot be used anymore.
+   * @param options
+   */
+  close(options?: {
+    /**
+     * The reason to be reported to the operations interrupted by the browser closure.
+     */
+    reason?: string;
+  }): Promise<void>;
+
+  /**
+   * Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const browser = await pw.webkit.launch();
+   * console.log(browser.contexts().length); // prints `0`
+   *
+   * const context = await browser.newContext();
+   * console.log(browser.contexts().length); // prints `1`
+   * ```
+   *
+   */
+  contexts(): Array<BrowserContext>;
+
+  /**
+   * Indicates that the browser is connected.
+   */
+  isConnected(): boolean;
+
+  /**
+   * **NOTE** CDP Sessions are only supported on Chromium-based browsers.
+   *
+   * Returns the newly created browser session.
+   */
+  newBrowserCDPSession(): Promise<CDPSession>;
+
+  /**
+   * Creates a new browser context. It won't share cookies/cache with other browser contexts.
+   *
+   * **NOTE** If directly using this method to create {@link BrowserContext}s, it is best practice to explicitly close
+   * the returned context via
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
+   * your code is done with the {@link BrowserContext}, and before calling
+   * [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the
+   * `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
+   *
+   * **Usage**
+   *
+   * ```js
+   * (async () => {
+   *   const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
+   *   // Create a new incognito browser context.
+   *   const context = await browser.newContext();
+   *   // Create a new page in a pristine context.
+   *   const page = await context.newPage();
+   *   await page.goto('https://example.com');
+   *
+   *   // Gracefully close up everything
+   *   await context.close();
+   *   await browser.close();
+   * })();
+   * ```
+   *
+   * @param options
+   */
+  newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
+
+  /**
+   * Creates a new page in a new browser context. Closing this page will close the context as well.
+   *
+   * This is a convenience API that should only be used for the single-page scenarios and short snippets. Production
+   * code and testing frameworks should explicitly create
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) followed by the
+   * [browserContext.newPage()](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-page) to
+   * control their exact life times.
+   * @param options
+   */
+  newPage(options?: {
+    /**
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+     */
+    acceptDownloads?: boolean;
+
+    /**
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+     * or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+     * it takes the base URL in consideration by using the
+     * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+     * Unset by default. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+     *   `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
+     */
+    baseURL?: string;
+
+    /**
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+     */
+    bypassCSP?: boolean;
+
+    /**
+     * TLS Client Authentication allows the server to request a client certificate and verify it.
+     *
+     * **Details**
+     *
+     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
+     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
+     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
+     * the certificate is valid for.
+     *
+     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+     *
+     * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+     * work by replacing `localhost` with `local.playwright`.
+     */
+    clientCertificates?: Array<{
+      /**
+       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+       */
+      origin: string;
+
+      /**
+       * Path to the file with the certificate in PEM format.
+       */
+      certPath?: string;
+
+      /**
+       * Path to the file with the private key in PEM format.
+       */
+      keyPath?: string;
+
+      /**
+       * Path to the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfxPath?: string;
+
+      /**
+       * Passphrase for the private key (PEM or PFX).
+       */
+      passphrase?: string;
+    }>;
+
+    /**
+     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+     */
+    colorScheme?: null|"light"|"dark"|"no-preference";
+
+    /**
+     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+     */
+    deviceScaleFactor?: number;
+
+    /**
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
+     */
+    extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+     */
+    forcedColors?: null|"active"|"none";
+
+    geolocation?: {
+      /**
+       * Latitude between -90 and 90.
+       */
+      latitude: number;
+
+      /**
+       * Longitude between -180 and 180.
+       */
+      longitude: number;
+
+      /**
+       * Non-negative accuracy value. Defaults to `0`.
+       */
+      accuracy?: number;
+    };
+
+    /**
+     * Specifies if viewport supports touch events. Defaults to false. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+     */
+    hasTouch?: boolean;
+
+    /**
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     */
+    httpCredentials?: {
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
+       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
+       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
+       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+     */
+    isMobile?: boolean;
+
+    /**
+     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+     */
+    javaScriptEnabled?: boolean;
+
+    /**
+     * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     */
+    locale?: string;
+
+    /**
+     * Logger sink for Playwright logging.
+     */
+    logger?: Logger;
+
+    /**
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
+     */
+    offline?: boolean;
+
+    /**
+     * A list of permissions to grant to all pages in this context. See
+     * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+     * for more details. Defaults to none.
+     */
+    permissions?: Array<string>;
+
+    /**
+     * Network proxy settings to use with this context. Defaults to none.
+     *
+     * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
+     * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
+     * proxy: { server: 'http://per-context' } })`.
+     */
+    proxy?: {
+      /**
+       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+       */
+      server: string;
+
+      /**
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       */
+      bypass?: string;
+
+      /**
+       * Optional username to use if HTTP proxy requires authentication.
+       */
+      username?: string;
+
+      /**
+       * Optional password to use if HTTP proxy requires authentication.
+       */
+      password?: string;
+    };
+
+    /**
+     * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+     * If not specified, the HAR is not recorded. Make sure to await
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
+     */
+    recordHar?: {
+      /**
+       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+       * `content` policy instead.
+       */
+      omitContent?: boolean;
+
+      /**
+       * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+       * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+       * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+       * files and to `embed` for all other file extensions.
+       */
+      content?: "omit"|"embed"|"attach";
+
+      /**
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
+       */
+      path: string;
+
+      /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+       */
+      urlFilter?: string|RegExp;
+    };
+
+    /**
+     * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+     * Make sure to await
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
+     */
+    recordVideo?: {
+      /**
+       * Path to the directory to put videos into.
+       */
+      dir: string;
+
+      /**
+       * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * each page will be scaled down if necessary to fit the specified size.
+       */
+      size?: {
+        /**
+         * Video frame width.
+         */
+        width: number;
+
+        /**
+         * Video frame height.
+         */
+        height: number;
+      };
+    };
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    reducedMotion?: null|"reduce"|"no-preference";
+
+    /**
+     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+     * `viewport` is set.
+     */
+    screen?: {
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+
+    /**
+     * Whether to allow sites to register Service workers. Defaults to `'allow'`.
+     * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+     *   registered.
+     * - `'block'`: Playwright will block all registration of Service Workers.
+     */
+    serviceWorkers?: "allow"|"block";
+
+    /**
+     * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+     *
+     * Populates context with given storage state. This option can be used to initialize context with logged-in
+     * information obtained via
+     * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+     */
+    storageState?: string|{
+      /**
+       * Cookies to set for context
+       */
+      cookies: Array<{
+        name: string;
+
+        value: string;
+
+        /**
+         * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+         * this: ".example.com"
+         */
+        domain: string;
+
+        /**
+         * Domain and path are required
+         */
+        path: string;
+
+        /**
+         * Unix time in seconds.
+         */
+        expires: number;
+
+        httpOnly: boolean;
+
+        secure: boolean;
+
+        /**
+         * sameSite flag
+         */
+        sameSite: "Strict"|"Lax"|"None";
+      }>;
+
+      /**
+       * localStorage to set for context
+       */
+      origins: Array<{
+        origin: string;
+
+        localStorage: Array<{
+          name: string;
+
+          value: string;
+        }>;
+      }>;
+    };
+
+    /**
+     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See {@link Locator} to
+     * learn more about the strict mode.
+     */
+    strictSelectors?: boolean;
+
+    /**
+     * Changes the timezone of the context. See
+     * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+     * for a list of supported timezone IDs. Defaults to the system timezone.
+     */
+    timezoneId?: string;
+
+    /**
+     * Specific user agent to use in this context.
+     */
+    userAgent?: string;
+
+    /**
+     * @deprecated Use `recordVideo` instead.
+     */
+    videoSize?: {
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
+
+    /**
+     * @deprecated Use `recordVideo` instead.
+     */
+    videosPath?: string;
+
+    /**
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+     *
+     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+     * by the operating system. It makes the execution of the tests non-deterministic.
+     */
+    viewport?: null|{
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+  }): Promise<Page>;
+
+  /**
+   * **NOTE** This API controls
+   * [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) which is a low-level
+   * chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be found
+   * [here](https://playwright.dev/docs/api/class-tracing).
+   *
+   * You can use
+   * [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing) and
+   * [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
+   * that can be opened in Chrome DevTools performance panel.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await browser.startTracing(page, { path: 'trace.json' });
+   * await page.goto('https://www.google.com');
+   * await browser.stopTracing();
+   * ```
+   *
+   * @param page Optional, if specified, tracing includes screenshots of the given page.
+   * @param options
+   */
+  startTracing(page?: Page, options?: {
+    /**
+     * specify custom categories to use instead of default.
+     */
+    categories?: Array<string>;
+
+    /**
+     * A path to write the trace file to.
+     */
+    path?: string;
+
+    /**
+     * captures screenshots in the trace.
+     */
+    screenshots?: boolean;
+  }): Promise<void>;
+
+  /**
+   * **NOTE** This API controls
+   * [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) which is a low-level
+   * chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be found
+   * [here](https://playwright.dev/docs/api/class-tracing).
+   *
+   * Returns the buffer with trace data.
+   */
+  stopTracing(): Promise<Buffer>;
+
+  /**
+   * Returns the browser version.
+   */
+  version(): string;
 
   [Symbol.asyncDispose](): Promise<void>;
 }
@@ -16589,653 +17275,6 @@ export interface APIResponse {
   [Symbol.asyncDispose](): Promise<void>;
 }
 
-/**
- * - extends: [EventEmitter]
- *
- * A Browser is created via
- * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). An example
- * of using a {@link Browser} to create a {@link Page}:
- *
- * ```js
- * const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
- *
- * (async () => {
- *   const browser = await firefox.launch();
- *   const page = await browser.newPage();
- *   await page.goto('https://example.com');
- *   await browser.close();
- * })();
- * ```
- *
- */
-export interface Browser extends EventEmitter {
-  /**
-   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
-   * following:
-   * - Browser application is closed or crashed.
-   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
-   */
-  on(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
-   * following:
-   * - Browser application is closed or crashed.
-   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
-   */
-  addListener(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
-   * following:
-   * - Browser application is closed or crashed.
-   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
-   */
-  prependListener(event: 'disconnected', listener: (browser: Browser) => any): this;
-
-  /**
-   * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
-   */
-  browserType(): BrowserType;
-
-  /**
-   * In case this browser is obtained using
-   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch), closes the
-   * browser and all of its pages (if any were opened).
-   *
-   * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from
-   * the browser server.
-   *
-   * **NOTE** This is similar to force quitting the browser. Therefore, you should call
-   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
-   * any {@link BrowserContext}'s you explicitly created earlier with
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
-   * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
-   *
-   * The {@link Browser} object itself is considered to be disposed and cannot be used anymore.
-   * @param options
-   */
-  close(options?: {
-    /**
-     * The reason to be reported to the operations interrupted by the browser closure.
-     */
-    reason?: string;
-  }): Promise<void>;
-
-  /**
-   * Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const browser = await pw.webkit.launch();
-   * console.log(browser.contexts().length); // prints `0`
-   *
-   * const context = await browser.newContext();
-   * console.log(browser.contexts().length); // prints `1`
-   * ```
-   *
-   */
-  contexts(): Array<BrowserContext>;
-
-  /**
-   * Indicates that the browser is connected.
-   */
-  isConnected(): boolean;
-
-  /**
-   * **NOTE** CDP Sessions are only supported on Chromium-based browsers.
-   *
-   * Returns the newly created browser session.
-   */
-  newBrowserCDPSession(): Promise<CDPSession>;
-
-  /**
-   * Creates a new browser context. It won't share cookies/cache with other browser contexts.
-   *
-   * **NOTE** If directly using this method to create {@link BrowserContext}s, it is best practice to explicitly close
-   * the returned context via
-   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
-   * your code is done with the {@link BrowserContext}, and before calling
-   * [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the
-   * `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
-   *
-   * **Usage**
-   *
-   * ```js
-   * (async () => {
-   *   const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
-   *   // Create a new incognito browser context.
-   *   const context = await browser.newContext();
-   *   // Create a new page in a pristine context.
-   *   const page = await context.newPage();
-   *   await page.goto('https://example.com');
-   *
-   *   // Gracefully close up everything
-   *   await context.close();
-   *   await browser.close();
-   * })();
-   * ```
-   *
-   * @param options
-   */
-  newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
-
-  /**
-   * Creates a new page in a new browser context. Closing this page will close the context as well.
-   *
-   * This is a convenience API that should only be used for the single-page scenarios and short snippets. Production
-   * code and testing frameworks should explicitly create
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) followed by the
-   * [browserContext.newPage()](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-page) to
-   * control their exact life times.
-   * @param options
-   */
-  newPage(options?: {
-    /**
-     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
-     */
-    acceptDownloads?: boolean;
-
-    /**
-     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
-     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
-     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
-     * or
-     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
-     * it takes the base URL in consideration by using the
-     * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-     * Unset by default. Examples:
-     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
-     *   `http://localhost:3000/foo/bar.html`
-     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
-     *   `http://localhost:3000/bar.html`
-     */
-    baseURL?: string;
-
-    /**
-     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
-     */
-    bypassCSP?: boolean;
-
-    /**
-     * TLS Client Authentication allows the server to request a client certificate and verify it.
-     *
-     * **Details**
-     *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
-     *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-     *
-     * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
-     * work by replacing `localhost` with `local.playwright`.
-     */
-    clientCertificates?: Array<{
-      /**
-       * Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
-       */
-      origin: string;
-
-      /**
-       * Path to the file with the certificate in PEM format.
-       */
-      certPath?: string;
-
-      /**
-       * Path to the file with the private key in PEM format.
-       */
-      keyPath?: string;
-
-      /**
-       * Path to the PFX or PKCS12 encoded private key and certificate chain.
-       */
-      pfxPath?: string;
-
-      /**
-       * Passphrase for the private key (PEM or PFX).
-       */
-      passphrase?: string;
-    }>;
-
-    /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
-     */
-    colorScheme?: null|"light"|"dark"|"no-preference";
-
-    /**
-     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
-     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
-     */
-    deviceScaleFactor?: number;
-
-    /**
-     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
-     */
-    extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
-     */
-    forcedColors?: null|"active"|"none";
-
-    geolocation?: {
-      /**
-       * Latitude between -90 and 90.
-       */
-      latitude: number;
-
-      /**
-       * Longitude between -180 and 180.
-       */
-      longitude: number;
-
-      /**
-       * Non-negative accuracy value. Defaults to `0`.
-       */
-      accuracy?: number;
-    };
-
-    /**
-     * Specifies if viewport supports touch events. Defaults to false. Learn more about
-     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
-     */
-    hasTouch?: boolean;
-
-    /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
-     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
-     */
-    httpCredentials?: {
-      username: string;
-
-      password: string;
-
-      /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
-       */
-      origin?: string;
-
-      /**
-       * This option only applies to the requests sent from corresponding {@link APIRequestContext} and does not affect
-       * requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be
-       * sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response
-       * with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
-       */
-      send?: "unauthorized"|"always";
-    };
-
-    /**
-     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
-     */
-    ignoreHTTPSErrors?: boolean;
-
-    /**
-     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
-     */
-    isMobile?: boolean;
-
-    /**
-     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
-     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
-     */
-    javaScriptEnabled?: boolean;
-
-    /**
-     * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
-     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
-     */
-    locale?: string;
-
-    /**
-     * Logger sink for Playwright logging.
-     */
-    logger?: Logger;
-
-    /**
-     * Whether to emulate network being offline. Defaults to `false`. Learn more about
-     * [network emulation](https://playwright.dev/docs/emulation#offline).
-     */
-    offline?: boolean;
-
-    /**
-     * A list of permissions to grant to all pages in this context. See
-     * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-     * for more details. Defaults to none.
-     */
-    permissions?: Array<string>;
-
-    /**
-     * Network proxy settings to use with this context. Defaults to none.
-     *
-     * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
-     * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
-     * proxy: { server: 'http://per-context' } })`.
-     */
-    proxy?: {
-      /**
-       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
-       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-       */
-      server: string;
-
-      /**
-       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-       */
-      bypass?: string;
-
-      /**
-       * Optional username to use if HTTP proxy requires authentication.
-       */
-      username?: string;
-
-      /**
-       * Optional password to use if HTTP proxy requires authentication.
-       */
-      password?: string;
-    };
-
-    /**
-     * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
-     * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
-     * the HAR to be saved.
-     */
-    recordHar?: {
-      /**
-       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
-       * `content` policy instead.
-       */
-      omitContent?: boolean;
-
-      /**
-       * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
-       * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
-       * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
-       * files and to `embed` for all other file extensions.
-       */
-      content?: "omit"|"embed"|"attach";
-
-      /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
-       * default.
-       */
-      path: string;
-
-      /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
-       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
-       */
-      mode?: "full"|"minimal";
-
-      /**
-       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
-       * provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
-       */
-      urlFilter?: string|RegExp;
-    };
-
-    /**
-     * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
-     * Make sure to await
-     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
-     * videos to be saved.
-     */
-    recordVideo?: {
-      /**
-       * Path to the directory to put videos into.
-       */
-      dir: string;
-
-      /**
-       * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
-       */
-      size?: {
-        /**
-         * Video frame width.
-         */
-        width: number;
-
-        /**
-         * Video frame height.
-         */
-        height: number;
-      };
-    };
-
-    /**
-     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
-     */
-    reducedMotion?: null|"reduce"|"no-preference";
-
-    /**
-     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
-     * `viewport` is set.
-     */
-    screen?: {
-      /**
-       * page width in pixels.
-       */
-      width: number;
-
-      /**
-       * page height in pixels.
-       */
-      height: number;
-    };
-
-    /**
-     * Whether to allow sites to register Service workers. Defaults to `'allow'`.
-     * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
-     *   registered.
-     * - `'block'`: Playwright will block all registration of Service Workers.
-     */
-    serviceWorkers?: "allow"|"block";
-
-    /**
-     * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
-     *
-     * Populates context with given storage state. This option can be used to initialize context with logged-in
-     * information obtained via
-     * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-     */
-    storageState?: string|{
-      /**
-       * Cookies to set for context
-       */
-      cookies: Array<{
-        name: string;
-
-        value: string;
-
-        /**
-         * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
-         * this: ".example.com"
-         */
-        domain: string;
-
-        /**
-         * Domain and path are required
-         */
-        path: string;
-
-        /**
-         * Unix time in seconds.
-         */
-        expires: number;
-
-        httpOnly: boolean;
-
-        secure: boolean;
-
-        /**
-         * sameSite flag
-         */
-        sameSite: "Strict"|"Lax"|"None";
-      }>;
-
-      /**
-       * localStorage to set for context
-       */
-      origins: Array<{
-        origin: string;
-
-        localStorage: Array<{
-          name: string;
-
-          value: string;
-        }>;
-      }>;
-    };
-
-    /**
-     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
-     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See {@link Locator} to
-     * learn more about the strict mode.
-     */
-    strictSelectors?: boolean;
-
-    /**
-     * Changes the timezone of the context. See
-     * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs. Defaults to the system timezone.
-     */
-    timezoneId?: string;
-
-    /**
-     * Specific user agent to use in this context.
-     */
-    userAgent?: string;
-
-    /**
-     * @deprecated Use `recordVideo` instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use `recordVideo` instead.
-     */
-    videosPath?: string;
-
-    /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
-     *
-     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-     * by the operating system. It makes the execution of the tests non-deterministic.
-     */
-    viewport?: null|{
-      /**
-       * page width in pixels.
-       */
-      width: number;
-
-      /**
-       * page height in pixels.
-       */
-      height: number;
-    };
-  }): Promise<Page>;
-
-  /**
-   * **NOTE** This API controls
-   * [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) which is a low-level
-   * chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be found
-   * [here](https://playwright.dev/docs/api/class-tracing).
-   *
-   * You can use
-   * [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing) and
-   * [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
-   * that can be opened in Chrome DevTools performance panel.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await browser.startTracing(page, { path: 'trace.json' });
-   * await page.goto('https://www.google.com');
-   * await browser.stopTracing();
-   * ```
-   *
-   * @param page Optional, if specified, tracing includes screenshots of the given page.
-   * @param options
-   */
-  startTracing(page?: Page, options?: {
-    /**
-     * specify custom categories to use instead of default.
-     */
-    categories?: Array<string>;
-
-    /**
-     * A path to write the trace file to.
-     */
-    path?: string;
-
-    /**
-     * captures screenshots in the trace.
-     */
-    screenshots?: boolean;
-  }): Promise<void>;
-
-  /**
-   * **NOTE** This API controls
-   * [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) which is a low-level
-   * chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be found
-   * [here](https://playwright.dev/docs/api/class-tracing).
-   *
-   * Returns the buffer with trace data.
-   */
-  stopTracing(): Promise<Buffer>;
-
-  /**
-   * Returns the browser version.
-   */
-  version(): string;
-
-  [Symbol.asyncDispose](): Promise<void>;
-}
-
 export interface BrowserServer {
   /**
    * Emitted when the browser server closes.
@@ -19401,7 +19440,7 @@ export interface Route {
   abort(errorCode?: string): Promise<void>;
 
   /**
-   * Continues route's request with optional overrides.
+   * Sends route's request to the network with optional overrides.
    *
    * **Usage**
    *
@@ -19424,6 +19463,11 @@ export interface Route {
    * through redirects, use the combination of
    * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
    * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
+   *
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) will immediately send the
+   * request to the network, other matching handlers won't be invoked. Use
+   * [route.fallback([options])](https://playwright.dev/docs/api/class-route#route-fallback) If you want next matching
+   * handler in the chain to be invoked.
    * @param options
    */
   continue(options?: {
@@ -19449,12 +19493,16 @@ export interface Route {
   }): Promise<void>;
 
   /**
+   * Continues route's request with optional overrides. The method is similar to
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) with the difference that
+   * other matching handlers will be invoked before sending the request.
+   *
+   * **Usage**
+   *
    * When several routes match the given pattern, they run in the order opposite to their registration. That way the
    * last registered route can always override all the previous ones. In the example below, request will be handled by
    * the bottom-most handler first, then it'll fall back to the previous one and in the end will be aborted by the first
    * registered route.
-   *
-   * **Usage**
    *
    * ```js
    * await page.route('**\/*', async route => {
@@ -19511,6 +19559,8 @@ export interface Route {
    * });
    * ```
    *
+   * Use [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) to immediately send the
+   * request to the network, other matching handlers won't be invoked in that case.
    * @param options
    */
   fallback(options?: {
@@ -19569,6 +19619,12 @@ export interface Route {
      * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
      */
     maxRedirects?: number;
+
+    /**
+     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     */
+    maxRetries?: number;
 
     /**
      * If set changes the request method (e.g. GET or POST).
@@ -20196,6 +20252,322 @@ export interface WebSocket {
 
 }
 
+interface AccessibilitySnapshotOptions {
+  /**
+   * Prune uninteresting nodes from the tree. Defaults to `true`.
+   */
+  interestingOnly?: boolean;
+
+  /**
+   * The root DOM element for the snapshot. Defaults to the whole page.
+   */
+  root?: ElementHandle;
+}
+
+export interface LaunchOptions {
+  /**
+   * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
+   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+   */
+  args?: Array<string>;
+
+  /**
+   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
+   * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   */
+  channel?: string;
+
+  /**
+   * Enable Chromium sandboxing. Defaults to `false`.
+   */
+  chromiumSandbox?: boolean;
+
+  /**
+   * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+   * `headless` option will be set `false`.
+   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
+   */
+  devtools?: boolean;
+
+  /**
+   * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
+   * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
+   * created in is closed.
+   */
+  downloadsPath?: string;
+
+  /**
+   * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+   */
+  env?: { [key: string]: string|number|boolean; };
+
+  /**
+   * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
+   * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium,
+   * Firefox or WebKit, use at your own risk.
+   */
+  executablePath?: string;
+
+  /**
+   * Firefox user preferences. Learn more about the Firefox user preferences at
+   * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   */
+  firefoxUserPrefs?: { [key: string]: string|number|boolean; };
+
+  /**
+   * Close the browser process on SIGHUP. Defaults to `true`.
+   */
+  handleSIGHUP?: boolean;
+
+  /**
+   * Close the browser process on Ctrl-C. Defaults to `true`.
+   */
+  handleSIGINT?: boolean;
+
+  /**
+   * Close the browser process on SIGTERM. Defaults to `true`.
+   */
+  handleSIGTERM?: boolean;
+
+  /**
+   * Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+   * `devtools` option is `true`.
+   */
+  headless?: boolean;
+
+  /**
+   * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
+   * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+   */
+  ignoreDefaultArgs?: boolean|Array<string>;
+
+  /**
+   * Logger sink for Playwright logging.
+   */
+  logger?: Logger;
+
+  /**
+   * Network proxy settings.
+   */
+  proxy?: {
+    /**
+     * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+     * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+     */
+    server: string;
+
+    /**
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     */
+    bypass?: string;
+
+    /**
+     * Optional username to use if HTTP proxy requires authentication.
+     */
+    username?: string;
+
+    /**
+     * Optional password to use if HTTP proxy requires authentication.
+     */
+    password?: string;
+  };
+
+  /**
+   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on.
+   */
+  slowMo?: number;
+
+  /**
+   * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+   * to disable timeout.
+   */
+  timeout?: number;
+
+  /**
+   * If specified, traces are saved into this directory.
+   */
+  tracesDir?: string;
+}
+
+export interface ConnectOverCDPOptions {
+  /**
+   * Deprecated, use the first argument instead. Optional.
+   */
+  endpointURL?: string;
+
+  /**
+   * Additional HTTP headers to be sent with connect request. Optional.
+   */
+  headers?: { [key: string]: string; };
+
+  /**
+   * Logger sink for Playwright logging. Optional.
+   */
+  logger?: Logger;
+
+  /**
+   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   */
+  slowMo?: number;
+
+  /**
+   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+   * `0` to disable timeout.
+   */
+  timeout?: number;
+}
+
+export interface ConnectOptions {
+  /**
+   * This option exposes network available on the connecting client to the browser being connected to. Consists of a
+   * list of rules separated by comma.
+   *
+   * Available rules:
+   * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
+   * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
+   * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
+   *
+   * Some common examples:
+   * 1. `"*"` to expose all network.
+   * 1. `"<loopback>"` to expose localhost network.
+   * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and
+   *    localhost.
+   */
+  exposeNetwork?: string;
+
+  /**
+   * Additional HTTP headers to be sent with web socket connect request. Optional.
+   */
+  headers?: { [key: string]: string; };
+
+  /**
+   * Logger sink for Playwright logging. Optional.
+   */
+  logger?: Logger;
+
+  /**
+   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   */
+  slowMo?: number;
+
+  /**
+   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
+   */
+  timeout?: number;
+}
+
+export interface LocatorScreenshotOptions {
+  /**
+   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   */
+  animations?: "disabled"|"allow";
+
+  /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   */
+  caret?: "hide"|"initial";
+
+  /**
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
+   */
+  mask?: Array<Locator>;
+
+  /**
+   * Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   */
+  maskColor?: string;
+
+  /**
+   * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   */
+  omitBackground?: boolean;
+
+  /**
+   * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a
+   * relative path, then it is resolved relative to the current working directory. If no path is provided, the image
+   * won't be saved to the disk.
+   */
+  path?: string;
+
+  /**
+   * The quality of the image, between 0-100. Not applicable to `png` images.
+   */
+  quality?: number;
+
+  /**
+   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
+   */
+  scale?: "css"|"device";
+
+  /**
+   * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
+   */
+  style?: string;
+
+  /**
+   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+
+  /**
+   * Specify screenshot type, defaults to `png`.
+   */
+  type?: "png"|"jpeg";
+}
+
+interface ElementHandleWaitForSelectorOptions {
+  /**
+   * Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   *   without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   *   `visibility:hidden`. This is opposite to the `'visible'` option.
+   */
+  state?: "attached"|"detached"|"visible"|"hidden";
+
+  /**
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   */
+  strict?: boolean;
+
+  /**
+   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+}
+
 export interface BrowserContextOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
@@ -20633,322 +21005,6 @@ export interface Geolocation {
    * Non-negative accuracy value. Defaults to `0`.
    */
   accuracy?: number;
-}
-
-interface AccessibilitySnapshotOptions {
-  /**
-   * Prune uninteresting nodes from the tree. Defaults to `true`.
-   */
-  interestingOnly?: boolean;
-
-  /**
-   * The root DOM element for the snapshot. Defaults to the whole page.
-   */
-  root?: ElementHandle;
-}
-
-export interface LaunchOptions {
-  /**
-   * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
-   *
-   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
-   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
-   */
-  args?: Array<string>;
-
-  /**
-   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
-   * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
-   */
-  channel?: string;
-
-  /**
-   * Enable Chromium sandboxing. Defaults to `false`.
-   */
-  chromiumSandbox?: boolean;
-
-  /**
-   * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-   * `headless` option will be set `false`.
-   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
-   */
-  devtools?: boolean;
-
-  /**
-   * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
-   * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
-   * created in is closed.
-   */
-  downloadsPath?: string;
-
-  /**
-   * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-   */
-  env?: { [key: string]: string|number|boolean; };
-
-  /**
-   * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
-   * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium,
-   * Firefox or WebKit, use at your own risk.
-   */
-  executablePath?: string;
-
-  /**
-   * Firefox user preferences. Learn more about the Firefox user preferences at
-   * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
-   */
-  firefoxUserPrefs?: { [key: string]: string|number|boolean; };
-
-  /**
-   * Close the browser process on SIGHUP. Defaults to `true`.
-   */
-  handleSIGHUP?: boolean;
-
-  /**
-   * Close the browser process on Ctrl-C. Defaults to `true`.
-   */
-  handleSIGINT?: boolean;
-
-  /**
-   * Close the browser process on SIGTERM. Defaults to `true`.
-   */
-  handleSIGTERM?: boolean;
-
-  /**
-   * Whether to run browser in headless mode. More details for
-   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-   * `devtools` option is `true`.
-   */
-  headless?: boolean;
-
-  /**
-   * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
-   * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-   */
-  ignoreDefaultArgs?: boolean|Array<string>;
-
-  /**
-   * Logger sink for Playwright logging.
-   */
-  logger?: Logger;
-
-  /**
-   * Network proxy settings.
-   */
-  proxy?: {
-    /**
-     * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
-     * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-     */
-    server: string;
-
-    /**
-     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-     */
-    bypass?: string;
-
-    /**
-     * Optional username to use if HTTP proxy requires authentication.
-     */
-    username?: string;
-
-    /**
-     * Optional password to use if HTTP proxy requires authentication.
-     */
-    password?: string;
-  };
-
-  /**
-   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
-   * on.
-   */
-  slowMo?: number;
-
-  /**
-   * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
-   * to disable timeout.
-   */
-  timeout?: number;
-
-  /**
-   * If specified, traces are saved into this directory.
-   */
-  tracesDir?: string;
-}
-
-export interface ConnectOverCDPOptions {
-  /**
-   * Deprecated, use the first argument instead. Optional.
-   */
-  endpointURL?: string;
-
-  /**
-   * Additional HTTP headers to be sent with connect request. Optional.
-   */
-  headers?: { [key: string]: string; };
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   */
-  logger?: Logger;
-
-  /**
-   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
-   * on. Defaults to 0.
-   */
-  slowMo?: number;
-
-  /**
-   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
-   * `0` to disable timeout.
-   */
-  timeout?: number;
-}
-
-export interface ConnectOptions {
-  /**
-   * This option exposes network available on the connecting client to the browser being connected to. Consists of a
-   * list of rules separated by comma.
-   *
-   * Available rules:
-   * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
-   * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
-   * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
-   *
-   * Some common examples:
-   * 1. `"*"` to expose all network.
-   * 1. `"<loopback>"` to expose localhost network.
-   * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and
-   *    localhost.
-   */
-  exposeNetwork?: string;
-
-  /**
-   * Additional HTTP headers to be sent with web socket connect request. Optional.
-   */
-  headers?: { [key: string]: string; };
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   */
-  logger?: Logger;
-
-  /**
-   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
-   * on. Defaults to 0.
-   */
-  slowMo?: number;
-
-  /**
-   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
-   */
-  timeout?: number;
-}
-
-export interface LocatorScreenshotOptions {
-  /**
-   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
-   * treatment depending on their duration:
-   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-   * - infinite animations are canceled to initial state, and then played over after the screenshot.
-   *
-   * Defaults to `"allow"` that leaves animations untouched.
-   */
-  animations?: "disabled"|"allow";
-
-  /**
-   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
-   * changed.  Defaults to `"hide"`.
-   */
-  caret?: "hide"|"initial";
-
-  /**
-   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-   * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
-   */
-  mask?: Array<Locator>;
-
-  /**
-   * Specify the color of the overlay box for masked elements, in
-   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
-   */
-  maskColor?: string;
-
-  /**
-   * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-   * Defaults to `false`.
-   */
-  omitBackground?: boolean;
-
-  /**
-   * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a
-   * relative path, then it is resolved relative to the current working directory. If no path is provided, the image
-   * won't be saved to the disk.
-   */
-  path?: string;
-
-  /**
-   * The quality of the image, between 0-100. Not applicable to `png` images.
-   */
-  quality?: number;
-
-  /**
-   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
-   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
-   * screenshots of high-dpi devices will be twice as large or even larger.
-   *
-   * Defaults to `"device"`.
-   */
-  scale?: "css"|"device";
-
-  /**
-   * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
-   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
-   * the Shadow DOM and applies to the inner frames.
-   */
-  style?: string;
-
-  /**
-   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-   * option in the config, or by using the
-   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-   */
-  timeout?: number;
-
-  /**
-   * Specify screenshot type, defaults to `png`.
-   */
-  type?: "png"|"jpeg";
-}
-
-interface ElementHandleWaitForSelectorOptions {
-  /**
-   * Defaults to `'visible'`. Can be either:
-   * - `'attached'` - wait for element to be present in DOM.
-   * - `'detached'` - wait for element to not be present in DOM.
-   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
-   *   without any content or with `display:none` has an empty bounding box and is not considered visible.
-   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
-   *   `visibility:hidden`. This is opposite to the `'visible'` option.
-   */
-  state?: "attached"|"detached"|"visible"|"hidden";
-
-  /**
-   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
-   * element, the call throws an exception.
-   */
-  strict?: boolean;
-
-  /**
-   * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-   * option in the config, or by using the
-   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-   */
-  timeout?: number;
 }
 
 export interface Cookie {

@@ -19,7 +19,6 @@ import * as React from 'react';
 import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { Language } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
@@ -55,19 +54,18 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const [requestBody, setRequestBody] = React.useState<{ text: string, language?: Language } | null>(null);
+  const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.request.postData) {
         const requestContentTypeHeader = resource.request.headers.find(q => q.name === 'Content-Type');
         const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-        const language = mimeTypeToHighlighter(requestContentType);
         if (resource.request.postData._sha1) {
           const response = await fetch(`sha1/${resource.request.postData._sha1}`);
-          setRequestBody({ text: formatBody(await response.text(), requestContentType), language });
+          setRequestBody({ text: formatBody(await response.text(), requestContentType), mimeType: requestContentType });
         } else {
-          setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), language });
+          setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType });
         }
       } else {
         setRequestBody(null);
@@ -80,15 +78,14 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    <div className='network-request-details-general'>{`Status Code: ${
-      resource.response.status >= 200 && resource.response.status < 400
-        ? `🟢 ${resource.response.status} ${resource.response.statusText}`
-        : `🔴 ${resource.response.status} ${resource.response.statusText}`
-    }`}</div>
+    {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
+      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+        {`${resource.response.status} ${resource.response.statusText}`}
+      </span></div>}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
-    {requestBody && <CodeMirrorWrapper text={requestBody.text} language={requestBody.language} readOnly lineNumbers={true}/>}
+    {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };
 
@@ -104,7 +101,7 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, language?: Language } | null>(null);
+  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string } | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -119,9 +116,10 @@ const BodyTab: React.FunctionComponent<{
           setResponseBody({ dataUrl: (await eventPromise).target.result });
         } else {
           const formattedBody = formatBody(await response.text(), resource.response.content.mimeType);
-          const language = mimeTypeToHighlighter(resource.response.content.mimeType);
-          setResponseBody({ text: formattedBody, language });
+          setResponseBody({ text: formattedBody, mimeType: resource.response.content.mimeType });
         }
+      } else {
+        setResponseBody(null);
       }
     };
 
@@ -131,9 +129,17 @@ const BodyTab: React.FunctionComponent<{
   return <div className='network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
-    {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} language={responseBody.language} readOnly lineNumbers={true}/>}
+    {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };
+
+function statusClass(statusCode: number): string {
+  if (statusCode < 300 || statusCode === 304)
+    return 'green-circle';
+  if (statusCode < 400)
+    return 'yellow-circle';
+  return 'red-circle';
+}
 
 function formatBody(body: string | null, contentType: string): string {
   if (body === null)
@@ -155,13 +161,4 @@ function formatBody(body: string | null, contentType: string): string {
     return decodeURIComponent(bodyStr);
 
   return bodyStr;
-}
-
-function mimeTypeToHighlighter(mimeType: string): Language | undefined {
-  if (mimeType.includes('javascript') || mimeType.includes('json'))
-    return 'javascript';
-  if (mimeType.includes('html'))
-    return 'html';
-  if (mimeType.includes('css'))
-    return 'css';
 }

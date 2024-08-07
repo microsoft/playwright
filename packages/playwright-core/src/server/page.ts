@@ -54,10 +54,8 @@ export interface PageDelegate {
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
-  exposeBinding(binding: PageBinding): Promise<void>;
-  removeExposedBindings(): Promise<void>;
   addInitScript(initScript: InitScript): Promise<void>;
-  removeInitScripts(): Promise<void>;
+  removeNonInternalInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   potentiallyUninitializedPage(): Page;
   pageOrError(): Promise<Page | Error>;
@@ -154,7 +152,7 @@ export class Page extends SdkObject {
   private _emulatedMedia: Partial<EmulatedMedia> = {};
   private _interceptFileChooser = false;
   private readonly _pageBindings = new Map<string, PageBinding>();
-  readonly initScripts: InitScript[] = [];
+  initScripts: InitScript[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -342,15 +340,15 @@ export class Page extends SdkObject {
       throw new Error(`Function "${name}" has been already registered in the browser context`);
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    await this._delegate.exposeBinding(binding);
+    await this._delegate.addInitScript(binding.initScript);
+    await Promise.all(this.frames().map(frame => frame.evaluateExpression(binding.initScript.source).catch(e => {})));
   }
 
   async _removeExposedBindings() {
-    for (const key of this._pageBindings.keys()) {
-      if (!key.startsWith('__pw'))
+    for (const [key, binding] of this._pageBindings) {
+      if (!binding.internal)
         this._pageBindings.delete(key);
     }
-    await this._delegate.removeExposedBindings();
   }
 
   setExtraHTTPHeaders(headers: types.HeadersArray) {
@@ -533,8 +531,8 @@ export class Page extends SdkObject {
   }
 
   async _removeInitScripts() {
-    this.initScripts.splice(0, this.initScripts.length);
-    await this._delegate.removeInitScripts();
+    this.initScripts = this.initScripts.filter(script => script.internal);
+    await this._delegate.removeNonInternalInitScripts();
   }
 
   needsRequestInterception(): boolean {
@@ -727,8 +725,9 @@ export class Page extends SdkObject {
       this._browserContext.addVisitedOrigin(origin);
   }
 
-  allBindings() {
-    return [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
+  allInitScripts() {
+    const bindings = [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
+    return [...bindings.map(binding => binding.initScript), ...this._browserContext.initScripts, ...this.initScripts];
   }
 
   getBinding(name: string) {
@@ -819,23 +818,29 @@ type BindingPayload = {
 };
 
 export class PageBinding {
+  static kPlaywrightBinding = '__playwright__binding__';
+
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
-  readonly source: string;
+  readonly initScript: InitScript;
   readonly needsHandle: boolean;
+  readonly internal: boolean;
 
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle}, (${source})())`;
+    this.initScript = new InitScript(`(${addPageBinding.toString()})(${JSON.stringify(PageBinding.kPlaywrightBinding)}, ${JSON.stringify(name)}, ${needsHandle}, (${source})())`, true /* internal */);
     this.needsHandle = needsHandle;
+    this.internal = name.startsWith('__pw');
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const { name, seq, serializedArgs } = JSON.parse(payload) as BindingPayload;
     try {
       assert(context.world);
-      const binding = page.getBinding(name)!;
+      const binding = page.getBinding(name);
+      if (!binding)
+        throw new Error(`Function "${name}" is not exposed`);
       let result: any;
       if (binding.needsHandle) {
         const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
@@ -877,10 +882,8 @@ export class PageBinding {
   }
 }
 
-function addPageBinding(bindingName: string, needsHandle: boolean, utilityScriptSerializers: ReturnType<typeof source>) {
-  const binding = (globalThis as any)[bindingName];
-  if (binding.__installed)
-    return;
+function addPageBinding(playwrightBinding: string, bindingName: string, needsHandle: boolean, utilityScriptSerializers: ReturnType<typeof source>) {
+  const binding = (globalThis as any)[playwrightBinding];
   (globalThis as any)[bindingName] = (...args: any[]) => {
     const me = (globalThis as any)[bindingName];
     if (needsHandle && args.slice(1).some(arg => arg !== undefined))
@@ -919,8 +922,9 @@ function addPageBinding(bindingName: string, needsHandle: boolean, utilityScript
 
 export class InitScript {
   readonly source: string;
+  readonly internal: boolean;
 
-  constructor(source: string) {
+  constructor(source: string, internal?: boolean) {
     const guid = createGuid();
     this.source = `(() => {
       globalThis.__pwInitScripts = globalThis.__pwInitScripts || {};
@@ -930,6 +934,7 @@ export class InitScript {
       globalThis.__pwInitScripts[${JSON.stringify(guid)}] = true;
       ${source}
     })();`;
+    this.internal = !!internal;
   }
 }
 

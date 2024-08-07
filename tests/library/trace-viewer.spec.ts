@@ -256,6 +256,67 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
+test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('JS', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('style.css')).toBeVisible();
+
+  await traceViewer.page.getByText('Image', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByText('Fetch', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByText('HTML', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('network.html')).toBeVisible();
+
+  await traceViewer.page.getByText('Font', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
+});
+
+test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('script.');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('png');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('api/');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('End');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('FON');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
+});
+
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/style.css', route => route.abort());
@@ -291,13 +352,13 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
 test('should popup snapshot', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent('hello');
+    await page.setContent('hello äöü 🙂');
   });
   await traceViewer.snapshotFrame('page.setContent');
   const popupPromise = traceViewer.page.context().waitForEvent('page');
   await traceViewer.page.getByTitle('Open snapshot in a new tab').click();
   const popup = await popupPromise;
-  await expect(popup.getByText('hello')).toBeVisible();
+  await expect(popup.getByText('hello äöü 🙂')).toBeVisible();
 });
 
 test('should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
@@ -804,7 +865,7 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
 test('should include metainfo', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
-  const callLine = traceViewer.page.locator('.metadata-view .call-line');
+  const callLine = traceViewer.metadataTab.locator('.call-line');
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
   await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
   await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
@@ -1357,7 +1418,6 @@ test('should allow hiding route actions', {
   await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
   await traceViewer.page.getByText('Actions', { exact: true }).click();
   await expect(traceViewer.actionTitles).toHaveText([
-    /page.route/,
     /page.goto.*empty.html/,
   ]);
 

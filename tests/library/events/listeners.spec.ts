@@ -40,7 +40,7 @@ test('EventEmitter listeners with one listener', () => {
   expect(listeners).toHaveLength(1);
   expect(listeners[0]).toEqual(listener);
 
-  ee.removeAllListeners('foo');
+  void ee.removeAllListeners('foo');
   expect<Array<any>>(ee.listeners('foo')).toHaveLength(0);
 
   expect(Array.isArray(fooListeners)).toBeTruthy();

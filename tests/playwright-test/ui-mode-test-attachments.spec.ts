@@ -23,7 +23,10 @@ test('should contain text attachment', async ({ runUITest }) => {
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('attach test', async () => {
+        // Attach two files with the same content and different names,
+        // to make sure each is downloaded with an intended name.
         await test.info().attach('file attachment', { path: __filename });
+        await test.info().attach('file attachment 2', { path: __filename });
         await test.info().attach('text attachment', { body: 'hi tester!', contentType: 'text/plain' });
       });
     `,
@@ -35,14 +38,24 @@ test('should contain text attachment', async ({ runUITest }) => {
 
   await page.locator('.tab-attachments').getByText('text attachment').click();
   await expect(page.locator('.tab-attachments')).toContainText('hi tester!');
-  await page.locator('.tab-attachments').getByText('file attachment').click();
+  await page.locator('.tab-attachments').getByText('file attachment').first().click();
   await expect(page.locator('.tab-attachments')).not.toContainText('attach test');
 
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'download' }).first().click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe('file attachment');
-  expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
+  {
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'download' }).first().click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('file attachment');
+    expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
+  }
+
+  {
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'download' }).nth(1).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('file attachment 2');
+    expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
+  }
 });
 
 test('should contain binary attachment', async ({ runUITest }) => {
@@ -84,6 +97,55 @@ test('should contain string attachment', async ({ runUITest }) => {
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('note');
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
+});
+
+test('should linkify string attachments', async ({ runUITest, server }) => {
+  server.setRoute('/one.html', (req, res) => res.end());
+  server.setRoute('/two.html', (req, res) => res.end());
+  server.setRoute('/three.html', (req, res) => res.end());
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        await test.info().attach('Inline url: ${server.PREFIX + '/one.html'}');
+        await test.info().attach('Second', { body: 'Inline link ${server.PREFIX + '/two.html'} to be highlighted.' });
+        await test.info().attach('Third', { body: '[markdown link](${server.PREFIX + '/three.html'})', contentType: 'text/markdown' });
+      });
+    `,
+  });
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByText('Attachments').click();
+
+  const attachmentsPane = page.locator('.attachments-tab');
+
+  {
+    const url = server.PREFIX + '/one.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText(url).click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
+
+  {
+    await attachmentsPane.getByText('Second download').click();
+    const url = server.PREFIX + '/two.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText(url).click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
+
+  {
+    await attachmentsPane.getByText('Third download').click();
+    const url = server.PREFIX + '/three.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText('[markdown link]').click();
+    const popup = await promise;
+    await expect(popup).toHaveURL(url);
+  }
 });
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {

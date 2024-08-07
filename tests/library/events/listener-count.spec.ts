@@ -20,7 +20,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import events from 'events';
 import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
 import { test, expect } from '@playwright/test';
 
@@ -32,7 +31,6 @@ test('Listener count test', () => {
   // Allow any type
   emitter.on(123, () => {});
 
-  expect(events.listenerCount(emitter, 'foo')).toEqual(2);
   expect(emitter.listenerCount('foo')).toEqual(2);
   expect(emitter.listenerCount('bar')).toEqual(0);
   expect(emitter.listenerCount('baz')).toEqual(1);

@@ -36,6 +36,8 @@ openssl x509 \
 	-out client/trusted/cert.pem \
 	-set_serial 01 \
 	-days 365
+# create pfx
+openssl pkcs12 -export -out client/trusted/cert.pfx -inkey client/trusted/key.pem -in client/trusted/cert.pem -passout pass:secure
 ```
 
 ## Self-signed certificate (invalid)

@@ -47,8 +47,9 @@ Create `tests/auth.setup.ts` that will prepare authenticated browser state for a
 
 ```js title="tests/auth.setup.ts"
 import { test as setup, expect } from '@playwright/test';
+import path from 'path';
 
-const authFile = 'playwright/.auth/user.json';
+const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
@@ -112,6 +113,8 @@ test('test', async ({ page }) => {
   // page is authenticated
 });
 ```
+
+Note that you need to delete the stored state when it expires. If you don't need to keep the state between test runs, write the browser state under [`property: TestProject.outputDir`], which is automatically cleaned up before every test run.
 
 ### Authenticating in UI mode
 * langs: js

@@ -170,8 +170,16 @@ export function source() {
     if (typeof value === 'bigint')
       return { bi: value.toString() };
 
-    if (isError(value))
-      return { e: { n: value.name, m: value.message, s: value.stack || '' } };
+    if (isError(value)) {
+      let stack;
+      if (value.stack?.startsWith(value.name + ': ' + value.message)) {
+        // v8
+        stack = value.stack;
+      } else {
+        stack = `${value.name}: ${value.message}\n${value.stack}`;
+      }
+      return { e: { n: value.name, m: value.message, s: stack } };
+    }
     if (isDate(value))
       return { d: value.toJSON() };
     if (isURL(value))

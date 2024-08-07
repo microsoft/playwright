@@ -20,7 +20,7 @@ import * as dom from '../dom';
 import type * as frames from '../frames';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import type { PageBinding, PageDelegate } from '../page';
+import type { PageDelegate } from '../page';
 import { InitScript } from '../page';
 import { Page, Worker } from '../page';
 import type * as types from '../types';
@@ -114,7 +114,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.addInitScript(new InitScript('', true), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   potentiallyUninitializedPage(): Page {
@@ -336,14 +336,6 @@ export class FFPage implements PageDelegate {
     this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
   }
 
-  async exposeBinding(binding: PageBinding) {
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
-  }
-
-  async removeExposedBindings() {
-    // TODO: implement me.
-  }
-
   didClose() {
     this._markAsError(new TargetClosedError());
     this._session.dispose();
@@ -412,9 +404,9 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
   }
 
-  async removeInitScripts() {
-    this._initScripts = [];
-    await this._session.send('Page.setInitScripts', { scripts: [] });
+  async removeNonInternalInitScripts() {
+    this._initScripts = this._initScripts.filter(s => s.initScript.internal);
+    await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {

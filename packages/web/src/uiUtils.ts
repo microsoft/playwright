@@ -141,6 +141,7 @@ export function copy(text: string) {
 
 export type Setting<T> = readonly [T, (value: T) => void, string];
 
+
 export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
   if (name)
     defaultValue = settings.getObject(name, defaultValue);
@@ -148,19 +149,32 @@ export function useSetting<S>(name: string | undefined, defaultValue: S, title?:
   const setValueWrapper = React.useCallback((value: React.SetStateAction<S>) => {
     if (name)
       settings.setObject(name, value);
-    setValue(value);
+    else
+      setValue(value);
   }, [name, setValue]);
+
+  React.useEffect(() => {
+    if (name) {
+      const onStoreChange = () => setValue(settings.getObject(name, defaultValue));
+      settings.onChangeEmitter.addEventListener(name, onStoreChange);
+      return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
+    }
+  }, [defaultValue, name]);
+
   const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
   return [value, setValueWrapper, setting];
 }
 
 export class Settings {
+  onChangeEmitter = new EventTarget();
+
   getString(name: string, defaultValue: string): string {
     return localStorage[name] || defaultValue;
   }
 
   setString(name: string, value: string) {
     localStorage[name] = value;
+    this.onChangeEmitter.dispatchEvent(new Event(name));
     if ((window as any).saveSettings)
       (window as any).saveSettings();
   }
@@ -177,9 +191,19 @@ export class Settings {
 
   setObject<T>(name: string, value: T) {
     localStorage[name] = JSON.stringify(value);
+    this.onChangeEmitter.dispatchEvent(new Event(name));
+
     if ((window as any).saveSettings)
       (window as any).saveSettings();
   }
 }
 
 export const settings = new Settings();
+
+// inspired by https://www.npmjs.com/package/clsx
+export function clsx(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
+const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
+export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');

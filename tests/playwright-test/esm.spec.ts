@@ -129,8 +129,10 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'playwright.config.ts': `
+      // Make sure that config can use the path mapping.
+      import { foo } from 'util/b.js';
       export default {
-        projects: [{name: 'foo'}],
+        projects: [{ name: foo }],
       };
     `,
     'tsconfig.json': `{
@@ -148,7 +150,8 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
       import { foo } from 'util/b.js';
       import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
-        expect(testInfo.project.name).toBe(foo);
+        expect(testInfo.project.name).toBe('foo');
+        expect(foo).toBe('foo');
       });
     `,
     'foo/bar/util/b.ts': `

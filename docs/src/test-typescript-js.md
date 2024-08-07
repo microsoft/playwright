@@ -5,9 +5,9 @@ title: "TypeScript"
 
 ## Introduction
 
-Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run. Note that Playwright does not check the types and will run tests even if there are non-critical TypeScript compilation errors.
+Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run.
 
-We recommend you run TypeScript compiler alongside Playwright. For example on GitHub actions:
+Note that Playwright does not check the types and will run tests even if there are non-critical TypeScript compilation errors. We recommend you run TypeScript compiler alongside Playwright. For example on GitHub actions:
 
 ```yaml
 jobs:
@@ -28,7 +28,7 @@ npx tsc -p tsconfig.json --noEmit -w
 
 ## tsconfig.json
 
-Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `paths` and `baseUrl`.
+Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `allowJs`, `baseUrl`, `paths` and `references`.
 
 We recommend setting up a separate `tsconfig.json` in the tests directory so that you can change some preferences specifically for the tests. Here is an example directory structure.
 
@@ -49,12 +49,12 @@ playwright.config.ts
 
 Playwright supports [path mapping](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping) declared in the `tsconfig.json`. Make sure that `baseUrl` is also set.
 
-Here is an example `tsconfig.json` that works with Playwright Test:
+Here is an example `tsconfig.json` that works with Playwright:
 
-```json
+```json title="tsconfig.json"
 {
   "compilerOptions": {
-    "baseUrl": ".", // This must be specified if "paths" is.
+    "baseUrl": ".",
     "paths": {
       "@myhelper/*": ["packages/myhelper/*"] // This mapping is relative to "baseUrl".
     }
@@ -72,6 +72,22 @@ test('example', async ({ page }) => {
   await page.getByLabel('User Name').fill(username);
   await page.getByLabel('Password').fill(password);
 });
+```
+
+### tsconfig resolution
+
+By default, Playwright will look up a closest tsconfig for each imported file by going up the directory structure and looking for `tsconfig.json` or `jsconfig.json`. This way, you can create a `tests/tsconfig.json` file that will be used only for your tests and Playwright will pick it up automatically.
+
+```sh
+# Playwright will choose tsconfig automatically
+npx playwrigh test
+```
+
+Alternatively, you can specify a single tsconfig file to use in the command line, and Playwright will use it for all imported files, not only test files.
+
+```sh
+# Pass a specific tsconfig
+npx playwrigh test --tsconfig=tsconfig.test.json
 ```
 
 ## Manually compile tests with TypeScript

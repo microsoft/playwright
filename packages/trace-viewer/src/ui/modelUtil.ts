@@ -409,3 +409,30 @@ function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: Err
   }
   return result;
 }
+
+const kRouteMethods = new Set([
+  'page.route',
+  'page.routefromhar',
+  'page.unroute',
+  'page.unrouteall',
+  'browsercontext.route',
+  'browsercontext.routefromhar',
+  'browsercontext.unroute',
+  'browsercontext.unrouteall',
+]);
+{
+  // .NET adds async suffix.
+  for (const method of [...kRouteMethods])
+    kRouteMethods.add(method + 'async');
+  // Python methods which contain underscores.
+  for (const method of [
+    'page.route_from_har',
+    'page.unroute_all',
+    'context.route_from_har',
+    'context.unroute_all',
+  ])
+    kRouteMethods.add(method);
+}
+export function isRouteAction(action: ActionTraceEventInContext) {
+  return action.class === 'Route' || kRouteMethods.has(action.apiName.toLowerCase());
+}

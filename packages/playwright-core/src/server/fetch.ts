@@ -17,7 +17,6 @@
 import type * as channels from '@protocol/channels';
 import type { LookupAddress } from 'dns';
 import http from 'http';
-import fs from 'fs';
 import https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
@@ -26,7 +25,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
-import { assert, createGuid, isUnderTest, monotonicTime } from '../utils';
+import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
@@ -41,7 +40,7 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { kMaxCookieExpiresDateInSeconds } from './network';
-import { clientCertificatesToTLSOptions } from './socksClientCertificatesInterceptor';
+import { clientCertificatesToTLSOptions, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -199,8 +198,6 @@ export abstract class APIRequestContext extends SdkObject {
       ...clientCertificatesToTLSOptions(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
-    if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
-      options.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
     // rejectUnauthorized = undefined is treated as true in Node.js 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;
@@ -214,8 +211,16 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
-      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}`);
+    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
+      let responseText = '';
+      if (fetchResponse.body.byteLength) {
+        let text = fetchResponse.body.toString('utf8');
+        if (text.length > 1000)
+          text = text.substring(0, 997) + '...';
+        responseText = `\nResponse text:\n${text}`;
+      }
+      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
+    }
     return { ...fetchResponse, fetchUid };
   }
 
@@ -447,7 +452,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
-      request.on('error', reject);
+      request.on('error', error => reject(rewriteOpenSSLErrorIfNeeded(error)));
 
       const disposeListener = () => {
         reject(new Error('Request context disposed.'));

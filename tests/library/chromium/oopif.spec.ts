@@ -260,8 +260,8 @@ it('should report google.com frame with headed', async ({ browserType, server })
 it('ElementHandle.boundingBox() should work', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await page.$eval('iframe', iframe => {
-    iframe.style.width = '500px';
-    iframe.style.height = '500px';
+    iframe.style.width = '520px';
+    iframe.style.height = '520px';
     iframe.style.marginLeft = '42px';
     iframe.style.marginTop = '17px';
   });

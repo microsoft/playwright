@@ -4,6 +4,45 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.46
+
+### TLS Client Certificates
+
+Playwright now allows to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+
+You can provide client certificates as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`]. The following snippet sets up a client certificate for `https://example.com`:
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+    .setClientCertificates(asList(new ClientCertificate("https://example.com")
+          .setCertPath(Paths.get("client-certificates/cert.pem"))
+          .setKeyPath(Paths.get("client-certificates/key.pem")))));
+```
+
+### Trace Viewer Updates
+
+- Content of text attachments is now rendered inline in the attachments pane.
+- New setting to show/hide routing actions like [`method: Route.continue`].
+- Request method and status are shown in the network details tab.
+- New button to copy source file location to clipboard.
+- Metadata pane now displays the `baseURL`.
+
+### Miscellaneous
+
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
+
+### Browser Versions
+
+- Chromium 128.0.6613.18
+- Mozilla Firefox 128.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 127
+- Microsoft Edge 127
+
+
 ## Version 1.45
 
 ### Clock

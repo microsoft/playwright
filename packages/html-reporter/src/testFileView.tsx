@@ -23,6 +23,7 @@ import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
+import { clsx } from '@web/uiUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -39,7 +40,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
       {file.fileName}
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
-      <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
+      <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
         <div className='hbox' style={{ alignItems: 'flex-start' }}>
           <div className='hbox'>
             <span className='test-file-test-status-icon'>
@@ -101,7 +102,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
   return labels.length > 0 ? (
     <>
       {labels.map(label => (
-        <span key={label} style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(label))} onClick={e => onClickHandle(e, label)}>
+        <span key={label} style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={clsx('label', 'label-color-' + hashStringToInt(label))} onClick={e => onClickHandle(e, label)}>
           {label.slice(1)}
         </span>
       ))}

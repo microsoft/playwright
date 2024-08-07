@@ -20,7 +20,7 @@ import './consoleTab.css';
 import type * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from '../geometry';
-import { msToString } from '@web/uiUtils';
+import { clsx, msToString } from '@web/uiUtils';
 import { ansi2html } from '@web/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';
 
@@ -124,8 +124,8 @@ export const ConsoleTab: React.FunctionComponent<{
       render={entry => {
         const timestamp = msToString(entry.timestamp - boundaries.minimum);
         const timestampElement = <span className='console-time'>{timestamp}</span>;
-        const errorSuffix = entry.isError ? ' status-error' : entry.isWarning ? ' status-warning' : ' status-none';
-        const statusElement = entry.browserMessage || entry.browserError ? <span className={'codicon codicon-browser' + errorSuffix} title='Browser message'></span> : <span className={'codicon codicon-file' + errorSuffix} title='Runner message'></span>;
+        const errorSuffix = entry.isError ? 'status-error' : entry.isWarning ? 'status-warning' : 'status-none';
+        const statusElement = entry.browserMessage || entry.browserError ? <span className={clsx('codicon', 'codicon-browser', errorSuffix)} title='Browser message'></span> : <span className={clsx('codicon', 'codicon-file', errorSuffix)} title='Runner message'></span>;
         let locationText: string | undefined;
         let messageBody: JSX.Element[] | string | undefined;
         let messageInnerHTML: string | undefined;

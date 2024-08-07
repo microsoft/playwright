@@ -64,8 +64,12 @@ class TestServer {
 
 class TestServerDispatcher implements TestServerInterface {
   private _configLocation: ConfigLocation;
-  private _globalWatcher: Watcher;
-  private _testWatcher: Watcher;
+
+  private _watcher: Watcher;
+  private _watchedProjectDirs = new Set<string>();
+  private _ignoredProjectOutputs = new Set<string>();
+  private _watchedTestDependencies = new Set<string>();
+
   private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   readonly transport: Transport;
   private _queue = Promise.resolve();
@@ -86,8 +90,7 @@ class TestServerDispatcher implements TestServerInterface {
           gracefullyProcessExitDoNotHang(0);
       },
     };
-    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
-    this._testWatcher = new Watcher('flat', events => {
+    this._watcher = new Watcher(events => {
       const collector = new Set<string>();
       events.forEach(f => collectAffectedTestFiles(f.file, collector));
       this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
@@ -279,22 +282,26 @@ class TestServerDispatcher implements TestServerInterface {
     await taskRunner.reporter.onEnd({ status });
     await taskRunner.reporter.onExit();
 
-    const projectDirs = new Set<string>();
-    const projectOutputs = new Set<string>();
+    this._watchedProjectDirs = new Set();
+    this._ignoredProjectOutputs = new Set();
     for (const p of config.projects) {
-      projectDirs.add(p.project.testDir);
-      projectOutputs.add(p.project.outputDir);
+      this._watchedProjectDirs.add(p.project.testDir);
+      this._ignoredProjectOutputs.add(p.project.outputDir);
     }
 
     const result = await resolveCtDirs(config);
     if (result) {
-      projectDirs.add(result.templateDir);
-      projectOutputs.add(result.outDir);
+      this._watchedProjectDirs.add(result.templateDir);
+      this._ignoredProjectOutputs.add(result.outDir);
     }
 
     if (this._watchTestDirs)
-      this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
+      await this.updateWatcher(false);
     return { report, status };
+  }
+
+  private async updateWatcher(reportPending: boolean) {
+    await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
@@ -364,12 +371,12 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async watch(params: { fileNames: string[]; }) {
-    const files = new Set<string>();
+    this._watchedTestDependencies = new Set();
     for (const fileName of params.fileNames) {
-      files.add(fileName);
-      dependenciesForTestFile(fileName).forEach(file => files.add(file));
+      this._watchedTestDependencies.add(fileName);
+      dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
     }
-    this._testWatcher.update([...files], [], true);
+    await this.updateWatcher(true);
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {

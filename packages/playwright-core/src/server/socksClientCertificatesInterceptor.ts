@@ -22,7 +22,7 @@ import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { isUnderTest, ManualPromise } from '../utils';
+import { escapeHTML, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -142,38 +142,18 @@ class SocksProxyConnection {
       dummyServer.emit('connection', this.internal);
       dummyServer.on('secureConnection', internalTLS => {
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
-        const tlsOptions: tls.ConnectionOptions = {
-          socket: this.target,
-          host: this.host,
-          port: this.port,
-          rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
-          ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
-          ...clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, `https://${this.host}:${this.port}`),
-        };
-        if (!net.isIP(this.host))
-          tlsOptions.servername = this.host;
-        if (process.env.PWTEST_UNSUPPORTED_CUSTOM_CA && isUnderTest())
-          tlsOptions.ca = [fs.readFileSync(process.env.PWTEST_UNSUPPORTED_CUSTOM_CA)];
-        const targetTLS = tls.connect(tlsOptions);
 
-        targetTLS.on('secureConnect', () => {
-          internalTLS.pipe(targetTLS);
-          targetTLS.pipe(internalTLS);
-        });
-
-        // Handle close and errors
+        let targetTLS: tls.TLSSocket | undefined = undefined;
         const closeBothSockets = () => {
           internalTLS.end();
-          targetTLS.end();
+          targetTLS?.end();
         };
 
-        internalTLS.on('end', () => closeBothSockets());
-        targetTLS.on('end', () => closeBothSockets());
-
-        internalTLS.on('error', () => closeBothSockets());
-        targetTLS.on('error', error => {
-          debugLogger.log('client-certificates', `error when connecting to target: ${error.message}`);
-          const responseBody = 'Playwright client-certificate error: ' + error.message;
+        const handleError = (error: Error) => {
+          error = rewriteOpenSSLErrorIfNeeded(error);
+          debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
+          const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
+              .replaceAll('\n', ' <br>');
           if (internalTLS?.alpnProtocol === 'h2') {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
@@ -206,7 +186,38 @@ class SocksProxyConnection {
             ].join('\r\n'));
             closeBothSockets();
           }
+        };
+
+        let secureContext: tls.SecureContext;
+        try {
+          secureContext = tls.createSecureContext(clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin));
+        } catch (error) {
+          handleError(error);
+          return;
+        }
+
+        const tlsOptions: tls.ConnectionOptions = {
+          socket: this.target,
+          host: this.host,
+          port: this.port,
+          rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+          ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
+          servername: !net.isIP(this.host) ? this.host : undefined,
+          secureContext,
+        };
+
+        targetTLS = tls.connect(tlsOptions);
+
+        targetTLS.on('secureConnect', () => {
+          internalTLS.pipe(targetTLS);
+          targetTLS.pipe(internalTLS);
         });
+
+        internalTLS.on('end', () => closeBothSockets());
+        targetTLS.on('end', () => closeBothSockets());
+
+        internalTLS.on('error', () => closeBothSockets());
+        targetTLS.on('error', handleError);
       });
     });
   }
@@ -287,4 +298,15 @@ export function clientCertificatesToTLSOptions(
 
 function rewriteToLocalhostIfNeeded(host: string): string {
   return host === 'local.playwright' ? 'localhost' : host;
+}
+
+export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
+  if (error.message !== 'unsupported')
+    return error;
+  return rewriteErrorMessage(error, [
+    'Unsupported TLS certificate.',
+    'Most likely, the security algorithm of the given certificate was deprecated by OpenSSL.',
+    'For more details, see https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
+    'You could probably modernize the certificate by following the steps at https://github.com/nodejs/node/issues/40672#issuecomment-1243648223',
+  ].join('\n'));
 }

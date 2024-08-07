@@ -33,6 +33,7 @@ export type ConfigCLIOverrides = {
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   timeout?: number;
+  tsconfig?: string;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
   workers?: number | string;
