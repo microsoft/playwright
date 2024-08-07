@@ -11,7 +11,7 @@ Playwright tests can be run on any CI provider. This guide covers one way of run
 #### You will learn
 * langs: js
 
-- [How to run tests on push/pull_request](/ci-intro.md#on-pushpull_request)
+- [How to set up GitHub Actions](/ci-intro.md#setting-up-github-actions)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
 - [How to view the HTML report](/ci-intro.md#viewing-the-html-report)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
@@ -26,7 +26,7 @@ Playwright tests can be ran on any CI provider. In this section we will cover ru
 #### You will learn
 * langs: python, java, csharp
   
-- [How to set up GitHub Actions](/ci-intro.md#setting-up-GitHub-Actions)
+- [How to set up GitHub Actions](/ci-intro.md#setting-up-github-actions)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
 
