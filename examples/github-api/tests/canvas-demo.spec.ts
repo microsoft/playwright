@@ -56,3 +56,14 @@ test('Go JS', async ({ page }) => {
     }
   });
 });
+
+test('ThreeJS', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = window.HTMLCanvasElement.prototype.getContext;
+    window.HTMLCanvasElement.prototype.getContext = function(id, options) { return original.call(this, id, {...options, preserveDrawingBuffer: true }) }
+  });
+  await page.goto('https://threejs.org/examples/webgl_animation_skinning_morph.html');
+  await page.waitForTimeout(1000);
+  await page.getByLabel('Surprised').fill('1');
+  await page.waitForTimeout(1000);
+});
