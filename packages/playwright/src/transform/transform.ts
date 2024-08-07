@@ -156,7 +156,7 @@ export function resolveHook(filename: string, specifier: string, dontResolveDire
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`
     // Do not handle module imports like `import 'fs'`
-    return resolveImportSpecifierExtension(specifier, dontResolveDirectories);
+    return resolveImportSpecifierExtension(specifier, false);
   }
 }
 
