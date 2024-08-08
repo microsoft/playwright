@@ -693,3 +693,65 @@ test('should respect --tsconfig option', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output).not.toContain(`Could not`);
 });
+
+
+test('should resolve index.js in CJS after path mapping', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
+
+  const result = await runInlineTest({
+    '@acme/lib/index.js': `
+      exports.greet = () => console.log('hello playwright');
+    `,
+    '@acme/lib/index.d.ts': `
+      export const greet: () => void;
+    `,
+    'tests/hello.test.ts': `
+      import { greet } from '@acme/lib';
+      import { test } from '@playwright/test';
+      test('hello', async ({}) => {
+        greet();
+      });
+    `,
+    'tests/tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        'paths': {
+          '@acme/*': ['../@acme/*'],
+        }
+      }
+    })
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should not resolve index.js in ESM after path mapping', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
+
+  const result = await runInlineTest({
+    '@acme/lib/index.js': `
+      export const greet = () => console.log('hello playwright');
+    `,
+    '@acme/lib/index.d.ts': `
+      export const greet: () => void;
+    `,
+    'tests/hello.test.ts': `
+      import { greet } from '@acme/lib';
+      import { test } from '@playwright/test';
+      test('hello', async ({}) => {
+        greet();
+      });
+    `,
+    'tests/tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        'paths': {
+          '@acme/*': ['../@acme/*'],
+        }
+      }
+    }),
+    'package.json': JSON.stringify({ type: 'module' }),
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find package '@acme/lib'`);
+});
