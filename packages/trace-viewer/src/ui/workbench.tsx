@@ -113,8 +113,9 @@ export const Workbench: React.FunctionComponent<{
 
   const onActionSelected = React.useCallback((action: modelUtil.ActionTraceEventInContext) => {
     setSelectedAction(action);
+    setHighlightedAction(undefined);
     onSelectionChanged?.(action);
-  }, [setSelectedAction, onSelectionChanged]);
+  }, [setSelectedAction, onSelectionChanged, setHighlightedAction]);
 
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);

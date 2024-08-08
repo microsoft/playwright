@@ -128,6 +128,7 @@ export function ListView<T>({
         scrollIntoViewIfNeeded(element || undefined);
         onHighlighted?.(undefined);
         onSelected?.(items[newIndex], newIndex);
+        setHighlightedItem(undefined);
       }}
       ref={itemListRef}
     >
