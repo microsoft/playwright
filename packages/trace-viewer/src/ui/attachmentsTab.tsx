@@ -131,7 +131,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     })}
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
-      return <div className='attachment-item' key={`attachment-${i}`}>
+      return <div className='attachment-item' key={attachmentKey(a, i)}>
         <ExpandableAttachment attachment={a} />
       </div>;
     })}
@@ -153,4 +153,8 @@ function downloadURL(attachment: Attachment) {
   if (attachment.contentType)
     params.dct = attachment.contentType;
   return attachmentURL(attachment, params);
+}
+
+function attachmentKey(attachment: Attachment, index: number) {
+  return index + '-' + (attachment.sha1 ? `sha1-` + attachment.sha1 : `path-` + attachment.path);
 }
