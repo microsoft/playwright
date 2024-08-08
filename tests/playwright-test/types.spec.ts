@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should check types of fixtures', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
-      import { test as base, expect } from '@playwright/test';
+      import { test as base, expect, Page } from '@playwright/test';
       export type MyOptions = { foo: string, bar: number };
       export const test = base.extend<{ foo: string }, { bar: number }>({
         foo: 'foo',
@@ -71,7 +71,7 @@ test('should check types of fixtures', async ({ runTSC }) => {
         // @ts-expect-error
         baz: true,
       });
-      const fail9 = test.extend<{ foo: string }>({
+      const fail9 = test.extend({
         foo: [ async ({}, use) => {
           await use('foo');
           // @ts-expect-error
@@ -100,7 +100,21 @@ test('should check types of fixtures', async ({ runTSC }) => {
             return y;
           });
         },
-      })
+      });
+
+      const chain1 = base.extend({
+        page: async ({ page }, use) => {
+          await use(page);
+        },
+      });
+      const chain2 = chain1.extend<{ pageAsUser: Page }>({
+        pageAsUser: async ({ page }, use) => {
+          // @ts-expect-error
+          const x: number = page;
+          // @ts-expect-error
+          await use(x);
+        },
+      });
     `,
     'playwright.config.ts': `
       import { MyOptions } from './helper';
