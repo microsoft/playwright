@@ -29,3 +29,9 @@
   align-items: center;
   flex: 1 1 auto;
 }
+
+.source-tab-file-name div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

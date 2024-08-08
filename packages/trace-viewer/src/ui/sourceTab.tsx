@@ -95,6 +95,7 @@ export const SourceTab: React.FunctionComponent<{
   }, [onOpenExternally, location]);
 
   const showStackFrames = (stack?.length ?? 0) > 1;
+  const shortFileName = getFileName(fileName);
 
   return <SplitView
     sidebarSize={200}
@@ -102,8 +103,10 @@ export const SourceTab: React.FunctionComponent<{
     sidebarHidden={!showStackFrames}
     main={<div className='vbox' data-testid='source-code'>
       { fileName && <Toolbar>
-        <span className='source-tab-file-name'>{fileName}</span>
-        <CopyToClipboard description='Copy filename' value={getFileName(fileName)}/>
+        <div className='source-tab-file-name' title={fileName}>
+          <div>{shortFileName}</div>
+        </div>
+        <CopyToClipboard description='Copy filename' value={shortFileName}/>
         {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
       </Toolbar> }
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
