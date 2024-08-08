@@ -4452,19 +4452,23 @@ might return multiple quads for inline nodes.
       savedResultIndex?: number;
     }
     /**
-     * Sets whether the given URL should be in the list of blackboxed scripts, which are ignored when pausing/stepping/debugging.
+     * Sets whether the given URL should be in the list of blackboxed scripts, which are ignored when pausing.
      */
     export type setShouldBlackboxURLParameters = {
       url: string;
       shouldBlackbox: boolean;
       /**
-       * If true, <code>url</code> is case sensitive.
+       * If <code>true</code>, <code>url</code> is case sensitive.
        */
       caseSensitive?: boolean;
       /**
-       * If true, treat <code>url</code> as regular expression.
+       * If <code>true</code>, treat <code>url</code> as regular expression.
        */
       isRegex?: boolean;
+      /**
+       * If provided, limits where in the script the debugger will skip pauses. Expected structure is a repeated <code>[startLine, startColumn, endLine, endColumn]</code>. Ignored if <code>shouldBlackbox</code> is <code>false</code>.
+       */
+      sourceRanges?: number[];
     }
     export type setShouldBlackboxURLReturnValue = {
     }
