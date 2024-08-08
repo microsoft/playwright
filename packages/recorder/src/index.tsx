@@ -22,6 +22,6 @@ import { Main } from './main';
 
 (async () => {
   applyTheme();
-  // we'd like to migrate this to React 18, but concurrent mode seems to break some of our tests.
+  // TODO: we'd like to migrate this to React 18, but concurrent mode seems to break some of our tests.
   ReactDOM.render(<Main/>, document.querySelector('#root'));
 })();
