@@ -55,3 +55,29 @@ test('should have timeout error name', async ({ page }) => {
   const error = await page.waitForSelector('#not-found', { timeout: 1 }).catch(e => e);
   expect(error.name).toBe('TimeoutError');
 });
+
+test('should not throw when navigating during one-shot check', async ({ page, server }) => {
+  await page.setContent(`<div>hello</div>`);
+  const promise = expect(page.locator('div')).toHaveText('bye');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div>bye</div>`);
+  await promise;
+});
+
+test('should not throw when navigating during first locator handler check', async ({ page, server }) => {
+  await page.addLocatorHandler(page.locator('span'), async locator => {});
+  await page.setContent(`<div>hello</div>`);
+  const promise = expect(page.locator('div')).toHaveText('bye');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div>bye</div>`);
+  await promise;
+});
+
+test('should timeout during first locator handler check', async ({ page, server }) => {
+  await page.addLocatorHandler(page.locator('div'), async locator => {});
+  await page.setContent(`<div>hello</div><span>bye</span>`);
+  const error = await expect(page.locator('span')).toHaveText('bye', { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('Timed out 3000ms waiting for');
+  expect(error.message).toContain(`locator handler has finished, waiting for locator('div') to be hidden`);
+  expect(error.message).toContain(`locator resolved to visible <div>hello</div>`);
+});
