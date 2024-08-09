@@ -31,7 +31,7 @@ packages.set('injected', packagesDir + '/playwright-core/src/server/injected/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
-const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
+const peerDependencies = ['electron', 'react', 'react-dom', 'react-dom/client', '@zip.js/zip.js'];
 
 const depsCache = {};
 
