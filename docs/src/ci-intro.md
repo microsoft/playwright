@@ -131,9 +131,9 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
-    - name: Ensure browsers are installed
+    - name: Build & Install
       run: mvn -B install -D skipTests --no-transfer-progress
-    - name: Install Playwright
+    - name: Ensure browsers are installed
       run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
     - name: Run tests
       run: mvn test
