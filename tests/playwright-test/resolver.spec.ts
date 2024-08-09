@@ -606,6 +606,43 @@ test('should import packages with non-index main script through path resolver', 
   expect(result.output).toContain(`foo=42`);
 });
 
+test('does not honor `exports` field after type mapping', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'app/pkg/main.ts': `
+      export const filename = 'main.ts';
+    `,
+    'app/pkg/index.js': `
+      export const filename = 'index.js';
+    `,
+    'app/pkg/package.json': JSON.stringify({
+      exports: { '.': { require: './main.ts' } }
+    }),
+    'package.json': JSON.stringify({
+      name: 'example-project'
+    }),
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        baseUrl: '.',
+        paths: {
+          'app/*': ['app/*'],
+        },
+      }
+    }),
+    'example.spec.ts': `
+      import { filename } from 'app/pkg';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        console.log('filename=' + filename);
+      });
+    `,
+  });
+
+  expect(result.output).toContain('filename=index.js');
+});
+
 test('should respect tsconfig project references', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29256' });
 
