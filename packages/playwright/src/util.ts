@@ -319,18 +319,17 @@ export function resolveImportSpecifierExtension(resolved: string, isPathMapping:
     break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
 
-  if (dirExists(resolved)) {
+  // Following TypeScript's path mapping logic, index files and package.json are not resolved in ESM.
+  // TypeScript does not interpret package.json for path mappings: https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
+  const shouldNotResolveDirectory = isPathMapping && isESM;
+
+  if (!shouldNotResolveDirectory && dirExists(resolved)) {
     // If we import a package, let Node.js figure out the correct import based on package.json.
-    // TypeScript does not interpret package.json for path mappings: https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
-    if (!isPathMapping && fileExists(path.join(resolved, 'package.json')))
+    if (fileExists(path.join(resolved, 'package.json')))
       return resolved;
 
-    // Following TypeScript's path mapping logic, index files are still resolved in CommonJS.
-    const shouldNotResolveIndex = isPathMapping && isESM;
-    if (!shouldNotResolveIndex) {
-      const dirImport = path.join(resolved, 'index');
-      return resolveImportSpecifierExtension(dirImport, isPathMapping, isESM);
-    }
+    const dirImport = path.join(resolved, 'index');
+    return resolveImportSpecifierExtension(dirImport, isPathMapping, isESM);
   }
 }
 
