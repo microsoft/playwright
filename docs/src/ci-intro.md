@@ -156,7 +156,8 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - run: dotnet build
+    - name: Build & Install
+      run: dotnet build
     - name: Ensure browsers are installed
       run: pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
     - name: Run your tests
@@ -169,6 +170,7 @@ Looking at the list of steps in `jobs.test.steps`, you can see that the workflow
 
 1. Clone your repository
 2. Install language dependencies
+3. Install project dependencies and build
 4. Install Playwright Browsers
 5. Run tests
 
