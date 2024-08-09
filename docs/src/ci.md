@@ -61,9 +61,9 @@ export default defineConfig({
 
 ## CI configurations
 
-### GitHub Actions
+The [Command line tools](./browsers#install-system-dependencies) can be used to install all operating system dependencies in CI.
 
-The [Command line tools](./browsers#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
+### GitHub Actions
 
 #### On push/pull_request
 * langs: js
