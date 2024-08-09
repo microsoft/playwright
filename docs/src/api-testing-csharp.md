@@ -18,8 +18,6 @@ All of that could be achieved via [APIRequestContext] methods.
 
 The following examples rely on the [`Microsoft.Playwright.MSTest`](./test-runners.md) package which creates a Playwright and Page instance for each test.
 
-<!-- TOC -->
-
 ## Writing API Test
 
 [APIRequestContext] can send all kinds of HTTP(S) requests over network.

@@ -14,8 +14,6 @@ A few examples of problems this can catch include:
 
 The following examples rely on the [`com.deque.html.axe-core/playwright`](https://mvnrepository.com/artifact/com.deque.html.axe-core/playwright) Maven package which adds support for running the [axe accessibility testing engine](https://www.deque.com/axe/) as part of your Playwright tests.
 
-<!-- TOC -->
-
 ## Disclaimer
 
 Automated accessibility tests can detect some common accessibility problems such as missing or invalid properties. But many accessibility problems can only be discovered through manual testing. We recommend using a combination of automated testing, manual accessibility assessments, and inclusive user testing.

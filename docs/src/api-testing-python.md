@@ -18,8 +18,6 @@ All of that could be achieved via [APIRequestContext] methods.
 
 The following examples rely on the [`pytest-playwright`](./test-runners.md) package which add Playwright fixtures to the Pytest test-runner.
 
-<!-- TOC -->
-
 ## Writing API Test
 
 [APIRequestContext] can send all kinds of HTTP(S) requests over network.
