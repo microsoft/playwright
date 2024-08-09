@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { LongStandingScope, assert, createGuid, isError } from '../utils';
+import { LongStandingScope, assert, createGuid } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -851,10 +851,7 @@ export class PageBinding {
       }
       context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      if (isError(error))
-        context.evaluate(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
-      else
-        context.evaluate(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
+      context.evaluate(deliverResult, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function takeHandle(arg: { name: string, seq: number }) {
@@ -863,21 +860,13 @@ export class PageBinding {
       return handle;
     }
 
-    function deliverResult(arg: { name: string, seq: number, result: any }) {
-      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
-      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
-    }
-
-    function deliverError(arg: { name: string, seq: number, message: string, stack: string | undefined }) {
-      const error = new Error(arg.message);
-      error.stack = arg.stack;
-      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).reject(error);
-      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
-    }
-
-    function deliverErrorValue(arg: { name: string, seq: number, error: any }) {
-      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).reject(arg.error);
-      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
+    function deliverResult(arg: { name: string, seq: number, result?: any, error?: any }) {
+      const callbacks = (globalThis as any)[arg.name]['callbacks'];
+      if ('error' in arg)
+        callbacks.get(arg.seq).reject(arg.error);
+      else
+        callbacks.get(arg.seq).resolve(arg.result);
+      callbacks.delete(arg.seq);
     }
   }
 }
