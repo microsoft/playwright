@@ -1,0 +1,50 @@
+{
+  "name": "@playwright/experimental-ct-angular",
+  "version": "1.45.0-next",
+  "description": "Playwright Component Testing for Angular",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./register": {
+      "types": "./register.d.ts",
+      "default": "./register.mjs"
+    },
+    "./hooks": {
+      "types": "./hooks.d.ts",
+      "default": "./hooks.mjs"
+    }
+  },
+  "dependencies": {
+    "@playwright/experimental-ct-core": "1.45.0-next"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^17.0.0",
+    "@angular/core": "^17.0.0",
+    "@angular/platform-browser-dynamic": "^17.0.0",
+    "rxjs": "~7.8.1",
+    "typescript": "~5.2.0"
+  },
+  "peerDependencies": {
+    "@angular/compiler": "^17.0.0",
+    "@angular/core": "^17.0.0",
+    "@angular/platform-browser-dynamic": "^17.0.0",
+    "typescript": ">=5.2.0"
+  },
+  "bin": {
+    "playwright": "cli.js"
+  }
+}
