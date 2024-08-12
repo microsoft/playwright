@@ -32,15 +32,15 @@ export class WebKit extends BrowserType {
     super(parent, 'webkit');
   }
 
-  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
+  override _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
   }
 
-  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+  override _doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
     if (error.logs.includes('cannot open display'))
@@ -48,11 +48,11 @@ export class WebKit extends BrowserType {
     return error;
   }
 
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+  override _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({ method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId });
   }
 
-  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy, headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)

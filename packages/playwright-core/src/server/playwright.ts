@@ -28,6 +28,7 @@ import { debugLogger } from '../utils/debugLogger';
 import type { Page } from './page';
 import { DebugController } from './debugController';
 import type { Language } from '../utils/isomorphic/locatorGenerators';
+import type { BrowserType } from './browserType';
 
 type PlaywrightOptions = {
   socksProxyPort?: number;
@@ -38,11 +39,11 @@ type PlaywrightOptions = {
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
-  readonly chromium: Chromium;
+  readonly chromium: BrowserType;
   readonly android: Android;
   readonly electron: Electron;
-  readonly firefox: Firefox;
-  readonly webkit: WebKit;
+  readonly firefox: BrowserType;
+  readonly webkit: BrowserType;
   readonly options: PlaywrightOptions;
   readonly debugController: DebugController;
   private _allPages = new Set<Page>();
