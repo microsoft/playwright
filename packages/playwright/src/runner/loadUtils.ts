@@ -202,8 +202,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite._fullProject!)));
 
     // Clone file suites for dependency projects.
-    for (const project of projectClosure.keys()) {
-      if (projectClosure.get(project) === 'dependency')
+    for (const [project, level] of projectClosure.entries()) {
+      if (level === 'dependency')
         rootSuite._prependSuite(buildProjectSuite(project, unfilteredProjectSuites.get(project)!));
     }
   }
