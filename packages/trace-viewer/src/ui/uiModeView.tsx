@@ -85,7 +85,9 @@ export const UIModeView: React.FC<{}> = ({
   const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
+  const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean } | undefined>();
+  const isRunningTest = runningState && !runningState.completed;
+
   const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
   const commandQueue = React.useRef(Promise.resolve());
@@ -251,29 +253,29 @@ export const UIModeView: React.FC<{}> = ({
 
   // Update progress.
   React.useEffect(() => {
-    if (runningState && testModel?.progress)
+    if (isRunningTest && testModel?.progress)
       setProgress(testModel.progress);
     else if (!testModel)
       setProgress(undefined);
-  }, [testModel, runningState]);
+  }, [testModel, isRunningTest]);
 
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
       return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, pathSeparator) };
     const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
-    testTree.filterTree(filterText, statusFilters, runningState?.testIds);
+    testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState?.testIds : undefined);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
     testTree.flattenForSingleProject();
     setVisibleTestIds(testTree.testIds());
     return { testTree };
-  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState]);
+  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
     if (!testServerConnection || !testModel)
       return;
-    if (mode === 'bounce-if-busy' && runningState)
+    if (mode === 'bounce-if-busy' && isRunningTest)
       return;
 
     runTestBacklog.current = new Set([...runTestBacklog.current, ...testIds]);
@@ -320,9 +322,9 @@ export const UIModeView: React.FC<{}> = ({
           test.results = [];
       }
       setTestModel({ ...testModel });
-      setRunningState(undefined);
+      setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, runningState, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -396,7 +398,6 @@ export const UIModeView: React.FC<{}> = ({
     };
   }, [runTests, reloadTests, testServerConnection, visibleTestIds, isShowingOutput]);
 
-  const isRunningTest = !!runningState;
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   const openInstallDialog = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
