@@ -38,7 +38,7 @@ declare global {
     playwrightSetSelector: (selector: string, focus?: boolean) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
     dispatch(data: EventData): Promise<void>;
-    saveSettings(): Promise<void>;
+    saveSettings?(): Promise<void>;
   }
 }
 
