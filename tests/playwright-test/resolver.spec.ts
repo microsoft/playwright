@@ -606,6 +606,42 @@ test('should import packages with non-index main script through path resolver', 
   expect(result.output).toContain(`foo=42`);
 });
 
+test('should not honor `package.json#main` field in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'app/pkg/main.ts': `
+      export const foo = 42;
+    `,
+    'app/pkg/package.json': `
+      { "main": "main.ts" }
+    `,
+    'package.json': `
+      { "name": "example-project", "type": "module" }
+    `,
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "app/*": ["app/*"],
+        },
+      },
+    }`,
+    'example.spec.ts': `
+      import { foo } from 'app/pkg';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        console.log('foo=' + foo);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find package 'app'`);
+});
+
+
 test('does not honor `exports` field after type mapping', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'app/pkg/main.ts': `

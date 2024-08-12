@@ -319,8 +319,16 @@ export function resolveImportSpecifierExtension(resolved: string, isPathMapping:
     break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
 
-  // Following TypeScript's path mapping logic, index files and package.json are not resolved in ESM.
-  // TypeScript does not interpret package.json for path mappings: https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
+  // After TypeScript path mapping, here's how directories with a `package.json` are resolved:
+  //  - `package.json#exports` is not respected
+  //  - `package.json#main` is respected only in CJS mode
+  //  - `index.js` default is respected only in CJS mode
+  //
+  // More info:
+  //  - https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
+  //  - https://www.typescriptlang.org/docs/handbook/modules/reference.html#directory-modules-index-file-resolution
+  //  - https://nodejs.org/dist/latest-v20.x/docs/api/modules.html#folders-as-modules
+
   const shouldNotResolveDirectory = isPathMapping && isESM;
 
   if (!shouldNotResolveDirectory && dirExists(resolved)) {
