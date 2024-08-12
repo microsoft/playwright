@@ -366,7 +366,12 @@ test('UI mode is not supported', async ({ runInlineTest }) => {
   expect(result.output).toContain('--only-changed is not supported in UI mode');
 });
 
-test('should run project dependencies of changed tests', async ({ runInlineTest, git, writeFiles }) => {
+test('should run project dependencies of changed tests', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/32070',
+  },
+}, async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'playwright.config.ts': `
       module.exports = {
