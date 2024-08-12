@@ -98,7 +98,7 @@ class Documentation {
     for (const [name, clazz] of this.classes.entries()) {
       clazz.sortMembers();
 
-      if (!clazz.extends || ['EventEmitter', 'Error', 'Exception', 'RuntimeException'].includes(clazz.extends))
+      if (!clazz.extends || ['Error', 'Exception', 'RuntimeException'].includes(clazz.extends))
         continue;
       const superClass = this.classes.get(clazz.extends);
       if (!superClass) {
