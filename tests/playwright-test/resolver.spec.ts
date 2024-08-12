@@ -606,6 +606,79 @@ test('should import packages with non-index main script through path resolver', 
   expect(result.output).toContain(`foo=42`);
 });
 
+test('should not honor `package.json#main` field in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'app/pkg/main.ts': `
+      export const foo = 42;
+    `,
+    'app/pkg/package.json': `
+      { "main": "main.ts" }
+    `,
+    'package.json': `
+      { "name": "example-project", "type": "module" }
+    `,
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "app/*": ["app/*"],
+        },
+      },
+    }`,
+    'example.spec.ts': `
+      import { foo } from 'app/pkg';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        console.log('foo=' + foo);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find package 'app'`);
+});
+
+
+test('does not honor `exports` field after type mapping', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'app/pkg/main.ts': `
+      export const filename = 'main.ts';
+    `,
+    'app/pkg/index.js': `
+      export const filename = 'index.js';
+    `,
+    'app/pkg/package.json': JSON.stringify({
+      exports: { '.': { require: './main.ts' } }
+    }),
+    'package.json': JSON.stringify({
+      name: 'example-project'
+    }),
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        baseUrl: '.',
+        paths: {
+          'app/*': ['app/*'],
+        },
+      }
+    }),
+    'example.spec.ts': `
+      import { filename } from 'app/pkg';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        console.log('filename=' + filename);
+      });
+    `,
+  });
+
+  expect(result.output).toContain('filename=index.js');
+});
+
 test('should respect tsconfig project references', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29256' });
 
@@ -692,4 +765,66 @@ test('should respect --tsconfig option', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
   expect(result.output).not.toContain(`Could not`);
+});
+
+
+test('should resolve index.js in CJS after path mapping', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
+
+  const result = await runInlineTest({
+    '@acme/lib/index.js': `
+      exports.greet = () => console.log('hello playwright');
+    `,
+    '@acme/lib/index.d.ts': `
+      export const greet: () => void;
+    `,
+    'tests/hello.test.ts': `
+      import { greet } from '@acme/lib';
+      import { test } from '@playwright/test';
+      test('hello', async ({}) => {
+        greet();
+      });
+    `,
+    'tests/tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        'paths': {
+          '@acme/*': ['../@acme/*'],
+        }
+      }
+    })
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should not resolve index.js in ESM after path mapping', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31811' });
+
+  const result = await runInlineTest({
+    '@acme/lib/index.js': `
+      export const greet = () => console.log('hello playwright');
+    `,
+    '@acme/lib/index.d.ts': `
+      export const greet: () => void;
+    `,
+    'tests/hello.test.ts': `
+      import { greet } from '@acme/lib';
+      import { test } from '@playwright/test';
+      test('hello', async ({}) => {
+        greet();
+      });
+    `,
+    'tests/tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        'paths': {
+          '@acme/*': ['../@acme/*'],
+        }
+      }
+    }),
+    'package.json': JSON.stringify({ type: 'module' }),
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find package '@acme/lib'`);
 });
