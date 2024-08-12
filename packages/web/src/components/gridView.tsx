@@ -121,7 +121,7 @@ export function GridView<T>(model: GridViewProps<T>) {
         onIconClicked={model.onIconClicked}
         noItemsMessage={model.noItemsMessage}
         dataTestId={model.dataTestId}
-        noHighlightOnHover={model.noHighlightOnHover}
+        notSelectable={model.notSelectable}
       ></ListView>
     </div>
   </div>;

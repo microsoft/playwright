@@ -9,25 +9,25 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1247",
+      "revision": "1248",
       "installByDefault": false,
-      "browserVersion": "129.0.6640.0"
+      "browserVersion": "129.0.6644.0"
     },
     {
       "name": "firefox",
-      "revision": "1458",
+      "revision": "1462",
       "installByDefault": true,
-      "browserVersion": "128.0"
+      "browserVersion": "129.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1461",
+      "revision": "1462",
       "installByDefault": false,
       "browserVersion": "130.0b2"
     },
     {
       "name": "webkit",
-      "revision": "2056",
+      "revision": "2061",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",

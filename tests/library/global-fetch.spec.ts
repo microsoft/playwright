@@ -21,7 +21,7 @@ import { expect, playwrightTest as base } from '../config/browserTest';
 import { kTargetClosedErrorMessage } from 'tests/config/errors';
 
 const it = base.extend({
-  context: async () => {
+  context: async ({}, use) => {
     throw new Error('global fetch tests should not use context');
   }
 });

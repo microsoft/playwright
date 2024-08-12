@@ -17,11 +17,10 @@
 import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
-import * as ReactDOM from 'react-dom';
+import * as ReactDOM from 'react-dom/client';
 import { Main } from './main';
 
 (async () => {
   applyTheme();
-  // TODO: we'd like to migrate this to React 18, but concurrent mode seems to break some of our tests.
-  ReactDOM.render(<Main/>, document.querySelector('#root'));
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<Main/>);
 })();

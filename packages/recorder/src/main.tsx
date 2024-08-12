@@ -30,12 +30,14 @@ export const Main: React.FC = ({
   window.playwrightSetSources = setSources;
   window.playwrightSetPaused = setPaused;
   window.playwrightUpdateLogs = callLogs => {
-    const newLog = new Map<string, CallLog>(log);
-    for (const callLog of callLogs) {
-      callLog.reveal = !log.has(callLog.id);
-      newLog.set(callLog.id, callLog);
-    }
-    setLog(newLog);
+    setLog(log => {
+      const newLog = new Map<string, CallLog>(log);
+      for (const callLog of callLogs) {
+        callLog.reveal = !log.has(callLog.id);
+        newLog.set(callLog.id, callLog);
+      }
+      return newLog;
+    });
   };
 
   window.playwrightSourcesEchoForTest = sources;
