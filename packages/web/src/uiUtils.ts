@@ -165,6 +165,12 @@ export function useSetting<S>(name: string | undefined, defaultValue: S, title?:
   return [value, setValueWrapper, setting];
 }
 
+declare global {
+  interface Window {
+    saveSettings?(): Promise<void>;
+  }
+}
+
 export class Settings {
   onChangeEmitter = new EventTarget();
 
@@ -175,8 +181,7 @@ export class Settings {
   setString(name: string, value: string) {
     localStorage[name] = value;
     this.onChangeEmitter.dispatchEvent(new Event(name));
-    if ((window as any).saveSettings)
-      (window as any).saveSettings();
+    window.saveSettings?.();
   }
 
   getObject<T>(name: string, defaultValue: T): T {
@@ -192,9 +197,7 @@ export class Settings {
   setObject<T>(name: string, value: T) {
     localStorage[name] = JSON.stringify(value);
     this.onChangeEmitter.dispatchEvent(new Event(name));
-
-    if ((window as any).saveSettings)
-      (window as any).saveSettings();
+    window.saveSettings?.();
   }
 }
 
