@@ -123,6 +123,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
+  const unfilteredProjectSuites = new Map<FullProjectInternal, Suite>();
   const projectSuites = new Map<FullProjectInternal, Suite>();
   const filteredProjectSuites = new Map<FullProjectInternal, Suite>();
 
@@ -136,6 +137,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
     // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
+      unfilteredProjectSuites.set(project, createProjectSuite(project, fileSuites));
       const filteredFileSuites = additionalFileMatcher ? fileSuites.filter(fileSuite => additionalFileMatcher(fileSuite.location!.file)) : fileSuites;
       const projectSuite = createProjectSuite(project, filteredFileSuites);
       projectSuites.set(project, projectSuite);
@@ -202,7 +204,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     // Clone file suites for dependency projects.
     for (const project of projectClosure.keys()) {
       if (projectClosure.get(project) === 'dependency')
-        rootSuite._prependSuite(buildProjectSuite(project, projectSuites.get(project)!));
+        rootSuite._prependSuite(buildProjectSuite(project, unfilteredProjectSuites.get(project)!));
     }
   }
 
