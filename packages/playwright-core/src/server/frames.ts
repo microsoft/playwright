@@ -1392,73 +1392,54 @@ export class Frame extends SdkObject {
   }
 
   private async _expectImpl(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    let timeout = this._page._timeoutSettings.timeout(options);
-    const start = timeout > 0 ? monotonicTime() : 0;
     const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
-    const resultOneShot = await this._expectInternal(metadata, selector, options, true, timeout, lastIntermediateResult);
-    if (resultOneShot.matches !== options.isNot)
-      return resultOneShot;
-    if (timeout > 0) {
-      const elapsed = monotonicTime() - start;
-      timeout -= elapsed;
-    }
-    if (timeout < 0)
-      return { matches: options.isNot, log: metadata.log, timedOut: true, received: lastIntermediateResult.received };
-    return await this._expectInternal(metadata, selector, options, false, timeout, lastIntermediateResult);
-  }
+    try {
+      let timeout = this._page._timeoutSettings.timeout(options);
+      const start = timeout > 0 ? monotonicTime() : 0;
 
-  private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number, lastIntermediateResult: { received?: any, isSet: boolean }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(async progress => {
-      if (oneShot) {
+      // Step 1: perform locator handlers checkpoint with a specified timeout.
+      await (new ProgressController(metadata, this)).run(async progress => {
         progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
         progress.log(`waiting for ${this._asLocator(selector)}`);
-      }
-      return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
         await this._page.performLocatorHandlersCheckpoint(progress);
+      }, timeout);
 
-        const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
-        progress.throwIfAborted();
+      // Step 2: perform one-shot expect check without a timeout.
+      // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
+      // that should succeed when the locator is already visible.
+      try {
+        const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
+          return await this._expectInternal(progress, selector, options, lastIntermediateResult);
+        });
+        if (resultOneShot.matches !== options.isNot)
+          return resultOneShot;
+      } catch (e) {
+        if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+          throw e;
+        // Ignore any other errors from one-shot, we'll handle them during retries.
+      }
+      if (timeout > 0) {
+        const elapsed = monotonicTime() - start;
+        timeout -= elapsed;
+      }
+      if (timeout < 0)
+        return { matches: options.isNot, log: metadata.log, timedOut: true, received: lastIntermediateResult.received };
 
-        const { frame, info } = selectorInFrame || { frame: this, info: undefined };
-        const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-        const context = await frame._context(world);
-        const injected = await context.injectedScript();
-        progress.throwIfAborted();
-
-        const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
-          const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
-          const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-          let log = '';
-          if (isArray)
-            log = `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`;
-          else if (elements.length > 1)
-            throw injected.strictModeViolationError(info!.parsed, elements);
-          else if (elements.length)
-            log = `  locator resolved to ${injected.previewNode(elements[0])}`;
-          if (callId)
-            injected.markTargetElements(new Set(elements), callId);
-          return { log, ...await injected.expect(elements[0], options, elements) };
-        }, { info, options, callId: metadata.id });
-
-        if (log)
-          progress.log(log);
-        // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
-        if (matches === options.isNot) {
-          lastIntermediateResult.received = missingReceived ? '<element(s) not found>' : received;
-          lastIntermediateResult.isSet = true;
-          if (!missingReceived && !Array.isArray(received))
-            progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
-        }
-        if (!oneShot && matches === options.isNot) {
-          // Keep waiting in these cases:
-          // expect(locator).conditionThatDoesNotMatch
-          // expect(locator).not.conditionThatDoesMatch
-          return continuePolling;
-        }
-        return { matches, received };
-      });
-    }, oneShot ? 0 : timeout).catch(e => {
+      // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
+      return await (new ProgressController(metadata, this)).run(async progress => {
+        return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
+          await this._page.performLocatorHandlersCheckpoint(progress);
+          const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult);
+          if (matches === options.isNot) {
+            // Keep waiting in these cases:
+            // expect(locator).conditionThatDoesNotMatch
+            // expect(locator).not.conditionThatDoesMatch
+            return continuePolling;
+          }
+          return { matches, received };
+        });
+      }, timeout);
+    } catch (e) {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
@@ -1469,7 +1450,44 @@ export class Frame extends SdkObject {
       if (e instanceof TimeoutError)
         result.timedOut = true;
       return result;
-    });
+    }
+  }
+
+  private async _expectInternal(progress: Progress, selector: string, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean }) {
+    const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
+    progress.throwIfAborted();
+
+    const { frame, info } = selectorInFrame || { frame: this, info: undefined };
+    const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
+    const context = await frame._context(world);
+    const injected = await context.injectedScript();
+    progress.throwIfAborted();
+
+    const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
+      const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
+      const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+      let log = '';
+      if (isArray)
+        log = `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`;
+      else if (elements.length > 1)
+        throw injected.strictModeViolationError(info!.parsed, elements);
+      else if (elements.length)
+        log = `  locator resolved to ${injected.previewNode(elements[0])}`;
+      if (callId)
+        injected.markTargetElements(new Set(elements), callId);
+      return { log, ...await injected.expect(elements[0], options, elements) };
+    }, { info, options, callId: progress.metadata.id });
+
+    if (log)
+      progress.log(log);
+    // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
+    if (matches === options.isNot) {
+      lastIntermediateResult.received = missingReceived ? '<element(s) not found>' : received;
+      lastIntermediateResult.isSet = true;
+      if (!missingReceived && !Array.isArray(received))
+        progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
+    }
+    return { matches, received };
   }
 
   async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
