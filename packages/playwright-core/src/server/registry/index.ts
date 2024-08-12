@@ -71,6 +71,11 @@ const EXECUTABLE_PATHS = {
     'mac': ['ffmpeg-mac'],
     'win': ['ffmpeg-win64.exe'],
   },
+  'bidi-firefox': {
+    'linux': ['firefox', 'firefox'],
+    'mac': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'win': ['firefox', 'firefox.exe'],
+  },
 };
 
 type DownloadPaths = Record<HostPlatform, string | undefined>;
@@ -264,6 +269,34 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac14-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
+  'bidi-firefox': {
+    '<unknown>': undefined,
+    'ubuntu18.04-x64': undefined,
+    'ubuntu20.04-x64': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
+    'ubuntu22.04-x64': 'builds/firefox/%s/firefox-ubuntu-22.04.zip',
+    'ubuntu24.04-x64': 'builds/firefox/%s/firefox-ubuntu-24.04.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': 'builds/firefox/%s/firefox-ubuntu-20.04-arm64.zip',
+    'ubuntu22.04-arm64': 'builds/firefox/%s/firefox-ubuntu-22.04-arm64.zip',
+    'ubuntu24.04-arm64': 'builds/firefox/%s/firefox-ubuntu-24.04-arm64.zip',
+    'debian11-x64': 'builds/firefox/%s/firefox-debian-11.zip',
+    'debian11-arm64': 'builds/firefox/%s/firefox-debian-11-arm64.zip',
+    'debian12-x64': 'builds/firefox/%s/firefox-debian-12.zip',
+    'debian12-arm64': 'builds/firefox/%s/firefox-debian-12-arm64.zip',
+    'mac10.13': 'builds/firefox/%s/firefox-mac.zip',
+    'mac10.14': 'builds/firefox/%s/firefox-mac.zip',
+    'mac10.15': 'builds/firefox/%s/firefox-mac.zip',
+    'mac11': 'builds/firefox/%s/firefox-mac.zip',
+    'mac11-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'mac12': 'builds/firefox/%s/firefox-mac.zip',
+    'mac12-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'mac13': 'builds/firefox/%s/firefox-mac.zip',
+    'mac13-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'mac14': 'builds/firefox/%s/firefox-mac.zip',
+    'mac14-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'win64': 'builds/firefox/%s/firefox-win64.zip',
+  },
+
 };
 
 export const registryDirectory = (() => {
@@ -349,14 +382,15 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi-firefox';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
+type BidiFirefoxChannel = 'bidi-firefox-stable';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
-  name: BrowserName | InternalTool | ChromiumChannel;
+  name: BrowserName | InternalTool | ChromiumChannel | BidiFirefoxChannel;
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
@@ -521,6 +555,12 @@ export class Registry {
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
     }));
 
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
+      'linux': '/usr/bin/firefox',
+      'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\Mozilla Firefox\\firefox.exe',
+    }));
+
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
     this._executables.push({
@@ -616,6 +656,24 @@ export class Registry {
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
+
+    const bidiFirefox = descriptors.find(d => d.name === 'firefox')!;
+    const bidiFirefoxExecutable = findExecutablePath(bidiFirefox.dir, 'firefox');
+    this._executables.push({
+      type: 'browser',
+      name: 'bidi-firefox',
+      browserName: 'bidi-firefox',
+      directory: bidiFirefox.dir,
+      executablePath: () => bidiFirefoxExecutable,
+      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('bidi-firefox', bidiFirefoxExecutable, bidiFirefox.installByDefault, sdkLanguage),
+      installType: bidiFirefox.installByDefault ? 'download-by-default' : 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'bidi-firefox', bidiFirefox.dir, ['firefox'], [], ['firefox']),
+      downloadURLs: this._downloadURLs(bidiFirefox),
+      browserVersion: bidiFirefox.browserVersion,
+      _install: () => this._downloadExecutable(bidiFirefox, bidiFirefoxExecutable),
+      _dependencyGroup: 'firefox',
+      _isHermeticInstallation: true,
+    });
   }
 
   private _createChromiumChannel(name: ChromiumChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
@@ -646,6 +704,44 @@ export class Registry {
       type: 'channel',
       name,
       browserName: 'chromium',
+      directory: undefined,
+      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
+      installType: install ? 'install-script' : 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      _isHermeticInstallation: false,
+      _install: install,
+    };
+  }
+
+  private _createBidiFirefoxChannel(name: BidiFirefoxChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
+      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
+      if (!suffix) {
+        if (shouldThrow)
+          throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        return undefined;
+      }
+      const prefixes = (process.platform === 'win32' ? [
+        process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
+      ].filter(Boolean) : ['']) as string[];
+
+      for (const prefix of prefixes) {
+        const executablePath = path.join(prefix, suffix);
+        if (canAccessFile(executablePath))
+          return executablePath;
+      }
+      if (!shouldThrow)
+        return undefined;
+
+      const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
+      const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
+      throw new Error(`Firefox distribution '${name}' is not found${location}${installation}`);
+    };
+    return {
+      type: 'channel',
+      name,
+      browserName: 'bidi-firefox',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

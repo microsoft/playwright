@@ -17,6 +17,14 @@
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as test, expect } from '../config/browserTest';
 
+
+test('create 2 pages', async ({ browser, browserType }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.close();
+  await context.close();
+});
+
 test('should return browserType', function({ browser, browserType }) {
   expect(browser.browserType()).toBe(browserType);
 });
