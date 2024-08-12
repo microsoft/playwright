@@ -17,10 +17,16 @@
 import React from 'react';
 import { type Setting, settings } from './uiUtils';
 
+declare global {
+  interface Document {
+    playwrightThemeInitialized?: boolean;
+  }
+}
+
 export function applyTheme() {
-  if ((document as any).playwrightThemeInitialized)
+  if (document.playwrightThemeInitialized)
     return;
-  (document as any).playwrightThemeInitialized = true;
+  document.playwrightThemeInitialized = true;
   document!.defaultView!.addEventListener('focus', (event: any) => {
     if (event.target.document.nodeType === Node.DOCUMENT_NODE)
       document.body.classList.remove('inactive');

@@ -30,10 +30,10 @@ export function bundle(): Plugin {
         if (!ctx || !ctx.bundle)
           return html;
         html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
-        for (const [name, value] of Object.entries(ctx.bundle) as any) {
+        for (const [name, value] of Object.entries(ctx.bundle)) {
           if (name.endsWith('.map'))
             continue;
-          if (value.code)
+          if ('code' in value)
             html = html.replace(/<script type="module".*<\/script>/, () => `<script type="module">${value.code}</script>`);
           else
             html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${value.source}</style>`);
