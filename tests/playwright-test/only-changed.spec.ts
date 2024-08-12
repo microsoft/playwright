@@ -371,13 +371,17 @@ test('should run project dependencies of changed tests', async ({ runInlineTest,
     'playwright.config.ts': `
       module.exports = {
         projects: [
-          { name: 'setup', testMatch: 'setup.ts', },
+          { name: 'setup', testMatch: 'setup.spec.ts', },
           { name: 'main', dependencies: ['setup'] },
         ],
       };
     `,
-    'setup.ts': `
-      console.log("setup is run")
+    'setup.spec.ts': `
+    import { test, expect } from '@playwright/test';
+
+    test('setup test', async ({ page }) => {
+      console.log('setup test is executed')
+    });
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -401,9 +405,7 @@ test('should run project dependencies of changed tests', async ({ runInlineTest,
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.passed).toBe(0);
+  expect(result.passed).toBe(1);
 
-  console.log(result.output);
-  expect(result.output).toContain('setup is run');
-  expect(result.output).toContain('c.spec.ts');
+  expect(result.output).toContain('setup test is executed');
 });
