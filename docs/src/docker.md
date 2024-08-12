@@ -108,7 +108,7 @@ See our [Continuous Integration guides](./ci.md) for sample configs.
 See [all available image tags].
 
 We currently publish images with the following tags:
-- `:v%%VERSION%%` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
+- `:v%%VERSION%%` - Playwright v%%VERSION%% release docker image based on Ubuntu 24.04 LTS (Noble Numbat).
 - `:v%%VERSION%%-noble` - Playwright v%%VERSION%% release docker image based on Ubuntu 24.04 LTS (Noble Numbat).
 - `:v%%VERSION%%-jammy` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
 - `:v%%VERSION%%-focal` - Playwright v%%VERSION%% release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
