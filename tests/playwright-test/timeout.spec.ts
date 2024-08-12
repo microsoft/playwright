@@ -558,3 +558,34 @@ test('should allow custom worker fixture timeout longer than force exit cap', as
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).toContain(`1 error was not a part of any test, see above for details`);
 });
+
+test('should run fixture teardown with custom timeout after test timeout', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31537' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          console.log('\\n%%foo setup');
+          await use('foo');
+          console.log('\\n%%foo teardown');
+        }, { timeout: 2000 }],
+      });
+
+      test('times out', async ({ foo }) => {
+        console.log('\\n%%test start');
+        await new Promise(() => {});
+        console.log('\\n%%test end');
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'foo setup',
+    'test start',
+    'foo teardown',
+  ]);
+});

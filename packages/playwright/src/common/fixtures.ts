@@ -40,7 +40,7 @@ export type FixtureRegistration = {
   // Custom title to be used instead of the name, internal-only.
   customTitle?: string;
   // Fixture with a separate timeout does not count towards the test time.
-  timeout?: number;
+  timeout?: number | 'trace';
   // Names of the dependencies, comes from the declaration "({ foo, bar }) => {...}"
   deps: string[];
   // Unique id, to differentiate between fixtures with the same name.
@@ -103,7 +103,7 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean } | undefined;
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | 'trace' | undefined, customTitle?: string, box?: boolean } | undefined;
       if (isFixtureTuple(value)) {
         options = {
           auto: value[1].auto ?? false,

@@ -266,8 +266,11 @@ export class WorkerMain extends ProcessRunner {
       }
     };
 
-    if (!this._isStopped)
+    const traceSlot = { timeout: this._project.project.timeout, elapsed: 0 };
+    if (!this._isStopped) {
       this._fixtureRunner.setPool(test._pool!);
+      this._fixtureRunner.traceSlot = traceSlot;
+    }
 
     const suites = getSuites(test);
     const reversedSuites = suites.slice().reverse();
@@ -307,7 +310,7 @@ export class WorkerMain extends ProcessRunner {
 
     testInfo._allowSkips = true;
     await testInfo._runAsStage({ title: 'setup and test' }, async () => {
-      await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test' } }, async () => {
+      await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test', slot: traceSlot } }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
         // test runner instead of a fixture belonging to Playwright.
         // However, for backwards compatibility, we have to read it from a fixture today.
@@ -458,8 +461,7 @@ export class WorkerMain extends ProcessRunner {
       }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
     }
 
-    const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-    await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
+    await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: traceSlot } }, async () => {
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 

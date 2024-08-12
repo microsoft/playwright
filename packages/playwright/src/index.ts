@@ -297,7 +297,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     clientInstrumentation.removeListener(csiListener);
     await artifactsRecorder.didFinishTest();
 
-  }, { auto: 'all-hooks-included',  title: 'trace recording', box: true } as any],
+  }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 'trace' } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
