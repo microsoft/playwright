@@ -1,6 +1,5 @@
 # class: BrowserContext
 * since: v1.8
-* extends: [EventEmitter]
 
 BrowserContexts provide a way to operate multiple independent browser sessions.
 

@@ -29,8 +29,6 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 /**
- * - extends: [EventEmitter]
- *
  * Page provides methods to interact with a single tab in a {@link Browser}, or an
  * [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One {@link
  * Browser} instance might have multiple {@link Page} instances.
@@ -7535,8 +7533,6 @@ export interface Frame {
 }
 
 /**
- * - extends: [EventEmitter]
- *
  * BrowserContexts provide a way to operate multiple independent browser sessions.
  *
  * If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
@@ -8942,8 +8938,6 @@ export interface BrowserContext {
 }
 
 /**
- * - extends: [EventEmitter]
- *
  * A Browser is created via
  * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). An example
  * of using a {@link Browser} to create a {@link Page}:
@@ -14450,8 +14444,6 @@ export interface BrowserType<Unused = {}> {
 }
 
 /**
- * - extends: [EventEmitter]
- *
  * The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
  * - protocol methods can be called with `session.send` method.
  * - protocol events can be subscribed to with `session.on` method.
