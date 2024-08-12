@@ -32,7 +32,7 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { toClientCertificatesProtocol } from './browserContext';
 
 export type FetchOptions = {
-  params?: { [key: string]: string; },
+  params?: { [key: string]: string | number | boolean; } | URLSearchParams | string,
   method?: string,
   headers?: Headers,
   data?: string | Buffer | Serializable,
@@ -175,7 +175,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
       assert(options.maxRetries === undefined || options.maxRetries >= 0, `'maxRetries' must be greater than or equal to '0'`);
       const url = options.url !== undefined ? options.url : options.request!.url();
-      const params = objectToArray(options.params);
+      const params = mapParamsToArray(options.params);
       const method = options.method || options.request?.method();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
       const headersObj = options.headers || options.request?.headers();
@@ -405,6 +405,30 @@ function objectToArray(map?: { [key: string]: any }): NameValue[] | undefined {
   for (const [name, value] of Object.entries(map))
     result.push({ name, value: String(value) });
   return result;
+}
+
+function queryStringToArray(queryString: string): NameValue[] | undefined {
+  const searchParams = new URLSearchParams(queryString);
+  return searchParamsToArray(searchParams);
+}
+
+function searchParamsToArray(searchParams: URLSearchParams): NameValue[] | undefined {
+  if (searchParams.size === 0)
+    return undefined;
+
+  const result: NameValue[] = [];
+  for (const [name, value] of searchParams.entries())
+    result.push({ name, value });
+  return result;
+}
+
+function mapParamsToArray(params: FetchOptions['params']): NameValue[] | undefined {
+  if (params instanceof URLSearchParams)
+    return searchParamsToArray(params);
+  if (typeof params === 'string')
+    return queryStringToArray(params);
+
+  return objectToArray(params);
 }
 
 function isFilePayload(value: any): boolean {
