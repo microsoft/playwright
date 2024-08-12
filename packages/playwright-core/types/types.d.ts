@@ -16526,7 +16526,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -16662,7 +16662,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -16762,7 +16762,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -16848,7 +16848,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -16934,7 +16934,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -17062,7 +17062,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -17148,7 +17148,7 @@ export interface APIRequestContext {
     /**
      * Query parameters to be sent with the URL.
      */
-    params?: { [key: string]: string|number|boolean; };
+    params?: { [key: string]: string|number|boolean; }|URLSearchParams|string;
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.

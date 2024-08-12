@@ -122,22 +122,40 @@ it('should add session cookies to request', async ({ context, server }) => {
 });
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should support queryParams`, async ({ context, server }) => {
-    const url = new URL(server.EMPTY_PAGE);
-    url.searchParams.set('p1', 'v1');
-    url.searchParams.set('парам2', 'знач2');
-    const [request] = await Promise.all([
-      server.waitForRequest(url.pathname + url.search),
-      context.request[method](server.EMPTY_PAGE + '?p1=foo', {
-        params: {
-          'p1': 'v1',
-          'парам2': 'знач2',
-        }
-      }),
-    ]);
-    const params = new URLSearchParams(request.url!.substr(request.url!.indexOf('?')));
-    expect(params.get('p1')).toEqual('v1');
-    expect(params.get('парам2')).toEqual('знач2');
+  it(`${method} should support params passed as object`, async ({ context, server }) => {
+    const params = {
+      'first-param': 'value2',
+      'second-param': 'value',
+    };
+
+    const response = await context.request[method](server.EMPTY_PAGE + '?first-param=value1', { params });
+
+    const { searchParams } = new URL(response.url());
+    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
+    expect(searchParams.get('second-param')).toBe('value');
+  });
+
+  it(`${method} should support params passed as URLSearchParams`, async ({ context, server }) => {
+    const params = new URLSearchParams();
+    params.append('first-param', 'value1');
+    params.append('first-param', 'value2');
+    params.append('second-param', 'value');
+
+    const response = await context.request[method](server.EMPTY_PAGE, { params });
+
+    const { searchParams } = new URL(response.url());
+    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
+    expect(searchParams.get('second-param')).toBe('value');
+  });
+
+  it(`${method} should support params passed as string`, async ({ context, server }) => {
+    const params = 'first-param=value1&first-param=value2&second-param=value';
+
+    const response = await context.request[method](server.EMPTY_PAGE, { params });
+
+    const { searchParams } = new URL(response.url());
+    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
+    expect(searchParams.get('second-param')).toBe('value');
   });
 
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {

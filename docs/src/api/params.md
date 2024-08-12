@@ -356,8 +356,14 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 Target URL.
 
-## js-python-fetch-option-params
-* langs: js, python
+## js-fetch-option-params
+* langs: js
+- `params` <[Object]<[string], [string]|[number]|[boolean]>|[URLSearchParams]|[string]>
+
+Query parameters to be sent with the URL.
+
+## python-fetch-option-params
+* langs: python
 - `params` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Query parameters to be sent with the URL.
