@@ -19134,14 +19134,8 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
-   * The Service {@link Worker} that is performing the request.
-   *
-   * **Details**
-   *
-   * This method is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
-   *
-   * Requests originated in a Service Worker do not have a
-   * [request.frame()](https://playwright.dev/docs/api/class-request#request-frame) available.
+   * This method will always return `null`.
+   * @deprecated Requests made by a Service Worker are not reported in Playwright.
    */
   serviceWorker(): null|Worker;
 

@@ -288,15 +288,10 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 ## method: Request.serviceWorker
 * since: v1.24
 * langs: js
+* deprecated: Requests made by a Service Worker are not reported in Playwright.
 - returns: <[null]|[Worker]>
 
-The Service [Worker] that is performing the request.
-
-**Details**
-
-This method is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
-
-Requests originated in a Service Worker do not have a [`method: Request.frame`] available.
+This method will always return `null`.
 
 ## async method: Request.sizes
 * since: v1.15
