@@ -6018,7 +6018,7 @@ interface AsymmetricMatchers {
  * ```
  *
  */
-interface GenericAssertions<R> {
+export interface GenericAssertions<R> {
   /**
    * Makes the assertion check for the opposite condition. For example, the following code passes:
    *
@@ -6650,7 +6650,7 @@ export { };
  * ```
  *
  */
-interface APIResponseAssertions {
+export interface APIResponseAssertions {
   /**
    * Ensures the response status code is within `200..299` range.
    *
@@ -6690,7 +6690,7 @@ interface APIResponseAssertions {
  * ```
  *
  */
-interface LocatorAssertions {
+export interface LocatorAssertions {
   /**
    * Ensures that {@link Locator} points to an element that is
    * [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
@@ -7562,7 +7562,7 @@ interface LocatorAssertions {
  * ```
  *
  */
-interface PageAssertions {
+export interface PageAssertions {
   /**
    * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
@@ -7658,7 +7658,7 @@ interface PageAssertions {
  * ```
  *
  */
-interface SnapshotAssertions {
+export interface SnapshotAssertions {
   /**
    * **NOTE** To compare screenshots, use
    * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
