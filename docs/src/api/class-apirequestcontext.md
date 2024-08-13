@@ -379,9 +379,9 @@ await request.get('https://example.com/api/getText', {
 
 // Passing params as URLSearchParams
 const searchParams = new URLSearchParams();
-searchParams.set('isbn', '1234')
-searchParams.append('page', 23)
-searchParams.append('page', 24)
+searchParams.set('isbn', '1234');
+searchParams.append('page', 23);
+searchParams.append('page', 24);
 await request.get('https://example.com/api/getText', { params: searchParams });
 
 // Passing params as string
