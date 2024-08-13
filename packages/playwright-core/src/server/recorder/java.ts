@@ -23,8 +23,7 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import { escapeWithQuotes, asLocator } from '../../utils';
 
 type JavaLanguageMode = 'library' | 'junit';
 

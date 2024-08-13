@@ -17,7 +17,7 @@
 
 import type * as channels from '@protocol/channels';
 import type { Size } from '../common/types';
-export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
+export type { Size, Point, Rect, Quad, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {

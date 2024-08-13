@@ -27,11 +27,9 @@ import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { mime } from '../../utilsBundle';
 import { ManualPromise } from '../../utils/manualPromise';
-import { getPlaywrightVersion } from '../../utils/userAgent';
-import { urlMatches } from '../../utils/network';
+import { getPlaywrightVersion, isTextualMimeType, urlMatches } from '../../utils';
 import { Frame } from '../frames';
 import type { HeadersArray, LifecycleEvent } from '../types';
-import { isTextualMimeType } from '../../utils/isomorphic/mimeType';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
