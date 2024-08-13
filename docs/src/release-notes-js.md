@@ -35,14 +35,14 @@ You can also provide client certificates to a particular [test project](./api/cl
 
 ### `--only-changed` cli option
 
-New CLI option `--only-changed` allows to only run test files that have been changed since the last git commit or from a specific git "ref".
+New CLI option `--only-changed` will only run test files that have been changed since the last git commit or from a specific git "ref". This will also run all test files that import any changed files.
 
 ```sh
 # Only run test files with uncommitted changes
 npx playwright test --only-changed
 
 # Only run test files changed relative to the "main" branch
-npx playwrigh test --only-changed=main
+npx playwright test --only-changed=main
 ```
 
 ### Component Testing: New `router` fixture
