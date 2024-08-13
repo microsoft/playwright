@@ -32,6 +32,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (isTypeScript) {
     plugins.push(
+        [require('@babel/plugin-transform-typescript'), { allowDeclareFields: true }],
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
         [require('@babel/plugin-proposal-explicit-resource-management')],
         [require('@babel/plugin-transform-class-properties')],
