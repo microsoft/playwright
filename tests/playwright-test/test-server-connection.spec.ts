@@ -15,9 +15,9 @@
  */
 import { test as baseTest, expect } from './ui-mode-fixtures';
 
-import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
+import { WSTestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 
-class TestServerConnectionUnderTest extends TestServerConnection {
+class TestServerConnectionUnderTest extends WSTestServerConnection {
   events: [string, any][] = [];
 
   constructor(wsUrl: string) {

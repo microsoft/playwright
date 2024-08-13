@@ -33,7 +33,7 @@ import { useDarkModeSetting } from '@web/theme';
 import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
-import { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import { WSTestServerConnection } from '@testIsomorphic/testServerConnection';
 import { pathSeparator } from './uiModeModel';
 import type { TestModel } from './uiModeModel';
 import { FiltersView } from './uiModeFiltersView';
@@ -95,7 +95,7 @@ export const UIModeView: React.FC<{}> = ({
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
   const [hasBrowsers, setHasBrowsers] = React.useState(true);
-  const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
+  const [testServerConnection, setTestServerConnection] = React.useState<WSTestServerConnection>();
   const [teleSuiteUpdater, setTeleSuiteUpdater] = React.useState<TeleSuiteUpdater>();
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
@@ -135,7 +135,7 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(wsURL.toString()));
+    setTestServerConnection(new WSTestServerConnection(wsURL.toString()));
   }, []);
 
   // Load tests on startup.
