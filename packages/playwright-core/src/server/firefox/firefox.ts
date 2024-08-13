@@ -104,7 +104,7 @@ class JugglerReadyState implements BrowserReadyState {
   }
   onBrowserExit(): void {
     // Unblock launch when browser prematurely exits.
-    this._jugglerPromise.reject(new Error('Browser exited'));
+    this._jugglerPromise.resolve();
   }
   async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
     await this._jugglerPromise;

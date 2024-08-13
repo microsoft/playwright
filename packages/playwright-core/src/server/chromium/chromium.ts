@@ -359,7 +359,7 @@ export class Chromium extends BrowserType {
 }
 
 class ChromiumReadyState implements BrowserReadyState {
-  private readonly _wsEndpoint = new ManualPromise<string>();
+  private readonly _wsEndpoint = new ManualPromise<string|undefined>();
 
   onBrowserOutput(message: string): void {
     const match = message.match(/DevTools listening on (.*)/);
@@ -367,7 +367,7 @@ class ChromiumReadyState implements BrowserReadyState {
       this._wsEndpoint.resolve(match[1]);
   }
   onBrowserExit(): void {
-    this._wsEndpoint.reject(new Error('Browser exited'));
+    this._wsEndpoint.resolve(undefined);
   }
   async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
     const wsEndpoint = await this._wsEndpoint;
