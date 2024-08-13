@@ -20,7 +20,7 @@ import { stringifySelector, type ParsedSelector, splitSelectorByFrame, InvalidSe
 import type { FrameExecutionContext, ElementHandle } from './dom';
 import type { JSHandle } from './javascript';
 import type { InjectedScript } from './injected/injectedScript';
-import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import { asLocator } from '../utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,

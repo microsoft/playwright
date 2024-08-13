@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
+import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 import { asLocators } from './locatorGenerators';
 import type { Language, Quote } from './locatorGenerators';
 import { parseSelector } from './selectorParser';

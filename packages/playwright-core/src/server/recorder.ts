@@ -43,8 +43,7 @@ import { EventEmitter } from 'events';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { quoteCSSAttributeValue } from '../utils/isomorphic/stringUtils';
-import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
+import { quoteCSSAttributeValue, eventsHelper, type RegisteredListener } from '../utils';
 import type { Dialog } from './dialog';
 
 type BindingSource = { frame: Frame, page: Page };

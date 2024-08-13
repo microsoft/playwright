@@ -44,7 +44,7 @@ import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import { TargetClosedError } from './errors';
-import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import { asLocator } from '../utils';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

@@ -21,9 +21,8 @@ import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes, toSnakeCase } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes, toSnakeCase, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id: string;

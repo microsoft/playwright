@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
+import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime, asLocator } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
@@ -38,7 +38,6 @@ import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams } fro
 import { isSessionClosedError } from './protocolError';
 import { type ParsedSelector, isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import type { ScreenshotOptions } from './screenshotter';
-import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
 import { TimeoutError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
