@@ -369,12 +369,24 @@ context cookies from the response. The method will automatically follow redirect
 Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
 
 ```js
+// Passing params as object
 await request.get('https://example.com/api/getText', {
   params: {
     'isbn': '1234',
     'page': 23,
   }
 });
+
+// Passing params as URLSearchParams
+const searchParams = new URLSearchParams();
+searchParams.set('isbn', '1234');
+searchParams.append('page', 23);
+searchParams.append('page', 24);
+await request.get('https://example.com/api/getText', { params: searchParams });
+
+// Passing params as string
+const queryString = 'isbn=1234&page=23&page=24';
+await request.get('https://example.com/api/getText', { params: queryString });
 ```
 
 ```java
