@@ -288,7 +288,7 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 ## method: Request.serviceWorker
 * since: v1.24
 * langs: js
-* deprecated: This method is deprecated.
+* deprecated: Requests made by a Service Worker are not reported in Playwright.
 - returns: <[null]|[Worker]>
 
 This method will always return `null`.
