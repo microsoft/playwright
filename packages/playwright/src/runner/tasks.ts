@@ -74,13 +74,6 @@ export function createTaskRunnerForWatchSetup(config: FullConfigInternal, report
   return taskRunner;
 }
 
-export function createTaskRunnerForWatch(config: FullConfigInternal, reporters: ReporterV2[], additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true,  failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true, additionalFileMatcher }));
-  addRunTasks(taskRunner, config);
-  return taskRunner;
-}
-
 export function createTaskRunnerForTestServer(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
   const taskRunner = TaskRunner.create<TestRun>(reporters);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }));
@@ -222,10 +215,10 @@ function createListFilesTask(): Task<TestRun> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean, additionalFileMatcher?: Matcher }): Task<TestRun> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean }): Task<TestRun> {
   return {
     setup: async (reporter, testRun, errors, softErrors) => {
-      await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter, options.additionalFileMatcher);
+      await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
       let cliOnlyChangedMatcher: Matcher | undefined = undefined;

@@ -62,7 +62,7 @@ class TestServer {
   }
 }
 
-class TestServerDispatcher implements TestServerInterface {
+export class TestServerDispatcher implements TestServerInterface {
   private _configLocation: ConfigLocation;
 
   private _watcher: Watcher;

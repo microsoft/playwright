@@ -9,4 +9,5 @@
 ../utilsBundle.ts
 ../isomorphic/folders.ts
 ../isomorphic/teleReceiver.ts
+../isomorphic/testServerConnection.ts
 ../fsWatcher.ts

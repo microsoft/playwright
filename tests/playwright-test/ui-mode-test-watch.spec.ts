@@ -251,6 +251,60 @@ test('should run added test in watched file', async ({ runUITest, writeFiles }) 
   `);
 });
 
+test('should run dependency of watched test', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: 'global.setup.ts', },
+          { name: 'main', dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'global.setup.ts': `
+    import { test as setup } from '@playwright/test';
+
+    setup('setup test', async ({ page }) => {
+      console.log('setup test is executed')
+    });
+    `,
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    `,
+  });
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('setup').setChecked(true);
+  await page.getByLabel('main').setChecked(true);
+
+  await page.getByText('a.test.ts').click();
+  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts 👁 <=
+        ◯ foo
+    ▼ ◯ global.setup.ts
+        ◯ setup test
+  `);
+
+  await writeFiles({
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    test('bar', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts 👁 <=
+        ✅ foo
+        ✅ bar
+    ▼ ✅ global.setup.ts
+        ✅ setup test
+  `);
+});
+
 test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   const latch = createLatch();
   const { page } = await runUITest({

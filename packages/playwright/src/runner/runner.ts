@@ -134,7 +134,10 @@ export class Runner {
   async watchAllTests(): Promise<FullResult['status']> {
     const config = this._config;
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    return await runWatchModeLoop(config);
+    return await runWatchModeLoop(
+        { configDir: config.configDir, resolvedConfigFile: config.config.configFile },
+        { projects: config.cliProjectFilter, files: config.cliArgs, grep: config.cliGrep, onlyChanged: config.cliOnlyChanged }
+    );
   }
 
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
