@@ -123,39 +123,66 @@ it('should add session cookies to request', async ({ context, server }) => {
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should support params passed as object`, async ({ context, server }) => {
-    const params = {
-      'first-param': 'value2',
-      'second-param': 'value',
-    };
+    const url = new URL(server.EMPTY_PAGE);
+    url.searchParams.set('param1', 'value1');
+    url.searchParams.set('парам2', 'знач2');
 
-    const response = await context.request[method](server.EMPTY_PAGE + '?first-param=value1', { params });
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + url.search),
+      context.request[method](server.EMPTY_PAGE, {
+        params: {
+          'param1': 'value1',
+          'парам2': 'знач2',
+        }
+      }),
+    ]);
 
-    const { searchParams } = new URL(response.url());
-    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
-    expect(searchParams.get('second-param')).toBe('value');
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.get('param1')).toEqual('value1');
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.get('param1')).toEqual('value1');
+    expect(responseParams.get('парам2')).toBe('знач2');
   });
 
   it(`${method} should support params passed as URLSearchParams`, async ({ context, server }) => {
-    const params = new URLSearchParams();
-    params.append('first-param', 'value1');
-    params.append('first-param', 'value2');
-    params.append('second-param', 'value');
+    const url = new URL(server.EMPTY_PAGE);
+    const searchParams = new URLSearchParams();
+    searchParams.append('param1', 'value1');
+    searchParams.append('param1', 'value2');
+    searchParams.set('парам2', 'знач2');
 
-    const response = await context.request[method](server.EMPTY_PAGE, { params });
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + '?' + searchParams),
+      context.request[method](server.EMPTY_PAGE, { params: searchParams }),
+    ]);
 
-    const { searchParams } = new URL(response.url());
-    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
-    expect(searchParams.get('second-param')).toBe('value');
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
   });
 
   it(`${method} should support params passed as string`, async ({ context, server }) => {
-    const params = 'first-param=value1&first-param=value2&second-param=value';
+    const url = new URL(server.EMPTY_PAGE);
+    const params = '?param1=value1&param1=value2&парам2=знач2';
 
-    const response = await context.request[method](server.EMPTY_PAGE, { params });
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + encodeURI(params)),
+      context.request[method](server.EMPTY_PAGE, { params }),
+    ]);
 
-    const { searchParams } = new URL(response.url());
-    expect(searchParams.getAll('first-param')).toEqual(['value1', 'value2']);
-    expect(searchParams.get('second-param')).toBe('value');
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
   });
 
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {
