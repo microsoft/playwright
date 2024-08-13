@@ -24,6 +24,7 @@ import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
+import type { BrowserReadyState } from '../browserType';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
@@ -348,6 +349,28 @@ export class Chromium extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
+  }
+
+  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
+    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
+      return new ChromiumReadyState();
+    return undefined;
+  }
+}
+
+class ChromiumReadyState implements BrowserReadyState {
+  private readonly _wsEndpoint = new ManualPromise<string>();
+
+  onBrowserOutput(message: string): void {
+    const match = message.match(/DevTools listening on (.*)/);
+    if (match)
+      this._wsEndpoint.resolve(match[1]);
+  }
+  onBrowserExit(): void {
+    this._wsEndpoint.reject(new Error('Browser exited'));
+  }
+  async ready(): Promise<string|undefined> {
+    return this._wsEndpoint;
   }
 }
 
