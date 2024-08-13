@@ -47,7 +47,7 @@ export const kNoXServerRunningError = 'Looks like you launched a headed browser 
 export interface BrowserReadyState {
   onBrowserOutput(message: string): void;
   onBrowserExit(): void;
-  ready(): Promise<string|undefined>;
+  waitUntilReady(): Promise<{ wsEndpoint?: string }>;
 }
 
 export abstract class BrowserType extends SdkObject {
@@ -250,7 +250,7 @@ export abstract class BrowserType extends SdkObject {
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
-    const wsEndpoint = await readyState?.ready();
+    const wsEndpoint = (await readyState?.waitUntilReady())?.wsEndpoint;
     if (options.useWebSocket) {
       transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {

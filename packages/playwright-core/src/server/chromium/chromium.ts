@@ -369,8 +369,9 @@ class ChromiumReadyState implements BrowserReadyState {
   onBrowserExit(): void {
     this._wsEndpoint.reject(new Error('Browser exited'));
   }
-  async ready(): Promise<string|undefined> {
-    return this._wsEndpoint;
+  async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
+    const wsEndpoint = await this._wsEndpoint;
+    return { wsEndpoint };
   }
 }
 
