@@ -6548,7 +6548,7 @@ export type MatcherReturnType = {
   log?: string[];
 };
 
-type MakeMatchers<R, T, ExtendedMatchers> = {
+export type MakeMatchers<R, T, ExtendedMatchers> = {
   /**
    * If you know how to test something, `.not` lets you test its opposite.
    */
