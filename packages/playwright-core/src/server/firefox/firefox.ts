@@ -33,11 +33,11 @@ export class Firefox extends BrowserType {
     super(parent, 'firefox');
   }
 
-  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
+  override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     return FFBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+  override doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
     // https://github.com/microsoft/playwright/issues/6500
@@ -48,7 +48,7 @@ export class Firefox extends BrowserType {
     return error;
   }
 
-  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
     if (os.platform() === 'linux') {
@@ -60,12 +60,12 @@ export class Firefox extends BrowserType {
     return env;
   }
 
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+  override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
     transport.send(message);
   }
 
-  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
