@@ -20,11 +20,12 @@ import path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
+import type { BrowserReadyState } from '../browserType';
 import type { Env } from '../../utils/processLauncher';
 import type { ConnectionTransport } from '../transport';
 import type { BrowserOptions } from '../browser';
 import type * as types from '../types';
-import { wrapInASCIIBox } from '../../utils';
+import { ManualPromise, wrapInASCIIBox } from '../../utils';
 import type { SdkObject } from '../instrumentation';
 import type { ProtocolError } from '../protocolError';
 
@@ -87,6 +88,27 @@ export class Firefox extends BrowserType {
     else
       firefoxArguments.push('-silent');
     return firefoxArguments;
+  }
+
+  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
+    return new JugglerReadyState();
+  }
+}
+
+class JugglerReadyState implements BrowserReadyState {
+  private readonly _jugglerPromise = new ManualPromise<void>();
+
+  onBrowserOutput(message: string): void {
+    if (message.includes('Juggler listening to the pipe'))
+      this._jugglerPromise.resolve();
+  }
+  onBrowserExit(): void {
+    // Unblock launch when browser prematurely exits.
+    this._jugglerPromise.resolve();
+  }
+  async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
+    await this._jugglerPromise;
+    return { };
   }
 }
 
