@@ -625,7 +625,31 @@ test('uncaught error in beforeEach should not be masked by another error', async
   expect(result.output).toContain('Received: 1');
 });
 
-test('should report error from fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
+test('should report error from worker fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          let cb;
+          await use(new Promise((f, r) => cb = r));
+          cb(new Error('Oh my!'));
+        }, { scope: 'worker' }],
+      });
+      test.beforeAll(async ({ foo }, testInfo) => {
+        await foo;
+      });
+      test('passing', () => {
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Error: Oh my!');
+});
+
+test('should not report error from test fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test as base, expect } from '@playwright/test';
@@ -646,7 +670,7 @@ test('should report error from fixture teardown when beforeAll times out', async
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
-  expect(result.output).toContain('Error: Oh my!');
+  expect(result.output).not.toContain('Error: Oh my!');
 });
 
 test('should not hang and report results when worker process suddenly exits during afterAll', async ({ runInlineTest }) => {

@@ -559,6 +559,74 @@ test('should allow custom worker fixture timeout longer than force exit cap', as
   expect(result.output).toContain(`1 error was not a part of any test, see above for details`);
 });
 
+test('should run fixture teardown with custom timeout after test timeout', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31537' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          console.log('\\n%%foo setup');
+          await use('foo');
+          console.log('\\n%%foo teardown');
+        }, { timeout: 2000 }],
+      });
+      test('times out', async ({ foo }) => {
+        console.log('\\n%%test start');
+        await new Promise(() => {});
+        console.log('\\n%%test end');
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'foo setup',
+    'test start',
+    'foo teardown',
+  ]);
+});
+
+test('should run fixture teardown with custom timeout after afterEach timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      let counter = 0;
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          console.log('\\n%%foo setup');
+          await use('foo' + (++counter));
+          console.log('\\n%%foo teardown');
+        }, { timeout: 2000 }],
+      });
+      test.afterEach(async () => {
+        console.log('\\n%%afterEach start');
+        await new Promise(() => {});
+        console.log('\\n%%afterEach end');
+      });
+      test.afterAll(async ({ foo }) => {
+        // Note: afterAll should receive a new instance of the "foo" fixture.
+        console.log('\\n%%afterAll - ' + foo);
+      });
+      test('times out', async ({ foo }) => {
+        console.log('\\n%%test - ' + foo);
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'foo setup',
+    'test - foo1',
+    'afterEach start',
+    'foo teardown',
+    'foo setup',
+    'afterAll - foo2',
+    'foo teardown',
+  ]);
+});
+
 test('test.setTimeout should be able to change custom fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
