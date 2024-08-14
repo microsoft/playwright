@@ -60,7 +60,7 @@ class ALPNCache {
       ALPNProtocols: ['h2', 'http/1.1'],
       rejectUnauthorized: false,
     }).then(socket => {
-      socket.on('secureConnect', () => {
+      socket.once('secureConnect', () => {
         // The server may not respond with ALPN, in which case we default to http/1.1.
         result.resolve(socket.alpnProtocol || 'http/1.1');
         socket.end();
@@ -93,8 +93,8 @@ class SocksProxyConnection {
 
   async connect() {
     this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
-    this.target.on('close', this._targetCloseEventListener);
-    this.target.on('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
+    this.target.once('close', this._targetCloseEventListener);
+    this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
       host: this.target.localAddress!,
@@ -138,9 +138,9 @@ class SocksProxyConnection {
         ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
-      this.internal?.on('close', () => dummyServer.close());
+      this.internal?.once('close', () => dummyServer.close());
       dummyServer.emit('connection', this.internal);
-      dummyServer.on('secureConnection', internalTLS => {
+      dummyServer.once('secureConnection', internalTLS => {
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
 
         let targetTLS: tls.TLSSocket | undefined = undefined;
@@ -162,7 +162,7 @@ class SocksProxyConnection {
               this.target.removeListener('close', this._targetCloseEventListener);
               // @ts-expect-error
               const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
-              session.on('stream', (stream: http2.ServerHttp2Stream) => {
+              session.once('stream', (stream: http2.ServerHttp2Stream) => {
                 stream.respond({
                   'content-type': 'text/html',
                   [http2.constants.HTTP2_HEADER_STATUS]: 503,
@@ -171,7 +171,7 @@ class SocksProxyConnection {
                   session.close();
                   closeBothSockets();
                 });
-                stream.on('error', () => closeBothSockets());
+                stream.once('error', () => closeBothSockets());
               });
             } else {
               closeBothSockets();
@@ -208,16 +208,16 @@ class SocksProxyConnection {
 
         targetTLS = tls.connect(tlsOptions);
 
-        targetTLS.on('secureConnect', () => {
+        targetTLS.once('secureConnect', () => {
           internalTLS.pipe(targetTLS);
           targetTLS.pipe(internalTLS);
         });
 
-        internalTLS.on('end', () => closeBothSockets());
-        targetTLS.on('end', () => closeBothSockets());
+        internalTLS.once('end', () => closeBothSockets());
+        targetTLS.once('end', () => closeBothSockets());
 
-        internalTLS.on('error', () => closeBothSockets());
-        targetTLS.on('error', handleError);
+        internalTLS.once('error', () => closeBothSockets());
+        targetTLS.once('error', handleError);
       });
     });
   }
