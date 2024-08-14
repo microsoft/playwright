@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import tls from 'tls';
 import type http2 from 'http2';
 import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
@@ -300,6 +301,48 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
+  });
+
+  test('should not hang on tls errors during TLS 1.2 handshake', async ({ browser, asset, platform, browserName }) => {
+    for (const tlsVersion of ['TLSv1.3', 'TLSv1.2'] as const) {
+      await test.step(`TLS version: ${tlsVersion}`, async () => {
+        const server = tls.createServer({
+          key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+          cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+          ca: [
+            fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+          ],
+          requestCert: true,
+          rejectUnauthorized: true,
+          minVersion: tlsVersion,
+          maxVersion: tlsVersion,
+          SNICallback: (servername, cb) => {
+            // Always reject the connection by passing an error
+            cb(new Error('Connection rejected'), null);
+          }
+        }, () => {
+          // Do nothing
+        });
+        const serverURL = await new Promise<string>(resolve => {
+          server.listen(0, 'localhost', () => {
+            const host = browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost';
+            resolve(`https://${host}:${(server.address() as net.AddressInfo).port}/`);
+          });
+        });
+        const page = await browser.newPage({
+          ignoreHTTPSErrors: true,
+          clientCertificates: [{
+            origin: new URL(serverURL).origin,
+            certPath: asset('client-certificates/client/self-signed/cert.pem'),
+            keyPath: asset('client-certificates/client/self-signed/key.pem'),
+          }],
+        });
+        await page.goto(serverURL);
+        await expect(page.getByText('Playwright client-certificate error: Client network socket disconnected before secure TLS connection was established')).toBeVisible();
+        await page.close();
+        await new Promise<void>(resolve => server.close(() => resolve()));
+      });
+    }
   });
 
   test('should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName }) => {
