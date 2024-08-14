@@ -1225,4 +1225,44 @@ test('should not nest top level expect into unfinished api calls ', {
   ]);
 });
 
+test('should record trace after fixture teardown timeout', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30718' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        fixture: async ({}, use) => {
+          await use('foo');
+          await new Promise(() => {});
+        },
+      });
+      // Note: it is important that "fixture" is last, so that it runs the teardown first.
+      test('fails', async ({ page, fixture }) => {
+        await page.evaluate(() => console.log('from the page'));
+      });
+    `,
+  }, { trace: 'on', timeout: '3000' }, { DEBUG: 'pw:test' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
 
+  const tracePath = test.info().outputPath('test-results', 'a-fails', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '  fixture: page',
+    '    browserContext.newPage',
+    '  fixture: fixture',
+    'page.evaluate',
+    'After Hooks',
+    '  fixture: fixture',
+    'Worker Cleanup',
+    '  fixture: browser',
+  ]);
+  // Check console events to make sure that library trace is recorded.
+  expect(trace.events).toContainEqual(expect.objectContaining({ type: 'console', text: 'from the page' }));
+});
