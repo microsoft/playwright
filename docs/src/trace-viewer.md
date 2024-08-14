@@ -13,14 +13,14 @@ Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright
 * langs: js
 
 <LiteYouTube
-    id="lfxjs--9ZQs"
+    id="yP6AnTxC34s"
     title="Viewing Playwright Traces"
 />
 
 ## Trace Viewer features
 ### Actions
 
-In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action. 
+In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
 
 ![actions tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/948b65cd-f0fd-4c7f-8e53-2c632b5a07f1)
 
@@ -31,7 +31,7 @@ In the Actions tab you can see what locator was used for every action and how lo
 
 ### Screenshots
 
-When tracing with the [`option: screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect. 
+When tracing with the [`option: screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
 
 Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
@@ -393,7 +393,7 @@ public class ExampleTest : PageTest
     [TearDown]
     public async Task TearDown()
     {
-        var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error 
+        var failed = TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Error
             || TestContext.CurrentContext.Result.Outcome == NUnit.Framework.Interfaces.ResultState.Failure;
 
         await Context.Tracing.StopAsync(new()
@@ -402,7 +402,7 @@ public class ExampleTest : PageTest
                 TestContext.CurrentContext.WorkDirectory,
                 "playwright-traces",
                 $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}.zip"
-            ) : null, 
+            ) : null,
         });
     }
 
