@@ -229,7 +229,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode())
-      testInfo.setTimeout(0);
+      (testInfo as TestInfoImpl)._setDebugMode();
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
       (browserType as any)._defaultContextTimeout = actionTimeout || 0;
@@ -270,7 +270,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         step?.complete({ error });
       },
       onWillPause: () => {
-        currentTestInfo()?.setTimeout(0);
+        currentTestInfo()?._setDebugMode();
       },
       runAfterCreateBrowserContext: async (context: BrowserContext) => {
         await artifactsRecorder?.didCreateBrowserContext(context);

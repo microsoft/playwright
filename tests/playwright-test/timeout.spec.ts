@@ -159,7 +159,7 @@ test('should ignore test.setTimeout when debugging', async ({ runInlineTest }) =
         await new Promise(f => setTimeout(f, 2000));
       });
     `
-  }, { timeout: 0 });
+  }, { debug: true });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
@@ -557,4 +557,26 @@ test('should allow custom worker fixture timeout longer than force exit cap', as
   expect(result.output).toContain(`output from teardown`);
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).toContain(`1 error was not a part of any test, see above for details`);
+});
+
+test('test.setTimeout should be able to change custom fixture timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          console.log('\\n%%foo setup');
+          test.setTimeout(100);
+          await new Promise(f => setTimeout(f, 3000));
+          await use('foo');
+          console.log('\\n%%foo teardown');
+        }, { timeout: 0 }],
+      });
+      test('times out', async ({ foo }) => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain(`Fixture "foo" timeout of 100ms exceeded during setup`);
 });

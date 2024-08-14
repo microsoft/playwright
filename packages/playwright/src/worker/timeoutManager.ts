@@ -52,9 +52,14 @@ export const kMaxDeadline = 2147483647; // 2^31-1
 export class TimeoutManager {
   private _defaultSlot: TimeSlot;
   private _running?: Running;
+  private _ignoreTimeouts = false;
 
   constructor(timeout: number) {
     this._defaultSlot = { timeout, elapsed: 0 };
+  }
+
+  setIgnoreTimeouts() {
+    this._ignoreTimeouts = true;
   }
 
   interrupt() {
@@ -94,7 +99,7 @@ export class TimeoutManager {
     if (running.timer)
       clearTimeout(running.timer);
     running.timer = undefined;
-    if (!running.slot.timeout) {
+    if (this._ignoreTimeouts || !running.slot.timeout) {
       running.deadline = kMaxDeadline;
       return;
     }
@@ -119,8 +124,6 @@ export class TimeoutManager {
 
   setTimeout(timeout: number) {
     const slot = this._running ? this._running.slot : this._defaultSlot;
-    if (!slot.timeout)
-      return; // Zero timeout means some debug mode - do not set a timeout.
     slot.timeout = timeout;
     if (this._running)
       this._updateTimeout(this._running);

@@ -20,6 +20,7 @@ import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
+  debug?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
