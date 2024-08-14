@@ -8,9 +8,15 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.46
 
+<LiteYouTube
+  id="tQo7w-QQBsI"
+  title="Playwright 1.46"
+/>
+
+
 ### TLS Client Certificates
 
-Playwright now allows to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+Playwright now allows you to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
 
 The following snippet sets up a client certificate for `https://example.com`:
 
