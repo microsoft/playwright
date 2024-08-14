@@ -51,6 +51,8 @@ export { SocksProxyAgent } from 'socks-proxy-agent';
 import StackUtilsLibrary from 'stack-utils';
 export const StackUtils = StackUtilsLibrary;
 
+export * as nodeForge from 'node-forge';
+
 // @ts-ignore
 import wsLibrary, { WebSocketServer, Receiver, Sender } from 'ws';
 export const ws = wsLibrary;

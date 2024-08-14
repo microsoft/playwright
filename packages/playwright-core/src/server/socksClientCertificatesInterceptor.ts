@@ -15,13 +15,12 @@
  */
 
 import net from 'net';
-import path from 'path';
 import http2 from 'http2';
 import type https from 'https';
-import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
+import { nodeForge } from '../utilsBundle';
 import { escapeHTML, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
@@ -32,9 +31,32 @@ let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
   if (dummyServerTlsOptions)
     return;
+  const keys = nodeForge.pki.rsa.generateKeyPair(2048);
+
+  const cert = nodeForge.pki.createCertificate();
+  cert.publicKey = keys.publicKey;
+  cert.serialNumber = '01';
+  cert.validity.notBefore = new Date();
+  cert.validity.notAfter = new Date();
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+
+  const attrs = [{
+    name: 'commonName',
+    value: 'Playwright Client Certificate Support'
+  }];
+  cert.setSubject(attrs);
+  cert.setIssuer(attrs);
+
+  cert.setExtensions([{
+    name: 'basicConstraints',
+    cA: true
+  }]);
+
+  cert.sign(keys.privateKey, nodeForge.md.sha256.create());
+
   dummyServerTlsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
+    key: nodeForge.pki.privateKeyToPem(keys.privateKey),
+    cert: nodeForge.pki.certificateToPem(cert),
   };
 }
 
