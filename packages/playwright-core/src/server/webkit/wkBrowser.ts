@@ -18,9 +18,7 @@
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
-import type { RegisteredListener } from '../../utils/eventsHelper';
 import { assert } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
 import * as network from '../network';
 import type { InitScript, Page, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
@@ -41,7 +39,6 @@ export class WKBrowser extends Browser {
   readonly _browserSession: WKSession;
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
-  private readonly _eventListeners: RegisteredListener[];
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(parent, transport, options);
@@ -63,17 +60,15 @@ export class WKBrowser extends Browser {
     super(parent, options);
     this._connection = new WKConnection(transport, this._onDisconnect.bind(this), options.protocolLogger, options.browserLogsCollector);
     this._browserSession = this._connection.browserSession;
-    this._eventListeners = [
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.windowOpen', event => this._onWindowOpen(event)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, 'Playwright.screencastFinished', this._onScreencastFinished.bind(this)),
-      eventsHelper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
-    ];
+    this._browserSession.on('Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this));
+    this._browserSession.on('Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this));
+    this._browserSession.on('Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event));
+    this._browserSession.on('Playwright.windowOpen', event => this._onWindowOpen(event));
+    this._browserSession.on('Playwright.downloadCreated', this._onDownloadCreated.bind(this));
+    this._browserSession.on('Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this));
+    this._browserSession.on('Playwright.downloadFinished', this._onDownloadFinished.bind(this));
+    this._browserSession.on('Playwright.screencastFinished', this._onScreencastFinished.bind(this));
+    this._browserSession.on(kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this));
   }
 
   _onDisconnect() {
