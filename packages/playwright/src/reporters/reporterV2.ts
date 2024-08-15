@@ -104,7 +104,7 @@ class ReporterV2Wrapper implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    return await this._reporter.onEnd?.(result);
+    return this._reporter.onEnd?.(result);
   }
 
   async onExit() {
