@@ -83,6 +83,7 @@ class SocksProxyConnection {
   private _targetCloseEventListener: () => void;
   private _dummyServer: tls.Server | undefined;
   private _closed = false;
+  private _certTlsOptions: Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
     this.socksProxy = socksProxy;
@@ -95,6 +96,7 @@ class SocksProxyConnection {
       this.internalTLS?.destroy();
       this._dummyServer?.close();
     };
+    this._certTlsOptions = clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${host}:${port}`).origin);
   }
 
   async connect() {
@@ -126,7 +128,8 @@ class SocksProxyConnection {
     if (!this.firstPackageReceived) {
       this.firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-      if (data[0] === 0x16)
+      // Intercept the session only if the client has provided client certificates for this specific host:port combination.
+      if (data[0] === 0x16 && this._certTlsOptions)
         this._attachTLSListeners();
       else
         this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
@@ -204,7 +207,7 @@ class SocksProxyConnection {
 
         let secureContext: tls.SecureContext;
         try {
-          secureContext = tls.createSecureContext(clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin));
+          secureContext = tls.createSecureContext(this._certTlsOptions);
         } catch (error) {
           handleError(error);
           return;
