@@ -20,10 +20,15 @@ import { MultiTraceModel } from './modelUtil';
 import './embeddedWorkbenchLoader.css';
 import { Workbench } from './workbench';
 import { currentTheme, toggleTheme } from '@web/theme';
+import type { SourceLocation } from './modelUtil';
 
 function openPage(url: string, target?: string) {
   if (url)
-    window.parent!.postMessage({ command: 'openExternal', params: { url, target } }, '*');
+    window.parent!.postMessage({ method: 'openExternal', params: { url, target } }, '*');
+}
+
+function openSourceLocation({ file, line, column }: SourceLocation) {
+  window.parent!.postMessage({ method: 'openSourceLocation', params: { file, line, column } }, '*');
 }
 
 export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
@@ -86,7 +91,7 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} openPage={openPage} showSettings />
+    <Workbench model={model} openPage={openPage} onOpenExternally={openSourceLocation} showSettings />
     {!traceURLs.length && <div className='empty-state'>
       <div className='title'>Select test to see the trace</div>
     </div>}
