@@ -16,7 +16,7 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 - [How to open and view the trace](/trace-viewer-intro.md#opening-the-trace)
 
 <LiteYouTube
-    id="lfxjs--9ZQs"
+    id="yP6AnTxC34s"
     title="Viewing Playwright Traces"
 />
 
