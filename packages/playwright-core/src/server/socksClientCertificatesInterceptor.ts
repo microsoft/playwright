@@ -210,8 +210,10 @@ class SocksProxyConnection {
           return;
         }
 
-        if (this._closed)
+        if (this._closed) {
+          internalTLS.destroy();
           return;
+        }
         targetTLS = tls.connect({
           socket: this.target,
           host: this.host,
