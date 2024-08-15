@@ -82,6 +82,7 @@ class SocksProxyConnection {
   internalTLS: tls.TLSSocket | undefined;
   private _targetCloseEventListener: () => void;
   private _dummyServer: tls.Server | undefined;
+  private _closed = false;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
     this.socksProxy = socksProxy;
@@ -100,6 +101,10 @@ class SocksProxyConnection {
     this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
+    if (this._closed) {
+      this.target.destroy();
+      return;
+    }
     this.socksProxy._socksProxy.socketConnected({
       uid: this.uid,
       host: this.target.localAddress!,
@@ -112,6 +117,7 @@ class SocksProxyConnection {
     this.target.destroy();
     this.internalTLS?.destroy();
     this._dummyServer?.close();
+    this._closed = true;
   }
 
   public onData(data: Buffer) {
@@ -141,6 +147,8 @@ class SocksProxyConnection {
     });
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
+      if (this._closed)
+        return;
       this._dummyServer = tls.createServer({
         ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
@@ -202,7 +210,9 @@ class SocksProxyConnection {
           return;
         }
 
-        const tlsOptions: tls.ConnectionOptions = {
+        if (this._closed)
+          return;
+        targetTLS = tls.connect({
           socket: this.target,
           host: this.host,
           port: this.port,
@@ -210,9 +220,7 @@ class SocksProxyConnection {
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
           servername: !net.isIP(this.host) ? this.host : undefined,
           secureContext,
-        };
-
-        targetTLS = tls.connect(tlsOptions);
+        });
 
         targetTLS.once('secureConnect', () => {
           internalTLS.pipe(targetTLS);
