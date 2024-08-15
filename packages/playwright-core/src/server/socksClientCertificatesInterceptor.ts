@@ -60,11 +60,9 @@ class ALPNCache {
       ALPNProtocols: ['h2', 'http/1.1'],
       rejectUnauthorized: false,
     }).then(socket => {
-      socket.once('secureConnect', () => {
-        // The server may not respond with ALPN, in which case we default to http/1.1.
-        result.resolve(socket.alpnProtocol || 'http/1.1');
-        socket.end();
-      });
+      // The server may not respond with ALPN, in which case we default to http/1.1.
+      result.resolve(socket.alpnProtocol || 'http/1.1');
+      socket.end();
     }).catch(error => {
       debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
       result.resolve('http/1.1');
@@ -213,8 +211,7 @@ class SocksProxyConnection {
           targetTLS.pipe(internalTLS);
         });
 
-        internalTLS.once('end', () => closeBothSockets());
-        targetTLS.once('end', () => closeBothSockets());
+        internalTLS.once('close', () => closeBothSockets());
 
         internalTLS.once('error', () => closeBothSockets());
         targetTLS.once('error', handleError);

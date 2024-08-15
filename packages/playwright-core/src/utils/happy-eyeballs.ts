@@ -72,14 +72,16 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
     assert(options.host, 'host is required');
     if (net.isIP(options.host)) {
       const socket = tls.connect(options)
-      socket.on('connect', () => resolve(socket));
+      socket.on('secureConnect', () => resolve(socket));
       socket.on('error', error => reject(error));
     } else {
       createConnectionAsync(options, (err, socket) => {
         if (err)
           reject(err);
-        if (socket)
-          resolve(socket);
+        if (socket) {
+          socket.on('secureConnect', () => resolve(socket));
+          socket.on('error', error => reject(error));
+        }
       }, true).catch(err => reject(err));
     }
   });
