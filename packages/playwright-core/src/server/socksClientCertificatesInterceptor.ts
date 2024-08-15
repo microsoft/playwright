@@ -79,14 +79,21 @@ class SocksProxyConnection {
   target!: net.Socket;
   // In case of http, we just pipe data to the target socket and they are |undefined|.
   internal: stream.Duplex | undefined;
+  internalTLS: tls.TLSSocket | undefined;
   private _targetCloseEventListener: () => void;
+  private _dummyServer: tls.Server | undefined;
 
   constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
     this.socksProxy = socksProxy;
     this.uid = uid;
     this.host = host;
     this.port = port;
-    this._targetCloseEventListener = () => this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
+    this._targetCloseEventListener = () => {
+      // Close the other end and cleanup TLS resources.
+      this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
+      this.internalTLS?.destroy();
+      this._dummyServer?.close();
+    };
   }
 
   async connect() {
@@ -101,8 +108,10 @@ class SocksProxyConnection {
   }
 
   public onClose() {
-    this.internal?.destroy();
+    // Close the other end and cleanup TLS resources.
     this.target.destroy();
+    this.internalTLS?.destroy();
+    this._dummyServer?.close();
   }
 
   public onData(data: Buffer) {
@@ -132,20 +141,16 @@ class SocksProxyConnection {
     });
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
-      const dummyServer = tls.createServer({
+      this._dummyServer = tls.createServer({
         ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
       });
-      this.internal?.once('close', () => dummyServer.close());
-      dummyServer.emit('connection', this.internal);
-      dummyServer.once('secureConnection', internalTLS => {
+      this._dummyServer.emit('connection', this.internal);
+      this._dummyServer.once('secureConnection', internalTLS => {
+        this.internalTLS = internalTLS;
         debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} chooses ALPN ${internalTLS.alpnProtocol}`);
 
         let targetTLS: tls.TLSSocket | undefined = undefined;
-        const closeBothSockets = () => {
-          internalTLS.end();
-          targetTLS?.end();
-        };
 
         const handleError = (error: Error) => {
           error = rewriteOpenSSLErrorIfNeeded(error);
@@ -156,7 +161,8 @@ class SocksProxyConnection {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
               // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
-              // This is an async operation, so we need to intercept the close event to prevent the socket from being closed too early.
+              // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
+              // This means we call this._targetCloseEventListener manually.
               this.target.removeListener('close', this._targetCloseEventListener);
               // @ts-expect-error
               const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
@@ -165,14 +171,16 @@ class SocksProxyConnection {
                   'content-type': 'text/html',
                   [http2.constants.HTTP2_HEADER_STATUS]: 503,
                 });
-                stream.end(responseBody, () => {
+                const cleanup = () => {
                   session.close();
-                  closeBothSockets();
-                });
-                stream.once('error', () => closeBothSockets());
+                  this.target.destroy();
+                  this._targetCloseEventListener();
+                };
+                stream.end(responseBody, cleanup);
+                stream.once('error', cleanup);
               });
             } else {
-              closeBothSockets();
+              this.target.destroy();
             }
           } else {
             internalTLS.end([
@@ -182,7 +190,7 @@ class SocksProxyConnection {
               '',
               responseBody,
             ].join('\r\n'));
-            closeBothSockets();
+            this.target.destroy();
           }
         };
 
@@ -211,9 +219,7 @@ class SocksProxyConnection {
           targetTLS.pipe(internalTLS);
         });
 
-        internalTLS.once('close', () => closeBothSockets());
-
-        internalTLS.once('error', () => closeBothSockets());
+        internalTLS.once('error', () => this.target.destroy());
         targetTLS.once('error', handleError);
       });
     });
