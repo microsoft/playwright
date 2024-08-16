@@ -30,7 +30,6 @@ let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
   if (dummyServerTlsOptions)
     return;
-  // TODO: do we want to have it unique per browser context, launch or global?
   const { cert, key } = generateSelfSignedCertificate();
   dummyServerTlsOptions = { key, cert };
 }

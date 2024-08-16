@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
 import crypto from 'crypto';
+import { assert } from './debug';
 
 export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
@@ -45,7 +45,7 @@ class DER {
     return this._encode(0x30, Buffer.concat(data));
   }
   static encodeInteger(data: number): Buffer {
-    assert(data >= 0 && data <= 0xff);
+    assert(data >= -128 && data <= 127);
     return this._encode(0x02, Buffer.from([data]));
   }
   static encodeObjectIdentifier(oid: string): Buffer {
@@ -63,10 +63,11 @@ class DER {
     return Buffer.from([0x05, 0x00]);
   }
   static encodeSet(data: Buffer[]): Buffer {
+    assert(data.length === 1, 'Only one item in the set is supported. We\'d need to sort the data to support more.');
     // We expect the data to be already sorted.
     return this._encode(0x31, Buffer.concat(data));
   }
-  static encodeImplicitContextDependent(tag: number, data: Buffer): Buffer {
+  static encodeExplicitContextDependent(tag: number, data: Buffer): Buffer {
     return this._encode(0xa0 + tag, data);
   }
   static encodePrintableString(data: string): Buffer {
@@ -116,9 +117,13 @@ export function generateSelfSignedCertificate() {
   const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
   const publicKeyDer = publicKey.export({ type: 'pkcs1', format: 'der' });
 
+  const oneYearInMilliseconds = 365 * 24 * 60 * 60 * 1_000;
+  const notBefore = new Date(new Date().getTime() - oneYearInMilliseconds);
+  const notAfter = new Date(new Date().getTime() + oneYearInMilliseconds);
+
   // List of fields / structure: https://datatracker.ietf.org/doc/html/rfc2459#section-4.1
   const tbsCertificate = DER.encodeSequence([
-    DER.encodeImplicitContextDependent(0, DER.encodeInteger(1)), // version
+    DER.encodeExplicitContextDependent(0, DER.encodeInteger(1)), // version
     DER.encodeInteger(1), // serialNumber
     DER.encodeSequence([
       DER.encodeObjectIdentifier('1.2.840.113549.1.1.11'), // sha256WithRSAEncryption PKCS #1
@@ -134,13 +139,13 @@ export function generateSelfSignedCertificate() {
       DER.encodeSet([
         DER.encodeSequence([
           DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
-          DER.encodePrintableString('Client Certificate Demo')
+          DER.encodePrintableString('Playwright Client Certificate Support')
         ])
       ])
     ]), // issuer
     DER.encodeSequence([
-      DER.encodeDate(new Date()), // notBefore
-      DER.encodeDate(new Date()), // notAfter
+      DER.encodeDate(notBefore), // notBefore
+      DER.encodeDate(notAfter), // notAfter
     ]), // validity
     DER.encodeSequence([
       DER.encodeSet([
@@ -152,7 +157,7 @@ export function generateSelfSignedCertificate() {
       DER.encodeSet([
         DER.encodeSequence([
           DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
-          DER.encodePrintableString('Client Certificate Demo')
+          DER.encodePrintableString('Playwright Client Certificate Support')
         ])
       ])
     ]), // subject
