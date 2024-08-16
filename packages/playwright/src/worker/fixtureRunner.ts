@@ -17,7 +17,7 @@
 import { formatLocation, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
-import { TimeoutManagerError, type FixtureDescription, type RunnableDescription } from './timeoutManager';
+import { type FixtureDescription, type RunnableDescription } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -125,38 +125,41 @@ class Fixture {
   }
 
   async teardown(testInfo: TestInfoImpl, runnable: RunnableDescription) {
-    await testInfo._runAsStage({
-      title: `fixture: ${this.registration.name}`,
-      runnable: { ...runnable, fixture: this._teardownDescription },
-      stepInfo: this._stepInfo,
-    }, async () => {
-      await this._teardownInternal();
-    });
+    try {
+      const fixtureRunnable = { ...runnable, fixture: this._teardownDescription };
+      // Do not even start the teardown for a fixture that does not have any
+      // time remaining in the time slot. This avoids cascading timeouts.
+      if (!testInfo._timeoutManager.isTimeExhaustedFor(fixtureRunnable)) {
+        await testInfo._runAsStage({
+          title: `fixture: ${this.registration.name}`,
+          runnable: fixtureRunnable,
+          stepInfo: this._stepInfo,
+        }, async () => {
+          await this._teardownInternal();
+        });
+      }
+    } finally {
+      // To preserve fixtures integrity, forcefully cleanup fixtures
+      // that cannnot teardown due to a timeout or an error.
+      for (const dep of this._deps)
+        dep._usages.delete(this);
+      this.runner.instanceForId.delete(this.registration.id);
+    }
   }
 
   private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
-    try {
-      if (this._usages.size !== 0) {
-        // TODO: replace with assert.
-        console.error('Internal error: fixture integrity at', this._teardownDescription.title);  // eslint-disable-line no-console
-        this._usages.clear();
-      }
-      if (this._useFuncFinished) {
-        this._useFuncFinished.resolve();
-        this._useFuncFinished = undefined;
-        await this._selfTeardownComplete;
-      }
-    } finally {
-      this._cleanupInstance();
+    if (this._usages.size !== 0) {
+      // TODO: replace with assert.
+      console.error('Internal error: fixture integrity at', this._teardownDescription.title);  // eslint-disable-line no-console
+      this._usages.clear();
     }
-  }
-
-  _cleanupInstance() {
-    for (const dep of this._deps)
-      dep._usages.delete(this);
-    this.runner.instanceForId.delete(this.registration.id);
+    if (this._useFuncFinished) {
+      this._useFuncFinished.resolve();
+      this._useFuncFinished = undefined;
+      await this._selfTeardownComplete;
+    }
   }
 
   _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
@@ -203,27 +206,18 @@ export class FixtureRunner {
     const collector = new Set<Fixture>();
     for (const fixture of fixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
-    try {
-      let firstError: Error | undefined;
-      for (const fixture of collector) {
-        try {
-          await fixture.teardown(testInfo, runnable);
-        } catch (error) {
-          if (error instanceof TimeoutManagerError)
-            throw error;
-          firstError = firstError ?? error;
-        }
+    let firstError: Error | undefined;
+    for (const fixture of collector) {
+      try {
+        await fixture.teardown(testInfo, runnable);
+      } catch (error) {
+        firstError = firstError ?? error;
       }
-      if (firstError)
-        throw firstError;
-    } finally {
-      // To preserve fixtures integrity, forcefully cleanup fixtures that did not teardown
-      // due to a timeout in one of them.
-      for (const fixture of collector)
-        fixture._cleanupInstance();
-      if (scope === 'test')
-        this.testScopeClean = true;
     }
+    if (scope === 'test')
+      this.testScopeClean = true;
+    if (firstError)
+      throw firstError;
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<object | null> {

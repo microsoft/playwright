@@ -31,7 +31,7 @@ import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { inheritFixtureNames } from '../common/fixtures';
-import { type TimeSlot, TimeoutManagerError } from './timeoutManager';
+import { type TimeSlot } from './timeoutManager';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -368,36 +368,27 @@ export class WorkerMain extends ProcessRunner {
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
     await testInfo._runAsStage({ title: 'After Hooks', stepInfo: { category: 'hook' } }, async () => {
       let firstAfterHooksError: Error | undefined;
-      let didTimeoutInAfterHooks = false;
 
       try {
         // Run "immediately upon test function finish" callback.
         await testInfo._runAsStage({ title: 'on-test-function-finish', runnable: { type: 'test', slot: afterHooksSlot } }, async () => testInfo._onDidFinishTestFunction?.());
       } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          didTimeoutInAfterHooks = true;
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
-        if (!didTimeoutInAfterHooks && shouldRunAfterEachHooks)
+        if (shouldRunAfterEachHooks)
           await this._runEachHooksForSuites(reversedSuites, 'afterEach', testInfo, afterHooksSlot);
       } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          didTimeoutInAfterHooks = true;
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
       try {
-        if (!didTimeoutInAfterHooks) {
-          // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
-          // they should probably increase the test timeout to fix this issue.
-          await this._fixtureRunner.teardownScope('test', testInfo, { type: 'test', slot: afterHooksSlot });
-        }
+        // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
+        // they should probably increase the test timeout to fix this issue.
+        await this._fixtureRunner.teardownScope('test', testInfo, { type: 'test', slot: afterHooksSlot });
       } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          didTimeoutInAfterHooks = true;
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
@@ -559,14 +550,16 @@ export class WorkerMain extends ProcessRunner {
     let firstError: Error | undefined;
     const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
     for (const hook of hooks) {
+      const runnable = { type: hook.type, location: hook.location, slot };
+      if (testInfo._timeoutManager.isTimeExhaustedFor(runnable)) {
+        // Do not run hooks that will timeout right away.
+        continue;
+      }
       try {
         await testInfo._runAsStage({ title: hook.title, stepInfo: { category: 'hook', location: hook.location } }, async () => {
-          const runnable = { type: hook.type, location: hook.location, slot };
           await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test', runnable);
         });
       } catch (error) {
-        if (error instanceof TimeoutManagerError)
-          throw error;
         firstError = firstError ?? error;
         // Skip in modifier prevents others from running.
         if (error instanceof SkipError)
