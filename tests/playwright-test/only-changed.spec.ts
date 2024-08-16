@@ -414,3 +414,26 @@ test('should run project dependencies of changed tests', {
 
   expect(result.output).toContain('setup test is executed');
 });
+
+test('should work with list mode', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  const result = await runInlineTest({
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `
+  }, { 'only-changed': true, 'list': true });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('b.spec.ts');
+  expect(result.output).not.toContain('a.spec.ts');
+});
