@@ -36,7 +36,7 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
             `Revision '${baseCommit}' is not available in the local repository.`,
             `On CI, this is likely caused by a shallow clone.`,
             `To fix, clone the full repository history:`,
-            '   https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches'
+            'e.g. for GitHub Actions: https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches'
           ].join('\n'));
         }
       }
