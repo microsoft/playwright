@@ -167,6 +167,8 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
+    if (configInternal.configCLIOverrides.debug)
+      this._setDebugMode();
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
@@ -223,17 +225,6 @@ export class TestInfoImpl implements TestInfo {
       if (this.expectedStatus !== 'skipped')
         this.expectedStatus = 'failed';
     }
-  }
-
-  private _findLastNonFinishedStep(filter: (step: TestStepInternal) => boolean) {
-    let result: TestStepInternal | undefined;
-    const visit = (step: TestStepInternal) => {
-      if (!step.endWallTime && filter(step))
-        result = step;
-      step.steps.forEach(visit);
-    };
-    this._steps.forEach(visit);
-    return result;
   }
 
   private _findLastStageStep() {
@@ -402,6 +393,10 @@ export class TestInfoImpl implements TestInfo {
       if (type && ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type))
         return type;
     }
+  }
+
+  _setDebugMode() {
+    this._timeoutManager.setIgnoreTimeouts();
   }
 
   // ------------ TestInfo methods ------------

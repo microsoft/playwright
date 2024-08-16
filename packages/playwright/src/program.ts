@@ -308,9 +308,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   if (options.headed || options.debug)
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
-    overrides.maxFailures = 1;
-    overrides.timeout = 0;
-    overrides.workers = 1;
+    overrides.debug = true;
     process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
