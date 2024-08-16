@@ -27,6 +27,20 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
       ).split('\n').filter(Boolean);
     } catch (_error) {
       const error = _error as childProcess.SpawnSyncReturns<string>;
+
+      const unknownRevision = error.output.some(line => line?.includes('unknown revision'));
+      if (unknownRevision) {
+        const isShallowClone = childProcess.execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8',  stdio: 'pipe' }).trim() === 'true';
+        if (isShallowClone) {
+          throw new Error([
+            `Revision '${baseCommit}' is not available in the local repository.`,
+            `On CI, this is likely caused by a shallow clone.`,
+            `To fix, clone the full repository history:`,
+            '   https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches'
+          ].join('\n'));
+        }
+      }
+
       throw new Error([
         `Cannot detect changed files for --only-changed mode:`,
         `git ${command}`,
