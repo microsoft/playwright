@@ -58,14 +58,14 @@ const calculateBase128BytesNeeded = (num: number) => {
   return (bitsNeeded / 7) >>> 0;
 };
 
-class ASN1 {
-  static toSequence(data: Buffer[]): Buffer {
+class DER {
+  static encodeSequence(data: Buffer[]): Buffer {
     return this._encode(0x30, Buffer.concat(data));
   }
-  static toInteger(data: number): Buffer {
+  static encodeInteger(data: number): Buffer {
     return this._encode(0x02, Buffer.from([data]));
   }
-  static toObject(oid: string): Buffer {
+  static encodeObject(oid: string): Buffer {
     const parts = oid.split('.').map((v) => Number(v));
     // Encode the second part, which could be large, using base-128 encoding if necessary
     const output = [encodeBase128(40 * parts[0] + parts[1])];
@@ -76,34 +76,41 @@ class ASN1 {
 
     return this._encode(0x06, Buffer.concat(output));
   }
-  static toNull(): Buffer {
+  static encodeNull(): Buffer {
     return Buffer.from([0x05, 0x00]);
   }
-  static toSet(data: Buffer[]): Buffer {
+  static encodeSet(data: Buffer[]): Buffer {
     return this._encode(0x31, Buffer.concat(data));
   }
-  static toContextSpecific(tag: number, data: Buffer): Buffer {
+  static encodeForContext(tag: number, data: Buffer): Buffer {
     return this._encode(0xa0 + tag, data);
   }
-  static toPrintableString(data: string): Buffer {
+  static encodePrintableString(data: string): Buffer {
     return this._encode(0x13, Buffer.from(data));
   }
-  static toBitString(data: Buffer): Buffer {
+  static encodeBitString(data: Buffer): Buffer {
     // The first byte of the content is the number of unused bits at the end
     const unusedBits = 0; // Assuming all bits are used
     const content = Buffer.concat([Buffer.from([unusedBits]), data]);
     return this._encode(0x03, content);
   }
-  static toUtcTime(date: Date): Buffer {
+  static encodeDate(date: Date): Buffer {
+    const year = date.getUTCFullYear();
+    const isGeneralizedTime = year >= 2050;
+  
     const parts = [
-      date.getUTCFullYear().toString().slice(-2),
+      isGeneralizedTime ? year.toString() : year.toString().slice(-2),
       (date.getUTCMonth() + 1).toString().padStart(2, '0'),
       date.getUTCDate().toString().padStart(2, '0'),
       date.getUTCHours().toString().padStart(2, '0'),
       date.getUTCMinutes().toString().padStart(2, '0'),
       date.getUTCSeconds().toString().padStart(2, '0')
     ];
-    return this._encode(0x17, Buffer.from(parts.join('') + 'Z'));
+  
+    const encodedDate = parts.join('') + 'Z';
+    const tag = isGeneralizedTime ? 0x18 : 0x17; // 0x18 for GeneralizedTime, 0x17 for UTCTime
+  
+    return this._encode(tag, Buffer.from(encodedDate));
   }
   private static _encode(tag: number, data: Buffer): Buffer {
     const lengthBytes = this._encodeLength(data.length);
@@ -127,63 +134,64 @@ export function generateSelfSignedCertificate(commonName: string) {
   const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
   const publicKeyDer = publicKey.export({ type: 'pkcs1', format: 'der' });
 
-  const tbsCertificate = ASN1.toSequence([
-    ASN1.toContextSpecific(0, ASN1.toInteger(1)), // version
-    ASN1.toInteger(1), // serialNumber
-    ASN1.toSequence([
-      ASN1.toObject('1.2.840.113549.1.1.11'),
-      ASN1.toNull()
+  const tbsCertificate = DER.encodeSequence([
+    DER.encodeForContext(0, DER.encodeInteger(1)), // version
+    DER.encodeInteger(1), // serialNumber
+    DER.encodeSequence([
+      DER.encodeObject('1.2.840.113549.1.1.11'),
+      DER.encodeNull()
     ]), // signature
-    ASN1.toSequence([
-      ASN1.toSet([
-        ASN1.toSequence([
-          ASN1.toObject('2.5.4.3'),
-          ASN1.toPrintableString(commonName)
+    DER.encodeSequence([
+      DER.encodeSet([
+        DER.encodeSequence([
+          DER.encodeObject('2.5.4.3'),
+          DER.encodePrintableString(commonName)
         ]),
-        ASN1.toSequence([
-          ASN1.toObject('2.5.4.10'),
-          ASN1.toPrintableString('Client Certificate Demo')
+        DER.encodeSequence([
+          DER.encodeObject('2.5.4.10'),
+          DER.encodePrintableString('Client Certificate Demo')
         ])
       ])
     ]), // issuer
-    ASN1.toSequence([
-      ASN1.toUtcTime(new Date()),
-      ASN1.toUtcTime(new Date()),
+    DER.encodeSequence([
+      DER.encodeDate(new Date()),
+      DER.encodeDate(new Date()),
     ]), // validity
-    ASN1.toSequence([
-      ASN1.toSet([
-        ASN1.toSequence([
-          ASN1.toObject('2.5.4.3'),
-          ASN1.toPrintableString(commonName)
+    DER.encodeSequence([
+      DER.encodeSet([
+        DER.encodeSequence([
+          DER.encodeObject('2.5.4.3'),
+          DER.encodePrintableString(commonName)
         ]),
-        ASN1.toSequence([
-          ASN1.toObject('2.5.4.10'),
-          ASN1.toPrintableString('Client Certificate Demo')
+        DER.encodeSequence([
+          DER.encodeObject('2.5.4.10'),
+          DER.encodePrintableString('Client Certificate Demo')
         ])
       ])
     ]), // subject
-    ASN1.toSequence([
-      ASN1.toSequence([
-        ASN1.toObject('1.2.840.113549.1.1.1'),
-        ASN1.toNull()
+    DER.encodeSequence([
+      DER.encodeSequence([
+        DER.encodeObject('1.2.840.113549.1.1.1'),
+        DER.encodeNull()
       ]),
-      ASN1.toBitString(publicKeyDer)
+      DER.encodeBitString(publicKeyDer)
     ]), // SubjectPublicKeyInfo
   ]);
 
   const signature = crypto.sign('sha256', tbsCertificate, privateKey);
 
-  const certificate = ASN1.toSequence([
+  const certificate = DER.encodeSequence([
     tbsCertificate,
-    ASN1.toSequence([
-      ASN1.toObject('1.2.840.113549.1.1.11'),
-      ASN1.toNull()
+    DER.encodeSequence([
+      DER.encodeObject('1.2.840.113549.1.1.11'),
+      DER.encodeNull()
     ]),
-    ASN1.toBitString(signature)
+    DER.encodeBitString(signature)
   ]);
 
   const certPem = [
       '-----BEGIN CERTIFICATE-----',
+      // Split the base64 string into lines of 64 characters
       certificate.toString('base64').match(/.{1,64}/g)!.join('\n'),
       '-----END CERTIFICATE-----'
   ].join('\n');
