@@ -27,6 +27,18 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
       ).split('\n').filter(Boolean);
     } catch (_error) {
       const error = _error as childProcess.SpawnSyncReturns<string>;
+
+      const unknownRevision = error.output.some(line => line?.includes('unknown revision'));
+      if (unknownRevision) {
+        const isShallowClone = childProcess.execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8',  stdio: 'pipe' }).trim() === 'true';
+        if (isShallowClone) {
+          throw new Error([
+            `The repository is a shallow clone and does not have '${baseCommit}' available locally.`,
+            `Note that GitHub Actions checkout is shallow by default: https://github.com/actions/checkout`
+          ].join('\n'));
+        }
+      }
+
       throw new Error([
         `Cannot detect changed files for --only-changed mode:`,
         `git ${command}`,
