@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import assert from 'assert';
 import crypto from 'crypto';
 
 export function createGuid(): string {
@@ -26,46 +27,28 @@ export function calculateSha1(buffer: Buffer | string): string {
   return hash.digest('hex');
 }
 
-const encodeBase128 = (value: number) => {
-  const bytes = new Uint8Array(calculateBase128BytesNeeded(value));
-  const lastPos = bytes.byteLength - 1;
-  let pos = lastPos;
+// Variable-length quantity encoding aka. base-128 encoding
+function encodeBase128 (value: number): Buffer {
+  const bytes = [];
   do {
-    let byte = value & 0x7f; // Take the last 7 bits
-    value >>>= 7; // Shift right, unsigned
-    if (pos !== lastPos) {
-      byte |= 0x80; // Set the continuation bit on all but the first byte
-    }
-    bytes[pos--] = byte; // Insert the byte at the start of the array
+    let byte = value & 0x7f;
+    value >>>= 7;
+    if (bytes.length > 0) byte |= 0x80;
+    bytes.push(byte);
   } while (value > 0);
-  return bytes;
+  return Buffer.from(bytes.reverse());
 };
 
-const calculateBase128BytesNeeded = (num: number) => {
-  // Start at 6 and not 0 to account for overflow and to ensure that the
-  // division below always gives a value equal to or greater than 1.
-  // For example, consider the following 'real' bits needed:
-  // 0: 6 (initial value) + 1 (real) => 7 / 7 = 1
-  // 7: 6 (initial value) + 7 (real) => 13 / 7 = 1
-  // 8: 6 (initial value) + 8 (real) => 14 / 7 = 2
-  let bitsNeeded = 6;
-
-  do {
-    bitsNeeded++;
-    num >>>= 1;
-  } while (num > 0);
-
-  return (bitsNeeded / 7) >>> 0;
-};
-
+// ASN1/DER Speficiation:   https://www.itu.int/rec/T-REC-X.680-X.693-202102-I/en
 class DER {
   static encodeSequence(data: Buffer[]): Buffer {
     return this._encode(0x30, Buffer.concat(data));
   }
   static encodeInteger(data: number): Buffer {
+    assert(data >= 0 && data <= 0xff);
     return this._encode(0x02, Buffer.from([data]));
   }
-  static encodeObject(oid: string): Buffer {
+  static encodeObjectIdentifier(oid: string): Buffer {
     const parts = oid.split('.').map((v) => Number(v));
     // Encode the second part, which could be large, using base-128 encoding if necessary
     const output = [encodeBase128(40 * parts[0] + parts[1])];
@@ -80,9 +63,10 @@ class DER {
     return Buffer.from([0x05, 0x00]);
   }
   static encodeSet(data: Buffer[]): Buffer {
+    // We expect the data to be already sorted.
     return this._encode(0x31, Buffer.concat(data));
   }
-  static encodeForContext(tag: number, data: Buffer): Buffer {
+  static encodeImplicitContextDependent(tag: number, data: Buffer): Buffer {
     return this._encode(0xa0 + tag, data);
   }
   static encodePrintableString(data: string): Buffer {
@@ -130,48 +114,50 @@ class DER {
   }
 }
 
-export function generateSelfSignedCertificate(commonName: string) {
+// X.509 Specification: https://datatracker.ietf.org/doc/html/rfc2459#section-4.1
+export function generateSelfSignedCertificate() {
   const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
   const publicKeyDer = publicKey.export({ type: 'pkcs1', format: 'der' });
 
+  // List of fields / structure: https://datatracker.ietf.org/doc/html/rfc2459#section-4.1
   const tbsCertificate = DER.encodeSequence([
-    DER.encodeForContext(0, DER.encodeInteger(1)), // version
+    DER.encodeImplicitContextDependent(0, DER.encodeInteger(1)), // version
     DER.encodeInteger(1), // serialNumber
     DER.encodeSequence([
-      DER.encodeObject('1.2.840.113549.1.1.11'),
+      DER.encodeObjectIdentifier('1.2.840.113549.1.1.11'), // sha256WithRSAEncryption PKCS #1
       DER.encodeNull()
     ]), // signature
     DER.encodeSequence([
       DER.encodeSet([
         DER.encodeSequence([
-          DER.encodeObject('2.5.4.3'),
-          DER.encodePrintableString(commonName)
+          DER.encodeObjectIdentifier('2.5.4.3'), // commonName X.520 DN component
+          DER.encodePrintableString('localhost')
         ]),
         DER.encodeSequence([
-          DER.encodeObject('2.5.4.10'),
+          DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
           DER.encodePrintableString('Client Certificate Demo')
         ])
       ])
     ]), // issuer
     DER.encodeSequence([
-      DER.encodeDate(new Date()),
-      DER.encodeDate(new Date()),
+      DER.encodeDate(new Date()), // notBefore
+      DER.encodeDate(new Date()), // notAfter
     ]), // validity
     DER.encodeSequence([
       DER.encodeSet([
         DER.encodeSequence([
-          DER.encodeObject('2.5.4.3'),
-          DER.encodePrintableString(commonName)
+          DER.encodeObjectIdentifier('2.5.4.3'), // commonName X.520 DN component
+          DER.encodePrintableString('localhost')
         ]),
         DER.encodeSequence([
-          DER.encodeObject('2.5.4.10'),
+          DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
           DER.encodePrintableString('Client Certificate Demo')
         ])
       ])
     ]), // subject
     DER.encodeSequence([
       DER.encodeSequence([
-        DER.encodeObject('1.2.840.113549.1.1.1'),
+        DER.encodeObjectIdentifier('1.2.840.113549.1.1.1'), // rsaEncryption PKCS #1
         DER.encodeNull()
       ]),
       DER.encodeBitString(publicKeyDer)
@@ -183,7 +169,7 @@ export function generateSelfSignedCertificate(commonName: string) {
   const certificate = DER.encodeSequence([
     tbsCertificate,
     DER.encodeSequence([
-      DER.encodeObject('1.2.840.113549.1.1.11'),
+      DER.encodeObjectIdentifier('1.2.840.113549.1.1.11'), // sha256WithRSAEncryption PKCS #1
       DER.encodeNull()
     ]),
     DER.encodeBitString(signature)
