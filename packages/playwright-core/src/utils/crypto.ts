@@ -28,7 +28,7 @@ export function calculateSha1(buffer: Buffer | string): string {
 }
 
 // Variable-length quantity encoding aka. base-128 encoding
-function encodeBase128 (value: number): Buffer {
+function encodeBase128(value: number): Buffer {
   const bytes = [];
   do {
     let byte = value & 0x7f;
@@ -81,7 +81,6 @@ class DER {
   static encodeDate(date: Date): Buffer {
     const year = date.getUTCFullYear();
     const isGeneralizedTime = year >= 2050;
-  
     const parts = [
       isGeneralizedTime ? year.toString() : year.toString().slice(-2),
       (date.getUTCMonth() + 1).toString().padStart(2, '0'),
@@ -90,10 +89,8 @@ class DER {
       date.getUTCMinutes().toString().padStart(2, '0'),
       date.getUTCSeconds().toString().padStart(2, '0')
     ];
-  
     const encodedDate = parts.join('') + 'Z';
     const tag = isGeneralizedTime ? 0x18 : 0x17; // 0x18 for GeneralizedTime, 0x17 for UTCTime
-  
     return this._encode(tag, Buffer.from(encodedDate));
   }
   private static _encode(tag: number, data: Buffer): Buffer {
@@ -133,6 +130,8 @@ export function generateSelfSignedCertificate() {
           DER.encodeObjectIdentifier('2.5.4.3'), // commonName X.520 DN component
           DER.encodePrintableString('localhost')
         ]),
+      ]),
+      DER.encodeSet([
         DER.encodeSequence([
           DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
           DER.encodePrintableString('Client Certificate Demo')
@@ -149,6 +148,8 @@ export function generateSelfSignedCertificate() {
           DER.encodeObjectIdentifier('2.5.4.3'), // commonName X.520 DN component
           DER.encodePrintableString('localhost')
         ]),
+      ]),
+      DER.encodeSet([
         DER.encodeSequence([
           DER.encodeObjectIdentifier('2.5.4.10'), // organizationName X.520 DN component
           DER.encodePrintableString('Client Certificate Demo')
@@ -176,10 +177,10 @@ export function generateSelfSignedCertificate() {
   ]);
 
   const certPem = [
-      '-----BEGIN CERTIFICATE-----',
-      // Split the base64 string into lines of 64 characters
-      certificate.toString('base64').match(/.{1,64}/g)!.join('\n'),
-      '-----END CERTIFICATE-----'
+    '-----BEGIN CERTIFICATE-----',
+    // Split the base64 string into lines of 64 characters
+    certificate.toString('base64').match(/.{1,64}/g)!.join('\n'),
+    '-----END CERTIFICATE-----'
   ].join('\n');
 
   return {
