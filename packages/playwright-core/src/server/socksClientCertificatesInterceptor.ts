@@ -15,14 +15,12 @@
  */
 
 import net from 'net';
-import path from 'path';
 import http2 from 'http2';
 import type https from 'https';
-import fs from 'fs';
 import tls from 'tls';
 import stream from 'stream';
 import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { escapeHTML, ManualPromise, rewriteErrorMessage } from '../utils';
+import { escapeHTML, generateSelfSignedCertificate, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
 import type * as channels from '@protocol/channels';
@@ -32,10 +30,8 @@ let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
   if (dummyServerTlsOptions)
     return;
-  dummyServerTlsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '../../bin/socks-certs/cert.pem')),
-  };
+  const { cert, key } = generateSelfSignedCertificate();
+  dummyServerTlsOptions = { key, cert };
 }
 
 class ALPNCache {
