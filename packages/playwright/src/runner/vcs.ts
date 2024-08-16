@@ -33,10 +33,8 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
         const isShallowClone = childProcess.execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8',  stdio: 'pipe' }).trim() === 'true';
         if (isShallowClone) {
           throw new Error([
-            `Revision '${baseCommit}' is not available in the local repository.`,
-            `On CI, this is likely caused by a shallow clone.`,
-            `To fix, clone the full repository history:`,
-            'e.g. for GitHub Actions: https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches'
+            `The repository is a shallow clone and does not have '${baseCommit}' available locally.`,
+            `Note that GitHub Actions checkout is shallow by default: https://github.com/actions/checkout`
           ].join('\n'));
         }
       }
