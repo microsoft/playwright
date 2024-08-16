@@ -188,7 +188,7 @@ test.describe('fetch', () => {
   });
 
   test('should throw a http error if the pfx passphrase is incorect', async ({ playwright, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -202,7 +202,7 @@ test.describe('fetch', () => {
   });
 
   test('should fail with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
