@@ -414,3 +414,19 @@ test('should run project dependencies of changed tests', {
 
   expect(result.output).toContain('setup test is executed');
 });
+
+test('exits successfully if there are no changes', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  const result = await runInlineTest({}, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(0);
+});
