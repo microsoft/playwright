@@ -353,6 +353,8 @@ class Member {
     this.clazz = null;
     /** @type {Member=} */
     this.enclosingMethod = undefined;
+    /** @type {Member=} */
+    this.parent = undefined;
     this.async = false;
     this.alias = name;
     this.overloadIndex = 0;
@@ -372,10 +374,11 @@ class Member {
     this.args = new Map();
     if (this.kind === 'method')
       this.enclosingMethod = this;
-    const indexType = type => {
-      type.deepProperties().forEach(p => {
+    const indexArg = (/** @type {Member} */ arg) => {
+      arg.type?.deepProperties().forEach(p => {
         p.enclosingMethod = this;
-        indexType(p.type);
+        p.parent = arg;
+        indexArg(p);
       });
     }
     for (const arg of this.argsArray) {
@@ -385,7 +388,7 @@ class Member {
         // @ts-ignore
         arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
       }
-      indexType(arg.type);
+      indexArg(arg);
     }
   }
 
