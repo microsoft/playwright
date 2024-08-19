@@ -5206,10 +5206,10 @@ export interface PlaywrightTestOptions {
    *
    * **Details**
    *
-   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-   * the certificate is valid for.
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *

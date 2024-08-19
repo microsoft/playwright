@@ -552,13 +552,19 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
 export async function toClientCertificatesProtocol(certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
   if (!certs)
     return undefined;
-  return await Promise.all(certs.map(async cert => {
-    return {
-      origin: cert.origin,
-      cert: cert.certPath ? await fs.promises.readFile(cert.certPath) : undefined,
-      key: cert.keyPath ? await fs.promises.readFile(cert.keyPath) : undefined,
-      pfx: cert.pfxPath ? await fs.promises.readFile(cert.pfxPath) : undefined,
-      passphrase: cert.passphrase,
-    };
-  }));
+
+  const bufferizeContent = async (value?: Buffer, path?: string): Promise<Buffer | undefined> => {
+    if (value)
+      return value;
+    if (path)
+      return await fs.promises.readFile(path);
+  };
+
+  return await Promise.all(certs.map(async cert => ({
+    origin: cert.origin,
+    cert: await bufferizeContent(cert.cert, cert.certPath),
+    key: await bufferizeContent(cert.key, cert.keyPath),
+    pfx: await bufferizeContent(cert.pfx, cert.pfxPath),
+    passphrase: cert.passphrase,
+  })));
 }

@@ -9138,10 +9138,10 @@ export interface Browser {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -9160,14 +9160,29 @@ export interface Browser {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -13850,10 +13865,10 @@ export interface BrowserType<Unused = {}> {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -13872,14 +13887,29 @@ export interface BrowserType<Unused = {}> {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -16259,10 +16289,10 @@ export interface APIRequest {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -16281,14 +16311,29 @@ export interface APIRequest {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -20600,10 +20645,10 @@ export interface BrowserContextOptions {
    *
    * **Details**
    *
-   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-   * the certificate is valid for.
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -20622,14 +20667,29 @@ export interface BrowserContextOptions {
     certPath?: string;
 
     /**
+     * Direct value of the certificate in PEM format.
+     */
+    cert?: Buffer;
+
+    /**
      * Path to the file with the private key in PEM format.
      */
     keyPath?: string;
 
     /**
+     * Direct value of the private key in PEM format.
+     */
+    key?: Buffer;
+
+    /**
      * Path to the PFX or PKCS12 encoded private key and certificate chain.
      */
     pfxPath?: string;
+
+    /**
+     * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+     */
+    pfx?: Buffer;
 
     /**
      * Passphrase for the private key (PEM or PFX).
