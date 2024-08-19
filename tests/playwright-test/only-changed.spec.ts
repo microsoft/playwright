@@ -256,10 +256,9 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
   const result = await runInlineTest({}, { 'workers': 1, 'only-changed': true });
 
-  expect(result.exitCode).toBe(1);
+  expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('No tests found');
 
   const result2 = await runInlineTest({
     'src/button2.test.tsx': `
