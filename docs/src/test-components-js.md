@@ -838,7 +838,7 @@ import { test } from '@playwright/experimental-ct-vue';
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.update(
-      <Component msg="greetings" callback={() => {}}>Child</Component>
+      <Component msg="greetings" v-on:callback={() => {}}>Child</Component>
   );
 });
 ```
