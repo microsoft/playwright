@@ -144,11 +144,18 @@ const FontPreview: React.FunctionComponent<{
   const [isError, setIsError] = React.useState(false);
 
   React.useEffect(() => {
-    const fontFace = new FontFace('font-preview', font);
-    if (fontFace.status === 'loaded')
-      document.fonts.add(fontFace);
-    if (fontFace.status === 'error')
+    let fontFace: FontFace;
+    try {
+      // note: constant font family name will lead to bugs
+      // when displaying two font previews.
+      fontFace = new FontFace('font-preview', font);
+      if (fontFace.status === 'loaded')
+        document.fonts.add(fontFace);
+      if (fontFace.status === 'error')
+        setIsError(true);
+    } catch {
       setIsError(true);
+    }
 
     return () => {
       document.fonts.delete(fontFace);
