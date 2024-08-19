@@ -1439,3 +1439,15 @@ test('should show baseURL in metadata pane', {
   await traceViewer.showMetadataTab();
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
+
+test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
+  server.setRoute('/one-style.css', (req, res) => {
+    res.writeHead(200);
+    res.end(`body { background: red }`);
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
+});
