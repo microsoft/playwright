@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import { browserTest as it, expect } from '../config/browserTest';
 
 it.describe('mobile viewport', () => {
@@ -54,7 +55,8 @@ it.describe('mobile viewport', () => {
     }
   });
 
-  it('should be detectable by Modernizr', async ({ playwright, browser, server }) => {
+  it('should be detectable by Modernizr', async ({ playwright, browser, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'detect-touch.html uses Modernizr which uses WebGL. WebGL is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
@@ -63,7 +65,8 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should detect touch when applying viewport with touches', async ({ browser, server }) => {
+  it('should detect touch when applying viewport with touches', async ({ browser, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'Modernizr uses WebGL. WebGL is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);

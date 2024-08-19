@@ -32,7 +32,8 @@ async function checkFeatures(name: string, context: any, server: any) {
 
 it('safari-14-1', async ({ browser, browserName, platform, server, headless, isMac }) => {
   it.skip(browserName !== 'webkit');
-  it.skip(browserName === 'webkit' && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
+  it.skip(browserName === 'webkit' && platform === 'darwin', 'WebKit for macOS 10.15 is frozen.');
+  it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'Modernizr uses WebGL which is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
   const context = await browser.newContext({
     deviceScaleFactor: 2
   });
@@ -81,7 +82,8 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
 
 it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, isMac, server, headless }) => {
   it.skip(browserName !== 'webkit');
-  it.skip(browserName === 'webkit' && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
+  it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
+  it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'Modernizr uses WebGL which is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
   const iPhone = playwright.devices['iPhone 12'];
   const context = await browser.newContext(iPhone);
   const { actual, expected } = await checkFeatures('mobile-safari-14-1', context, server);
