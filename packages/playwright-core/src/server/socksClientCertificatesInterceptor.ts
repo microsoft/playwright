@@ -157,7 +157,6 @@ class SocksProxyConnection {
         let targetTLS: tls.TLSSocket | undefined = undefined;
 
         const handleError = (error: Error) => {
-          error = rewriteOpenSSLErrorIfNeeded(error);
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
           const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
               .replaceAll('\n', ' <br>');
@@ -198,14 +197,6 @@ class SocksProxyConnection {
           }
         };
 
-        let secureContext: tls.SecureContext;
-        try {
-          secureContext = tls.createSecureContext(clientCertificatesToTLSOptions(this.socksProxy.clientCertificates, new URL(`https://${this.host}:${this.port}`).origin));
-        } catch (error) {
-          handleError(error);
-          return;
-        }
-
         if (this._closed) {
           internalTLS.destroy();
           return;
@@ -217,7 +208,7 @@ class SocksProxyConnection {
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
           servername: !net.isIP(this.host) ? this.host : undefined,
-          secureContext,
+          secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
         });
 
         targetTLS.once('secureConnect', () => {
@@ -236,7 +227,7 @@ export class ClientCertificatesProxy {
   _socksProxy: SocksProxy;
   private _connections: Map<string, SocksProxyConnection> = new Map();
   ignoreHTTPSErrors: boolean | undefined;
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'];
+  secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
 
   constructor(
@@ -244,7 +235,7 @@ export class ClientCertificatesProxy {
   ) {
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
-    this.clientCertificates = contextOptions.clientCertificates;
+    this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
     this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
@@ -266,6 +257,27 @@ export class ClientCertificatesProxy {
     loadDummyServerCertsIfNeeded();
   }
 
+  _initSecureContexts(clientCertificates: channels.BrowserNewContextOptions['clientCertificates']) {
+    // Step 1. Group certificates by origin.
+    const origin2certs = new Map<string, channels.BrowserNewContextOptions['clientCertificates']>();
+    for (const cert of clientCertificates || []) {
+      const origin = normalizeOrigin(cert.origin);
+      const certs = origin2certs.get(origin) || [];
+      certs.push(cert);
+      origin2certs.set(origin, certs);
+    }
+
+    // Step 2. Create secure contexts for each origin.
+    for (const [origin, certs] of origin2certs) {
+      try {
+        this.secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
+      } catch (error) {
+        error = rewriteOpenSSLErrorIfNeeded(error);
+        throw rewriteErrorMessage(error, `Failed to load client certificate: ${error.message}`);
+      }
+    }
+  }
+
   public async listen(): Promise<string> {
     const port = await this._socksProxy.listen(0, '127.0.0.1');
     return `socks5://127.0.0.1:${port}`;
@@ -276,25 +288,25 @@ export class ClientCertificatesProxy {
   }
 }
 
-export function clientCertificatesToTLSOptions(
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
-  origin: string
+function normalizeOrigin(origin: string): string {
+  try {
+    return new URL(origin).origin;
+  } catch (error) {
+    return origin;
+  }
+}
+
+function convertClientCertificatesToTLSOptions(
+  clientCertificates: channels.BrowserNewContextOptions['clientCertificates']
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
-  const matchingCerts = clientCertificates?.filter(c => {
-    try {
-      return new URL(c.origin).origin === origin;
-    } catch (error) {
-      return c.origin === origin;
-    }
-  });
-  if (!matchingCerts || !matchingCerts.length)
+  if (!clientCertificates || !clientCertificates.length)
     return;
   const tlsOptions = {
     pfx: [] as { buf: Buffer, passphrase?: string }[],
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
   };
-  for (const cert of matchingCerts) {
+  for (const cert of clientCertificates) {
     if (cert.cert)
       tlsOptions.cert.push(cert.cert);
     if (cert.key)
@@ -303,6 +315,16 @@ export function clientCertificatesToTLSOptions(
       tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
   }
   return tlsOptions;
+}
+
+export function getMatchingTLSOptionsForOrigin(
+  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
+  origin: string
+): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
+  const matchingCerts = clientCertificates?.filter(c =>
+    normalizeOrigin(c.origin) === origin
+  );
+  return convertClientCertificatesToTLSOptions(matchingCerts);
 }
 
 function rewriteToLocalhostIfNeeded(host: string): string {
