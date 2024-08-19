@@ -553,9 +553,9 @@ export async function toClientCertificatesProtocol(certs?: BrowserContextOptions
   if (!certs)
     return undefined;
 
-  const bufferizeContent = async (value?: string | Buffer, path?: string): Promise<Buffer | undefined> => {
+  const bufferizeContent = async (value?: Buffer, path?: string): Promise<Buffer | undefined> => {
     if (value)
-      return Buffer.from(value);
+      return value;
     if (path)
       return await fs.promises.readFile(path);
   };
