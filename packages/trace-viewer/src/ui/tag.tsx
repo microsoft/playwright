@@ -17,7 +17,7 @@
 import { clsx } from '@web/uiUtils';
 import './tag.css';
 
-export const TagViev = ({ tag, style, onClick }: { tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }) => {
+export const TagView = ({ tag, style, onClick }: { tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }) => {
   return <span
     className={clsx('tag', `tag-color-${tagNameToColor(tag)}`)}
     onClick={onClick}
