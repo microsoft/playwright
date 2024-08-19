@@ -152,6 +152,7 @@ export function ListView<T>({
           onMouseEnter={() => setHighlightedItem(item)}
           onMouseLeave={() => setHighlightedItem(undefined)}
         >
+          {/* eslint-disable-next-line react/jsx-key */}
           {indentation ? new Array(indentation).fill(0).map(() => <div className='list-view-indent'></div>) : undefined}
           {icon && <div
             className={'codicon ' + (icon(item, index) || 'codicon-blank')}

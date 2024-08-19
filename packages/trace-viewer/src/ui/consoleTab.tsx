@@ -213,6 +213,7 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
 }
 
 function formatAnsi(text: string): JSX.Element[] {
+  // eslint-disable-next-line react/jsx-key
   return [<span dangerouslySetInnerHTML={{ __html: ansi2html(text.trim()) }}></span>];
 }
 

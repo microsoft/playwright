@@ -126,7 +126,7 @@ export const AttachmentsTab: React.FunctionComponent<{
       const url = attachmentURL(a);
       return <div className='attachment-item' key={`screenshot-${i}`}>
         <div><img draggable='false' src={url} /></div>
-        <div><a target='_blank' href={url}>{a.name}</a></div>
+        <div><a target='_blank' href={url} rel='noreferrer'>{a.name}</a></div>
       </div>;
     })}
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
