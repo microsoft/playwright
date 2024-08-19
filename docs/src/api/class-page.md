@@ -2333,6 +2333,15 @@ last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
 
+## async method: Page.forceGarbageCollection
+* since: v1.47
+
+Force the browser to perform garbage collection.
+
+:::note
+Forcing garbage collection is only supported in Chromium and WebKit.
+:::
+
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
 

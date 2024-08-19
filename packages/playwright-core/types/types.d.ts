@@ -2555,6 +2555,13 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Force the browser to perform garbage collection.
+   *
+   * **NOTE** Forcing garbage collection is only supported in Chromium and WebKit.
+   */
+  forceGarbageCollection(): Promise<void>;
+
+  /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
    * **Usage**

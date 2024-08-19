@@ -768,6 +768,10 @@ export class WKPage implements PageDelegate {
     });
   }
 
+  async forceGarbageCollection(): Promise<void> {
+    await this._session.send('Heap.gc');
+  }
+
   async addInitScript(initScript: InitScript): Promise<void> {
     await this._updateBootstrapScript();
   }

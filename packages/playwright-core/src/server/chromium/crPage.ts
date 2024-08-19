@@ -247,6 +247,10 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
+  async forceGarbageCollection(): Promise<void> {
+    await this._mainFrameSession._client.send('HeapProfiler.collectGarbage');
+  }
+
   async addInitScript(initScript: InitScript, world: types.World = 'main'): Promise<void> {
     await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(initScript, world));
   }
