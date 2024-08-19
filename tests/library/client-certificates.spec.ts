@@ -309,8 +309,8 @@ test.describe('browser', () => {
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         origin: new URL(serverURL).origin,
-        cert: (await fs.promises.readFile(asset('client-certificates/client/trusted/cert.pem'))).toString(),
-        key: (await fs.promises.readFile(asset('client-certificates/client/trusted/key.pem'))).toString(),
+        cert: await fs.promises.readFile(asset('client-certificates/client/trusted/cert.pem')),
+        key: await fs.promises.readFile(asset('client-certificates/client/trusted/key.pem')),
       }],
     });
     await page.goto(serverURL);

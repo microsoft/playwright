@@ -9162,7 +9162,7 @@ export interface Browser {
       /**
        * Direct value of the certificate in PEM format.
        */
-      cert?: string;
+      cert?: Buffer;
 
       /**
        * Path to the file with the private key in PEM format.
@@ -9172,7 +9172,7 @@ export interface Browser {
       /**
        * Direct value of the private key in PEM format.
        */
-      key?: string;
+      key?: Buffer;
 
       /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
@@ -13889,7 +13889,7 @@ export interface BrowserType<Unused = {}> {
       /**
        * Direct value of the certificate in PEM format.
        */
-      cert?: string;
+      cert?: Buffer;
 
       /**
        * Path to the file with the private key in PEM format.
@@ -13899,7 +13899,7 @@ export interface BrowserType<Unused = {}> {
       /**
        * Direct value of the private key in PEM format.
        */
-      key?: string;
+      key?: Buffer;
 
       /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
@@ -16313,7 +16313,7 @@ export interface APIRequest {
       /**
        * Direct value of the certificate in PEM format.
        */
-      cert?: string;
+      cert?: Buffer;
 
       /**
        * Path to the file with the private key in PEM format.
@@ -16323,7 +16323,7 @@ export interface APIRequest {
       /**
        * Direct value of the private key in PEM format.
        */
-      key?: string;
+      key?: Buffer;
 
       /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
@@ -20669,7 +20669,7 @@ export interface BrowserContextOptions {
     /**
      * Direct value of the certificate in PEM format.
      */
-    cert?: string;
+    cert?: Buffer;
 
     /**
      * Path to the file with the private key in PEM format.
@@ -20679,7 +20679,7 @@ export interface BrowserContextOptions {
     /**
      * Direct value of the private key in PEM format.
      */
-    key?: string;
+    key?: Buffer;
 
     /**
      * Path to the PFX or PKCS12 encoded private key and certificate chain.
