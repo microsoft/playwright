@@ -432,7 +432,7 @@ Or alternatively, using the `jsx` style:
 import { test } from '@playwright/experimental-ct-vue';
 
 test('callback', async ({ mount }) => {
-  const component = await mount(<Component callback={() => {}} />);
+  const component = await mount(<Component v-on:callback={() => {}} />);
 });
 ```
 
