@@ -55,7 +55,7 @@ export interface MountResultJsx extends Locator {
 export const test: TestType<{
   mount<HooksConfig>(
     component: JSX.Element,
-    options: MountOptionsJsx<HooksConfig>
+    options?: MountOptionsJsx<HooksConfig>
   ): Promise<MountResultJsx>;
   mount<HooksConfig, Component = unknown>(
     component: Component,
