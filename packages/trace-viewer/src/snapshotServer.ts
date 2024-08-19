@@ -85,7 +85,9 @@ export class SnapshotServer {
       contentType = `${contentType}; charset=utf-8`;
 
     const headers = new Headers();
-    headers.set('Content-Type', contentType);
+    // "x-unknown" in the har means "no content type".
+    if (contentType !== 'x-unknown')
+      headers.set('Content-Type', contentType);
     for (const { name, value } of resource.response.headers)
       headers.set(name, value);
     headers.delete('Content-Encoding');

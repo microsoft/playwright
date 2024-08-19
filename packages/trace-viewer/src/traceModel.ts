@@ -114,9 +114,11 @@ export class TraceModel {
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
     const blob = await this._backend.readBlob('resources/' + sha1);
-    if (!blob)
-      return;
-    return new Blob([blob], { type: this._resourceToContentType.get(sha1) || 'application/octet-stream' });
+    const contentType = this._resourceToContentType.get(sha1);
+    // "x-unknown" in the har means "no content type".
+    if (!blob || contentType === undefined || contentType === 'x-unknown')
+      return blob;
+    return new Blob([blob], { type: contentType });
   }
 
   storage(): SnapshotStorage {
