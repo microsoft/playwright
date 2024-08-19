@@ -116,7 +116,7 @@ const BodyTab: React.FunctionComponent<{
           reader.readAsDataURL(blob);
           setResponseBody({ dataUrl: (await eventPromise).target.result });
         } else if (isFont) {
-          const font = await response.blob().then(blob => blob.arrayBuffer());
+          const font = await response.arrayBuffer();
           setResponseBody({ font });
         } else {
           const formattedBody = formatBody(await response.text(), resource.response.content.mimeType);
@@ -141,14 +141,22 @@ const BodyTab: React.FunctionComponent<{
 const FontPreview: React.FunctionComponent<{
   font: BinaryData;
 }> = ({ font }) => {
+  const [isError, setIsError] = React.useState(false);
+
   React.useEffect(() => {
     const fontFace = new FontFace('font-preview', font);
-    document.fonts.add(fontFace);
+    if (fontFace.status === 'loaded')
+      document.fonts.add(fontFace);
+    if (fontFace.status === 'error')
+      setIsError(true);
 
     return () => {
       document.fonts.delete(fontFace);
     };
   }, [font]);
+
+  if (isError)
+    return <div className='network-font-preview-error'>Could not load font preview</div>;
 
   return <div className='network-font-preview'>
     ABCDEFGHIJKLM<br />
