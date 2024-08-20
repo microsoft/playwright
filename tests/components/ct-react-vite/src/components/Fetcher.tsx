@@ -20,7 +20,7 @@ export default function Fetcher() {
   }, [fetched, setFetched, setData]);
 
   return <div>
-    <div data-testId='name'>{data.name}</div>
+    <div data-testid='name'>{data.name}</div>
     <button onClick={() => {
       setFetched(false);
       setData({ name: '<none>' });

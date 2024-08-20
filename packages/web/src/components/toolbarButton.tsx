@@ -51,7 +51,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
     title={title}
     disabled={!!disabled}
     style={style}
-    data-testId={testId}
+    data-testid={testId}
   >
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}

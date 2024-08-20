@@ -6,8 +6,13 @@ module.exports = {
       sourceType: "module",
     },
     extends: [
+      "plugin:react/recommended",
       "plugin:react-hooks/recommended"
     ],
+
+    settings: {
+        react: { version: "18" }
+    },
 
     /**
      * ESLint rules
@@ -124,5 +129,8 @@ module.exports = {
             "mustMatch": "Copyright",
             "templateFile": require("path").join(__dirname, "utils", "copyright.js"),
         }],
+
+        // react
+        "react/react-in-jsx-scope": 0
     }
 };

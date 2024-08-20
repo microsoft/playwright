@@ -29,7 +29,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   return <TabbedPane
     dataTestId='network-request-details'
-    leftToolbar={[<ToolbarButton icon='close' title='Close' onClick={onClose}></ToolbarButton>]}
+    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}></ToolbarButton>]}
     tabs={[
       {
         id: 'request',

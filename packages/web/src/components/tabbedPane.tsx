@@ -48,6 +48,7 @@ export const TabbedPane: React.FunctionComponent<{
         {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
           {[...tabs.map(tab => (
             <TabbedPaneTab
+              key={tab.id}
               id={tab.id}
               title={tab.title}
               count={tab.count}
@@ -67,7 +68,7 @@ export const TabbedPane: React.FunctionComponent<{
                 suffix = ` (${tab.count})`;
               if (tab.errorCount)
                 suffix = ` (${tab.errorCount})`;
-              return <option value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
+              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
             })}
           </select>
         </div>}

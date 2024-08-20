@@ -58,7 +58,7 @@ export const TestCaseView: React.FC<{
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
     {!!visibleAnnotations.length && <AutoChip header='Annotations'>
-      {visibleAnnotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
+      {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
