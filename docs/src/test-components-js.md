@@ -148,7 +148,7 @@ test('should work', async ({ mount }) => {
 ```
 If using TypeScript and Vue make sure to add a `vue.d.ts` file to your project:
 
-```ts
+```js
 declare module '*.vue';
 ```
 
