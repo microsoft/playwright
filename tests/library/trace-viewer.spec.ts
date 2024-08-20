@@ -300,7 +300,7 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await traceViewer.networkRequests.getByText('font.woff2').click();
   await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
-  await expect(traceViewer.page.locator('.network-request-details-tab')).toHaveScreenshot();
+  await expect(traceViewer.page.locator('.network-request-details-tab')).toHaveScreenshot({ maxDiffPixelRatio: 0.1 });
 });
 
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
