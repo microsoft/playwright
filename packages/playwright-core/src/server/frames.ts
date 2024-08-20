@@ -659,18 +659,24 @@ export class Frame extends SdkObject {
     }
     url = helper.completeUserURL(url);
 
-    const sameDocument = helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (e: NavigationEvent) => !e.newDocument);
-    const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+    const navigationEvents: NavigationEvent[] = [];
+    const collectNavigations = (arg: NavigationEvent) => navigationEvents.push(arg);
+    this.on(Frame.Events.InternalNavigation, collectNavigations);
+    const navigateResult = await this._page._delegate.navigateFrame(this, url, referer).finally(
+        () => this.off(Frame.Events.InternalNavigation, collectNavigations));
 
     let event: NavigationEvent;
     if (navigateResult.newDocumentId) {
-      sameDocument.dispose();
-      event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+      const predicate = (event: NavigationEvent) => {
         // We are interested either in this specific document, or any other document that
         // did commit and replaced the expected document.
         return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
-      }).promise;
-
+      };
+      const events = navigationEvents.filter(predicate);
+      if (events.length)
+        event = events[0];
+      else
+        event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
@@ -679,7 +685,13 @@ export class Frame extends SdkObject {
       if (event.error)
         throw event.error;
     } else {
-      event = await sameDocument.promise;
+      // Wait for same document navigation.
+      const predicate = (e: NavigationEvent) => !e.newDocument;
+      const events = navigationEvents.filter(predicate);
+      if (events.length)
+        event = events[0];
+      else
+        event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
     }
 
     if (!this._firedLifecycleEvents.has(waitUntil))
