@@ -461,7 +461,7 @@ Playwright's Firefox version matches the recent [Firefox Stable](https://www.moz
 
 ### WebKit
 
-Playwright's WebKit is derived from the latest WebKit main branch sources, often before these updates are incorporated into Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead, you can test using the most recent WebKit build. Note that avialability of certain features, which depend heavily on the underlying platform, may vary between operating systems.
+Playwright's WebKit is derived from the latest WebKit main branch sources, often before these updates are incorporated into Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead, you can test using the most recent WebKit build. Note that availability of certain features, which depend heavily on the underlying platform, may vary between operating systems.
 
 ## Install behind a firewall or a proxy
 
