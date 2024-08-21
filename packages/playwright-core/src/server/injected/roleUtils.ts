@@ -375,7 +375,8 @@ function getPseudoContent(element: Element, pseudo: '::before' | '::after') {
 }
 
 function getPseudoContentImpl(pseudoStyle: CSSStyleDeclaration | undefined) {
-  if (!pseudoStyle)
+  // Note: all browsers ignore display:none and visibility:hidden pseudos.
+  if (!pseudoStyle || pseudoStyle.display === 'none' || pseudoStyle.visibility === 'hidden')
     return '';
   const content = pseudoStyle.content;
   if ((content[0] === '\'' && content[content.length - 1] === '\'') ||
