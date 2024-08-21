@@ -129,6 +129,8 @@ export const UIModeView: React.FC<{}> = ({
   }, [runUpdateSnapshots, setRunUpdateSnapshots]);
 
   const [, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
+  const [, , showScreenshotSetting] = useSetting('screenshot-instead-of-snapshot', false, 'Show screenshot instead of snapshot');
+
 
   const darkModeSetting = useDarkModeSetting();
 
@@ -537,6 +539,7 @@ export const UIModeView: React.FC<{}> = ({
         {settingsVisible && <SettingsView settings={[
           darkModeSetting,
           showRouteActionsSetting,
+          showScreenshotSetting,
         ]} />}
       </div>
       }
