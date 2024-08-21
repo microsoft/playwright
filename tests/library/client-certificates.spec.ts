@@ -377,7 +377,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should handle TLS renegotiation with client certificates', async ({ browser, asset }) => {
+  test('should handle TLS renegotiation with client certificates', async ({ browser, asset, browserName, platform }) => {
     const server: https.Server = createHttpsServer({
       key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
       cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
@@ -390,6 +390,8 @@ test.describe('browser', () => {
     });
 
     server.on('request', async (req, res) => {
+      if (!req.socket)
+        return;
       const renegotiate = () => new Promise<void>((resolve, reject) => {
         (req.socket as tls.TLSSocket).renegotiate({
           requestCert: true,
@@ -409,10 +411,12 @@ test.describe('browser', () => {
           'Content-Type': 'text/plain',
           'Transfer-Encoding': 'chunked'
         });
+        res.flushHeaders();
 
-        req.on('data', data => {
+        await new Promise<void>(resolve => req.once('data', data => {
           res.write(`server received: ${data.toString()}\n`);
-        });
+          resolve();
+        }));
 
         await renegotiate();
         for (let i = 0; i < 4; i++) {
@@ -458,12 +462,13 @@ test.describe('browser', () => {
 
     await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
     const port = (server.address() as import('net').AddressInfo).port;
-    const serverUrl = `https://localhost:${port}`;
+    const origin = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost');
+    const serverUrl = `${origin}:${port}`;
 
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
-        origin: `https://localhost:${port}`,
+        origin,
         certPath: asset('client-certificates/client/trusted/cert.pem'),
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
