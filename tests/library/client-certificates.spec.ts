@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 import tls from 'tls';
+import type https from 'https';
+import zlib from 'zlib';
 import type http2 from 'http2';
 import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
@@ -373,6 +375,131 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
+  });
+
+  test('should handle TLS renegotiation with client certificates', async ({ browser, asset }) => {
+    const server: https.Server = createHttpsServer({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+      ca: [fs.readFileSync(asset('client-certificates/server/server_cert.pem'))],
+      requestCert: false, // Initially don't request client cert
+      rejectUnauthorized: false,
+      // TLSv1.3 does not support renegotiation
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.2',
+    });
+
+    server.on('request', async (req, res) => {
+      const renegotiate = () => new Promise<void>((resolve, reject) => {
+        (req.socket as tls.TLSSocket).renegotiate({
+          requestCert: true,
+          rejectUnauthorized: false
+        }, err => {
+          if (err)
+            reject(err);
+          else
+            resolve();
+        });
+      });
+      if (req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end();
+      } else if (req.url === '/from-fetch-api') {
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=UTF-8',
+          'Transfer-Encoding': 'chunked'
+        });
+
+        req.on('data', data => {
+          res.write(`server received: ${data.toString()}\n`);
+        });
+
+        await renegotiate();
+        for (let i = 0; i < 4; i++) {
+          res.write(`${i}-from-server\n`);
+          // Best-effort to trigger a new chunk
+          await new Promise<void>(resolve => setTimeout(resolve, 100));
+        }
+        res.end('server closed the connection');
+      } else if (req.url === '/style.css') {
+        res.writeHead(200, {
+          'Content-Type': 'text/css',
+          'Content-Encoding': 'gzip',
+          'Transfer-Encoding': 'chunked'
+        });
+
+        await renegotiate();
+
+        const stylesheet = `
+          button {
+            background-color: red;
+          }  
+        `;
+
+        const stylesheetBuffer = await new Promise<Buffer>((resolve, reject) => {
+          zlib.gzip(stylesheet, (err, buffer) => {
+            if (err)
+              reject(err);
+            else
+              resolve(buffer);
+          });
+        });
+        for (let i = 0; i < stylesheetBuffer.length; i += 100) {
+          res.write(stylesheetBuffer.slice(i, i + 100));
+          // Best-effort to trigger a new chunk
+          await new Promise<void>(resolve => setTimeout(resolve, 20));
+        }
+        res.end();
+      } else {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+
+    await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
+    const port = (server.address() as import('net').AddressInfo).port;
+    const serverUrl = `https://localhost:${port}`;
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: `https://localhost:${port}`,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+
+    const page = await context.newPage();
+
+    await test.step('fetch API', async () => {
+      await page.goto(serverUrl);
+      const response = await page.evaluate(async () => {
+        const response = await fetch('/from-fetch-api', {
+          method: 'POST',
+          body: 'client-request-payload'
+        });
+        return await response.text();
+      });
+      expect(response).toBe([
+        'server received: client-request-payload',
+        '0-from-server',
+        '1-from-server',
+        '2-from-server',
+        '3-from-server',
+        'server closed the connection'
+      ].join('\n'));
+    });
+
+    await test.step('Gzip encoded CSS Stylesheet', async () => {
+      await page.goto(serverUrl);
+      await page.setContent('<button>Click me</button>');
+      // This would throw with net::ERR_INVALID_CHUNKED_ENCODING
+      await page.addStyleTag({ url: `${serverUrl}/style.css` });
+      await expect(page.locator('button')).toHaveCSS('background-color', /* red */'rgb(255, 0, 0)');
+    });
+
+    await context.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
   test('should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName }) => {
