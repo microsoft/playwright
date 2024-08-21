@@ -402,11 +402,11 @@ test.describe('browser', () => {
         });
       });
       if (req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.writeHead(200, { 'Content-Type': 'text/html', 'connection': 'close' });
         res.end();
       } else if (req.url === '/from-fetch-api') {
         res.writeHead(200, {
-          'Content-Type': 'text/html; charset=UTF-8',
+          'Content-Type': 'text/plain',
           'Transfer-Encoding': 'chunked'
         });
 
@@ -492,9 +492,11 @@ test.describe('browser', () => {
 
     await test.step('Gzip encoded CSS Stylesheet', async () => {
       await page.goto(serverUrl);
-      await page.setContent('<button>Click me</button>');
-      // This would throw with net::ERR_INVALID_CHUNKED_ENCODING
-      await page.addStyleTag({ url: `${serverUrl}/style.css` });
+      // The <link> would throw with net::ERR_INVALID_CHUNKED_ENCODING
+      await page.setContent(`
+        <button>Click me</button>
+        <link rel="stylesheet" href="/style.css">
+      `);
       await expect(page.locator('button')).toHaveCSS('background-color', /* red */'rgb(255, 0, 0)');
     });
 
