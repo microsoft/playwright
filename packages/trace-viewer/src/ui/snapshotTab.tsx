@@ -201,7 +201,7 @@ export const SnapshotTab: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
-      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot /* TODO: proper tooltip */} />
+      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Locators not available when showing screenshot' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           key={tab}
@@ -212,8 +212,7 @@ export const SnapshotTab: React.FunctionComponent<{
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
-      {/* TODO: disable + proper tooltip. also for locator tab */}
-      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
+      <ToolbarButton icon='link-external' title={showScreenshotInsteadOfSnapshot ? 'Not available when showing screenshot' : 'Open snapshot in a new tab'} disabled={!popoutUrl || showScreenshotInsteadOfSnapshot} onClick={() => {
         if (!openPage)
           openPage = window.open;
         const win = openPage(popoutUrl || '', '_blank');
