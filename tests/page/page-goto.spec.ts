@@ -181,8 +181,9 @@ it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, 
 
 it('should properly cancel Cross-Origin-Opener-Policy navigation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32107' },
-}, async ({ page, server, browserName, isLinux }) => {
+}, async ({ page, server, browserName, isLinux, headless }) => {
   it.fixme(browserName === 'webkit' && isLinux, 'Started failing after https://commits.webkit.org/281488@main');
+  it.fixme(browserName === 'chromium' && headless, 'COOP navigation cancels the one that starts later');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.end();
