@@ -698,7 +698,7 @@ test.describe('browser', () => {
     const page = await context.newPage();
 
     // This was triggering an unhandled error before.
-    await page.goto(serverUrl).catch(e => e);
+    await page.goto(serverUrl).catch(() => {});
 
     await context.close();
     await new Promise<void>(resolve => server.close(() => resolve()));
