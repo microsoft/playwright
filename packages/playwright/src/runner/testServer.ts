@@ -114,14 +114,11 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
-    if (params.serializer)
-      this._serializer = params.serializer;
-    if (params.closeOnDisconnect)
-      this._closeOnDisconnect = true;
-    if (params.interceptStdio)
-      await this._setInterceptStdio(true);
-    if (params.watchTestDirs)
-      this._watchTestDirs = true;
+    // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
+    this._serializer = params.serializer || require.resolve('./uiModeReporter');
+    this._closeOnDisconnect = !!params.closeOnDisconnect;
+    await this._setInterceptStdio(!!params.interceptStdio);
+    this._watchTestDirs = !!params.watchTestDirs;
   }
 
   async ping() {}
@@ -161,7 +158,6 @@ class TestServerDispatcher implements TestServerInterface {
       return { status: 'failed', report };
     }
 
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
     const { collectingReporter, report } = await this._collectingReporter();
     const listReporter = new ListReporter();
     const taskRunner = createTaskRunnerForWatchSetup(config, [collectingReporter, listReporter]);
@@ -418,10 +414,12 @@ class TestServerDispatcher implements TestServerInterface {
     try {
       const config = await loadConfig(this._configLocation, overrides);
       // Preserve plugin instances between setup and build.
-      if (!this._plugins)
+      if (!this._plugins) {
+        webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
         this._plugins = config.plugins || [];
-      else
+      } else {
         config.plugins.splice(0, config.plugins.length, ...this._plugins);
+      }
       return { config };
     } catch (e) {
       return { config: null, error: serializeError(e) };

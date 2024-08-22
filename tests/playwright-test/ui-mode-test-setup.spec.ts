@@ -15,6 +15,7 @@
  */
 
 import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -246,3 +247,42 @@ for (const useWeb of [true, false]) {
     });
   });
 }
+
+test('should restart webserver on reload', async ({ runUITest }) => {
+  const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
+  const port = test.info().workerIndex * 2 + 10500;
+
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+          reuseExistingServer: false,
+        },
+      });
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({ page }) => {
+        await page.goto('http://localhost:${port}');
+      });
+    `
+  }, { DEBUG: 'pw:webserver' });
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText('[WebServer] listening');
+
+  await page.getByTitle('Clear output').click();
+  await expect(page.getByTestId('output')).not.toContainText('[WebServer] listening');
+
+  await page.getByTitle('Reload').click();
+  await expect(page.getByTestId('output')).toContainText('[WebServer] listening');
+  await expect(page.getByTestId('output')).not.toContainText('set reuseExistingServer:true');
+
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+});

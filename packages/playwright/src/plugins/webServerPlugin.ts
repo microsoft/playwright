@@ -73,7 +73,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 
   public async teardown() {
+    debugWebServer(`Terminating the WebServer`);
     await this._killProcess?.();
+    debugWebServer(`Terminated the WebServer`);
   }
 
   private async _startProcess(): Promise<void> {
