@@ -102,7 +102,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       const guid = new URLSearchParams(window.location.search).get('ws');
       const wsURL = new URL(`../${guid}`, window.location.toString());
       wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-      const testServerConnection = new TestServerConnection(wsURL.toString());
+      const testServerConnection = new TestServerConnection(new WebSocket(wsURL));
       testServerConnection.onLoadTraceRequested(async params => {
         setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
         setDragOver(false);
