@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { createGuid, debugMode } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
