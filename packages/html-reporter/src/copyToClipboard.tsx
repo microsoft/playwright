@@ -39,7 +39,7 @@ export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({
     });
   }, [value]);
   const iconElement = icon === 'check' ? icons.check() : icon === 'cross' ? icons.cross() : icons.copy();
-  return <button className="copy-icon" onClick={handleCopy}>{iconElement}</button>;
+  return <button className='copy-icon' onClick={handleCopy}>{iconElement}</button>;
 };
 
 type CopyToClipboardContainerProps = CopyToClipboardProps & {
