@@ -27,10 +27,10 @@ import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { SourceLocation } from './modelUtil';
 import { testStatusIcon } from './testUtils';
-import type { TestModel } from './uiModeModel';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
 import { TagView } from './tag';
+import type { TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 
 const TestTreeView = TreeView<TreeItem>;
 
@@ -38,7 +38,7 @@ export const TestListView: React.FC<{
   filterText: string,
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
-  testModel?: TestModel,
+  testModel?: TeleSuiteUpdaterTestModel,
   runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
@@ -179,7 +179,7 @@ export const TestListView: React.FC<{
     noItemsMessage={isLoading ? 'Loading\u2026' : 'No tests'} />;
 };
 
-function itemLocation(item: TreeItem | undefined, model: TestModel | undefined): SourceLocation | undefined {
+function itemLocation(item: TreeItem | undefined, model: TeleSuiteUpdaterTestModel | undefined): SourceLocation | undefined {
   if (!item || !model)
     return;
   return {
