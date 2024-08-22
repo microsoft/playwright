@@ -454,10 +454,6 @@ test('example test', async ({ slowFixture }) => {
 
 ## Fixtures-options
 
-:::note
-Overriding custom fixtures in the config file has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
-:::
-
 Playwright Test supports running multiple test projects that can be separately configured. You can use "option" fixtures to make your configuration options declarative and type-checked. Learn more about [parametrizing tests](./test-parameterize.md).
 
 Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in configuration file. Note the tuple syntax and `{ option: true }` argument.
@@ -552,6 +548,30 @@ export default defineConfig<MyOptions>({
       use: { defaultItem: 'Exercise!' },
     },
   ]
+});
+```
+
+**Array as an option value**
+
+If the value of your option is an array, for example `[{ name: 'Alice' }, { name: 'Bob' }]`, you'll need to wrap it into an extra array when providing the value. This is best illustrated with an example.
+
+```js
+type Person = { name: string };
+const test = base.extend<{ persons: Person[] }>({
+  // Declare the option, default value is an empty array.
+  persons: [[], { option: true }],
+});
+
+// Option value is an array of persons.
+const actualPersons = [{ name: 'Alice' }, { name: 'Bob' }];
+test.use({
+  // CORRECT: Wrap the value into an array and pass the scope.
+  persons: [actualPersons, { scope: 'test' }],
+});
+
+test.use({
+  // WRONG: passing an array value directly will not work.
+  persons: actualPersons,
 });
 ```
 
