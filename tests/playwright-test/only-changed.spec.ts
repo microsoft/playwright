@@ -256,10 +256,9 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
   const result = await runInlineTest({}, { 'workers': 1, 'only-changed': true });
 
-  expect(result.exitCode).toBe(1);
+  expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('No tests found');
 
   const result2 = await runInlineTest({
     'src/button2.test.tsx': `
@@ -437,3 +436,20 @@ test('should work with list mode', async ({ runInlineTest, git, writeFiles }) =>
   expect(result.output).toContain('b.spec.ts');
   expect(result.output).not.toContain('a.spec.ts');
 });
+
+test('exits successfully if there are no changes', async ({ runInlineTest, git, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  const result = await runInlineTest({}, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(0);
+});
+
