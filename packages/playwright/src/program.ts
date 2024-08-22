@@ -198,7 +198,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliGrepInvert = opts.grepInvert as string | undefined;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
-  config.cliPassWithNoTests = !!(opts.passWithNoTests ?? opts.onlyChanged);
+  config.cliPassWithNoTests =opts.passWithNoTests;
   config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
 
   const runner = new Runner(config);
