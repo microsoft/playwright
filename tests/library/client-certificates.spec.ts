@@ -461,7 +461,7 @@ test.describe('browser', () => {
     });
 
     await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
-    const port = (server.address() as import('net').AddressInfo).port;
+    const port = (server.address() as net.AddressInfo).port;
     const origin = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost');
     const serverUrl = `${origin}:${port}`;
 
@@ -669,6 +669,39 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
     await page.close();
+  });
+
+  test('should handle rejected certificate in handshake with HTTP/2', async ({ browser, asset, browserName, platform }) => {
+    const server: http2.Http2SecureServer = createHttp2Server({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+      ca: [fs.readFileSync(asset('client-certificates/server/server_cert.pem'))],
+      requestCert: true,
+    }, async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse) => {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end('Hello world');
+    });
+
+    await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
+    const port = (server.address() as net.AddressInfo).port;
+    const serverUrl = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost') + ':' + port;
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+
+    const page = await context.newPage();
+
+    // This was triggering an unhandled error before.
+    await page.goto(serverUrl).catch(() => {});
+
+    await context.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
   test.describe('persistentContext', () => {
