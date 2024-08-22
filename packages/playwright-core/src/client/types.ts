@@ -49,8 +49,11 @@ export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domconten
 
 export type ClientCertificate = {
   origin: string;
+  cert?: Buffer;
   certPath?: string;
+  key?: Buffer;
   keyPath?: string;
+  pfx?: Buffer;
   pfxPath?: string;
   passphrase?: string;
 };

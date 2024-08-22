@@ -26,10 +26,10 @@ export type FilterState = {
 
 export const defaultFilterState: FilterState = { searchValue: '', resourceType: 'All' };
 
-export const NetworkFilters: React.FunctionComponent<{
+export const NetworkFilters = ({ filterState, onFilterStateChange }: {
   filterState: FilterState,
   onFilterStateChange: (filterState: FilterState) => void,
-}> = ({ filterState, onFilterStateChange }) => {
+}) => {
   return (
     <div className='network-filters'>
       <input

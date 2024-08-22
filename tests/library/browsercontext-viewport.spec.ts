@@ -93,7 +93,8 @@ it('should emulate availWidth and availHeight', async ({ page }) => {
   expect(await page.evaluate(() => window.screen.availHeight)).toBe(600);
 });
 
-it('should not have touch by default', async ({ page, server }) => {
+it('should not have touch by default', async ({ page, server, browserName, platform }) => {
+  it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'detect-touch.html uses Modernizr which uses WebGL. WebGL is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
   await page.goto(server.PREFIX + '/mobile.html');
   expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
   await page.goto(server.PREFIX + '/detect-touch.html');

@@ -119,9 +119,9 @@ export const ImageDiffView: React.FC<{
         </div>}
       </div>
       <div style={{ alignSelf: 'start', lineHeight: '18px', marginLeft: '15px' }}>
-        <div>{diff.diff && <a target='_blank' href={diff.diff.attachment.path}>{diff.diff.attachment.name}</a>}</div>
-        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.actual!.attachment.path}>{diff.actual!.attachment.name}</a></div>
-        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.expected!.attachment.path}>{diff.expected!.attachment.name}</a></div>
+        <div>{diff.diff && <a target='_blank' href={diff.diff.attachment.path} rel='noreferrer'>{diff.diff.attachment.name}</a>}</div>
+        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.actual!.attachment.path} rel='noreferrer'>{diff.actual!.attachment.name}</a></div>
+        <div><a target={noTargetBlank ? '' : '_blank'} href={diff.expected!.attachment.path} rel='noreferrer'>{diff.expected!.attachment.name}</a></div>
       </div>
     </>}
   </div>;

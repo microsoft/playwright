@@ -323,6 +323,7 @@ it.describe('page screenshot', () => {
   it('should work for webgl', async ({ page, server, browserName, platform }) => {
     it.fixme(browserName === 'firefox');
     it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
+    it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'WebGL is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
 
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

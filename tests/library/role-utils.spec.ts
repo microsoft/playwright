@@ -462,6 +462,39 @@ test('should work with form and tricky input names', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'form')).toEqual({ role: 'form', name: 'my form' });
 });
 
+test('should ignore stylesheet from hidden aria-labelledby subtree', async ({ page }) => {
+  await page.setContent(`
+    <div id=mylabel style="display:none">
+      <template shadowrootmode=open>
+        <style>span { color: red; }</style>
+        <span>hello</span>
+      </template>
+    </div>
+    <input aria-labelledby=mylabel type=text>
+  `);
+  expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'textbox', name: 'hello' });
+});
+
+test('should not include hidden pseudo into accessible name', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      span:before {
+        content: 'world';
+        display: none;
+      }
+      div:after {
+        content: 'bye';
+        visibility: hidden;
+      }
+    </style>
+    <a href="http://example.com">
+      <span>hello</span>
+      <div>hello</div>
+    </a>
+  `);
+  expect.soft(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'hello hello' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }

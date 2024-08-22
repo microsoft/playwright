@@ -531,15 +531,18 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 - `clientCertificates` <[Array]<[Object]>>
   - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
   - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
+  - `cert` ?<[Buffer]> Direct value of the certificate in PEM format.
   - `keyPath` ?<[path]> Path to the file with the private key in PEM format.
+  - `key` ?<[Buffer]> Direct value of the private key in PEM format.
   - `pfxPath` ?<[path]> Path to the PFX or PKCS12 encoded private key and certificate chain.
+  - `pfx` ?<[Buffer]> Direct value of the PFX or PKCS12 encoded private key and certificate chain.
   - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
 
 TLS Client Authentication allows the server to request a client certificate and verify it.
 
 **Details**
 
-An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that the certificate is valid for.
+An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`, a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally, `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided with an exact match to the request origin that the certificate is valid for.
 
 :::note
 Using Client Certificates in combination with Proxy Servers is not supported.

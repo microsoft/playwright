@@ -288,8 +288,41 @@ export interface Page {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
+   *
+   * **Bundling**
+   *
+   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
+   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
+   * commonjs module and pass `path` and `arg`.
+   *
+   * ```js
+   * // mocks/mockRandom.ts
+   * // This script can import other files.
+   * import { defaultValue } from './defaultValue';
+   *
+   * export default function(value?: number) {
+   *   window.Math.random = () => value ?? defaultValue;
+   * }
+   * ```
+   *
+   * ```js
+   * // tests/example.spec.ts
+   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
+   *
+   * // Passing 42 as an argument to the default export function.
+   * await page.addInitScript({ path: mockPath }, 42);
+   *
+   * // Make sure to pass undefined even if you do not need to pass an argument.
+   * // This instructs Playwright to treat the file as a commonjs module.
+   * await page.addInitScript({ path: mockPath }, undefined);
+   * ```
+   *
    * @param script Script to be evaluated in the page.
-   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   * @param arg Optional JSON-serializable argument to pass to `script`.
+   * - When `script` is a function, the argument is passed to it directly.
+   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
+   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
+   * argument.
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
@@ -7666,8 +7699,41 @@ export interface BrowserContext {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
+   *
+   * **Bundling**
+   *
+   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
+   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
+   * commonjs module and pass `path` and `arg`.
+   *
+   * ```js
+   * // mocks/mockRandom.ts
+   * // This script can import other files.
+   * import { defaultValue } from './defaultValue';
+   *
+   * export default function(value?: number) {
+   *   window.Math.random = () => value ?? defaultValue;
+   * }
+   * ```
+   *
+   * ```js
+   * // tests/example.spec.ts
+   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
+   *
+   * // Passing 42 as an argument to the default export function.
+   * await context.addInitScript({ path: mockPath }, 42);
+   *
+   * // Make sure to pass undefined even if you do not need to pass an argument.
+   * // This instructs Playwright to treat the file as a commonjs module.
+   * await context.addInitScript({ path: mockPath }, undefined);
+   * ```
+   *
    * @param script Script to be evaluated in all pages in the browser context.
-   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   * @param arg Optional JSON-serializable argument to pass to `script`.
+   * - When `script` is a function, the argument is passed to it directly.
+   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
+   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
+   * argument.
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
@@ -9138,10 +9204,10 @@ export interface Browser {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -9160,14 +9226,29 @@ export interface Browser {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -13850,10 +13931,10 @@ export interface BrowserType<Unused = {}> {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -13872,14 +13953,29 @@ export interface BrowserType<Unused = {}> {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -16259,10 +16355,10 @@ export interface APIRequest {
      *
      * **Details**
      *
-     * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-     * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-     * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-     * the certificate is valid for.
+     * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+     * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+     * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+     * with an exact match to the request origin that the certificate is valid for.
      *
      * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
@@ -16281,14 +16377,29 @@ export interface APIRequest {
       certPath?: string;
 
       /**
+       * Direct value of the certificate in PEM format.
+       */
+      cert?: Buffer;
+
+      /**
        * Path to the file with the private key in PEM format.
        */
       keyPath?: string;
 
       /**
+       * Direct value of the private key in PEM format.
+       */
+      key?: Buffer;
+
+      /**
        * Path to the PFX or PKCS12 encoded private key and certificate chain.
        */
       pfxPath?: string;
+
+      /**
+       * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+       */
+      pfx?: Buffer;
 
       /**
        * Passphrase for the private key (PEM or PFX).
@@ -20600,10 +20711,10 @@ export interface BrowserContextOptions {
    *
    * **Details**
    *
-   * An array of client certificates to be used. Each certificate object must have both `certPath` and `keyPath` or a
-   * single `pfxPath` to load the client certificate. Optionally, `passphrase` property should be provided if the
-   * certficiate is encrypted. The `origin` property should be provided with an exact match to the request origin that
-   * the certificate is valid for.
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
    *
    * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
@@ -20622,14 +20733,29 @@ export interface BrowserContextOptions {
     certPath?: string;
 
     /**
+     * Direct value of the certificate in PEM format.
+     */
+    cert?: Buffer;
+
+    /**
      * Path to the file with the private key in PEM format.
      */
     keyPath?: string;
 
     /**
+     * Direct value of the private key in PEM format.
+     */
+    key?: Buffer;
+
+    /**
      * Path to the PFX or PKCS12 encoded private key and certificate chain.
      */
     pfxPath?: string;
+
+    /**
+     * Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+     */
+    pfx?: Buffer;
 
     /**
      * Passphrase for the private key (PEM or PFX).

@@ -48,6 +48,22 @@
   overflow: hidden;
 }
 
+.network-font-preview {
+  font-family: font-preview;
+  font-size: 30px;
+  line-height: 40px;
+  padding: 16px;
+  padding-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.network-font-preview-error {
+  margin-top: 8px;
+  text-align: center;
+}
+
 .tab-network .toolbar {
   min-height: 30px !important;
   background-color: initial !important;
