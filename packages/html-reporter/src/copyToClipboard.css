@@ -20,7 +20,7 @@
   width: 24px;
   border: none;
   outline: none;
-  color: var(--color-fg-default);
+  color: var(--color-fg-muted);
   background: transparent;
   padding: 4px;
   cursor: pointer;
@@ -34,15 +34,17 @@
   margin: 0;
 }
 
-.copy-icon.small {
-  color: var(--color-fg-muted);
-}
-
-.copy-icon.small svg {
-  height: 14px;
-  width: 14px;
-}
-
 .copy-icon:not(:disabled):hover {
   background-color: var(--color-border-default);
+}
+
+.copy-button-container {
+  visibility: hidden;
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: bottom;
+}
+
+.copy-value-container:hover .copy-button-container {
+  visibility: visible;
 }

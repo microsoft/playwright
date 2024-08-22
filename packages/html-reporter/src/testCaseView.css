@@ -75,8 +75,3 @@
   flex-wrap: wrap;
 }
 
-.copy-button-container {
-  display: inline-flex;
-  margin-left: 8px;
-  vertical-align: bottom;
-}
