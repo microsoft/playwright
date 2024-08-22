@@ -289,6 +289,20 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
+test('should show font preview', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('Font', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await traceViewer.networkRequests.getByText('font.woff2').click();
+  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
+  await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
+});
+
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
