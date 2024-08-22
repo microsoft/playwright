@@ -18,8 +18,7 @@ import '@web/third_party/vscode/codicon.css';
 import '@web/common.css';
 import React from 'react';
 import { TeleSuite } from '@testIsomorphic/teleReceiver';
-import { TeleSuiteUpdater } from './teleSuiteUpdater';
-import type { Progress } from './uiModeModel';
+import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
@@ -34,12 +33,12 @@ import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
 import { TestServerConnection } from '@testIsomorphic/testServerConnection';
-import { pathSeparator } from './uiModeModel';
-import type { TestModel } from './uiModeModel';
 import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
+
+const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -80,8 +79,8 @@ export const UIModeView: React.FC<{}> = ({
     ['skipped', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
-  const [testModel, setTestModel] = React.useState<TestModel>();
-  const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
+  const [testModel, setTestModel] = React.useState<TeleSuiteUpdaterTestModel>();
+  const [progress, setProgress] = React.useState<TeleSuiteUpdaterProgress & { total: number } | undefined>();
   const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
