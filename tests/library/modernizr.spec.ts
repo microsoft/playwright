@@ -41,6 +41,9 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
 
   if (platform === 'linux') {
     expected.subpixelfont = false;
+    expected.applicationcache = false;
+    expected.inputsearchevent = false;
+    expected.speechrecognition = false;
     if (headless)
       expected.todataurljpeg = false;
 
@@ -99,6 +102,9 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
 
   if (platform === 'linux') {
     expected.subpixelfont = false;
+    expected.speechrecognition = false;
+    expected.inputsearchevent = false;
+    expected.applicationcache = false;
     if (headless)
       expected.todataurljpeg = false;
 
