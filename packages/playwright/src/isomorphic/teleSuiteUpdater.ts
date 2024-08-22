@@ -20,17 +20,17 @@ import type { ReporterV2 } from '../reporters/reporterV2';
 import type * as reporterTypes from '../../types/testReporter';
 
 export type TeleSuiteUpdaterProgress = {
-    total: number;
-    passed: number;
-    failed: number;
-    skipped: number;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
 };
 
 export type TeleSuiteUpdaterTestModel = {
-    config: reporterTypes.FullConfig;
-    rootSuite: reporterTypes.Suite;
-    loadErrors: reporterTypes.TestError[];
-    progress: TeleSuiteUpdaterProgress;
+  config: reporterTypes.FullConfig;
+  rootSuite: reporterTypes.Suite;
+  loadErrors: reporterTypes.TestError[];
+  progress: TeleSuiteUpdaterProgress;
 };
 
 export type TeleSuiteUpdaterOptions = {
@@ -131,11 +131,11 @@ export class TeleSuiteUpdater {
         return false;
       },
 
-      onStdOut: () => {},
-      onStdErr: () => {},
-      onExit: () => {},
-      onStepBegin: () => {},
-      onStepEnd: () => {},
+      onStdOut: () => { },
+      onStdErr: () => { },
+      onExit: () => { },
+      onStepBegin: () => { },
+      onStepEnd: () => { },
     };
   }
 
@@ -163,8 +163,8 @@ export class TeleSuiteUpdater {
   processTestReportEvent(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    this._lastRunReceiver?.dispatch(message)?.catch(() => {});
-    this._receiver.dispatch(message)?.catch(() => {});
+    this._lastRunReceiver?.dispatch(message)?.catch(() => { });
+    this._receiver.dispatch(message)?.catch(() => { });
   }
 
   private _handleOnError(error: reporterTypes.TestError) {
