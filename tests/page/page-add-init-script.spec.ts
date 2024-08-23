@@ -37,12 +37,6 @@ it('should assume CJS module with a path and arg', async ({ page, server, asset 
   expect(await page.evaluate(() => window['injected'])).toBe(17);
 });
 
-it('should assume CJS module with a path and undefined arg', async ({ page, server, asset }) => {
-  await page.addInitScript({ path: asset('injectedmodule.js') }, undefined);
-  await page.goto(server.EMPTY_PAGE);
-  expect(await page.evaluate(() => window['injected'])).toBe(42);
-});
-
 it('should work with content @smoke', async ({ page, server }) => {
   await page.addInitScript({ content: 'window["injected"] = 123' });
   await page.goto(server.PREFIX + '/tamperable.html');

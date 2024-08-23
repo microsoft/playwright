@@ -312,9 +312,9 @@ export interface Page {
    * // Passing 42 as an argument to the default export function.
    * await page.addInitScript({ path: mockPath }, 42);
    *
-   * // Make sure to pass undefined even if you do not need to pass an argument.
+   * // Make sure to pass something even if you do not need to pass an argument.
    * // This instructs Playwright to treat the file as a commonjs module.
-   * await page.addInitScript({ path: mockPath }, undefined);
+   * await page.addInitScript({ path: mockPath }, '');
    * ```
    *
    * @param script Script to be evaluated in the page.
@@ -7723,9 +7723,9 @@ export interface BrowserContext {
    * // Passing 42 as an argument to the default export function.
    * await context.addInitScript({ path: mockPath }, 42);
    *
-   * // Make sure to pass undefined even if you do not need to pass an argument.
+   * // Make sure to pass something even if you do not need to pass an argument.
    * // This instructs Playwright to treat the file as a commonjs module.
-   * await context.addInitScript({ path: mockPath }, undefined);
+   * await context.addInitScript({ path: mockPath }, '');
    * ```
    *
    * @param script Script to be evaluated in all pages in the browser context.
