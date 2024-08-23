@@ -184,7 +184,7 @@ Its also possible to specify it per context:
 ```js tab=js-test title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
-test('should do ...', async ({ browser }) => {
+test('should use custom proxy on a new context', async ({ browser }) => {
   const context = await browser.newContext({
     proxy: {
       server: 'http://myproxy.com:3128',
