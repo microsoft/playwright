@@ -92,7 +92,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   const telesuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
-  const dirtyTestFiles: string[] = []; // we're never clearing this! seems wrong.
+  const dirtyTestFiles = new Set<string>();
   const onDirtyTestFiles: { resolve?(): void } = {};
 
   testServerConnection.onTestFilesChanged(async ({ testFiles: changedFiles }) => {
@@ -105,11 +105,11 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     for (const project of telesuiteUpdater.rootSuite!.suites) {
       for (const suite of project.suites) {
         if (suite.location?.file && changedFiles.includes(suite.location.file))
-          dirtyTestFiles.push(suite.location.file);
+          dirtyTestFiles.add(suite.location.file);
       }
     }
 
-    if (dirtyTestFiles.length === 0)
+    if (dirtyTestFiles.size === 0)
       return;
 
     onDirtyTestFiles.resolve?.();
@@ -141,8 +141,10 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     const command = await readCommandPromise;
 
     if (command === 'changed') {
-      await runChangedTests(options, testServerConnection, dirtyTestFiles);
-      lastRun = { type: 'changed', dirtyTestFiles: [...dirtyTestFiles] };
+      const changedFiles = [...dirtyTestFiles];
+      dirtyTestFiles.clear();
+      await runChangedTests(options, testServerConnection, changedFiles);
+      lastRun = { type: 'changed', dirtyTestFiles: changedFiles };
       continue;
     }
 
