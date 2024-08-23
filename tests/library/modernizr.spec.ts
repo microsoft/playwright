@@ -55,13 +55,14 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
 
   if (platform === 'win32') {
     expected.datalistelem = false;
-    expected.fileinputdirectory = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechsynthesis = false;
     expected.todataurljpeg = false;
     expected.unicode = false;
     expected.webaudio = false;
+    expected.speechrecognition = false;
+    expected.gamepads = false;
 
     expected.input.list = false;
     expected.inputtypes.color = false;
@@ -111,13 +112,14 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
 
   if (platform === 'win32') {
     expected.datalistelem = false;
-    expected.fileinputdirectory = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechsynthesis = false;
     expected.todataurljpeg = false;
     expected.unicode = false;
     expected.webaudio = false;
+    expected.speechrecognition = false;
+    expected.gamepads = false;
 
     expected.input.list = false;
     expected.inputtypes.color = false;
