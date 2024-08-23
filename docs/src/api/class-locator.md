@@ -2055,7 +2055,7 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ### option: Locator.selectOption.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.selectOption.timeout = %%-input-timeout-%%

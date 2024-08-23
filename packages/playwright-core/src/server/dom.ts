@@ -536,7 +536,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
-  async selectOption(metadata: CallMetadata, elements: ElementHandle[], values: types.SelectOption[], options: { noWaitAfter?: boolean } & types.CommonActionOptions): Promise<string[]> {
+  async selectOption(metadata: CallMetadata, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._selectOption(progress, elements, values, options);
@@ -544,7 +544,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: { noWaitAfter?: boolean } & types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
+  async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
     await this._retryAction(progress, 'select option', async () => {
       await progress.beforeInputAction(this);
