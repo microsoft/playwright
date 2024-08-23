@@ -69,7 +69,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
-  private readonly _stages: TestStage[] = [];
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -227,10 +226,14 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  private _findLastStageStep() {
-    for (let i = this._stages.length - 1; i >= 0; i--) {
-      if (this._stages[i].step)
-        return this._stages[i].step;
+  private _findLastStageStep(steps: TestStepInternal[]): TestStepInternal | undefined {
+    // Find the deepest step that is marked as isStage and has not finished yet.
+    for (let i = steps.length - 1; i >= 0; i--) {
+      const child = this._findLastStageStep(steps[i].steps);
+      if (child)
+        return child;
+      if (steps[i].isStage && !steps[i].endWallTime)
+        return steps[i];
     }
   }
 
@@ -240,12 +243,12 @@ export class TestInfoImpl implements TestInfo {
     let parentStep: TestStepInternal | undefined;
     if (data.isStage) {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
-      parentStep = this._findLastStageStep();
+      parentStep = this._findLastStageStep(this._steps);
     } else {
       parentStep = zones.zoneData<TestStepInternal>('stepZone');
       if (!parentStep) {
         // If no parent step on stack, assume the current stage as parent.
-        parentStep = this._findLastStageStep();
+        parentStep = this._findLastStageStep(this._steps);
       }
     }
 
@@ -341,7 +344,6 @@ export class TestInfoImpl implements TestInfo {
       debugTest(`started stage "${stage.title}"${location}`);
     }
     stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, isStage: true }) : undefined;
-    this._stages.push(stage);
 
     try {
       await this._timeoutManager.withRunnable(stage.runnable, async () => {
@@ -376,9 +378,6 @@ export class TestInfoImpl implements TestInfo {
       stage.step?.complete({ error });
       throw error;
     } finally {
-      if (this._stages[this._stages.length - 1] !== stage)
-        throw new Error(`Internal error: inconsistent stages!`);
-      this._stages.pop();
       debugTest(`finished stage "${stage.title}"`);
     }
   }
@@ -388,11 +387,8 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _currentHookType() {
-    for (let i = this._stages.length - 1; i >= 0; i--) {
-      const type = this._stages[i].runnable?.type;
-      if (type && ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type))
-        return type;
-    }
+    const type = this._timeoutManager.currentSlotType();
+    return ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type) ? type : undefined;
   }
 
   _setDebugMode() {
