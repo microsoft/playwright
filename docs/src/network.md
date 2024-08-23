@@ -191,7 +191,7 @@ test('should use custom proxy on a new context', async ({ browser }) => {
     }
   });
   const page = await context.newPage();
-  
+
   await context.close();
 });
 ```
