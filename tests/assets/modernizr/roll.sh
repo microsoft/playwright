@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-MODERNIZER_VERSION="44fa7b07c367a1814e8699e3a2f15c53fbe32df7"
+MODERNIZR_VERSION="44fa7b07c367a1814e8699e3a2f15c53fbe32df7"
 
 cd "$(dirname "$0")"
 
 rm -rf Modernizr
 git clone https://github.com/Modernizr/Modernizr
 cd Modernizr
-git checkout $MODERNIZER_VERSION
+git checkout $MODERNIZR_VERSION
 npm ci
 
 # Modernizr minifier is not working, hence we minify with ESBuild.

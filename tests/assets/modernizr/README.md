@@ -1,8 +1,8 @@
-# Playwright Modernizer tests
+# Playwright Modernizr tests
 
-## Rolling Modernizer
+## Rolling Modernizr
 
-- [modernizer.com](modernizer.com) isn't getting updated anymore, see [here](https://github.com/Modernizr/Modernizr/issues/2490) and [here](https://github.com/Modernizr/Modernizr/commit/db96bdaff995a1d4abccb0dc69c77db7b47ad614). It only contains version 3.6.
+- [modernizr.com](modernizr.com) isn't getting updated anymore, see [here](https://github.com/Modernizr/Modernizr/issues/2490) and [here](https://github.com/Modernizr/Modernizr/commit/db96bdaff995a1d4abccb0dc69c77db7b47ad614). It only contains version 3.6.
 - This is why we build it from source ourselves, using `roll.sh` (they recommend it).
 
 ## Updating expectations
