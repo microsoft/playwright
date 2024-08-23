@@ -243,5 +243,5 @@ test('should propagate promise rejections', { annotation: { type: 'issue', descr
     `
   });
 
-  expect(result.output).toContain('Error: some error');
+  expect(result.output).toContain('some error');
 });

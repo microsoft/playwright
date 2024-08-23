@@ -289,8 +289,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const step = testInfo._addStep(stepInfo);
 
-      const reportStepError = (unknownError: unknown) => {
-        const jestError = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+      const reportStepError = (jestError: Error | unknown) => {
         const error = isExpectError(jestError) ? new ExpectError(jestError, customMessage, stackFrames) : jestError;
         step.complete({ error });
         if (this._info.isSoft)
