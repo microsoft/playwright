@@ -150,13 +150,7 @@ export type DialogSignal = BaseSignal & {
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
 
-type FrameDescriptionMainFrame = {
-  isMainFrame: true;
+export type FrameDescription = {
+  pageAlias: string;
+  framePath: string[];
 };
-
-type FrameDescriptionChildFrame = {
-  isMainFrame: false;
-  selectorsChain: string[];
-};
-
-export type FrameDescription = { pageAlias: string } & (FrameDescriptionMainFrame | FrameDescriptionChildFrame);

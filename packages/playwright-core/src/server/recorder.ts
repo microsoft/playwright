@@ -191,15 +191,9 @@ export class Recorder implements InstrumentationListener {
     });
 
     await this._context.exposeBinding('__pw_recorderSetSelector', false, async ({ frame }, selector: string) => {
-      const selectorPromises: Promise<string | undefined>[] = [];
-      let currentFrame: Frame | null = frame;
-      while (currentFrame) {
-        selectorPromises.push(findFrameSelector(currentFrame));
-        currentFrame = currentFrame.parentFrame();
-      }
-      const fullSelector = (await Promise.all(selectorPromises)).filter(Boolean);
-      fullSelector.push(selector);
-      await this._recorderApp?.setSelector(fullSelector.join(' >> internal:control=enter-frame >> '), true);
+      const selectorChain = await generateFrameSelector(frame);
+      selectorChain.push(selector);
+      await this._recorderApp?.setSelector(selectorChain.join(' >> internal:control=enter-frame >> '), true);
     });
 
     await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
@@ -539,45 +533,14 @@ class ContextRecorder extends EventEmitter {
   private _describeMainFrame(page: Page): actions.FrameDescription {
     return {
       pageAlias: this._pageAliases.get(page)!,
-      isMainFrame: true,
+      framePath: [],
     };
   }
 
   private async _describeFrame(frame: Frame): Promise<actions.FrameDescription> {
-    const page = frame._page;
-    const pageAlias = this._pageAliases.get(page)!;
-    const chain: Frame[] = [];
-    for (let ancestor: Frame | null = frame; ancestor; ancestor = ancestor.parentFrame())
-      chain.push(ancestor);
-    chain.reverse();
-
-    if (chain.length === 1)
-      return this._describeMainFrame(page);
-
-    const selectorPromises: Promise<string | undefined>[] = [];
-    for (let i = 0; i < chain.length - 1; i++)
-      selectorPromises.push(findFrameSelector(chain[i + 1]));
-
-    const result = await raceAgainstDeadline(() => Promise.all(selectorPromises), monotonicTime() + 2000);
-    if (!result.timedOut && result.result.every(selector => !!selector)) {
-      return {
-        pageAlias,
-        isMainFrame: false,
-        selectorsChain: result.result as string[],
-      };
-    }
-    // Best effort to find a selector for the frame.
-    const selectorsChain = [];
-    for (let i = 0; i < chain.length - 1; i++) {
-      if (chain[i].name())
-        selectorsChain.push(`iframe[name=${quoteCSSAttributeValue(chain[i].name())}]`);
-      else
-        selectorsChain.push(`iframe[src=${quoteCSSAttributeValue(chain[i].url())}]`);
-    }
     return {
-      pageAlias,
-      isMainFrame: false,
-      selectorsChain,
+      pageAlias: this._pageAliases.get(frame._page)!,
+      framePath: await generateFrameSelector(frame),
     };
   }
 
@@ -691,20 +654,41 @@ function isScreenshotCommand(metadata: CallMetadata) {
   return metadata.method.toLowerCase().includes('screenshot');
 }
 
-async function findFrameSelector(frame: Frame): Promise<string | undefined> {
-  try {
+async function generateFrameSelector(frame: Frame): Promise<string[]> {
+  const selectorPromises: Promise<string>[] = [];
+  while (frame) {
     const parent = frame.parentFrame();
-    const frameElement = await frame.frameElement();
-    if (!frameElement || !parent)
-      return;
-    const utility = await parent._utilityContext();
-    const injected = await utility.injectedScript();
-    const selector = await injected.evaluate((injected, element) => {
-      return injected.generateSelectorSimple(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
-    }, frameElement);
-    return selector;
-  } catch (e) {
+    if (!parent)
+      break;
+    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
+    frame = parent;
   }
+  const result = await Promise.all(selectorPromises);
+  return result.reverse();
+}
+
+async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promise<string> {
+  const result = await raceAgainstDeadline(async () => {
+    try {
+      const frameElement = await frame.frameElement();
+      if (!frameElement || !parent)
+        return;
+      const utility = await parent._utilityContext();
+      const injected = await utility.injectedScript();
+      const selector = await injected.evaluate((injected, element) => {
+        return injected.generateSelectorSimple(element as Element);
+      }, frameElement);
+      return selector;
+    } catch (e) {
+      return e.toString();
+    }
+  }, monotonicTime() + 2000);
+  if (!result.timedOut && result.result)
+    return result.result;
+
+  if (frame.name())
+    return `iframe[name=${quoteCSSAttributeValue(frame.name())}]`;
+  return `iframe[src=${quoteCSSAttributeValue(frame.url())}]`;
 }
 
 async function innerPerformAction(frame: Frame, action: string, params: any, cb: (callMetadata: CallMetadata) => Promise<any>): Promise<boolean> {

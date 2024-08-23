@@ -63,16 +63,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    let subject: string;
-    let inFrameLocator = false;
-    if (actionInContext.frame.isMainFrame) {
-      subject = pageAlias;
-    } else {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
-      subject = `${pageAlias}${locators.join('')}`;
-      inFrameLocator = true;
-    }
-
+    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector, false)}.contentFrame()`);
+    const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -82,7 +74,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    let code = this._generateActionCall(subject, action, inFrameLocator);
+    let code = this._generateActionCall(subject, action, !!actionInContext.frame.framePath.length);
 
     if (signals.popup) {
       code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {

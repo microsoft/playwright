@@ -146,7 +146,7 @@ export class CodeGenerator extends EventEmitter {
       this.addAction({
         frame: {
           pageAlias,
-          isMainFrame: true,
+          framePath: [],
         },
         committed: true,
         action: {
