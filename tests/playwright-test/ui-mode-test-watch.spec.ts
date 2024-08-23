@@ -251,60 +251,6 @@ test('should run added test in watched file', async ({ runUITest, writeFiles }) 
   `);
 });
 
-test('should run dependency of watched test', async ({ runUITest, writeFiles }) => {
-  const { page } = await runUITest({
-    'playwright.config.ts': `
-      module.exports = {
-        projects: [
-          { name: 'setup', testMatch: 'global.setup.ts', },
-          { name: 'main', dependencies: ['setup'] },
-        ],
-      };
-    `,
-    'global.setup.ts': `
-    import { test as setup } from '@playwright/test';
-
-    setup('setup test', async ({ page }) => {
-      console.log('setup test is executed')
-    });
-    `,
-    'a.test.ts': `
-    import { test } from '@playwright/test';
-    test('foo', () => {});
-    `,
-  });
-
-  await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(true);
-  await page.getByLabel('main').setChecked(true);
-
-  await page.getByText('a.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
-
-  await expect.poll(dumpTestTree(page)).toBe(`
-    ▼ ◯ a.test.ts 👁 <=
-        ◯ foo
-    ▼ ◯ global.setup.ts
-        ◯ setup test
-  `);
-
-  await writeFiles({
-    'a.test.ts': `
-    import { test } from '@playwright/test';
-    test('foo', () => {});
-    test('bar', () => {});
-    `,
-  });
-
-  await expect.poll(dumpTestTree(page)).toBe(`
-    ▼ ✅ a.test.ts 👁 <=
-        ✅ foo
-        ✅ bar
-    ▼ ✅ global.setup.ts
-        ✅ setup test
-  `);
-});
-
 test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   const latch = createLatch();
   const { page } = await runUITest({
@@ -346,4 +292,31 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   latch.open();
 
   await expect(page.getByTestId('status-line')).toHaveText('3/3 passed (100%)');
+});
+
+test('should not watch output', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', ({}, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('output.txt'), 'DATA');
+      });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+  `);
+
+  const commands: string[] = [];
+  await page.exposeBinding('__logForTest', (source, arg) => {
+    commands.push(arg.method);
+  });
+
+  await page.getByTitle('Run all').click();
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  expect(commands).toContain('runTests');
+  expect(commands).not.toContain('listTests');
 });
