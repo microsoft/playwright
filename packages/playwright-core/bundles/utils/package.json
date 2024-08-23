@@ -12,6 +12,7 @@
     "colors": "1.4.0",
     "commander": "8.3.0",
     "debug": "^4.3.4",
+    "dotenv": "^16.4.5",
     "graceful-fs": "4.2.10",
     "https-proxy-agent": "5.0.0",
     "jpeg-js": "0.4.4",
