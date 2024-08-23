@@ -9372,10 +9372,6 @@ export interface Browser {
 
     /**
      * Network proxy settings to use with this context. Defaults to none.
-     *
-     * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
-     * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
-     * proxy: { server: 'http://per-context' } })`.
      */
     proxy?: {
       /**
@@ -20847,10 +20843,6 @@ export interface BrowserContextOptions {
 
   /**
    * Network proxy settings to use with this context. Defaults to none.
-   *
-   * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
-   * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
-   * proxy: { server: 'http://per-context' } })`.
    */
   proxy?: {
     /**

@@ -769,12 +769,6 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 
 Network proxy settings to use with this context. Defaults to none.
 
-:::note
-For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
-contexts override the proxy, global proxy will be never used and can be any string, for example
-`launch({ proxy: { server: 'http://per-context' } })`.
-:::
-
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
