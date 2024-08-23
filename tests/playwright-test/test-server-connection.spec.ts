@@ -15,13 +15,13 @@
  */
 import { test as baseTest, expect } from './ui-mode-fixtures';
 
-import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
+import { TestServerConnection, WebSocketTestServerTransport } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 
 class TestServerConnectionUnderTest extends TestServerConnection {
   events: [string, any][] = [];
 
   constructor(wsUrl: string) {
-    super(wsUrl);
+    super(new WebSocketTestServerTransport(wsUrl));
     this.onTestFilesChanged(params => this.events.push(['testFilesChanged', params]));
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));

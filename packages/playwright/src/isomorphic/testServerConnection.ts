@@ -32,7 +32,7 @@ export interface TestServerTransport {
 export class WebSocketTestServerTransport implements TestServerTransport {
   private _ws: WebSocket;
 
-  constructor(url: URL) {
+  constructor(url: string | URL) {
     this._ws = new WebSocket(url);
   }
 
