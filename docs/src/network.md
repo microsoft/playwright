@@ -181,14 +181,18 @@ await using var browser = await BrowserType.LaunchAsync(new()
 
 Its also possible to specify it per context:
 
-```js tab=js-test title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-export default defineConfig({
-  use: {
+```js tab=js-test title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test('should do ...', async ({ browser }) => {
+  const context = await browser.newContext({
     proxy: {
       server: 'http://myproxy.com:3128',
     }
-  }
+  });
+  const page = await context.newPage();
+  
+  await context.close();
 });
 ```
 
@@ -201,7 +205,7 @@ const context = await browser.newContext({
 
 ```java
 Browser browser = chromium.launch();
-BrowserContext context = chromium.launch(new Browser.NewContextOptions()
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
   .setProxy(new Proxy("http://myproxy.com:3128")));
 ```
 
