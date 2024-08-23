@@ -32,7 +32,6 @@ async function checkFeatures(name: string, context: any, server: any) {
 
 it('safari-14-1', async ({ browser, browserName, platform, server, headless, isMac }) => {
   it.skip(browserName !== 'webkit');
-  it.skip(browserName === 'webkit' && platform === 'darwin', 'WebKit for macOS 10.15 is frozen.');
   it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'Modernizr uses WebGL which is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
   const context = await browser.newContext({
     deviceScaleFactor: 2
@@ -41,9 +40,6 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
 
   if (platform === 'linux') {
     expected.subpixelfont = false;
-    expected.applicationcache = false;
-    expected.inputsearchevent = false;
-    expected.speechrecognition = false;
     if (headless)
       expected.todataurljpeg = false;
 
@@ -62,7 +58,6 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
     expected.fileinputdirectory = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
-    expected.speechrecognition = false;
     expected.speechsynthesis = false;
     expected.todataurljpeg = false;
     expected.unicode = false;
@@ -77,7 +72,6 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
 
   if (isMac && parseInt(os.release(), 10) > 20) {
     expected.applicationcache = false;
-    expected.inputsearchevent = false;
   }
 
   expect(actual).toEqual(expected);
@@ -102,9 +96,6 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
 
   if (platform === 'linux') {
     expected.subpixelfont = false;
-    expected.speechrecognition = false;
-    expected.inputsearchevent = false;
-    expected.applicationcache = false;
     if (headless)
       expected.todataurljpeg = false;
 
@@ -123,7 +114,6 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
     expected.fileinputdirectory = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
-    expected.speechrecognition = false;
     expected.speechsynthesis = false;
     expected.todataurljpeg = false;
     expected.unicode = false;
@@ -137,11 +127,6 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
     expected.inputtypes.time = false;
     expected.inputtypes['datetime-local'] = false;
     expected.inputtypes.time = false;
-  }
-
-  if (isMac && parseInt(os.release(), 10) > 20) {
-    expected.applicationcache = false;
-    expected.inputsearchevent = false;
   }
 
   expect(actual).toEqual(expected);
