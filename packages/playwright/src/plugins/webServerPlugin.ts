@@ -113,13 +113,13 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     debugWebServer(`Process started`);
 
-    launchedProcess.stderr!.on('data', line => {
+    launchedProcess.stderr!.on('data', data => {
       if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
-        this._reporter!.onStdErr?.(colors.dim('[WebServer] ') + line.toString());
+        this._reporter!.onStdErr?.(prefixOutputLines(data.toString()));
     });
-    launchedProcess.stdout!.on('data', line => {
+    launchedProcess.stdout!.on('data', data => {
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.(colors.dim('[WebServer] ') + line.toString());
+        this._reporter!.onStdOut?.(prefixOutputLines(data.toString()));
     });
   }
 
@@ -201,3 +201,14 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
 
   return webServerPlugins;
 };
+
+function prefixOutputLines(output: string) {
+  const lastIsNewLine = output[output.length - 1] === '\n';
+  let lines = output.split('\n');
+  if (lastIsNewLine)
+    lines.pop();
+  lines = lines.map(line => colors.dim('[WebServer] ') + line);
+  if (lastIsNewLine)
+    lines.push('');
+  return lines.join('\n');
+}
