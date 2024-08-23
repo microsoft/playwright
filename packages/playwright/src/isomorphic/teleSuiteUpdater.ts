@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
-import { statusEx } from '@testIsomorphic/testTree';
-import type { ReporterV2 } from 'playwright/src/reporters/reporterV2';
-import type * as reporterTypes from 'playwright/types/testReporter';
-import type { Progress, TestModel } from './uiModeModel';
+import { TeleReporterReceiver, TeleSuite } from './teleReceiver';
+import { statusEx } from './testTree';
+import type { ReporterV2 } from '../reporters/reporterV2';
+import type * as reporterTypes from '../../types/testReporter';
+
+export type TeleSuiteUpdaterProgress = {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+};
+
+export type TeleSuiteUpdaterTestModel = {
+  config: reporterTypes.FullConfig;
+  rootSuite: reporterTypes.Suite;
+  loadErrors: reporterTypes.TestError[];
+  progress: TeleSuiteUpdaterProgress;
+};
 
 export type TeleSuiteUpdaterOptions = {
   onUpdate: (force?: boolean) => void,
@@ -30,7 +43,7 @@ export class TeleSuiteUpdater {
   rootSuite: TeleSuite | undefined;
   config: reporterTypes.FullConfig | undefined;
   readonly loadErrors: reporterTypes.TestError[] = [];
-  readonly progress: Progress = {
+  readonly progress: TeleSuiteUpdaterProgress = {
     total: 0,
     passed: 0,
     failed: 0,
@@ -118,11 +131,11 @@ export class TeleSuiteUpdater {
         return false;
       },
 
-      onStdOut: () => {},
-      onStdErr: () => {},
-      onExit: () => {},
-      onStepBegin: () => {},
-      onStepEnd: () => {},
+      onStdOut: () => { },
+      onStdErr: () => { },
+      onExit: () => { },
+      onStepBegin: () => { },
+      onStepEnd: () => { },
     };
   }
 
@@ -134,7 +147,7 @@ export class TeleSuiteUpdater {
       onError: (error: reporterTypes.TestError) => this._handleOnError(error)
     });
     for (const message of report)
-      receiver.dispatch(message);
+      void receiver.dispatch(message);
   }
 
   processListReport(report: any[]) {
@@ -144,14 +157,14 @@ export class TeleSuiteUpdater {
     this._testResultsSnapshot = new Map(tests.map(test => [test.id, test.results]));
     this._receiver.reset();
     for (const message of report)
-      this._receiver.dispatch(message);
+      void this._receiver.dispatch(message);
   }
 
   processTestReportEvent(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    this._lastRunReceiver?.dispatch(message)?.catch(() => {});
-    this._receiver.dispatch(message)?.catch(() => {});
+    this._lastRunReceiver?.dispatch(message)?.catch(() => { });
+    this._receiver.dispatch(message)?.catch(() => { });
   }
 
   private _handleOnError(error: reporterTypes.TestError) {
@@ -160,7 +173,7 @@ export class TeleSuiteUpdater {
     this._options.onUpdate();
   }
 
-  asModel(): TestModel {
+  asModel(): TeleSuiteUpdaterTestModel {
     return {
       rootSuite: this.rootSuite || new TeleSuite('', 'root'),
       config: this.config!,

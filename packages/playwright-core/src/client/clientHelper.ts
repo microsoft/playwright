@@ -28,7 +28,7 @@ export function envObjectToArray(env: types.Env): { name: string, value: string 
   return result;
 }
 
-export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg: any, hasArg: boolean, addSourceUrl: boolean = true): Promise<string> {
+export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg: any, addSourceUrl: boolean = true): Promise<string> {
   if (typeof fun === 'function') {
     const source = fun.toString();
     const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
@@ -46,7 +46,7 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   }
   if (fun.path !== undefined) {
     let source = await fs.promises.readFile(fun.path, 'utf8');
-    if (hasArg) {
+    if (arg !== undefined) {
       // Assume a CJS module that has a function default export.
       source = `(() => {
         var exports = {}; var module = { exports };
