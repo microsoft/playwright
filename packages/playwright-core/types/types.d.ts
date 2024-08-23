@@ -3897,10 +3897,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -7023,10 +7021,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -11136,10 +11132,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -13331,10 +13325,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 

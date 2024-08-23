@@ -2185,7 +2185,6 @@ Frame:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array
@@ -2741,7 +2740,6 @@ ElementHandle:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array

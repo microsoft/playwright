@@ -3742,7 +3742,7 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.selectOption.strict = %%-input-strict-%%
