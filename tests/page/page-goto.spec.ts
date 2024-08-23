@@ -366,7 +366,7 @@ it('should fail when main resources failed to load', async ({ page, browserName,
   } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
     expect(error.message).toContain(`proxy handshake error`);
   } else if (browserName === 'webkit' && isWindows) {
-    expect(error.message).toContain(`Couldn\'t connect to server`);
+    expect(error.message).toContain(`Could not connect to server`);
   } else if (browserName === 'webkit') {
     if (mode === 'service2')
       expect(error.message).toContain('Connection refused');
