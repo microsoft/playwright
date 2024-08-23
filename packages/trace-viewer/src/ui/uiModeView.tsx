@@ -32,7 +32,7 @@ import { useDarkModeSetting } from '@web/theme';
 import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
-import { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
@@ -134,7 +134,7 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(wsURL.toString()));
+    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
   }, []);
 
   // Load tests on startup.
