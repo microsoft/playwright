@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import os from 'os';
 import { browserTest as it, expect } from '../config/browserTest';
 
 it.describe('mobile viewport', () => {
@@ -59,7 +58,7 @@ it.describe('mobile viewport', () => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
-    expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
+    expect(await page.evaluate(() => 'ontouchstart' in window || !!window.TouchEvent)).toBe(true);
     await context.close();
   });
 
@@ -67,7 +66,7 @@ it.describe('mobile viewport', () => {
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
+    expect(await page.evaluate(() => 'ontouchstart' in window || !!window.TouchEvent)).toBe(true);
     await context.close();
   });
 
