@@ -7,7 +7,5 @@
 ../plugins/
 ../util.ts
 ../utilsBundle.ts
-../isomorphic/folders.ts
-../isomorphic/teleReceiver.ts
-../isomorphic/testServerConnection.ts
+../isomorphic/
 ../fsWatcher.ts
