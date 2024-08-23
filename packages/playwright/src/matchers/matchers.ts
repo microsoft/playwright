@@ -20,8 +20,8 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
-import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
+import { toMatchText } from './toMatchText';
+import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
@@ -163,12 +163,12 @@ export function toContainText(
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
     }, expected, { ...options, contains: true });
   } else {
     return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
     }, expected, options);
   }
@@ -181,7 +181,7 @@ export function toHaveAccessibleDescription(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -193,7 +193,7 @@ export function toHaveAccessibleName(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -218,7 +218,7 @@ export function toHaveAttribute(
     }, options);
   }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected as (string | RegExp)], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected as (string | RegExp)], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
   }, expected as (string | RegExp), options);
 }
@@ -231,12 +231,12 @@ export function toHaveClass(
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues(expected);
+      const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues([expected]);
+      const expectedText = serializeExpectedTextValues([expected]);
       return await locator._expect('to.have.class', { expectedText, isNot, timeout });
     }, expected, options);
   }
@@ -261,7 +261,7 @@ export function toHaveCSS(
   options?: { timeout?: number },
 ) {
   return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = serializeExpectedTextValues([expected]);
     return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -273,7 +273,7 @@ export function toHaveId(
   options?: { timeout?: number },
 ) {
   return toMatchText.call(this, 'toHaveId', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = serializeExpectedTextValues([expected]);
     return await locator._expect('to.have.id', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -299,7 +299,7 @@ export function toHaveRole(
   if (!isString(expected))
     throw new Error(`"role" argument in toHaveRole must be a string`);
   return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = serializeExpectedTextValues([expected]);
     return await locator._expect('to.have.role', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -312,12 +312,12 @@ export function toHaveText(
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
     }, expected, options);
   }
@@ -330,7 +330,7 @@ export function toHaveValue(
   options?: { timeout?: number },
 ) {
   return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
+    const expectedText = serializeExpectedTextValues([expected]);
     return await locator._expect('to.have.value', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -342,7 +342,7 @@ export function toHaveValues(
   options?: { timeout?: number },
 ) {
   return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues(expected);
+    const expectedText = serializeExpectedTextValues(expected);
     return await locator._expect('to.have.values', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -355,7 +355,7 @@ export function toHaveTitle(
 ) {
   const locator = page.locator(':root') as LocatorEx;
   return toMatchText.call(this, 'toHaveTitle', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true });
+    const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await locator._expect('to.have.title', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -370,7 +370,7 @@ export function toHaveURL(
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
   const locator = page.locator(':root') as LocatorEx;
   return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await locator._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
 }

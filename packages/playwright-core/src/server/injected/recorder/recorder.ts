@@ -23,7 +23,7 @@ import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';
 
 interface RecorderDelegate {
-  performAction?(action: actions.Action): Promise<void>;
+  performAction?(action: actions.PerformOnRecordAction): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
   setSelector?(selector: string): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
@@ -483,7 +483,7 @@ class RecordActionTool implements RecorderTool {
     return true;
   }
 
-  private async _performAction(action: actions.Action) {
+  private async _performAction(action: actions.PerformOnRecordAction) {
     this._hoveredElement = null;
     this._hoveredModel = null;
     this._activeModel = null;
@@ -1361,7 +1361,7 @@ function createSvgElement(doc: Document, { tagName, attrs, children }: SvgJson):
 }
 
 interface Embedder {
-  __pw_recorderPerformAction(action: actions.Action): Promise<void>;
+  __pw_recorderPerformAction(action: actions.PerformOnRecordAction): Promise<void>;
   __pw_recorderRecordAction(action: actions.Action): Promise<void>;
   __pw_recorderState(): Promise<UIState>;
   __pw_recorderSetSelector(selector: string): Promise<void>;
@@ -1407,7 +1407,7 @@ export class PollingRecorder implements RecorderDelegate {
     this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
-  async performAction(action: actions.Action) {
+  async performAction(action: actions.PerformOnRecordAction) {
     await this._embedder.__pw_recorderPerformAction(action);
   }
 
