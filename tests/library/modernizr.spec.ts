@@ -63,11 +63,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless, 
     // GHA
     delete actual.variablefonts;
     delete expected.variablefonts;
-
-    if (isDocker()) {
-      delete actual.unicode;
-      delete expected.unicode;
-    }
   }
 
   if (platform === 'win32') {
@@ -77,12 +72,10 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless, 
     expected.speechrecognition = false;
     expected.speechsynthesis = false;
     expected.todataurljpeg = false;
-    expected.unicode = false;
     expected.webaudio = false;
     expected.gamepads = false;
 
     expected.input.list = false;
-    delete expected.unicode;
     delete expected.datalistelem;
 
     expected.publickeycredential = false;
@@ -137,11 +130,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, isMac, 
     // GHA
     delete actual.variablefonts;
     delete expected.variablefonts;
-
-    if (isDocker()) {
-      delete actual.unicode;
-      delete expected.unicode;
-    }
   }
 
   if (platform === 'win32') {
@@ -156,7 +144,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, isMac, 
 
     expected.input.list = false;
 
-    delete expected.unicode;
     delete expected.datalistelem;
 
     expected.publickeycredential = false;
@@ -174,16 +161,3 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, isMac, 
 
   expect(actual).toEqual(expected);
 });
-
-function isDocker() {
-  try {
-    fs.statSync('/.dockerenv');
-    return true;
-  } catch {
-  }
-  try {
-    return fs.readFileSync('/proc/self/cgroup', 'utf8').includes('docker');
-  } catch {
-  }
-  return false;
-}
