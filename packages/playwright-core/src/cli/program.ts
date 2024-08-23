@@ -20,7 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { Command } from '../utilsBundle';
-import { program } from '../utilsBundle';
+import { program, dotenv } from '../utilsBundle';
 export { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
@@ -561,6 +561,7 @@ async function open(options: Options, url: string | undefined, language: string)
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
+  dotenv.config({ path: 'playwright.env' });
   await context._enableRecorder({
     language,
     launchOptions,
