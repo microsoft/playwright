@@ -25,22 +25,40 @@ import { separator } from '../reporters/base';
 import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
 import { TestServerDispatcher } from './testServer';
 import { EventEmitter } from 'stream';
-import { type TestServerSocket, TestServerConnection } from '../isomorphic/testServerConnection';
+import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
 import { createFileMatcherFromArguments } from '../util';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 
-class InMemoryServerSocket extends EventEmitter implements TestServerSocket {
-  public readonly send: (data: string) => void;
-  public readonly close: () => void;
+class InMemoryTransport extends EventEmitter implements TestServerTransport {
+  public readonly _send: (data: string) => void;
 
-  constructor(send: (data: any) => void,  close: () => void = () => {}) {
+  constructor(send: (data: any) => void) {
     super();
-    this.send = send;
-    this.close = close;
+    this._send = send;
   }
 
-  addEventListener(event: string, listener: (e: any) => void) {
-    this.addListener(event, listener);
+  close() {
+    this.emit('close');
+  }
+
+  onclose(listener: () => void): void {
+    this.on('close', listener);
+  }
+
+  onerror(listener: () => void): void {
+    this.on('error', listener);
+  }
+
+  onmessage(listener: (message: string) => void): void {
+    this.on('message', listener);
+  }
+
+  onopen(listener: () => void): void {
+    this.on('open', listener);
+  }
+
+  send(data: string): void {
+    this._send(data);
   }
 }
 
@@ -55,22 +73,22 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const options: WatchModeOptions = { ...initialOptions };
 
   const testServerDispatcher = new TestServerDispatcher(configLocation);
-  const inMemorySocket = new InMemoryServerSocket(
+  const transport = new InMemoryTransport(
       async data => {
         const { id, method, params } = JSON.parse(data);
         try {
           const result = await testServerDispatcher.transport.dispatch(method, params);
-          inMemorySocket.emit('message', { data: JSON.stringify({ id, result }) });
+          transport.emit('message', JSON.stringify({ id, result }));
         } catch (e) {
-          inMemorySocket.emit('message', { data: JSON.stringify({ id, error: String(e) }) });
+          transport.emit('message', JSON.stringify({ id, error: String(e) }));
         }
       }
   );
   testServerDispatcher.transport.sendEvent = (method, params) => {
-    inMemorySocket.emit('message', { data: JSON.stringify({ method, params }) });
+    transport.emit('message', JSON.stringify({ method, params }));
   };
-  const testServerConnection = new TestServerConnection(inMemorySocket);
-  inMemorySocket.emit('open');
+  const testServerConnection = new TestServerConnection(transport);
+  transport.emit('open');
 
   const telesuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
