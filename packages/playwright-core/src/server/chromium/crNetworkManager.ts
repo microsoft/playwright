@@ -609,7 +609,7 @@ class RouteImpl implements network.RouteDelegate {
     this._interceptionId = interceptionId;
   }
 
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<void> {
+  async continue(overrides: types.NormalizedContinueOverrides): Promise<void> {
     this._alreadyContinuedParams = {
       requestId: this._interceptionId!,
       url: overrides.url,
