@@ -239,7 +239,12 @@ export class ClockController {
 
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
     this._replayLogOnce();
-    if (options.func === undefined)
+
+    if (options.type === TimerType.AnimationFrame && !options.func)
+      throw new Error('Callback must be provided to requestAnimationFrame calls');
+    if (options.type === TimerType.IdleCallback && !options.func)
+      throw new Error('Callback must be provided to requestIdleCallback calls');
+    if ([TimerType.Timeout, TimerType.Interval].includes(options.type) && !options.func && options.delay === undefined)
       throw new Error('Callback must be provided to timer calls');
 
     let delay = options.delay ? +options.delay : 0;
