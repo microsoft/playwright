@@ -230,7 +230,7 @@
   "fullscreen": true,
   "gamepads": true,
   "geolocation": true,
-  "hiddenscroll": false,
+  "hiddenscroll": true,
   "history": true,
   "htmlimports": false,
   "ie8compat": false,

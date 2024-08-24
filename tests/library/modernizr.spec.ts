@@ -39,7 +39,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless, 
   const { actual, expected } = await checkFeatures('safari-18', context, server);
 
   expected.pushmanager = false;
-  expected.hiddenscroll = true;
   expected.devicemotion2 = false;
   expected.devicemotion = false;
   expected.deviceorientation = false;
