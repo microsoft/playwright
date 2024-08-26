@@ -254,6 +254,7 @@ export const InspectModeController: React.FunctionComponent<{
         language: sdkLanguage,
         testIdAttributeName,
         overlay: { offsetX: 0 },
+        generateSimpleDom: false,
       }, {
         async setSelector(selector: string) {
           setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector));

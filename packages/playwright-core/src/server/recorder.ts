@@ -41,6 +41,7 @@ import { quoteCSSAttributeValue, eventsHelper, type RegisteredListener } from '.
 import type { Dialog } from './dialog';
 import { performAction } from './recorderRunner';
 import { languageSet } from './codegen/languages';
+import type { SimpleDomNode } from './injected/simpleDom';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -182,6 +183,7 @@ export class Recorder implements InstrumentationListener {
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
         overlay: this._overlayState,
+        generateSimpleDom: false,
       };
       return uiState;
     });
@@ -448,11 +450,11 @@ class ContextRecorder extends EventEmitter {
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
     await this._context.exposeBinding('__pw_recorderPerformAction', false,
-        (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(source.frame, action));
+        (source: BindingSource, action: actions.PerformOnRecordAction, simpleDomNode?: SimpleDomNode) => this._performAction(source.frame, action, simpleDomNode));
 
     // Other non-essential actions are simply being recorded.
     await this._context.exposeBinding('__pw_recorderRecordAction', false,
-        (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
+        (source: BindingSource, action: actions.Action, simpleDomNode?: SimpleDomNode) => this._recordAction(source.frame, action, simpleDomNode));
 
     await this._context.extendInjectedScript(recorderSource.source);
   }
@@ -532,14 +534,15 @@ class ContextRecorder extends EventEmitter {
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
+  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction, simpleDomNode?: SimpleDomNode) {
     // Commit last action so that no further signals are added to it.
     this._generator.commitLastAction();
 
     const frameDescription = await this._describeFrame(frame);
     const actionInContext: ActionInContext = {
       frame: frameDescription,
-      action
+      action,
+      description: undefined,  // TODO: generate description based on simple dom node.
     };
 
     this._generator.willPerformAction(actionInContext);
@@ -552,14 +555,15 @@ class ContextRecorder extends EventEmitter {
     }
   }
 
-  private async _recordAction(frame: Frame, action: actions.Action) {
+  private async _recordAction(frame: Frame, action: actions.Action, simpleDomNode?: SimpleDomNode) {
     // Commit last action so that no further signals are added to it.
     this._generator.commitLastAction();
 
     const frameDescription = await this._describeFrame(frame);
     const actionInContext: ActionInContext = {
       frame: frameDescription,
-      action
+      action,
+      description: undefined,  // TODO: generate description based on simple dom node.
     };
     this._setCommittedAfterTimeout(actionInContext);
     this._generator.addAction(actionInContext);

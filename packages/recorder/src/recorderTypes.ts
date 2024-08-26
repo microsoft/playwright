@@ -51,6 +51,7 @@ export type UIState = {
   language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;
+  generateSimpleDom: boolean;
 };
 
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';

@@ -22,8 +22,8 @@ test.skip(({ mode }) => mode !== 'default');
 
 async function getNameAndRole(page: Page, selector: string) {
   return await page.$eval(selector, e => {
-    const name = (window as any).__injectedScript.getElementAccessibleName(e);
-    const role = (window as any).__injectedScript.getAriaRole(e);
+    const name = (window as any).__injectedScript.utils.getElementAccessibleName(e);
+    const role = (window as any).__injectedScript.utils.getAriaRole(e);
     return { name, role };
   });
 }
@@ -89,7 +89,7 @@ for (let range = 0; range <= ranges.length; range++) {
             if (!element)
               throw new Error(`Unable to resolve "${step.selector}"`);
             const injected = (window as any).__injectedScript;
-            const received = step.property === 'name' ? injected.getElementAccessibleName(element) : injected.getElementAccessibleDescription(element);
+            const received = step.property === 'name' ? injected.utils.getElementAccessibleName(element) : injected.utils.getElementAccessibleDescription(element);
             result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;
@@ -152,7 +152,7 @@ test('wpt accname non-manual', async ({ page, asset, server }) => {
           const injected = (window as any).__injectedScript;
           const title = element.getAttribute('data-testname');
           const expected = element.getAttribute('data-expectedlabel');
-          const received = injected.getElementAccessibleName(element);
+          const received = injected.utils.getElementAccessibleName(element);
           result.push({ title, expected, received });
         }
         return result;
@@ -180,7 +180,7 @@ test('axe-core implicit-role', async ({ page, asset, server }) => {
         const element = document.querySelector(selector);
         if (!element)
           throw new Error(`Unable to resolve "${selector}"`);
-        return (window as any).__injectedScript.getAriaRole(element);
+        return (window as any).__injectedScript.utils.getAriaRole(element);
       }, testCase.target);
       expect.soft(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
     });
@@ -213,7 +213,7 @@ test('axe-core accessible-text', async ({ page, asset, server }) => {
           const element = injected.querySelector(injected.parseSelector('css=' + selector), document, false);
           if (!element)
             throw new Error(`Unable to resolve "${selector}"`);
-          return injected.getElementAccessibleName(element);
+          return injected.utils.getElementAccessibleName(element);
         });
       }, targets);
       expect.soft(received, `checking ${JSON.stringify(testCase)}`).toEqual(expected);
