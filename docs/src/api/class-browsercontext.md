@@ -1048,8 +1048,10 @@ Returns all open pages in the context.
 
 ## async method: BrowserContext.removeAllListeners
 * since: v1.47
+* langs: js
 
-Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
 
 ### param: BrowserContext.removeAllListeners.type
 * since: v1.47

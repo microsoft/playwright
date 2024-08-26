@@ -3372,8 +3372,23 @@ By default, after calling the handler Playwright will wait until the overlay bec
 
 ## async method: Page.removeAllListeners
 * since: v1.47
+* langs: js
 
-Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+**Usage**
+
+```js
+page.on('request', async request => {
+  const response = await request.response();
+  const body = await response.body();
+  console.log(body.byteLength);
+});
+await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+// Waits for all the reported 'request' events to resolve.
+await page.removeAllListeners('request', { behavior: 'wait' });
+```
 
 ### param: Page.removeAllListeners.type
 * since: v1.47

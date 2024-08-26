@@ -898,17 +898,55 @@ export interface Page {
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
 
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.on('request', async request => {
+   *   const response = await request.response();
+   *   const body = await response.body();
+   *   console.log(body.byteLength);
+   * });
+   * await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+   * // Waits for all the reported 'request' events to resolve.
+   * await page.removeAllListeners('request', { behavior: 'wait' });
+   * ```
+   *
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.on('request', async request => {
+   *   const response = await request.response();
+   *   const body = await response.body();
+   *   console.log(body.byteLength);
+   * });
+   * await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+   * // Waits for all the reported 'request' events to resolve.
+   * await page.removeAllListeners('request', { behavior: 'wait' });
+   * ```
+   *
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * Emitted when the page closes.
    */
@@ -7734,17 +7772,27 @@ export interface BrowserContext {
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * **NOTE** Only works with Chromium browser's persistent context.
    *
@@ -9018,17 +9066,27 @@ export interface BrowserContext {
  */
 export interface Browser {
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
