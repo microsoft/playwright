@@ -122,7 +122,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
   teleSuiteUpdater.processListReport(report);
 
-  let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestFiles?: string[] } = { type: 'regular' };
+  let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
 
   // Enter the watch loop.
@@ -141,10 +141,10 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     const command = await readCommandPromise;
 
     if (command === 'changed') {
-      const changedFiles = [...dirtyTestFiles];
+      const testIds = teleSuiteUpdater.rootSuite!.allTests().filter(t => dirtyTestFiles.has(t.location.file)).map(t => t.id);
       dirtyTestFiles.clear();
-      await runChangedTests(options, testServerConnection, changedFiles);
-      lastRun = { type: 'changed', dirtyTestFiles: changedFiles };
+      await runTests(options, testServerConnection, { testIds, title: 'files changed' });
+      lastRun = { type: 'changed', dirtyTestIds: testIds };
       continue;
     }
 
@@ -216,7 +216,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
         await runTests(options, testServerConnection, { title: 're-running tests' });
         continue;
       } else if (lastRun.type === 'changed') {
-        await runChangedTests(options, testServerConnection, lastRun.dirtyTestFiles!, 're-running tests');
+        await runTests(options, testServerConnection, { title: 're-running tests', testIds: lastRun.dirtyTestIds });
       } else if (lastRun.type === 'failed') {
         await runTests({}, testServerConnection, { title: 're-running tests', testIds: [...lastRun.failedTestIds!] });
       }
@@ -242,25 +242,16 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
-
-async function runChangedTests(watchOptions: WatchModeOptions, testServerConnection: TestServerConnection, changedFiles: string[], title?: string) {
-  if (watchOptions.files?.length)
-    changedFiles = changedFiles.filter(createFileMatcherFromArguments(watchOptions.files));
-
-  await runTests(watchOptions, testServerConnection, { title: title || 'files changed', locations: changedFiles });
-}
-
 async function runTests(watchOptions: WatchModeOptions, testServerConnection: TestServerConnection, options?: {
     title?: string,
     testIds?: string[],
-    locations?: string[],
   }) {
   printConfiguration(watchOptions, options?.title);
 
   await testServerConnection.runTests({
     grep: watchOptions.grep,
     testIds: options?.testIds,
-    locations: options?.locations ?? watchOptions?.files,
+    locations: watchOptions?.files,
     projects: watchOptions.projects,
     connectWsEndpoint,
     reuseContext: connectWsEndpoint ? true : undefined,
