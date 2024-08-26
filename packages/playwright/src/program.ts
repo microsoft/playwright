@@ -157,6 +157,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
+  if (process.env.PWTEST_WATCH && opts.onlyChanged)
+    throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
@@ -203,13 +206,10 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   const runner = new Runner(config);
   let status: FullResult['status'];
-  if (process.env.PWTEST_WATCH) {
-    if (opts.onlyChanged)
-      throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+  if (process.env.PWTEST_WATCH)
     status = await runner.watchAllTests();
-  } else {
+  else
     status = await runner.runAllTests();
-  }
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
