@@ -46,6 +46,7 @@ class InMemoryTransport extends EventEmitter implements TestServerTransport {
   }
 
   onerror(listener: () => void): void {
+    // no-op to fulfil the interface, the user of InMemoryTransport doesn't emit any errors.
     this.on('error', listener);
   }
 
@@ -66,7 +67,6 @@ interface WatchModeOptions {
   files?: string[];
   projects?: string[];
   grep?: string;
-  onlyChanged?: string;
 }
 
 export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status']> {
@@ -90,7 +90,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const testServerConnection = new TestServerConnection(transport);
   transport.emit('open');
 
-  const telesuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
+  const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
   const dirtyTestFiles = new Set<string>();
   const onDirtyTestFiles: { resolve?(): void } = {};
@@ -100,9 +100,9 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       return;
 
     const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
-    telesuiteUpdater.processListReport(report);
+    teleSuiteUpdater.processListReport(report);
 
-    for (const project of telesuiteUpdater.rootSuite!.suites) {
+    for (const project of teleSuiteUpdater.rootSuite!.suites) {
       for (const suite of project.suites) {
         if (suite.location?.file && changedFiles.includes(suite.location.file))
           dirtyTestFiles.add(suite.location.file);
@@ -114,13 +114,13 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
     onDirtyTestFiles.resolve?.();
   });
-  testServerConnection.onReport(report => telesuiteUpdater.processTestReportEvent(report));
+  testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
 
   await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true });
   await testServerConnection.runGlobalSetup({});
 
   const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
-  telesuiteUpdater.processListReport(report);
+  teleSuiteUpdater.processListReport(report);
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestFiles?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
@@ -160,7 +160,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
         type: 'multiselect',
         name: 'selectedProjects',
         message: 'Select projects',
-        choices: telesuiteUpdater.rootSuite!.suites.map(s => s.title),
+        choices: teleSuiteUpdater.rootSuite!.suites.map(s => s.title),
       }).catch(() => ({ selectedProjects: null }));
       if (!selectedProjects)
         continue;
@@ -205,7 +205,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     }
 
     if (command === 'failed') {
-      const failedTestIds = telesuiteUpdater.rootSuite!.allTests().filter(t => !t.ok()).map(t => t.id);
+      const failedTestIds = teleSuiteUpdater.rootSuite!.allTests().filter(t => !t.ok()).map(t => t.id);
       await runTests({}, testServerConnection, { title: 'running failed tests', testIds: failedTestIds });
       lastRun = { type: 'failed', failedTestIds };
       continue;
@@ -340,8 +340,6 @@ function printConfiguration(options: WatchModeOptions, title?: string) {
     tokens.push(...options.projects.map(p => colors.blue(`--project ${p}`)));
   if (options.grep)
     tokens.push(colors.red(`--grep ${options.grep}`));
-  if (options.onlyChanged)
-    tokens.push(colors.yellow(`--only-changed ${options.onlyChanged}`));
   if (options.files)
     tokens.push(...options.files.map(a => colors.bold(a)));
   if (title)
