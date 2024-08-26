@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { sanitizeDeviceOptions, toSignalMap } from './language';
+import type { BrowserContextOptions } from '../../../types/types';
 import type { ActionInContext } from './codeGenerator';
-import type { Action } from './recorderActions';
-import type { MouseClickOptions } from './utils';
-import { toModifiers } from './utils';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptions } from './language';
 import { escapeWithQuotes, toSnakeCase, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
@@ -66,7 +63,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (signals.dialog)
       formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);
 
-    let code = `${this._awaitPrefix}${this._generateActionCall(subject, action)}`;
+    let code = `${this._awaitPrefix}${this._generateActionCall(subject, actionInContext)}`;
 
     if (signals.popup) {
       code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {
@@ -87,7 +84,8 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, action: Action): string {
+  private _generateActionCall(subject: string, actionInContext: ActionInContext): string {
+    const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -97,16 +95,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         let method = 'click';
         if (action.clickCount === 2)
           method = 'dblclick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        const options = toClickOptions(action);
         const optionsString = formatOptions(options, false);
         return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
       }
@@ -119,7 +108,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'setInputFiles':
         return `${subject}.${this._asLocator(action.selector)}.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
-        const modifiers = toModifiers(action.modifiers);
+        const modifiers = toKeyboardModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
         return `${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)})`;
       }

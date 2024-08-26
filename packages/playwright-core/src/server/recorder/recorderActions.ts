@@ -149,8 +149,3 @@ export type DialogSignal = BaseSignal & {
 };
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
-
-export type FrameDescription = {
-  pageAlias: string;
-  framePath: string[];
-};
