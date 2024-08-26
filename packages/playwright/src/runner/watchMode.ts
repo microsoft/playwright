@@ -91,8 +91,8 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
-  const dirtyTestFiles = new Set<string>();
-  const onDirtyTestFiles: { resolve?(): void } = {};
+  const dirtyTestIds = new Set<string>();
+  const onDirtyTests: { resolve?(): void } = {};
 
   let queue = Promise.resolve();
 
@@ -104,19 +104,16 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
       teleSuiteUpdater.processListReport(report);
 
-      for (const project of teleSuiteUpdater.rootSuite!.suites) {
-        for (const suite of project.suites) {
-          if (suite.location?.file && changedFiles.includes(suite.location.file))
-            dirtyTestFiles.add(suite.location.file);
-        }
+      for (const test of teleSuiteUpdater.rootSuite!.allTests()) {
+        if (changedFiles.includes(test.location.file))
+          dirtyTestIds.add(test.id);
       }
 
-      // if listTests takes longer than the debouncing interval of onTestFilesChanged,
-      // then the queue might contain another listTests call.
-      // appending `resolve` to the queue ensures that all pending listTests calls are executed first.
+      // listTests can take longer than the debouncing interval of onTestFilesChanged,
+      // so the queue might contain another set of changed files to be processed before executing tests.
       queue = queue.then(() => {
-        if (dirtyTestFiles.size > 0)
-          onDirtyTestFiles.resolve?.();
+        if (dirtyTestIds.size > 0)
+          onDirtyTests.resolve?.();
       });
     });
   });
@@ -138,7 +135,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     printPrompt();
     const readCommandPromise = readCommand();
     await Promise.race([
-      new Promise<void>(resolve => { onDirtyTestFiles.resolve = resolve; }),
+      new Promise<void>(resolve => { onDirtyTests.resolve = resolve; }),
       readCommandPromise,
     ]);
     if (!readCommandPromise.isDone())
@@ -147,8 +144,8 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     const command = await readCommandPromise;
 
     if (command === 'changed') {
-      const testIds = teleSuiteUpdater.rootSuite!.allTests().filter(t => dirtyTestFiles.has(t.location.file)).map(t => t.id);
-      dirtyTestFiles.clear();
+      const testIds = [...dirtyTestIds];
+      dirtyTestIds.clear();
       await runTests(options, testServerConnection, { testIds, title: 'files changed' });
       lastRun = { type: 'changed', dirtyTestIds: testIds };
       continue;
