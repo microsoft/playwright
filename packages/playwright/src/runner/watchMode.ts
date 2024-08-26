@@ -26,7 +26,6 @@ import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
 import { TestServerDispatcher } from './testServer';
 import { EventEmitter } from 'stream';
 import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
-import { createFileMatcherFromArguments } from '../util';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
@@ -95,24 +94,31 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const dirtyTestFiles = new Set<string>();
   const onDirtyTestFiles: { resolve?(): void } = {};
 
-  testServerConnection.onTestFilesChanged(async ({ testFiles: changedFiles }) => {
+  let queue = Promise.resolve();
+
+  testServerConnection.onTestFilesChanged(({ testFiles: changedFiles }) => {
     if (changedFiles.length === 0)
       return;
 
-    const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
-    teleSuiteUpdater.processListReport(report);
+    queue = queue.then(async () => {
+      const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
+      teleSuiteUpdater.processListReport(report);
 
-    for (const project of teleSuiteUpdater.rootSuite!.suites) {
-      for (const suite of project.suites) {
-        if (suite.location?.file && changedFiles.includes(suite.location.file))
-          dirtyTestFiles.add(suite.location.file);
+      for (const project of teleSuiteUpdater.rootSuite!.suites) {
+        for (const suite of project.suites) {
+          if (suite.location?.file && changedFiles.includes(suite.location.file))
+            dirtyTestFiles.add(suite.location.file);
+        }
       }
-    }
 
-    if (dirtyTestFiles.size === 0)
-      return;
-
-    onDirtyTestFiles.resolve?.();
+      // if listTests takes longer than the debouncing interval of onTestFilesChanged,
+      // then the queue might contain another listTests call.
+      // appending `resolve` to the queue ensures that all pending listTests calls are executed first.
+      queue = queue.then(() => {
+        if (dirtyTestFiles.size > 0)
+          onDirtyTestFiles.resolve?.();
+      });
+    });
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
 
