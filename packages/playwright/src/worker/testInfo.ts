@@ -30,7 +30,7 @@ import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -270,7 +270,7 @@ export class TestInfoImpl implements TestInfo {
 
         step.endWallTime = Date.now();
         if (result.error) {
-          if (!(result.error as any)[stepSymbol])
+          if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
           const error = serializeError(result.error);
           if (data.boxedStack)
@@ -327,13 +327,13 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error) {
+  _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = serializeError(error);
-    const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
+    const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
-      serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }

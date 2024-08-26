@@ -232,3 +232,29 @@ test('should show intermediate result for poll that spills over test time', asyn
   expect(result.output).toContain('Expected: 2');
   expect(result.output).toContain('Received: 3');
 });
+
+test('should propagate promise rejections', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32256' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(() => Promise.reject('some error')).toBe({ foo: 'baz' });
+      });
+    `
+  });
+
+  expect(result.output).toContain('some error');
+});
+
+test('should propagate string exception from async arrow function', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32256' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(async () => { throw 'some error' }).toBe({ foo: 'baz' });
+      });
+    `
+  });
+
+  expect(result.output).toContain('some error');
+});
