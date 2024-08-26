@@ -15,10 +15,15 @@
  */
 
 import { EventEmitter } from 'events';
-import type { BrowserContextOptions, LaunchOptions } from '../../..';
+import type { BrowserContextOptions, LaunchOptions } from '../../../types/types';
 import type { Frame } from '../frames';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
-import type { Action, Signal, FrameDescription } from './recorderActions';
+import type { Action, Signal } from '../recorder/recorderActions';
+
+export type FrameDescription = {
+  pageAlias: string;
+  framePath: string[];
+};
 
 export type ActionInContext = {
   frame: FrameDescription;

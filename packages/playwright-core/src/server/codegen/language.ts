@@ -16,8 +16,9 @@
 
 import type { BrowserContextOptions, LaunchOptions } from '../../..';
 import type { Language } from '../../utils';
+import type * as actions from '../recorder/recorderActions';
+import type * as types from '../types';
 import type { ActionInContext } from './codeGenerator';
-import type { Action, DialogSignal, DownloadSignal, PopupSignal } from './recorderActions';
 export type { Language } from '../../utils';
 
 export type LanguageGeneratorOptions = {
@@ -51,10 +52,10 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
   return cleanedOptions;
 }
 
-export function toSignalMap(action: Action) {
-  let popup: PopupSignal | undefined;
-  let download: DownloadSignal | undefined;
-  let dialog: DialogSignal | undefined;
+export function toSignalMap(action: actions.Action) {
+  let popup: actions.PopupSignal | undefined;
+  let download: actions.DownloadSignal | undefined;
+  let dialog: actions.DialogSignal | undefined;
   for (const signal of action.signals) {
     if (signal.name === 'popup')
       popup = signal;
@@ -68,4 +69,31 @@ export function toSignalMap(action: Action) {
     download,
     dialog,
   };
+}
+
+export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModifier[] {
+  const result: types.SmartKeyboardModifier[] = [];
+  if (modifiers & 1)
+    result.push('Alt');
+  if (modifiers & 2)
+    result.push('ControlOrMeta');
+  if (modifiers & 4)
+    result.push('ControlOrMeta');
+  if (modifiers & 8)
+    result.push('Shift');
+  return result;
+}
+
+export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
+  const modifiers = toKeyboardModifiers(action.modifiers);
+  const options: types.MouseClickOptions = {};
+  if (action.button !== 'left')
+    options.button = action.button;
+  if (modifiers.length)
+    options.modifiers = modifiers;
+  if (action.clickCount > 2)
+    options.clickCount = action.clickCount;
+  if (action.position)
+    options.position = action.position;
+  return options;
 }

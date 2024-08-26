@@ -20,3 +20,10 @@
 ./electron/
 ./firefox/
 ./webkit/
+
+[recorder.ts]
+./codegen/codeGenerator.ts
+./codegen/languages.ts
+
+[recorderRunner.ts]
+./codegen/language.ts
