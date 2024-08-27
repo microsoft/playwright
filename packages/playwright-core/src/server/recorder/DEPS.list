@@ -1,8 +1,11 @@
 [*]
 ../
+../codegen/language.ts
+../codegen/languages.ts
 ../isomorphic/**
 ../registry/**
 ../../common/
+../../generated/recorderSource.ts
 ../../protocol/
 ../../utils/**
 ../../utilsBundle.ts

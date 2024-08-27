@@ -15,38 +15,19 @@
  */
 
 import { EventEmitter } from 'events';
-import type { BrowserContextOptions, LaunchOptions } from '../../../types/types';
 import type { Frame } from '../frames';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
-import type { Action, Signal } from '../recorder/recorderActions';
+import type { Signal } from './recorderActions';
+import type { ActionInContext } from '../codegen/types';
 
-export type FrameDescription = {
-  pageAlias: string;
-  framePath: string[];
-};
-
-export type ActionInContext = {
-  frame: FrameDescription;
-  description?: string;
-  action: Action;
-  committed?: boolean;
-};
-
-export class CodeGenerator extends EventEmitter {
+export class RecorderCollection extends EventEmitter {
   private _currentAction: ActionInContext | null = null;
   private _lastAction: ActionInContext | null = null;
   private _actions: ActionInContext[] = [];
   private _enabled: boolean;
-  private _options: LanguageGeneratorOptions;
 
-  constructor(browserName: string, enabled: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName: string | undefined, saveStorage: string | undefined) {
+  constructor(enabled: boolean) {
     super();
-
-    // Make a copy of options to modify them later.
-    launchOptions = { headless: false, ...launchOptions };
-    contextOptions = { ...contextOptions };
     this._enabled = enabled;
-    this._options = { browserName, launchOptions, contextOptions, deviceName, saveStorage };
     this.restart();
   }
 
@@ -55,6 +36,10 @@ export class CodeGenerator extends EventEmitter {
     this._lastAction = null;
     this._actions = [];
     this.emit('change');
+  }
+
+  actions() {
+    return this._actions;
   }
 
   setEnabled(enabled: boolean) {
@@ -162,13 +147,5 @@ export class CodeGenerator extends EventEmitter {
         },
       });
     }
-  }
-
-  generateStructure(languageGenerator: LanguageGenerator) {
-    const header = languageGenerator.generateHeader(this._options);
-    const footer = languageGenerator.generateFooter(this._options.saveStorage);
-    const actions = this._actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
-    const text = [header, ...actions, footer].join('\n');
-    return { header, footer, actions, text };
   }
 }
