@@ -27,6 +27,7 @@ export type FrameDescription = {
 
 export type ActionInContext = {
   frame: FrameDescription;
+  description?: string;
   action: Action;
   committed?: boolean;
 };

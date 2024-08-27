@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
-import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
-import { isElementVisible } from './domUtils';
+import type { InjectedScript } from './injectedScript';
 
 const leafRoles = new Set([
   'button',
@@ -26,11 +24,40 @@ const leafRoles = new Set([
   'textbox',
 ]);
 
-export function simpleDom(document: Document): { markup: string, elements: Map<string, Element> } {
+export type SimpleDom = {
+  markup: string;
+  elements: Map<string, Element>;
+};
+
+export type SimpleDomNode = {
+  dom: SimpleDom;
+  id: string;
+  tag: string;
+};
+
+let lastDom: SimpleDom | undefined;
+
+export function generateSimpleDom(injectedScript: InjectedScript): SimpleDom {
+  return generate(injectedScript).dom;
+}
+
+export function generateSimpleDomNode(injectedScript: InjectedScript, target: Element): SimpleDomNode {
+  return generate(injectedScript, target).node!;
+}
+
+export function selectorForSimpleDomNodeId(injectedScript: InjectedScript, id: string): string {
+  const element = lastDom?.elements.get(id);
+  if (!element)
+    throw new Error(`Internal error: element with id "${id}" not found`);
+  return injectedScript.generateSelectorSimple(element);
+}
+
+function generate(injectedScript: InjectedScript, target?: Element): { dom: SimpleDom, node?: SimpleDomNode } {
   const normalizeWhitespace = (text: string) => text.replace(/[\s\n]+/g, match => match.includes('\n') ? '\n' : ' ');
   const tokens: string[] = [];
-  const idMap = new Map<string, Element>();
+  const elements = new Map<string, Element>();
   let lastId = 0;
+  let resultTarget: { tag: string, id: string } | undefined;
   const visit = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE) {
       tokens.push(node.nodeValue!);
@@ -41,16 +68,19 @@ export function simpleDom(document: Document): { markup: string, elements: Map<s
       const element = node as Element;
       if (element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || element.nodeName === 'NOSCRIPT')
         return;
-      if (isElementVisible(element)) {
-        const role = getAriaRole(element) as string;
+      if (injectedScript.utils.isElementVisible(element)) {
+        const role = injectedScript.utils.getAriaRole(element) as string;
         if (role && leafRoles.has(role)) {
           let value: string | undefined;
           if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
             value = (element as HTMLInputElement | HTMLTextAreaElement).value;
-          const name = getElementAccessibleName(element, false);
+          const name = injectedScript.utils.getElementAccessibleName(element, false);
           const structuralId = String(++lastId);
-          idMap.set(structuralId, element);
-          tokens.push(renderTag(role, name, structuralId, { value }));
+          elements.set(structuralId, element);
+          const tag = renderTag(injectedScript, role, name, structuralId, { value });
+          if (element === target)
+            resultTarget = { tag, id: structuralId };
+          tokens.push(tag);
           return;
         }
       }
@@ -58,21 +88,28 @@ export function simpleDom(document: Document): { markup: string, elements: Map<s
         visit(child);
     }
   };
-  beginAriaCaches();
+  injectedScript.utils.beginAriaCaches();
   try {
-    visit(document.body);
+    visit(injectedScript.document.body);
   } finally {
-    endAriaCaches();
+    injectedScript.utils.endAriaCaches();
   }
-  return {
+  const dom = {
     markup: normalizeWhitespace(tokens.join(' ')),
-    elements: idMap
+    elements
   };
+
+  if (target && !resultTarget)
+    throw new Error('Target element is not in the simple DOM');
+
+  lastDom = dom;
+
+  return { dom, node: resultTarget ? { dom, ...resultTarget } : undefined };
 }
 
-function renderTag(role: string, name: string, id: string, params?: { value?: string }): string {
-  const escapedTextContent = escapeHTML(name);
-  const escapedValue = escapeHTMLAttribute(params?.value || '');
+function renderTag(injectedScript: InjectedScript, role: string, name: string, id: string, params?: { value?: string }): string {
+  const escapedTextContent = injectedScript.utils.escapeHTML(name);
+  const escapedValue = injectedScript.utils.escapeHTMLAttribute(params?.value || '');
   switch (role) {
     case 'button': return `<button id="${id}">${escapedTextContent}</button>`;
     case 'link': return `<a id="${id}">${escapedTextContent}</a>`;

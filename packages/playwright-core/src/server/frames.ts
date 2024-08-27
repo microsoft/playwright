@@ -800,7 +800,7 @@ export class Frame extends SdkObject {
       const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
-        const visible = element ? injected.isVisible(element) : false;
+        const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
           if (info.strict)

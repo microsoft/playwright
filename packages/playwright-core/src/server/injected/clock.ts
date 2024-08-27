@@ -216,7 +216,7 @@ export class ClockController {
         const sinceLastSync = now - this._realTime!.lastSyncTicks;
         this._realTime!.lastSyncTicks = now;
         // eslint-disable-next-line no-console
-        this._runTo(shiftTicks(this._now.ticks, sinceLastSync)).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        void this._runTo(shiftTicks(this._now.ticks, sinceLastSync)).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
       }, callAt - this._now.ticks),
     };
   }
