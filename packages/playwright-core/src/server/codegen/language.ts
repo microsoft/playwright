@@ -14,32 +14,17 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions, LaunchOptions } from '../../..';
-import type { Language } from '../../utils';
+import type { BrowserContextOptions } from '../../..';
 import type * as actions from '../recorder/recorderActions';
 import type * as types from '../types';
-import type { ActionInContext } from './codeGenerator';
-export type { Language } from '../../utils';
+import type { ActionInContext, LanguageGenerator, LanguageGeneratorOptions } from './types';
 
-export type LanguageGeneratorOptions = {
-  browserName: string;
-  launchOptions: LaunchOptions;
-  contextOptions: BrowserContextOptions;
-  deviceName?: string;
-  saveStorage?: string;
-};
-
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text';
-export type LocatorBase = 'page' | 'locator' | 'frame-locator';
-
-export interface LanguageGenerator {
-  id: string;
-  groupName: string;
-  name: string;
-  highlighter: Language;
-  generateHeader(options: LanguageGeneratorOptions): string;
-  generateAction(actionInContext: ActionInContext): string;
-  generateFooter(saveStorage: string | undefined): string;
+export function generateCode(actions: ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
+  const header = languageGenerator.generateHeader(options);
+  const footer = languageGenerator.generateFooter(options.saveStorage);
+  const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
+  const text = [header, ...actionTexts, footer].join('\n');
+  return { header, footer, actionTexts, text };
 }
 
 export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {

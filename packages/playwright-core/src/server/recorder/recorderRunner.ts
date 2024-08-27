@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { createGuid, monotonicTime, serializeExpectedTextValues } from '../utils';
-import { toClickOptions, toKeyboardModifiers } from './codegen/language';
-import type { Frame } from './frames';
-import type { CallMetadata } from './instrumentation';
-import type * as actions from './recorder/recorderActions';
+import { createGuid, monotonicTime, serializeExpectedTextValues } from '../../utils';
+import { toClickOptions, toKeyboardModifiers } from '../codegen/language';
+import type { Frame } from '../frames';
+import type { CallMetadata } from '../instrumentation';
+import type * as actions from './recorderActions';
 
 async function innerPerformAction(frame: Frame, action: string, params: any, cb: (callMetadata: CallMetadata) => Promise<any>): Promise<boolean> {
   const callMetadata: CallMetadata = {

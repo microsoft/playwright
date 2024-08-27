@@ -15,8 +15,7 @@
  */
 
 import type { BrowserContextOptions } from '../../../types/types';
-import type { ActionInContext } from './codeGenerator';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptions } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { escapeWithQuotes, asLocator } from '../../utils';
