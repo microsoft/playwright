@@ -56,7 +56,7 @@ it('should work for promises', async ({ page }) => {
   expect(bHandle.toString()).toBe('Promise');
 });
 
-it('should work with different subtypes @smoke', async ({ page, browserName, browserMajorVersion }) => {
+it('should work with different subtypes @smoke', async ({ page, browserName }) => {
   expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
   expect((await page.evaluateHandle('12')).toString()).toBe('12');
   expect((await page.evaluateHandle('true')).toString()).toBe('true');
@@ -71,7 +71,7 @@ it('should work with different subtypes @smoke', async ({ page, browserName, bro
   expect((await page.evaluateHandle('new WeakMap()')).toString()).toBe('WeakMap');
   expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('WeakSet');
   expect((await page.evaluateHandle('new Error()')).toString()).toContain('Error');
-  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe((browserName === 'chromium' && browserMajorVersion >= 111) ? 'Proxy(Object)' : 'Proxy');
+  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe((browserName === 'chromium') ? 'Proxy(Object)' : 'Proxy');
 });
 
 it('should work with previewable subtypes', async ({ page, browserName }) => {
