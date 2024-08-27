@@ -725,17 +725,19 @@ export const test = base.extend({
 
 ## Adding global beforeEach/afterEach hooks
 
-[`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures with `scope: 'test'` like this:
+[`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures like this:
 
 ```ts title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
   forEachTest: [async ({ page, baseURL }, use) => {
+    // This code runs before every test.
     await page.goto('http://localhost:8000');
     await use();
+    // This code runs after every test.
     console.log('Last URL:', page.url());
-  }, { scope: 'test', auto: true } ],  // starts automatically for every test, we pass "auto" for that.
+  }, { auto: true }],  // starts automatically for every test, we pass "auto" for that.
 });
 ```
 
@@ -759,11 +761,13 @@ that run before/after all tests in every file, you can declare them as auto fixt
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  forEachWorker: [async ({ browser }, use) => {
-    console.log('Before All', browser.version());
+  forEachWorker: [async ({}, use) => {
+    // This code runs before all the tests in the worker process.
+    console.log(`Starting test worker ${test.info().workerIndex}`);
     await use();
-    console.log('After All', browser.version());
-  }, { scope: 'worker', auto: true } ],  // starts automatically for every worker, we pass "auto" for that.
+    // This code runs after all the tests in the worker process.
+    console.log(`Stopping test worker ${test.info().workerIndex}`);
+  }, { scope: 'worker', auto: true }],  // starts automatically for every worker, we pass "auto" for that.
 });
 ```
 
