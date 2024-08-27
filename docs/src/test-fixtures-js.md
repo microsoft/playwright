@@ -731,12 +731,12 @@ export const test = base.extend({
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  sharedAfterEach: [async ({ page, baseURL }, use) => {
+  sharedBeforeEach: [async ({ page, baseURL }, use) => {
     await page.goto(baseURL);
     await use();
   }, { scope: 'test', auto: true } ],  // starts automatically before every test, we pass "auto" for that.
 
-  sharedBeforeEach: [async ({ page }, use) => {
+  sharedAfterEach: [async ({ page }, use) => {
     await use();
     console.log('Test final URL:', page.url());
   }, { scope: 'test', auto: true } ],  // starts automatically after every test, we pass "auto" for that.
