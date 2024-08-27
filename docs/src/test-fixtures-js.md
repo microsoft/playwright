@@ -731,12 +731,12 @@ export const test = base.extend({
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  sharedAfterEach: [ async ({ page, baseURL }, use) => {
+  sharedAfterEach: [async ({ page, baseURL }, use) => {
     await page.goto(baseURL);
     await use();
   }, { scope: 'test', auto: true } ],  // starts automatically before every test, we pass "auto" for that.
 
-  sharedBeforeEach: [ async ({ page }, use) => {
+  sharedBeforeEach: [async ({ page }, use) => {
     await use();
     console.log('Test final URL:', page.url());
   }, { scope: 'test', auto: true } ],  // starts automatically after every test, we pass "auto" for that.
@@ -763,12 +763,12 @@ that run before/after all tests in every file, you can define them as auto fixtu
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  sharedBeforeAll: [ async ({ browser }, use) => {
+  sharedBeforeAll: [async ({ browser }, use) => {
     console.log('Before All', browser.version());
     await use();
   }, { scope: 'worker', auto: true } ],  // starts automatically for every worker, we pass "auto" for that.
 
-  sharedAfterAll: [ async ({ browser }, use) => {
+  sharedAfterAll: [async ({ browser }, use) => {
     console.log('After All', browser.version());
     await use();
   }, { scope: 'worker', auto: true } ],  // starts automatically for every worker, we pass "auto" for that.
