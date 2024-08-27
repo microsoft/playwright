@@ -737,7 +737,7 @@ export const test = base.extend({
     await use();
     // This code runs after every test.
     console.log('Last URL:', page.url());
-  }, { auto: true }],  // starts automatically for every test, we pass "auto" for that.
+  }, { auto: true }],  // automatically starts for every test.
 });
 ```
 
@@ -767,7 +767,7 @@ export const test = base.extend({
     await use();
     // This code runs after all the tests in the worker process.
     console.log(`Stopping test worker ${test.info().workerIndex}`);
-  }, { scope: 'worker', auto: true }],  // starts automatically for every worker, we pass "auto" for that.
+  }, { scope: 'worker', auto: true }],  // automatically starts for every worker.
 });
 ```
 
