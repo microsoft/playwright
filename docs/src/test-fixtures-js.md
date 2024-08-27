@@ -722,3 +722,68 @@ export const test = base.extend({
   }, { title: 'my fixture' }],
 });
 ```
+
+## Adding global beforeEach/afterEach hooks
+
+[`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can define them as auto fixtures with `scope: 'test'` like this:
+
+```ts title="fixtures.ts"
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  sharedAfterEach: [ async ({ page, baseURL }, use) => {
+    await page.goto(baseURL);
+    await use();
+  }, { scope: 'test', auto: true } ],  // starts automatically before every test, we pass "auto" for that.
+
+  sharedBeforeEach: [ async ({ page }, use) => {
+    await use();
+    console.log('Test final URL:', page.url());
+  }, { scope: 'test', auto: true } ],  // starts automatically after every test, we pass "auto" for that.
+});
+```
+
+And then import the fixtures in all your tests:
+
+```ts title="mytest.spec.ts"
+import { test } from './fixtures';
+import { expect } from '@playwright/test';
+
+test('basic', async ({ page, baseURL }) => {
+  expect(page).toHaveURL(baseURL!);
+});
+```
+
+## Adding global beforeAll/afterAll hooks
+
+[`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks run before/after all tests declared in the same file and same [`method: Test.describe`] block (if any) once per worker process. If you want to declare hooks
+that run before/after all tests in every file, you can define them as auto fixtures with `scope: 'worker'` as follows:
+
+```ts title="fixtures.ts"
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  sharedBeforeAll: [ async ({ browser }, use) => {
+    console.log('Before All', browser.version());
+    await use();
+  }, { scope: 'worker', auto: true } ],  // starts automatically for every worker, we pass "auto" for that.
+
+  sharedAfterAll: [ async ({ browser }, use) => {
+    console.log('After All', browser.version());
+    await use();
+  }, { scope: 'worker', auto: true } ],  // starts automatically for every worker, we pass "auto" for that.
+});
+```
+
+And then import the fixtures in all your tests:
+
+```ts title="mytest.spec.ts"
+import { test } from './fixtures';
+import { expect } from '@playwright/test';
+
+test('basic', async ({ }) => {
+  // ...
+});
+```
+Note that the fixtures will still run once per [worker process](./test-parallel.md#worker-processes) but you don't need to redeclare them in every file.
+
