@@ -6,7 +6,7 @@ This project uses GitHub issues to track bugs and feature requests. Please searc
 
 For help and questions about using this project, please see the [docs site for Playwright][docs].
 
-Join our community [Discord Server][discord-server] to connect with other developers using Playwright and ask questions in our ['help-playwright'][discord-channel] forum,
+Join our community [Discord Server][discord-server] to connect with other developers using Playwright and ask questions in our 'help-playwright' forum.
 
 ## Microsoft Support Policy  
 
@@ -15,4 +15,3 @@ Support for Playwright is limited to the resources listed above.
 [gh-issues]: https://github.com/microsoft/playwright/issues/
 [docs]: https://playwright.dev/
 [discord-server]: https://aka.ms/playwright/discord
-[discord-channel]: https://discord.com/channels/807756831384403968/1054804523652231198
