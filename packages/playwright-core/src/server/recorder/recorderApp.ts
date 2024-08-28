@@ -24,7 +24,7 @@ import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
-import type { Recorder } from '../recorder';
+import type { Recorder, RecorderAppFactory } from '../recorder';
 import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
 
@@ -113,7 +113,15 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await mainFrame.goto(serverSideCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(recorder: Recorder, inspectedContext: BrowserContext, handleSIGINT: boolean | undefined): Promise<IRecorderApp> {
+  static factory(context: BrowserContext): RecorderAppFactory {
+    return async recorder => {
+      if (process.env.PW_CODEGEN_NO_INSPECTOR)
+        return new EmptyRecorderApp();
+      return await RecorderApp._open(recorder, context);
+    };
+  }
+
+  private static async _open(recorder: Recorder, inspectedContext: BrowserContext): Promise<IRecorderApp> {
     const sdkLanguage = inspectedContext.attribution.playwright.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
@@ -125,7 +133,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
         useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
-        handleSIGINT,
+        handleSIGINT: false,
         args: process.env.PWTEST_RECORDER_PORT ? [`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`] : [],
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
       }
@@ -170,11 +178,11 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {
     if (userGesture) {
-      if (this._recorder.mode() === 'inspecting') {
+      if (this._recorder?.mode() === 'inspecting') {
         this._recorder.setMode('standby');
         this._page.bringToFront();
       } else {
-        this._recorder.setMode('recording');
+        this._recorder?.setMode('recording');
       }
     }
     await this._page.mainFrame().evaluateExpression(((data: { selector: string, userGesture?: boolean }) => {

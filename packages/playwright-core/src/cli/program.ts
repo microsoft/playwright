@@ -571,7 +571,6 @@ async function codegen(options: Options & { target: string, output?: string, tes
     mode: 'recording',
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
-    handleSIGINT: false,
   });
   await openPage(context, url);
 }
