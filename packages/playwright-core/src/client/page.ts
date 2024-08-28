@@ -492,7 +492,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(script, arg);
+    const source = await evaluationScript(script, arg, arguments.length > 1);
     await this._channel.addInitScript({ source });
   }
 

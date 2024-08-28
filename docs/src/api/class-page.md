@@ -643,9 +643,9 @@ const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
 // Passing 42 as an argument to the default export function.
 await page.addInitScript({ path: mockPath }, 42);
 
-// Make sure to pass something even if you do not need to pass an argument.
+// Make sure to pass undefined even if you do not need to pass an argument.
 // This instructs Playwright to treat the file as a commonjs module.
-await page.addInitScript({ path: mockPath }, '');
+await page.addInitScript({ path: mockPath }, undefined);
 ```
 
 ### param: Page.addInitScript.script

@@ -308,7 +308,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void> {
-    const source = await evaluationScript(script, arg);
+    const source = await evaluationScript(script, arg, arguments.length > 1);
     await this._channel.addInitScript({ source });
   }
 
