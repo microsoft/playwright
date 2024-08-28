@@ -730,8 +730,8 @@ export const test = base.extend({
 ```ts title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
-export const test = base.extend({
-  forEachTest: [async ({ page, baseURL }, use) => {
+export const test = base.extend<{ forEachTest: void }>({
+  forEachTest: [async ({ page }, use) => {
     // This code runs before every test.
     await page.goto('http://localhost:8000');
     await use();
@@ -747,8 +747,9 @@ And then import the fixtures in all your tests:
 import { test } from './fixtures';
 import { expect } from '@playwright/test';
 
-test('basic', async ({ page, baseURL }) => {
-  expect(page).toHaveURL(baseURL!);
+test('basic', async ({ page }) => {
+  expect(page).toHaveURL('http://localhost:8000');
+  await page.goto('https://playwright.dev');
 });
 ```
 
@@ -760,7 +761,7 @@ that run before/after all tests in every file, you can declare them as auto fixt
 ```ts title="fixtures.ts"
 import { test as base } from '@playwright/test';
 
-export const test = base.extend({
+export const test = base.extend<{}, { forEachWorker: void }>({
   forEachWorker: [async ({}, use) => {
     // This code runs before all the tests in the worker process.
     console.log(`Starting test worker ${test.info().workerIndex}`);
