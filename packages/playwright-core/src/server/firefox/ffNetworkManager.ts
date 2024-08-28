@@ -226,7 +226,7 @@ class FFRouteImpl implements network.RouteDelegate {
     this._request = request;
   }
 
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._request._id,
       url: overrides.url,
