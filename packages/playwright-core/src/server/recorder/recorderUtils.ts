@@ -44,3 +44,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
   };
   return callLog;
 }
+
+export function buildFullSelector(framePath: string[], selector: string) {
+  return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
+}

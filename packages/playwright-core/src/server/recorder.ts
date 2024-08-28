@@ -28,7 +28,7 @@ import type { CallMetadata, InstrumentationListener, SdkObject } from './instrum
 import { ContextRecorder, generateFrameSelector } from './recorder/contextRecorder';
 import type { IRecorderApp } from './recorder/recorderApp';
 import { EmptyRecorderApp, RecorderApp } from './recorder/recorderApp';
-import { metadataToCallLog } from './recorder/recorderUtils';
+import { buildFullSelector, metadataToCallLog } from './recorder/recorderUtils';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -175,8 +175,7 @@ export class Recorder implements InstrumentationListener {
 
     await this._context.exposeBinding('__pw_recorderSetSelector', false, async ({ frame }, selector: string) => {
       const selectorChain = await generateFrameSelector(frame);
-      selectorChain.push(selector);
-      await this._recorderApp?.setSelector(selectorChain.join(' >> internal:control=enter-frame >> '), true);
+      await this._recorderApp?.setSelector(buildFullSelector(selectorChain, selector), true);
     });
 
     await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {

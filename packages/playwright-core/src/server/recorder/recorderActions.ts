@@ -37,28 +37,28 @@ export type ActionBase = {
   signals: Signal[],
 };
 
-export type ClickAction = ActionBase & {
-  name: 'click',
+export type ActionWithSelector = ActionBase & {
   selector: string,
+};
+
+export type ClickAction = ActionWithSelector & {
+  name: 'click',
   button: 'left' | 'middle' | 'right',
   modifiers: number,
   clickCount: number,
   position?: Point,
 };
 
-export type CheckAction = ActionBase & {
+export type CheckAction = ActionWithSelector & {
   name: 'check',
-  selector: string,
 };
 
-export type UncheckAction = ActionBase & {
+export type UncheckAction = ActionWithSelector & {
   name: 'uncheck',
-  selector: string,
 };
 
-export type FillAction = ActionBase & {
+export type FillAction = ActionWithSelector & {
   name: 'fill',
-  selector: string,
   text: string,
 };
 
@@ -83,40 +83,34 @@ export type PressAction = ActionBase & {
   modifiers: number,
 };
 
-export type SelectAction = ActionBase & {
+export type SelectAction = ActionWithSelector & {
   name: 'select',
-  selector: string,
   options: string[],
 };
 
-export type SetInputFilesAction = ActionBase & {
+export type SetInputFilesAction = ActionWithSelector & {
   name: 'setInputFiles',
-  selector: string,
   files: string[],
 };
 
-export type AssertTextAction = ActionBase & {
+export type AssertTextAction = ActionWithSelector & {
   name: 'assertText',
-  selector: string,
   text: string,
   substring: boolean,
 };
 
-export type AssertValueAction = ActionBase & {
+export type AssertValueAction = ActionWithSelector & {
   name: 'assertValue',
-  selector: string,
   value: string,
 };
 
-export type AssertCheckedAction = ActionBase & {
+export type AssertCheckedAction = ActionWithSelector & {
   name: 'assertChecked',
-  selector: string,
   checked: boolean,
 };
 
-export type AssertVisibleAction = ActionBase & {
+export type AssertVisibleAction = ActionWithSelector & {
   name: 'assertVisible',
-  selector: string,
 };
 
 export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction;

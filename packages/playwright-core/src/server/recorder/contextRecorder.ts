@@ -230,7 +230,7 @@ export class ContextRecorder extends EventEmitter {
     };
 
     this._collection.willPerformAction(actionInContext);
-    const success = await performAction(frame, action);
+    const success = await performAction(this._pageAliases, actionInContext);
     if (success) {
       this._collection.didPerformAction(actionInContext);
       this._setCommittedAfterTimeout(actionInContext);
