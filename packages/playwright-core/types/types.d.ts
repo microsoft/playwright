@@ -288,41 +288,8 @@ export interface Page {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
-   *
-   * **Bundling**
-   *
-   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
-   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
-   * commonjs module and pass `path` and `arg`.
-   *
-   * ```js
-   * // mocks/mockRandom.ts
-   * // This script can import other files.
-   * import { defaultValue } from './defaultValue';
-   *
-   * export default function(value?: number) {
-   *   window.Math.random = () => value ?? defaultValue;
-   * }
-   * ```
-   *
-   * ```js
-   * // tests/example.spec.ts
-   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
-   *
-   * // Passing 42 as an argument to the default export function.
-   * await page.addInitScript({ path: mockPath }, 42);
-   *
-   * // Make sure to pass something even if you do not need to pass an argument.
-   * // This instructs Playwright to treat the file as a commonjs module.
-   * await page.addInitScript({ path: mockPath }, '');
-   * ```
-   *
    * @param script Script to be evaluated in the page.
-   * @param arg Optional JSON-serializable argument to pass to `script`.
-   * - When `script` is a function, the argument is passed to it directly.
-   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
-   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
-   * argument.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
@@ -7733,41 +7700,8 @@ export interface BrowserContext {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
-   *
-   * **Bundling**
-   *
-   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
-   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
-   * commonjs module and pass `path` and `arg`.
-   *
-   * ```js
-   * // mocks/mockRandom.ts
-   * // This script can import other files.
-   * import { defaultValue } from './defaultValue';
-   *
-   * export default function(value?: number) {
-   *   window.Math.random = () => value ?? defaultValue;
-   * }
-   * ```
-   *
-   * ```js
-   * // tests/example.spec.ts
-   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
-   *
-   * // Passing 42 as an argument to the default export function.
-   * await context.addInitScript({ path: mockPath }, 42);
-   *
-   * // Make sure to pass something even if you do not need to pass an argument.
-   * // This instructs Playwright to treat the file as a commonjs module.
-   * await context.addInitScript({ path: mockPath }, '');
-   * ```
-   *
    * @param script Script to be evaluated in all pages in the browser context.
-   * @param arg Optional JSON-serializable argument to pass to `script`.
-   * - When `script` is a function, the argument is passed to it directly.
-   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
-   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
-   * argument.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 

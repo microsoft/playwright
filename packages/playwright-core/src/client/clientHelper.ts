@@ -28,37 +28,20 @@ export function envObjectToArray(env: types.Env): { name: string, value: string 
   return result;
 }
 
-export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg: any, addSourceUrl: boolean = true): Promise<string> {
+export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
   if (typeof fun === 'function') {
     const source = fun.toString();
     const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
     return `(${source})(${argString})`;
   }
-  if (isString(fun)) {
-    if (arg !== undefined)
-      throw new Error('Cannot evaluate a string with arguments');
+  if (arg !== undefined)
+    throw new Error('Cannot evaluate a string with arguments');
+  if (isString(fun))
     return fun;
-  }
-  if (fun.content !== undefined) {
-    if (arg !== undefined)
-      throw new Error('Cannot evaluate a string with arguments');
+  if (fun.content !== undefined)
     return fun.content;
-  }
   if (fun.path !== undefined) {
     let source = await fs.promises.readFile(fun.path, 'utf8');
-    if (arg !== undefined) {
-      // Assume a CJS module that has a function default export.
-      source = `(() => {
-        var exports = {}; var module = { exports };
-        ${source}
-        let __pw_result__ = module.exports;
-        if (__pw_result__ && typeof __pw_result__ === 'object' && ('default' in __pw_result__))
-          __pw_result__ = __pw_result__['default'];
-        if (typeof __pw_result__ !== 'function')
-          return __pw_result__;
-        return __pw_result__(${JSON.stringify(arg)});
-      })()`;
-    }
     if (addSourceUrl)
       source = addSourceUrlToScript(source, fun.path);
     return source;

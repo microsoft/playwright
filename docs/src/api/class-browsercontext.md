@@ -415,42 +415,13 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 [`method: Page.addInitScript`] is not defined.
 :::
 
-**Bundling**
-
-If you have a complex script split into several files, it needs to be bundled into a single file first. We recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a commonjs module and pass [`option: path`] and [`option: arg`].
-
-```js browser title="mocks/mockRandom.ts"
-// This script can import other files.
-import { defaultValue } from './defaultValue';
-
-export default function(value?: number) {
-  window.Math.random = () => value ?? defaultValue;
-}
-```
-
-```sh
-# bundle with esbuild
-esbuild mocks/mockRandom.ts --bundle --format=cjs --outfile=mocks/mockRandom.js
-```
-
-```js title="tests/example.spec.ts"
-const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
-
-// Passing 42 as an argument to the default export function.
-await context.addInitScript({ path: mockPath }, 42);
-
-// Make sure to pass something even if you do not need to pass an argument.
-// This instructs Playwright to treat the file as a commonjs module.
-await context.addInitScript({ path: mockPath }, '');
-```
-
 ### param: BrowserContext.addInitScript.script
 * since: v1.8
 * langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
-    current working directory.
-  - `content` ?<[string]> Raw script content.
+    current working directory. Optional.
+  - `content` ?<[string]> Raw script content. Optional.
 
 Script to be evaluated in all pages in the browser context.
 
@@ -466,9 +437,7 @@ Script to be evaluated in all pages in the browser context.
 * langs: js
 - `arg` ?<[Serializable]>
 
-Optional JSON-serializable argument to pass to [`param: script`].
-* When `script` is a function, the argument is passed to it directly.
-* When `script` is a file path, the file is assumed to be a commonjs module. The default export, either `module.exports` or `module.exports.default`, should be a function that's going to be executed with this argument.
+Optional argument to pass to [`param: script`] (only supported when passing a function).
 
 ### param: BrowserContext.addInitScript.path
 * since: v1.8
