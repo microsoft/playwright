@@ -1063,3 +1063,44 @@ test('should throw error when using .equals()', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('expect.extendImmutable should work', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      const expectFoo = expect.extendImmutable({
+        toFoo() {
+          console.log('%%foo');
+          return { pass: true };
+        }
+      });
+      const expectFoo2 = expect.extendImmutable({
+        toFoo() {
+          console.log('%%foo2');
+          return { pass: true };
+        }
+      });
+      const expectBar = expectFoo.extendImmutable({
+        toBar() {
+          console.log('%%bar');
+          return { pass: true };
+        }
+      });
+      test('logs', () => {
+        expect(expectFoo).not.toBe(expectFoo2);
+        expect(expectFoo).not.toBe(expectBar);
+
+        expectFoo().toFoo();
+        expectFoo2().toFoo();
+        expectBar().toFoo();
+        expectBar().toBar();
+      });
+    `
+  });
+  expect(result.outputLines).toEqual([
+    'foo',
+    'foo2',
+    'foo',
+    'bar',
+  ]);
+});

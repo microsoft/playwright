@@ -61,6 +61,7 @@ import {
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
 import { ExpectError, isExpectError } from './matcherHint';
+import { randomUUID } from 'node:crypto';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -104,11 +105,30 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessage = string | { message?: string };
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info));
+function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
 }
 
-function createExpect(info: ExpectMetaInfo) {
+function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
+
+  function extend(matchers: any, qualifier: string) {
+    const wrappedMatchers: any = {};
+    for (const [name, matcher] of Object.entries(matchers)) {
+      wrappedMatchers[qualifier + name] = function(...args: any[]) {
+        const { isNot, promise, utils } = this;
+        const newThis: ExpectMatcherState = {
+          isNot,
+          promise,
+          utils,
+          timeout: currentExpectTimeout()
+        };
+        (newThis as any).equals = throwUnsupportedExpectMatcherError;
+        return (matcher as any).call(newThis, ...args);
+      };
+    }
+    expectLibrary.extend(wrappedMatchers);
+  }
+
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
@@ -119,7 +139,7 @@ function createExpect(info: ExpectMetaInfo) {
           throw new Error('`expect.poll()` accepts only function as a first argument');
         newInfo.generator = actual as any;
       }
-      return createMatchers(actual, newInfo);
+      return createMatchers(actual, newInfo, prefix);
     },
 
     get: function(target: any, property: string) {
@@ -128,22 +148,17 @@ function createExpect(info: ExpectMetaInfo) {
 
       if (property === 'extend') {
         return (matchers: any) => {
-          const wrappedMatchers: any = {};
-          for (const [name, matcher] of Object.entries(matchers)) {
-            wrappedMatchers[name] = function(...args: any[]) {
-              const { isNot, promise, utils } = this;
-              const newThis: ExpectMatcherState = {
-                isNot,
-                promise,
-                utils,
-                timeout: currentExpectTimeout()
-              };
-              (newThis as any).equals = throwUnsupportedExpectMatcherError;
-              return (matcher as any).call(newThis, ...args);
-            };
-          }
-          expectLibrary.extend(wrappedMatchers);
+          extend(matchers, '');
           return expectInstance;
+        };
+      }
+
+      if (property === 'extendImmutable') {
+        return (matchers: any) => {
+          const key = randomUUID();
+          const qualifier = [...prefix, key];
+          extend(matchers, `${qualifier.join(':')}$`);
+          return createExpect(info, qualifier);
         };
       }
 
@@ -241,13 +256,26 @@ type ExpectMetaInfo = {
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
+  private _prefix: string[];
 
-  constructor(info: ExpectMetaInfo) {
+  constructor(info: ExpectMetaInfo, prefix: string[]) {
     this._info = { ...info };
+    this._prefix = prefix;
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
+
+    if (typeof matcherName === 'string') {
+      for (let i = this._prefix.length; i > 0; i--) {
+        const qualifiedName = `${this._prefix.slice(0, i).join(':')}$${matcherName}`;
+        if (Reflect.has(target, qualifiedName)) {
+          matcher = Reflect.get(target, qualifiedName, receiver);
+          break;
+        }
+      }
+    }
+
     if (typeof matcherName !== 'string')
       return matcher;
     if (matcher === undefined)
