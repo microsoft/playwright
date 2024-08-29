@@ -29,7 +29,10 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
       });
     `,
     'globalSetup.ts': `
-      export default () => console.log('\\n%%from-global-setup');
+      export default (config) => {
+        console.log('\\n%%from-global-setup');
+        console.log('%%' + JSON.stringify(config));
+      };
     `,
     'globalTeardown.ts': `
       export default (config) => {
@@ -46,13 +49,15 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
   await page.getByTitle('Toggle output').click();
-  await expect(page.getByTestId('output')).toContainText('from-global-setup');
+  const output = page.getByTestId('output');
+  await expect(output).toContainText('from-global-setup');
+  await expect(output).toContainText(`"outputDir":"${testInfo.outputPath('foo')}"`);
   await page.close();
 
   await expect.poll(() => testProcess.outputLines()).toContain('from-global-teardown');
 
-  const config = JSON.parse(testProcess.outputLines()[1]);
-  expect(config.projects[0].outputDir).toEqual(testInfo.outputPath('foo'));
+  const teardownConfig = JSON.parse(testProcess.outputLines()[1]);
+  expect(teardownConfig.projects[0].outputDir).toEqual(testInfo.outputPath('foo'));
 });
 
 test('should teardown on sigint', async ({ runUITest, nodeVersion }) => {
