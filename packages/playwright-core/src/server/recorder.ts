@@ -72,7 +72,7 @@ export class Recorder implements InstrumentationListener {
 
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._mode = params.mode || 'none';
-    this._contextRecorder = new ContextRecorder(context, params);
+    this._contextRecorder = new ContextRecorder(context, params, {});
     this._context = context;
     this._omitCallTracking = !!params.omitCallTracking;
     this._debugger = context.debugger();
@@ -160,7 +160,6 @@ export class Recorder implements InstrumentationListener {
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
         overlay: this._overlayState,
-        generateSimpleDom: false,
       };
       return uiState;
     });
