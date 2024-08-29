@@ -17,8 +17,6 @@
 import { test as it, expect } from './pageTest';
 
 it('should work', async function({ page, browserName }) {
-  it.skip(browserName === 'firefox', 'forceGarbageCollection is supported only in Chromium and WebKit');
-
   await page.evaluate(() => {
     globalThis.thing = {};
     globalThis.something = new WeakRef(globalThis.thing);

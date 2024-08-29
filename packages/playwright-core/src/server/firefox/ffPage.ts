@@ -401,7 +401,7 @@ export class FFPage implements PageDelegate {
   }
 
   async forceGarbageCollection(): Promise<void> {
-    // Not supported in Firefox.
+    await this._session.send('Heap.collectGarbage');
   }
 
   async addInitScript(initScript: InitScript, worldName?: string): Promise<void> {
