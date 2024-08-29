@@ -17320,8 +17320,8 @@ export interface APIResponse {
   headers(): { [key: string]: string; };
 
   /**
-   * An array with all the request HTTP headers associated with this response. Header names are not lower-cased. Headers
-   * with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   * An array with all the response HTTP headers associated with this response. Header names are not lower-cased.
+   * Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
   headersArray(): Array<{
     /**
