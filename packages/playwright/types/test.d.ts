@@ -1825,8 +1825,10 @@ type TestDetailsAnnotation = {
   description?: string;
 };
 
+type TestDetailsTag = `@${string}`;
+
 export type TestDetails = {
-  tag?: string | string[];
+  tag?: TestDetailsTag | TestDetailsTag[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 

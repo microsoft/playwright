@@ -147,6 +147,18 @@ test('should enforce @ symbol', async ({ runInlineTest }) => {
   expect(result.output).toContain(`Error: Tag must start with "@" symbol, got "foo" instead.`);
 });
 
+test('types should enforce @ symbol', async ({ runTSC }) => {
+  const result = await runTSC({
+    'stdio.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', { tag: 'foo' }, () => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(2);
+  expect(result.output).toContain('error TS2322: Type \'"foo"\' is not assignable to type \'`@${string}` | `@${string}`[] | undefined');
+});
+
 test('should be included in testInfo', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
