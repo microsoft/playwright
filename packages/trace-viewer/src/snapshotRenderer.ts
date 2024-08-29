@@ -32,6 +32,7 @@ export class SnapshotRenderer {
   private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
+  private _renderResults = new WeakMap<FrameSnapshot, string>();
 
   constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
     this._resources = resources;
@@ -61,70 +62,70 @@ export class SnapshotRenderer {
         return escapeHTML(n);
       }
 
-      if (!(n as any)._string) {
-        if (isSubtreeReferenceSnapshot(n)) {
-          // Node reference.
-          const referenceIndex = snapshotIndex - n[0][0];
-          if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
-            const nodes = snapshotNodes(this._snapshots[referenceIndex]);
-            const nodeIndex = n[0][1];
-            if (nodeIndex >= 0 && nodeIndex < nodes.length)
-              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
-          }
-        } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
-          const [name, nodeAttrs, ...children] = n;
-          // Element node.
-          // Note that <noscript> will not be rendered by default in the trace viewer, because
-          // JS is enabled. So rename it to <x-noscript>.
-          const nodeName = name === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
-          const attrs = Object.entries(nodeAttrs || {});
-          const builder: string[] = [];
-          builder.push('<', nodeName);
-          const kCurrentSrcAttribute = '__playwright_current_src__';
-          const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
-          const isAnchor = nodeName === 'A';
-          const isImg = nodeName === 'IMG';
-          const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
-          const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
-          for (const [attr, value] of attrs) {
-            let attrName = attr;
-            if (isFrame && attr.toLowerCase() === 'src') {
-              // Never set relative URLs as <iframe src> - they start fetching frames immediately.
-              attrName = '__playwright_src__';
-            }
-            if (isImg && attr === kCurrentSrcAttribute) {
-              // Render currentSrc for images, so that trace viewer does not accidentally
-              // resolve srcset to a different source.
-              attrName = 'src';
-            }
-            if (['src', 'srcset'].includes(attr.toLowerCase()) && (isImgWithCurrentSrc || isSourceInsidePictureWithCurrentSrc)) {
-              // Disable actual <img src>, <img srcset>, <source src> and <source srcset> if
-              // we will be using the currentSrc instead.
-              attrName = '_' + attrName;
-            }
-            let attrValue = value;
-            if (isAnchor && attr.toLowerCase() === 'href')
-              attrValue = 'link://' + value;
-            else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
-              attrValue = rewriteURLForCustomProtocol(value);
-            builder.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
-          }
-          builder.push('>');
-          for (const child of children)
-            builder.push(visit(child, snapshotIndex, nodeName, attrs));
-          if (!autoClosing.has(nodeName))
-            builder.push('</', nodeName, '>');
-          (n as any)._string = builder.join('');
-        } else {
-          // Why are we here? Let's not throw, just in case.
-          (n as any)._string = '';
+      if (isSubtreeReferenceSnapshot(n)) {
+        // Node reference.
+        const referenceIndex = snapshotIndex - n[0][0];
+        if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
+          const nodes = snapshotNodes(this._snapshots[referenceIndex]);
+          const nodeIndex = n[0][1];
+          if (nodeIndex >= 0 && nodeIndex < nodes.length)
+            return visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
         }
+      } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
+        const [name, nodeAttrs, ...children] = n;
+        // Element node.
+        // Note that <noscript> will not be rendered by default in the trace viewer, because
+        // JS is enabled. So rename it to <x-noscript>.
+        const nodeName = name === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
+        const attrs = Object.entries(nodeAttrs || {});
+        const builder: string[] = [];
+        builder.push('<', nodeName);
+        const kCurrentSrcAttribute = '__playwright_current_src__';
+        const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
+        const isAnchor = nodeName === 'A';
+        const isImg = nodeName === 'IMG';
+        const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
+        const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+        for (const [attr, value] of attrs) {
+          let attrName = attr;
+          if (isFrame && attr.toLowerCase() === 'src') {
+            // Never set relative URLs as <iframe src> - they start fetching frames immediately.
+            attrName = '__playwright_src__';
+          }
+          if (isImg && attr === kCurrentSrcAttribute) {
+            // Render currentSrc for images, so that trace viewer does not accidentally
+            // resolve srcset to a different source.
+            attrName = 'src';
+          }
+          if (['src', 'srcset'].includes(attr.toLowerCase()) && (isImgWithCurrentSrc || isSourceInsidePictureWithCurrentSrc)) {
+            // Disable actual <img src>, <img srcset>, <source src> and <source srcset> if
+            // we will be using the currentSrc instead.
+            attrName = '_' + attrName;
+          }
+          let attrValue = value;
+          if (isAnchor && attr.toLowerCase() === 'href')
+            attrValue = 'link://' + value;
+          else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
+            attrValue = rewriteURLForCustomProtocol(value);
+          builder.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
+        }
+        builder.push('>');
+        for (const child of children)
+          builder.push(visit(child, snapshotIndex, nodeName, attrs));
+        if (!autoClosing.has(nodeName))
+          builder.push('</', nodeName, '>');
+        return builder.join('');
+      } else {
+        // Why are we here? Let's not throw, just in case.
+        return '';
       }
-      return (n as any)._string;
     };
 
     const snapshot = this._snapshot;
-    let html = visit(snapshot.html, this._index, undefined, undefined);
+    if (!this._renderResults.has(snapshot))
+      this._renderResults.set(snapshot, visit(snapshot.html, this._index, undefined, undefined));
+
+    let html = this._renderResults.get(snapshot);
     if (!html)
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
