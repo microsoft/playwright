@@ -29,9 +29,10 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
       });
     `,
     'globalSetup.ts': `
+      import { basename } from "node:path";
       export default (config) => {
         console.log('\\n%%from-global-setup');
-        console.log('%%' + JSON.stringify(config));
+        console.log("setupOutputDir: " + basename(config.projects[0].outputDir));
       };
     `,
     'globalTeardown.ts': `
@@ -51,7 +52,7 @@ test('should run global setup and teardown', async ({ runUITest }, testInfo) => 
   await page.getByTitle('Toggle output').click();
   const output = page.getByTestId('output');
   await expect(output).toContainText('from-global-setup');
-  await expect(output).toContainText(`"outputDir":"${testInfo.outputPath('foo')}"`);
+  await expect(output).toContainText('setupOutputDir: foo');
   await page.close();
 
   await expect.poll(() => testProcess.outputLines()).toContain('from-global-teardown');
