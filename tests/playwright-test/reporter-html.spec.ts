@@ -802,6 +802,32 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
     });
 
+    test('should have link for opening HTML attachments in new tab', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            testInfo.attach('axe-report.html', {
+              contentType: 'text/html',
+              body: '<h1>Axe Report</h1>',
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByText('passing', { exact: true }).click();
+
+      const [newTab] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.getByText('axe-report.html', { exact: true }).click(),
+      ]);
+
+      await expect(newTab).toHaveURL(/^blob:/);
+      await expect(newTab.getByText('Axe Report')).toBeVisible();
+    });
+
     test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest, showReport, page }, testInfo) => {
       const result = await runInlineTest({
         'a.test.js': `
