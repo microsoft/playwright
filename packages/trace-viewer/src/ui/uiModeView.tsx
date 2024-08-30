@@ -73,6 +73,7 @@ export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
+  const [outputContainsError, setOutputContainsError] = React.useState(false);
   const [statusFilters, setStatusFilters] = React.useState<Map<string, boolean>>(new Map([
     ['passed', false],
     ['failed', false],
@@ -156,6 +157,9 @@ export const UIModeView: React.FC<{}> = ({
         } else {
           xtermDataSource.write(params.text!);
         }
+
+        if (params.type === 'stderr')
+          setOutputContainsError(true);
       }),
       testServerConnection.onClose(() => setIsDisconnected(true))
     ];
@@ -190,6 +194,7 @@ export const UIModeView: React.FC<{}> = ({
       },
       onError: error => {
         xtermDataSource.write((error.stack || error.value || '') + '\n');
+        setOutputContainsError(true);
       },
       pathSeparator,
     });
@@ -446,7 +451,7 @@ export const UIModeView: React.FC<{}> = ({
         <div className={clsx('vbox', !isShowingOutput && 'hidden')}>
           <Toolbar>
             <div className='section-title' style={{ flex: 'none' }}>Output</div>
-            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
+            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => { xtermDataSource.clear(); setOutputContainsError(false); }}></ToolbarButton>
             <div className='spacer'></div>
             <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
           </Toolbar>
@@ -466,7 +471,7 @@ export const UIModeView: React.FC<{}> = ({
           <img src='playwright-logo.svg' alt='Playwright logo' />
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='terminal' title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} style={outputContainsError ? { color: 'var(--vscode-minimap-errorHighlight)' } : undefined}/>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
