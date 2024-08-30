@@ -19,7 +19,7 @@ import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
 
-test('should run global setup and teardown', async ({ runUITest }) => {
+test('should run global setup and teardown', async ({ runUITest }, testInfo) => {
   const { page, testProcess } = await runUITest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
@@ -29,26 +29,36 @@ test('should run global setup and teardown', async ({ runUITest }) => {
       });
     `,
     'globalSetup.ts': `
-      export default () => console.log('\\n%%from-global-setup');
+      import { basename } from "node:path";
+      export default (config) => {
+        console.log('\\n%%from-global-setup');
+        console.log("setupOutputDir: " + basename(config.projects[0].outputDir));
+      };
     `,
     'globalTeardown.ts': `
-      export default () => console.log('\\n%%from-global-teardown');
+      export default (config) => {
+        console.log('\\n%%from-global-teardown');
+        console.log('%%' + JSON.stringify(config));
+      };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {});
     `
-  });
+  }, undefined, { additionalArgs: ['--output=foo'] });
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
   await page.getByTitle('Toggle output').click();
-  await expect(page.getByTestId('output')).toContainText('from-global-setup');
+  const output = page.getByTestId('output');
+  await expect(output).toContainText('from-global-setup');
+  await expect(output).toContainText('setupOutputDir: foo');
   await page.close();
 
-  await expect.poll(() => testProcess.outputLines()).toEqual([
-    'from-global-teardown',
-  ]);
+  await expect.poll(() => testProcess.outputLines()).toContain('from-global-teardown');
+
+  const teardownConfig = JSON.parse(testProcess.outputLines()[1]);
+  expect(teardownConfig.projects[0].outputDir).toEqual(testInfo.outputPath('foo'));
 });
 
 test('should teardown on sigint', async ({ runUITest, nodeVersion }) => {
