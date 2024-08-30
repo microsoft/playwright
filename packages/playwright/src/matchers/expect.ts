@@ -105,11 +105,13 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessage = string | { message?: string };
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
+function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[], parentPrefixes: string[][]): any {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, [prefix, ...parentPrefixes]));
 }
 
-function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
+const getPrefixSymbol = Symbol('get prefix');
+
+function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixes: string[][] = []) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
@@ -120,10 +122,10 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
           throw new Error('`expect.poll()` accepts only function as a first argument');
         newInfo.generator = actual as any;
       }
-      return createMatchers(actual, newInfo, prefix);
+      return createMatchers(actual, newInfo, prefix, parentPrefixes);
     },
 
-    get: function(target: any, property: string) {
+    get: function(target: any, property: string | typeof getPrefixSymbol) {
       if (property === 'configure')
         return configure;
 
@@ -149,7 +151,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
           }
           expectLibrary.extend(wrappedMatchers);
 
-          return createExpect(info, qualifier);
+          return createExpect(info, qualifier, parentPrefixes);
         };
       }
 
@@ -158,6 +160,9 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
           return configure({ soft: true })(actual, messageOrOptions) as any;
         };
       }
+
+      if (property === getPrefixSymbol)
+        return { prefix, parentPrefixes };
 
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
@@ -247,22 +252,24 @@ type ExpectMetaInfo = {
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
-  private _prefix: string[];
+  private _prefixes: string[][];
 
-  constructor(info: ExpectMetaInfo, prefix: string[]) {
+  constructor(info: ExpectMetaInfo, prefixes: string[][]) {
     this._info = { ...info };
-    this._prefix = prefix;
+    this._prefixes = prefixes;
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
 
     if (typeof matcherName === 'string') {
-      for (let i = this._prefix.length; i > 0; i--) {
-        const qualifiedName = `${this._prefix.slice(0, i).join(':')}$${matcherName}`;
-        if (Reflect.has(target, qualifiedName)) {
-          matcher = Reflect.get(target, qualifiedName, receiver);
-          break;
+      for (const prefix of this._prefixes) {
+        for (let i = prefix.length; i > 0; i--) {
+          const qualifiedName = `${prefix.slice(0, i).join(':')}$${matcherName}`;
+          if (Reflect.has(target, qualifiedName)) {
+            matcher = Reflect.get(target, qualifiedName, receiver);
+            break;
+          }
         }
       }
     }
@@ -397,5 +404,11 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
 export const expect: Expect<{}> = createExpect({}).extend(customMatchers);
 
 export function mergeExpects(...expects: any[]) {
-  return expect;
+  const parentPrefixes = expects.flatMap(e => {
+    const internals = e[getPrefixSymbol];
+    if (!internals) // non-playwright expects mutate the global expect, so we don't need to do anything special
+      return [];
+    return [internals.prefix, ...internals.parentPrefixes];
+  });
+  return createExpect({}, undefined, parentPrefixes);
 }
