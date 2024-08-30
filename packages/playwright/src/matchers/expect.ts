@@ -110,25 +110,6 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[])
 }
 
 function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
-
-  function extend(matchers: any, qualifier: string) {
-    const wrappedMatchers: any = {};
-    for (const [name, matcher] of Object.entries(matchers)) {
-      wrappedMatchers[qualifier + name] = function(...args: any[]) {
-        const { isNot, promise, utils } = this;
-        const newThis: ExpectMatcherState = {
-          isNot,
-          promise,
-          utils,
-          timeout: currentExpectTimeout()
-        };
-        (newThis as any).equals = throwUnsupportedExpectMatcherError;
-        return (matcher as any).call(newThis, ...args);
-      };
-    }
-    expectLibrary.extend(wrappedMatchers);
-  }
-
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
@@ -148,16 +129,26 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = []) {
 
       if (property === 'extend') {
         return (matchers: any) => {
-          extend(matchers, '');
-          return expectInstance;
-        };
-      }
+          const qualifier = [...prefix, randomUUID()];
 
-      if (property === 'extendImmutable') {
-        return (matchers: any) => {
-          const key = randomUUID();
-          const qualifier = [...prefix, key];
-          extend(matchers, `${qualifier.join(':')}$`);
+          const wrappedMatchers: any = {};
+          for (const [name, matcher] of Object.entries(matchers)) {
+            const key = qualifier.join(':') + '$' + name;
+            wrappedMatchers[key] = function(...args: any[]) {
+              const { isNot, promise, utils } = this;
+              const newThis: ExpectMatcherState = {
+                isNot,
+                promise,
+                utils,
+                timeout: currentExpectTimeout()
+              };
+              (newThis as any).equals = throwUnsupportedExpectMatcherError;
+              return (matcher as any).call(newThis, ...args);
+            };
+            Object.defineProperty(wrappedMatchers[key], 'name', { value: name });
+          }
+          expectLibrary.extend(wrappedMatchers);
+
           return createExpect(info, qualifier);
         };
       }
