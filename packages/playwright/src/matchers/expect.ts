@@ -189,7 +189,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
         newInfo.pollIntervals = configuration._poll.intervals;
       }
     }
-    return createExpect(newInfo);
+    return createExpect(newInfo, prefix, parentPrefixes);
   };
 
   return expectInstance;
