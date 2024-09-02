@@ -270,10 +270,12 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (typeof matcherName !== 'string')
       return matcher;
 
+    let resolvedMatcherName = matcherName;
     for (let i = this._prefix.length; i > 0; i--) {
       const qualifiedName = qualifiedMatcherName(this._prefix.slice(0, i), matcherName);
       if (Reflect.has(target, qualifiedName)) {
         matcher = Reflect.get(target, qualifiedName, receiver);
+        resolvedMatcherName = qualifiedName;
         break;
       }
     }
@@ -288,7 +290,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (this._info.isPoll) {
       if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -318,6 +320,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const step = testInfo._addStep(stepInfo);
 
       const reportStepError = (jestError: Error | unknown) => {
+        console.error(jestError);
         const error = isExpectError(jestError) ? new ExpectError(jestError, customMessage, stackFrames) : jestError;
         step.complete({ error });
         if (this._info.isSoft)
@@ -348,7 +351,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   }
 }
 
-async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
+async function pollMatcher(qualifiedMatcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
   const testInfo = currentTestInfo();
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
@@ -361,7 +364,7 @@ async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: numb
     if (isNot)
       expectInstance = expectInstance.not;
     try {
-      expectInstance[matcherName].call(expectInstance, ...args);
+      expectInstance[qualifiedMatcherName].call(expectInstance, ...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
       return { continuePolling: true, result: error };

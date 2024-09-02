@@ -172,7 +172,9 @@ test('should support .not predicate', async ({ runInlineTest }) => {
 test('should support custom matchers', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      expect.extend({
+      import { test, expect as baseExpect } from '@playwright/test';
+
+      const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -191,10 +193,9 @@ test('should support custom matchers', async ({ runInlineTest }) => {
         },
       });
 
-      import { test, expect } from '@playwright/test';
       test('should poll', async () => {
         let i = 0;
-        await test.expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
+        await expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
       });
     `
   });
