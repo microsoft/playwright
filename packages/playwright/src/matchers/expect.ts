@@ -105,17 +105,17 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessage = string | { message?: string };
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[], parentPrefixes: string[][]): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, [prefix, ...parentPrefixes]));
+function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
 }
 
-const getPrefixSymbol = Symbol('get prefix');
+const getCustomMatchersSymbol = Symbol('get prefix');
 
 function qualifiedMatcherName(qualifier: string[], matcherName: string) {
   return qualifier.join(':') + '$' + matcherName;
 }
 
-function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixes: string[][] = []) {
+function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Record<string, Function>) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
@@ -126,10 +126,10 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
           throw new Error('`expect.poll()` accepts only function as a first argument');
         newInfo.generator = actual as any;
       }
-      return createMatchers(actual, newInfo, prefix, parentPrefixes);
+      return createMatchers(actual, newInfo, prefix);
     },
 
-    get: function(target: any, property: string | typeof getPrefixSymbol) {
+    get: function(target: any, property: string | typeof getCustomMatchersSymbol) {
       if (property === 'configure')
         return configure;
 
@@ -138,6 +138,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
           const qualifier = [...prefix, createGuid()];
 
           const wrappedMatchers: any = {};
+          const extendedMatchers: any = { ...customMatchers };
           for (const [name, matcher] of Object.entries(matchers)) {
             const key = qualifiedMatcherName(qualifier, name);
             wrappedMatchers[key] = function(...args: any[]) {
@@ -152,10 +153,11 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
               return (matcher as any).call(newThis, ...args);
             };
             Object.defineProperty(wrappedMatchers[key], 'name', { value: name });
+            extendedMatchers[name] = wrappedMatchers[key];
           }
           expectLibrary.extend(wrappedMatchers);
 
-          return createExpect(info, qualifier, parentPrefixes);
+          return createExpect(info, qualifier, extendedMatchers);
         };
       }
 
@@ -165,8 +167,8 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
         };
       }
 
-      if (property === getPrefixSymbol)
-        return { prefix, parentPrefixes };
+      if (property === getCustomMatchersSymbol)
+        return customMatchers;
 
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
@@ -193,7 +195,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
         newInfo.pollIntervals = configuration._poll.intervals;
       }
     }
-    return createExpect(newInfo, prefix, parentPrefixes);
+    return createExpect(newInfo, prefix, customMatchers);
   };
 
   return expectInstance;
@@ -256,11 +258,11 @@ type ExpectMetaInfo = {
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
-  private _prefixes: string[][];
+  private _prefix: string[];
 
-  constructor(info: ExpectMetaInfo, prefixes: string[][]) {
+  constructor(info: ExpectMetaInfo, prefix: string[]) {
     this._info = { ...info };
-    this._prefixes = prefixes;
+    this._prefix = prefix;
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
@@ -268,13 +270,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (typeof matcherName !== 'string')
       return matcher;
 
-    for (const prefix of this._prefixes) {
-      for (let i = prefix.length; i > 0; i--) {
-        const qualifiedName = qualifiedMatcherName(prefix.slice(0, i), matcherName);
-        if (Reflect.has(target, qualifiedName)) {
-          matcher = Reflect.get(target, qualifiedName, receiver);
-          break;
-        }
+    for (let i = this._prefix.length; i > 0; i--) {
+      const qualifiedName = qualifiedMatcherName(this._prefix.slice(0, i), matcherName);
+      if (Reflect.has(target, qualifiedName)) {
+        matcher = Reflect.get(target, qualifiedName, receiver);
+        break;
       }
     }
 
@@ -403,14 +403,15 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
   return value ? `(${value})` : '';
 }
 
-export const expect: Expect<{}> = createExpect({}).extend(customMatchers);
+export const expect: Expect<{}> = createExpect({}, [], {}).extend(customMatchers);
 
 export function mergeExpects(...expects: any[]) {
-  const parentPrefixes = expects.flatMap(e => {
-    const internals = e[getPrefixSymbol];
+  let merged = expect;
+  for (const e of expects) {
+    const internals = e[getCustomMatchersSymbol];
     if (!internals) // non-playwright expects mutate the global expect, so we don't need to do anything special
-      return [];
-    return [internals.prefix, ...internals.parentPrefixes];
-  });
-  return createExpect({}, undefined, parentPrefixes);
+      continue;
+    merged = merged.extend(internals);
+  }
+  return merged;
 }

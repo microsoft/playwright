@@ -1008,8 +1008,8 @@ test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC 
 test('should throw error when using .equals()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      import { test as base, expect } from '@playwright/test';
-      expect.extend({
+      import { test as base, expect as baseExpect } from '@playwright/test';
+      export const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           this.equals(1, 2);
         },
@@ -1017,10 +1017,10 @@ test('should throw error when using .equals()', async ({ runInlineTest }) => {
       export const test = base;
     `,
     'expect-test.spec.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('numeric ranges', () => {
-        test.expect(() => {
-          test.expect(100).toBeWithinRange(90, 110);
+        expect(() => {
+          expect(100).toBeWithinRange(90, 110);
         }).toThrowError('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
       });
     `
@@ -1029,23 +1029,23 @@ test('should throw error when using .equals()', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('expect.extendImmutable should work', async ({ runInlineTest }) => {
+test('expect.extend should be immutable', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       import { test, expect } from '@playwright/test';
-      const expectFoo = expect.extendImmutable({
+      const expectFoo = expect.extend({
         toFoo() {
           console.log('%%foo');
           return { pass: true };
         }
       });
-      const expectFoo2 = expect.extendImmutable({
+      const expectFoo2 = expect.extend({
         toFoo() {
           console.log('%%foo2');
           return { pass: true };
         }
       });
-      const expectBar = expectFoo.extendImmutable({
+      const expectBar = expectFoo.extend({
         toBar() {
           console.log('%%bar');
           return { pass: true };
