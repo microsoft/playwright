@@ -111,6 +111,10 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[],
 
 const getPrefixSymbol = Symbol('get prefix');
 
+function qualifiedMatcherName(qualifier: string[], matcherName: string) {
+  return qualifier.join(':') + '$' + matcherName;
+}
+
 function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixes: string[][] = []) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
@@ -135,7 +139,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
 
           const wrappedMatchers: any = {};
           for (const [name, matcher] of Object.entries(matchers)) {
-            const key = qualifier.join(':') + '$' + name;
+            const key = qualifiedMatcherName(qualifier, name);
             wrappedMatchers[key] = function(...args: any[]) {
               const { isNot, promise, utils } = this;
               const newThis: ExpectMatcherState = {
@@ -265,7 +269,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (typeof matcherName === 'string') {
       for (const prefix of this._prefixes) {
         for (let i = prefix.length; i > 0; i--) {
-          const qualifiedName = `${prefix.slice(0, i).join(':')}$${matcherName}`;
+          const qualifiedName = qualifiedMatcherName(prefix.slice(0, i), matcherName);
           if (Reflect.has(target, qualifiedName)) {
             matcher = Reflect.get(target, qualifiedName, receiver);
             break;
