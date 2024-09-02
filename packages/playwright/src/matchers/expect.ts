@@ -265,21 +265,19 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
+    if (typeof matcherName !== 'string')
+      return matcher;
 
-    if (typeof matcherName === 'string') {
-      for (const prefix of this._prefixes) {
-        for (let i = prefix.length; i > 0; i--) {
-          const qualifiedName = qualifiedMatcherName(prefix.slice(0, i), matcherName);
-          if (Reflect.has(target, qualifiedName)) {
-            matcher = Reflect.get(target, qualifiedName, receiver);
-            break;
-          }
+    for (const prefix of this._prefixes) {
+      for (let i = prefix.length; i > 0; i--) {
+        const qualifiedName = qualifiedMatcherName(prefix.slice(0, i), matcherName);
+        if (Reflect.has(target, qualifiedName)) {
+          matcher = Reflect.get(target, qualifiedName, receiver);
+          break;
         }
       }
     }
 
-    if (typeof matcherName !== 'string')
-      return matcher;
     if (matcher === undefined)
       throw new Error(`expect: Property '${matcherName}' not found.`);
     if (typeof matcher !== 'function') {
