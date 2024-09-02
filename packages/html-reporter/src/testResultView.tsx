@@ -67,15 +67,16 @@ export const TestResultView: React.FC<{
   anchor: 'video' | 'diff' | '',
 }> = ({ result, anchor }) => {
 
-  const { screenshots, videos, traces, otherAttachments, diffs } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, diffs, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const videos = attachments.filter(a => a.name === 'video');
     const traces = attachments.filter(a => a.name === 'trace');
+    const htmls = attachments.filter(a => a.contentType.startsWith('text/html'));
     const otherAttachments = new Set<TestAttachment>(attachments);
-    [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
+    [...screenshots, ...videos, ...traces, ...htmls].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, htmls };
   }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
@@ -135,7 +136,10 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip>}
 
-    {!!otherAttachments.size && <AutoChip header='Attachments'>
+    {!!(otherAttachments.size + htmls.length) && <AutoChip header='Attachments'>
+      {[...htmls].map((a, i) => (
+        <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)
+      )}
       {[...otherAttachments].map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
     </AutoChip>}
   </div>;
