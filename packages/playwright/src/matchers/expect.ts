@@ -16,6 +16,7 @@
 
 import {
   captureRawStack,
+  createGuid,
   isString,
   pollAgainstDeadline } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
@@ -61,7 +62,6 @@ import {
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
 import { ExpectError, isExpectError } from './matcherHint';
-import { randomUUID } from 'node:crypto';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -131,7 +131,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[] = [], parentPrefixe
 
       if (property === 'extend') {
         return (matchers: any) => {
-          const qualifier = [...prefix, randomUUID()];
+          const qualifier = [...prefix, createGuid()];
 
           const wrappedMatchers: any = {};
           for (const [name, matcher] of Object.entries(matchers)) {
