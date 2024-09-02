@@ -6567,15 +6567,17 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
+type PollMatchers<R, T, ExtendedMatchers> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: PollMatchers<R, T, ExtendedMatchers>;
+} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>;
+
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
-  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
-    /**
-     * If you know how to test something, `.not` lets you test its opposite.
-     */
-     not: BaseMatchers<Promise<void>, T>;
-  };
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>,T, ExtendedMatchers>
   extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
