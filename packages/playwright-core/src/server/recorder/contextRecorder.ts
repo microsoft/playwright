@@ -25,7 +25,6 @@ import type { ActionInContext, FrameDescription, LanguageGeneratorOptions, Langu
 import { languageSet } from '../codegen/languages';
 import type { Dialog } from '../dialog';
 import { Frame } from '../frames';
-import type { SimpleDomNode } from '../injected/simpleDom';
 import { Page } from '../page';
 import type * as actions from './recorderActions';
 import { performAction } from './recorderRunner';
@@ -34,6 +33,10 @@ import { RecorderCollection } from './recorderCollection';
 import { generateCode } from '../codegen/language';
 
 type BindingSource = { frame: Frame, page: Page };
+
+export interface ContextRecorderDelegate {
+  rewriteActionInContext?(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Promise<void>;
+}
 
 export class ContextRecorder extends EventEmitter {
   static Events = {
@@ -48,15 +51,17 @@ export class ContextRecorder extends EventEmitter {
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  private _delegate: ContextRecorderDelegate;
   private _recorderSources: Source[];
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams, delegate: ContextRecorderDelegate) {
     super();
     this._context = context;
     this._params = params;
+    this._delegate = delegate;
     this._recorderSources = [];
     const language = params.language || context.attribution.playwright.options.sdkLanguage;
     this.setOutput(language, params.outputFile);
@@ -134,11 +139,11 @@ export class ContextRecorder extends EventEmitter {
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
     await this._context.exposeBinding('__pw_recorderPerformAction', false,
-        (source: BindingSource, action: actions.PerformOnRecordAction, simpleDomNode?: SimpleDomNode) => this._performAction(source.frame, action, simpleDomNode));
+        (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
     await this._context.exposeBinding('__pw_recorderRecordAction', false,
-        (source: BindingSource, action: actions.Action, simpleDomNode?: SimpleDomNode) => this._recordAction(source.frame, action, simpleDomNode));
+        (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
     await this._context.extendInjectedScript(recorderSource.source);
   }
@@ -218,7 +223,7 @@ export class ContextRecorder extends EventEmitter {
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction, simpleDomNode?: SimpleDomNode) {
+  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
     // Commit last action so that no further signals are added to it.
     this._collection.commitLastAction();
 
@@ -226,8 +231,10 @@ export class ContextRecorder extends EventEmitter {
     const actionInContext: ActionInContext = {
       frame: frameDescription,
       action,
-      description: undefined,  // TODO: generate description based on simple dom node.
+      description: undefined,
     };
+
+    await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
 
     this._collection.willPerformAction(actionInContext);
     const success = await performAction(this._pageAliases, actionInContext);
@@ -239,7 +246,7 @@ export class ContextRecorder extends EventEmitter {
     }
   }
 
-  private async _recordAction(frame: Frame, action: actions.Action, simpleDomNode?: SimpleDomNode) {
+  private async _recordAction(frame: Frame, action: actions.Action) {
     // Commit last action so that no further signals are added to it.
     this._collection.commitLastAction();
 
@@ -247,8 +254,11 @@ export class ContextRecorder extends EventEmitter {
     const actionInContext: ActionInContext = {
       frame: frameDescription,
       action,
-      description: undefined,  // TODO: generate description based on simple dom node.
+      description: undefined,
     };
+
+    await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
+
     this._setCommittedAfterTimeout(actionInContext);
     this._collection.addAction(actionInContext);
   }

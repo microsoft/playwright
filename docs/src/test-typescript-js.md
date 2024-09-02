@@ -80,14 +80,14 @@ By default, Playwright will look up a closest tsconfig for each imported file by
 
 ```sh
 # Playwright will choose tsconfig automatically
-npx playwrigh test
+npx playwright test
 ```
 
 Alternatively, you can specify a single tsconfig file to use in the command line, and Playwright will use it for all imported files, not only test files.
 
 ```sh
 # Pass a specific tsconfig
-npx playwrigh test --tsconfig=tsconfig.test.json
+npx playwright test --tsconfig=tsconfig.test.json
 ```
 
 ## Manually compile tests with TypeScript

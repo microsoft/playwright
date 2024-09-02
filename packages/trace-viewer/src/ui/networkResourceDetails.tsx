@@ -59,7 +59,7 @@ const RequestTab: React.FunctionComponent<{
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.request.postData) {
-        const requestContentTypeHeader = resource.request.headers.find(q => q.name === 'Content-Type');
+        const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
         const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
         if (resource.request.postData._sha1) {
           const response = await fetch(`sha1/${resource.request.postData._sha1}`);

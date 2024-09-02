@@ -148,7 +148,10 @@ class TestServerDispatcher implements TestServerInterface {
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     await this.runGlobalTeardown();
 
-    const { config, error } = await this._loadConfig();
+    const overrides: ConfigCLIOverrides = {
+      outputDir: params.outputDir,
+    };
+    const { config, error } = await this._loadConfig(overrides);
     if (!config) {
       const { reporter, report } = await this._collectingInternalReporter();
       // Produce dummy config when it has an error.
@@ -256,6 +259,7 @@ class TestServerDispatcher implements TestServerInterface {
     const overrides: ConfigCLIOverrides = {
       repeatEach: 1,
       retries: 0,
+      outputDir: params.outputDir,
     };
     const { config, error } = await this._loadConfig(overrides);
     if (!config) {

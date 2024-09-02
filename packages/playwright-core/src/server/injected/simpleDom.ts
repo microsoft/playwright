@@ -77,10 +77,11 @@ function generate(injectedScript: InjectedScript, target?: Element): { dom: Simp
           const name = injectedScript.utils.getElementAccessibleName(element, false);
           const structuralId = String(++lastId);
           elements.set(structuralId, element);
-          const tag = renderTag(injectedScript, role, name, structuralId, { value });
-          if (element === target)
-            resultTarget = { tag, id: structuralId };
-          tokens.push(tag);
+          tokens.push(renderTag(injectedScript, role, name, structuralId, { value }));
+          if (element === target) {
+            const tagNoValue = renderTag(injectedScript, role, name, structuralId);
+            resultTarget = { tag: tagNoValue, id: structuralId };
+          }
           return;
         }
       }

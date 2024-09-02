@@ -16,6 +16,10 @@
 
 import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
+import type { Page } from '../page';
+import type { ActionInContext } from '../codegen/types';
+import type { Frame } from '../frames';
+import type * as actions from './recorderActions';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -47,4 +51,24 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
 
 export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
+}
+
+export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Frame {
+  const pageAlias = actionInContext.frame.pageAlias;
+  const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
+  if (!page)
+    throw new Error('Internal error: page not found');
+  return page.mainFrame();
+}
+
+export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
+  const pageAlias = actionInContext.frame.pageAlias;
+  const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
+  if (!page)
+    throw new Error('Internal error: page not found');
+  const fullSelector = buildFullSelector(actionInContext.frame.framePath, action.selector);
+  const result = await page.mainFrame().selectors.resolveFrameForSelector(fullSelector);
+  if (!result)
+    throw new Error('Internal error: frame not found');
+  return result.frame;
 }

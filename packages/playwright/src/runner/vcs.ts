@@ -30,7 +30,7 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
 
       const unknownRevision = error.output.some(line => line?.includes('unknown revision'));
       if (unknownRevision) {
-        const isShallowClone = childProcess.execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8',  stdio: 'pipe' }).trim() === 'true';
+        const isShallowClone = childProcess.execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8',  stdio: 'pipe', cwd: configDir }).trim() === 'true';
         if (isShallowClone) {
           throw new Error([
             `The repository is a shallow clone and does not have '${baseCommit}' available locally.`,

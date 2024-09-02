@@ -34,7 +34,8 @@ import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } fr
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, escapeHTML, escapeHTMLAttribute, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { generateSimpleDom, generateSimpleDomNode, selectorForSimpleDomNodeId } from './simpleDom';
+import { selectorForSimpleDomNodeId, generateSimpleDomNode } from './simpleDom';
+import type { SimpleDomNode } from './simpleDom';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -79,15 +80,12 @@ export class InjectedScript {
     endAriaCaches,
     escapeHTML,
     escapeHTMLAttribute,
-    generateSimpleDom: generateSimpleDom.bind(undefined, this),
-    generateSimpleDomNode: generateSimpleDomNode.bind(undefined, this),
     getAriaRole,
     getElementAccessibleDescription,
     getElementAccessibleName,
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
-    selectorForSimpleDomNodeId: selectorForSimpleDomNodeId.bind(undefined, this),
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -1313,6 +1311,17 @@ export class InjectedScript {
       return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
+  }
+
+  generateSimpleDomNode(selector: string): SimpleDomNode | undefined {
+    const element = this.querySelector(this.parseSelector(selector), this.document.documentElement, true);
+    if (!element)
+      return;
+    return generateSimpleDomNode(this, element);
+  }
+
+  selectorForSimpleDomNodeId(nodeId: string) {
+    return selectorForSimpleDomNodeId(this, nodeId);
   }
 }
 

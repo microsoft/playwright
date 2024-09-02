@@ -24,8 +24,8 @@ import clipPaths from './clipPaths';
 import type { SimpleDomNode } from '../simpleDom';
 
 interface RecorderDelegate {
-  performAction?(action: actions.PerformOnRecordAction, simpleDomNode?: SimpleDomNode): Promise<void>;
-  recordAction?(action: actions.Action, simpleDomNode?: SimpleDomNode): Promise<void>;
+  performAction?(action: actions.PerformOnRecordAction): Promise<void>;
+  recordAction?(action: actions.Action): Promise<void>;
   setSelector?(selector: string): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
   setOverlayState?(state: OverlayState): Promise<void>;
@@ -931,7 +931,6 @@ export class Recorder {
     testIdAttributeName: 'data-testid',
     language: 'javascript',
     overlay: { offsetX: 0 },
-    generateSimpleDom: false,
   };
   readonly document: Document;
   private _delegate: RecorderDelegate = {};
@@ -1186,13 +1185,11 @@ export class Recorder {
   }
 
   async performAction(action: actions.PerformOnRecordAction) {
-    const simpleDomNode = this._generateSimpleDomNode(action);
-    await this._delegate.performAction?.(action, simpleDomNode).catch(() => {});
+    await this._delegate.performAction?.(action).catch(() => {});
   }
 
   recordAction(action: actions.Action) {
-    const simpleDomNode = this._generateSimpleDomNode(action);
-    void this._delegate.recordAction?.(action, simpleDomNode);
+    void this._delegate.recordAction?.(action);
   }
 
   setOverlayState(state: { offsetX: number; }) {
@@ -1201,18 +1198,6 @@ export class Recorder {
 
   setSelector(selector: string) {
     void this._delegate.setSelector?.(selector);
-  }
-
-  private _generateSimpleDomNode(action: actions.Action): SimpleDomNode | undefined {
-    if (!this.state.generateSimpleDom)
-      return;
-    if (!('selector' in action))
-      return;
-
-    const element = this.injectedScript.querySelector(this.injectedScript.parseSelector(action.selector), this.document.documentElement, true);
-    if (!element)
-      return;
-    return this.injectedScript.utils.generateSimpleDomNode(element);
   }
 }
 
