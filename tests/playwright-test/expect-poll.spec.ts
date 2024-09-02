@@ -44,7 +44,10 @@ test('should poll predicate', async ({ runInlineTest }) => {
 test('should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test, expect as baseExpect } from '@playwright/test';
+      const expect = baseExpect.extend({
+        toBeWithinRange() { return { message: () => "is within range", pass: true }; },
+      })
       test('should poll sync predicate', async ({ page }) => {
         let i = 0;
         test.expect.poll(() => ++i).toBe(3);
@@ -57,6 +60,7 @@ test('should compile', async ({ runTSC }) => {
           return ++i;
         }).toBe(3);
         test.expect.poll(() => Promise.resolve(++i)).toBe(3);
+        expect.poll(() => Promise.resolve(++i)).toBeWithinRange();
 
         // @ts-expect-error
         await test.expect.poll(() => page.locator('foo')).toBeEnabled();
