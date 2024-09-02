@@ -25,6 +25,28 @@ function isSubtreeReferenceSnapshot(n: NodeSnapshot): n is SubtreeReferenceSnaps
   return Array.isArray(n) && Array.isArray(n[0]);
 }
 
+let cacheSize = 0;
+const cache = new Map<SnapshotRenderer, string>();
+const CACHE_SIZE = 300000000; // 300mb
+
+function cacheAndReturn(key: SnapshotRenderer, compute: () => string): string {
+  if (cache.has(key))
+    return cache.get(key)!;
+
+  const result = compute();
+
+  while (cacheSize + result.length > CACHE_SIZE) {
+    const first = cache.keys().next().value;
+    cacheSize -= cache.get(first)!.length;
+    cache.delete(first);
+  }
+
+  cache.set(key, result);
+  cacheSize += result.length;
+
+  return result;
+}
+
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
@@ -32,7 +54,6 @@ export class SnapshotRenderer {
   private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
-  private _renderResults = new WeakMap<FrameSnapshot, string>();
 
   constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
     this._resources = resources;
@@ -52,14 +73,17 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined): string => {
+    const result: string[] = [];
+    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
-          return rewriteURLsInStyleSheetForCustomProtocol(n);
-        return escapeHTML(n);
+          result.push(rewriteURLsInStyleSheetForCustomProtocol(n));
+        else
+          result.push(escapeHTML(n));
+        return;
       }
 
       if (isSubtreeReferenceSnapshot(n)) {
@@ -78,8 +102,7 @@ export class SnapshotRenderer {
         // JS is enabled. So rename it to <x-noscript>.
         const nodeName = name === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
         const attrs = Object.entries(nodeAttrs || {});
-        const builder: string[] = [];
-        builder.push('<', nodeName);
+        result.push('<', nodeName);
         const kCurrentSrcAttribute = '__playwright_current_src__';
         const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
         const isAnchor = nodeName === 'A';
@@ -107,34 +130,32 @@ export class SnapshotRenderer {
             attrValue = 'link://' + value;
           else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
             attrValue = rewriteURLForCustomProtocol(value);
-          builder.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
+          result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
-        builder.push('>');
+        result.push('>');
         for (const child of children)
-          builder.push(visit(child, snapshotIndex, nodeName, attrs));
+          visit(child, snapshotIndex, nodeName, attrs);
         if (!autoClosing.has(nodeName))
-          builder.push('</', nodeName, '>');
-        return builder.join('');
+          result.push('</', nodeName, '>');
+        return;
       } else {
         // Why are we here? Let's not throw, just in case.
-        return '';
+        return;
       }
     };
 
     const snapshot = this._snapshot;
-    if (!this._renderResults.has(snapshot))
-      this._renderResults.set(snapshot, visit(snapshot.html, this._index, undefined, undefined));
+    const html = cacheAndReturn(this, () => {
+      visit(snapshot.html, this._index, undefined, undefined);
 
-    let html = this._renderResults.get(snapshot);
-    if (!html)
-      return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
-
-    // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
-    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
-    html = prefix + [
-      '<style>*,*::before,*::after { visibility: hidden }</style>',
-      `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
-    ].join('') + html;
+      const html = result.join('');
+      // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
+      const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
+      return prefix + [
+        '<style>*,*::before,*::after { visibility: hidden }</style>',
+        `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
+      ].join('') + html;
+    });
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
