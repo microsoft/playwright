@@ -30,8 +30,14 @@ const cache = new Map<SnapshotRenderer, string>();
 const CACHE_SIZE = 300000000; // 300mb
 
 function cacheAndReturn(key: SnapshotRenderer, compute: () => string): string {
-  if (cache.has(key))
-    return cache.get(key)!;
+  if (cache.has(key)) {
+    const value = cache.get(key)!;
+    // reinserting makes this the least recently used entry
+    cache.delete(key);
+    cache.set(key, value);
+    return value;
+  }
+
 
   const result = compute();
 
