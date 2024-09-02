@@ -109,7 +109,7 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[])
   return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
 }
 
-const getCustomMatchersSymbol = Symbol('get prefix');
+const getCustomMatchersSymbol = Symbol('get custom matchers');
 
 function qualifiedMatcherName(qualifier: string[], matcherName: string) {
   return qualifier.join(':') + '$' + matcherName;
