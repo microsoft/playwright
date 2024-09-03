@@ -46,7 +46,6 @@ class InMemoryTransport extends EventEmitter implements TestServerTransport {
 
   onerror(listener: () => void): void {
     // no-op to fulfil the interface, the user of InMemoryTransport doesn't emit any errors.
-    this.on('error', listener);
   }
 
   onmessage(listener: (message: string) => void): void {
@@ -92,7 +91,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
   const dirtyTestIds = new Set<string>();
-  const onDirtyTests: { resolve?(): void } = {};
+  let onDirtyTests = new ManualPromise();
 
   let queue = Promise.resolve();
 
@@ -135,7 +134,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     printPrompt();
     const readCommandPromise = readCommand();
     await Promise.race([
-      new Promise<void>(resolve => { onDirtyTests.resolve = resolve; }),
+      onDirtyTests,
       readCommandPromise,
     ]);
     if (!readCommandPromise.isDone())
@@ -144,6 +143,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     const command = await readCommandPromise;
 
     if (command === 'changed') {
+      onDirtyTests = new ManualPromise();
       const testIds = [...dirtyTestIds];
       dirtyTestIds.clear();
       await runTests(options, testServerConnection, { testIds, title: 'files changed' });
