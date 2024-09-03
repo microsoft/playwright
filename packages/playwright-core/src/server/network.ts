@@ -224,6 +224,7 @@ export class Request extends SdkObject {
     };
   }
 
+  // TODO(bidi): remove once post body is available.
   _setBodySize(size: number) {
     this._bodySize = size;
   }

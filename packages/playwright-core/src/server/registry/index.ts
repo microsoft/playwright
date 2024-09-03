@@ -382,8 +382,8 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi-firefox';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android' | 'bidi-firefox';
 type BidiFirefoxChannel = 'bidi-firefox-stable';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
@@ -662,12 +662,12 @@ export class Registry {
     this._executables.push({
       type: 'browser',
       name: 'bidi-firefox',
-      browserName: 'bidi-firefox',
+      browserName: 'firefox',
       directory: bidiFirefox.dir,
       executablePath: () => bidiFirefoxExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('bidi-firefox', bidiFirefoxExecutable, bidiFirefox.installByDefault, sdkLanguage),
       installType: bidiFirefox.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'bidi-firefox', bidiFirefox.dir, ['firefox'], [], ['firefox']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', bidiFirefox.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(bidiFirefox),
       browserVersion: bidiFirefox.browserVersion,
       _install: () => this._downloadExecutable(bidiFirefox, bidiFirefoxExecutable),
@@ -741,7 +741,7 @@ export class Registry {
     return {
       type: 'channel',
       name,
-      browserName: 'bidi-firefox',
+      browserName: 'firefox',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

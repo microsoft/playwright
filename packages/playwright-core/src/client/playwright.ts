@@ -46,7 +46,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
-    this._experimentalBidiFirefox = BrowserType.from(initializer.bidiFirefox);
+    this._experimentalBidiFirefox = BrowserType.from(initializer.bidi);
     this._experimentalBidiFirefox._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors();

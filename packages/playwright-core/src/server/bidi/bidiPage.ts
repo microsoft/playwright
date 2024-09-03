@@ -39,7 +39,6 @@ export class BidiPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   readonly _page: Page;
-  // private readonly _pagePromise = new ManualPromise<Page | Error>();
   private readonly _pagePromise: Promise<Page | Error>;
   readonly _session: BidiSession;
   readonly _opener: BidiPage | null;
@@ -98,7 +97,6 @@ export class BidiPage implements PageDelegate {
 
   private _handleFrameTree(frameTree: bidi.BrowsingContext.Info) {
     this._onFrameAttached(frameTree.context, frameTree.parent || null);
-    // this._onFrameNavigated(frameTree.context, true);
     if (!frameTree.children)
       return;
 
@@ -144,18 +142,19 @@ export class BidiPage implements PageDelegate {
     if (!frame)
       return;
     const delegate = new BidiExecutionContext(this._session, realmInfo);
-    let worldName: types.World|null = null;
+    let worldName: types.World;
     if (!realmInfo.sandbox) {
       worldName = 'main';
       // Force creating utility world every time the main world is created (e.g. due to navigation).
       this._touchUtilityWorld(realmInfo.context);
     } else if (realmInfo.sandbox === UTILITY_WORLD_NAME) {
       worldName = 'utility';
+    } else {
+      return;
     }
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    if (worldName)
-      frame._contextCreated(worldName, context);
+    frame._contextCreated(worldName, context);
     this._realmToContext.set(realmInfo.realm, context);
   }
 
@@ -426,7 +425,7 @@ export class BidiPage implements PageDelegate {
   }
 
   rafCountForStablePosition(): number {
-    return process.platform === 'win32' ? 5 : 1;
+    return 1;
   }
 
   async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null | 'error:notconnected'> {

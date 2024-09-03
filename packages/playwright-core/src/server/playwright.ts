@@ -42,7 +42,7 @@ export class Playwright extends SdkObject {
   readonly chromium: BrowserType;
   readonly android: Android;
   readonly electron: Electron;
-  readonly bidiFirefox;
+  readonly bidi;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
   readonly options: PlaywrightOptions;
@@ -64,7 +64,7 @@ export class Playwright extends SdkObject {
       }
     }, null);
     this.chromium = new Chromium(this);
-    this.bidiFirefox = new BidiFirefox(this);
+    this.bidi = new BidiFirefox(this);
     this.firefox = new Firefox(this);
     this.webkit = new WebKit(this);
     this.electron = new Electron(this);
