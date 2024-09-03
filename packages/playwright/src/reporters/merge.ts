@@ -304,7 +304,7 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
       actualWorkers: (to.metadata.actualWorkers || 0) + (from.metadata.actualWorkers || 0),
     },
     workers: to.workers + from.workers,
-    projects: dedupByName(to.projects, from.projects),
+    projects: dedupByName(to?.projects ?? [], from?.projects ?? []),
   };
 }
 
