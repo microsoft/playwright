@@ -2164,7 +2164,6 @@ A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] ob
 
 ## method: Page.frameLocator
 * since: v1.17
-regular [`Locator`] instead.
 - returns: <[FrameLocator]>
 
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
