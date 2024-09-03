@@ -2338,10 +2338,6 @@ Navigate to the next page in history.
 
 Force the browser to perform garbage collection.
 
-:::note
-Forcing garbage collection is only supported in Chromium and WebKit.
-:::
-
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
 

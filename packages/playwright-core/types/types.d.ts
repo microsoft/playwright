@@ -2556,8 +2556,6 @@ export interface Page {
 
   /**
    * Force the browser to perform garbage collection.
-   *
-   * **NOTE** Forcing garbage collection is only supported in Chromium and WebKit.
    */
   forceGarbageCollection(): Promise<void>;
 
