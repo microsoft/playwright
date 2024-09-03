@@ -24,9 +24,9 @@ import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'p
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult, TestError } from '../types/testReporter';
+import type { TestError } from '../types/testReporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
@@ -35,6 +35,7 @@ import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import * as testServer from './runner/testServer';
 import { clearCacheAndLogToConsole } from './runner/testServer';
+import { runWatchModeLoop } from './runner/watchMode';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -157,9 +158,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
-  if (process.env.PWTEST_WATCH && opts.onlyChanged)
-    throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
-
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
@@ -186,6 +184,24 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
+  if (process.env.PWTEST_WATCH) {
+    if (opts.onlyChanged)
+      throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+
+    const status = await runWatchModeLoop(
+        resolveConfigLocation(opts.config),
+        {
+          projects: opts.project,
+          files: args,
+          grep: opts.grep
+        }
+    );
+    await stopProfiling('runner');
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
+    return;
+  }
+
   const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
   if (!config)
     return;
@@ -205,11 +221,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
 
   const runner = new Runner(config);
-  let status: FullResult['status'];
-  if (process.env.PWTEST_WATCH)
-    status = await runner.watchAllTests();
-  else
-    status = await runner.runAllTests();
+  const status = await runner.runAllTests();
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
