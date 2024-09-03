@@ -163,7 +163,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
         type: 'multiselect',
         name: 'selectedProjects',
         message: 'Select projects',
-        choices: teleSuiteUpdater.config!.projects.map(s => s.name),
+        choices: teleSuiteUpdater.rootSuite!.suites.map(s => s.title),
       }).catch(() => ({ selectedProjects: null }));
       if (!selectedProjects)
         continue;
