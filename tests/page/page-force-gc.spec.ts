@@ -16,12 +16,12 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async function({ page, browserName }) {
+it.only('should work', async function({ page, browserName }) {
   await page.evaluate(() => {
-    globalThis.thing = {};
-    globalThis.something = new WeakRef(globalThis.thing);
+    globalThis.objectToDestroy = {};
+    globalThis.weakRef = new WeakRef(globalThis.objectToDestroy);
   });
-  await page.evaluate(() => globalThis.thing = null);
+  await page.evaluate(() => globalThis.objectToDestroy = null);
   await page.forceGarbageCollection();
-  expect(await page.evaluate(() => globalThis.something.deref())).toBe(undefined);
+  expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
 });

@@ -257,11 +257,10 @@ class PageHandler {
   }
 
   async ['Heap.collectGarbage']() {
-    await new Promise((resolve) => {
-      Cu.schedulePreciseGC(() => {
-        resolve();
-      });
-    });
+    Services.obs.notifyObservers(null, "child-gc-request");
+    Cu.forceGC();
+    Services.obs.notifyObservers(null, "child-cc-request");
+    Cu.forceCC();
   }
 
   async ['Network.getResponseBody']({requestId}) {
