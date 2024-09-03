@@ -166,39 +166,13 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
   expect(result.output).not.toContain('c.spec.ts');
 });
 
-test('should support watch mode', async ({ git, writeFiles, runWatchTest }) => {
-  await writeFiles({
-    'a.spec.ts': `
-    import { test, expect } from '@playwright/test';
-    test('fails', () => { expect(1).toBe(2); });
-  `,
-    'b.spec.ts': `
-    import { test, expect } from '@playwright/test';
-    test('fails', () => { expect(1).toBe(2); });
-  `,
-  });
-
-  git(`add .`);
-  git(`commit -m init`);
-
-  await writeFiles({
-    'b.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('fails', () => { expect(1).toBe(3); });
-      `,
-  });
-  git(`commit -a -m update`);
-
-  const testProcess = await runWatchTest({}, { 'only-changed': `HEAD~1` });
-  await testProcess.waitForOutput('Waiting for file changes.');
-  testProcess.clearOutput();
-  testProcess.write('r');
-
-  await testProcess.waitForOutput('b.spec.ts:3:13 › fails');
-  expect(testProcess.output).not.toContain('a.spec');
+test('watch mode is not supported', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({}, { 'only-changed': true });
+  await testProcess.exited;
+  expect(testProcess.output).toContain('--only-changed is not supported in watch mode');
 });
 
-test('should throw nice error message if git doesnt work', async ({ git, runInlineTest }) => {
+test('should throw nice error message if git doesnt work', async ({ runInlineTest, git }) => {
   const result = await runInlineTest({}, { 'only-changed': `this-commit-does-not-exist` });
 
   expect(result.exitCode).toBe(1);

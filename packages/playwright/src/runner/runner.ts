@@ -24,7 +24,6 @@ import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { runWatchModeLoop } from './watchMode';
 import type { Suite } from '../common/test';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
 import { affectedTestFiles } from '../transform/compilationCache';
@@ -129,12 +128,6 @@ export class Runner {
       status = modifiedResult.status;
     await taskRunner.reporter.onExit();
     return { status, suite: testRun.rootSuite, errors };
-  }
-
-  async watchAllTests(): Promise<FullResult['status']> {
-    const config = this._config;
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    return await runWatchModeLoop(config);
   }
 
   async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
