@@ -197,6 +197,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
         }
     );
     await stopProfiling('runner');
+    if (status === 'restarted')
+      return;
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;

@@ -27,6 +27,7 @@ import { TestServerDispatcher } from './testServer';
 import { EventEmitter } from 'stream';
 import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
+import { restartWithExperimentalTsEsm } from '../common/configLoader';
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;
@@ -67,7 +68,10 @@ interface WatchModeOptions {
   grep?: string;
 }
 
-export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status']> {
+export async function runWatchModeLoop(configLocation: ConfigLocation, initialOptions: WatchModeOptions): Promise<FullResult['status'] | 'restarted'> {
+  if (restartWithExperimentalTsEsm(undefined, true))
+    return 'restarted';
+
   const options: WatchModeOptions = { ...initialOptions };
 
   const testServerDispatcher = new TestServerDispatcher(configLocation);
