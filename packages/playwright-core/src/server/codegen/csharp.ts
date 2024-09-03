@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { sanitizeDeviceOptions, toSignalMap } from './language';
-import type { ActionInContext } from './codeGenerator';
-import type { Action } from './recorderActions';
-import type { MouseClickOptions } from './utils';
-import { toModifiers } from './utils';
+import type { BrowserContextOptions } from '../../../types/types';
+import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import { sanitizeDeviceOptions, toClickOptions, toKeyboardModifiers, toSignalMap } from './language';
 import { escapeWithQuotes, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
@@ -72,14 +68,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    let subject: string;
-    if (actionInContext.frame.isMainFrame) {
-      subject = pageAlias;
-    } else {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.FrameLocator(${quote(selector)})`);
-      subject = `${pageAlias}${locators.join('')}`;
-    }
-
+    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.ContentFrame()`);
+    const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -93,7 +83,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     const lines: string[] = [];
-    lines.push(this._generateActionCall(subject, action));
+    lines.push(this._generateActionCall(subject, actionInContext));
 
     if (signals.download) {
       lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`);
@@ -111,7 +101,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, action: Action): string {
+  private _generateActionCall(subject: string, actionInContext: ActionInContext): string {
+    const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -121,16 +112,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         let method = 'Click';
         if (action.clickCount === 2)
           method = 'DblClick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        const options = toClickOptions(action);
         if (!Object.entries(options).length)
           return `await ${subject}.${this._asLocator(action.selector)}.${method}Async();`;
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
@@ -145,7 +127,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       case 'setInputFiles':
         return `await ${subject}.${this._asLocator(action.selector)}.SetInputFilesAsync(${formatObject(action.files)});`;
       case 'press': {
-        const modifiers = toModifiers(action.modifiers);
+        const modifiers = toKeyboardModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
         return `await ${subject}.${this._asLocator(action.selector)}.PressAsync(${quote(shortcut)});`;
       }

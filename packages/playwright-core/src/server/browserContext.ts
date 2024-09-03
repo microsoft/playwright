@@ -43,6 +43,7 @@ import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import { RecorderApp } from './recorder/recorderApp';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -130,19 +131,21 @@ export abstract class BrowserContext extends SdkObject {
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
-      await Recorder.show(this, { pauseOnNextStatement: true });
+      await Recorder.show(this, RecorderApp.factory(this), { pauseOnNextStatement: true });
 
     // When paused, show inspector.
     if (this._debugger.isPaused())
-      Recorder.showInspector(this);
+      Recorder.showInspector(this, RecorderApp.factory(this));
+
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
-      Recorder.showInspector(this);
+      if (this._debugger.isPaused())
+        Recorder.showInspector(this, RecorderApp.factory(this));
     });
 
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
     if (this._options.serviceWorkers === 'block')
-      await this.addInitScript(`\nnavigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
+      await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);

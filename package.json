@@ -79,7 +79,7 @@
     "colors": "^1.4.0",
     "concurrently": "^6.2.1",
     "cross-env": "^7.0.3",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.4.5",
     "electron": "^30.1.2",
     "esbuild": "^0.18.11",
     "eslint": "^8.55.0",

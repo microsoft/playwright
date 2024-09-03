@@ -141,7 +141,6 @@ it.describe('should proxy local network requests', () => {
 
 it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName }) => {
   it.fail(browserName === 'firefox', 'page.goto: NS_ERROR_UNKNOWN_HOST');
-  it.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `[0:0:0:0:0:0:0:1]:${proxyServer.PORT}` }

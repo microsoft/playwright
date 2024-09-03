@@ -324,7 +324,7 @@ export class Route extends SdkObject {
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
-    await this._delegate.continue(this._request, overrides);
+    await this._delegate.continue(overrides);
     this._endHandling();
   }
 
@@ -612,7 +612,7 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<void>;
+  continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

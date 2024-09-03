@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { toSignalMap } from './language';
-import type { ActionInContext } from './codeGenerator';
-import type { Action } from './recorderActions';
-import type { MouseClickOptions } from './utils';
-import { toModifiers } from './utils';
+import type { BrowserContextOptions } from '../../../types/types';
+import type * as types from '../types';
+import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import { toClickOptions, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 import { escapeWithQuotes, asLocator } from '../../utils';
@@ -63,16 +60,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    let subject: string;
-    let inFrameLocator = false;
-    if (actionInContext.frame.isMainFrame) {
-      subject = pageAlias;
-    } else {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
-      subject = `${pageAlias}${locators.join('')}`;
-      inFrameLocator = true;
-    }
-
+    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector, false)}.contentFrame()`);
+    const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -82,7 +71,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    let code = this._generateActionCall(subject, action, inFrameLocator);
+    let code = this._generateActionCall(subject, actionInContext, !!actionInContext.frame.framePath.length);
 
     if (signals.popup) {
       code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {
@@ -101,7 +90,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, action: Action, inFrameLocator: boolean): string {
+  private _generateActionCall(subject: string, actionInContext: ActionInContext, inFrameLocator: boolean): string {
+    const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -111,16 +101,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         let method = 'click';
         if (action.clickCount === 2)
           method = 'dblclick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        const options = toClickOptions(action);
         const optionsText = formatClickOptions(options);
         return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.${method}(${optionsText});`;
       }
@@ -133,7 +114,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       case 'setInputFiles':
         return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
-        const modifiers = toModifiers(action.modifiers);
+        const modifiers = toKeyboardModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
         return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.press(${quote(shortcut)});`;
       }
@@ -279,7 +260,7 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   return lines.join('\n');
 }
 
-function formatClickOptions(options: MouseClickOptions) {
+function formatClickOptions(options: types.MouseClickOptions) {
   const lines = [];
   if (options.button)
     lines.push(`  .setButton(MouseButton.${options.button.toUpperCase()})`);

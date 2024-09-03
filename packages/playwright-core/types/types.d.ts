@@ -288,41 +288,8 @@ export interface Page {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
-   *
-   * **Bundling**
-   *
-   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
-   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
-   * commonjs module and pass `path` and `arg`.
-   *
-   * ```js
-   * // mocks/mockRandom.ts
-   * // This script can import other files.
-   * import { defaultValue } from './defaultValue';
-   *
-   * export default function(value?: number) {
-   *   window.Math.random = () => value ?? defaultValue;
-   * }
-   * ```
-   *
-   * ```js
-   * // tests/example.spec.ts
-   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
-   *
-   * // Passing 42 as an argument to the default export function.
-   * await page.addInitScript({ path: mockPath }, 42);
-   *
-   * // Make sure to pass something even if you do not need to pass an argument.
-   * // This instructs Playwright to treat the file as a commonjs module.
-   * await page.addInitScript({ path: mockPath }, '');
-   * ```
-   *
    * @param script Script to be evaluated in the page.
-   * @param arg Optional JSON-serializable argument to pass to `script`.
-   * - When `script` is a function, the argument is passed to it directly.
-   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
-   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
-   * argument.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
@@ -898,17 +865,55 @@ export interface Page {
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
 
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.on('request', async request => {
+   *   const response = await request.response();
+   *   const body = await response.body();
+   *   console.log(body.byteLength);
+   * });
+   * await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+   * // Waits for all the reported 'request' events to resolve.
+   * await page.removeAllListeners('request', { behavior: 'wait' });
+   * ```
+   *
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.on('request', async request => {
+   *   const response = await request.response();
+   *   const body = await response.body();
+   *   console.log(body.byteLength);
+   * });
+   * await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+   * // Waits for all the reported 'request' events to resolve.
+   * await page.removeAllListeners('request', { behavior: 'wait' });
+   * ```
+   *
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * Emitted when the page closes.
    */
@@ -3897,10 +3902,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -7023,10 +7026,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -7571,9 +7572,9 @@ export interface Frame {
  * If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
  * context.
  *
- * Playwright allows creating "incognito" browser contexts with
+ * Playwright allows creating isolated non-persistent browser contexts with
  * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) method.
- * "Incognito" browser contexts don't write any browsing data to disk.
+ * Non-persistent browser contexts don't write any browsing data to disk.
  *
  * ```js
  * // Create a new incognito browser context
@@ -7699,56 +7700,33 @@ export interface BrowserContext {
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
    * defined.
-   *
-   * **Bundling**
-   *
-   * If you have a complex script split into several files, it needs to be bundled into a single file first. We
-   * recommend running [`esbuild`](https://esbuild.github.io/) or [`webpack`](https://webpack.js.org/) to produce a
-   * commonjs module and pass `path` and `arg`.
-   *
-   * ```js
-   * // mocks/mockRandom.ts
-   * // This script can import other files.
-   * import { defaultValue } from './defaultValue';
-   *
-   * export default function(value?: number) {
-   *   window.Math.random = () => value ?? defaultValue;
-   * }
-   * ```
-   *
-   * ```js
-   * // tests/example.spec.ts
-   * const mockPath = { path: path.resolve(__dirname, '../mocks/mockRandom.js') };
-   *
-   * // Passing 42 as an argument to the default export function.
-   * await context.addInitScript({ path: mockPath }, 42);
-   *
-   * // Make sure to pass something even if you do not need to pass an argument.
-   * // This instructs Playwright to treat the file as a commonjs module.
-   * await context.addInitScript({ path: mockPath }, '');
-   * ```
-   *
    * @param script Script to be evaluated in all pages in the browser context.
-   * @param arg Optional JSON-serializable argument to pass to `script`.
-   * - When `script` is a function, the argument is passed to it directly.
-   * - When `script` is a file path, the file is assumed to be a commonjs module. The default export, either
-   * `module.exports` or `module.exports.default`, should be a function that's going to be executed with this
-   * argument.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * **NOTE** Only works with Chromium browser's persistent context.
    *
@@ -9022,17 +9000,27 @@ export interface BrowserContext {
  */
 export interface Browser {
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
   removeAllListeners(type?: string): this;
   /**
-   * Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+   * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+   * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
    */
-  removeAllListeners(type: string | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
+  removeAllListeners(type: string | undefined, options: {
+    /**
+     * Specifies whether to wait for already running listeners and what to do if they throw errors:
+     * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+     * - `'wait'` - wait for current listener calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+     */
+    behavior?: 'wait'|'ignoreErrors'|'default'
+  }): Promise<void>;
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
@@ -11136,10 +11124,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -13331,10 +13317,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
-     * @deprecated This option will default to `true` in the future.
+     * This option has no effect.
+     * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
 
@@ -17336,8 +17320,8 @@ export interface APIResponse {
   headers(): { [key: string]: string; };
 
   /**
-   * An array with all the request HTTP headers associated with this response. Header names are not lower-cased. Headers
-   * with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   * An array with all the response HTTP headers associated with this response. Header names are not lower-cased.
+   * Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
   headersArray(): Array<{
     /**

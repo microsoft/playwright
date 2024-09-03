@@ -291,8 +291,7 @@ export class FrameManager {
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
-      if (route)
-        route.continue(request, { isFallback: true }).catch(() => {});
+      route?.continue({ isFallback: true }).catch(() => {});
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
@@ -800,7 +799,7 @@ export class Frame extends SdkObject {
       const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
-        const visible = element ? injected.isVisible(element) : false;
+        const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
           if (info.strict)
@@ -1344,7 +1343,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: { noWaitAfter?: boolean } & types.CommonActionOptions = {}): Promise<string[]> {
+  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions = {}): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._selectOption(progress, elements, values, options));

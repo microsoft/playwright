@@ -1753,7 +1753,6 @@ export type BrowserContextRecorderSupplementEnableParams = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
@@ -1766,7 +1765,6 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
@@ -2939,7 +2937,6 @@ export type FrameSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionOptions = {
   strict?: boolean,
@@ -2952,7 +2949,6 @@ export type FrameSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionResult = {
   values: string[],
@@ -3555,7 +3551,6 @@ export type ElementHandleSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
@@ -3567,7 +3562,6 @@ export type ElementHandleSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionResult = {
   values: string[],

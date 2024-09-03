@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { sanitizeDeviceOptions, toSignalMap } from './language';
-import type { ActionInContext } from './codeGenerator';
-import type { Action } from './recorderActions';
-import type { MouseClickOptions } from './utils';
-import { toModifiers } from './utils';
+import type { BrowserContextOptions } from '../../../types/types';
+import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptions } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { escapeWithQuotes, asLocator } from '../../utils';
 
@@ -52,14 +48,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    let subject: string;
-    if (actionInContext.frame.isMainFrame) {
-      subject = pageAlias;
-    } else {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
-      subject = `${pageAlias}${locators.join('')}`;
-    }
-
+    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.contentFrame()`);
+    const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -74,7 +64,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (signals.download)
       formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
 
-    formatter.add(this._generateActionCall(subject, action));
+    formatter.add(wrapWithStep(actionInContext.description, this._generateActionCall(subject, actionInContext)));
 
     if (signals.popup)
       formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
@@ -84,7 +74,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, action: Action): string {
+  private _generateActionCall(subject: string, actionInContext: ActionInContext): string {
+    const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -94,16 +85,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         let method = 'click';
         if (action.clickCount === 2)
           method = 'dblclick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        const options = toClickOptions(action);
         const optionsString = formatOptions(options, false);
         return `await ${subject}.${this._asLocator(action.selector)}.${method}(${optionsString});`;
       }
@@ -116,7 +98,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       case 'setInputFiles':
         return `await ${subject}.${this._asLocator(action.selector)}.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
-        const modifiers = toModifiers(action.modifiers);
+        const modifiers = toKeyboardModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
         return `await ${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)});`;
       }
@@ -275,4 +257,10 @@ export class JavaScriptFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\'');
+}
+
+function wrapWithStep(description: string | undefined, body: string) {
+  return description ? `await test.step(\`${description}\`, async () => {
+${body}
+});` : body;
 }

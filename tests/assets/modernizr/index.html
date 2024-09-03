@@ -1,0 +1,26 @@
+<script src='modernizr.js'></script>
+<body></body>
+<script>
+function serialize(value) {
+  if (typeof value !== 'object')
+    return value;
+  const copy = {};
+  for (const key in value) {
+    if (typeof value[key] === 'function')
+      continue;
+    if (key.startsWith('_'))
+      continue;
+    copy[key] = serialize(value[key]);
+  }
+  return copy;
+}
+const report = serialize(Modernizr);
+
+report['devicemotion2'] = 'ondevicemotion' in window;
+report['deviceorientation2'] = 'orientation' in window;
+report['deviceorientation3'] = 'ondeviceorientation' in window;
+
+document.body.style.whiteSpace = 'pre';
+document.body.textContent = JSON.stringify(report, undefined, 2);
+window.report = JSON.parse(document.body.textContent);
+</script>

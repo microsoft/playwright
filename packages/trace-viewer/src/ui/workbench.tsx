@@ -83,7 +83,7 @@ export const Workbench: React.FunctionComponent<{
     setRevealedStack(action?.stack);
   }, [setSelectedActionImpl, setRevealedStack]);
 
-  const sources = React.useMemo(() => model?.sources || new Map(), [model]);
+  const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
 
   React.useEffect(() => {
     setSelectedTime(undefined);
@@ -179,9 +179,17 @@ export const Workbench: React.FunctionComponent<{
       selectPropertiesTab('source');
     }} />
   };
+
+  // Fallback location w/o action stands for file / test.
+  // Render error count on Source tab for that case.
+  let fallbackSourceErrorCount: number | undefined = undefined;
+  if (!selectedAction && fallbackLocation)
+    fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
+
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
+    errorCount: fallbackSourceErrorCount,
     render: () => <SourceTab
       stack={revealedStack}
       sources={sources}
