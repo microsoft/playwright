@@ -255,6 +255,7 @@ function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: str
     rootDir: '',
     version: '',
     workers: 0,
+    projects: [],
   };
   for (const event of configureEvents)
     config = mergeConfigs(config, event.params.config);
@@ -288,6 +289,11 @@ function mergeConfigureEvents(configureEvents: JsonEvent[], rootDirOverride: str
   };
 }
 
+function dedupByName<T extends { name: string }>(a: T[], b: T[]) {
+  const aNames = new Set(a.map(v => v.name));
+  return a.concat(b.filter(b => !aNames.has(b.name)));
+}
+
 function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   return {
     ...to,
@@ -298,6 +304,7 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
       actualWorkers: (to.metadata.actualWorkers || 0) + (from.metadata.actualWorkers || 0),
     },
     workers: to.workers + from.workers,
+    projects: dedupByName(to.projects, from.projects),
   };
 }
 

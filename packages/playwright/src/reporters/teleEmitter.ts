@@ -161,12 +161,12 @@ export class TeleReporterEmitter implements ReporterV2 {
       rootDir: config.rootDir,
       version: config.version,
       workers: config.workers,
+      projects: config.projects.map(project => this._serializeConfigProject(project)),
     };
   }
 
-  private _serializeProject(suite: reporterTypes.Suite): teleReceiver.JsonProject {
-    const project = suite.project()!;
-    const report: teleReceiver.JsonProject = {
+  private _serializeConfigProject(project: reporterTypes.FullProject): teleReceiver.JsonConfigProject {
+    return {
       metadata: project.metadata,
       name: project.name,
       outputDir: this._relativePath(project.outputDir),
@@ -176,16 +176,20 @@ export class TeleReporterEmitter implements ReporterV2 {
       testIgnore: serializeRegexPatterns(project.testIgnore),
       testMatch: serializeRegexPatterns(project.testMatch),
       timeout: project.timeout,
-      suites: suite.suites.map(fileSuite => {
-        return this._serializeSuite(fileSuite);
-      }),
       grep: serializeRegexPatterns(project.grep),
       grepInvert: serializeRegexPatterns(project.grepInvert || []),
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
       teardown: project.teardown,
     };
-    return report;
+  }
+
+  private _serializeProject(suite: reporterTypes.Suite): teleReceiver.JsonProject {
+    const project = suite.project()!;
+    return {
+      ...this._serializeConfigProject(project),
+      suites: suite.suites.map(fileSuite => this._serializeSuite(fileSuite)),
+    };
   }
 
   private _serializeSuite(suite: reporterTypes.Suite): teleReceiver.JsonSuite {

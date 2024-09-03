@@ -26,14 +26,14 @@ export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonStdIOType = 'stdout' | 'stderr';
 
-export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'>;
+export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & { projects: JsonConfigProject[] };
 
 export type JsonPattern = {
   s?: string;
   r?: { source: string, flags: string };
 };
 
-export type JsonProject = {
+export type JsonConfigProject = {
   grep: JsonPattern[];
   grepInvert: JsonPattern[];
   metadata: Metadata;
@@ -45,13 +45,16 @@ export type JsonProject = {
   outputDir: string;
   repeatEach: number;
   retries: number;
-  suites: JsonSuite[];
   teardown?: string;
   // This is relative to root dir.
   testDir: string;
   testIgnore: JsonPattern[];
   testMatch: JsonPattern[];
   timeout: number;
+};
+
+export type JsonProject = JsonConfigProject & {
+  suites: JsonSuite[];
 };
 
 export type JsonSuite = {
@@ -304,10 +307,13 @@ export class TeleReporterReceiver {
       result.quiet = this._options.configOverrides.quiet;
       result.reporter = [...this._options.configOverrides.reporter];
     }
-    return result;
+    return {
+      ...result,
+      projects: result.projects.map(p => this._parseProject(p)),
+    };
   }
 
-  private _parseProject(project: JsonProject): TeleFullProject {
+  private _parseProject(project: JsonConfigProject): TeleFullProject {
     return {
       metadata: project.metadata,
       name: project.name,
