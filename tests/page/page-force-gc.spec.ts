@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it.only('should work', async function({ page, browserName }) {
+it('should work', async function({ page, browserName }) {
   await page.evaluate(() => {
     globalThis.objectToDestroy = {};
     globalThis.weakRef = new WeakRef(globalThis.objectToDestroy);
