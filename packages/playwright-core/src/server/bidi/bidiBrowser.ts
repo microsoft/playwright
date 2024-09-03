@@ -15,19 +15,21 @@
  */
 
 import type * as channels from '@protocol/channels';
-import type * as types from '../types';
-import * as network from '../network';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContext';
 import type { SdkObject } from '../instrumentation';
+import * as network from '../network';
+import type { InitScript, Page, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
-import { BidiConnection, BidiSession } from './bidiConnection';
-import * as bidi from './third_party/bidiProtocol';
-import { InitScript, Page, PageDelegate } from '../page';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { BidiPage } from './bidiPage';
+import type * as types from '../types';
+import type { BidiSession } from './bidiConnection';
+import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
+import { BidiPage } from './bidiPage';
+import * as bidi from './third_party/bidiProtocol';
 
 export class BidiBrowser extends Browser {
   private readonly _connection: BidiConnection;
@@ -68,7 +70,7 @@ export class BidiBrowser extends Browser {
           break;
         default:
           throw new Error('Invalid proxy server protocol: ' + options.proxy.server);
-      };
+      }
       if (options.proxy.bypass)
         proxy.noProxy = options.proxy.bypass.split(',');
       // TODO: support authentication.
@@ -175,7 +177,7 @@ export class BidiBrowser extends Browser {
     }
     const bidiPage = this._bidiPages.get(event.context);
     if (!bidiPage)
-      return
+      return;
     bidiPage.didClose();
     this._bidiPages.delete(event.context);
   }

@@ -19,7 +19,8 @@ import path from 'path';
 import { assert, ManualPromise, wrapInASCIIBox } from '../../utils';
 import type { Env } from '../../utils/processLauncher';
 import type { BrowserOptions } from '../browser';
-import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import type { BrowserReadyState } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import type { SdkObject } from '../instrumentation';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
@@ -70,11 +71,10 @@ export class BidiFirefox extends BrowserType {
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--profile');
     const firefoxArguments = ['--remote-debugging-port=0'];
-    if (headless) {
+    if (headless)
       firefoxArguments.push('--headless');
-    } else {
+    else
       firefoxArguments.push('--foreground');
-    }
     firefoxArguments.push(`--profile`, userDataDir);
     firefoxArguments.push(...args);
     // TODO: make ephemeral context work without this argument.

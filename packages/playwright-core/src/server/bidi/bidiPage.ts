@@ -25,7 +25,7 @@ import { type InitScript, Page, type PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
-import { BidiSession } from './bidiConnection';
+import type { BidiSession } from './bidiConnection';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import * as bidi from './third_party/bidiProtocol';
 import { BidiExecutionContext } from './bidiExecutionContext';
@@ -87,7 +87,7 @@ export class BidiPage implements PageDelegate {
   }
 
   private async _initialize() {
-    const { contexts } = await this._session.send('browsingContext.getTree', { root: this._session.sessionId});
+    const { contexts } = await this._session.send('browsingContext.getTree', { root: this._session.sessionId });
     this._handleFrameTree(contexts[0]);
     await Promise.all([
       this.updateHttpCredentials(),
@@ -96,7 +96,7 @@ export class BidiPage implements PageDelegate {
     ]);
   }
 
-  private _handleFrameTree(frameTree: bidi.BrowsingContext.Info ) {
+  private _handleFrameTree(frameTree: bidi.BrowsingContext.Info) {
     this._onFrameAttached(frameTree.context, frameTree.parent || null);
     // this._onFrameNavigated(frameTree.context, true);
     if (!frameTree.children)
@@ -149,8 +149,9 @@ export class BidiPage implements PageDelegate {
       worldName = 'main';
       // Force creating utility world every time the main world is created (e.g. due to navigation).
       this._touchUtilityWorld(realmInfo.context);
-    } else if (realmInfo.sandbox === UTILITY_WORLD_NAME)
+    } else if (realmInfo.sandbox === UTILITY_WORLD_NAME) {
       worldName = 'utility';
+    }
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
@@ -376,7 +377,7 @@ export class BidiPage implements PageDelegate {
       if (!(element instanceof Element))
         return null;
       const rect = element.getBoundingClientRect();
-      return {x: rect.x, y: rect.y, width: rect.width, height: rect.height};
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
     });
     if (!box)
       return null;
@@ -385,7 +386,7 @@ export class BidiPage implements PageDelegate {
       return null;
     box.x += position.x;
     box.y += position.y;
-    return box
+    return box;
   }
 
   // TODO: move to Frame.
@@ -429,7 +430,7 @@ export class BidiPage implements PageDelegate {
   }
 
   async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null | 'error:notconnected'> {
-    let quads = await handle.evaluateInUtility(([injected, node]) => {
+    const quads = await handle.evaluateInUtility(([injected, node]) => {
       if (!node.isConnected)
         return 'error:notconnected';
       const rects = node.getClientRects();
@@ -445,27 +446,6 @@ export class BidiPage implements PageDelegate {
     if (!quads || quads === 'error:notconnected')
       return quads;
     // TODO: consider transforming quads to support clicks in iframes.
-    //
-    // if (handle._frame !== this._page.mainFrame()) {
-    //   const frameElement = await handle._frame.frameElement();
-    //   quads = await frameElement.evaluateInUtility(([injected, iframe, quads]) => {
-    //     const transform = getComputedStyle(iframe as Element).transform;
-    //     if (transform === 'none')
-    //       return quads;
-    //     const matrix = new DOMMatrixReadOnly(transform);
-    //     for (const quad of quads) {
-    //       for (const point of quad) {
-    //         const p = new DOMPoint(point.x, point.y);
-    //         const transformed = matrix.transformPoint(p);
-    //         point.x = transformed.x;
-    //         point.y = transformed.y;
-    //       }
-    //     }
-    //     return quads;
-    //   }, quads).catch(e => 'error:notconnected' as const);
-    //   if (!quads || quads === 'error:notconnected')
-    //     return null;
-    // }
     const position = await this._framePosition(handle._frame);
     if (!position)
       return null;

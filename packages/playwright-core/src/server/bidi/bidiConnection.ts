@@ -38,7 +38,7 @@ export class BidiConnection {
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: BidiSession;
-  readonly _browsingContextToSession = new Map<string, BidiSession>;
+  readonly _browsingContextToSession = new Map<string, BidiSession>();
 
   constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     this._transport = transport;

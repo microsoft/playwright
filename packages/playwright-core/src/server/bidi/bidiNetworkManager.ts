@@ -21,7 +21,7 @@ import * as network from '../network';
 import type * as frames from '../frames';
 import type * as types from '../types';
 import * as bidi from './third_party/bidiProtocol';
-import { BidiSession } from './bidiConnection';
+import type { BidiSession } from './bidiConnection';
 
 
 export class BidiNetworkManager {
@@ -223,7 +223,7 @@ class BidiRequest {
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
     // TODO: missing in the spec?
-    let postDataBuffer = null;
+    const postDataBuffer = null;
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
         payload.request.url, 'other', payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
@@ -297,13 +297,13 @@ class BidiRouteImpl implements network.RouteDelegate {
 
 function fromBidiHeaders(bidiHeaders: bidi.Network.Header[]): types.HeadersArray {
   const result: types.HeadersArray = [];
-  for (const {name, value} of bidiHeaders)
+  for (const { name, value } of bidiHeaders)
     result.push({ name, value: bidiBytesValueToString(value) });
   return result;
 }
 
 function toBidiHeaders(headers: types.HeadersArray): bidi.Network.Header[] {
-  return headers.map(({ name, value }) => ({ name, value: { type: 'string', value} }));
+  return headers.map(({ name, value }) => ({ name, value: { type: 'string', value } }));
 }
 
 export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as input from '../input';
+import type * as input from '../input';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 import * as bidi from './third_party/bidiProtocol';

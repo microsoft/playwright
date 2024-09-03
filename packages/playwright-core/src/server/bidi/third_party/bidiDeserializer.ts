@@ -8,6 +8,8 @@
 
 import type * as Bidi from './bidiProtocol';
 
+/* eslint-disable object-curly-spacing */
+
 /**
  * @internal
  */

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { BidiSession } from './bidiConnection';
+import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
+import type { BidiSession } from './bidiConnection';
+import { BidiDeserializer } from './third_party/bidiDeserializer';
 import * as bidi from './third_party/bidiProtocol';
 import { BidiSerializer } from './third_party/bidiSerializer';
-import { BidiDeserializer } from './third_party/bidiDeserializer';
-import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
@@ -63,7 +63,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       expression,
       target: this._target,
       resultOwnership: bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
-      serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
+      serializationOptions: { maxObjectDepth: 0, maxDomDepth: 0 },
       awaitPromise: true,
       userActivation: true,
     });
@@ -91,7 +91,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
         ...objectIds.map(handle => ({ handle })),
       ],
       resultOwnership: returnByValue ? undefined : bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
-      serializationOptions: returnByValue ? {} : { maxObjectDepth:0, maxDomDepth:0 },
+      serializationOptions: returnByValue ? {} : { maxObjectDepth: 0, maxDomDepth: 0 },
       awaitPromise: true,
       userActivation: true,
     });
@@ -99,8 +99,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
     if (response.type === 'success') {
       if (returnByValue)
-        if (returnByValue)
-          return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+        return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
       const objectId = 'handle' in response.result ? response.result.handle : undefined ;
       return utilityScript._context.createHandle({ objectId, ...response.result });
     }
@@ -131,9 +130,9 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,
-      arguments: [ arg ],
+      arguments: [arg],
       resultOwnership: bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
-      serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
+      serializationOptions: { maxObjectDepth: 0, maxDomDepth: 0 },
       awaitPromise: true,
       userActivation: true,
     });

@@ -32,7 +32,7 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { assert, debugMode } from '../utils';
+import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
