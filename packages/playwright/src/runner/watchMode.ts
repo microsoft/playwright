@@ -221,7 +221,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       } else if (lastRun.type === 'changed') {
         await runTests(options, testServerConnection, { title: 're-running tests', testIds: lastRun.dirtyTestIds });
       } else if (lastRun.type === 'failed') {
-        await runTests({}, testServerConnection, { title: 're-running tests', testIds: [...lastRun.failedTestIds!] });
+        await runTests({}, testServerConnection, { title: 're-running tests', testIds: lastRun.failedTestIds });
       }
       continue;
     }
