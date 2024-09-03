@@ -172,7 +172,7 @@ test('watch mode is not supported', async ({ runWatchTest }) => {
   expect(testProcess.output).toContain('--only-changed is not supported in watch mode');
 });
 
-test('should throw nice error message if git doesnt work', async ({ runInlineTest }) => {
+test('should throw nice error message if git doesnt work', async ({ runInlineTest, git }) => {
   const result = await runInlineTest({}, { 'only-changed': `this-commit-does-not-exist` });
 
   expect(result.exitCode).toBe(1);
