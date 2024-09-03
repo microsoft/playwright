@@ -21,7 +21,6 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { removeFolders } from 'playwright-core/lib/utils';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { ReporterV2 } from '../reporters/reporterV2';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
@@ -32,6 +31,7 @@ import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 import { detectChangedTestFiles } from './vcs';
+import type { InternalReporter } from '../reporters/internalReporter';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -60,22 +60,22 @@ export class TestRun {
   }
 }
 
-export function createTaskRunner(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunner(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter);
   addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForTestServer(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
+export function createTaskRunnerForTestServer(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
@@ -99,15 +99,15 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporters: ReporterV2[], mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
 }
 
-export function createTaskRunnerForListFiles(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunnerForListFiles(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createListFilesTask());
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;

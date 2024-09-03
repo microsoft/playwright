@@ -21,6 +21,7 @@ import { Suite } from '../common/test';
 import { colors, prepareErrorStack, relativeFilePath } from './base';
 import type { ReporterV2 } from './reporterV2';
 import { monotonicTime } from 'playwright-core/lib/utils';
+import { Multiplexer } from './multiplexer';
 
 export class InternalReporter {
   private _reporter: ReporterV2;
@@ -29,8 +30,8 @@ export class InternalReporter {
   private _startTime: Date | undefined;
   private _monotonicStartTime: number | undefined;
 
-  constructor(reporter: ReporterV2) {
-    this._reporter = reporter;
+  constructor(reporters: ReporterV2[]) {
+    this._reporter = new Multiplexer(reporters);
   }
 
   version(): 'v2' {
