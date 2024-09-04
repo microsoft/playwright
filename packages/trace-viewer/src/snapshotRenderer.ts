@@ -29,7 +29,7 @@ let cacheSize = 0;
 const cache = new Map<SnapshotRenderer, string>();
 const CACHE_SIZE = 300000000; // 300mb
 
-function cacheAndReturn(key: SnapshotRenderer, compute: () => string): string {
+function lruCache(key: SnapshotRenderer, compute: () => string): string {
   if (cache.has(key)) {
     const value = cache.get(key)!;
     // reinserting makes this the least recently used entry
@@ -42,9 +42,9 @@ function cacheAndReturn(key: SnapshotRenderer, compute: () => string): string {
   const result = compute();
 
   while (cache.size && cacheSize + result.length > CACHE_SIZE) {
-    const first = cache.keys().next().value;
-    cacheSize -= cache.get(first)!.length;
-    cache.delete(first);
+    const [firstKey, firstValue] = cache.entries().next().value;
+    cacheSize -= firstValue.length;
+    cache.delete(firstKey);
   }
 
   cache.set(key, result);
@@ -151,7 +151,7 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    const html = cacheAndReturn(this, () => {
+    const html = lruCache(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
 
       const html = result.join('');
