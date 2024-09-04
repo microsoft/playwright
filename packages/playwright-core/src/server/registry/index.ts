@@ -71,11 +71,6 @@ const EXECUTABLE_PATHS = {
     'mac': ['ffmpeg-mac'],
     'win': ['ffmpeg-win64.exe'],
   },
-  'bidi-firefox': {
-    'linux': ['firefox', 'firefox'],
-    'mac': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'win': ['firefox', 'firefox.exe'],
-  },
 };
 
 type DownloadPaths = Record<HostPlatform, string | undefined>;
@@ -269,34 +264,9 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac14-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
-  'bidi-firefox': {
-    '<unknown>': undefined,
-    'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
-    'ubuntu22.04-x64': 'builds/firefox/%s/firefox-ubuntu-22.04.zip',
-    'ubuntu24.04-x64': 'builds/firefox/%s/firefox-ubuntu-24.04.zip',
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': 'builds/firefox/%s/firefox-ubuntu-20.04-arm64.zip',
-    'ubuntu22.04-arm64': 'builds/firefox/%s/firefox-ubuntu-22.04-arm64.zip',
-    'ubuntu24.04-arm64': 'builds/firefox/%s/firefox-ubuntu-24.04-arm64.zip',
-    'debian11-x64': 'builds/firefox/%s/firefox-debian-11.zip',
-    'debian11-arm64': 'builds/firefox/%s/firefox-debian-11-arm64.zip',
-    'debian12-x64': 'builds/firefox/%s/firefox-debian-12.zip',
-    'debian12-arm64': 'builds/firefox/%s/firefox-debian-12-arm64.zip',
-    'mac10.13': 'builds/firefox/%s/firefox-mac.zip',
-    'mac10.14': 'builds/firefox/%s/firefox-mac.zip',
-    'mac10.15': 'builds/firefox/%s/firefox-mac.zip',
-    'mac11': 'builds/firefox/%s/firefox-mac.zip',
-    'mac11-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
-    'mac12': 'builds/firefox/%s/firefox-mac.zip',
-    'mac12-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
-    'mac13': 'builds/firefox/%s/firefox-mac.zip',
-    'mac13-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
-    'mac14': 'builds/firefox/%s/firefox-mac.zip',
-    'mac14-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
-    'win64': 'builds/firefox/%s/firefox-win64.zip',
-  },
-
+  // TODO(bidi): implement downloads.
+  'bidi': {
+  } as DownloadPaths,
 };
 
 export const registryDirectory = (() => {
@@ -382,15 +352,15 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android' | 'bidi-firefox';
-type BidiFirefoxChannel = 'bidi-firefox-stable';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
+type BidiChannel = 'bidi-firefox-stable';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
-  name: BrowserName | InternalTool | ChromiumChannel | BidiFirefoxChannel;
+  name: BrowserName | InternalTool | ChromiumChannel | BidiChannel;
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
@@ -555,7 +525,7 @@ export class Registry {
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
     }));
 
-    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
+    this._executables.push(this._createBidiChannel('bidi-firefox-stable', {
       'linux': '/usr/bin/firefox',
       'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
       'win32': '\\Mozilla Firefox\\firefox.exe',
@@ -657,21 +627,18 @@ export class Registry {
       _isHermeticInstallation: true,
     });
 
-    const bidiFirefox = descriptors.find(d => d.name === 'firefox')!;
-    const bidiFirefoxExecutable = findExecutablePath(bidiFirefox.dir, 'firefox');
     this._executables.push({
       type: 'browser',
-      name: 'bidi-firefox',
-      browserName: 'firefox',
-      directory: bidiFirefox.dir,
-      executablePath: () => bidiFirefoxExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('bidi-firefox', bidiFirefoxExecutable, bidiFirefox.installByDefault, sdkLanguage),
-      installType: bidiFirefox.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', bidiFirefox.dir, ['firefox'], [], ['firefox']),
-      downloadURLs: this._downloadURLs(bidiFirefox),
-      browserVersion: bidiFirefox.browserVersion,
-      _install: () => this._downloadExecutable(bidiFirefox, bidiFirefoxExecutable),
-      _dependencyGroup: 'firefox',
+      name: 'bidi',
+      browserName: 'bidi',
+      directory: undefined,
+      executablePath: () => undefined,
+      executablePathOrDie: () => '',
+      installType: 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      downloadURLs: [],
+      _install: () => Promise.resolve(),
+      _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
   }
@@ -714,7 +681,7 @@ export class Registry {
     };
   }
 
-  private _createBidiFirefoxChannel(name: BidiFirefoxChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+  private _createBidiChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
@@ -741,7 +708,7 @@ export class Registry {
     return {
       type: 'channel',
       name,
-      browserName: 'firefox',
+      browserName: 'bidi',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

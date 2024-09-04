@@ -30,7 +30,7 @@ import { kBrowserCloseMessageId } from './bidiConnection';
 
 export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, 'firefox');
+    super(parent, 'bidi');
     this._useBidi = true;
   }
 

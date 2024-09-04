@@ -22,7 +22,7 @@ import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 
 const getExecutablePath = () => {
-  return process.env.FFPATH;
+  return process.env.BIDIPATH;
 };
 
 const headed = process.argv.includes('--headed');
@@ -59,7 +59,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-const browserName: any = '_experimentalBidiFirefox';
+const browserName: any = '_experimentalBidi';
 const executablePath = getExecutablePath();
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
