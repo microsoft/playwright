@@ -41,7 +41,7 @@ function cacheAndReturn(key: SnapshotRenderer, compute: () => string): string {
 
   const result = compute();
 
-  while (cacheSize + result.length > CACHE_SIZE) {
+  while (cache.size && cacheSize + result.length > CACHE_SIZE) {
     const first = cache.keys().next().value;
     cacheSize -= cache.get(first)!.length;
     cache.delete(first);
