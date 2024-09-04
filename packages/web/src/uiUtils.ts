@@ -139,10 +139,7 @@ export function copy(text: string) {
   textArea.remove();
 }
 
-export type Setting<T> = readonly [T, (value: T) => void, string];
-
-
-export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>, Setting<S>] {
+export function useSetting<S>(name: string | undefined, defaultValue: S, title?: string): [S, React.Dispatch<React.SetStateAction<S>>] {
   if (name)
     defaultValue = settings.getObject(name, defaultValue);
   const [value, setValue] = React.useState<S>(defaultValue);
@@ -160,9 +157,7 @@ export function useSetting<S>(name: string | undefined, defaultValue: S, title?:
       return () => settings.onChangeEmitter.removeEventListener(name, onStoreChange);
     }
   }, [defaultValue, name]);
-
-  const setting = [value, setValueWrapper, title || name || ''] as Setting<S>;
-  return [value, setValueWrapper, setting];
+  return [value, setValueWrapper];
 }
 
 declare global {

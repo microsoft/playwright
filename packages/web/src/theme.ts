@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { type Setting, settings } from './uiUtils';
+import { settings } from './uiUtils';
 
 declare global {
   interface Document {
@@ -68,12 +68,12 @@ export function currentTheme(): Theme {
   return document.body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
 }
 
-export function useDarkModeSetting() {
+export function useDarkModeSetting(): [boolean, (value: boolean) => void] {
   const [theme, setTheme] = React.useState(currentTheme() === 'dark-mode');
   return [theme, (value: boolean) => {
     const current = currentTheme() === 'dark-mode';
     if (current !== value)
       toggleTheme();
     setTheme(value);
-  }, 'Dark mode'] as Setting<boolean>;
+  }];
 }

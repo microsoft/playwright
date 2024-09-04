@@ -100,36 +100,13 @@ export const UIModeView: React.FC<{}> = ({
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
+
   const showTestingOptions = false;
-
-  const [runWorkers, setRunWorkers] = React.useState(queryParams.workers);
-  const singleWorkerSetting = React.useMemo(() => {
-    return [
-      runWorkers === '1',
-      (value: boolean) => {
-        // When started with `--workers=1`, the setting allows to undo that.
-        // Otherwise, fallback to the cli `--workers=X` argument.
-        setRunWorkers(value ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers));
-      },
-      'Single worker',
-    ] as const;
-  }, [runWorkers, setRunWorkers]);
-
-  const [runHeaded, setRunHeaded] = React.useState(queryParams.headed);
-  const showBrowserSetting = React.useMemo(() => [runHeaded, setRunHeaded, 'Show browser'] as const, [runHeaded, setRunHeaded]);
-
-  const [runUpdateSnapshots, setRunUpdateSnapshots] = React.useState(queryParams.updateSnapshots);
-  const updateSnapshotsSetting = React.useMemo(() => {
-    return [
-      runUpdateSnapshots === 'all',
-      (value: boolean) => setRunUpdateSnapshots(value ? 'all' : 'missing'),
-      'Update snapshots',
-    ] as const;
-  }, [runUpdateSnapshots, setRunUpdateSnapshots]);
-
-  const [, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
-
-  const darkModeSetting = useDarkModeSetting();
+  const [singleWorker, setSingleWorker] = React.useState(queryParams.workers === '1');
+  const [showBrowser, setShowBrowser] = React.useState(queryParams.headed);
+  const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
+  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
+  const [darkMode, setDarkMode] = useDarkModeSetting();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -309,11 +286,13 @@ export const UIModeView: React.FC<{}> = ({
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
-        workers: runWorkers,
+        // When started with `--workers=1`, the setting allows to undo that.
+        // Otherwise, fallback to the cli `--workers=X` argument.
+        workers: singleWorker ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers),
         timeout: queryParams.timeout,
-        headed: runHeaded,
+        headed: showBrowser,
         outputDir: queryParams.outputDir,
-        updateSnapshots: runUpdateSnapshots,
+        updateSnapshots: updateSnapshots ? 'all' : queryParams.updateSnapshots,
         reporters: queryParams.reporters,
         trace: 'on',
       });
@@ -325,7 +304,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, singleWorker, showBrowser, updateSnapshots]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -522,9 +501,9 @@ export const UIModeView: React.FC<{}> = ({
             <div className='section-title'>Testing Options</div>
           </Toolbar>
           {testingOptionsVisible && <SettingsView settings={[
-            singleWorkerSetting,
-            showBrowserSetting,
-            updateSnapshotsSetting,
+            { value: singleWorker, set: setSingleWorker, title: 'Single worker' },
+            { value: showBrowser, set: setShowBrowser, title: 'Show browser' },
+            { value: updateSnapshots, set: setUpdateSnapshots, title: 'Update snapshots' },
           ]} />}
         </>}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
@@ -536,8 +515,8 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
-          darkModeSetting,
-          showRouteActionsSetting,
+          { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
         ]} />}
       </div>
       }
