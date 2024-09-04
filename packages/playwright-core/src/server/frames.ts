@@ -900,7 +900,7 @@ export class Frame extends SdkObject {
         const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
         progress.log(`setting frame content, waiting until "${waitUntil}"`);
         const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
-        const context = await this._utilityContext();
+        const context = this._page._delegate.useMainWorldForSetContent?.() ? await this._mainContext() : await this._utilityContext();
         const lifecyclePromise = new Promise((resolve, reject) => {
           this._page._frameManager._consoleMessageTags.set(tag, () => {
             // Clear lifecycle right after document.open() - see 'tag' below.

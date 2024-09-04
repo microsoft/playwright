@@ -108,6 +108,7 @@ export class Request extends SdkObject {
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
+  private _bodySize: number | undefined;
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
@@ -223,8 +224,13 @@ export class Request extends SdkObject {
     };
   }
 
+  // TODO(bidi): remove once post body is available.
+  _setBodySize(size: number) {
+    this._bodySize = size;
+  }
+
   bodySize(): number {
-    return this.postDataBuffer()?.length || 0;
+    return this._bodySize || this.postDataBuffer()?.length || 0;
   }
 
   async requestHeadersSize(): Promise<number> {

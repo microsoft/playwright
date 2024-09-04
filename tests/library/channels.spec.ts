@@ -45,6 +45,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
       { _guid: 'android', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [] }
       ] },
@@ -65,6 +66,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
@@ -103,6 +105,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
       { _guid: 'android', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [] }
       ] },
@@ -119,6 +122,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
@@ -147,6 +151,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -161,6 +166,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
@@ -197,6 +203,7 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [
@@ -268,6 +275,10 @@ it('exposeFunction should not leak', async ({ page, expectScopeState, server }) 
     'objects': [
       {
         '_guid': 'android',
+        'objects': [],
+      },
+      {
+        '_guid': 'browser-type',
         'objects': [],
       },
       {

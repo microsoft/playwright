@@ -83,15 +83,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.channel = channel;
     options.tracesDir = tracing().tracesDir();
 
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._experimentalBidi])
       (browserType as any)._defaultLaunchOptions = options;
     await use(options);
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._experimentalBidi])
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
-    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
+    if (!['chromium', 'firefox', 'webkit', '_experimentalBidi'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
     if (connectOptions) {

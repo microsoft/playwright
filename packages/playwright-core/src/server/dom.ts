@@ -233,7 +233,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         this._page._timeoutSettings.timeout(options));
   }
 
-  private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport'> {
+  private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport' | 'error:notconnected'> {
     const intersectQuadWithViewport = (quad: types.Quad): types.Quad => {
       return quad.map(point => ({
         x: Math.min(Math.max(point.x, 0), metrics.width),
@@ -257,6 +257,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       this._page._delegate.getContentQuads(this),
       this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
     ] as const);
+    if (quads === 'error:notconnected')
+      return quads;
     if (!quads || !quads.length)
       return 'error:notvisible';
 

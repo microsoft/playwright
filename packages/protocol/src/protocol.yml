@@ -668,6 +668,7 @@ Playwright:
 
   initializer:
     chromium: BrowserType
+    bidi: BrowserType
     firefox: BrowserType
     webkit: BrowserType
     android: Android

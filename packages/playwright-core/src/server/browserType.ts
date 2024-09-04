@@ -52,6 +52,7 @@ export interface BrowserReadyState {
 
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
+  _useBidi: boolean = false;
 
   constructor(parent: SdkObject, browserName: BrowserName) {
     super(parent, 'browser-type');
@@ -69,6 +70,8 @@ export abstract class BrowserType extends SdkObject {
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = this._validateLaunchOptions(options);
+    if (this._useBidi)
+      options.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -82,6 +85,8 @@ export abstract class BrowserType extends SdkObject {
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
+    if (this._useBidi)
+      options.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
     const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
