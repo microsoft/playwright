@@ -15,14 +15,19 @@
  */
 
 import * as React from 'react';
-import type { Setting } from '@web/uiUtils';
 import './settingsView.css';
+
+export type Setting<T> = {
+  value: T,
+  set: (value: T) => void,
+  title: string
+};
 
 export const SettingsView: React.FunctionComponent<{
   settings: Setting<boolean>[],
 }> = ({ settings }) => {
   return <div className='vbox settings-view'>
-    {settings.map(([value, set, title]) => {
+    {settings.map(({ value, set, title }) => {
       return <div key={title} className='setting'>
         <label>
           <input type='checkbox' checked={value} onClick={() => set(!value)}/>
