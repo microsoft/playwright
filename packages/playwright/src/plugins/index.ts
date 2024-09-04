@@ -21,6 +21,7 @@ export interface TestRunnerPlugin {
   name: string;
   setup?(config: FullConfig, configDir: string, reporter: ReporterV2): Promise<void>;
   populateDependencies?(): Promise<void>;
+  startDevServer?(): Promise<() => Promise<void>>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
@@ -29,6 +30,7 @@ export interface TestRunnerPlugin {
 export type TestRunnerPluginRegistration = {
   factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
   instance?: TestRunnerPlugin;
+  devServerCleanup?: any;
 };
 
 export { webServer } from './webServerPlugin';
