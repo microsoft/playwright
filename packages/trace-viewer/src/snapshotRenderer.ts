@@ -27,7 +27,7 @@ function isSubtreeReferenceSnapshot(n: NodeSnapshot): n is SubtreeReferenceSnaps
 
 let cacheSize = 0;
 const cache = new Map<SnapshotRenderer, string>();
-const CACHE_SIZE = 300000000; // 300mb
+const CACHE_SIZE = 300_000_000; // 300mb
 
 function lruCache(key: SnapshotRenderer, compute: () => string): string {
   if (cache.has(key)) {
