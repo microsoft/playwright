@@ -135,3 +135,28 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '}',
   ]);
 });
+
+test('should display list of query parameters (only if present)', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+      });
+    `,
+  });
+
+  await page.getByText('network tab test').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+
+  await page.getByText('call-with-query-params').click();
+
+  await expect(page.getByText('Query String Parameters')).toBeVisible();
+  await expect(page.getByText('param1: value1')).toBeVisible();
+  await expect(page.getByText('param1: value2')).toBeVisible();
+  await expect(page.getByText('param2: value2')).toBeVisible();
+
+  await page.getByText('endpoint').click();
+
+  await expect(page.getByText('Query String Parameters')).not.toBeVisible();
+});
