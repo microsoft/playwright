@@ -384,6 +384,7 @@ export type MatcherReturnType = {
   expected?: unknown;
   actual?: any;
   log?: string[];
+  timeout?: number;
 };
 
 type MakeMatchers<R, T, ExtendedMatchers> = {

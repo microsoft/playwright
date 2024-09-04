@@ -6546,6 +6546,7 @@ export type MatcherReturnType = {
   expected?: unknown;
   actual?: any;
   log?: string[];
+  timeout?: number;
 };
 
 type MakeMatchers<R, T, ExtendedMatchers> = {
@@ -8222,9 +8223,44 @@ export interface TestInfo {
 }
 
 /**
+ * Matcher-specific details for the error thrown during the `expect` call.
+ */
+export interface TestInfoErrorMatcherResult {
+  /**
+   * Actual value.
+   */
+  actual?: unknown;
+
+  /**
+   * Expected value.
+   */
+  expected?: unknown;
+
+  /**
+   * Matcher name.
+   */
+  name?: string;
+
+  /**
+   * Whether the matcher passed.
+   */
+  pass: string;
+
+  /**
+   * Timeout that was used during matching.
+   */
+  timeout?: number;
+}
+
+/**
  * Information about an error thrown during test execution.
  */
 export interface TestInfoError {
+  /**
+   * Matcher result details.
+   */
+  matcherResult?: TestInfoErrorMatcherResult;
+
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
