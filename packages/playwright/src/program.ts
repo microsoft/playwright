@@ -95,13 +95,14 @@ function addDevServerCommand(program: Command) {
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
-    const configInternal = await loadConfigFromFileRestartIfNeeded(options.config);
-    if (!configInternal)
+    const config = await loadConfigFromFileRestartIfNeeded(options.config);
+    if (!config)
       return;
-    const { config } = configInternal;
-    const implementation = (config as any)['@playwright/test']?.['cli']?.['dev-server'];
+    const implementation = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
     if (implementation) {
-      await implementation(configInternal);
+      const runner = new Runner(config);
+      await runner.loadAllTests();
+      await implementation(config.config);
     } else {
       console.log(`DevServer is not available in the package you are using. Did you mean to use component testing?`);
       gracefullyProcessExitDoNotHang(1);

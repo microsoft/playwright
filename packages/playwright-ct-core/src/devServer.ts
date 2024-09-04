@@ -17,28 +17,26 @@
 import fs from 'fs';
 import path from 'path';
 import { Watcher } from 'playwright/lib/fsWatcher';
-import { Runner } from 'playwright/lib/runner/runner';
 import type { PluginContext } from 'rollup';
 import { source as injectedSource } from './generated/indexSource';
 import { createConfig, populateComponentsFromTests, resolveDirs, transformIndexFile, frameworkConfig } from './viteUtils';
 import type { ComponentRegistry } from './viteUtils';
-import type { FullConfigInternal } from 'playwright/lib/common/config';
+import type { FullConfig } from 'playwright/test';
 
-export async function runDevServer(config: FullConfigInternal): Promise<() => Promise<void>> {
-  const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config.config);
-  const runner = new Runner(config);
-  await runner.loadAllTests();
+export async function runDevServer(config: FullConfig): Promise<() => Promise<void>> {
+  const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
   const componentRegistry: ComponentRegistry = new Map();
   await populateComponentsFromTests(componentRegistry);
 
-  const dirs = await resolveDirs(config.configDir, config.config);
+  const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
+  const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
     console.log(`Template file playwright/index.html is missing.`);
     return async () => {};
   }
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-  const viteConfig = await createConfig(dirs, config.config, frameworkPluginFactory, false);
+  const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, false);
   viteConfig.plugins.push({
     name: 'playwright:component-index',
 
@@ -57,8 +55,8 @@ export async function runDevServer(config: FullConfigInternal): Promise<() => Pr
   const projectDirs = new Set<string>();
   const projectOutputs = new Set<string>();
   for (const p of config.projects) {
-    projectDirs.add(p.project.testDir);
-    projectOutputs.add(p.project.outputDir);
+    projectDirs.add(p.testDir);
+    projectOutputs.add(p.outputDir);
   }
 
   const globalWatcher = new Watcher(async () => {

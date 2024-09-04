@@ -176,17 +176,16 @@ export class TestServerDispatcher implements TestServerInterface {
   async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
     if (this._devServerHandle)
       return { status: 'failed', report: [] };
-    const { reporter, report } = await this._collectingInternalReporter();
-    const config = await this._loadConfigOrReportError(reporter);
+    const { config, report, reporter, status } = await this._innerListTests({});
     if (!config)
-      return { status: 'failed', report };
+      return { status, report };
     const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
     if (!devServerCommand) {
       reporter.onError({ message: 'No dev-server command found in the configuration' });
       return { status: 'failed', report };
     }
     try {
-      this._devServerHandle = await devServerCommand(config);
+      this._devServerHandle = await devServerCommand(config.config);
       return { status: 'passed', report };
     } catch (e) {
       reporter.onError(serializeError(e));
@@ -237,13 +236,21 @@ export class TestServerDispatcher implements TestServerInterface {
   async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
     let result: Awaited<ReturnType<TestServerInterface['listTests']>>;
     this._queue = this._queue.then(async () => {
-      result = await this._innerListTests(params);
+      const { config, report, status } = await this._innerListTests(params);
+      if (config)
+        await this._updateWatchedDirs(config);
+      result = { report, status };
     }).catch(printInternalError);
     await this._queue;
     return result!;
   }
 
-  private async _innerListTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
+  private async _innerListTests(params: Parameters<TestServerInterface['listTests']>[0]): Promise<{
+    report: ReportEntry[],
+    reporter: InternalReporter,
+    status: reporterTypes.FullResult['status'],
+    config?: FullConfigInternal,
+  }> {
     const overrides: ConfigCLIOverrides = {
       repeatEach: 1,
       retries: 0,
@@ -252,7 +259,7 @@ export class TestServerDispatcher implements TestServerInterface {
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter, overrides);
     if (!config)
-      return { report, status: 'failed' };
+      return { report, reporter, status: 'failed' };
 
     config.cliArgs = params.locations || [];
     config.cliGrep = params.grep;
@@ -266,7 +273,10 @@ export class TestServerDispatcher implements TestServerInterface {
     const status = await taskRunner.run(testRun, 0);
     await reporter.onEnd({ status });
     await reporter.onExit();
+    return { config, report, reporter, status };
+  }
 
+  private async _updateWatchedDirs(config: FullConfigInternal) {
     this._watchedProjectDirs = new Set();
     this._ignoredProjectOutputs = new Set();
     for (const p of config.projects) {
@@ -281,11 +291,10 @@ export class TestServerDispatcher implements TestServerInterface {
     }
 
     if (this._watchTestDirs)
-      await this.updateWatcher(false);
-    return { report, status };
+      await this._updateWatcher(false);
   }
 
-  private async updateWatcher(reportPending: boolean) {
+  private async _updateWatcher(reportPending: boolean) {
     await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
   }
 
@@ -358,7 +367,7 @@ export class TestServerDispatcher implements TestServerInterface {
       this._watchedTestDependencies.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
     }
-    await this.updateWatcher(true);
+    await this._updateWatcher(true);
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
