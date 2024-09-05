@@ -58,7 +58,7 @@ test('query params', async ({ request }) => {
 
 ### Browser Versions
 
-- Chromium 129.0.6668.22
+- Chromium 129.0.6668.29
 - Mozilla Firefox 130.0
 - WebKit 18.0
 
