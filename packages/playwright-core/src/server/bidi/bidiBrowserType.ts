@@ -28,7 +28,6 @@ import type * as types from '../types';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
-import { connectBidiOverCdp } from './bidiOverCdp';
 
 export class BidiBrowserType extends BrowserType {
   constructor(parent: SdkObject) {
@@ -39,7 +38,9 @@ export class BidiBrowserType extends BrowserType {
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
     if (options.channel?.includes('chrome')) {
       // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
-      const bidiTransport = await connectBidiOverCdp(transport);
+      // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
+      // we load bidiOverCdp dynamically.
+      const bidiTransport = await require('./bidiOverCdp').connectBidiOverCdp(transport);
       (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
       transport = bidiTransport;
     }
