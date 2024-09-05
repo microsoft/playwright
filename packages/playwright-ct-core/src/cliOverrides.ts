@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { affectedTestFiles, cacheDir } from 'playwright/lib/transform/compilationCache';
-import { buildBundle } from './vitePlugin';
+import { cacheDir } from 'playwright/lib/transform/compilationCache';
 import { resolveDirs } from './viteUtils';
 import type { FullConfigInternal } from 'playwright/lib/common/config';
 import { removeFolderAndLogToConsole } from 'playwright/lib/runner/testServer';
@@ -26,9 +25,4 @@ export async function clearCacheCommand(config: FullConfigInternal) {
   if (dirs)
     await removeFolderAndLogToConsole(dirs.outDir);
   await removeFolderAndLogToConsole(cacheDir);
-}
-
-export async function findRelatedTestFilesCommand(files: string[],  config: FullConfigInternal) {
-  await buildBundle(config.config, config.configDir);
-  return { testFiles: affectedTestFiles(files) };
 }

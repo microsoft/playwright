@@ -129,6 +129,16 @@ export function createTaskRunnerForDevServer(config: FullConfigInternal, reporte
   return taskRunner;
 }
 
+export function createTaskRunnerForRelatedTestFiles(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupPlugins: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupPlugins) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('load tests', createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }));
+  return taskRunner;
+}
+
 function createReportBeginTask(): Task<TestRun> {
   return {
     setup: async (reporter, { rootSuite }) => {
@@ -231,16 +241,19 @@ function createListFilesTask(): Task<TestRun> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean }): Task<TestRun> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean, populateDependencies?: boolean }): Task<TestRun> {
   return {
     setup: async (reporter, testRun, errors, softErrors) => {
       await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
-      let cliOnlyChangedMatcher: Matcher | undefined = undefined;
-      if (testRun.config.cliOnlyChanged) {
+      if (testRun.config.cliOnlyChanged || options.populateDependencies) {
         for (const plugin of testRun.config.plugins)
           await plugin.instance?.populateDependencies?.();
+      }
+
+      let cliOnlyChangedMatcher: Matcher | undefined = undefined;
+      if (testRun.config.cliOnlyChanged) {
         const changedFiles = await detectChangedTestFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
         cliOnlyChangedMatcher = file => changedFiles.has(file);
       }

@@ -21,11 +21,9 @@ import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
-import { createConsoleReporter, createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForDevServer, createTaskRunnerForList } from './tasks';
+import { createErrorCollectingReporter, createReporters } from './reporters';
+import { TestRun, createTaskRunner, createTaskRunnerForDevServer, createTaskRunnerForList, createTaskRunnerForRelatedTestFiles } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import type { Suite } from '../common/test';
-import { wrapReporterAsV2 } from '../reporters/reporterV2';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
 
@@ -109,43 +107,22 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process'): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
-    const config = this._config;
-    const errors: TestError[] = [];
-    const reporter = new InternalReporter([wrapReporterAsV2({
-      onError(error: TestError) {
-        errors.push(error);
-      }
-    })]);
-    const taskRunner = createTaskRunnerForList(config, reporter, mode, { failOnLoadErrors: true });
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-
-    const taskStatus = await taskRunner.run(testRun, 0);
-    let status: FullResult['status'] = testRun.failureTracker.result();
-    if (status === 'passed' && taskStatus !== 'passed')
-      status = taskStatus;
-    const modifiedResult = await reporter.onEnd({ status });
-    if (modifiedResult && modifiedResult.status)
-      status = modifiedResult.status;
+  async findRelatedTestFiles(files: string[]): Promise<FindRelatedTestFilesReport>  {
+    const errorReporter = createErrorCollectingReporter();
+    const reporter = new InternalReporter([errorReporter]);
+    const taskRunner = createTaskRunnerForRelatedTestFiles(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
     await reporter.onExit();
-    return { status, suite: testRun.rootSuite, errors };
-  }
-
-  async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
-    const result = await this.loadAllTests(mode);
-    if (result.status !== 'passed' || !result.suite)
-      return { errors: result.errors, testFiles: [] };
-
-    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-    if (override)
-      return await override(resolvedFiles, this._config);
-    return { testFiles: affectedTestFiles(resolvedFiles) };
+    if (status !== 'passed')
+      return { errors: errorReporter.errors(), testFiles: [] };
+    return { testFiles: affectedTestFiles(files) };
   }
 
   async runDevServer() {
-    const reporter = new InternalReporter([createConsoleReporter()]);
+    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
     const taskRunner = createTaskRunnerForDevServer(this._config, reporter, 'in-process', true);
     const testRun = new TestRun(this._config);
     reporter.onConfigure(this._config.config);

@@ -18,7 +18,7 @@ import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 import { playwrightCtConfigText } from './playwright-test-fixtures';
 import ws from 'ws';
-import type { TestChildProcess } from 'tests/config/commonFixtures';
+import type { TestChildProcess } from '../config/commonFixtures';
 
 class WSTransport {
   private _ws: ws.WebSocket;
@@ -69,6 +69,24 @@ const test = baseTest.extend<{ startTestServer: () => Promise<TestServerConnecti
     await testServerProcess?.kill();
   }
 });
+
+const ctFiles = {
+  'playwright.config.ts': playwrightCtConfigText,
+  'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+  'playwright/index.ts': ``,
+  'src/button.tsx': `
+    export const Button = () => <button>Button</button>;
+  `,
+  'src/button.test.tsx': `
+    import { test, expect } from '@playwright/experimental-ct-react';
+    import { Button } from './button';
+
+    test('pass', async ({ mount }) => {
+      const component = await mount(<Button></Button>);
+      await expect(component).toHaveText('Button', { timeout: 1 });
+    });
+  `,
+};
 
 test('file watching', async ({ startTestServer, writeFiles }, testInfo) => {
   await writeFiles({
@@ -125,23 +143,7 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
 });
 
 test('start dev server', async ({ startTestServer, writeFiles, runInlineTest }) => {
-  await writeFiles({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-    'src/button.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
-
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1 });
-      });
-    `,
-  });
+  await writeFiles(ctFiles);
 
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
@@ -154,5 +156,40 @@ test('start dev server', async ({ startTestServer, writeFiles, runInlineTest }) 
   expect(result.output).toContain('Dev Server is already running at');
 
   expect((await testServerConnection.stopDevServer({})).status).toBe('passed');
+  expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
+});
+
+test('find related test files errors', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'a.spec.ts': `
+      const a = 1;
+      const a = 2;
+    `,
+  });
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({ interceptStdio: true });
+  expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
+
+  const aSpecTs = test.info().outputPath('a.spec.ts');
+  const result = await testServerConnection.findRelatedTestFiles({ files: [aSpecTs] });
+  expect(result).toEqual({ testFiles: [], errors: [
+    expect.objectContaining({ message: expect.stringContaining(`Identifier 'a' has already been declared`) }),
+    expect.objectContaining({ message: expect.stringContaining(`No tests found`) }),
+  ] });
+
+  expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
+});
+
+test('find related test files', async ({ startTestServer, writeFiles }) => {
+  await writeFiles(ctFiles);
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({ interceptStdio: true });
+  expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
+
+  const buttonTsx = test.info().outputPath('src/button.tsx');
+  const buttonTestTsx = test.info().outputPath('src/button.test.tsx');
+  const result = await testServerConnection.findRelatedTestFiles({ files: [buttonTsx] });
+  expect(result).toEqual({ testFiles: [buttonTestTsx] });
+
   expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
 });
