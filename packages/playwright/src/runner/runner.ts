@@ -22,7 +22,7 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForDevServer, createTaskRunnerForList, createTaskRunnerForRelatedTestFiles } from './tasks';
+import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRunnerForDevServer, createTaskRunnerForList, createTaskRunnerForRelatedTestFiles } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
@@ -124,6 +124,17 @@ export class Runner {
   async runDevServer() {
     const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
     const taskRunner = createTaskRunnerForDevServer(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    return { status };
+  }
+
+  async clearCache() {
+    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
+    const taskRunner = createTaskRunnerForClearCache(this._config, reporter, 'in-process', true);
     const testRun = new TestRun(this._config);
     reporter.onConfigure(this._config.config);
     const status = await taskRunner.run(testRun, 0);

@@ -26,12 +26,13 @@ import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
-import type { Matcher } from '../util';
+import { removeDirAndLogToConsole, type Matcher } from '../util';
 import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 import { detectChangedTestFiles } from './vcs';
 import type { InternalReporter } from '../reporters/internalReporter';
+import { cacheDir } from '../transform/compilationCache';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -136,6 +137,22 @@ export function createTaskRunnerForRelatedTestFiles(config: FullConfigInternal, 
       taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   }
   taskRunner.addTask('load tests', createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }));
+  return taskRunner;
+}
+
+export function createTaskRunnerForClearCache(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupPlugins: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupPlugins) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('clear cache', {
+    setup: async () => {
+      await removeDirAndLogToConsole(cacheDir);
+      for (const plugin of config.plugins)
+        await plugin.instance?.clearCache?.();
+    },
+  });
   return taskRunner;
 }
 

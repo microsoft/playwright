@@ -32,6 +32,7 @@ import type { ComponentRegistry } from './viteUtils';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
 import { runDevServer } from './devServer';
+import { removeDirAndLogToConsole } from 'playwright/lib/util';
 
 const log = debug('pw:vite');
 
@@ -77,6 +78,13 @@ export function createPlugin(): TestRunnerPlugin {
 
     startDevServer: async () => {
       return await runDevServer(config);
+    },
+
+    clearCache: async () => {
+      const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
+      const dirs = await resolveDirs(configDir, config);
+      if (dirs)
+        await removeDirAndLogToConsole(dirs.outDir);
     },
   };
 }

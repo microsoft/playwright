@@ -193,3 +193,12 @@ test('find related test files', async ({ startTestServer, writeFiles }) => {
 
   expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
 });
+
+test('clear cache', async ({ startTestServer, writeFiles }) => {
+  await writeFiles(ctFiles);
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({ interceptStdio: true });
+  expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
+  await testServerConnection.clearCache({});
+  expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
+});

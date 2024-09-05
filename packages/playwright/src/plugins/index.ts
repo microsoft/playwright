@@ -22,6 +22,7 @@ export interface TestRunnerPlugin {
   setup?(config: FullConfig, configDir: string, reporter: ReporterV2): Promise<void>;
   populateDependencies?(): Promise<void>;
   startDevServer?(): Promise<() => Promise<void>>;
+  clearCache?(): Promise<void>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
