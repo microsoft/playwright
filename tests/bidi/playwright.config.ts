@@ -63,7 +63,7 @@ const executablePath = getExecutablePath();
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
-for (let channel of ['bidi-chrome-canary', 'bidi-firefox-stable']) {
+for (const channel of ['bidi-chrome-canary', 'bidi-firefox-stable']) {
   for (const folder of ['library', 'page']) {
     config.projects.push({
       name: `${channel}-${folder}`,
