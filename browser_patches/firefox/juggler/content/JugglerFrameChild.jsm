@@ -70,7 +70,7 @@ class JugglerFrameChild extends JSWindowActorChild {
 
     const agents = topBrowingContextToAgents.get(this.browsingContext);
     // The agents are already re-bound to a new actor.
-    if (agents.actor !== this)
+    if (agents?.actor !== this)
       return;
 
     topBrowingContextToAgents.delete(this.browsingContext);
