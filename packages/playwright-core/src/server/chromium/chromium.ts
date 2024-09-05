@@ -24,7 +24,7 @@ import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import type { BrowserReadyState } from '../browserType';
+import { BrowserReadyState } from '../browserType';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
@@ -352,20 +352,11 @@ export class Chromium extends BrowserType {
   }
 }
 
-class ChromiumReadyState implements BrowserReadyState {
-  private readonly _wsEndpoint = new ManualPromise<string|undefined>();
-
-  onBrowserOutput(message: string): void {
+class ChromiumReadyState extends BrowserReadyState {
+  override onBrowserOutput(message: string): void {
     const match = message.match(/DevTools listening on (.*)/);
     if (match)
       this._wsEndpoint.resolve(match[1]);
-  }
-  onBrowserExit(): void {
-    this._wsEndpoint.resolve(undefined);
-  }
-  async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
-    const wsEndpoint = await this._wsEndpoint;
-    return { wsEndpoint };
   }
 }
 

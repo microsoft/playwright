@@ -3,3 +3,9 @@
 ../
 ../isomorphic/
 ./third_party/
+
+[bidiOverCdp.ts]
+***
+
+[bidiBrowserType.ts]
+../chromium/chromiumSwitches.ts

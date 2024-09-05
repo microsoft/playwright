@@ -86,22 +86,13 @@ export class BidiPage implements PageDelegate {
   }
 
   private async _initialize() {
-    const { contexts } = await this._session.send('browsingContext.getTree', { root: this._session.sessionId });
-    this._handleFrameTree(contexts[0]);
+    // Initialize main frame.
+    this._onFrameAttached(this._session.sessionId, null);
     await Promise.all([
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
       this._updateViewport(),
     ]);
-  }
-
-  private _handleFrameTree(frameTree: bidi.BrowsingContext.Info) {
-    this._onFrameAttached(frameTree.context, frameTree.parent || null);
-    if (!frameTree.children)
-      return;
-
-    for (const child of frameTree.children)
-      this._handleFrameTree(child);
   }
 
   potentiallyUninitializedPage(): Page {

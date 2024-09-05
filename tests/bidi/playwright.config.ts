@@ -26,7 +26,6 @@ const getExecutablePath = () => {
 };
 
 const headed = process.argv.includes('--headed');
-const channel = process.env.PWTEST_CHANNEL as any;
 const trace = !!process.env.PWTEST_TRACE;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
@@ -64,32 +63,34 @@ const executablePath = getExecutablePath();
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
-for (const folder of ['library', 'page']) {
-  config.projects.push({
-    name: `${browserName}-${folder}`,
-    testDir: path.join(testDir, folder),
-    testIgnore,
-    snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${browserName}{ext}`,
-    use: {
-      browserName,
-      headless: !headed,
-      channel,
-      video: 'off',
-      launchOptions: {
-        channel: 'bidi-firefox-stable',
-        executablePath,
+for (const channel of ['bidi-chrome-canary', 'bidi-firefox-stable']) {
+  for (const folder of ['library', 'page']) {
+    config.projects.push({
+      name: `${channel}-${folder}`,
+      testDir: path.join(testDir, folder),
+      testIgnore,
+      snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${channel}{ext}`,
+      use: {
+        browserName,
+        headless: !headed,
+        channel,
+        video: 'off',
+        launchOptions: {
+          channel: 'bidi-chrome-canary',
+          executablePath,
+        },
+        trace: trace ? 'on' : undefined,
       },
-      trace: trace ? 'on' : undefined,
-    },
-    metadata: {
-      platform: process.platform,
-      docker: !!process.env.INSIDE_DOCKER,
-      headless: !headed,
-      browserName,
-      channel,
-      trace: !!trace,
-    },
-  });
+      metadata: {
+        platform: process.platform,
+        docker: !!process.env.INSIDE_DOCKER,
+        headless: !headed,
+        browserName,
+        channel,
+        trace: !!trace,
+      },
+    });
+  }
 }
 
 export default config;
