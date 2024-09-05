@@ -6,6 +6,69 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.47
+
+### `--tsconfig` CLI option
+
+By default, Playwright will look up a closest tsconfig for each imported file using a heuristic. You can now specify a single tsconfig file in the command line, and Playwright will use it for all imported files, not only test files:
+
+```sh
+# Pass a specific tsconfig
+npx playwright test --tsconfig tsconfig.test.json
+```
+
+### Network Tab improvements
+
+- TODO: add nice screenshots
+- preview for font requests
+- filters
+
+### HTML attachments in the HTML report can now be opened in a new tab
+
+You can now open HTML attachments in a new tab by clicking on the attachment in the HTML report.
+This is useful for including third-party reports or other HTML content in the test report
+
+### `APIRequestContext` now accepts `URLSearchParams` and `string` as query parameters
+
+You can now pass `URLSearchParams` and `string` as query parameters to `APIRequestContext`:
+
+```ts
+test('query params', async ({ request }) => {
+  const searchParams = new URLSearchParams();
+  searchParams.set('userId', 1);
+  const response = await request.get(
+    'https://jsonplaceholder.typicode.com/posts',
+    {
+      params: searchParams,
+      // or as a string
+      params: 'userId=1',
+    }
+  );
+  // ...
+});
+```
+
+### CI Documentation improvements
+
+We reorganized the CI documentation to make it easier to find the information you need. Please let us know your feedback on the new structure!
+
+### Miscellaneous
+
+- The `mcr.microsoft.com/playwright:v1.47.0` now serves a Playwright image based on Ubuntu Noble.
+  To use the jammy-based image, please use `mcr.microsoft.com/playwright:v1.47.0-jammy` instead.
+- New option in `Browser.removeAllListeners` and `BrowserContext.removeAllListeners` to wait until all listeners are removed.
+- TLS client certificates can now be passed from memory by passing `cert` and `key` as buffers instead of file paths.
+
+### Browser Versions
+
+- Chromium 129.0.6668.22
+- Mozilla Firefox 130.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+TODO
+
 ## Version 1.46
 
 <LiteYouTube
