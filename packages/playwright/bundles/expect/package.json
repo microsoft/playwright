@@ -9,7 +9,7 @@
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {
-    "expect": "29.5.0",
-    "jest-matcher-utils": "29.5.0"
+    "expect": "29.7.0",
+    "jest-matcher-utils": "29.7.0"
   }
 }
