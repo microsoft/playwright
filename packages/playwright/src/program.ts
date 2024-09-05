@@ -86,7 +86,8 @@ function addFindRelatedTestFilesCommand(program: Command) {
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
-    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles('in-process', files));
+    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
+    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles(resolvedFiles));
   });
 }
 

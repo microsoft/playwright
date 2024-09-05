@@ -86,12 +86,22 @@ export async function createReporterForTestServer(file: string, messageSink: (me
   }));
 }
 
-export function createConsoleReporter() {
-  return wrapReporterAsV2({
+interface ErrorCollectingReporter extends ReporterV2 {
+  errors(): TestError[];
+}
+
+export function createErrorCollectingReporter(writeToConsole?: boolean): ErrorCollectingReporter {
+  const errors: TestError[] = [];
+  const reporterV2 = wrapReporterAsV2({
     onError(error: TestError) {
-      process.stdout.write(formatError(error, colors.enabled).message + '\n');
+      errors.push(error);
+      if (writeToConsole)
+        process.stdout.write(formatError(error, colors.enabled).message + '\n');
     }
   });
+  const reporter = reporterV2 as ErrorCollectingReporter;
+  reporter.errors = () => errors;
+  return reporter;
 }
 
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {
