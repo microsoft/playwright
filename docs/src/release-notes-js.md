@@ -37,12 +37,10 @@ test('query params', async ({ request }) => {
   const searchParams = new URLSearchParams();
   searchParams.set('userId', 1);
   const response = await request.get(
-    'https://jsonplaceholder.typicode.com/posts',
-    {
-      params: searchParams,
-      // or as a string
-      params: 'userId=1',
-    }
+      'https://jsonplaceholder.typicode.com/posts',
+      {
+        params: searchParams // or as a string: 'userId=1'
+      }
   );
   // ...
 });
