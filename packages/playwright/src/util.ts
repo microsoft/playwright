@@ -348,3 +348,14 @@ function fileExists(resolved: string) {
 function dirExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
 }
+
+export async function removeDirAndLogToConsole(dir: string) {
+  try {
+    if (!fs.existsSync(dir))
+      return;
+    // eslint-disable-next-line no-console
+    console.log(`Removing ${await fs.promises.realpath(dir)}`);
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  } catch {
+  }
+}

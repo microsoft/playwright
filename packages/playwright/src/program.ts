@@ -34,7 +34,6 @@ export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import * as testServer from './runner/testServer';
-import { clearCacheAndLogToConsole } from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 
 function addTestCommand(program: Command) {
@@ -74,10 +73,13 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const configInternal = await loadConfigFromFileRestartIfNeeded(opts.config);
-    if (!configInternal)
+    const config = await loadConfigFromFileRestartIfNeeded(opts.config);
+    if (!config)
       return;
-    await clearCacheAndLogToConsole(configInternal);
+    const runner = new Runner(config);
+    const { status } = await runner.clearCache();
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
   });
 }
 
