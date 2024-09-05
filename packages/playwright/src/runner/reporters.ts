@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { FullConfig, TestError } from '../../types/testReporter';
-import { formatError } from '../reporters/base';
+import { colors, formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -84,6 +84,14 @@ export async function createReporterForTestServer(file: string, messageSink: (me
   return wrapReporterAsV2(new reporterConstructor({
     _send: messageSink,
   }));
+}
+
+export function createConsoleReporter() {
+  return wrapReporterAsV2({
+    onError(error: TestError) {
+      process.stdout.write(formatError(error, colors.enabled).message + '\n');
+    }
+  });
 }
 
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {

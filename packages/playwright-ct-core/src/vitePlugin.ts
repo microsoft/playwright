@@ -31,6 +31,7 @@ import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
+import { runDevServer } from './devServer';
 
 const log = debug('pw:vite');
 
@@ -72,6 +73,10 @@ export function createPlugin(): TestRunnerPlugin {
 
     populateDependencies: async () => {
       await buildBundle(config, configDir);
+    },
+
+    startDevServer: async () => {
+      return await runDevServer(config);
     },
   };
 }

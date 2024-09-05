@@ -16,7 +16,7 @@
 
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
-const { clearCacheCommand, runDevServerCommand, findRelatedTestFilesCommand } = require('./lib/cliOverrides');
+const { clearCacheCommand, findRelatedTestFilesCommand } = require('./lib/cliOverrides');
 const { createPlugin } = require('./lib/vitePlugin');
 
 const defineConfig = (...configs) => {
@@ -31,7 +31,6 @@ const defineConfig = (...configs) => {
       ],
       cli: {
         'clear-cache': clearCacheCommand,
-        'dev-server': runDevServerCommand,
         'find-related-test-files': findRelatedTestFilesCommand,
       },
     }

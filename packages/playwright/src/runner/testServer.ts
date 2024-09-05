@@ -23,7 +23,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles, createTaskRunnerForDevServer } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -75,12 +75,12 @@ export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
   private _queue = Promise.resolve();
   private _globalSetup: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
+  private _devServer: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _serializer = require.resolve('./uiModeReporter');
   private _watchTestDirs = false;
   private _closeOnDisconnect = false;
-  private _devServerHandle: (() => Promise<void>) | undefined;
 
   constructor(configLocation: ConfigLocation) {
     this._configLocation = configLocation;
@@ -174,41 +174,32 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 
   async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
-    if (this._devServerHandle)
-      return { status: 'failed', report: [] };
-    const { config, report, reporter, status } = await this._innerListTests({});
+    await this.stopDevServer({});
+
+    const { reporter, report } = await this._collectingInternalReporter();
+    const config = await this._loadConfigOrReportError(reporter);
     if (!config)
-      return { status, report };
-    const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
-    if (!devServerCommand) {
-      reporter.onError({ message: 'No dev-server command found in the configuration' });
-      return { status: 'failed', report };
+      return { report, status: 'failed' };
+
+    const taskRunner = createTaskRunnerForDevServer(config, reporter, 'out-of-process', false);
+    const testRun = new TestRun(config);
+    reporter.onConfigure(config.config);
+    const { status, cleanup } = await taskRunner.runDeferCleanup(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    if (status !== 'passed') {
+      await cleanup();
+      return { report, status };
     }
-    try {
-      this._devServerHandle = await devServerCommand(config.config);
-      return { status: 'passed', report };
-    } catch (e) {
-      reporter.onError(serializeError(e));
-      return { status: 'failed', report };
-    }
+    this._devServer = { cleanup, report };
+    return { report, status };
   }
 
   async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
-    if (!this._devServerHandle)
-      return { status: 'failed', report: [] };
-    try {
-      await this._devServerHandle();
-      this._devServerHandle = undefined;
-      return { status: 'passed', report: [] };
-    } catch (e) {
-      const { reporter, report } = await this._collectingInternalReporter();
-      // Produce dummy config when it has an error.
-      reporter.onConfigure(baseFullConfig);
-      reporter.onError(serializeError(e));
-      await reporter.onEnd({ status: 'failed' });
-      await reporter.onExit();
-      return { status: 'failed', report };
-    }
+    const devServer = this._devServer;
+    const status = await devServer?.cleanup();
+    this._devServer = undefined;
+    return { status, report: devServer?.report || [] };
   }
 
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {

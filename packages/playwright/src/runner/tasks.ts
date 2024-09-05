@@ -113,6 +113,22 @@ export function createTaskRunnerForListFiles(config: FullConfigInternal, reporte
   return taskRunner;
 }
 
+export function createTaskRunnerForDevServer(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupAndWait: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupAndWait) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('load tests', createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false }));
+  taskRunner.addTask('start dev server', createStartDevServerTask());
+  if (setupAndWait) {
+    taskRunner.addTask('wait until interrupted', {
+      setup: async () => new Promise(() => {}),
+    });
+  }
+  return taskRunner;
+}
+
 function createReportBeginTask(): Task<TestRun> {
   return {
     setup: async (reporter, { rootSuite }) => {
@@ -346,6 +362,28 @@ function createRunTestsTask(): Task<TestRun> {
     teardown: async (reporter, { phases }) => {
       for (const { dispatcher } of phases.reverse())
         await dispatcher.stop();
+    },
+  };
+}
+
+function createStartDevServerTask(): Task<TestRun> {
+  return {
+    setup: async (reporter, testRun, errors, softErrors) => {
+      if (testRun.config.plugins.some(plugin => !!plugin.devServerCleanup)) {
+        errors.push({ message: `DevServer is already running` });
+        return;
+      }
+      for (const plugin of testRun.config.plugins)
+        plugin.devServerCleanup = await plugin.instance?.startDevServer?.();
+      if (!testRun.config.plugins.some(plugin => !!plugin.devServerCleanup))
+        errors.push({ message: `DevServer is not available in the package you are using. Did you mean to use component testing?` });
+    },
+
+    teardown: async (reporter, testRun) => {
+      for (const plugin of testRun.config.plugins) {
+        await plugin.devServerCleanup?.();
+        plugin.devServerCleanup = undefined;
+      }
     },
   };
 }

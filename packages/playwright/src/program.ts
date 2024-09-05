@@ -98,15 +98,10 @@ function addDevServerCommand(program: Command) {
     const config = await loadConfigFromFileRestartIfNeeded(options.config);
     if (!config)
       return;
-    const implementation = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
-    if (implementation) {
-      const runner = new Runner(config);
-      await runner.loadAllTests();
-      await implementation(config.config);
-    } else {
-      console.log(`DevServer is not available in the package you are using. Did you mean to use component testing?`);
-      gracefullyProcessExitDoNotHang(1);
-    }
+    const runner = new Runner(config);
+    const { status } = await runner.runDevServer();
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
   });
 }
 

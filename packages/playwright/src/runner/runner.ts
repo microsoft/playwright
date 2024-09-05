@@ -21,8 +21,8 @@ import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
-import { createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
+import { createConsoleReporter, createReporters } from './reporters';
+import { TestRun, createTaskRunner, createTaskRunnerForDevServer, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import type { Suite } from '../common/test';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
@@ -142,6 +142,17 @@ export class Runner {
     if (override)
       return await override(resolvedFiles, this._config);
     return { testFiles: affectedTestFiles(resolvedFiles) };
+  }
+
+  async runDevServer() {
+    const reporter = new InternalReporter([createConsoleReporter()]);
+    const taskRunner = createTaskRunnerForDevServer(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    return { status };
   }
 }
 
