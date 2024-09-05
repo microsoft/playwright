@@ -321,9 +321,10 @@ scheme.RootInitializeResult = tObject({
 });
 scheme.PlaywrightInitializer = tObject({
   chromium: tChannel(['BrowserType']),
-  bidi: tChannel(['BrowserType']),
   firefox: tChannel(['BrowserType']),
   webkit: tChannel(['BrowserType']),
+  bidiChromium: tChannel(['BrowserType']),
+  bidiFirefox: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
   utils: tOptional(tChannel(['LocalUtils'])),

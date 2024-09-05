@@ -44,9 +44,10 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     const prelaunchedAndroidDeviceDispatcher = prelaunchedAndroidDevice ? new AndroidDeviceDispatcher(android, prelaunchedAndroidDevice) : undefined;
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
-      bidi: new BrowserTypeDispatcher(scope, playwright.bidi),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
+      bidiChromium: new BrowserTypeDispatcher(scope, playwright.bidiChromium),
+      bidiFirefox: new BrowserTypeDispatcher(scope, playwright.bidiFirefox),
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),

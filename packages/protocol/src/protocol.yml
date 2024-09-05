@@ -668,9 +668,10 @@ Playwright:
 
   initializer:
     chromium: BrowserType
-    bidi: BrowserType
     firefox: BrowserType
     webkit: BrowserType
+    bidiChromium: BrowserType
+    bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?

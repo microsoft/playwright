@@ -15,58 +15,55 @@
  */
 
 import os from 'os';
-import path from 'path';
 import { assert, wrapInASCIIBox } from '../../utils';
 import type { Env } from '../../utils/processLauncher';
 import type { BrowserOptions } from '../browser';
-import { BrowserReadyState } from '../browserType';
-import { BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import type { SdkObject } from '../instrumentation';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
-import { chromiumSwitches } from '../chromium/chromiumSwitches';
 
-export class BidiBrowserType extends BrowserType {
+export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {
     super(parent, 'bidi');
     this._useBidi = true;
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
-    if (options.channel?.includes('chrome')) {
-      // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
-      // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
-      // we load bidiOverCdp dynamically.
-      const bidiTransport = await require('./bidiOverCdp').connectBidiOverCdp(transport);
-      (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
-      transport = bidiTransport;
-    }
-    return BidiBrowser.connect(this.attribution.playwright, transport, options);
+    // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
+    // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
+    // we load bidiOverCdp dynamically.
+    const bidiTransport = await require('./bidiOverCdp').connectBidiOverCdp(transport);
+    (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
+    return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
-    // https://github.com/microsoft/playwright/issues/6500
-    if (error.logs.includes(`as root in a regular user's session is not supported.`))
-      error.logs = '\n' + wrapInASCIIBox(`Firefox is unable to launch if the $HOME folder isn't owned by the current user.\nWorkaround: Set the HOME=/root environment variable${process.env.GITHUB_ACTION ? ' in your GitHub Actions workflow file' : ''} when running Playwright.`, 1);
-    if (error.logs.includes('no DISPLAY environment variable specified'))
+    if (error.logs.includes('Missing X server'))
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    // These error messages are taken from Chromium source code as of July, 2020:
+    // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
+    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180'))
+      return error;
+    error.logs = [
+      `Chromium sandboxing failed!`,
+      `================================`,
+      `To avoid the sandboxing issue, do either of the following:`,
+      `  - (preferred): Configure your environment to support sandboxing`,
+      `  - (alternative): Launch Chromium without sandbox using 'chromiumSandbox: false' option`,
+      `================================`,
+      ``,
+    ].join('\n');
     return error;
   }
 
   override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    if (!path.isAbsolute(os.homedir()))
-      throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
-    if (os.platform() === 'linux') {
-      // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
-      // confuse Firefox: in our case, builds never come from SNAP.
-      // See https://github.com/microsoft/playwright/issues/20555
-      return { ...env, SNAP_NAME: undefined, SNAP_INSTANCE_NAME: undefined };
-    }
     return env;
   }
 
@@ -78,44 +75,6 @@ export class BidiBrowserType extends BrowserType {
   }
 
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    if (options.channel === 'bidi-firefox-stable')
-      return this._defaultFirefoxArgs(options, isPersistent, userDataDir);
-    else if (options.channel === 'bidi-chrome-canary')
-      return this._defaultChromiumArgs(options, isPersistent, userDataDir);
-    throw new Error(`Unknown Bidi channel "${options.channel}"`);
-  }
-
-  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    assert(options.useWebSocket);
-    if (options.channel?.includes('firefox'))
-      return new FirefoxReadyState();
-    if (options.channel?.includes('chrome'))
-      return new ChromiumReadyState();
-    return undefined;
-  }
-
-  private _defaultFirefoxArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], headless } = options;
-    const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
-    if (userDataDirArg)
-      throw this._createUserDataDirArgMisuseError('--profile');
-    const firefoxArguments = ['--remote-debugging-port=0'];
-    if (headless)
-      firefoxArguments.push('--headless');
-    else
-      firefoxArguments.push('--foreground');
-    firefoxArguments.push(`--profile`, userDataDir);
-    firefoxArguments.push(...args);
-    // TODO: make ephemeral context work without this argument.
-    firefoxArguments.push('about:blank');
-    // if (isPersistent)
-    //   firefoxArguments.push('about:blank');
-    // else
-    //   firefoxArguments.push('-silent');
-    return firefoxArguments;
-  }
-
-  private _defaultChromiumArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     chromeArguments.push('--remote-debugging-port=0');
@@ -124,6 +83,11 @@ export class BidiBrowserType extends BrowserType {
     else
       chromeArguments.push('--no-startup-window');
     return chromeArguments;
+  }
+
+  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
+    assert(options.useWebSocket);
+    return new ChromiumReadyState();
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
@@ -183,15 +147,6 @@ export class BidiBrowserType extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
-  }
-}
-
-class FirefoxReadyState extends BrowserReadyState {
-  override onBrowserOutput(message: string): void {
-    // Bidi WebSocket in Firefox.
-    const match = message.match(/WebDriver BiDi listening on (ws:\/\/.*)$/);
-    if (match)
-      this._wsEndpoint.resolve(match[1] + '/session');
   }
 }
 
