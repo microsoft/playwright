@@ -72,7 +72,8 @@ We reorganized the CI documentation to make it easier to find the information yo
 
 This version was also tested against the following stable channels:
 
-TODO
+- Google Chrome 128
+- Microsoft Edge 128
 
 ## Version 1.46
 
