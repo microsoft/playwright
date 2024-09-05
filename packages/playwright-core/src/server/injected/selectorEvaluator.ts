@@ -74,10 +74,8 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('near', createLayoutEngine('near'));
     this._engines.set('nth-match', nthMatchEngine);
 
-    const allNames = [...this._engines.keys()];
-    allNames.sort();
-    const parserNames = [...customCSSNames];
-    parserNames.sort();
+    const allNames = [...this._engines.keys()].sort();
+    const parserNames = [...customCSSNames].sort();
     if (allNames.join('|') !== parserNames.join('|'))
       throw new Error(`Please keep customCSSNames in sync with evaluator engines: ${allNames.join('|')} vs ${parserNames.join('|')}`);
   }
