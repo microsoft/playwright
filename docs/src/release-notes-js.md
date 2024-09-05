@@ -8,6 +8,17 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.47
 
+### Network Tab improvements
+
+The Network tab in the UI mode and trace viewer now allows searching searching and filtering by asset type:
+
+![](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
+
+And for fonts, it now shows a nice preview:
+
+![](https://github.com/user-attachments/assets/769d64cc-cdcb-421d-9849-227d2f874d1f)
+
+
 ### `--tsconfig` CLI option
 
 By default, Playwright will look up a closest tsconfig for each imported file using a heuristic. You can now specify a single tsconfig file in the command line, and Playwright will use it for all imported files, not only test files:
@@ -17,16 +28,10 @@ By default, Playwright will look up a closest tsconfig for each imported file us
 npx playwright test --tsconfig tsconfig.test.json
 ```
 
-### Network Tab improvements
-
-- TODO: add nice screenshots
-- preview for font requests
-- filters
-
 ### HTML attachments in the HTML report can now be opened in a new tab
 
-You can now open HTML attachments in a new tab by clicking on the attachment in the HTML report.
-This is useful for including third-party reports or other HTML content in the test report
+Attachments with an HTML content-type can now be opened in a new tab by clicking on the attachment in the HTML report.
+This is useful for including third-party reports or other HTML content in the Playwright test report and distributing it to your team.
 
 ### `APIRequestContext` now accepts `URLSearchParams` and `string` as query parameters
 
