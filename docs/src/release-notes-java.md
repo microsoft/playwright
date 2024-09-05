@@ -4,6 +4,37 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.47
+
+### Network Tab improvements
+
+The Network tab in the trace viewer now allows searching and filtering by asset type:
+
+![Network tab now has filters](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
+
+And for fonts, it now shows a nice preview:
+
+![Font requests have a preview now](https://github.com/user-attachments/assets/769d64cc-cdcb-421d-9849-227d2f874d1f)
+
+### Miscellaneous
+
+- The `mcr.microsoft.com/playwright-java:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
+  To use the 22.02 jammy-based image, please use `mcr.microsoft.com/playwright-java:v1.47.0-jammy` instead.
+- TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as byte arrays instead of file paths.
+- [`option: noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
+- We've seen reports of WebGL in Webkit misbehaving on GitHub Actions `macos-13`. We recommend upgrading GitHub Actions to `macos-14`.
+
+### Browser Versions
+
+- Chromium 129.0.6668.22
+- Mozilla Firefox 130.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 128
+- Microsoft Edge 128
+
 ## Version 1.46
 
 ### TLS Client Certificates

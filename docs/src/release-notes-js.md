@@ -50,8 +50,8 @@ test('query params', async ({ request }) => {
 
 ### Miscellaneous
 
-- The `mcr.microsoft.com/playwright:v1.47.0` now serves a Playwright image based on Ubuntu Noble.
-  To use the jammy-based image, please use `mcr.microsoft.com/playwright:v1.47.0-jammy` instead.
+- The `mcr.microsoft.com/playwright:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
+  To use the 22.04 jammy-based image, please use `mcr.microsoft.com/playwright:v1.47.0-jammy` instead.
 - New option [`option: behavior`] in [`method: Page.removeAllListeners`], [`method: Browser.removeAllListeners`] and [`method: BrowserContext.removeAllListeners`] to wait for ongoing listeners to complete.
 - TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as buffers instead of file paths.
 - Attachments with a `text/html` content type can now be opened in a new tab in the HTML report. This is useful for including third-party reports or other HTML content in the Playwright test report and distributing it to your team.
