@@ -354,7 +354,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
-type BidiChannel = 'bidi-firefox-stable';
+type BidiChannel = 'bidi-firefox-stable' | 'bidi-chrome-canary';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
@@ -529,6 +529,11 @@ export class Registry {
       'linux': '/usr/bin/firefox',
       'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
       'win32': '\\Mozilla Firefox\\firefox.exe',
+    }));
+    this._executables.push(this._createBidiChannel('bidi-chrome-canary', {
+      'linux': '',
+      'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+      'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;

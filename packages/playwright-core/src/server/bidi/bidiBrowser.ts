@@ -43,9 +43,6 @@ export class BidiBrowser extends Browser {
     const browser = new BidiBrowser(parent, transport, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
-    const sessionStatus = await browser._browserSession.send('session.status', {});
-    if (!sessionStatus.ready)
-      throw new Error('Bidi session is not ready. ' + sessionStatus.message);
 
     let proxy: bidi.Session.ManualProxyConfiguration | undefined;
     if (options.proxy) {

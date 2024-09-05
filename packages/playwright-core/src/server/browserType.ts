@@ -32,7 +32,7 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode } from '../utils';
+import { debugMode, ManualPromise } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -44,10 +44,19 @@ export const kNoXServerRunningError = 'Looks like you launched a headed browser 
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
 
 
-export interface BrowserReadyState {
-  onBrowserOutput(message: string): void;
-  onBrowserExit(): void;
-  waitUntilReady(): Promise<{ wsEndpoint?: string }>;
+export abstract class BrowserReadyState {
+  protected readonly _wsEndpoint = new ManualPromise<string|undefined>();
+
+  onBrowserExit(): void {
+    // Unblock launch when browser prematurely exits.
+    this._wsEndpoint.resolve(undefined);
+  }
+  async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
+    const wsEndpoint = await this._wsEndpoint;
+    return { wsEndpoint };
+  }
+
+  abstract onBrowserOutput(message: string): void;
 }
 
 export abstract class BrowserType extends SdkObject {
