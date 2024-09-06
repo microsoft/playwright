@@ -282,8 +282,8 @@ test('should respect file filter P', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
-test('should respect project filter C', async ({ runWatchTest }) => {
-  const testProcess = await runWatchTest({
+test('should respect project filter C', async ({ runWatchTest, writeFiles }) => {
+  const files = {
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
       export default defineConfig({ projects: [{name: 'foo'}, {name: 'bar'}] });
@@ -292,9 +292,9 @@ test('should respect project filter C', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  });
+  };
+  const testProcess = await runWatchTest(files, { project: 'foo' });
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
-  await testProcess.waitForOutput('[bar] › a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
   testProcess.write('c');
@@ -306,6 +306,16 @@ test('should respect project filter C', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('npx playwright test --project foo #1');
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('[bar] › a.test.ts:3:11 › passes');
+
+  testProcess.clearOutput();
+
+  await writeFiles(files); // file change triggers listTests with project filter
+  await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
+
+  testProcess.write('c');
+  await testProcess.waitForOutput('Select projects');
+  await testProcess.waitForOutput('foo');
+  await testProcess.waitForOutput('bar'); // second selection should still show all
 });
 
 test('should respect file filter P and split files', async ({ runWatchTest }) => {

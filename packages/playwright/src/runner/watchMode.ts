@@ -125,8 +125,10 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true });
   await testServerConnection.runGlobalSetup({});
 
-  const { report } = await testServerConnection.listTests({ locations: options.files, projects: options.projects, grep: options.grep });
+  const { report } = await testServerConnection.listTests({});
   teleSuiteUpdater.processListReport(report);
+
+  const projectNames = teleSuiteUpdater.rootSuite!.suites.map(s => s.title);
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
@@ -167,7 +169,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
         type: 'multiselect',
         name: 'selectedProjects',
         message: 'Select projects',
-        choices: teleSuiteUpdater.rootSuite!.suites.map(s => s.title),
+        choices: projectNames,
       }).catch(() => ({ selectedProjects: null }));
       if (!selectedProjects)
         continue;
