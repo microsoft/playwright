@@ -81,7 +81,6 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
           channel,
           video: 'off',
           launchOptions: {
-            channel: 'bidi-chrome-canary',
             executablePath,
           },
           trace: trace ? 'on' : undefined,
