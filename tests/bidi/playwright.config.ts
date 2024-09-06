@@ -47,9 +47,9 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   expect: {
     timeout: 10000,
   },
-  maxFailures: 200,
-  timeout: 30000,
-  globalTimeout: 5400000,
+  maxFailures: 0,
+  timeout: 15 * 1000,
+  globalTimeout: 30 * 60 * 1000,
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
@@ -63,7 +63,7 @@ if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
 const browserToChannels = {
-  '_bidiChromium': ['bidi-chrome-canary'],
+  '_bidiChromium': ['bidi-chrome-beta'],
   '_bidiFirefox': ['bidi-firefox-stable'],
 };
 for (const [key, channels] of Object.entries(browserToChannels)) {
@@ -81,7 +81,6 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
           channel,
           video: 'off',
           launchOptions: {
-            channel: 'bidi-chrome-canary',
             executablePath,
           },
           trace: trace ? 'on' : undefined,

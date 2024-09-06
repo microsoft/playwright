@@ -1,14 +1,14 @@
 name: tests BiDi
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
+  workflow_dispatch:
   pull_request:
     branches:
       - main
-      - release-*
+    paths:
+      - .github/workflows/tests_bidi.yml
+  schedule:
+    - cron: '0 0 * * *'
 
 env:
   FORCE_COLOR: 1
@@ -18,7 +18,7 @@ jobs:
   test_bidi:
     name: BiDi
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
@@ -26,23 +26,21 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: add Firefox
-        project: [chrome]
+        channel: [bidi-chrome-beta]
     steps:
     - uses: actions/checkout@v4
-    - name: Configure executable path
+    - name: Install browser
       run: |
-        if [ ${{ matrix.project }} == "chrome" ]; then
-          echo "BIDIPATH=/opt/google/chrome/chrome" >> $GITHUB_ENV
-        else
-          sudo apt-get install -y firefox
-          echo "BIDIPATH=/usr/bin/firefox" >> $GITHUB_ENV
+        if [[ ${{ matrix.channel }} == bidi-chrome-beta ]]; then
+          curl -O https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
+          sudo dpkg -i google-chrome-beta_current_amd64.deb
         fi
     - uses: ./.github/actions/run-test
       with:
         node-version: 20
         browsers-to-install: chromium
-        command: npm run biditest -- --project=*${{ matrix.project }}*
-        bot-name: bidi-${{ matrix.project }}
+        command: npm run biditest -- --project=${{ matrix.channel }}*
+        bot-name: bidi-${{ matrix.channel }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
