@@ -1465,3 +1465,13 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
+
+test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+
+  const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'pink', { timeout: 0 });
+});
+
