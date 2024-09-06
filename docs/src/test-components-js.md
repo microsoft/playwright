@@ -359,6 +359,7 @@ test('props', async ({ mount }) => {
 ```
 
 ```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
 import { test } from '@playwright/experimental-ct-vue';
 
 test('props', async ({ mount }) => {
@@ -412,7 +413,7 @@ test('callback', async ({ mount }) => {
 import { test } from '@playwright/experimental-ct-svelte';
 
 test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { onClick() {} } });
+  const component = await mount(Component, { on: { click() {} } });
 });
 ```
 
@@ -423,15 +424,16 @@ test('event', async ({ mount }) => {
 import { test } from '@playwright/experimental-ct-vue';
 
 test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { onClick() {} } });
+  const component = await mount(Component, { on: { click() {} } });
 });
 ```
 
 ```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
 import { test } from '@playwright/experimental-ct-vue';
 
 test('event', async ({ mount }) => {
-  const component = await mount(<Component v-on:onClick={() => {}} />);
+  const component = await mount(<Component v-on:click={() => {}} />);
 });
 ```
 
@@ -497,6 +499,7 @@ test('slot', async ({ mount }) => {
 ```
 
 ```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
 import { test } from '@playwright/experimental-ct-vue';
 
 test('children', async ({ mount }) => {
@@ -611,18 +614,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
     await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
   });
   ```
-  ```js title="src/pages/ProductsPage.spec.tsx"
-  import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from '../playwright';
-  import ProductsPage from './pages/ProductsPage.vue';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(<ProductsPage />, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
 
   </TabItem>
 
@@ -652,19 +643,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   test('configure routing through hooks config', async ({ page, mount }) => {
     const component = await mount<HooksConfig>(ProductsPage, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
-
-  ```js title="src/pages/ProductsPage.spec.tsx"
-  import { test, expect } from '@playwright/experimental-ct-vue2';
-  import type { HooksConfig } from '../playwright';
-  import ProductsPage from './pages/ProductsPage.vue';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(<ProductsPage />, {
       hooksConfig: { enableRouting: true },
     });
     await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
@@ -737,6 +715,7 @@ test('unmount', async ({ mount }) => {
 ```
 
 ```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
 import { test } from '@playwright/experimental-ct-vue';
 
 test('unmount', async ({ mount }) => {
@@ -799,7 +778,7 @@ test('update', async ({ mount }) => {
   const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
-    on: { onClick() {} },
+    on: { click() {} },
     slots: { default: 'Child' }
   });
 });
@@ -815,19 +794,20 @@ test('update', async ({ mount }) => {
   const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
-    on: { onClick() {} },
+    on: { click() {} },
     slots: { default: 'Child' }
   });
 });
 ```
 
 ```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
 import { test } from '@playwright/experimental-ct-vue';
 
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.update(
-      <Component msg="greetings" v-on:onClick={() => {}}>Child</Component>
+      <Component msg="greetings" v-on:click={() => {}}>Child</Component>
   );
 });
 ```
