@@ -35,12 +35,13 @@ jobs:
           curl -O https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
           sudo dpkg -i google-chrome-beta_current_amd64.deb
         fi
-    - uses: ./.github/actions/run-test
+    - uses: actions/setup-node@v4
       with:
         node-version: 20
-        browsers-to-install: chromium
-        command: npm run biditest -- --project=${{ matrix.channel }}*
-        bot-name: bidi-${{ matrix.channel }}
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium
+    - name: Run tests
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
