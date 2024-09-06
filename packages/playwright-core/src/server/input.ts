@@ -162,7 +162,6 @@ export interface RawMouse {
   move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void>;
   down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
-  click?(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void>;
   wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void>;
 }
 
@@ -217,8 +216,6 @@ export class Mouse {
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
     if (metadata)
       metadata.point = { x, y };
-    if (this._raw.click)
-      return await this._raw.click(x, y, options);
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
       this.move(x, y, { forClick: true });

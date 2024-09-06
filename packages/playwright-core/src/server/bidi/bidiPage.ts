@@ -505,10 +505,6 @@ export class BidiPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
-
-  useMainWorldForSetContent(): boolean {
-    return true;
-  }
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
