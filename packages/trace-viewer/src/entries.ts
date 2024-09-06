@@ -44,7 +44,6 @@ export type PageEntry = {
   pageId: string,
   screencastFrames: {
     sha1: string,
-    pageId: string,
     timestamp: number,
     width: number,
     height: number,
