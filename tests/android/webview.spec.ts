@@ -16,6 +16,10 @@
 
 import { androidTest as test, expect } from './androidTest';
 
+test.beforeEach(async ({ androidDevice }) => {
+  await androidDevice.shell('am force-stop com.google.android.googlequicksearchbox');
+});
+
 test.afterEach(async ({ androidDevice }) => {
   await androidDevice.shell('am force-stop org.chromium.webview_shell');
   await androidDevice.shell('am force-stop com.android.chrome');
