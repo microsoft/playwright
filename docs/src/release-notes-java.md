@@ -8,13 +8,13 @@ toc_max_heading_level: 2
 
 ### Network Tab improvements
 
-The Network tab in the trace viewer now allows searching and filtering by asset type:
+The Network tab in the trace viewer has several nice improvements:
+
+- filtering by asset type and URL
+- better display of query string parameters
+- preview of font assets
 
 ![Network tab now has filters](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
-
-And for fonts, it now shows a nice preview:
-
-![Font requests have a preview now](https://github.com/user-attachments/assets/769d64cc-cdcb-421d-9849-227d2f874d1f)
 
 ### Miscellaneous
 
