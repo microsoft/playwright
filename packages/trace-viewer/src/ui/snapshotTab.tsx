@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, pageForAction, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -166,12 +166,13 @@ export const SnapshotTab: React.FunctionComponent<{
     y: (measure.height - snapshotContainerSize.height) / 2,
   };
 
-  const page = model?.pages[0]; // TODO: figure out what to do about multiple pages.
+  const page = action ? pageForAction(action) : undefined;
   const screencastFrame = React.useMemo(
-      () => snapshotInfo.timestamp && page?.screencastFrames
-        ? findClosest(page.screencastFrames, snapshotInfo.timestamp)
-        : undefined
-      , [page?.screencastFrames, snapshotInfo.timestamp]
+      () => {
+        if (snapshotInfo.timestamp && page?.screencastFrames)
+          return findClosest(page.screencastFrames, snapshotInfo.timestamp);
+      },
+      [page?.screencastFrames, snapshotInfo.timestamp]
   );
 
   return <div
@@ -201,7 +202,7 @@ export const SnapshotTab: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
-      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Locators not available when showing screenshot' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
+      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Disable "screenshots instead of snapshots" to pick a locator' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           key={tab}

@@ -356,6 +356,10 @@ export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[prevInListSymbol];
 }
 
+export function pageForAction(action: ActionTraceEvent): PageEntry {
+  return context(action).pages[0]; // TODO: figure out what to do about multiple pages.
+}
+
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
   let errors = 0;
   let warnings = 0;
