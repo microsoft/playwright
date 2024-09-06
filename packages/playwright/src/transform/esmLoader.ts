@@ -26,7 +26,7 @@ import { fileIsModule } from '../util';
 async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
-    const resolved = resolveHook(filename, specifier, true);
+    const resolved = resolveHook(filename, specifier);
     if (resolved !== undefined)
       specifier = url.pathToFileURL(resolved).toString();
   }
