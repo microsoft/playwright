@@ -160,7 +160,7 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = handle._page._delegate.adoptElementHandle(handle, context);
+  const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;
 }
