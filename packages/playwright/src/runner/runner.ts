@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRunnerForDevServer, createTaskRunnerForList, createTaskRunnerForRelatedTestFiles } from './tasks';
+import { TestRun, createClearCacheTask, createGlobalSetupTasks, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
@@ -69,7 +68,6 @@ export class Runner {
   async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
     const listOnly = config.cliListOnly;
-    const deadline = config.config.globalTimeout ? monotonicTime() + config.config.globalTimeout : 0;
 
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
@@ -80,24 +78,15 @@ export class Runner {
       await lastRun.filterLastFailed();
 
     const reporter = new InternalReporter([...reporters, lastRun]);
-    const taskRunner = listOnly ? createTaskRunnerForList(
-        config,
-        reporter,
-        'in-process',
-        { failOnLoadErrors: true }) : createTaskRunner(config, reporter);
-
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-
-    const taskStatus = await taskRunner.run(testRun, deadline);
-    let status: FullResult['status'] = testRun.failureTracker.result();
-    if (status === 'passed' && taskStatus !== 'passed')
-      status = taskStatus;
-    const modifiedResult = await reporter.onEnd({ status });
-    if (modifiedResult && modifiedResult.status)
-      status = modifiedResult.status;
-
-    await reporter.onExit();
+    const tasks = listOnly ? [
+      createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
+      createReportBeginTask(),
+    ] : [
+      ...createGlobalSetupTasks(config),
+      createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }),
+      ...createRunTestsTasks(config),
+    ];
+    const status = await runTasks(new TestRun(config, reporter), tasks, config.config.globalTimeout);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
@@ -110,12 +99,10 @@ export class Runner {
   async findRelatedTestFiles(files: string[]): Promise<FindRelatedTestFilesReport>  {
     const errorReporter = createErrorCollectingReporter();
     const reporter = new InternalReporter([errorReporter]);
-    const taskRunner = createTaskRunnerForRelatedTestFiles(this._config, reporter, 'in-process', true);
-    const testRun = new TestRun(this._config);
-    reporter.onConfigure(this._config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(this._config, reporter), [
+      ...createPluginSetupTasks(this._config),
+      createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
+    ]);
     if (status !== 'passed')
       return { errors: errorReporter.errors(), testFiles: [] };
     return { testFiles: affectedTestFiles(files) };
@@ -123,23 +110,21 @@ export class Runner {
 
   async runDevServer() {
     const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
-    const taskRunner = createTaskRunnerForDevServer(this._config, reporter, 'in-process', true);
-    const testRun = new TestRun(this._config);
-    reporter.onConfigure(this._config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(this._config, reporter), [
+      ...createPluginSetupTasks(this._config),
+      createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
+      createStartDevServerTask(),
+      { title: 'wait until interrupted', setup: async () => new Promise(() => {}) },
+    ]);
     return { status };
   }
 
   async clearCache() {
     const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
-    const taskRunner = createTaskRunnerForClearCache(this._config, reporter, 'in-process', true);
-    const testRun = new TestRun(this._config);
-    reporter.onConfigure(this._config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(this._config, reporter), [
+      ...createPluginSetupTasks(this._config),
+      createClearCacheTask(this._config),
+    ]);
     return { status };
   }
 }
