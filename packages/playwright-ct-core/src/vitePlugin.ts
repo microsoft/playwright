@@ -262,7 +262,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
-        const importPath = resolveHook(importInfo.filename, importInfo.importSource, true);
+        const importPath = resolveHook(importInfo.filename, importInfo.importSource);
         if (!importPath)
           continue;
         const deps = new Set<string>();
