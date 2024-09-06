@@ -17,7 +17,7 @@
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { Language } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { copy } from '@web/uiUtils';
+import { copy, useSetting } from '@web/uiUtils';
 import * as React from 'react';
 import './sourceTab.css';
 
@@ -27,10 +27,12 @@ export const InspectorTab: React.FunctionComponent<{
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
 }> = ({ sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
+  const [showScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+
   return <div className='vbox' style={{ backgroundColor: 'var(--vscode-sideBar-background)' }}>
     <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Locator</div>
     <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
-      <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} focusOnChange={true} isFocused={true} wrapLines={true} onChange={text => {
+      <CodeMirrorWrapper text={showScreenshot ? '/* disable "show screenshot" setting to pick locator */' : highlightedLocator} language={sdkLanguage} focusOnChange={true} isFocused={true} wrapLines={true} onChange={text => {
         // Updating text needs to go first - react can squeeze a render between the state updates.
         setHighlightedLocator(text);
         setIsInspecting(false);

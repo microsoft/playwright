@@ -17,10 +17,10 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, pageForAction, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure } from '@web/uiUtils';
+import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import ConsoleAPI from '@injected/consoleApi';
@@ -30,8 +30,18 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
 
+function findClosest<T extends { timestamp: number }>(items: T[], target: number) {
+  return items.find((item, index) => {
+    if (index === items.length - 1)
+      return true;
+    const next = items[index + 1];
+    return Math.abs(item.timestamp - target) < Math.abs(next.timestamp - target);
+  });
+}
+
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
+  model?: MultiTraceModel,
   sdkLanguage: Language,
   testIdAttributeName: string,
   isInspecting: boolean,
@@ -39,9 +49,10 @@ export const SnapshotTab: React.FunctionComponent<{
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
   openPage?: (url: string, target?: string) => Window | any,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
+}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
+  const [showScreenshotInsteadOfSnapshot] = useSetting('screenshot-instead-of-snapshot', false);
 
   type Snapshot = { action: ActionTraceEvent, snapshotName: string, point?: { x: number, y: number } };
   const { snapshots } = React.useMemo(() => {
@@ -90,7 +101,7 @@ export const SnapshotTab: React.FunctionComponent<{
 
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
-  const [snapshotInfo, setSnapshotInfo] = React.useState({ viewport: kDefaultViewport, url: '' });
+  const [snapshotInfo, setSnapshotInfo] = React.useState<{ viewport: typeof kDefaultViewport, url: string, timestamp?: number }>({ viewport: kDefaultViewport, url: '', timestamp: undefined });
   const loadingRef = React.useRef({ iteration: 0, visibleIframe: 0 });
 
   React.useEffect(() => {
@@ -99,13 +110,14 @@ export const SnapshotTab: React.FunctionComponent<{
       const newVisibleIframe = 1 - loadingRef.current.visibleIframe;
       loadingRef.current.iteration = thisIteration;
 
-      const newSnapshotInfo = { url: '', viewport: kDefaultViewport };
+      const newSnapshotInfo = { url: '', viewport: kDefaultViewport, timestamp: undefined };
       if (snapshotInfoUrl) {
         const response = await fetch(snapshotInfoUrl);
         const info = await response.json();
         if (!info.error) {
           newSnapshotInfo.url = info.url;
           newSnapshotInfo.viewport = info.viewport;
+          newSnapshotInfo.timestamp = info.timestamp;
         }
       }
 
@@ -154,6 +166,15 @@ export const SnapshotTab: React.FunctionComponent<{
     y: (measure.height - snapshotContainerSize.height) / 2,
   };
 
+  const page = action ? pageForAction(action) : undefined;
+  const screencastFrame = React.useMemo(
+      () => {
+        if (snapshotInfo.timestamp && page?.screencastFrames)
+          return findClosest(page.screencastFrames, snapshotInfo.timestamp);
+      },
+      [page?.screencastFrames, snapshotInfo.timestamp]
+  );
+
   return <div
     className='snapshot-tab'
     tabIndex={0}
@@ -181,7 +202,7 @@ export const SnapshotTab: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
-      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
+      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Disable "screenshots instead of snapshots" to pick a locator' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           key={tab}
@@ -192,7 +213,7 @@ export const SnapshotTab: React.FunctionComponent<{
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
-      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
+      <ToolbarButton icon='link-external' title={showScreenshotInsteadOfSnapshot ? 'Not available when showing screenshot' : 'Open snapshot in a new tab'} disabled={!popoutUrl || showScreenshotInsteadOfSnapshot} onClick={() => {
         if (!openPage)
           openPage = window.open;
         const win = openPage(popoutUrl || '', '_blank');
@@ -209,7 +230,8 @@ export const SnapshotTab: React.FunctionComponent<{
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <BrowserFrame url={snapshotInfo.url} />
-        <div className='snapshot-switcher'>
+        {(showScreenshotInsteadOfSnapshot && screencastFrame) && <img alt={`Screenshot of ${action?.apiName} > ${renderTitle(snapshotTab)}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />}
+        <div className='snapshot-switcher' style={showScreenshotInsteadOfSnapshot ? { display: 'none' } : undefined}>
           <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
           <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
         </div>

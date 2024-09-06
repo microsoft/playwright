@@ -58,6 +58,7 @@ export class TraceModernizer {
     let pageEntry = this._pageEntries.get(pageId);
     if (!pageEntry) {
       pageEntry = {
+        pageId,
         screencastFrames: [],
       };
       this._pageEntries.set(pageId, pageEntry);

@@ -1465,3 +1465,33 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
+
+test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
+  await expect(snapshot).toBeVisible();
+  await expect(screenshot).not.toBeVisible();
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  await expect(snapshot).not.toBeVisible();
+  await expect(screenshot).toBeVisible();
+});
+
+test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  }, { snapshots: false, screenshots: false });
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  await expect(screenshot).not.toBeVisible();
+});
+

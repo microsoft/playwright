@@ -107,6 +107,8 @@ export const UIModeView: React.FC<{}> = ({
   const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
   const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -517,6 +519,7 @@ export const UIModeView: React.FC<{}> = ({
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
           { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
+          { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
         ]} />}
       </div>
       }

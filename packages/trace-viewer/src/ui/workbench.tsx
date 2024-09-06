@@ -73,6 +73,8 @@ export const Workbench: React.FunctionComponent<{
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
+  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+
 
   const filteredActions = React.useMemo(() => {
     return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
@@ -299,7 +301,10 @@ export const Workbench: React.FunctionComponent<{
   const settingsTab: TabbedPaneTabModel = {
     id: 'settings',
     title: 'Settings',
-    component: <SettingsView settings={[{ value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' }]}/>,
+    component: <SettingsView settings={[
+      { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
+      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
+    ]}/>,
   };
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
@@ -325,6 +330,7 @@ export const Workbench: React.FunctionComponent<{
         settingName='actionListSidebar'
         main={<SnapshotTab
           action={activeAction}
+          model={model}
           sdkLanguage={sdkLanguage}
           testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
           isInspecting={isInspecting}
