@@ -43,6 +43,7 @@ export type ContextEntry = {
 export type PageEntry = {
   screencastFrames: {
     sha1: string,
+    pageId: string,
     timestamp: number,
     width: number,
     height: number,
