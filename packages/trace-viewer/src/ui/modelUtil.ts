@@ -149,7 +149,7 @@ function indexModel(context: ContextEntry) {
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
-    action[pageSymbol] = context.pages.find(page => page.screencastFrames.find(frame => frame.pageId === action.pageId));
+    action[pageSymbol] = context.pages.find(page => page.pageId === action.pageId);
   }
   let lastNonRouteAction = undefined;
   for (let i = context.actions.length - 1; i >= 0; i--) {
