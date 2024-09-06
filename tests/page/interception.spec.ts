@@ -164,7 +164,7 @@ it('should work with regular expression passed from a different context', async 
   expect(intercepted).toBe(true);
 });
 
-it('should not break remote worker importScripts', async ({ page, server, browserName, browserMajorVersion }) => {
+it('should not break remote worker importScripts', async ({ page, server }) => {
   await page.route('**', async route => {
     await route.continue();
   });
@@ -188,4 +188,21 @@ it('should disable memory cache when intercepting', async ({ page, server }) => 
   await page.goBack();
   await expect(page).toHaveURL(server.PREFIX + '/page.html');
   expect(interceted).toBe(2);
+});
+
+it('should intercept blob url requests', async function({ page, server, browserName }) {
+  it.fixme(browserName !== 'webkit');
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/*', route => {
+    route.fulfill({
+      status: 200,
+      body: 'intercepted',
+    }).catch(e => null);
+  });
+  page.on('console', msg => console.log(msg.text()));
+  const response = await page.evaluate(async () => {
+    const blobUrl = URL.createObjectURL(new Blob(['failed to intercept'], { type: 'text/plain' }));
+    return await fetch(blobUrl).then(response => response.text());
+  });
+  expect(response).toBe('intercepted');
 });

@@ -297,6 +297,16 @@ it('should click', async function({ page, browser, server }) {
   expect(await handle1.evaluate(() => (window as any)['_clicked'])).toBe(true);
 });
 
+it('contentFrame should work', async ({ page, browser, server }) => {
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(page.frames().length).toBe(2);
+  expect(await countOOPIFs(browser)).toBe(1);
+  expect(await page.locator('iframe').contentFrame().locator('div').count()).toBe(200);
+  const oopif = await page.$('iframe');
+  const content = await oopif.contentFrame();
+  expect(await content.locator('div').count()).toBe(200);
+});
+
 it('should allow cdp sessions on oopifs', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);

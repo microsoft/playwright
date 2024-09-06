@@ -75,3 +75,19 @@ it('should work inside closed shadow root', async ({ page, server, browserName }
   const element = await frame.frameElement();
   expect(await element.getAttribute('name')).toBe('myframe');
 });
+
+it('should work inside declarative shadow root', async ({ page, server, browserName }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div>
+      <template shadowrootmode="open">
+        <iframe name="myframe" srcdoc="<h1>Hi!</h1>"></iframe>
+        <slot></slot>
+      </template>
+      <span>footer</span>
+    </div>
+  `);
+  const frame = page.frame({ name: 'myframe' });
+  const element = await frame.frameElement();
+  expect(await element.getAttribute('name')).toBe('myframe');
+});
