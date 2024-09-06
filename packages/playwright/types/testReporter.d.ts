@@ -284,6 +284,7 @@ export interface JSONReportTest {
 export interface JSONReportError {
   message: string;
   location?: Location;
+  matcherResult?: TestErrorMatcherResult;
 }
 
 export interface JSONReportTestResult {
@@ -568,6 +569,36 @@ export interface TestCase {
 }
 
 /**
+ * Matcher-specific details for the error thrown during the `expect` call.
+ */
+export interface TestErrorMatcherResult {
+  /**
+   * Actual value.
+   */
+  actual?: unknown;
+
+  /**
+   * Expected value.
+   */
+  expected?: unknown;
+
+  /**
+   * Matcher name.
+   */
+  name?: string;
+
+  /**
+   * Whether the matcher passed.
+   */
+  pass: string;
+
+  /**
+   * Timeout that was used during matching.
+   */
+  timeout?: number;
+}
+
+/**
  * Information about an error thrown during test execution.
  */
 export interface TestError {
@@ -575,6 +606,11 @@ export interface TestError {
    * Error location in the source code.
    */
   location?: Location;
+
+  /**
+   * Matcher result details.
+   */
+  matcherResult?: TestErrorMatcherResult;
 
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
