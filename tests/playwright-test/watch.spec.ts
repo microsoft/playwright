@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import timers from 'timers/promises';
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
@@ -418,6 +419,17 @@ test('should run on changed files', async ({ runWatchTest, writeFiles }) => {
   expect(testProcess.output).not.toContain('a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
+
+  testProcess.clearOutput();
+  await writeFiles({
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await testProcess.waitForOutput('b.test.ts:3:11 › passes');
+  expect(testProcess.output).not.toContain('c.test.ts:3:11 › passes');
 });
 
 test('should run on changed deps', async ({ runWatchTest, writeFiles }) => {
@@ -545,7 +557,7 @@ test('should not trigger on changes to non-tests', async ({ runWatchTest, writeF
     `,
   });
 
-  await new Promise(f => setTimeout(f, 1000));
+  await timers.setTimeout(1000);
   expect(testProcess.output).not.toContain('Waiting for file changes.');
 });
 
@@ -603,7 +615,7 @@ test('should watch filtered files', async ({ runWatchTest, writeFiles }) => {
     `,
   });
 
-  await new Promise(f => setTimeout(f, 1000));
+  await timers.setTimeout(1000);
   expect(testProcess.output).not.toContain('Waiting for file changes.');
 });
 

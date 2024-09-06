@@ -9,21 +9,20 @@
 }
 
 .codicon {
-	font: normal normal normal 16px/1 codicon;
-	flex: none;
-	display: inline-block;
-	text-decoration: none;
-	text-rendering: auto;
-	text-align: center;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
+  font: normal normal normal 16px/1 codicon;
+  flex: none;
+  display: inline-block;
+  text-decoration: none;
+  text-rendering: auto;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
-.codicon-blank:before { content: '\2003'; }
 .codicon-add:before { content: '\ea60'; }
 .codicon-plus:before { content: '\ea60'; }
 .codicon-gist-new:before { content: '\ea60'; }
@@ -39,6 +38,7 @@
 .codicon-record-keys:before { content: '\ea65'; }
 .codicon-keyboard:before { content: '\ea65'; }
 .codicon-tag:before { content: '\ea66'; }
+.codicon-git-pull-request-label:before { content: '\ea66'; }
 .codicon-tag-add:before { content: '\ea66'; }
 .codicon-tag-remove:before { content: '\ea66'; }
 .codicon-person:before { content: '\ea67'; }
@@ -74,6 +74,7 @@
 .codicon-debug-breakpoint:before { content: '\ea71'; }
 .codicon-debug-breakpoint-disabled:before { content: '\ea71'; }
 .codicon-debug-hint:before { content: '\ea71'; }
+.codicon-terminal-decoration-success:before { content: '\ea71'; }
 .codicon-primitive-square:before { content: '\ea72'; }
 .codicon-edit:before { content: '\ea73'; }
 .codicon-pencil:before { content: '\ea73'; }
@@ -185,7 +186,6 @@
 .codicon-check:before { content: '\eab2'; }
 .codicon-checklist:before { content: '\eab3'; }
 .codicon-chevron-down:before { content: '\eab4'; }
-.codicon-drop-down-button:before { content: '\eab4'; }
 .codicon-chevron-left:before { content: '\eab5'; }
 .codicon-chevron-right:before { content: '\eab6'; }
 .codicon-chevron-up:before { content: '\eab7'; }
@@ -193,9 +193,10 @@
 .codicon-chrome-maximize:before { content: '\eab9'; }
 .codicon-chrome-minimize:before { content: '\eaba'; }
 .codicon-chrome-restore:before { content: '\eabb'; }
-.codicon-circle:before { content: '\eabc'; }
 .codicon-circle-outline:before { content: '\eabc'; }
+.codicon-circle:before { content: '\eabc'; }
 .codicon-debug-breakpoint-unverified:before { content: '\eabc'; }
+.codicon-terminal-decoration-incomplete:before { content: '\eabc'; }
 .codicon-circle-slash:before { content: '\eabd'; }
 .codicon-circuit-board:before { content: '\eabe'; }
 .codicon-clear-all:before { content: '\eabf'; }
@@ -207,7 +208,6 @@
 .codicon-collapse-all:before { content: '\eac5'; }
 .codicon-color-mode:before { content: '\eac6'; }
 .codicon-comment-discussion:before { content: '\eac7'; }
-.codicon-compare-changes:before { content: '\eafd'; }
 .codicon-credit-card:before { content: '\eac9'; }
 .codicon-dash:before { content: '\eacc'; }
 .codicon-dashboard:before { content: '\eacd'; }
@@ -231,6 +231,7 @@
 .codicon-diff-removed:before { content: '\eadf'; }
 .codicon-diff-renamed:before { content: '\eae0'; }
 .codicon-diff:before { content: '\eae1'; }
+.codicon-diff-sidebyside:before { content: '\eae1'; }
 .codicon-discard:before { content: '\eae2'; }
 .codicon-editor-layout:before { content: '\eae3'; }
 .codicon-empty-window:before { content: '\eae4'; }
@@ -259,6 +260,7 @@
 .codicon-gist:before { content: '\eafb'; }
 .codicon-git-commit:before { content: '\eafc'; }
 .codicon-git-compare:before { content: '\eafd'; }
+.codicon-compare-changes:before { content: '\eafd'; }
 .codicon-git-merge:before { content: '\eafe'; }
 .codicon-github-action:before { content: '\eaff'; }
 .codicon-github-alt:before { content: '\eb00'; }
@@ -271,13 +273,11 @@
 .codicon-horizontal-rule:before { content: '\eb07'; }
 .codicon-hubot:before { content: '\eb08'; }
 .codicon-inbox:before { content: '\eb09'; }
-.codicon-issue-closed:before { content: '\eba4'; }
 .codicon-issue-reopened:before { content: '\eb0b'; }
 .codicon-issues:before { content: '\eb0c'; }
 .codicon-italic:before { content: '\eb0d'; }
 .codicon-jersey:before { content: '\eb0e'; }
 .codicon-json:before { content: '\eb0f'; }
-.codicon-bracket:before { content: '\eb0f'; }
 .codicon-kebab-vertical:before { content: '\eb10'; }
 .codicon-key:before { content: '\eb11'; }
 .codicon-law:before { content: '\eb12'; }
@@ -295,6 +295,7 @@
 .codicon-megaphone:before { content: '\eb1e'; }
 .codicon-mention:before { content: '\eb1f'; }
 .codicon-milestone:before { content: '\eb20'; }
+.codicon-git-pull-request-milestone:before { content: '\eb20'; }
 .codicon-mortar-board:before { content: '\eb21'; }
 .codicon-move:before { content: '\eb22'; }
 .codicon-multiple-windows:before { content: '\eb23'; }
@@ -355,7 +356,6 @@
 .codicon-star-half:before { content: '\eb5a'; }
 .codicon-symbol-class:before { content: '\eb5b'; }
 .codicon-symbol-color:before { content: '\eb5c'; }
-.codicon-symbol-customcolor:before { content: '\eb5c'; }
 .codicon-symbol-constant:before { content: '\eb5d'; }
 .codicon-symbol-enum-member:before { content: '\eb5e'; }
 .codicon-symbol-field:before { content: '\eb5f'; }
@@ -407,6 +407,7 @@
 .codicon-debug-stackframe-active:before { content: '\eb89'; }
 .codicon-circle-small-filled:before { content: '\eb8a'; }
 .codicon-debug-stackframe-dot:before { content: '\eb8a'; }
+.codicon-terminal-decoration-mark:before { content: '\eb8a'; }
 .codicon-debug-stackframe:before { content: '\eb8b'; }
 .codicon-debug-stackframe-focused:before { content: '\eb8b'; }
 .codicon-debug-breakpoint-unsupported:before { content: '\eb8c'; }
@@ -414,14 +415,17 @@
 .codicon-debug-reverse-continue:before { content: '\eb8e'; }
 .codicon-debug-step-back:before { content: '\eb8f'; }
 .codicon-debug-restart-frame:before { content: '\eb90'; }
+.codicon-debug-alt:before { content: '\eb91'; }
 .codicon-call-incoming:before { content: '\eb92'; }
 .codicon-call-outgoing:before { content: '\eb93'; }
 .codicon-menu:before { content: '\eb94'; }
 .codicon-expand-all:before { content: '\eb95'; }
 .codicon-feedback:before { content: '\eb96'; }
+.codicon-git-pull-request-reviewer:before { content: '\eb96'; }
 .codicon-group-by-ref-type:before { content: '\eb97'; }
 .codicon-ungroup-by-ref-type:before { content: '\eb98'; }
 .codicon-account:before { content: '\eb99'; }
+.codicon-git-pull-request-assignee:before { content: '\eb99'; }
 .codicon-bell-dot:before { content: '\eb9a'; }
 .codicon-debug-console:before { content: '\eb9b'; }
 .codicon-library:before { content: '\eb9c'; }
@@ -430,10 +434,10 @@
 .codicon-sync-ignored:before { content: '\eb9f'; }
 .codicon-pinned:before { content: '\eba0'; }
 .codicon-github-inverted:before { content: '\eba1'; }
-.codicon-debug-alt:before { content: '\eb91'; }
 .codicon-server-process:before { content: '\eba2'; }
 .codicon-server-environment:before { content: '\eba3'; }
 .codicon-pass:before { content: '\eba4'; }
+.codicon-issue-closed:before { content: '\eba4'; }
 .codicon-stop-circle:before { content: '\eba5'; }
 .codicon-play-circle:before { content: '\eba6'; }
 .codicon-record:before { content: '\eba7'; }
@@ -466,7 +470,7 @@
 .codicon-debug-rerun:before { content: '\ebc0'; }
 .codicon-workspace-trusted:before { content: '\ebc1'; }
 .codicon-workspace-untrusted:before { content: '\ebc2'; }
-.codicon-workspace-unspecified:before { content: '\ebc3'; }
+.codicon-workspace-unknown:before { content: '\ebc3'; }
 .codicon-terminal-cmd:before { content: '\ebc4'; }
 .codicon-terminal-debian:before { content: '\ebc5'; }
 .codicon-terminal-linux:before { content: '\ebc6'; }
@@ -500,6 +504,7 @@
 .codicon-graph-line:before { content: '\ebe2'; }
 .codicon-graph-scatter:before { content: '\ebe3'; }
 .codicon-pie-chart:before { content: '\ebe4'; }
+.codicon-bracket:before { content: '\eb0f'; }
 .codicon-bracket-dot:before { content: '\ebe5'; }
 .codicon-bracket-error:before { content: '\ebe6'; }
 .codicon-lock-small:before { content: '\ebe7'; }
@@ -519,20 +524,26 @@
 .codicon-layout-statusbar:before { content: '\ebf5'; }
 .codicon-layout-menubar:before { content: '\ebf6'; }
 .codicon-layout-centered:before { content: '\ebf7'; }
-.codicon-layout-sidebar-right-off:before { content: '\ec00'; }
-.codicon-layout-panel-off:before { content: '\ec01'; }
-.codicon-layout-sidebar-left-off:before { content: '\ec02'; }
 .codicon-target:before { content: '\ebf8'; }
 .codicon-indent:before { content: '\ebf9'; }
 .codicon-record-small:before { content: '\ebfa'; }
 .codicon-error-small:before { content: '\ebfb'; }
+.codicon-terminal-decoration-error:before { content: '\ebfb'; }
 .codicon-arrow-circle-down:before { content: '\ebfc'; }
 .codicon-arrow-circle-left:before { content: '\ebfd'; }
 .codicon-arrow-circle-right:before { content: '\ebfe'; }
 .codicon-arrow-circle-up:before { content: '\ebff'; }
+.codicon-layout-sidebar-right-off:before { content: '\ec00'; }
+.codicon-layout-panel-off:before { content: '\ec01'; }
+.codicon-layout-sidebar-left-off:before { content: '\ec02'; }
+.codicon-blank:before { content: '\ec03'; }
 .codicon-heart-filled:before { content: '\ec04'; }
 .codicon-map:before { content: '\ec05'; }
+.codicon-map-horizontal:before { content: '\ec05'; }
+.codicon-fold-horizontal:before { content: '\ec05'; }
 .codicon-map-filled:before { content: '\ec06'; }
+.codicon-map-horizontal-filled:before { content: '\ec06'; }
+.codicon-fold-horizontal-filled:before { content: '\ec06'; }
 .codicon-circle-small:before { content: '\ec07'; }
 .codicon-bell-slash:before { content: '\ec08'; }
 .codicon-bell-slash-dot:before { content: '\ec09'; }
@@ -544,3 +555,42 @@
 .codicon-send:before { content: '\ec0f'; }
 .codicon-sparkle:before { content: '\ec10'; }
 .codicon-insert:before { content: '\ec11'; }
+.codicon-mic:before { content: '\ec12'; }
+.codicon-thumbsdown-filled:before { content: '\ec13'; }
+.codicon-thumbsup-filled:before { content: '\ec14'; }
+.codicon-coffee:before { content: '\ec15'; }
+.codicon-snake:before { content: '\ec16'; }
+.codicon-game:before { content: '\ec17'; }
+.codicon-vr:before { content: '\ec18'; }
+.codicon-chip:before { content: '\ec19'; }
+.codicon-piano:before { content: '\ec1a'; }
+.codicon-music:before { content: '\ec1b'; }
+.codicon-mic-filled:before { content: '\ec1c'; }
+.codicon-repo-fetch:before { content: '\ec1d'; }
+.codicon-copilot:before { content: '\ec1e'; }
+.codicon-lightbulb-sparkle:before { content: '\ec1f'; }
+.codicon-robot:before { content: '\ec20'; }
+.codicon-sparkle-filled:before { content: '\ec21'; }
+.codicon-diff-single:before { content: '\ec22'; }
+.codicon-diff-multiple:before { content: '\ec23'; }
+.codicon-surround-with:before { content: '\ec24'; }
+.codicon-share:before { content: '\ec25'; }
+.codicon-git-stash:before { content: '\ec26'; }
+.codicon-git-stash-apply:before { content: '\ec27'; }
+.codicon-git-stash-pop:before { content: '\ec28'; }
+.codicon-vscode:before { content: '\ec29'; }
+.codicon-vscode-insiders:before { content: '\ec2a'; }
+.codicon-code-oss:before { content: '\ec2b'; }
+.codicon-run-coverage:before { content: '\ec2c'; }
+.codicon-run-all-coverage:before { content: '\ec2d'; }
+.codicon-coverage:before { content: '\ec2e'; }
+.codicon-github-project:before { content: '\ec2f'; }
+.codicon-map-vertical:before { content: '\ec30'; }
+.codicon-fold-vertical:before { content: '\ec30'; }
+.codicon-map-vertical-filled:before { content: '\ec31'; }
+.codicon-fold-vertical-filled:before { content: '\ec31'; }
+.codicon-go-to-search:before { content: '\ec32'; }
+.codicon-percentage:before { content: '\ec33'; }
+.codicon-sort-percentage:before { content: '\ec33'; }
+.codicon-attach:before { content: '\ec34'; }
+.codicon-git-fetch:before { content: '\f101'; }

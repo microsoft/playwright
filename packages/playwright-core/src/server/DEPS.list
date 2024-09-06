@@ -16,6 +16,7 @@
 
 [playwright.ts]
 ./android/
+./bidi/
 ./chromium/
 ./electron/
 ./firefox/

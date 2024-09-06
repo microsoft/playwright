@@ -270,14 +270,14 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
   expect(allHeaders['name-b']).toEqual('v4');
 });
 
-it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, browserMajorVersion, mode }) => {
+it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(browserName === 'firefox', 'Firefox does return null for file:// URLs');
   it.skip(mode.startsWith('service'));
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   const response = await page.goto(fileurl);
-  if (isElectron || (browserName === 'chromium' && browserMajorVersion >= 99) || (browserName === 'webkit' && isWindows))
+  if (isElectron || (browserName === 'chromium') || (browserName === 'webkit' && isWindows))
     expect(response.status()).toBe(200);
   else
     expect(response.status()).toBe(0);

@@ -6,7 +6,7 @@ BrowserContexts provide a way to operate multiple independent browser sessions.
 If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
 context.
 
-Playwright allows creating "incognito" browser contexts with [`method: Browser.newContext`] method. "Incognito" browser
+Playwright allows creating isolated non-persistent browser contexts with [`method: Browser.newContext`] method. Non-persistent browser
 contexts don't write any browsing data to disk.
 
 ```js
@@ -1017,8 +1017,10 @@ Returns all open pages in the context.
 
 ## async method: BrowserContext.removeAllListeners
 * since: v1.47
+* langs: js
 
-Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
 
 ### param: BrowserContext.removeAllListeners.type
 * since: v1.47

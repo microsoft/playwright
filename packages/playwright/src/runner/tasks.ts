@@ -21,17 +21,18 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { removeFolders } from 'playwright-core/lib/utils';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { ReporterV2 } from '../reporters/reporterV2';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
-import type { Matcher } from '../util';
+import { removeDirAndLogToConsole, type Matcher } from '../util';
 import { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { FailureTracker } from './failureTracker';
 import { detectChangedTestFiles } from './vcs';
+import type { InternalReporter } from '../reporters/internalReporter';
+import { cacheDir } from '../transform/compilationCache';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -60,29 +61,22 @@ export class TestRun {
   }
 }
 
-export function createTaskRunner(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunner(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter);
   addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForWatch(config: FullConfigInternal, reporters: ReporterV2[], additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true,  failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true, additionalFileMatcher }));
-  addRunTasks(taskRunner, config);
-  return taskRunner;
-}
-
-export function createTaskRunnerForTestServer(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters);
+export function createTaskRunnerForTestServer(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
@@ -106,17 +100,59 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporters: ReporterV2[], mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
 }
 
-export function createTaskRunnerForListFiles(config: FullConfigInternal, reporters: ReporterV2[]): TaskRunner<TestRun> {
-  const taskRunner = TaskRunner.create<TestRun>(reporters, config.config.globalTimeout);
+export function createTaskRunnerForListFiles(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createListFilesTask());
   taskRunner.addTask('report begin', createReportBeginTask());
+  return taskRunner;
+}
+
+export function createTaskRunnerForDevServer(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupAndWait: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupAndWait) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('load tests', createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false }));
+  taskRunner.addTask('start dev server', createStartDevServerTask());
+  if (setupAndWait) {
+    taskRunner.addTask('wait until interrupted', {
+      setup: async () => new Promise(() => {}),
+    });
+  }
+  return taskRunner;
+}
+
+export function createTaskRunnerForRelatedTestFiles(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupPlugins: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupPlugins) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('load tests', createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }));
+  return taskRunner;
+}
+
+export function createTaskRunnerForClearCache(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', setupPlugins: boolean): TaskRunner<TestRun> {
+  const taskRunner = TaskRunner.create<TestRun>(reporter, config.config.globalTimeout);
+  if (setupPlugins) {
+    for (const plugin of config.plugins)
+      taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  }
+  taskRunner.addTask('clear cache', {
+    setup: async () => {
+      await removeDirAndLogToConsole(cacheDir);
+      for (const plugin of config.plugins)
+        await plugin.instance?.clearCache?.();
+    },
+  });
   return taskRunner;
 }
 
@@ -222,16 +258,19 @@ function createListFilesTask(): Task<TestRun> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean, additionalFileMatcher?: Matcher }): Task<TestRun> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, doNotRunDepsOutsideProjectFilter?: boolean, populateDependencies?: boolean }): Task<TestRun> {
   return {
     setup: async (reporter, testRun, errors, softErrors) => {
-      await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter, options.additionalFileMatcher);
+      await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
+
+      if (testRun.config.cliOnlyChanged || options.populateDependencies) {
+        for (const plugin of testRun.config.plugins)
+          await plugin.instance?.populateDependencies?.();
+      }
 
       let cliOnlyChangedMatcher: Matcher | undefined = undefined;
       if (testRun.config.cliOnlyChanged) {
-        for (const plugin of testRun.config.plugins)
-          await plugin.instance?.populateDependencies?.();
         const changedFiles = await detectChangedTestFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
         cliOnlyChangedMatcher = file => changedFiles.has(file);
       }
@@ -239,7 +278,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly, cliOnlyChangedMatcher);
       testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
-      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard) {
+      if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard && !testRun.config.cliOnlyChanged) {
         if (testRun.config.cliArgs.length) {
           throw new Error([
             `No tests found.`,
@@ -353,6 +392,28 @@ function createRunTestsTask(): Task<TestRun> {
     teardown: async (reporter, { phases }) => {
       for (const { dispatcher } of phases.reverse())
         await dispatcher.stop();
+    },
+  };
+}
+
+function createStartDevServerTask(): Task<TestRun> {
+  return {
+    setup: async (reporter, testRun, errors, softErrors) => {
+      if (testRun.config.plugins.some(plugin => !!plugin.devServerCleanup)) {
+        errors.push({ message: `DevServer is already running` });
+        return;
+      }
+      for (const plugin of testRun.config.plugins)
+        plugin.devServerCleanup = await plugin.instance?.startDevServer?.();
+      if (!testRun.config.plugins.some(plugin => !!plugin.devServerCleanup))
+        errors.push({ message: `DevServer is not available in the package you are using. Did you mean to use component testing?` });
+    },
+
+    teardown: async (reporter, testRun) => {
+      for (const plugin of testRun.config.plugins) {
+        await plugin.devServerCleanup?.();
+        plugin.devServerCleanup = undefined;
+      }
     },
   };
 }

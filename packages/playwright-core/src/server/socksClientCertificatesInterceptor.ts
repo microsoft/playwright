@@ -169,6 +169,10 @@ class SocksProxyConnection {
               this.target.removeListener('close', this._targetCloseEventListener);
               // @ts-expect-error
               const session: http2.ServerHttp2Session = http2.performServerHandshake(internalTLS);
+              session.on('error', () => {
+                this.target.destroy();
+                this._targetCloseEventListener();
+              });
               session.once('stream', (stream: http2.ServerHttp2Stream) => {
                 stream.respond({
                   'content-type': 'text/html',

@@ -108,6 +108,7 @@ export class Request extends SdkObject {
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
+  private _bodySize: number | undefined;
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
@@ -223,8 +224,13 @@ export class Request extends SdkObject {
     };
   }
 
+  // TODO(bidi): remove once post body is available.
+  _setBodySize(size: number) {
+    this._bodySize = size;
+  }
+
   bodySize(): number {
-    return this.postDataBuffer()?.length || 0;
+    return this._bodySize || this.postDataBuffer()?.length || 0;
   }
 
   async requestHeadersSize(): Promise<number> {
@@ -324,7 +330,7 @@ export class Route extends SdkObject {
     this._request._setOverrides(overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
-    await this._delegate.continue(this._request, overrides);
+    await this._delegate.continue(overrides);
     this._endHandling();
   }
 
@@ -612,7 +618,7 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<void>;
+  continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

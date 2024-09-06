@@ -15,8 +15,7 @@
  */
 
 import { asLocator } from '../../utils';
-import type { ActionInContext } from './codeGenerator';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 
 export class JsonlLanguageGenerator implements LanguageGenerator {
   id = 'jsonl';

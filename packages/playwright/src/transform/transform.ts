@@ -15,12 +15,13 @@
  */
 
 import crypto from 'crypto';
+import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import type { Location } from '../../types/testReporter';
 import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
-import { tsConfigLoader } from '../third_party/tsconfig-loader';
+import { loadTsConfig } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
@@ -57,14 +58,15 @@ export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
 
-let _singleTSConfig: string | undefined;
+let _singleTSConfigPath: string | undefined;
+let _singleTSConfig: ParsedTsConfigData[] | undefined;
 
 export function setSingleTSConfig(value: string | undefined) {
-  _singleTSConfig = value;
+  _singleTSConfigPath = value;
 }
 
 export function singleTSConfig(): string | undefined {
-  return _singleTSConfig;
+  return _singleTSConfigPath;
 }
 
 function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
@@ -81,12 +83,47 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
 }
 
 function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
-  const tsconfigPathOrDirecotry = _singleTSConfig || path.dirname(file);
-  if (!cachedTSConfigs.has(tsconfigPathOrDirecotry)) {
-    const loaded = tsConfigLoader(tsconfigPathOrDirecotry);
-    cachedTSConfigs.set(tsconfigPathOrDirecotry, loaded.map(validateTsConfig));
+  if (_singleTSConfigPath && !_singleTSConfig)
+    _singleTSConfig = loadTsConfig(_singleTSConfigPath).map(validateTsConfig);
+  if (_singleTSConfig)
+    return _singleTSConfig;
+  return loadAndValidateTsconfigsForFolder(path.dirname(file));
+}
+
+function loadAndValidateTsconfigsForFolder(folder: string): ParsedTsConfigData[] {
+  const foldersWithConfig: string[] = [];
+  let currentFolder = path.resolve(folder);
+  let result: ParsedTsConfigData[] | undefined;
+  while (true) {
+    const cached = cachedTSConfigs.get(currentFolder);
+    if (cached) {
+      result = cached;
+      break;
+    }
+
+    foldersWithConfig.push(currentFolder);
+
+    for (const name of ['tsconfig.json', 'jsconfig.json']) {
+      const configPath = path.join(currentFolder, name);
+      if (fs.existsSync(configPath)) {
+        const loaded = loadTsConfig(configPath);
+        result = loaded.map(validateTsConfig);
+        break;
+      }
+    }
+    if (result)
+      break;
+
+    const parentFolder = path.resolve(currentFolder, '../');
+    if (currentFolder === parentFolder)
+      break;
+    currentFolder = parentFolder;
   }
-  return cachedTSConfigs.get(tsconfigPathOrDirecotry)!;
+
+  result = result || [];
+  for (const folder of foldersWithConfig)
+    cachedTSConfigs.set(folder, result);
+  return result;
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';

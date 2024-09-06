@@ -116,6 +116,7 @@ class TargetRegistry {
     this._browserToTarget = new Map();
     this._browserIdToTarget = new Map();
 
+    this._proxiesWithClashingAuthCacheKeys = new Set();
     this._browserProxy = null;
 
     // Cleanup containers from previous runs (if any)
@@ -234,12 +235,50 @@ class TargetRegistry {
       onOpenWindow(win);
   }
 
+  // Firefox uses nsHttpAuthCache to cache authentication to the proxy.
+  // If we're provided with a single proxy with a multiple different authentications, then
+  // we should clear the nsHttpAuthCache on every request.
+  shouldBustHTTPAuthCacheForProxy(proxy) {
+    return this._proxiesWithClashingAuthCacheKeys.has(proxy);
+  }
+
+  _updateProxiesWithSameAuthCacheAndDifferentCredentials() {
+    const proxyIdToCredentials = new Map();
+    const allProxies = [...this._browserContextIdToBrowserContext.values()].map(bc => bc._proxy).filter(Boolean);
+    if (this._browserProxy)
+      allProxies.push(this._browserProxy);
+    const proxyAuthCacheKeyAndProxy = allProxies.map(proxy => [
+      JSON.stringify({
+        type: proxy.type,
+        host: proxy.host,
+        port: proxy.port,
+      }),
+      proxy,
+    ]);
+    this._proxiesWithClashingAuthCacheKeys.clear();
+
+    proxyAuthCacheKeyAndProxy.sort(([cacheKey1], [cacheKey2]) => cacheKey1 < cacheKey2 ? -1 : 1);
+    for (let i = 0; i < proxyAuthCacheKeyAndProxy.length - 1; ++i) {
+      const [cacheKey1, proxy1] = proxyAuthCacheKeyAndProxy[i];
+      const [cacheKey2, proxy2] = proxyAuthCacheKeyAndProxy[i + 1];
+      if (cacheKey1 !== cacheKey2)
+        continue;
+      if (proxy1.username === proxy2.username && proxy1.password === proxy2.password)
+        continue;
+      // `proxy1` and `proxy2` have the same caching key, but serve different credentials.
+      // We have to bust HTTP Auth Cache everytime there's a request that will use either of the proxies.
+      this._proxiesWithClashingAuthCacheKeys.add(proxy1);
+      this._proxiesWithClashingAuthCacheKeys.add(proxy2);
+    }
+  }
+
   async cancelDownload(options) {
     this._downloadInterceptor.cancelDownload(options.uuid);
   }
 
   setBrowserProxy(proxy) {
     this._browserProxy = proxy;
+    this._updateProxiesWithSameAuthCacheAndDifferentCredentials();
   }
 
   getProxyInfo(channel) {
@@ -906,12 +945,14 @@ class BrowserContext {
     }
     this._registry._browserContextIdToBrowserContext.delete(this.browserContextId);
     this._registry._userContextIdToBrowserContext.delete(this.userContextId);
+    this._registry._updateProxiesWithSameAuthCacheAndDifferentCredentials();
   }
 
   setProxy(proxy) {
     // Clear AuthCache.
     Services.obs.notifyObservers(null, "net:clear-active-logins");
     this._proxy = proxy;
+    this._registry._updateProxiesWithSameAuthCacheAndDifferentCredentials();
   }
 
   setIgnoreHTTPSErrors(ignoreHTTPSErrors) {

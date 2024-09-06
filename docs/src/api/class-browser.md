@@ -297,8 +297,10 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ## async method: Browser.removeAllListeners
 * since: v1.47
+* langs: js
 
-Removes all the listeners of the given type if the type is given. Otherwise removes all the listeners.
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
 
 ### param: Browser.removeAllListeners.type
 * since: v1.47

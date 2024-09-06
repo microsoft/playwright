@@ -18,35 +18,10 @@ import { browserTest as it, expect } from '../config/browserTest';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
-it.use({
-  launchOptions: async ({ launchOptions }, use) => {
-    await use({
-      ...launchOptions,
-      proxy: { server: 'per-context' }
-    });
-  }
-});
-
-
 it.beforeEach(({ server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
-});
-
-it('should throw for missing global proxy on Chromium Windows', async ({ browserName, platform, browserType, server }) => {
-  it.skip(browserName !== 'chromium' || platform !== 'win32');
-
-  let browser;
-  try {
-    browser = await browserType.launch({
-      proxy: undefined,
-    });
-    const error = await browser.newContext({ proxy: { server: `localhost:${server.PORT}` } }).catch(e => e);
-    expect(error.toString()).toContain('Browser needs to be launched with the global proxy');
-  } finally {
-    await browser.close();
-  }
 });
 
 it('should work when passing the proxy only on the context level', async ({ browserName, platform, browserType, server, proxyServer }) => {
@@ -166,7 +141,6 @@ it.describe('should proxy local network requests', () => {
 
 it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName }) => {
   it.fail(browserName === 'firefox', 'page.goto: NS_ERROR_UNKNOWN_HOST');
-  it.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `[0:0:0:0:0:0:0:1]:${proxyServer.PORT}` }

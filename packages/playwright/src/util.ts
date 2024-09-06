@@ -63,8 +63,20 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
 }
 
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error)
-    return filterStackTrace(error);
+  if (error instanceof Error) {
+    const result: TestInfoError = filterStackTrace(error);
+    if ('matcherResult' in error && error.matcherResult) {
+      const matcherResult = (error.matcherResult as TestInfoError['matcherResult'])!;
+      result.matcherResult = {
+        pass: matcherResult.pass,
+        name: matcherResult.name,
+        expected: matcherResult.expected,
+        actual: matcherResult.actual,
+        timeout: matcherResult.timeout,
+      };
+    }
+    return result;
+  }
   return {
     value: util.inspect(error)
   };
@@ -347,4 +359,15 @@ function fileExists(resolved: string) {
 
 function dirExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
+}
+
+export async function removeDirAndLogToConsole(dir: string) {
+  try {
+    if (!fs.existsSync(dir))
+      return;
+    // eslint-disable-next-line no-console
+    console.log(`Removing ${await fs.promises.realpath(dir)}`);
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  } catch {
+  }
 }

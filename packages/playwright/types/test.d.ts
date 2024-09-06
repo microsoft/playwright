@@ -6546,6 +6546,7 @@ export type MatcherReturnType = {
   expected?: unknown;
   actual?: any;
   log?: string[];
+  timeout?: number;
 };
 
 type MakeMatchers<R, T, ExtendedMatchers> = {
@@ -6565,15 +6566,17 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
+type PollMatchers<R, T, ExtendedMatchers> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: PollMatchers<R, T, ExtendedMatchers>;
+} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>;
+
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
-  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
-    /**
-     * If you know how to test something, `.not` lets you test its opposite.
-     */
-     not: BaseMatchers<Promise<void>, T>;
-  };
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
   extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
@@ -8220,9 +8223,44 @@ export interface TestInfo {
 }
 
 /**
+ * Matcher-specific details for the error thrown during the `expect` call.
+ */
+export interface TestInfoErrorMatcherResult {
+  /**
+   * Actual value.
+   */
+  actual?: unknown;
+
+  /**
+   * Expected value.
+   */
+  expected?: unknown;
+
+  /**
+   * Matcher name.
+   */
+  name?: string;
+
+  /**
+   * Whether the matcher passed.
+   */
+  pass: string;
+
+  /**
+   * Timeout that was used during matching.
+   */
+  timeout?: number;
+}
+
+/**
  * Information about an error thrown during test execution.
  */
 export interface TestInfoError {
+  /**
+   * Matcher result details.
+   */
+  matcherResult?: TestInfoErrorMatcherResult;
+
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */

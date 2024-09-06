@@ -18,8 +18,7 @@ import '@web/third_party/vscode/codicon.css';
 import '@web/common.css';
 import React from 'react';
 import { TeleSuite } from '@testIsomorphic/teleReceiver';
-import { TeleSuiteUpdater } from './teleSuiteUpdater';
-import type { Progress } from './uiModeModel';
+import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
@@ -33,13 +32,13 @@ import { useDarkModeSetting } from '@web/theme';
 import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
-import { TestServerConnection } from '@testIsomorphic/testServerConnection';
-import { pathSeparator } from './uiModeModel';
-import type { TestModel } from './uiModeModel';
+import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
+
+const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -80,8 +79,8 @@ export const UIModeView: React.FC<{}> = ({
     ['skipped', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
-  const [testModel, setTestModel] = React.useState<TestModel>();
-  const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
+  const [testModel, setTestModel] = React.useState<TeleSuiteUpdaterTestModel>();
+  const [progress, setProgress] = React.useState<TeleSuiteUpdaterProgress & { total: number } | undefined>();
   const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -101,43 +100,20 @@ export const UIModeView: React.FC<{}> = ({
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
+
   const showTestingOptions = false;
+  const [singleWorker, setSingleWorker] = React.useState(queryParams.workers === '1');
+  const [showBrowser, setShowBrowser] = React.useState(queryParams.headed);
+  const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
+  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
+  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
 
-  const [runWorkers, setRunWorkers] = React.useState(queryParams.workers);
-  const singleWorkerSetting = React.useMemo(() => {
-    return [
-      runWorkers === '1',
-      (value: boolean) => {
-        // When started with `--workers=1`, the setting allows to undo that.
-        // Otherwise, fallback to the cli `--workers=X` argument.
-        setRunWorkers(value ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers));
-      },
-      'Single worker',
-    ] as const;
-  }, [runWorkers, setRunWorkers]);
-
-  const [runHeaded, setRunHeaded] = React.useState(queryParams.headed);
-  const showBrowserSetting = React.useMemo(() => [runHeaded, setRunHeaded, 'Show browser'] as const, [runHeaded, setRunHeaded]);
-
-  const [runUpdateSnapshots, setRunUpdateSnapshots] = React.useState(queryParams.updateSnapshots);
-  const updateSnapshotsSetting = React.useMemo(() => {
-    return [
-      runUpdateSnapshots === 'all',
-      (value: boolean) => setRunUpdateSnapshots(value ? 'all' : 'missing'),
-      'Update snapshots',
-    ] as const;
-  }, [runUpdateSnapshots, setRunUpdateSnapshots]);
-
-  const [, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
-  const [, , showScreenshotSetting] = useSetting('screenshot-instead-of-snapshot', false, 'Show screenshot instead of snapshot');
-
-
-  const darkModeSetting = useDarkModeSetting();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(wsURL.toString()));
+    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
   }, []);
 
   // Load tests on startup.
@@ -208,12 +184,14 @@ export const UIModeView: React.FC<{}> = ({
           interceptStdio: true,
           watchTestDirs: true
         });
-        const { status, report } = await testServerConnection.runGlobalSetup({});
+        const { status, report } = await testServerConnection.runGlobalSetup({
+          outputDir: queryParams.outputDir,
+        });
         teleSuiteUpdater.processGlobalReport(report);
         if (status !== 'passed')
           return;
 
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, outputDir: queryParams.outputDir });
         teleSuiteUpdater.processListReport(result.report);
 
         testServerConnection.onReport(params => {
@@ -310,11 +288,13 @@ export const UIModeView: React.FC<{}> = ({
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
-        workers: runWorkers,
+        // When started with `--workers=1`, the setting allows to undo that.
+        // Otherwise, fallback to the cli `--workers=X` argument.
+        workers: singleWorker ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers),
         timeout: queryParams.timeout,
-        headed: runHeaded,
+        headed: showBrowser,
         outputDir: queryParams.outputDir,
-        updateSnapshots: runUpdateSnapshots,
+        updateSnapshots: updateSnapshots ? 'all' : queryParams.updateSnapshots,
         reporters: queryParams.reporters,
         trace: 'on',
       });
@@ -326,7 +306,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, runWorkers, runHeaded, runUpdateSnapshots]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, singleWorker, showBrowser, updateSnapshots]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -336,7 +316,7 @@ export const UIModeView: React.FC<{}> = ({
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
-          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, outputDir: queryParams.outputDir });
           teleSuiteUpdater.processListReport(result.report);
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -523,9 +503,9 @@ export const UIModeView: React.FC<{}> = ({
             <div className='section-title'>Testing Options</div>
           </Toolbar>
           {testingOptionsVisible && <SettingsView settings={[
-            singleWorkerSetting,
-            showBrowserSetting,
-            updateSnapshotsSetting,
+            { value: singleWorker, set: setSingleWorker, title: 'Single worker' },
+            { value: showBrowser, set: setShowBrowser, title: 'Show browser' },
+            { value: updateSnapshots, set: setUpdateSnapshots, title: 'Update snapshots' },
           ]} />}
         </>}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
@@ -537,9 +517,9 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
-          darkModeSetting,
-          showRouteActionsSetting,
-          showScreenshotSetting,
+          { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
+          { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
         ]} />}
       </div>
       }

@@ -291,8 +291,7 @@ export class FrameManager {
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
-      if (route)
-        route.continue(request, { isFallback: true }).catch(() => {});
+      route?.continue({ isFallback: true }).catch(() => {});
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
@@ -659,18 +658,24 @@ export class Frame extends SdkObject {
     }
     url = helper.completeUserURL(url);
 
-    const sameDocument = helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (e: NavigationEvent) => !e.newDocument);
-    const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+    const navigationEvents: NavigationEvent[] = [];
+    const collectNavigations = (arg: NavigationEvent) => navigationEvents.push(arg);
+    this.on(Frame.Events.InternalNavigation, collectNavigations);
+    const navigateResult = await this._page._delegate.navigateFrame(this, url, referer).finally(
+        () => this.off(Frame.Events.InternalNavigation, collectNavigations));
 
     let event: NavigationEvent;
     if (navigateResult.newDocumentId) {
-      sameDocument.dispose();
-      event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+      const predicate = (event: NavigationEvent) => {
         // We are interested either in this specific document, or any other document that
         // did commit and replaced the expected document.
         return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
-      }).promise;
-
+      };
+      const events = navigationEvents.filter(predicate);
+      if (events.length)
+        event = events[0];
+      else
+        event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
@@ -679,7 +684,13 @@ export class Frame extends SdkObject {
       if (event.error)
         throw event.error;
     } else {
-      event = await sameDocument.promise;
+      // Wait for same document navigation.
+      const predicate = (e: NavigationEvent) => !e.newDocument;
+      const events = navigationEvents.filter(predicate);
+      if (events.length)
+        event = events[0];
+      else
+        event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
     }
 
     if (!this._firedLifecycleEvents.has(waitUntil))
@@ -788,7 +799,7 @@ export class Frame extends SdkObject {
       const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
-        const visible = element ? injected.isVisible(element) : false;
+        const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
           if (info.strict)
@@ -889,7 +900,7 @@ export class Frame extends SdkObject {
         const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
         progress.log(`setting frame content, waiting until "${waitUntil}"`);
         const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
-        const context = await this._utilityContext();
+        const context = this._page._delegate.useMainWorldForSetContent?.() ? await this._mainContext() : await this._utilityContext();
         const lifecyclePromise = new Promise((resolve, reject) => {
           this._page._frameManager._consoleMessageTags.set(tag, () => {
             // Clear lifecycle right after document.open() - see 'tag' below.
@@ -1332,7 +1343,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: { noWaitAfter?: boolean } & types.CommonActionOptions = {}): Promise<string[]> {
+  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions = {}): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._selectOption(progress, elements, values, options));

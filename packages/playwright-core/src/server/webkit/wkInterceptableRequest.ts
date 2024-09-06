@@ -141,7 +141,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     });
   }
 
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptWithRequest', {

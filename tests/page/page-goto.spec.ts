@@ -179,26 +179,6 @@ it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, 
   expect(firstRequest.url()).toBe(server.PREFIX + '/redirect');
 });
 
-it('should properly cancel Cross-Origin-Opener-Policy navigation', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32107' },
-}, async ({ page, server, browserName, isLinux }) => {
-  it.fixme(browserName === 'webkit' && isLinux, 'Started failing after https://commits.webkit.org/281488@main');
-  server.setRoute('/empty.html', (req, res) => {
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
-  });
-  const requestPromise = page.waitForRequest(server.EMPTY_PAGE);
-  page.goto(server.EMPTY_PAGE).catch(() => {});
-  await new Promise(f => setTimeout(f, 50));
-  // Non COOP response.
-  await page.goto(server.CROSS_PROCESS_PREFIX + '/error.html');
-  const req = await requestPromise;
-  const response = await Promise.race([req.response(), new Promise(f => setTimeout(() => f('timeout'), 5_000))]);
-  // First navigation request should either receive response or be canceled by the second
-  // navigation, but never hang unresolved.
-  expect(response).not.toBe('timeout');
-});
-
 it('should capture iframe navigation request', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
@@ -365,7 +345,7 @@ it('should fail when main resources failed to load', async ({ page, browserName,
   } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
     expect(error.message).toContain(`proxy handshake error`);
   } else if (browserName === 'webkit' && isWindows) {
-    expect(error.message).toContain(`Couldn\'t connect to server`);
+    expect(error.message).toContain(`Could not connect to server`);
   } else if (browserName === 'webkit') {
     if (mode === 'service2')
       expect(error.message).toContain('Connection refused');

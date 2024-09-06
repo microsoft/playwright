@@ -39,6 +39,7 @@ import type { Dialog } from '../dialog';
 import type { ConsoleMessage } from '../console';
 import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { RecorderApp } from '../recorder/recorderApp';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -291,7 +292,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    await Recorder.show(this._context, params);
+    await Recorder.show(this._context, RecorderApp.factory(this._context), params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {

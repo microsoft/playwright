@@ -34,3 +34,4 @@ test-results
 /tests/installation/.registry.json
 .cache/
 .eslintcache
+playwright.env

@@ -33,7 +33,7 @@ import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
 
-export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher?: Matcher) {
+export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean) {
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
@@ -52,8 +52,6 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   for (const [project, files] of allFilesForProject) {
     const matchedFiles = files.filter(file => {
       const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
-        if (additionalFileMatcher && !additionalFileMatcher(source))
-          return false;
         if (cliFileMatcher && !cliFileMatcher(source))
           return false;
         return true;

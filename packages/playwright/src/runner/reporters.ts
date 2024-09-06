@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { FullConfig, TestError } from '../../types/testReporter';
-import { formatError } from '../reporters/base';
+import { colors, formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -84,6 +84,24 @@ export async function createReporterForTestServer(file: string, messageSink: (me
   return wrapReporterAsV2(new reporterConstructor({
     _send: messageSink,
   }));
+}
+
+interface ErrorCollectingReporter extends ReporterV2 {
+  errors(): TestError[];
+}
+
+export function createErrorCollectingReporter(writeToConsole?: boolean): ErrorCollectingReporter {
+  const errors: TestError[] = [];
+  const reporterV2 = wrapReporterAsV2({
+    onError(error: TestError) {
+      errors.push(error);
+      if (writeToConsole)
+        process.stdout.write(formatError(error, colors.enabled).message + '\n');
+    }
+  });
+  const reporter = reporterV2 as ErrorCollectingReporter;
+  reporter.errors = () => errors;
+  return reporter;
 }
 
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {

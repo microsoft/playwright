@@ -32,7 +32,7 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode } from '../utils';
+import { debugMode, ManualPromise } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -44,14 +44,24 @@ export const kNoXServerRunningError = 'Looks like you launched a headed browser 
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
 
 
-export interface BrowserReadyState {
-  onBrowserOutput(message: string): void;
-  onBrowserExit(): void;
-  waitUntilReady(): Promise<{ wsEndpoint?: string }>;
+export abstract class BrowserReadyState {
+  protected readonly _wsEndpoint = new ManualPromise<string|undefined>();
+
+  onBrowserExit(): void {
+    // Unblock launch when browser prematurely exits.
+    this._wsEndpoint.resolve(undefined);
+  }
+  async waitUntilReady(): Promise<{ wsEndpoint?: string }> {
+    const wsEndpoint = await this._wsEndpoint;
+    return { wsEndpoint };
+  }
+
+  abstract onBrowserOutput(message: string): void;
 }
 
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
+  _useBidi: boolean = false;
 
   constructor(parent: SdkObject, browserName: BrowserName) {
     super(parent, 'browser-type');
@@ -69,6 +79,8 @@ export abstract class BrowserType extends SdkObject {
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = this._validateLaunchOptions(options);
+    if (this._useBidi)
+      options.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -82,6 +94,8 @@ export abstract class BrowserType extends SdkObject {
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
+    if (this._useBidi)
+      options.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
     const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
