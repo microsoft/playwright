@@ -286,7 +286,7 @@ it('request.postData is not null when fetching FormData with a Blob', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
 }, async ({ server, page, browserName, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 31);
-  it.fixme(isAndroid, 'potData is null for some reason');
+  it.fixme(isAndroid, 'postData is null for some reason');
   it.fixme(browserName === 'webkit', 'The body is empty in WebKit when intercepting');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
