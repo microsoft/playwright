@@ -91,7 +91,7 @@ export class BidiPage implements PageDelegate {
     await Promise.all([
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
-      // this._updateViewport(),
+      this._updateViewport(),
     ]);
   }
 
