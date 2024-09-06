@@ -1483,3 +1483,15 @@ test('should allow showing screenshots instead of snapshots', async ({ runAndTra
   await expect(screenshot).toBeVisible();
 });
 
+test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  }, { snapshots: false, screenshots: false });
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  await expect(screenshot).not.toBeVisible();
+});
+
