@@ -100,8 +100,7 @@ it('should work with glob', async () => {
   expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
 });
 
-it('should intercept network activity from worker', async function({ page, server, isAndroid, browserName, browserMajorVersion }) {
-  it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
+it('should intercept network activity from worker', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
@@ -118,6 +117,35 @@ it('should intercept network activity from worker', async function({ page, serve
     page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
       fetch("${url}").then(response => response.text()).then(console.log);
     `], { type: 'application/javascript' }))), url),
+  ]);
+  expect(msg.text()).toBe('intercepted');
+});
+
+it('should intercept worker requests when enabled after worker creation', {
+  annotation: { type: 'issue', name: 'https://github.com/microsoft/playwright/issues/32355' }
+}, async function({ page, server, isAndroid, browserName }) {
+  it.skip(isAndroid);
+  it.fixme(browserName === 'chromium');
+
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
+  const url = server.PREFIX + '/data_for_worker';
+  await page.evaluate(url => {
+    (window as any).w = new Worker(URL.createObjectURL(new Blob([`
+    onmessage = function(e) {
+      fetch("${url}").then(response => response.text()).then(console.log);
+    };
+  `], { type: 'application/javascript' })))
+  }, url);
+  await page.route(url, route => {
+    route.fulfill({
+      status: 200,
+      body: 'intercepted',
+    }).catch(e => null);
+  });
+  const [msg] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => (window as any).w.postMessage(''))
   ]);
   expect(msg.text()).toBe('intercepted');
 });
