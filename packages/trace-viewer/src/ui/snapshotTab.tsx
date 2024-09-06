@@ -52,7 +52,7 @@ export const SnapshotTab: React.FunctionComponent<{
 }> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
-  const [showScreenshotInsteadOfSnapshot] = useSetting('screenshot-instead-of-snapshot', false, 'Show screenshot instead of snapshot');
+  const [showScreenshotInsteadOfSnapshot] = useSetting('screenshot-instead-of-snapshot', false);
 
   type Snapshot = { action: ActionTraceEvent, snapshotName: string, point?: { x: number, y: number } };
   const { snapshots } = React.useMemo(() => {
@@ -230,7 +230,7 @@ export const SnapshotTab: React.FunctionComponent<{
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <BrowserFrame url={snapshotInfo.url} />
-        {(showScreenshotInsteadOfSnapshot && screencastFrame) && <img src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />}
+        {(showScreenshotInsteadOfSnapshot && screencastFrame) && <img alt={`Screenshot of ${action?.apiName} > ${renderTitle(snapshotTab)}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />}
         <div className='snapshot-switcher' style={showScreenshotInsteadOfSnapshot ? { display: 'none' } : undefined}>
           <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
           <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
