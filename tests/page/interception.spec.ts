@@ -122,7 +122,7 @@ it('should intercept network activity from worker', async function({ page, serve
 });
 
 it('should intercept worker requests when enabled after worker creation', {
-  annotation: { type: 'issue', name: 'https://github.com/microsoft/playwright/issues/32355' }
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32355' }
 }, async function({ page, server, isAndroid, browserName }) {
   it.skip(isAndroid);
   it.fixme(browserName === 'chromium');
@@ -135,7 +135,7 @@ it('should intercept worker requests when enabled after worker creation', {
     onmessage = function(e) {
       fetch("${url}").then(response => response.text()).then(console.log);
     };
-  `], { type: 'application/javascript' })))
+  `], { type: 'application/javascript' })));
   }, url);
   await page.route(url, route => {
     route.fulfill({
