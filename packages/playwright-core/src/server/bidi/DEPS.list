@@ -7,5 +7,5 @@
 [bidiOverCdp.ts]
 ***
 
-[bidiBrowserType.ts]
+[bidiChromium.ts]
 ../chromium/chromiumSwitches.ts

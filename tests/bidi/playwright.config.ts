@@ -58,38 +58,44 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-const browserName: any = '_experimentalBidi';
 const executablePath = getExecutablePath();
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
-for (const channel of ['bidi-chrome-canary', 'bidi-firefox-stable']) {
-  for (const folder of ['library', 'page']) {
-    config.projects.push({
-      name: `${channel}-${folder}`,
-      testDir: path.join(testDir, folder),
-      testIgnore,
-      snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${channel}{ext}`,
-      use: {
-        browserName,
-        headless: !headed,
-        channel,
-        video: 'off',
-        launchOptions: {
-          channel: 'bidi-chrome-canary',
-          executablePath,
+const browserToChannels = {
+  '_bidiChromium': ['bidi-chrome-canary'],
+  '_bidiFirefox': ['bidi-firefox-stable'],
+};
+for (const [key, channels] of Object.entries(browserToChannels)) {
+  const browserName: any = key;
+  for (const channel of channels) {
+    for (const folder of ['library', 'page']) {
+      config.projects.push({
+        name: `${channel}-${folder}`,
+        testDir: path.join(testDir, folder),
+        testIgnore,
+        snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${channel}{ext}`,
+        use: {
+          browserName,
+          headless: !headed,
+          channel,
+          video: 'off',
+          launchOptions: {
+            channel: 'bidi-chrome-canary',
+            executablePath,
+          },
+          trace: trace ? 'on' : undefined,
         },
-        trace: trace ? 'on' : undefined,
-      },
-      metadata: {
-        platform: process.platform,
-        docker: !!process.env.INSIDE_DOCKER,
-        headless: !headed,
-        browserName,
-        channel,
-        trace: !!trace,
-      },
-    });
+        metadata: {
+          platform: process.platform,
+          docker: !!process.env.INSIDE_DOCKER,
+          headless: !headed,
+          browserName,
+          channel,
+          trace: !!trace,
+        },
+      });
+    }
   }
 }
 
