@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/tests_bidi.yml
   schedule:
+    # Run every day at midnight
     - cron: '0 0 * * *'
 
 env:
@@ -26,15 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: add Firefox
-        channel: [bidi-chrome-beta]
+        channel: [bidi-chrome-stable]
     steps:
     - uses: actions/checkout@v4
-    - name: Install browser
-      run: |
-        if [[ ${{ matrix.channel }} == bidi-chrome-beta ]]; then
-          curl -O https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
-          sudo dpkg -i google-chrome-beta_current_amd64.deb
-        fi
     - uses: actions/setup-node@v4
       with:
         node-version: 20
