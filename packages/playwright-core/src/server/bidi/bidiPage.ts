@@ -47,6 +47,7 @@ export class BidiPage implements PageDelegate {
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
   _initializedPage: Page | null = null;
+  private _initScriptIds: string[] = [];
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -92,7 +93,12 @@ export class BidiPage implements PageDelegate {
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
       this._updateViewport(),
+      this._addAllInitScripts(),
     ]);
+  }
+
+  private async _addAllInitScripts() {
+    return Promise.all(this._page.allInitScripts().map(initScript => this.addInitScript(initScript)));
   }
 
   potentiallyUninitializedPage(): Page {
@@ -318,15 +324,20 @@ export class BidiPage implements PageDelegate {
   }
 
   async addInitScript(initScript: InitScript): Promise<void> {
-    await this._updateBootstrapScript();
+    const { script } = await this._session.send('script.addPreloadScript', {
+      // TODO: remove function call from the source.
+      functionDeclaration: `() => { return ${initScript.source} }`,
+      // TODO: push to iframes?
+      contexts: [this._session.sessionId],
+    });
+    if (!initScript.internal)
+      this._initScriptIds.push(script);
   }
 
   async removeNonInternalInitScripts() {
-    await this._updateBootstrapScript();
-  }
-
-  async _updateBootstrapScript(): Promise<void> {
-    throw new Error('Method not implemented.');
+    const promises = this._initScriptIds.map(script => this._session.send('script.removePreloadScript', { script }));
+    this._initScriptIds = [];
+    await Promise.all(promises);
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
