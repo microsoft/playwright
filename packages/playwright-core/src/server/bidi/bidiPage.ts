@@ -272,6 +272,8 @@ export class BidiPage implements PageDelegate {
   }
 
   private async _updateViewport(): Promise<void> {
+    if (this._browserContext._browser.options.name === 'firefox')
+      return;
     const options = this._browserContext._options;
     const deviceSize = this._page.emulatedSize();
     if (deviceSize === null)

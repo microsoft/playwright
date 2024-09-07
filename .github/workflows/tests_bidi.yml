@@ -26,8 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: add Firefox
-        channel: [bidi-chrome-stable]
+        channel: [bidi-chrome-stable, bidi-firefox-stable]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -36,6 +35,13 @@ jobs:
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    - name: Install Firefox
+      if: matrix.channel == 'bidi-firefox-stable'
+      run: |
+        # Note: Firefox via Snap doesn't work.
+        curl -O https://download-installer.cdn.mozilla.net/pub/firefox/releases/130.0/linux-x86_64/en-US/firefox-130.0.deb
+        sudo apt-get install -y libgdk-pixbuf2.0-0
+        sudo dpkg -i firefox-130.0.deb
     - run: npm run build
     - run: npx playwright install --with-deps chromium
     - name: Run tests
