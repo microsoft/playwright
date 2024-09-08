@@ -2,7 +2,8 @@
 
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-
+import { hostname } from "os";
+import type { Location } from '../../../packages/playwright/types/testReporter'
 test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page }) => {
@@ -362,7 +363,7 @@ test.describe('Routing', () => {
 
     await test.step('Showing active items', async () => {
       await page.getByRole('link', { name: 'Active' }).click();
-    });
+    }, {location});
 
     await test.step('Showing completed items', async () => {
       await page.getByRole('link', { name: 'Completed' }).click();
