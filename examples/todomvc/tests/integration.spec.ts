@@ -363,7 +363,7 @@ test.describe('Routing', () => {
 
     await test.step('Showing active items', async () => {
       await page.getByRole('link', { name: 'Active' }).click();
-    }, {location});
+    });
 
     await test.step('Showing completed items', async () => {
       await page.getByRole('link', { name: 'Completed' }).click();
