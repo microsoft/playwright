@@ -2,8 +2,6 @@
 
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { hostname } from "os";
-import type { Location } from '../../../packages/playwright/types/testReporter'
 test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page }) => {
