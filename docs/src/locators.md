@@ -607,6 +607,26 @@ page.get_by_test_id("directions").click()
 await page.GetByTestId("directions").ClickAsync();
 ```
 
+#### Get the current test id attribute name
+
+Return the current test id attribute name, this will default to `data-testid`, if not updated using your test config or set using [`method: Selectors.setTestIdAttribute`].
+
+```java
+playwright.selectors().testIdAttributeName();
+```
+
+```python async
+playwright.selectors.test_id_attribute_name()
+```
+
+```python sync
+playwright.selectors.test_id_attribute_name()
+```
+
+```csharp
+playwright.Selectors.TestIdAttributeName();
+```
+
 ### Locate by CSS or XPath
 
 If you absolutely must use CSS or XPath locators, you can use [`method: Page.locator`] to create a locator that takes a selector describing how to find an element in the page. Playwright supports CSS and XPath selectors, and auto-detects them if you omit `css=` or `xpath=` prefix.

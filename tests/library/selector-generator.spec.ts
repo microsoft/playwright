@@ -596,4 +596,9 @@ it.describe('selector generator', () => {
       `span >> nth=1`,
     ]);
   });
+
+  it('should return the current testIdAttributeName', async ({ playwright }) => {
+    playwright.selectors.setTestIdAttribute('data-custom-id');
+    expect(playwright.selectors.testIdAttributeName()).toEqual('data-custom-id');
+  });
 });

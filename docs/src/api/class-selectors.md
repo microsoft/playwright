@@ -248,3 +248,8 @@ Defines custom attribute name to be used in [`method: Page.getByTestId`]. `data-
 - `attributeName` <[string]>
 
 Test id attribute name.
+
+## method: Selectors.testIdAttributeName
+* since: v1.48
+
+Return the current Test id attribute name.

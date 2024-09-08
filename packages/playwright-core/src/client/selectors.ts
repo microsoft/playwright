@@ -39,6 +39,8 @@ export class Selectors implements api.Selectors {
       channel._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
   }
 
+  testIdAttributeName = () => testIdAttributeName();
+
   _addChannel(channel: SelectorsOwner) {
     this._channels.add(channel);
     for (const params of this._registrations) {

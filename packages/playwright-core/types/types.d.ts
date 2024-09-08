@@ -19895,6 +19895,11 @@ export interface Selectors {
    * @param attributeName Test id attribute name.
    */
   setTestIdAttribute(attributeName: string): void;
+
+  /**
+   * Return the current Test id attribute name.
+   */
+  testIdAttributeName(): void;
 }
 
 /**
