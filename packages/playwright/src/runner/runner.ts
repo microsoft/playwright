@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
@@ -26,6 +24,7 @@ import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRun
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
+import { LastRunReporter } from './lastRun';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -76,7 +75,11 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
-    const reporter = new InternalReporter(reporters);
+    const lastRun = new LastRunReporter(config);
+    if (config.cliLastFailed)
+      await lastRun.filterLastFailed();
+
+    const reporter = new InternalReporter([...reporters, lastRun]);
     const taskRunner = listOnly ? createTaskRunnerForList(
         config,
         reporter,
@@ -93,9 +96,6 @@ export class Runner {
     const modifiedResult = await reporter.onEnd({ status });
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
-
-    if (!listOnly)
-      await writeLastRunInfo(testRun, status);
 
     await reporter.onExit();
 
@@ -142,34 +142,4 @@ export class Runner {
     await reporter.onExit();
     return { status };
   }
-}
-
-export type LastRunInfo = {
-  status: FullResult['status'];
-  failedTests: string[];
-};
-
-async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
-  const [project] = filterProjects(testRun.config.projects, testRun.config.cliProjectFilter);
-  if (!project)
-    return;
-  const outputDir = project.project.outputDir;
-  await fs.promises.mkdir(outputDir, { recursive: true });
-  const lastRunReportFile = path.join(outputDir, '.last-run.json');
-  const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
-  const lastRunReport = JSON.stringify({ status, failedTests }, undefined, 2);
-  await fs.promises.writeFile(lastRunReportFile, lastRunReport);
-}
-
-export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
-  const [project] = filterProjects(config.projects, config.cliProjectFilter);
-  if (!project)
-    return { status: 'passed', failedTests: [] };
-  const outputDir = project.project.outputDir;
-  try {
-    const lastRunReportFile = path.join(outputDir, '.last-run.json');
-    return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
-  } catch {
-  }
-  return { status: 'passed', failedTests: [] };
 }
