@@ -29,6 +29,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
+import { ClickPointer } from './clickPointer';
 
 function findClosest<T extends { timestamp: number }>(items: T[], target: number) {
   return items.find((item, index) => {
@@ -73,7 +74,7 @@ export const SnapshotTab: React.FunctionComponent<{
     return { snapshots: { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot } };
   }, [action]);
 
-  const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
+  const { snapshotInfoUrl, snapshotUrl, popoutUrl, point } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
     if (!snapshot)
       return { snapshotUrl: kBlankSnapshotUrl };
@@ -96,7 +97,7 @@ export const SnapshotTab: React.FunctionComponent<{
       popoutParams.set('pointY', String(snapshot.point.y));
     }
     const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
-    return { snapshots, snapshotInfoUrl, snapshotUrl, popoutUrl };
+    return { snapshots, snapshotInfoUrl, snapshotUrl, popoutUrl, point: snapshot.point };
   }, [snapshots, snapshotTab]);
 
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
@@ -230,7 +231,12 @@ export const SnapshotTab: React.FunctionComponent<{
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <BrowserFrame url={snapshotInfo.url} />
-        {(showScreenshotInsteadOfSnapshot && screencastFrame) && <img alt={`Screenshot of ${action?.apiName} > ${renderTitle(snapshotTab)}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />}
+        {(showScreenshotInsteadOfSnapshot && screencastFrame) && (
+          <>
+            {point && <ClickPointer point={point} />}
+            <img alt={`Screenshot of ${action?.apiName} > ${renderTitle(snapshotTab)}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />
+          </>
+        )}
         <div className='snapshot-switcher' style={showScreenshotInsteadOfSnapshot ? { display: 'none' } : undefined}>
           <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
           <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
