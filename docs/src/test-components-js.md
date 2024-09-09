@@ -113,11 +113,9 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
 }>
 <TabItem value="react">
 
-```js
+```js title="app.spec.tsx"
 import { test, expect } from '@playwright/experimental-ct-react';
 import App from './App';
-
-test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(<App />);
@@ -129,18 +127,25 @@ test('should work', async ({ mount }) => {
 
 <TabItem value="vue">
 
-```js
+```js title="app.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-vue';
 import App from './App.vue';
 
-test.use({ viewport: { width: 500, height: 500 } });
-
 test('should work', async ({ mount }) => {
   const component = await mount(App);
-  await expect(component).toContainText('Vite + Vue');
+  await expect(component).toContainText('Learn Vue');
 });
 ```
 
+```js title="app.spec.tsx"
+import { test, expect } from '@playwright/experimental-ct-vue';
+import App from './App.vue';
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<App />);
+  await expect(component).toContainText('Learn Vue');
+});
+```
 If using TypeScript and Vue make sure to add a `vue.d.ts` file to your project:
 
 ```js
@@ -151,15 +156,13 @@ declare module '*.vue';
 
 <TabItem value="svelte">
 
-```js
+```js title="app.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-svelte';
 import App from './App.svelte';
 
-test.use({ viewport: { width: 500, height: 500 } });
-
 test('should work', async ({ mount }) => {
   const component = await mount(App);
-  await expect(component).toContainText('Vite + Svelte');
+  await expect(component).toContainText('Learn Svelte');
 });
 ```
 
@@ -167,11 +170,9 @@ test('should work', async ({ mount }) => {
 
 <TabItem value="solid">
 
-```js
+```js title="app.spec.tsx"
 import { test, expect } from '@playwright/experimental-ct-solid';
 import App from './App';
-
-test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(<App />);
@@ -261,7 +262,10 @@ export function InputMediaForTest(props: InputMediaForTestProps) {
 
 Then test the component via testing the story:
 
-```js title="input-media.test.spec.tsx"
+```js title="input-media.spec.tsx"
+import { test, expect } from '@playwright/experimental-ct-react';
+import { InputMediaForTest } from './input-media.story.tsx';
+
 test('changes the image', async ({ mount }) => {
   let mediaSelected: string | null = null;
 
@@ -313,7 +317,9 @@ Provide props to a component when mounted.
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('props', async ({ mount }) => {
   const component = await mount(<Component msg="greetings" />);
 });
@@ -322,7 +328,9 @@ test('props', async ({ mount }) => {
 </TabItem>
 <TabItem value="solid">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-solid';
+
 test('props', async ({ mount }) => {
   const component = await mount(<Component msg="greetings" />);
 });
@@ -331,7 +339,9 @@ test('props', async ({ mount }) => {
 </TabItem>
 <TabItem value="svelte">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-svelte';
+
 test('props', async ({ mount }) => {
   const component = await mount(Component, { props: { msg: 'greetings' } });
 });
@@ -340,9 +350,20 @@ test('props', async ({ mount }) => {
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('props', async ({ mount }) => {
   const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
 });
 ```
 
@@ -366,36 +387,53 @@ Provide callbacks/events to a component when mounted.
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('callback', async ({ mount }) => {
-  const component = await mount(<Component callback={() => {}} />);
+  const component = await mount(<Component onClick={() => {}} />);
 });
 ```
 
 </TabItem>
 <TabItem value="solid">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-solid';
+
 test('callback', async ({ mount }) => {
-  const component = await mount(<Component callback={() => {}} />);
+  const component = await mount(<Component onClick={() => {}} />);
 });
 ```
 
 </TabItem>
 <TabItem value="svelte">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-svelte';
+
 test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { callback() {} } });
+  const component = await mount(Component, { on: { click() {} } });
 });
 ```
 
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { callback() {} } });
+  const component = await mount(Component, { on: { click() {} } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('event', async ({ mount }) => {
+  const component = await mount(<Component v-on:click={() => {}} />);
 });
 ```
 
@@ -419,7 +457,9 @@ Provide children/slots to a component when mounted.
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('children', async ({ mount }) => {
   const component = await mount(<Component>Child</Component>);
 });
@@ -428,7 +468,9 @@ test('children', async ({ mount }) => {
 </TabItem>
 <TabItem value="solid">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-solid';
+
 test('children', async ({ mount }) => {
   const component = await mount(<Component>Child</Component>);
 });
@@ -437,7 +479,9 @@ test('children', async ({ mount }) => {
 </TabItem>
 <TabItem value="svelte">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-svelte';
+
 test('slot', async ({ mount }) => {
   const component = await mount(Component, { slots: { default: 'Slot' } });
 });
@@ -446,9 +490,20 @@ test('slot', async ({ mount }) => {
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('slot', async ({ mount }) => {
   const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
 });
 ```
 
@@ -614,7 +669,9 @@ Unmount the mounted component from the DOM. This is useful for testing the compo
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.unmount();
@@ -624,7 +681,9 @@ test('unmount', async ({ mount }) => {
 </TabItem>
 <TabItem value="solid">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-solid';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.unmount();
@@ -634,7 +693,9 @@ test('unmount', async ({ mount }) => {
 </TabItem>
 <TabItem value="svelte">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-svelte';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(Component);
   await component.unmount();
@@ -644,13 +705,24 @@ test('unmount', async ({ mount }) => {
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(Component);
   await component.unmount();
 });
 ```
 
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
 </TabItem>
 
 </Tabs>
@@ -671,11 +743,13 @@ Update props, slots/children, and/or events/callbacks of a mounted component. Th
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.update(
-      <Component msg="greetings" callback={() => {}}>Child</Component>
+      <Component msg="greetings" onClick={() => {}}>Child</Component>
   );
 });
 ```
@@ -683,11 +757,13 @@ test('update', async ({ mount }) => {
 </TabItem>
 <TabItem value="solid">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-solid';
+
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.update(
-      <Component msg="greetings" callback={() => {}}>Child</Component>
+      <Component msg="greetings" onClick={() => {}}>Child</Component>
   );
 });
 ```
@@ -695,12 +771,14 @@ test('update', async ({ mount }) => {
 </TabItem>
 <TabItem value="svelte">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-svelte';
+
 test('update', async ({ mount }) => {
   const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
-    on: { callback: () => {} },
+    on: { click() {} },
     slots: { default: 'Child' }
   });
 });
@@ -709,14 +787,28 @@ test('update', async ({ mount }) => {
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('update', async ({ mount }) => {
   const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
-    on: { callback: () => {} },
+    on: { click() {} },
     slots: { default: 'Child' }
   });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" v-on:click={() => {}}>Child</Component>
+  );
 });
 ```
 
