@@ -1469,6 +1469,7 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
 test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
+    await page.waitForTimeout(1000); // ensure we could take a screenshot
   });
 
   const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
