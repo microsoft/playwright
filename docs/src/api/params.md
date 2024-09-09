@@ -380,7 +380,7 @@ Query parameters to be sent with the URL.
 
 Query parameters to be sent with the URL.
 
-## java-fetch-option-params
+## java-fetch-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
