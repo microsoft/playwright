@@ -30,12 +30,12 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
 
-function findClosest<T extends { timestamp: number }>(items: T[], target: number) {
+function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
     if (index === items.length - 1)
       return true;
     const next = items[index + 1];
-    return Math.abs(item.timestamp - target) < Math.abs(next.timestamp - target);
+    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
   });
 }
 
@@ -101,7 +101,7 @@ export const SnapshotTab: React.FunctionComponent<{
 
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
-  const [snapshotInfo, setSnapshotInfo] = React.useState<{ viewport: typeof kDefaultViewport, url: string, timestamp?: number }>({ viewport: kDefaultViewport, url: '', timestamp: undefined });
+  const [snapshotInfo, setSnapshotInfo] = React.useState<{ viewport: typeof kDefaultViewport, url: string, timestamp?: number, absoluteTimestamp?: undefined }>({ viewport: kDefaultViewport, url: '' });
   const loadingRef = React.useRef({ iteration: 0, visibleIframe: 0 });
 
   React.useEffect(() => {
@@ -110,7 +110,7 @@ export const SnapshotTab: React.FunctionComponent<{
       const newVisibleIframe = 1 - loadingRef.current.visibleIframe;
       loadingRef.current.iteration = thisIteration;
 
-      const newSnapshotInfo = { url: '', viewport: kDefaultViewport, timestamp: undefined };
+      const newSnapshotInfo = { url: '', viewport: kDefaultViewport, timestamp: undefined, absoluteTimestamp: undefined };
       if (snapshotInfoUrl) {
         const response = await fetch(snapshotInfoUrl);
         const info = await response.json();
@@ -118,6 +118,7 @@ export const SnapshotTab: React.FunctionComponent<{
           newSnapshotInfo.url = info.url;
           newSnapshotInfo.viewport = info.viewport;
           newSnapshotInfo.timestamp = info.timestamp;
+          newSnapshotInfo.absoluteTimestamp = info.absoluteTimestamp;
         }
       }
 
@@ -169,10 +170,13 @@ export const SnapshotTab: React.FunctionComponent<{
   const page = action ? pageForAction(action) : undefined;
   const screencastFrame = React.useMemo(
       () => {
+        if (snapshotInfo.absoluteTimestamp && page?.screencastFrames[0]?.frameSwapTimestamp)
+          return findClosest(page.screencastFrames, frame => frame.frameSwapTimestamp!, snapshotInfo.absoluteTimestamp);
+
         if (snapshotInfo.timestamp && page?.screencastFrames)
-          return findClosest(page.screencastFrames, snapshotInfo.timestamp);
+          return findClosest(page.screencastFrames, frame => frame.timestamp, snapshotInfo.timestamp);
       },
-      [page?.screencastFrames, snapshotInfo.timestamp]
+      [page?.screencastFrames, snapshotInfo.timestamp, snapshotInfo.absoluteTimestamp]
   );
 
   return <div

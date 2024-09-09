@@ -28,6 +28,7 @@ export type SnapshotData = {
   viewport: { width: number, height: number },
   url: string,
   timestamp: number,
+  absoluteTimestamp: number, // milliseconds since epoch
   collectionTime: number,
 };
 
@@ -573,6 +574,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         },
         url: location.href,
         timestamp,
+        absoluteTimestamp: Date.now(),
         collectionTime: 0,
       };
 

@@ -46,6 +46,7 @@ export class SnapshotServer {
       viewport: snapshot.viewport(),
       url: snapshot.snapshot().frameUrl,
       timestamp: snapshot.snapshot().timestamp,
+      absoluteTimestamp: snapshot.snapshot().absoluteTimestamp,
     } : {
       error: 'No snapshot found'
     });
