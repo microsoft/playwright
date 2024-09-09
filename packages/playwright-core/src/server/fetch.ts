@@ -159,6 +159,11 @@ export abstract class APIRequestContext extends SdkObject {
       for (const { name, value } of params.params)
         requestUrl.searchParams.append(name, value);
     }
+    if (params.encodedParams) {
+      const searchParams = new URLSearchParams(params.encodedParams);
+      for (const [name, value] of searchParams)
+        requestUrl.searchParams.append(name, value);
+    }
 
     const credentials = this._getHttpCredentials(requestUrl);
     if (credentials?.send === 'always')
