@@ -27,7 +27,7 @@ import { createMergedReport } from './reporters/merge';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TestError } from '../types/testReporter';
-import type { TraceMode } from '../types/test';
+import type { TraceMode, ShardingMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
 export { program } from 'playwright-core/lib/cli/program';
@@ -305,7 +305,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
-    shardingMode: options.shardingMode ? options.shardingMode : undefined,
+    shardingMode: options.shardingMode ? resolveShardingModeOption(options.shardingMode) : undefined,
     lastRunFile: options.lastRunFile ? path.resolve(process.cwd(), options.lastRunFile) : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
@@ -342,6 +342,16 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   return overrides;
 }
 
+const shardingModes: ShardingMode[] = ['partition', 'round-robin', 'duration-round-robin'];
+
+function resolveShardingModeOption(shardingMode?: string): ShardingMode | undefined {
+  if (!shardingMode)
+    return undefined;
+  if (!shardingModes.includes(shardingMode as ShardingMode))
+    throw new Error(`Unsupported sharding mode "${shardingMode}", must be one of: ${shardingModes.map(mode => `"${mode}"`).join(', ')}`);
+  return shardingMode as ShardingMode;
+}
+
 function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {
   if (!reporter || !reporter.length)
     return undefined;
@@ -372,7 +382,7 @@ const testOptions: [string, string][] = [
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
-  ['--last-run-file', `Path to a json file where the last run information is read from and written to (default: .last-run.json)`],
+  ['--last-run-file', `Path to a json file where the last run information is read from and written to (default: test-results/.last-run.json)`],
   ['--list', `Collect all the tests and report them, but do not run`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
