@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-import 'react';
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      'x-pw-pointer': JSX.IntrinsicElements['div'];
-    }
-  }
-}
-
 export function ClickPointer({ point }: { point: { x: number; y: number } }) {
   return (
-    <x-pw-pointer
+    <div
       style={{
         position: 'fixed',
         backgroundColor: '#f44336',
-        boxShadow: '0px 0px 60px 20px #f44336',
         width: '20px',
         height: '20px',
         borderRadius: '10px',
@@ -42,7 +31,18 @@ export function ClickPointer({ point }: { point: { x: number; y: number } }) {
         left: `${point.x}px`,
         top: `${point.y}px`,
       }}
-      title='Click positions on screenshots are inaccurate'
-    />
+    >
+      <div
+        style={{
+          fontSize: '19px',
+          color: 'white',
+          marginTop: '-3.5px',
+          userSelect: 'none'
+        }}
+        title='Click positions on screenshots are inaccurate.'
+      >
+        ⚠
+      </div>
+    </div>
   );
 }
