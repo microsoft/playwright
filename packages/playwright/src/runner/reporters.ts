@@ -80,7 +80,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
 
   if (!isTestServer && (mode === 'test' || mode === 'merge')) {
     // If we are not in the test server, always add a last-run reporter.
-    const lastRunOutputFile = config.projects.length >= 0 ? path.join(config.projects[0].project.outputDir, '.last-run.json') : undefined;
+    const lastRunOutputFile = config.lastRunFile ?? config.projects.length >= 0 ? path.join(config.projects[0].project.outputDir, '.last-run.json') : undefined;
     reporters.push(new LastRunReporter({ ...runOptions, outputFile: lastRunOutputFile }));
   }
 
