@@ -26,12 +26,13 @@ export function ansi2html(text: string): string {
       switch (code) {
         case 0: style = {}; break;
         case 1: style['font-weight'] = 'bold'; break;
+        case 2: style['opacity'] = '0.8'; break;
         case 3: style['font-style'] = 'italic'; break;
         case 4: style['text-decoration'] = 'underline'; break;
         case 8: style.display = 'none'; break;
         case 9: style['text-decoration'] = 'line-through'; break;
-        case 22: style = { ...style, 'font-weight': undefined, 'font-style': undefined, 'text-decoration': undefined }; break;
-        case 23: style = { ...style, 'font-weight': undefined, 'font-style': undefined }; break;
+        case 22: style = { ...style, 'font-weight': undefined, 'font-style': undefined, 'opacity': undefined, 'text-decoration': undefined }; break;
+        case 23: style = { ...style, 'font-weight': undefined, 'font-style': undefined, 'opacity': undefined }; break;
         case 24: style = { ...style, 'text-decoration': undefined }; break;
         case 30:
         case 31:

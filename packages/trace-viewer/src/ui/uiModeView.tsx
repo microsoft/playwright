@@ -38,8 +38,6 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 
-const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
-
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
   pending: [],
@@ -63,6 +61,7 @@ const queryParams = {
   outputDir: searchParams.get('outputDir') || undefined,
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
+  pathSeparator: searchParams.get('pathSeparator') || '/',
 };
 if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
@@ -170,7 +169,7 @@ export const UIModeView: React.FC<{}> = ({
       onError: error => {
         xtermDataSource.write((error.stack || error.value || '') + '\n');
       },
-      pathSeparator,
+      pathSeparator: queryParams.pathSeparator,
     });
 
     setTeleSuiteUpdater(teleSuiteUpdater);
@@ -242,8 +241,8 @@ export const UIModeView: React.FC<{}> = ({
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
-      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, pathSeparator) };
-    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
+      return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator) };
+    const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator);
     testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState?.testIds : undefined);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
@@ -332,7 +331,7 @@ export const UIModeView: React.FC<{}> = ({
 
       // run affected watched tests
       const testModel = teleSuiteUpdater.asModel();
-      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, pathSeparator);
+      const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator);
 
       const testIds: string[] = [];
       const set = new Set(params.testFiles);
@@ -435,6 +434,7 @@ export const UIModeView: React.FC<{}> = ({
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
           <TraceView
+            pathSeparator={queryParams.pathSeparator}
             item={selectedItem}
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}

@@ -176,6 +176,7 @@ scheme.APIRequestContextInitializer = tObject({
 });
 scheme.APIRequestContextFetchParams = tObject({
   url: tString,
+  encodedParams: tOptional(tString),
   params: tOptional(tArray(tType('NameValue'))),
   method: tOptional(tString),
   headers: tOptional(tArray(tType('NameValue'))),

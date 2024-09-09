@@ -318,6 +318,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
 }
 export type APIRequestContextFetchParams = {
   url: string,
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -332,6 +333,7 @@ export type APIRequestContextFetchParams = {
   maxRetries?: number,
 };
 export type APIRequestContextFetchOptions = {
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
