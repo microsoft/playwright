@@ -226,8 +226,6 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
-  private _projectToId: Map<Suite, number> = new Map();
-  private _lastProjectId = 0;
 
   constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
     this._config = config;
@@ -404,16 +402,6 @@ class HtmlBuilder {
         }),
       },
     };
-  }
-
-  private _projectId(suite: Suite): number {
-    const project = projectSuite(suite);
-    let id = this._projectToId.get(project);
-    if (!id) {
-      id = ++this._lastProjectId;
-      this._projectToId.set(project, id);
-    }
-    return id;
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
@@ -651,12 +639,6 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
-}
-
-function projectSuite(suite: Suite): Suite {
-  while (suite.parent?.parent)
-    suite = suite.parent;
-  return suite;
 }
 
 export default HtmlReporter;

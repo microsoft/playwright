@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type * as trace from '@trace/trace';
 import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
 import type { ContextEntry } from './entries';
 import { createEmptyContext } from './entries';
@@ -34,7 +33,6 @@ export class TraceModel {
   contextEntries: ContextEntry[] = [];
   private _snapshotStorage: SnapshotStorage | undefined;
   private _backend!: TraceModelBackend;
-  private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
   private _resourceToContentType = new Map<string, string>();
 
   constructor() {
@@ -64,7 +62,7 @@ export class TraceModel {
       const contextEntry = createEmptyContext();
       contextEntry.traceUrl = backend.traceURL();
       contextEntry.hasSource = hasSource;
-      const modernizer = new TraceModernizer(contextEntry, this._snapshotStorage, this._attachments);
+      const modernizer = new TraceModernizer(contextEntry, this._snapshotStorage);
 
       const trace = await this._backend.readText(ordinal + '.trace') || '';
       modernizer.appendTrace(trace);
@@ -116,13 +114,11 @@ export class TraceModel {
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
     const blob = await this._backend.readBlob('resources/' + sha1);
-    if (!blob)
-      return;
-    return new Blob([blob], { type: this._resourceToContentType.get(sha1) || 'application/octet-stream' });
-  }
-
-  attachmentForSha1(sha1: string): trace.AfterActionTraceEventAttachment | undefined {
-    return this._attachments.get(sha1);
+    const contentType = this._resourceToContentType.get(sha1);
+    // "x-unknown" in the har means "no content type".
+    if (!blob || contentType === undefined || contentType === 'x-unknown')
+      return blob;
+    return new Blob([blob], { type: contentType });
   }
 
   storage(): SnapshotStorage {

@@ -129,7 +129,7 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     capability.height = 960;
     capability.maxFPS = ScreencastEncoder::fps;
     capability.videoType = webrtc::VideoType::kI420;
-    int error = mCaptureModule->StartCapture(capability);
+    int error = mCaptureModule->StartCaptureCounted(capability);
     if (error) {
       fprintf(stderr, "StartCapture error %d\n", error);
       return false;
@@ -152,7 +152,7 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
       mCaptureModule->DeRegisterCaptureDataCallback(this);
     else
       mCaptureModule->DeRegisterRawFrameCallback(this);
-    mCaptureModule->StopCapture();
+    mCaptureModule->StopCaptureCounted();
     if (mEncoder) {
       mEncoder->finish([this, protect = RefPtr{this}] {
         NS_DispatchToMainThread(NS_NewRunnableFunction(

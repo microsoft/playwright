@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { clsx } from '@web/uiUtils';
 import './tabbedPane.css';
 import * as React from 'react';
 
@@ -34,7 +35,7 @@ export const TabbedPane: React.FunctionComponent<{
       <div className='hbox' style={{ flex: 'none' }}>
         <div className='tabbed-pane-tab-strip'>{
           tabs.map(tab => (
-            <div className={'tabbed-pane-tab-element ' + (selectedTab === tab.id ? 'selected' : '')}
+            <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
               key={tab.id}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>

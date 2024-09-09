@@ -89,14 +89,13 @@ This project incorporates components from the projects listed below. The origina
 -	ansi-styles@5.2.0 (https://github.com/chalk/ansi-styles)
 -	anymatch@3.1.3 (https://github.com/micromatch/anymatch)
 -	binary-extensions@2.2.0 (https://github.com/sindresorhus/binary-extensions)
--	braces@3.0.2 (https://github.com/micromatch/braces)
 -	braces@3.0.3 (https://github.com/micromatch/braces)
 -	browserslist@4.22.2 (https://github.com/browserslist/browserslist)
 -	buffer-from@1.1.2 (https://github.com/LinusU/buffer-from)
 -	caniuse-lite@1.0.30001579 (https://github.com/browserslist/caniuse-lite)
 -	chalk@2.4.2 (https://github.com/chalk/chalk)
 -	chalk@4.1.2 (https://github.com/chalk/chalk)
--	chokidar@3.5.3 (https://github.com/paulmillr/chokidar)
+-	chokidar@3.6.0 (https://github.com/paulmillr/chokidar)
 -	ci-info@3.8.0 (https://github.com/watson/ci-info)
 -	codemirror-shadow-1@0.0.1 (https://github.com/codemirror/CodeMirror)
 -	color-convert@1.9.3 (https://github.com/Qix-/color-convert)
@@ -112,7 +111,6 @@ This project incorporates components from the projects listed below. The origina
 -	escape-string-regexp@1.0.5 (https://github.com/sindresorhus/escape-string-regexp)
 -	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	expect@29.5.0 (https://github.com/facebook/jest)
--	fill-range@7.0.1 (https://github.com/jonschlinkert/fill-range)
 -	fill-range@7.1.1 (https://github.com/jonschlinkert/fill-range)
 -	gensync@1.0.0-beta.2 (https://github.com/loganfsmyth/gensync)
 -	glob-parent@5.1.2 (https://github.com/gulpjs/glob-parent)
@@ -133,7 +131,7 @@ This project incorporates components from the projects listed below. The origina
 -	jsesc@2.5.2 (https://github.com/mathiasbynens/jsesc)
 -	json5@2.2.3 (https://github.com/json5/json5)
 -	lru-cache@5.1.1 (https://github.com/isaacs/node-lru-cache)
--	micromatch@4.0.5 (https://github.com/micromatch/micromatch)
+-	micromatch@4.0.8 (https://github.com/micromatch/micromatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	node-releases@2.0.14 (https://github.com/chicoxyzzy/node-releases)
 -	normalize-path@3.0.0 (https://github.com/jonschlinkert/normalize-path)
@@ -2545,32 +2543,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF binary-extensions@2.2.0 AND INFORMATION
 
-%% braces@3.0.2 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The MIT License (MIT)
-
-Copyright (c) 2014-2018, Jon Schlinkert.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF braces@3.0.2 AND INFORMATION
-
 %% braces@3.0.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
@@ -3076,7 +3048,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF chalk@4.1.2 AND INFORMATION
 
-%% chokidar@3.5.3 NOTICES AND INFORMATION BEGIN HERE
+%% chokidar@3.6.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3100,7 +3072,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF chokidar@3.5.3 AND INFORMATION
+END OF chokidar@3.6.0 AND INFORMATION
 
 %% ci-info@3.8.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3423,32 +3395,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF expect@29.5.0 AND INFORMATION
-
-%% fill-range@7.0.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The MIT License (MIT)
-
-Copyright (c) 2014-present, Jon Schlinkert.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF fill-range@7.0.1 AND INFORMATION
 
 %% fill-range@7.1.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3891,7 +3837,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF lru-cache@5.1.1 AND INFORMATION
 
-%% micromatch@4.0.5 NOTICES AND INFORMATION BEGIN HERE
+%% micromatch@4.0.8 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3915,7 +3861,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF micromatch@4.0.5 AND INFORMATION
+END OF micromatch@4.0.8 AND INFORMATION
 
 %% ms@2.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -4405,6 +4351,6 @@ END OF yallist@3.1.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 151
+Total Packages: 149
 =========================================
 END OF SUMMARY

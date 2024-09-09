@@ -19,8 +19,6 @@ import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
-
 export type StringIntern = (s: string) => string;
 export type JsonLocation = reporterTypes.Location;
 export type JsonError = string;
@@ -613,7 +611,7 @@ export function serializeRegexPatterns(patterns: string | RegExp | (string | Reg
 
 export function parseRegexPatterns(patterns: JsonPattern[]): (string | RegExp)[] {
   return patterns.map(p => {
-    if (p.s)
+    if (p.s !== undefined)
       return p.s;
     return new RegExp(p.r!.source, p.r!.flags);
   });

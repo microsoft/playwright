@@ -15,8 +15,9 @@
  */
 
 import { playwrightTest as it, expect } from '../config/browserTest';
-import socks from 'socksv5';
 import net from 'net';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
+import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
@@ -288,28 +289,36 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
   expect(requestText).toContain('MyUserAgent');
 });
 
-async function setupSocksForwardingServer(port: number, forwardPort: number){
-  const socksServer = socks.createServer((info, accept, deny) => {
-    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(info.dstAddr) || info.dstPort !== 1337) {
-      deny();
+async function setupSocksForwardingServer(port: number, forwardPort: number) {
+  const connections = new Map<string, net.Socket>();
+  const socksProxy = new SocksProxy();
+  socksProxy.setPattern('*');
+  socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(payload.host) || payload.port !== 1337) {
+      socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
       return;
     }
-    const socket = accept(true);
-    if (socket) {
-      const dstSock = new net.Socket();
-      socket.pipe(dstSock).pipe(socket);
-      socket.on('close', () => dstSock.end());
-      socket.on('end', () => dstSock.end());
-      dstSock.on('error', () => socket.end());
-      dstSock.on('end', () => socket.end());
-      dstSock.setKeepAlive(false);
-      dstSock.connect(forwardPort, '127.0.0.1');
-    }
+    const target = new net.Socket();
+    target.on('error', error => socksProxy.sendSocketError({ uid: payload.uid, error: error.toString() }));
+    target.on('end', () => socksProxy.sendSocketEnd({ uid: payload.uid }));
+    target.on('data', data => socksProxy.sendSocketData({ uid: payload.uid, data }));
+    target.setKeepAlive(false);
+    target.connect(forwardPort, '127.0.0.1');
+    target.on('connect', () => {
+      connections.set(payload.uid, target);
+      socksProxy.socketConnected({ uid: payload.uid, host: target.localAddress, port: target.localPort });
+    });
   });
-  await new Promise<void>(resolve => socksServer.listen(port, 'localhost', resolve));
-  socksServer.useAuth(socks.auth.None());
+  socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+    connections.get(payload.uid)?.write(payload.data);
+  });
+  socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
+    connections.get(payload.uid)?.destroy();
+    connections.delete(payload.uid);
+  });
+  await socksProxy.listen(port, 'localhost');
   return {
-    closeProxyServer: () => socksServer.close(),
+    closeProxyServer: () => socksProxy.close(),
     proxyServerAddr: `socks5://localhost:${port}`,
   };
 }
@@ -343,5 +352,5 @@ it('should use SOCKS proxy for websocket requests', async ({ browserName, platfo
   expect(value).toBe('incoming');
 
   await browser.close();
-  closeProxyServer();
+  await closeProxyServer();
 });

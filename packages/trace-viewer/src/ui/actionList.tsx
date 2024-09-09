@@ -102,12 +102,22 @@ export const renderAction = (
       <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
+      {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
     {(showDuration || showBadges) && <div className='spacer'></div>}
     {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
-      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className="action-icon-value">{errors}</span></div>}
-      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className="action-icon-value">{warnings}</span></div>}
+      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
+      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
     </div>}
   </>;
 };
+
+function excludeOrigin(url: string): string {
+  try {
+    const urlObject = new URL(url);
+    return urlObject.pathname + urlObject.search;
+  } catch (error) {
+    return url;
+  }
+}

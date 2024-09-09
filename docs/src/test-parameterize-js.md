@@ -47,7 +47,7 @@ test.afterEach(async ({ page }) => {
 });
 ```
 
-If you want to have hooks for each test, you can put them inside a `describe()` - so they are executed for each iteration / each invidual test:
+If you want to have hooks for each test, you can put them inside a `describe()` - so they are executed for each iteration / each individual test:
 
 ```js title="example.spec.ts"
 [

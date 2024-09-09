@@ -30,10 +30,10 @@ import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
-  category: 'hook' | 'fixture' | 'test.step' | 'expect' | string;
+  category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
@@ -68,7 +68,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
-  private readonly _stages: TestStage[] = [];
+  _onDidFinishTestFunction: (() => Promise<void>) | undefined;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -166,6 +166,8 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
+    if (configInternal.configCLIOverrides.debug)
+      this._setDebugMode();
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
@@ -224,21 +226,14 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  private _findLastNonFinishedStep(filter: (step: TestStepInternal) => boolean) {
-    let result: TestStepInternal | undefined;
-    const visit = (step: TestStepInternal) => {
-      if (!step.endWallTime && filter(step))
-        result = step;
-      step.steps.forEach(visit);
-    };
-    this._steps.forEach(visit);
-    return result;
-  }
-
-  private _findLastStageStep() {
-    for (let i = this._stages.length - 1; i >= 0; i--) {
-      if (this._stages[i].step)
-        return this._stages[i].step;
+  private _findLastStageStep(steps: TestStepInternal[]): TestStepInternal | undefined {
+    // Find the deepest step that is marked as isStage and has not finished yet.
+    for (let i = steps.length - 1; i >= 0; i--) {
+      const child = this._findLastStageStep(steps[i].steps);
+      if (child)
+        return child;
+      if (steps[i].isStage && !steps[i].endWallTime)
+        return steps[i];
     }
   }
 
@@ -248,17 +243,12 @@ export class TestInfoImpl implements TestInfo {
     let parentStep: TestStepInternal | undefined;
     if (data.isStage) {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
-      parentStep = this._findLastStageStep();
+      parentStep = this._findLastStageStep(this._steps);
     } else {
       parentStep = zones.zoneData<TestStepInternal>('stepZone');
-      if (!parentStep && data.category !== 'test.step') {
-        // API steps (but not test.step calls) can be nested by time, instead of by stack.
-        // However, do not nest chains of route.continue by checking the title.
-        parentStep = this._findLastNonFinishedStep(step => step.title !== data.title);
-      }
       if (!parentStep) {
         // If no parent step on stack, assume the current stage as parent.
-        parentStep = this._findLastStageStep();
+        parentStep = this._findLastStageStep(this._steps);
       }
     }
 
@@ -280,7 +270,7 @@ export class TestInfoImpl implements TestInfo {
 
         step.endWallTime = Date.now();
         if (result.error) {
-          if (!(result.error as any)[stepSymbol])
+          if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
           const error = serializeError(result.error);
           if (data.boxedStack)
@@ -337,13 +327,13 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error) {
+  _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = serializeError(error);
-    const step = (error as any)[stepSymbol] as TestStepInternal | undefined;
+    const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
-      serialized.stack = `${error.name}: ${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }
@@ -354,7 +344,6 @@ export class TestInfoImpl implements TestInfo {
       debugTest(`started stage "${stage.title}"${location}`);
     }
     stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, isStage: true }) : undefined;
-    this._stages.push(stage);
 
     try {
       await this._timeoutManager.withRunnable(stage.runnable, async () => {
@@ -389,9 +378,6 @@ export class TestInfoImpl implements TestInfo {
       stage.step?.complete({ error });
       throw error;
     } finally {
-      if (this._stages[this._stages.length - 1] !== stage)
-        throw new Error(`Internal error: inconsistent stages!`);
-      this._stages.pop();
       debugTest(`finished stage "${stage.title}"`);
     }
   }
@@ -401,11 +387,12 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _currentHookType() {
-    for (let i = this._stages.length - 1; i >= 0; i--) {
-      const type = this._stages[i].runnable?.type;
-      if (type && ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type))
-        return type;
-    }
+    const type = this._timeoutManager.currentSlotType();
+    return ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type) ? type : undefined;
+  }
+
+  _setDebugMode() {
+    this._timeoutManager.setIgnoreTimeouts();
   }
 
   // ------------ TestInfo methods ------------

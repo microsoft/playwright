@@ -19,37 +19,77 @@ import * as events from './events';
 
 // -- Reuse boundary -- Everything below this line is reused in the vscode extension.
 
+export interface TestServerTransport {
+  onmessage(listener: (message: string) => void): void;
+  onopen(listener: () => void): void;
+  onerror(listener: () => void): void;
+  onclose(listener: () => void): void;
+
+  send(data: string): void;
+  close(): void;
+}
+
+export class WebSocketTestServerTransport implements TestServerTransport {
+  private _ws: WebSocket;
+
+  constructor(url: string | URL) {
+    this._ws = new WebSocket(url);
+  }
+
+  onmessage(listener: (message: string) => void) {
+    this._ws.addEventListener('message', event => listener(event.data));
+  }
+
+  onopen(listener: () => void) {
+    this._ws.addEventListener('open', listener);
+  }
+
+  onerror(listener: () => void) {
+    this._ws.addEventListener('error', listener);
+  }
+
+  onclose(listener: () => void) {
+    this._ws.addEventListener('close', listener);
+  }
+
+  send(data: string) {
+    this._ws.send(data);
+  }
+
+  close() {
+    this._ws.close();
+  }
+}
+
 export class TestServerConnection implements TestServerInterface, TestServerInterfaceEvents {
   readonly onClose: events.Event<void>;
   readonly onReport: events.Event<any>;
   readonly onStdio: events.Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
-  readonly onListChanged: events.Event<void>;
   readonly onTestFilesChanged: events.Event<{ testFiles: string[] }>;
   readonly onLoadTraceRequested: events.Event<{ traceUrl: string }>;
 
   private _onCloseEmitter = new events.EventEmitter<void>();
   private _onReportEmitter = new events.EventEmitter<any>();
   private _onStdioEmitter = new events.EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
-  private _onListChangedEmitter = new events.EventEmitter<void>();
   private _onTestFilesChangedEmitter = new events.EventEmitter<{ testFiles: string[] }>();
   private _onLoadTraceRequestedEmitter = new events.EventEmitter<{ traceUrl: string }>();
 
   private _lastId = 0;
-  private _ws: WebSocket;
+  private _transport: TestServerTransport;
   private _callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
   private _connectedPromise: Promise<void>;
+  private _isClosed = false;
 
-  constructor(wsURL: string) {
+  constructor(transport: TestServerTransport) {
     this.onClose = this._onCloseEmitter.event;
     this.onReport = this._onReportEmitter.event;
     this.onStdio = this._onStdioEmitter.event;
-    this.onListChanged = this._onListChangedEmitter.event;
     this.onTestFilesChanged = this._onTestFilesChangedEmitter.event;
     this.onLoadTraceRequested = this._onLoadTraceRequestedEmitter.event;
 
-    this._ws = new WebSocket(wsURL);
-    this._ws.addEventListener('message', event => {
-      const message = JSON.parse(String(event.data));
+    this._transport = transport;
+    this._transport.onmessage(data => {
+      const message = JSON.parse(data);
       const { id, result, error, method, params } = message;
       if (id) {
         const callback = this._callbacks.get(id);
@@ -64,15 +104,20 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
         this._dispatchEvent(method, params);
       }
     });
-    const pingInterval = setInterval(() => this._sendMessage('ping').catch(() => {}), 30000);
+    const pingInterval = setInterval(() => this._sendMessage('ping').catch(() => { }), 30000);
     this._connectedPromise = new Promise<void>((f, r) => {
-      this._ws.addEventListener('open', () => f());
-      this._ws.addEventListener('error', r);
+      this._transport.onopen(f);
+      this._transport.onerror(r);
     });
-    this._ws.addEventListener('close', () => {
+    this._transport.onclose(() => {
+      this._isClosed = true;
       this._onCloseEmitter.fire();
       clearInterval(pingInterval);
     });
+  }
+
+  isClosed(): boolean {
+    return this._isClosed;
   }
 
   private async _sendMessage(method: string, params?: any): Promise<any> {
@@ -82,14 +127,14 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     await this._connectedPromise;
     const id = ++this._lastId;
     const message = { id, method, params };
-    this._ws.send(JSON.stringify(message));
+    this._transport.send(JSON.stringify(message));
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, { resolve, reject });
     });
   }
 
   private _sendMessageNoReply(method: string, params?: any) {
-    this._sendMessage(method, params).catch(() => {});
+    this._sendMessage(method, params).catch(() => { });
   }
 
   private _dispatchEvent(method: string, params?: any) {
@@ -97,8 +142,6 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._onReportEmitter.fire(params);
     else if (method === 'stdio')
       this._onStdioEmitter.fire(params);
-    else if (method === 'listChanged')
-      this._onListChangedEmitter.fire(params);
     else if (method === 'testFilesChanged')
       this._onTestFilesChangedEmitter.fire(params);
     else if (method === 'loadTraceRequested')
@@ -199,7 +242,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
 
   close() {
     try {
-      this._ws.close();
+      this._transport.close();
     } catch {
     }
   }

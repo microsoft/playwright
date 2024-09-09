@@ -20,7 +20,7 @@ import '@web/third_party/vscode/codicon.css';
 import { settings } from '@web/uiUtils';
 import React from 'react';
 import './uiModeFiltersView.css';
-import type { TestModel } from './uiModeModel';
+import type { TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 
 export const FiltersView: React.FC<{
   filterText: string;
@@ -29,7 +29,7 @@ export const FiltersView: React.FC<{
   setStatusFilters: (filters: Map<string, boolean>) => void;
   projectFilters: Map<string, boolean>;
   setProjectFilters: (filters: Map<string, boolean>) => void;
-  testModel: TestModel | undefined,
+  testModel: TeleSuiteUpdaterTestModel | undefined,
   runTests: () => void;
 }> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, testModel, runTests }) => {
   const [expanded, setExpanded] = React.useState(false);
@@ -60,7 +60,7 @@ export const FiltersView: React.FC<{
     {expanded && <div className='hbox' style={{ marginLeft: 14, maxHeight: 200, overflowY: 'auto' }}>
       <div className='filter-list'>
         {[...statusFilters.entries()].map(([status, value]) => {
-          return <div className='filter-entry'>
+          return <div className='filter-entry' key={status}>
             <label>
               <input type='checkbox' checked={value} onClick={() => {
                 const copy = new Map(statusFilters);
@@ -74,7 +74,7 @@ export const FiltersView: React.FC<{
       </div>
       <div className='filter-list'>
         {[...projectFilters.entries()].map(([projectName, value]) => {
-          return <div className='filter-entry'>
+          return <div className='filter-entry' key={projectName}>
             <label>
               <input type='checkbox' checked={value} onClick={() => {
                 const copy = new Map(projectFilters);

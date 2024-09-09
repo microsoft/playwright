@@ -28,9 +28,8 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { headersObjectToArray, isRegExp, isString, urlMatchesEqual } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import type { Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
+import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
@@ -482,7 +481,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       mode?: 'recording' | 'inspecting',
       testIdAttributeName?: string,
       outputFile?: string,
-      handleSIGINT?: boolean,
   }) {
     await this._channel.recorderSupplementEnable(params);
   }
@@ -529,6 +527,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
+    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -547,4 +546,24 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   if (acceptDownloads)
     return 'accept';
   return 'deny';
+}
+
+export async function toClientCertificatesProtocol(certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+  if (!certs)
+    return undefined;
+
+  const bufferizeContent = async (value?: Buffer, path?: string): Promise<Buffer | undefined> => {
+    if (value)
+      return value;
+    if (path)
+      return await fs.promises.readFile(path);
+  };
+
+  return await Promise.all(certs.map(async cert => ({
+    origin: cert.origin,
+    cert: await bufferizeContent(cert.cert, cert.certPath),
+    key: await bufferizeContent(cert.key, cert.keyPath),
+    pfx: await bufferizeContent(cert.pfx, cert.pfxPath),
+    passphrase: cert.passphrase,
+  })));
 }

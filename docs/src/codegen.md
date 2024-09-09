@@ -125,14 +125,14 @@ With the test generator you can record:
 
 When you have finished interacting with the page, press the **record** button to stop the recording and use the **copy** button to copy the generated code to your editor.
 
-Use the **clear** button to clear the code to start recording again. Once finished close the Playwright inspector window or stop the terminal command.
+Use the **clear** button to clear the code to start recording again. Once finished, close the Playwright inspector window or stop the terminal command.
 
 ### Generating locators
 You can generate [locators](/locators.md) with the test generator. 
 
 * Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear.
 * Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element. 
-* To choose a locator click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
+* To choose a locator, click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
 * You can then edit the locator in this field to fine tune it or use the copy button to copy it and paste it into your code.
 
 ######
@@ -284,7 +284,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --color-scheme=dark playwright.dev
 Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once the page opens:
 
 1. Accept the cookies
-1. On the top right click on the locate me button to see geolocation in action.
+1. On the top right, click on the locate me button to see geolocation in action.
 
 ```bash js
 npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps
@@ -375,7 +375,7 @@ Make sure you only use the `auth.json` locally as it contains sensitive informat
 
 #### Load authenticated state
 
-Run with `--load-storage` to consume the previously loaded storage from the `auth.json`. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again. This means you can can continue generating tests from the logged in state.
+Run with `--load-storage` to consume the previously loaded storage from the `auth.json`. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again. This means you can continue generating tests from the logged in state.
 
 ```bash js
 npx playwright codegen --load-storage=auth.json github.com/microsoft/playwright

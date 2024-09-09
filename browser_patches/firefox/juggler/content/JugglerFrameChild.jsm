@@ -8,6 +8,8 @@ const helper = new Helper();
 
 let sameProcessInstanceNumber = 0;
 
+const topBrowingContextToAgents = new Map();
+
 class JugglerFrameChild extends JSWindowActorChild {
   constructor() {
     super();
@@ -16,46 +18,66 @@ class JugglerFrameChild extends JSWindowActorChild {
   }
 
   handleEvent(aEvent) {
-    if (this._agents && aEvent.type === 'DOMWillOpenModalDialog') {
-      this._agents.channel.pause();
+    const agents = this._agents();
+    if (!agents)
+      return;
+    if (aEvent.type === 'DOMWillOpenModalDialog') {
+      agents.channel.pause();
       return;
     }
-    if (this._agents && aEvent.type === 'DOMModalDialogClosed') {
-      this._agents.channel.resumeSoon();
+    if (aEvent.type === 'DOMModalDialogClosed') {
+      agents.channel.resumeSoon();
       return;
     }
-    if (this._agents && aEvent.target === this.document)
-      this._agents.pageAgent.onWindowEvent(aEvent);
-    if (this._agents && aEvent.target === this.document)
-      this._agents.frameTree.onWindowEvent(aEvent);
+    if (aEvent.target === this.document) {
+      agents.pageAgent.onWindowEvent(aEvent);
+      agents.frameTree.onWindowEvent(aEvent);
+    }
+  }
+
+  _agents() {
+    return topBrowingContextToAgents.get(this.browsingContext.top);
   }
 
   actorCreated() {
     this.actorName = `content::${this.browsingContext.browserId}/${this.browsingContext.id}/${++sameProcessInstanceNumber}`;
 
     this._eventListeners.push(helper.addEventListener(this.contentWindow, 'load', event => {
-      this._agents?.pageAgent.onWindowEvent(event);
+      this._agents()?.pageAgent.onWindowEvent(event);
     }));
 
     if (this.document.documentURI.startsWith('moz-extension://'))
       return;
-    this._agents = initialize(this.browsingContext, this.docShell, this);
-  }
 
-  _dispose() {
-    helper.removeListeners(this._eventListeners);
-    // We do not cleanup since agents are shared for all frames in the process.
+    // Child frame events will be forwarded to related top-level agents.
+    if (this.browsingContext.parent)
+      return;
 
-    // TODO: restore the cleanup.
-    // Reset transport so that all messages will be pending and will not throw any errors.
-    // this._channel.resetTransport();
-    // this._agents.pageAgent.dispose();
-    // this._agents.frameTree.dispose();
-    // this._agents = undefined;
+    let agents = topBrowingContextToAgents.get(this.browsingContext);
+    if (!agents) {
+      agents = initialize(this.browsingContext, this.docShell);
+      topBrowingContextToAgents.set(this.browsingContext, agents);
+    }
+    agents.channel.bindToActor(this);
+    agents.actor = this;
   }
 
   didDestroy() {
-    this._dispose();
+    helper.removeListeners(this._eventListeners);
+
+    if (this.browsingContext.parent)
+      return;
+
+    const agents = topBrowingContextToAgents.get(this.browsingContext);
+    // The agents are already re-bound to a new actor.
+    if (agents?.actor !== this)
+      return;
+
+    topBrowingContextToAgents.delete(this.browsingContext);
+
+    agents.channel.resetTransport();
+    agents.pageAgent.dispose();
+    agents.frameTree.dispose();
   }
 
   receiveMessage() { }

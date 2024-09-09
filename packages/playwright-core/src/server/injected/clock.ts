@@ -53,7 +53,7 @@ type Timer = {
 
 interface Embedder {
   dateNow(): number;
-  performanceNow(): DOMHighResTimeStamp;
+  performanceNow(): EmbedderTicks;
   setTimeout(task: () => void, timeout?: number): () => void;
   setInterval(task: () => void, delay: number): () => void;
 }
@@ -147,6 +147,8 @@ export class ClockController {
   }
 
   private async _runTo(to: Ticks) {
+    to = Math.ceil(to) as Ticks;
+
     if (this._now.ticks > to)
       return;
 
@@ -182,7 +184,7 @@ export class ClockController {
   }
 
   private _innerResume() {
-    const now = this._embedder.performanceNow() as EmbedderTicks;
+    const now = this._embedder.performanceNow();
     this._realTime = { startTicks: now, lastSyncTicks: now };
     this._updateRealTimeTimer();
   }
@@ -209,12 +211,12 @@ export class ClockController {
     this._currentRealTimeTimer = {
       callAt,
       dispose: this._embedder.setTimeout(() => {
-        const now = Math.ceil(this._embedder.performanceNow()) as EmbedderTicks;
+        const now = this._embedder.performanceNow();
         this._currentRealTimeTimer = undefined;
         const sinceLastSync = now - this._realTime!.lastSyncTicks;
         this._realTime!.lastSyncTicks = now;
         // eslint-disable-next-line no-console
-        this._runTo(shiftTicks(this._now.ticks, sinceLastSync)).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
+        void this._runTo(shiftTicks(this._now.ticks, sinceLastSync)).catch(e => console.error(e)).then(() => this._updateRealTimeTimer());
       }, callAt - this._now.ticks),
     };
   }
@@ -237,7 +239,12 @@ export class ClockController {
 
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
     this._replayLogOnce();
-    if (options.func === undefined)
+
+    if (options.type === TimerType.AnimationFrame && !options.func)
+      throw new Error('Callback must be provided to requestAnimationFrame calls');
+    if (options.type === TimerType.IdleCallback && !options.func)
+      throw new Error('Callback must be provided to requestIdleCallback calls');
+    if ([TimerType.Timeout, TimerType.Interval].includes(options.type) && !options.func && options.delay === undefined)
       throw new Error('Callback must be provided to timer calls');
 
     let delay = options.delay ? +options.delay : 0;
@@ -301,7 +308,11 @@ export class ClockController {
       if (typeof timer.func !== 'function') {
         let error: Error | undefined;
         try {
-          (() => { eval(timer.func); })();
+          // Using global this is not correct here,
+          // but it is already broken since the eval scope is different from the one
+          // on the original call site.
+          // eslint-disable-next-line no-restricted-globals
+          (() => { globalThis.eval(timer.func); })();
         } catch (e) {
           error = e;
         }
@@ -658,7 +669,7 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
   const originals = platformOriginals(globalObject);
   const embedder: Embedder = {
     dateNow: () => originals.raw.Date.now(),
-    performanceNow: () => originals.raw.performance!.now(),
+    performanceNow: () => Math.ceil(originals.raw.performance!.now()) as EmbedderTicks,
     setTimeout: (task: () => void, timeout?: number) => {
       const timerId = originals.bound.setTimeout(task, timeout);
       return () => originals.bound.clearTimeout(timerId);
@@ -691,6 +702,14 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Intl = api[method]!;
     } else if (method === 'performance') {
       (globalObject as any).performance = api[method]!;
+      const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
+      Object.defineProperty(Event.prototype, 'timeStamp', {
+        get() {
+          if (!this[kEventTimeStamp])
+            this[kEventTimeStamp] = api.performance?.now();
+          return this[kEventTimeStamp];
+        }
+      });
     } else {
       (globalObject as any)[method] = (...args: any[]) => {
         return (api[method] as any).apply(api, args);

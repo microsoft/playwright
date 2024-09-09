@@ -18,6 +18,6 @@
           "@web/*": ["packages/web/src/*"],
         },
     },
-    "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"],
+    "include": ["**/*.spec.js", "**/*.ts"],
     "exclude": ["components/", "installation/fixture-scripts/"]
 }

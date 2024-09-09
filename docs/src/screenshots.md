@@ -33,8 +33,6 @@ await Page.ScreenshotAsync(new()
 
 [Screenshots API](./api/class-page#page-screenshot) accepts many parameters for image format, clip area, quality, etc. Make sure to check them out.
 
-<!-- TOC -->
-
 ## Full page screenshots
 
 Full page screenshot is a screenshot of a full scrollable page, as if you had a very

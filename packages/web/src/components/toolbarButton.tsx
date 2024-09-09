@@ -24,7 +24,9 @@ export interface ToolbarButtonProps {
   disabled?: boolean,
   toggled?: boolean,
   onClick: (e: React.MouseEvent) => void,
-  style?: React.CSSProperties
+  style?: React.CSSProperties,
+  testId?: string,
+  className?: string,
 }
 
 export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>> = ({
@@ -35,8 +37,10 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   toggled = false,
   onClick = () => {},
   style,
+  testId,
+  className,
 }) => {
-  let className = `toolbar-button ${icon}`;
+  className = (className || '') + ` toolbar-button ${icon}`;
   if (toggled)
     className += ' toggled';
   return <button
@@ -47,6 +51,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
     title={title}
     disabled={!!disabled}
     style={style}
+    data-testid={testId}
   >
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}

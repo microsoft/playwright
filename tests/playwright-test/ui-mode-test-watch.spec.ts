@@ -220,6 +220,37 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
   `);
 });
 
+test('should run added test in watched file', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    `,
+  });
+
+  await page.getByText('a.test.ts').click();
+  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts 👁 <=
+        ◯ foo
+  `);
+
+  await writeFiles({
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    test('bar', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts 👁 <=
+        ✅ foo
+        ✅ bar
+  `);
+});
+
 test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   const latch = createLatch();
   const { page } = await runUITest({

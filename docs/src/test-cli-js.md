@@ -93,6 +93,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
 | `--no-deps` | Ignore the dependencies between projects and behave as if they were not specified. |
 | `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
+| `--only-changed [ref]` | Only run test files that have been changed between working tree and "ref". Defaults to running all uncommitted changes with ref=HEAD. Only supports Git. |
 | `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
 | `--project <name>` | Only run tests from the specified [projects](./test-projects.md), supports '*' wildcard. Defaults to running all projects defined in the configuration file.|
 | `--quiet` | Whether to suppress stdout and stderr from the tests. |
@@ -102,5 +103,6 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--shard <shard>` | [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.|
 | `--timeout <number>` | Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).|
 | `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure` |
+| `--tsconfig <path>` | Path to a single tsconfig applicable to all imported files. See [tsconfig resolution](./test-typescript.md#tsconfig-resolution) for more details. |
 | `--update-snapshots` or `-u` | Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.|
 | `--workers <number>` or `-j <number>`| The maximum number of concurrent worker processes that run in [parallel](./test-parallel.md). |

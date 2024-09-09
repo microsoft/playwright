@@ -125,6 +125,10 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   );
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
+  return startPlaywrightChildProcess(childProcess, baseDir, args, env, options);
+}
+
+function startPlaywrightChildProcess(childProcess: CommonFixtures['childProcess'], baseDir: string, args: string[], env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   return childProcess({
     command: ['node', cliEntrypoint, ...args],
     env: cleanEnv(env),
@@ -199,9 +203,9 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   };
 }
 
-async function runPlaywrightCLI(childProcess: CommonFixtures['childProcess'], args: string[], baseDir: string, env: NodeJS.ProcessEnv, entryPoint?: string): Promise<{ output: string, stdout: string, stderr: string, exitCode: number }> {
+async function runPlaywrightCLI(childProcess: CommonFixtures['childProcess'], args: string[], baseDir: string, env: NodeJS.ProcessEnv): Promise<{ output: string, stdout: string, stderr: string, exitCode: number }> {
   const testProcess = childProcess({
-    command: ['node', entryPoint || cliEntrypoint, ...args],
+    command: ['node', cliEntrypoint, ...args],
     env: cleanEnv(env),
     cwd: baseDir,
   });
@@ -245,8 +249,9 @@ type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
-  runCLICommand: (files: Files, command: string, args?: string[], entryPoint?: string) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
-  runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
+  runCLICommand: (files: Files, command: string, args?: string[]) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
+  startCLICommand: (files: Files, command: string, args?: string[], options?: RunOptions) => Promise<TestChildProcess>;
+  runWatchTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   interactWithTestRunner: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>
@@ -280,15 +285,24 @@ export const test = base
 
       runCLICommand: async ({ childProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
-        await use(async (files: Files, command: string, args?: string[], entryPoint?: string) => {
+        await use(async (files: Files, command: string, args?: string[]) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightCLI(childProcess, [command, ...(args || [])], baseDir, { PWTEST_CACHE_DIR: cacheDir }, entryPoint);
+          return await runPlaywrightCLI(childProcess, [command, ...(args || [])], baseDir, { PWTEST_CACHE_DIR: cacheDir });
+        });
+        await removeFolders([cacheDir]);
+      },
+
+      startCLICommand: async ({ childProcess }, use, testInfo: TestInfo) => {
+        const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+        await use(async (files: Files, command: string, args?: string[], options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files, true);
+          return startPlaywrightChildProcess(childProcess, baseDir, [command, ...(args || [])], { PWTEST_CACHE_DIR: cacheDir }, options);
         });
         await removeFolders([cacheDir]);
       },
 
       runWatchTest: async ({ interactWithTestRunner }, use, testInfo: TestInfo) => {
-        await use((files, env, options) => interactWithTestRunner(files, {}, { ...env, PWTEST_WATCH: '1' }, options));
+        await use((files, params, env, options) => interactWithTestRunner(files, params, { ...env, PWTEST_WATCH: '1' }, options));
       },
 
       interactWithTestRunner: async ({ childProcess }, use, testInfo: TestInfo) => {

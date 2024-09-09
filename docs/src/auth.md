@@ -47,8 +47,9 @@ Create `tests/auth.setup.ts` that will prepare authenticated browser state for a
 
 ```js title="tests/auth.setup.ts"
 import { test as setup, expect } from '@playwright/test';
+import path from 'path';
 
-const authFile = 'playwright/.auth/user.json';
+const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
@@ -112,6 +113,8 @@ test('test', async ({ page }) => {
   // page is authenticated
 });
 ```
+
+Note that you need to delete the stored state when it expires. If you don't need to keep the state between test runs, write the browser state under [`property: TestProject.outputDir`], which is automatically cleaned up before every test run.
 
 ### Authenticating in UI mode
 * langs: js
@@ -263,7 +266,7 @@ existing authentication state instead.
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
 in only once and then skip the log in step for all of the tests.
 
-Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [`method: BrowserContext.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with pre-populated state.
+Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [`method: BrowserContext.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
 
 Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
 

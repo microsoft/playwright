@@ -24,7 +24,6 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/testReporter';
-import { setTransformConfig } from '../transform/transform';
 import type { LastRunInfo } from '../runner/runner';
 
 export type ConfigLocation = {
@@ -50,6 +49,7 @@ export class FullConfigInternal {
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
+  cliOnlyChanged: string | undefined;
   cliProjectFilter?: string[];
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
@@ -83,7 +83,7 @@ export class FullConfigInternal {
       globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
-      maxFailures: takeFirst(configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
+      maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
       metadata: takeFirst(userConfig.metadata, {}),
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
@@ -105,7 +105,7 @@ export class FullConfigInternal {
 
     (this.config as any)[configInternalSymbol] = this;
 
-    const workers = takeFirst(configCLIOverrides.workers, userConfig.workers, '50%');
+    const workers = takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.workers, userConfig.workers, '50%');
     if (typeof workers === 'string') {
       if (workers.endsWith('%')) {
         const cpus = os.cpus().length;
@@ -133,10 +133,6 @@ export class FullConfigInternal {
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, packageJsonDir));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
-    setTransformConfig({
-      babelPlugins: privateConfiguration?.babelPlugins || [],
-      external: userConfig.build?.external || [],
-    });
     this.config.projects = this.projects.map(p => p.project);
   }
 
@@ -189,7 +185,7 @@ export class FullProjectInternal {
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).?(c|m)[jt]s?(x)'),
-      timeout: takeFirst(configCLIOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
+      timeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],
       teardown: projectConfig.teardown,

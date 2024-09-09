@@ -20,7 +20,7 @@ import type { AddressInfo } from 'net';
 import path from 'path';
 import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
+import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { stoppable } from 'playwright/lib/utilsBundle';
 import type { FullConfig, Suite } from 'playwright/types/testReporter';
 import type { PluginContext } from 'rollup';
@@ -31,6 +31,8 @@ import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
+import { runDevServer } from './devServer';
+import { removeDirAndLogToConsole } from 'playwright/lib/util';
 
 const log = debug('pw:vite');
 
@@ -49,7 +51,7 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     begin: async (suite: Suite) => {
-      const result = await buildBundle(config, configDir, suite);
+      const result = await buildBundle(config, configDir);
       if (!result)
         return;
 
@@ -69,6 +71,21 @@ export function createPlugin(): TestRunnerPlugin {
       if (stoppableServer)
         await new Promise(f => stoppableServer.stop(f));
     },
+
+    populateDependencies: async () => {
+      await buildBundle(config, configDir);
+    },
+
+    startDevServer: async () => {
+      return await runDevServer(config);
+    },
+
+    clearCache: async () => {
+      const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
+      const dirs = await resolveDirs(configDir, config);
+      if (dirs)
+        await removeDirAndLogToConsole(dirs.outDir);
+    },
   };
 }
 
@@ -87,7 +104,7 @@ type BuildInfo = {
   }
 };
 
-export async function buildBundle(config: FullConfig, configDir: string, suite: Suite): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+export async function buildBundle(config: FullConfig, configDir: string): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
   {
     // Detect a running dev server and use it if available.
@@ -157,7 +174,7 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
   const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, jsxInJS);
 
   if (sourcesDirty) {
-    // Only add out own plugin when we actually build / transform.
+    // Only add our own plugin when we actually build / transform.
     log('build');
     const depsCollector = new Map<string, string[]>();
     const buildConfig = mergeConfig(viteConfig, {
@@ -169,23 +186,13 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
 
   {
     // Update dependencies based on the vite build.
-    for (const projectSuite of suite.suites) {
-      for (const fileSuite of projectSuite.suites) {
-        // For every test file...
-        const testFile = fileSuite.location!.file;
-        const deps = new Set<string>();
-        // Collect its JS dependencies (helpers).
-        for (const file of [testFile, ...(internalDependenciesForTestFile(testFile) || [])]) {
-          // For each helper, get all the imported components.
-          for (const componentFile of componentsByImportingFile.get(file) || []) {
-            // For each component, get all the dependencies.
-            for (const d of buildInfo.deps[componentFile] || [])
-              deps.add(d);
-          }
-        }
-        // Now we have test file => all components along with dependencies.
-        setExternalDependencies(testFile, [...deps]);
+    for (const [importingFile, components] of componentsByImportingFile) {
+      const deps = new Set<string>();
+      for (const component of components) {
+        for (const d of buildInfo.deps[component])
+          deps.add(d);
       }
+      setExternalDependencies(importingFile, [...deps]);
     }
   }
 

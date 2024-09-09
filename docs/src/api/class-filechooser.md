@@ -65,7 +65,7 @@ they are resolved relative to the current working directory. For empty array, cl
 ### param: FileChooser.setFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: FileChooser.setFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: FileChooser.setFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: FileChooser.setFiles.timeout = %%-input-timeout-%%

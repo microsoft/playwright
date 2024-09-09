@@ -21,15 +21,11 @@ import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
-import { createReporters } from './reporters';
-import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
+import { createErrorCollectingReporter, createReporters } from './reporters';
+import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRunnerForDevServer, createTaskRunnerForList, createTaskRunnerForRelatedTestFiles } from './tasks';
 import type { FullConfigInternal } from '../common/config';
-import { runWatchModeLoop } from './watchMode';
-import { InternalReporter } from '../reporters/internalReporter';
-import { Multiplexer } from '../reporters/multiplexer';
-import type { Suite } from '../common/test';
-import { wrapReporterAsV2 } from '../reporters/reporterV2';
 import { affectedTestFiles } from '../transform/compilationCache';
+import { InternalReporter } from '../reporters/internalReporter';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -79,11 +75,15 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-    const reporter = new InternalReporter(new Multiplexer(await createReporters(config, listOnly ? 'list' : 'test', false)));
-    const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process', { failOnLoadErrors: true })
-      : createTaskRunner(config, reporter);
+    const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
+    const reporter = new InternalReporter(reporters);
+    const taskRunner = listOnly ? createTaskRunnerForList(
+        config,
+        reporter,
+        'in-process',
+        { failOnLoadErrors: true }) : createTaskRunner(config, reporter);
 
-    const testRun = new TestRun(config, reporter);
+    const testRun = new TestRun(config);
     reporter.onConfigure(config.config);
 
     const taskStatus = await taskRunner.run(testRun, deadline);
@@ -107,45 +107,40 @@ export class Runner {
     return status;
   }
 
-  async loadAllTests(mode: 'in-process' | 'out-of-process' = 'in-process'): Promise<{ status: FullResult['status'], suite?: Suite, errors: TestError[] }> {
-    const config = this._config;
-    const errors: TestError[] = [];
-    const reporter = new InternalReporter(new Multiplexer([wrapReporterAsV2({
-      onError(error: TestError) {
-        errors.push(error);
-      }
-    })]));
-    const taskRunner = createTaskRunnerForList(config, reporter, mode, { failOnLoadErrors: true });
-    const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config.config);
-
-    const taskStatus = await taskRunner.run(testRun, 0);
-    let status: FullResult['status'] = testRun.failureTracker.result();
-    if (status === 'passed' && taskStatus !== 'passed')
-      status = taskStatus;
-    const modifiedResult = await reporter.onEnd({ status });
-    if (modifiedResult && modifiedResult.status)
-      status = modifiedResult.status;
+  async findRelatedTestFiles(files: string[]): Promise<FindRelatedTestFilesReport>  {
+    const errorReporter = createErrorCollectingReporter();
+    const reporter = new InternalReporter([errorReporter]);
+    const taskRunner = createTaskRunnerForRelatedTestFiles(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
     await reporter.onExit();
-    return { status, suite: testRun.rootSuite, errors };
+    if (status !== 'passed')
+      return { errors: errorReporter.errors(), testFiles: [] };
+    return { testFiles: affectedTestFiles(files) };
   }
 
-  async watchAllTests(): Promise<FullResult['status']> {
-    const config = this._config;
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    return await runWatchModeLoop(config);
+  async runDevServer() {
+    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
+    const taskRunner = createTaskRunnerForDevServer(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    return { status };
   }
 
-  async findRelatedTestFiles(mode: 'in-process' | 'out-of-process', files: string[]): Promise<FindRelatedTestFilesReport>  {
-    const result = await this.loadAllTests(mode);
-    if (result.status !== 'passed' || !result.suite)
-      return { errors: result.errors, testFiles: [] };
-
-    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
-    const override = (this._config.config as any)['@playwright/test']?.['cli']?.['find-related-test-files'];
-    if (override)
-      return await override(resolvedFiles, this._config, result.suite);
-    return { testFiles: affectedTestFiles(resolvedFiles) };
+  async clearCache() {
+    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
+    const taskRunner = createTaskRunnerForClearCache(this._config, reporter, 'in-process', true);
+    const testRun = new TestRun(this._config);
+    reporter.onConfigure(this._config.config);
+    const status = await taskRunner.run(testRun, 0);
+    await reporter.onEnd({ status });
+    await reporter.onExit();
+    return { status };
   }
 }
 

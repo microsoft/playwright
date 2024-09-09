@@ -1,0 +1,42 @@
+name: tests BiDi
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tests_bidi.yml
+  schedule:
+    # Run every day at midnight
+    - cron: '0 0 * * *'
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  test_bidi:
+    name: BiDi
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: add Firefox
+        channel: [bidi-chrome-stable]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium
+    - name: Run tests
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*

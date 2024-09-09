@@ -249,12 +249,10 @@ it.describe('snapshots', () => {
   });
 
   it('empty adopted style sheets should not prevent node refs', async ({ page, toImpl, snapshotter, browserName }) => {
-    it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
-
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
       const sheet = new CSSStyleSheet();
-      (document as any).adoptedStyleSheets = [sheet];
+      document.adoptedStyleSheets = [sheet];
 
       const sheet2 = new CSSStyleSheet();
       for (const element of [document.createElement('div'), document.createElement('span')]) {
@@ -262,7 +260,7 @@ it.describe('snapshots', () => {
           mode: 'open'
         });
         root.append('foo');
-        (root as any).adoptedStyleSheets = [sheet2];
+        root.adoptedStyleSheets = [sheet2];
         document.body.appendChild(element);
       }
     });

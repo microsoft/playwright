@@ -52,14 +52,25 @@ export const kMaxDeadline = 2147483647; // 2^31-1
 export class TimeoutManager {
   private _defaultSlot: TimeSlot;
   private _running?: Running;
+  private _ignoreTimeouts = false;
 
   constructor(timeout: number) {
     this._defaultSlot = { timeout, elapsed: 0 };
   }
 
+  setIgnoreTimeouts() {
+    this._ignoreTimeouts = true;
+  }
+
   interrupt() {
     if (this._running)
       this._running.timeoutPromise.reject(this._createTimeoutError(this._running));
+  }
+
+  isTimeExhaustedFor(runnable: RunnableDescription) {
+    const slot = runnable.fixture?.slot || runnable.slot || this._defaultSlot;
+    // Note: the "-1" here matches the +1 in _updateTimeout.
+    return slot.timeout > 0 && (slot.elapsed >= slot.timeout - 1);
   }
 
   async withRunnable<T>(runnable: RunnableDescription | undefined, cb: () => Promise<T>): Promise<T> {
@@ -94,12 +105,15 @@ export class TimeoutManager {
     if (running.timer)
       clearTimeout(running.timer);
     running.timer = undefined;
-    if (!running.slot.timeout) {
+    if (this._ignoreTimeouts || !running.slot.timeout) {
       running.deadline = kMaxDeadline;
       return;
     }
     running.deadline = running.start + (running.slot.timeout - running.slot.elapsed);
-    const timeout = running.deadline - monotonicTime();
+    // Compensate for Node.js troubles with timeouts that can fire too early.
+    // We add an extra millisecond which seems to be enough.
+    // See https://github.com/nodejs/node/issues/26578.
+    const timeout = running.deadline - monotonicTime() + 1;
     if (timeout <= 0)
       running.timeoutPromise.reject(this._createTimeoutError(running));
     else
@@ -119,8 +133,6 @@ export class TimeoutManager {
 
   setTimeout(timeout: number) {
     const slot = this._running ? this._running.slot : this._defaultSlot;
-    if (!slot.timeout)
-      return; // Zero timeout means some debug mode - do not set a timeout.
     slot.timeout = timeout;
     if (this._running)
       this._updateTimeout(this._running);
@@ -128,6 +140,10 @@ export class TimeoutManager {
 
   currentSlotDeadline() {
     return this._running ? this._running.deadline : kMaxDeadline;
+  }
+
+  currentSlotType() {
+    return this._running ? this._running.runnable.type : 'test';
   }
 
   private _createTimeoutError(running: Running): Error {

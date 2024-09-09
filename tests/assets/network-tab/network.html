@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <link rel='stylesheet' href='style.css'>
+    <style>
+      @font-face {
+        font-family: 'font';
+        src: url('font.woff2') format('woff2');
+      }
+
+      body {
+        font-family: 'font';
+      }
+    </style>
+    <script src='script.js'></script>
+    <script>fetch('/api/endpoint')</script>
+    <script>fetch('/call-with-query-params?param1=value1&param1=value2&param2=value2')</script>
+    <script>
+      const body = JSON.stringify({
+        data: {
+          key: 'value',
+          array: ['value-1', 'value-2'],
+        },
+      });
+
+      fetch('/post-data-1', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      });
+      fetch('/post-data-2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Network Tab Test</h1>
+    <img src="image.png" >
+  </body>
+</html>

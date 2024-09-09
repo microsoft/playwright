@@ -32,6 +32,7 @@ type Annotation = {
 type ErrorDetails = {
   message: string;
   location?: Location;
+  matcherResult?: TestError['matcherResult'];
 };
 
 type TestSummary = {
@@ -319,7 +320,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
         const attachment = result.attachments[i];
-        const hasPrintableContent = attachment.contentType.startsWith('text/') && attachment.body;
+        const hasPrintableContent = attachment.contentType.startsWith('text/');
         if (!attachment.path && !hasPrintableContent)
           continue;
         resultLines.push('');
@@ -399,6 +400,7 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
+      matcherResult: formattedError.matcherResult
     });
   }
   return errorDetails;
@@ -489,6 +491,7 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
   return {
     location,
     message: tokens.join('\n'),
+    matcherResult: error.matcherResult
   };
 }
 

@@ -59,10 +59,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
-    if (browserName === 'firefox' && !channel)
-      await run(browserMajorVersion >= 103);
-    else if (browserName === 'firefox' && channel === 'firefox-beta')
-      await run(browserMajorVersion < 103 || browserMajorVersion >= 110);
+    if (browserName === 'firefox')
+      await run(true);
     else
       await run(false);
   }, { scope: 'worker' }],
@@ -74,10 +72,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run('Lax');
     else if (browserName === 'webkit' && !isLinux)
       await run('None');
-    else if (browserName === 'firefox' && channel === 'firefox-beta')
-      await run(browserMajorVersion >= 103 && browserMajorVersion < 110 ? 'Lax' : 'None');
-    else if (browserName === 'firefox' && channel !== 'firefox-beta')
-      await run(browserMajorVersion >= 103 ? 'None' : 'Lax');
+    else if (browserName === 'firefox')
+      await run('None');
     else
       throw new Error('unknown browser - ' + browserName);
   }, { scope: 'worker' }],

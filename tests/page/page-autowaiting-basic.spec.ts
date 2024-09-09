@@ -96,10 +96,10 @@ it('should work with noWaitAfter: true', async ({ page, server }) => {
   await page.click('a', { noWaitAfter: true });
 });
 
-it('should work with dblclick noWaitAfter: true', async ({ page, server }) => {
+it('should work with dblclick without noWaitAfter when navigation is stalled', async ({ page, server }) => {
   server.setRoute('/empty.html', async () => {});
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
-  await page.dblclick('a', { noWaitAfter: true });
+  await page.dblclick('a');
 });
 
 it('should work with waitForLoadState(load)', async ({ page, server }) => {

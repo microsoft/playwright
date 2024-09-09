@@ -124,7 +124,7 @@ Headers with multiple entries, such as `Set-Cookie`, appear in the array multipl
 * since: v1.15
 - returns: <[null]|[string]>
 
-Returns the value of the header matching the name. The name is case insensitive.
+Returns the value of the header matching the name. The name is case-insensitive.
 
 ### param: Request.headerValue.name
 * since: v1.15

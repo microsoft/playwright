@@ -4,6 +4,76 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.47
+
+### Network Tab improvements
+
+The Network tab in the trace viewer has several nice improvements:
+
+- filtering by asset type and URL
+- better display of query string parameters
+- preview of font assets
+
+![Network tab now has filters](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
+
+### Miscellaneous
+
+- The `mcr.microsoft.com/playwright-java:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
+  To use the 22.02 jammy-based image, please use `mcr.microsoft.com/playwright-java:v1.47.0-jammy` instead.
+- TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as byte arrays instead of file paths.
+- [`option: noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
+- We've seen reports of WebGL in Webkit misbehaving on GitHub Actions `macos-13`. We recommend upgrading GitHub Actions to `macos-14`.
+
+### Browser Versions
+
+- Chromium 129.0.6668.29
+- Mozilla Firefox 130.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 128
+- Microsoft Edge 128
+
+## Version 1.46
+
+### TLS Client Certificates
+
+Playwright now allows to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+
+You can provide client certificates as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`]. The following snippet sets up a client certificate for `https://example.com`:
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+    .setClientCertificates(asList(new ClientCertificate("https://example.com")
+          .setCertPath(Paths.get("client-certificates/cert.pem"))
+          .setKeyPath(Paths.get("client-certificates/key.pem")))));
+```
+
+### Trace Viewer Updates
+
+- Content of text attachments is now rendered inline in the attachments pane.
+- New setting to show/hide routing actions like [`method: Route.continue`].
+- Request method and status are shown in the network details tab.
+- New button to copy source file location to clipboard.
+- Metadata pane now displays the `baseURL`.
+
+### Miscellaneous
+
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
+
+### Browser Versions
+
+- Chromium 128.0.6613.18
+- Mozilla Firefox 128.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 127
+- Microsoft Edge 127
+
+
 ## Version 1.45
 
 ### Clock
@@ -1008,7 +1078,7 @@ This version was also tested against the following stable channels:
 
 ### Announcements
 
-- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update macOS to keep using latest & greatest WebKit!
 
 ### Browser Versions
 
@@ -1457,7 +1527,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`method: BrowserType.launch`] now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9

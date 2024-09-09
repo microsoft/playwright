@@ -147,7 +147,7 @@ const browser = await chromium.launch({
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
   .setProxy(new Proxy("http://myproxy.com:3128")
   .setUsername('usr')
-  .setPassword('pwd'));
+  .setPassword('pwd')));
 ```
 
 ```python async
@@ -179,60 +179,48 @@ await using var browser = await BrowserType.LaunchAsync(new()
 });
 ```
 
-When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
+Its also possible to specify it per context:
 
-```js tab=js-test title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-export default defineConfig({
-  use: {
-    launchOptions: {
-      // Browser proxy option is required for Chromium on Windows.
-      proxy: { server: 'per-context' }
-    },
+```js tab=js-test title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test('should use custom proxy on a new context', async ({ browser }) => {
+  const context = await browser.newContext({
     proxy: {
       server: 'http://myproxy.com:3128',
     }
-  }
+  });
+  const page = await context.newPage();
+
+  await context.close();
 });
 ```
 
 ```js tab=js-library
-const browser = await chromium.launch({
-  // Browser proxy option is required for Chromium on Windows.
-  proxy: { server: 'per-context' }
-});
+const browser = await chromium.launch();
 const context = await browser.newContext({
   proxy: { server: 'http://myproxy.com:3128' }
 });
 ```
 
 ```java
-Browser browser = chromium.launch(new BrowserType.LaunchOptions()
-  // Browser proxy option is required for Chromium on Windows.
-  .setProxy(new Proxy("per-context"));
-BrowserContext context = chromium.launch(new Browser.NewContextOptions()
-  .setProxy(new Proxy("http://myproxy.com:3128"));
+Browser browser = chromium.launch();
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+  .setProxy(new Proxy("http://myproxy.com:3128")));
 ```
 
 ```python async
-# Browser proxy option is required for Chromium on Windows.
-browser = await chromium.launch(proxy={"server": "per-context"})
+browser = await chromium.launch()
 context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
 
 ```python sync
-# Browser proxy option is required for Chromium on Windows.
-browser = chromium.launch(proxy={"server": "per-context"})
+browser = chromium.launch()
 context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
 
 ```csharp
-var proxy = new Proxy { Server = "per-context" };
-await using var browser = await BrowserType.LaunchAsync(new()
-{
-    // Browser proxy option is required for Chromium on Windows.
-    Proxy = proxy
-});
+await using var browser = await BrowserType.LaunchAsync();
 await using var context = await browser.NewContextAsync(new()
 {
     Proxy = new Proxy { Server = "http://myproxy.com:3128" },

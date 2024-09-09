@@ -20,19 +20,24 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { InternalReporter } from '../reporters/internalReporter';
 
-type TaskPhase<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;
+type TaskPhase<Context> = (reporter: ReporterV2, context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;
 export type Task<Context> = { setup?: TaskPhase<Context>, teardown?: TaskPhase<Context> };
 
 export class TaskRunner<Context> {
   private _tasks: { name: string, task: Task<Context> }[] = [];
-  private _reporter: ReporterV2;
+  private _reporter: InternalReporter;
   private _hasErrors = false;
   private _interrupted = false;
   private _isTearDown = false;
   private _globalTimeoutForError: number;
 
-  constructor(reporter: ReporterV2, globalTimeoutForError: number) {
+  static create<Context>(reporter: InternalReporter, globalTimeoutForError: number = 0) {
+    return new TaskRunner<Context>(reporter, globalTimeoutForError);
+  }
+
+  private constructor(reporter: InternalReporter, globalTimeoutForError: number) {
     this._reporter = reporter;
     this._globalTimeoutForError = globalTimeoutForError;
   }
@@ -65,7 +70,7 @@ export class TaskRunner<Context> {
         const softErrors: TestError[] = [];
         try {
           teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: { setup: task.teardown } });
-          await task.setup?.(context, errors, softErrors);
+          await task.setup?.(this._reporter, context, errors, softErrors);
         } catch (e) {
           debug('pw:test:task')(`error in "${name}": `, e);
           errors.push(serializeError(e));

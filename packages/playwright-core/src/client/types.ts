@@ -17,7 +17,7 @@
 
 import type * as channels from '@protocol/channels';
 import type { Size } from '../common/types';
-export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
+export type { Size, Point, Rect, Quad, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -33,7 +33,7 @@ export type WaitForEventOptions = Function | { predicate?: Function, timeout?: n
 export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
 
 export type SelectOption = { value?: string, label?: string, index?: number, valueOrLabel?: string };
-export type SelectOptionOptions = { force?: boolean, timeout?: number, noWaitAfter?: boolean };
+export type SelectOptionOptions = { force?: boolean, timeout?: number };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
 export type StorageState = {
   cookies: channels.NetworkCookie[],
@@ -47,7 +47,18 @@ export type SetStorageState = {
 export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads'> & {
+export type ClientCertificate = {
+  origin: string;
+  cert?: Buffer;
+  certPath?: string;
+  key?: Buffer;
+  keyPath?: string;
+  pfx?: Buffer;
+  pfxPath?: string;
+  passphrase?: string;
+};
+
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads'> & {
   viewport?: Size | null;
   extraHTTPHeaders?: Headers;
   logger?: Logger;
@@ -70,6 +81,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   reducedMotion?: 'reduce' | 'no-preference' | null;
   forcedColors?: 'active' | 'none' | null;
   acceptDownloads?: boolean;
+  clientCertificates?: ClientCertificate[];
 };
 
 type LaunchOverrides = {

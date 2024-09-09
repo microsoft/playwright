@@ -261,21 +261,17 @@ export class Screenshotter {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
-    await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, false, 'utility').catch(() => {});
-    }));
+    await this._page.safeNonStallingEvaluateInAllFrames('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, 'utility');
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
       progress.log('waiting for fonts to load...');
-      await frame.nonStallingEvaluateInExistingContext('document.fonts.ready', false, 'utility').catch(() => {});
+      await frame.nonStallingEvaluateInExistingContext('document.fonts.ready', 'utility').catch(() => {});
       progress.log('fonts loaded');
     }
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
 
   async _restorePageAfterScreenshot() {
-    await Promise.all(this._page.frames().map(async frame => {
-      frame.nonStallingEvaluateInExistingContext('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', false, 'utility').catch(() => {});
-    }));
+    await this._page.safeNonStallingEvaluateInAllFrames('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', 'utility');
   }
 
   async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {

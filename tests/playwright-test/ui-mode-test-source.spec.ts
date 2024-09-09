@@ -128,3 +128,31 @@ test('should show syntax errors in file', async ({ runUITest }) => {
     /Missing semicolon./
   ]);
 });
+
+test('should load error (dupe tests) indicator on sources', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('first', () => {});
+      test('first', () => {});
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ first
+  `);
+
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  await expect(page.getByText('Source1')).toBeVisible();
+
+  await expect(
+      page.locator('.CodeMirror .source-line-running'),
+  ).toHaveText(`4      test('first', () => {});`);
+
+  await expect(
+      page.locator('.CodeMirror-linewidget')
+  ).toHaveText([
+    '                              ',
+    /Error: duplicate test title "first", first declared in a.test.ts:3/
+  ]);
+});

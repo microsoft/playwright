@@ -282,16 +282,16 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
 
-    const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(items as string[]);
+    const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(items);
 
     if (context._connection.isRemote()) {
       const files = localDirectory ? (await fs.promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.path, f.name)) : localPaths!;
       const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
-        rootDirName: localDirectory ? path.basename(localDirectory as string) : undefined,
+        rootDirName: localDirectory ? path.basename(localDirectory) : undefined,
         items: await Promise.all(files.map(async file => {
           const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
           return {
-            name: localDirectory ? path.relative(localDirectory as string, file) : path.basename(file),
+            name: localDirectory ? path.relative(localDirectory, file) : path.basename(file),
             lastModifiedMs
           };
         })),

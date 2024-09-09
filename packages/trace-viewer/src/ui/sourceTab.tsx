@@ -23,6 +23,9 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import type { SourceLocation, SourceModel } from './modelUtil';
 import type { StackFrame } from '@protocol/channels';
+import { CopyToClipboard } from './copyToClipboard';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { Toolbar } from '@web/components/toolbar';
 
 export const SourceTab: React.FunctionComponent<{
   stack: StackFrame[] | undefined,
@@ -30,7 +33,8 @@ export const SourceTab: React.FunctionComponent<{
   sources: Map<string, SourceModel>,
   rootDir?: string,
   fallbackLocation?: SourceLocation,
-}> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation }) => {
+  onOpenExternally?: (location: SourceLocation) => void,
+}> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation, onOpenExternally }) => {
   const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
@@ -41,7 +45,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [stack, lastStack, setLastStack, setSelectedFrame]);
 
-  const { source, highlight, targetLine, fileName } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[] }>(async () => {
+  const { source, highlight, targetLine, fileName, location } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
     const shouldUseFallback = !actionLocation?.file;
     if (shouldUseFallback && !fallbackLocation)
@@ -55,6 +59,7 @@ export const SourceTab: React.FunctionComponent<{
       sources.set(file, source);
     }
 
+    const location = shouldUseFallback ? fallbackLocation! : actionLocation;
     const targetLine = shouldUseFallback ? fallbackLocation?.line || source.errors[0]?.line || 0 : actionLocation.line;
     const fileName = rootDir && file.startsWith(rootDir) ? file.substring(rootDir.length + 1) : file;
     const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
@@ -75,18 +80,39 @@ export const SourceTab: React.FunctionComponent<{
         source.content = `<Unable to read "${file}">`;
       }
     }
-    return { source, highlight, targetLine, fileName };
+    return { source, highlight, targetLine, fileName, location };
   }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
-  const showStackFrames = (stack?.length ?? 0) > 1;
+  const openExternally = React.useCallback(() => {
+    if (!location)
+      return;
+    if (onOpenExternally) {
+      onOpenExternally(location);
+    } else {
+      // This should open an external protocol handler instead of actually navigating away.
+      window.location.href = `vscode://file//${location.file}:${location.line}`;
+    }
+  }, [onOpenExternally, location]);
 
-  return <SplitView sidebarSize={200} orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'} sidebarHidden={!showStackFrames}>
-    <div className='vbox' data-testid='source-code'>
-      {fileName && <div className='source-tab-file-name'>{fileName}</div>}
+  const showStackFrames = (stack?.length ?? 0) > 1;
+  const shortFileName = getFileName(fileName);
+
+  return <SplitView
+    sidebarSize={200}
+    orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'}
+    sidebarHidden={!showStackFrames}
+    main={<div className='vbox' data-testid='source-code'>
+      { fileName && <Toolbar>
+        <div className='source-tab-file-name' title={fileName}>
+          <div>{shortFileName}</div>
+        </div>
+        <CopyToClipboard description='Copy filename' value={shortFileName}/>
+        {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
+      </Toolbar> }
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
-    </div>
-    <StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
-  </SplitView>;
+    </div>}
+    sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
+  />;
 };
 
 export async function calculateSha1(text: string): Promise<string> {
@@ -99,4 +125,11 @@ export async function calculateSha1(text: string): Promise<string> {
     hexCodes.push(byte);
   }
   return hexCodes.join('');
+}
+
+function getFileName(fullPath?: string): string {
+  if (!fullPath)
+    return '';
+  const pathSep = fullPath?.includes('/') ? '/' : '\\';
+  return fullPath?.split(pathSep).pop() ?? '';
 }

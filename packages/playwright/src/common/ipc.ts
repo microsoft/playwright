@@ -20,6 +20,7 @@ import type { ConfigLocation, FullConfigInternal } from './config';
 import type { PlaywrightTestConfig, ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
+  debug?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
@@ -35,6 +36,7 @@ export type ConfigCLIOverrides = {
   shardingMode?: PlaywrightTestConfig['shardingMode'];
   lastRunFile?: string;
   timeout?: number;
+  tsconfig?: string;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
   workers?: number | string;

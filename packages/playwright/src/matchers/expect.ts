@@ -60,7 +60,7 @@ import {
 } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
-import { ExpectError } from './matcherHint';
+import { ExpectError, isExpectError } from './matcherHint';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -138,6 +138,7 @@ function createExpect(info: ExpectMetaInfo) {
                 utils,
                 timeout: currentExpectTimeout()
               };
+              (newThis as any).equals = throwUnsupportedExpectMatcherError;
               return (matcher as any).call(newThis, ...args);
             };
           }
@@ -181,6 +182,10 @@ function createExpect(info: ExpectMetaInfo) {
   };
 
   return expectInstance;
+}
+
+function throwUnsupportedExpectMatcherError() {
+  throw new Error('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
 }
 
 expectLibrary.setState({ expand: false });
@@ -284,8 +289,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const step = testInfo._addStep(stepInfo);
 
-      const reportStepError = (jestError: ExpectError) => {
-        const error = new ExpectError(jestError, customMessage, stackFrames);
+      const reportStepError = (jestError: Error | unknown) => {
+        const error = isExpectError(jestError) ? new ExpectError(jestError, customMessage, stackFrames) : jestError;
         step.complete({ error });
         if (this._info.isSoft)
           testInfo._failWithError(error);

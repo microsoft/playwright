@@ -1039,3 +1039,27 @@ test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC 
   expect(result.failed).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should throw error when using .equals()', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      import { test as base, expect } from '@playwright/test';
+      expect.extend({
+        toBeWithinRange(received, floor, ceiling) {
+          this.equals(1, 2);
+        },
+      });
+      export const test = base;
+    `,
+    'expect-test.spec.ts': `
+      import { test } from './helper';
+      test('numeric ranges', () => {
+        test.expect(() => {
+          test.expect(100).toBeWithinRange(90, 110);
+        }).toThrowError('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

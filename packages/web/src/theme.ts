@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
+import React from 'react';
 import { settings } from './uiUtils';
 
+declare global {
+  interface Document {
+    playwrightThemeInitialized?: boolean;
+  }
+}
+
 export function applyTheme() {
-  if ((document as any).playwrightThemeInitialized)
+  if (document.playwrightThemeInitialized)
     return;
-  (document as any).playwrightThemeInitialized = true;
+  document.playwrightThemeInitialized = true;
   document!.defaultView!.addEventListener('focus', (event: any) => {
     if (event.target.document.nodeType === Node.DOCUMENT_NODE)
       document.body.classList.remove('inactive');
@@ -38,12 +45,8 @@ type Theme = 'dark-mode' | 'light-mode';
 
 const listeners = new Set<(theme: Theme) => void>();
 export function toggleTheme() {
-  const oldTheme = settings.getString('theme', 'light-mode');
-  let newTheme: Theme;
-  if (oldTheme === 'dark-mode')
-    newTheme = 'light-mode';
-  else
-    newTheme = 'dark-mode';
+  const oldTheme = currentTheme();
+  const newTheme = oldTheme === 'dark-mode' ? 'light-mode' : 'dark-mode';
 
   if (oldTheme)
     document.body.classList.remove(oldTheme);
@@ -63,4 +66,14 @@ export function removeThemeListener(listener: (theme: Theme) => void) {
 
 export function currentTheme(): Theme {
   return document.body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+}
+
+export function useDarkModeSetting(): [boolean, (value: boolean) => void] {
+  const [theme, setTheme] = React.useState(currentTheme() === 'dark-mode');
+  return [theme, (value: boolean) => {
+    const current = currentTheme() === 'dark-mode';
+    if (current !== value)
+      toggleTheme();
+    setTheme(value);
+  }];
 }

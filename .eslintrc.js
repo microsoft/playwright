@@ -6,8 +6,13 @@ module.exports = {
       sourceType: "module",
     },
     extends: [
+      "plugin:react/recommended",
       "plugin:react-hooks/recommended"
     ],
+
+    settings: {
+        react: { version: "18" }
+    },
 
     /**
      * ESLint rules
@@ -30,6 +35,7 @@ module.exports = {
             "avoidEscape": true,
             "allowTemplateLiterals": true
         }],
+        "jsx-quotes": [2, "prefer-single"],
         "no-extra-semi": 2,
         "@typescript-eslint/semi": [2],
         "comma-style": [2, "last"],
@@ -123,5 +129,8 @@ module.exports = {
             "mustMatch": "Copyright",
             "templateFile": require("path").join(__dirname, "utils", "copyright.js"),
         }],
+
+        // react
+        "react/react-in-jsx-scope": 0
     }
 };

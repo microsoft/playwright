@@ -29,7 +29,9 @@ import { Workbench } from './workbench';
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
   rootDir?: string,
-}> = ({ item, rootDir }) => {
+  onOpenExternally?: (location: SourceLocation) => void,
+  revealSource?: boolean,
+}> = ({ item, rootDir, onOpenExternally, revealSource }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -94,7 +96,11 @@ export const TraceView: React.FC<{
     onSelectionChanged={onSelectionChanged}
     fallbackLocation={item.testFile}
     isLive={model?.isLive}
-    status={item.treeItem?.status} />;
+    status={item.treeItem?.status}
+    annotations={item.testCase?.annotations || []}
+    onOpenExternally={onOpenExternally}
+    revealSource={revealSource}
+  />;
 };
 
 const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefined => {

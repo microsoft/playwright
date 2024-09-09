@@ -22,6 +22,7 @@ import type { ContextEntry, PageEntry } from '../entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
+const pageSymbol = Symbol('page');
 const nextInContextSymbol = Symbol('next');
 const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
@@ -29,7 +30,8 @@ const eventsSymbol = Symbol('events');
 export type SourceLocation = {
   file: string;
   line: number;
-  source: SourceModel;
+  column: number;
+  source?: SourceModel;
 };
 
 export type SourceModel = {
@@ -147,6 +149,7 @@ function indexModel(context: ContextEntry) {
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
+    action[pageSymbol] = context.pages.find(page => page.pageId === action.pageId);
   }
   let lastNonRouteAction = undefined;
   for (let i = context.actions.length - 1; i >= 0; i--) {
@@ -183,8 +186,8 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     if (traceFileToContexts.size > 1)
       makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
     // Align action times across runner and library contexts within each trace file.
-    const map = mergeActionsAndUpdateTimingSameTrace(contexts);
-    result.push(...map.values());
+    const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
+    result.push(...actions);
   }
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -211,11 +214,18 @@ function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId
   }
 }
 
-function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
+function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionTraceEventInContext[] {
   const map = new Map<string, ActionTraceEventInContext>();
 
   const libraryContexts = contexts.filter(context => context.origin === 'library');
   const testRunnerContexts = contexts.filter(context => context.origin === 'testRunner');
+
+  // With library-only or test-runner-only traces there is nothing to match.
+  if (!testRunnerContexts.length || !libraryContexts.length) {
+    return contexts.map(context => {
+      return context.actions.map(action => ({ ...action, context }));
+    }).flat();
+  }
 
   // Library actions are replaced with corresponding test runner steps. Matching with
   // the test runner steps enables us to find parent steps.
@@ -264,7 +274,7 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]) {
       map.set(key, { ...action, context });
     }
   }
-  return map;
+  return [...map.values()];
 }
 
 function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: number) {
@@ -348,6 +358,10 @@ export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[prevInListSymbol];
 }
 
+export function pageForAction(action: ActionTraceEvent): PageEntry {
+  return (action as any)[pageSymbol];
+}
+
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
   let errors = 0;
   let warnings = 0;
@@ -400,4 +414,31 @@ function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: Err
     });
   }
   return result;
+}
+
+const kRouteMethods = new Set([
+  'page.route',
+  'page.routefromhar',
+  'page.unroute',
+  'page.unrouteall',
+  'browsercontext.route',
+  'browsercontext.routefromhar',
+  'browsercontext.unroute',
+  'browsercontext.unrouteall',
+]);
+{
+  // .NET adds async suffix.
+  for (const method of [...kRouteMethods])
+    kRouteMethods.add(method + 'async');
+  // Python methods which contain underscores.
+  for (const method of [
+    'page.route_from_har',
+    'page.unroute_all',
+    'context.route_from_har',
+    'context.unroute_all',
+  ])
+    kRouteMethods.add(method);
+}
+export function isRouteAction(action: ActionTraceEventInContext) {
+  return action.class === 'Route' || kRouteMethods.has(action.apiName.toLowerCase());
 }

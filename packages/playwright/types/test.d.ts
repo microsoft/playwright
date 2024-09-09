@@ -367,7 +367,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to skip entries from `.gitignore` when searching for test files. By default, if neither
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) nor
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitely
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir) are explicitly
    * specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that
    * behavior.
    */
@@ -4838,6 +4838,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
+type ClientCertificate = Exclude<BrowserContextOptions['clientCertificates'], undefined>[0];
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
@@ -5215,6 +5216,41 @@ export interface PlaywrightTestOptions {
    *
    */
   colorScheme: ColorScheme;
+  /**
+   * TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
+   *
+   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     clientCertificates: [{
+   *       origin: 'https://example.com',
+   *       certPath: './cert.pem',
+   *       keyPath: './key.pem',
+   *       passphrase: 'mysecretpassword',
+   *     }],
+   *   },
+   * });
+   * ```
+   *
+   */
+  clientCertificates: ClientCertificate[] | undefined;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
    * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
@@ -6525,6 +6561,7 @@ export type MatcherReturnType = {
   expected?: unknown;
   actual?: any;
   log?: string[];
+  timeout?: number;
 };
 
 type MakeMatchers<R, T, ExtendedMatchers> = {
@@ -6544,15 +6581,17 @@ type MakeMatchers<R, T, ExtendedMatchers> = {
   rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
 } & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
+type PollMatchers<R, T, ExtendedMatchers> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: PollMatchers<R, T, ExtendedMatchers>;
+} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>;
+
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
-  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
-    /**
-     * If you know how to test something, `.not` lets you test its opposite.
-     */
-     not: BaseMatchers<Promise<void>, T>;
-  };
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
   extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
@@ -8199,9 +8238,44 @@ export interface TestInfo {
 }
 
 /**
+ * Matcher-specific details for the error thrown during the `expect` call.
+ */
+export interface TestInfoErrorMatcherResult {
+  /**
+   * Actual value.
+   */
+  actual?: unknown;
+
+  /**
+   * Expected value.
+   */
+  expected?: unknown;
+
+  /**
+   * Matcher name.
+   */
+  name?: string;
+
+  /**
+   * Whether the matcher passed.
+   */
+  pass: string;
+
+  /**
+   * Timeout that was used during matching.
+   */
+  timeout?: number;
+}
+
+/**
  * Information about an error thrown during test execution.
  */
 export interface TestInfoError {
+  /**
+   * Matcher result details.
+   */
+  matcherResult?: TestInfoErrorMatcherResult;
+
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */

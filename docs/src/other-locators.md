@@ -668,7 +668,7 @@ We recommend [locating by label text](./locators.md#locate-by-label) instead of 
 
 Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
 
-For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by it's "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
+For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by its "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
 - [`method: Locator.click`] will click the label and automatically focus the input field;
 - [`method: Locator.fill`] will fill the input field;
 - [`method: Locator.inputValue`] will return the value of the input field;
@@ -881,7 +881,7 @@ await page.Locator("data-test-id=submit").ClickAsync();
 ```
 
 :::note
-Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css] selector, e.g. `css=[data-test="login"]:enabled`.
+Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css](#css-locator) selector, e.g. `css=[data-test="login"]:enabled`.
 :::
 
 ## Chaining selectors
@@ -918,11 +918,3 @@ We recommend [filtering by another locator](./locators.md#filter-by-childdescend
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
 
 For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
-
-
-[text]: #text-selector
-[css]: #css-selector
-[xpath]: #xpath-selectors
-[react]: #react-selectors
-[vue]: #vue-selectors
-[id]: #id-data-testid-data-test-id-data-test-selectors

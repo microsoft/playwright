@@ -31,6 +31,7 @@ The recommended approach is to use `setFixedTime` to set the time to a specific 
   - `requestIdleCallback`
   - `cancelIdleCallback`
   - `performance`
+  - `Event.timeStamp`
 :::
 
 ## Test with predefined time
@@ -43,7 +44,7 @@ That way the time flows naturally, but `Date.now` always returns a fixed value.
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -69,7 +70,7 @@ In this case, you can install the clock and fast forward to the time of interest
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -152,9 +153,9 @@ assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
 ```csharp
 // Initialize clock with some time before the test time and let the page load naturally.
 // `Date.now` will progress as the timers fire.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0)
 });
 await Page.GotoAsync("http://localhost:3333");
 
@@ -176,6 +177,26 @@ Inactivity monitoring is a common feature in web applications that logs out user
 Testing this feature can be tricky because you need to wait for a long time to see the effect.
 With the help of the clock, you can speed up time and test this feature quickly.
 
+```html
+<div id="remaining-time" data-testid="remaining-time"></div>
+<script>
+  const endTime = Date.now() + 5 * 60_000;
+  const renderTime = () => {
+    const diffInSeconds = Math.round((endTime - Date.now()) / 1000);
+    if (diffInSeconds <= 0) {
+      document.getElementById('remaining-time').textContent =
+        'You have been logged out due to inactivity.';
+    } else {
+      document.getElementById('remaining-time').textContent =
+        `You will be logged out in ${diffInSeconds} seconds.`;
+    }
+    setTimeout(renderTime, 1000);
+  };
+  renderTime();
+</script>
+<button type="button">Interaction</button>
+```
+
 ```js
 // Initial time does not matter for the test, so we can pick current time.
 await page.clock.install();
@@ -186,7 +207,7 @@ await page.getByRole('button').click();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-await page.clock.fastForward('5:00');
+await page.clock.fastForward('05:00');
 
 // Check that the user was logged out automatically.
 await expect(page.getByText('You have been logged out due to inactivity.')).toBeVisible();
@@ -202,7 +223,7 @@ await page.get_by_role("button").click()
 # Fast forward time 5 minutes as if the user did not do anything.
 # Fast forward is like closing the laptop lid and opening it after 5 minutes.
 # All the timers due will fire once immediately, as in the real browser.
-await page.clock.fast_forward("5:00")
+await page.clock.fast_forward("05:00")
 
 # Check that the user was logged out automatically.
 await expect(page.getByText("You have been logged out due to inactivity.")).toBeVisible()
@@ -218,7 +239,7 @@ page.get_by_role("button").click()
 # Fast forward time 5 minutes as if the user did not do anything.
 # Fast forward is like closing the laptop lid and opening it after 5 minutes.
 # All the timers due will fire once immediately, as in the real browser.
-page.clock.fast_forward("5:00")
+page.clock.fast_forward("05:00")
 
 # Check that the user was logged out automatically.
 expect(page.get_by_text("You have been logged out due to inactivity.")).to_be_visible()
@@ -236,7 +257,7 @@ locator.click();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-page.clock().fastForward("5:00");
+page.clock().fastForward("05:00");
 
 // Check that the user was logged out automatically.
 assertThat(page.getByText("You have been logged out due to inactivity.")).isVisible();
@@ -253,7 +274,7 @@ await page.GetByRole("button").ClickAsync();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-await Page.Clock.FastForwardAsync("5:00");
+await Page.Clock.FastForwardAsync("05:00");
 
 // Check that the user was logged out automatically.
 await Expect(Page.GetByText("You have been logged out due to inactivity.")).ToBeVisibleAsync();
@@ -269,7 +290,7 @@ animation frames in the process to achieve a fine-grained control over the passa
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -350,9 +371,9 @@ assertThat(locator).hasText("2/2/2024, 10:00:02 AM");
 
 ```csharp
 // Initialize clock with a specific time, let the page load naturally.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
 });
 await page.GotoAsync("http://localhost:3333");
 var locator = page.GetByTestId("current-time");

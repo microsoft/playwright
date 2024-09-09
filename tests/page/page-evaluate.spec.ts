@@ -585,13 +585,37 @@ it('should evaluate exception with a function on the stack', async ({ page }) =>
       return new Error('error message');
     })();
   });
-  expect(error).toContain('Error: error message');
-  expect(error).toContain('functionOnStack');
+  expect(error.message).toBe('error message');
+  expect(error.stack).toContain('functionOnStack');
 });
 
 it('should evaluate exception', async ({ page }) => {
-  const error = await page.evaluate(`new Error('error message')`);
-  expect(error).toContain('Error: error message');
+  const error = await page.evaluate(() => {
+    function innerFunction() {
+      const e = new Error('error message');
+      e.name = 'foobar';
+      return e;
+    }
+    return innerFunction();
+  });
+  expect(error).toBeInstanceOf(Error);
+  expect((error as Error).message).toBe('error message');
+  expect((error as Error).name).toBe('foobar');
+  expect((error as Error).stack).toContain('innerFunction');
+});
+
+it('should pass exception argument', async ({ page }) => {
+  function innerFunction() {
+    const e = new Error('error message');
+    e.name = 'foobar';
+    return e;
+  }
+  const received = await page.evaluate(e => {
+    return { message: e.message, name: e.name, stack: e.stack };
+  }, innerFunction());
+  expect(received.message).toBe('error message');
+  expect(received.name).toBe('foobar');
+  expect(received.stack).toContain('innerFunction');
 });
 
 it('should evaluate date', async ({ page }) => {

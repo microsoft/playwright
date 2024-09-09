@@ -24,6 +24,7 @@ import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
+import { BrowserReadyState } from '../browserType';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
@@ -109,12 +110,6 @@ export class Chromium extends BrowserType {
       artifactsDir,
       downloadsPath: options.downloadsPath || artifactsDir,
       tracesDir: options.tracesDir || artifactsDir,
-      // On Windows context level proxies only work, if there isn't a global proxy
-      // set. This is currently a bug in the CR/Windows networking stack. By
-      // passing an arbitrary value we disable the check in PW land which warns
-      // users in normal (launch/launchServer) mode since otherwise connectOverCDP
-      // does not work at all with proxies on Windows.
-      proxy: { server: 'per-context' },
       originalLaunchOptions: {},
     };
     validateBrowserContextOptions(persistent, browserOptions);
@@ -131,7 +126,7 @@ export class Chromium extends BrowserType {
     return directory ? new CRDevTools(path.join(directory, 'devtools-preferences.json')) : undefined;
   }
 
-  async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
+  override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
     let devtools = this._devtools;
     if ((options as any).__testHookForDevTools) {
       devtools = this._createDevTools();
@@ -140,7 +135,7 @@ export class Chromium extends BrowserType {
     return CRBrowser.connect(this.attribution.playwright, transport, options, devtools);
   }
 
-  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+  override doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
     if (error.logs.includes('Missing X server'))
@@ -161,11 +156,11 @@ export class Chromium extends BrowserType {
     return error;
   }
 
-  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return env;
   }
 
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+  override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
     transport.send(message);
   }
@@ -277,7 +272,7 @@ export class Chromium extends BrowserType {
     }
   }
 
-  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     if (options.useWebSocket)
@@ -305,12 +300,9 @@ export class Chromium extends BrowserType {
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
-    }
-    if (options.headless) {
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      // See also https://github.com/microsoft/playwright/issues/30585
-      // and chromium fix at https://issues.chromium.org/issues/338414704.
-      chromeArguments.push('--enable-gpu');
+      if (options.headless)
+        chromeArguments.push('--use-angle');
     }
 
     if (options.devtools)
@@ -351,6 +343,20 @@ export class Chromium extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
+  }
+
+  override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
+    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
+      return new ChromiumReadyState();
+    return undefined;
+  }
+}
+
+class ChromiumReadyState extends BrowserReadyState {
+  override onBrowserOutput(message: string): void {
+    const match = message.match(/DevTools listening on (.*)/);
+    if (match)
+      this._wsEndpoint.resolve(match[1]);
   }
 }
 

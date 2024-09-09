@@ -302,6 +302,7 @@ function generatePreview(value: any, visited = new Set<any>()): string {
 }
 
 async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
+  temporaryTraceFiles = temporaryTraceFiles.filter(file => fs.existsSync(file));
   if (temporaryTraceFiles.length === 1) {
     await fs.promises.rename(temporaryTraceFiles[0], fileName);
     return;

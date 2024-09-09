@@ -348,8 +348,17 @@ class HarBackend {
           continue;
         if (method === 'POST' && postData && candidate.request.postData) {
           const buffer = await this._loadContent(candidate.request.postData);
-          if (!buffer.equals(postData))
-            continue;
+          if (!buffer.equals(postData)) {
+            const boundary = multipartBoundary(headers);
+            if (!boundary)
+              continue;
+            const candidataBoundary = multipartBoundary(candidate.request.headers);
+            if (!candidataBoundary)
+              continue;
+            // Try to match multipart/form-data ignroing boundary as it changes between requests.
+            if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidataBoundary, ''))
+              continue;
+          }
         }
         entries.push(candidate);
       }
@@ -436,4 +445,14 @@ export async function urlToWSEndpoint(progress: Progress|undefined, endpointURL:
   wsUrl.pathname += wsEndpointPath;
   wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
   return wsUrl.toString();
+}
+
+function multipartBoundary(headers: HeadersArray) {
+  const contentType = headers.find(h => h.name.toLowerCase() === 'content-type');
+  if (!contentType?.value.includes('multipart/form-data'))
+    return undefined;
+  const boundary = contentType.value.match(/boundary=(\S+)/);
+  if (boundary)
+    return boundary[1];
+  return undefined;
 }

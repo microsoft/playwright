@@ -58,6 +58,11 @@ scheme.SerializedValue = tObject({
   d: tOptional(tString),
   u: tOptional(tString),
   bi: tOptional(tString),
+  e: tOptional(tObject({
+    m: tString,
+    n: tString,
+    s: tString,
+  })),
   r: tOptional(tObject({
     p: tString,
     f: tString,
@@ -318,6 +323,8 @@ scheme.PlaywrightInitializer = tObject({
   chromium: tChannel(['BrowserType']),
   firefox: tChannel(['BrowserType']),
   webkit: tChannel(['BrowserType']),
+  bidiChromium: tChannel(['BrowserType']),
+  bidiFirefox: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
   utils: tOptional(tChannel(['LocalUtils'])),
@@ -331,6 +338,13 @@ scheme.PlaywrightNewRequestParams = tObject({
   userAgent: tOptional(tString),
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
@@ -532,6 +546,13 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -611,6 +632,13 @@ scheme.BrowserNewContextParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -673,6 +701,13 @@ scheme.BrowserNewContextForReuseParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),
@@ -928,7 +963,6 @@ scheme.BrowserContextRecorderSupplementEnableParams = tObject({
   device: tOptional(tString),
   saveStorage: tOptional(tString),
   outputFile: tOptional(tString),
-  handleSIGINT: tOptional(tBoolean),
   omitCallTracking: tOptional(tBoolean),
 });
 scheme.BrowserContextRecorderSupplementEnableResult = tOptional(tObject({}));
@@ -1237,15 +1271,6 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tNumber,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
-scheme.PageTouchscreenTouchParams = tObject({
-  type: tEnum(['touchstart', 'touchend', 'touchmove', 'touchcancel']),
-  touchPoints: tArray(tObject({
-    x: tNumber,
-    y: tNumber,
-    id: tOptional(tNumber),
-  })),
-});
-scheme.PageTouchscreenTouchResult = tOptional(tObject({}));
 scheme.PageAccessibilitySnapshotParams = tObject({
   interestingOnly: tOptional(tBoolean),
   root: tOptional(tChannel(['ElementHandle'])),
@@ -1383,7 +1408,6 @@ scheme.FrameCheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1411,7 +1435,6 @@ scheme.FrameDragAndDropParams = tObject({
   source: tString,
   target: tString,
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
   sourcePosition: tOptional(tType('Point')),
@@ -1423,7 +1446,6 @@ scheme.FrameDblclickParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
@@ -1462,7 +1484,6 @@ scheme.FrameFillParams = tObject({
   value: tString,
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameFillResult = tOptional(tObject({}));
 scheme.FrameFocusParams = tObject({
@@ -1505,7 +1526,6 @@ scheme.FrameHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameHoverResult = tOptional(tObject({}));
 scheme.FrameInnerHTMLParams = tObject({
@@ -1618,7 +1638,6 @@ scheme.FrameSelectOptionParams = tObject({
   }))),
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameSelectOptionResult = tObject({
   values: tArray(tString),
@@ -1642,14 +1661,12 @@ scheme.FrameSetInputFilesParams = tObject({
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameSetInputFilesResult = tOptional(tObject({}));
 scheme.FrameTapParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
@@ -1673,7 +1690,6 @@ scheme.FrameTypeParams = tObject({
   strict: tOptional(tBoolean),
   text: tString,
   delay: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -1681,7 +1697,6 @@ scheme.FrameUncheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1836,7 +1851,6 @@ scheme.ElementHandleBoundingBoxResult = tObject({
 });
 scheme.ElementHandleCheckParams = tObject({
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -1860,7 +1874,6 @@ scheme.ElementHandleContentFrameResult = tObject({
 });
 scheme.ElementHandleDblclickParams = tObject({
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tNumber),
@@ -1878,7 +1891,6 @@ scheme.ElementHandleFillParams = tObject({
   value: tString,
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
@@ -1895,7 +1907,6 @@ scheme.ElementHandleHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleHoverResult = tOptional(tObject({}));
 scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
@@ -1990,7 +2001,6 @@ scheme.ElementHandleSelectOptionParams = tObject({
   }))),
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleSelectOptionResult = tObject({
   values: tArray(tString),
@@ -2011,12 +2021,10 @@ scheme.ElementHandleSetInputFilesParams = tObject({
   localPaths: tOptional(tArray(tString)),
   streams: tOptional(tArray(tChannel(['WritableStream']))),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
 scheme.ElementHandleTapParams = tObject({
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
@@ -2030,13 +2038,11 @@ scheme.ElementHandleTextContentResult = tObject({
 scheme.ElementHandleTypeParams = tObject({
   text: tString,
   delay: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.ElementHandleTypeResult = tOptional(tObject({}));
 scheme.ElementHandleUncheckParams = tObject({
   force: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
@@ -2510,6 +2516,13 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     height: tNumber,
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
   javaScriptEnabled: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
   userAgent: tOptional(tString),

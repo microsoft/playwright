@@ -43,7 +43,7 @@ You can also reuse the signed-in state in the tests with [setup project](./auth.
 
 ### Avoid testing third-party dependencies
 
-Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
+Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you cannot control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
 
 Instead, use the [Playwright Network API](/network.md#handle-requests) and guarantee the response needed.
 
@@ -204,7 +204,7 @@ npx playwright show-report
 
 <img width="1516" alt="Playwrights HTML report" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279022-d929d4c0-2271-486a-a75f-166ac231d25f.png" />
 
-Traces can be opened by clicking on the icon next to the test or by opening each of the test reports and scrolling down to the traces section.
+Traces can be opened by clicking on the icon next to the test file name or by opening each of the test reports and scrolling down to the traces section.
 
 <img width="1516" alt="Screenshot 2023-01-13 at 09 58 34" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279699-c9eb134f-4f4e-4f19-805c-37596d3272a6.png" />
 
@@ -214,8 +214,8 @@ Playwright comes with a range of tooling to help you write tests.
 - The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running, and debugging tests.
 - The [test generator](./codegen.md) can generate tests and pick locators for you.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
-- The [UI Mode](./test-ui-mode) let's you explore, run and debug tests with a time travel experience complete with watch mode. All test files are loaded into the testing sidebar where you can expand each file and describe block to individually run, view, watch and debug each test.
-- [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
+- The [UI Mode](./test-ui-mode) lets you explore, run and debug tests with a time travel experience complete with watch mode. All test files are loaded into the testing sidebar where you can expand each file and describe block to individually run, view, watch and debug each test.
+- [TypeScript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
 
 ### Test across all browsers
 
@@ -261,11 +261,11 @@ npx playwright --version
 
 Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Playwright comes with a [GitHub actions workflow](/ci-intro.md) so that tests will run on CI for you with no setup required. Playwright can also be setup on the [CI environment](/ci.md) of your choice.
 
-Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
+Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI. Consider setting up [Sharding](./test-sharding.md) to make CI faster.
 
 ### Lint your tests
 
-Linting the tests helps catching errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API.
+We recommend TypeScript and linting with ESLint for your tests to catch errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API. On your CI you can run `tsc --noEmit` to ensure that functions are called with the right signature.
 
 ### Use parallelism and sharding
 
