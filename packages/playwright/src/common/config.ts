@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { Config, Fixtures, PlaywrightTestConfig, Project, ReporterDescription } from '../../types/test';
+import type { Config, Fixtures, ShardingMode, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import { getPackageJsonPath, mergeObjects } from '../util';
@@ -56,7 +56,7 @@ export class FullConfigInternal {
   cliFailOnFlakyTests?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
-  shardingMode: Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
+  shardingMode: ShardingMode;
   lastRunFile: string | undefined;
   lastRunInfo?: LastRunInfo;
 

@@ -202,6 +202,7 @@ export interface PlaywrightWorkerOptions {
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
+export type ShardingMode = Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';

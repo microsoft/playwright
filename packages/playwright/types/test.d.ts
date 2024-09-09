@@ -1439,7 +1439,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [sharding](https://playwright.dev/docs/test-sharding) with Playwright Test.
    */
-  shardingMode?: ShardingMode;
+  shardingMode?: "partition"|"round-robin"|"duration-round-robin";
 
   /**
    * **NOTE** Use
@@ -5118,8 +5118,7 @@ export interface PlaywrightWorkerOptions {
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
-export type ShardingMode = "partition" | "round-robin" | "duration-round-robin";
-
+export type ShardingMode = Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
