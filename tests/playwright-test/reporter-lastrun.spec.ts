@@ -39,7 +39,7 @@ const testCases = {
 test('report lastrun info', async ({ runInlineTest }) => {
   const result = await runInlineTest(testCases, { });
   expect(result.exitCode).toBe(1);
-  const lastRunFilename = test.info().outputPath('.last-run.json');
+  const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
   const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
   expect(lastRun.status).toEqual('failed');
   expect(lastRun.failedTests.length).toEqual(1);
@@ -51,7 +51,7 @@ test('keep test-ids consistent when re-run', async ({ runInlineTest }) => {
   {
     const result = await runInlineTest(testCases, { });
     expect(result.exitCode).toBe(1);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const currentRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     expect(currentRun.failedTests.length).toBeGreaterThanOrEqual(1);
     expect(Object.keys(currentRun.testDurations).length).toBeGreaterThanOrEqual(1);
@@ -60,7 +60,7 @@ test('keep test-ids consistent when re-run', async ({ runInlineTest }) => {
   {
     const result = await runInlineTest(testCases, { });
     expect(result.exitCode).toBe(1);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const currentRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     // Ensure test-ids are the same as the previous run.
     expect(currentRun.failedTests.sort()).toEqual(lastRun.failedTests.sort());
@@ -82,14 +82,14 @@ test('keep test-ids consistent when merging reports', async ({ runInlineTest, me
   };
   {
     await runInlineTest(testFiles, { shard: '1/2' });
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     lastRun.failedTests.forEach(t => allFailedTests.push(t));
     Object.entries(lastRun.testDurations).forEach(([k, v]) => allTestDurations[k] = v);
   }
   {
     await runInlineTest(testFiles, { shard: '2/2' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     lastRun.failedTests.forEach(t => allFailedTests.push(t));
     Object.entries(lastRun.testDurations).forEach(([k, v]) => allTestDurations[k] = v);
@@ -104,7 +104,7 @@ test('keep test-ids consistent when merging reports', async ({ runInlineTest, me
     expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
     const result = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' });
     expect(result.exitCode).toBe(0);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     // Ensure test-ids are the same as the previous run.
     expect(Object.keys(lastRun.testDurations).sort()).toEqual(Object.keys(allTestDurations).sort());
@@ -125,7 +125,7 @@ test('keep existing test-ids when test files are modified', async ({ runInlineTe
       `
     }, { });
     expect(result.exitCode).toBe(0);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     expect(lastRun.failedTests.length).toEqual(0);
     expect(Object.keys(lastRun.testDurations).length).toEqual(1);
@@ -148,7 +148,7 @@ test('keep existing test-ids when test files are modified', async ({ runInlineTe
       `
     }, { });
     expect(result.exitCode).toBe(0);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     expect(lastRun.failedTests.length).toEqual(0);
     expect(Object.keys(lastRun.testDurations).length).toEqual(3);
@@ -168,7 +168,7 @@ test('ensure same tests in different files have distinct test-ids', async ({ run
       `
     }, { }, {}, { additionalArgs: ['a.test.js'] });
     expect(result.exitCode).toBe(0);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     expect(lastRun.failedTests.length).toEqual(0);
     expect(Object.keys(lastRun.testDurations).length).toEqual(1);
@@ -184,7 +184,7 @@ test('ensure same tests in different files have distinct test-ids', async ({ run
       `
     }, { }, {}, { additionalArgs: ['b.test.js'] });
     expect(result.exitCode).toBe(0);
-    const lastRunFilename = test.info().outputPath('.last-run.json');
+    const lastRunFilename = test.info().outputPath('test-results/.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
     expect(lastRun.failedTests.length).toEqual(0);
     expect(Object.keys(lastRun.testDurations).length).toEqual(1);
