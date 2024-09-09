@@ -170,8 +170,8 @@ export const SnapshotTab: React.FunctionComponent<{
   const page = action ? pageForAction(action) : undefined;
   const screencastFrame = React.useMemo(
       () => {
-        if (snapshotInfo.wallTime && page?.screencastFrames[0]?.frameSwapTimestamp)
-          return findClosest(page.screencastFrames, frame => frame.frameSwapTimestamp!, snapshotInfo.wallTime);
+        if (snapshotInfo.wallTime && page?.screencastFrames[0]?.frameSwapWallTime)
+          return findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, snapshotInfo.wallTime);
 
         if (snapshotInfo.timestamp && page?.screencastFrames)
           return findClosest(page.screencastFrames, frame => frame.timestamp, snapshotInfo.timestamp);

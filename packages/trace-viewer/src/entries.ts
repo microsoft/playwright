@@ -45,7 +45,7 @@ export type PageEntry = {
   screencastFrames: {
     sha1: string,
     timestamp: number,
-    frameSwapTimestamp?: number,
+    frameSwapWallTime?: number,
     width: number,
     height: number,
   }[];

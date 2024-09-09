@@ -53,7 +53,7 @@ export type ScreencastFrameTraceEvent = {
   width: number,
   height: number,
   timestamp: number,
-  frameSwapTimestamp?: number, // milliseconds since epoch
+  frameSwapWallTime?: number,
 };
 
 export type BeforeActionTraceEvent = {
