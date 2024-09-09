@@ -364,13 +364,13 @@ Query parameters to be sent with the URL.
 
 ## python-fetch-option-params
 * langs: python
-- `params` <[Object]<[string], [string]|[float]|[boolean]>>
+- `params` <[Object]<[string], [string]|[float]|[boolean]>|[string]>
 
 Query parameters to be sent with the URL.
 
 ## csharp-fetch-option-params
 * langs: csharp
-- `params` <[Object]<[string], [Serializable]>>
+- `params` <[Object]<[string], [Serializable]>|[string]>
 
 Query parameters to be sent with the URL.
 
