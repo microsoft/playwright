@@ -285,8 +285,8 @@ it.describe('page screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    const screenshotPrefix = browserName === 'chromium' && isMac && process.arch === 'arm64' ? '-macOS-arm64' : '';
-    expect(screenshot).toMatchSnapshot(`screenshot-canvas${screenshotPrefix}.png`);
+    const screenshotPathSuffix = (browserName === 'chromium' && isMac && process.arch === 'arm64') ? '-macOS-arm64' : '';
+    expect(screenshot).toMatchSnapshot(`screenshot-canvas${screenshotPathSuffix}.png`);
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
