@@ -16,6 +16,24 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+test('should print tsconfig parsing error', async ({ runInlineTest }) => {
+  const files = {
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('pass', async () => {});
+    `,
+    'tsconfig.json': `
+      "foo": "bar"
+    `,
+  };
+
+  const result = await runInlineTest(files);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Failed to load tsconfig file at`);
+  expect(result.output).toContain(`tsconfig.json`);
+  expect(result.output).toContain(`JSON5: invalid character ':' at 2:12`);
+});
+
 test('should respect path resolver', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11656' });
 
