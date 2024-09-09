@@ -155,13 +155,10 @@ export abstract class APIRequestContext extends SdkObject {
     }
 
     const requestUrl = new URL(params.url, defaults.baseURL);
-    if (params.params) {
-      for (const { name, value } of params.params)
-        requestUrl.searchParams.append(name, value);
-    }
     if (params.encodedParams) {
-      const searchParams = new URLSearchParams(params.encodedParams);
-      for (const [name, value] of searchParams)
+      requestUrl.search = params.encodedParams;
+    } else if (params.params) {
+      for (const { name, value } of params.params)
         requestUrl.searchParams.append(name, value);
     }
 
