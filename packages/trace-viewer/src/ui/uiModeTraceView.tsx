@@ -31,7 +31,8 @@ export const TraceView: React.FC<{
   rootDir?: string,
   onOpenExternally?: (location: SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ item, rootDir, onOpenExternally, revealSource }) => {
+  pathSeparator: string,
+}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -69,7 +70,12 @@ export const TraceView: React.FC<{
       return;
     }
 
-    const traceLocation = `${outputDir}/${artifactsFolderName(result!.workerIndex)}/traces/${item.testCase?.id}.json`;
+    const traceLocation = [
+      outputDir,
+      artifactsFolderName(result!.workerIndex),
+      'traces',
+      `${item.testCase?.id}.json`
+    ].join(pathSeparator);
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {

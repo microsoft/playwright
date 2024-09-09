@@ -109,6 +109,8 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 
 export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
+  if (path.sep !== path.posix.sep)
+    params.set('pathSeparator', path.sep);
   for (const traceUrl of traceUrls)
     params.append('trace', traceUrl);
   if (server.wsGuid())
