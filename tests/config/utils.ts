@@ -23,6 +23,7 @@ import { TraceModel } from '../../packages/trace-viewer/src/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
+import style from 'ansi-styles';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -207,6 +208,40 @@ export function stripAnsi(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
+export function ansi2Markup(text: string): string {
+  return text.replace(ansiRegex, match => {
+    switch (match) {
+      case style.inverse.open:
+        return '<i>';
+      case style.inverse.close:
+        return '</i>';
+
+      case style.bold.open:
+        return '<b>';
+      case style.dim.open:
+        return '<d>';
+      case style.green.open:
+        return '<g>';
+      case style.red.open:
+        return '<r>';
+      case style.yellow.open:
+        return '<y>';
+      case style.bgYellow.open:
+        return '<Y>';
+
+      case style.bold.close:
+      case style.dim.close:
+      case style.green.close:
+      case style.red.close:
+      case style.yellow.close:
+      case style.bgYellow.close:
+        return '</>';
+
+      default:
+        return match; // unexpected escape sequence
+    }
+  });
+}
 
 class TraceBackend implements TraceModelBackend {
   private _fileName: string;
