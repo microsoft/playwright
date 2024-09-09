@@ -24,7 +24,7 @@ import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
 import { loadTsConfig } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
-import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
+import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupport } from './compilationCache';
 
@@ -136,8 +136,13 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return;
 
   if (isRelativeSpecifier(specifier))
-    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
+    return resolveImportSpecifierAfterMapping(path.resolve(path.dirname(filename), specifier), false);
 
+  /**
+   * TypeScript discourages path-mapping into node_modules:
+   * https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
+   * However, if path-mapping doesn't yield a result, TypeScript falls back to the default resolution through node_modules.
+   */
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
   for (const tsconfig of tsconfigs) {
@@ -179,7 +184,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.pathsBase!, candidate);
-        const existing = resolveImportSpecifierExtension(candidate);
+        const existing = resolveImportSpecifierAfterMapping(candidate, true);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
           pathMatchedByLongestPrefix = existing;
@@ -193,7 +198,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`
     // Do not handle module imports like `import 'fs'`
-    return resolveImportSpecifierExtension(specifier);
+    return resolveImportSpecifierAfterMapping(specifier, false);
   }
 }
 
