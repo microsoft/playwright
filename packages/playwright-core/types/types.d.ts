@@ -19899,7 +19899,7 @@ export interface Selectors {
   /**
    * Return the current Test id attribute name.
    */
-  testIdAttributeName(): void;
+  testIdAttributeName(): string;
 }
 
 /**

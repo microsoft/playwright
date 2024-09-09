@@ -251,5 +251,6 @@ Test id attribute name.
 
 ## method: Selectors.testIdAttributeName
 * since: v1.48
+- returns: <[string]>
 
 Return the current Test id attribute name.
