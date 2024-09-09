@@ -105,7 +105,6 @@ export interface JSONReportTest {
 export interface JSONReportError {
   message: string;
   location?: Location;
-  matcherResult?: TestErrorMatcherResult;
 }
 
 export interface JSONReportTestResult {

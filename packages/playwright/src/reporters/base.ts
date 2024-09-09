@@ -32,7 +32,6 @@ type Annotation = {
 type ErrorDetails = {
   message: string;
   location?: Location;
-  matcherResult?: TestError['matcherResult'];
 };
 
 type TestSummary = {
@@ -400,7 +399,6 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      matcherResult: formattedError.matcherResult
     });
   }
   return errorDetails;
@@ -491,7 +489,6 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
   return {
     location,
     message: tokens.join('\n'),
-    matcherResult: error.matcherResult
   };
 }
 
