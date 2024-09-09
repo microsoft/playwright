@@ -202,7 +202,7 @@ export const SnapshotTab: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
-      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Disable "screenshots instead of snapshots" to pick a locator' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
+      <ToolbarButton className='pick-locator' title={'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           key={tab}
@@ -213,7 +213,7 @@ export const SnapshotTab: React.FunctionComponent<{
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
-      <ToolbarButton icon='link-external' title={showScreenshotInsteadOfSnapshot ? 'Not available when showing screenshot' : 'Open snapshot in a new tab'} disabled={!popoutUrl || showScreenshotInsteadOfSnapshot} onClick={() => {
+      <ToolbarButton icon='link-external' title={'Open snapshot in a new tab'} disabled={!popoutUrl} onClick={() => {
         if (!openPage)
           openPage = window.open;
         const win = openPage(popoutUrl || '', '_blank');
@@ -230,10 +230,9 @@ export const SnapshotTab: React.FunctionComponent<{
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <BrowserFrame url={snapshotInfo.url} />
-        {(showScreenshotInsteadOfSnapshot && screencastFrame) && <img alt={`Screenshot of ${action?.apiName} > ${renderTitle(snapshotTab)}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />}
-        <div className='snapshot-switcher' style={showScreenshotInsteadOfSnapshot ? { display: 'none' } : undefined}>
-          <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
-          <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
+        <div className='snapshot-switcher' style={(showScreenshotInsteadOfSnapshot && screencastFrame) ? { backgroundImage: `url(sha1/${screencastFrame.sha1})`, backgroundSize: 'cover' } : undefined}>
+          <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')} style={showScreenshotInsteadOfSnapshot ? { opacity: 0 } : undefined}></iframe>
+          <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')} style={showScreenshotInsteadOfSnapshot ? { opacity: 0 } : undefined}></iframe>
         </div>
       </div>
     </div>
