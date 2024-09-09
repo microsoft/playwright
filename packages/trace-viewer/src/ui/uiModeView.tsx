@@ -434,6 +434,7 @@ export const UIModeView: React.FC<{}> = ({
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
           <TraceView
+            pathSeparator={queryParams.pathSeparator}
             item={selectedItem}
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}
