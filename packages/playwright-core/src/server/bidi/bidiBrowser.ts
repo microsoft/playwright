@@ -195,8 +195,12 @@ export class BidiBrowserContext extends BrowserContext {
     this._authenticateProxyViaHeader();
   }
 
+  private _bidiPages() {
+    return [...this._browser._bidiPages.values()].filter(bidiPage => bidiPage._browserContext === this);
+  }
+
   pages(): Page[] {
-    return [];
+    return this._bidiPages().map(bidiPage => bidiPage._initializedPage).filter(Boolean) as Page[];
   }
 
   async newPageDelegate(): Promise<PageDelegate> {
@@ -269,11 +273,13 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+    this._options.httpCredentials = httpCredentials;
+    for (const page of this.pages())
+      await (page._delegate as BidiPage).updateHttpCredentials();
   }
 
   async doAddInitScript(initScript: InitScript) {
-    // for (const page of this.pages())
-    //   await (page._delegate as WKPage)._updateBootstrapScript();
+    await Promise.all(this.pages().map(page => (page._delegate as BidiPage).addInitScript(initScript)));
   }
 
   async doRemoveNonInternalInitScripts() {
