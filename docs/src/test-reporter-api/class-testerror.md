@@ -4,12 +4,6 @@
 
 Information about an error thrown during test execution.
 
-## property: TestError.matcherResult
-* since: v1.48
-- type: ?<[TestErrorMatcherResult]>
-
-Matcher result details.
-
 ## property: TestError.message
 * since: v1.10
 - type: ?<[string]>

@@ -63,20 +63,8 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
 }
 
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error) {
-    const result: TestInfoError = filterStackTrace(error);
-    if ('matcherResult' in error && error.matcherResult) {
-      const matcherResult = (error.matcherResult as TestInfoError['matcherResult'])!;
-      result.matcherResult = {
-        pass: matcherResult.pass,
-        name: matcherResult.name,
-        expected: matcherResult.expected,
-        actual: matcherResult.actual,
-        timeout: matcherResult.timeout,
-      };
-    }
-    return result;
-  }
+  if (error instanceof Error)
+    return filterStackTrace(error);
   return {
     value: util.inspect(error)
   };
