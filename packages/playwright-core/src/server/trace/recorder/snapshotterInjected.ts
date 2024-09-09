@@ -27,7 +27,6 @@ export type SnapshotData = {
   }[],
   viewport: { width: number, height: number },
   url: string,
-  timestamp: number,
   absoluteTimestamp: number, // milliseconds since epoch
   collectionTime: number,
 };
@@ -573,7 +572,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           height: window.innerHeight,
         },
         url: location.href,
-        timestamp,
         absoluteTimestamp: Date.now(),
         collectionTime: 0,
       };
@@ -591,7 +589,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         result.resourceOverrides.push({ url, content, contentType: 'text/css' },);
       }
 
-      result.collectionTime = performance.now() - result.timestamp;
+      result.collectionTime = performance.now() - timestamp;
       return result;
     }
   }
