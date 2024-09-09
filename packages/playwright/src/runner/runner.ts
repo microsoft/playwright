@@ -94,9 +94,6 @@ export class Runner {
     if (modifiedResult && modifiedResult.status)
       status = modifiedResult.status;
 
-    if (!listOnly)
-      await writeLastRunInfo(testRun, status);
-
     await reporter.onExit();
 
     // Calling process.exit() might truncate large stdout/stderr output.
@@ -149,24 +146,6 @@ export type LastRunInfo = {
   failedTests: string[];
   testDurations?: { [testId: string]: number };
 };
-
-async function writeLastRunInfo(testRun: TestRun, status: FullResult['status']) {
-  const [project] = filterProjects(testRun.config.projects, testRun.config.cliProjectFilter);
-  if (!project)
-    return;
-  const outputDir = project.project.outputDir;
-  const lastRunReportFile = testRun.config.lastRunFile || path.join(outputDir, '.last-run.json');
-  const lastRunReportFileDir = path.dirname(lastRunReportFile);
-  await fs.promises.mkdir(lastRunReportFileDir, { recursive: true });
-  const failedTests = testRun.rootSuite?.allTests().filter(t => !t.ok()).map(t => t.id);
-  const testDurations = testRun.rootSuite?.allTests().reduce((map, t) => {
-    if (t.results.length)
-      map[t.id] = t.results.reduce((a, b) => a + b.duration, 0);
-    return map;
-  }, {} as { [testId: string]: number });
-  const lastRunReport = JSON.stringify({ status, failedTests, testDurations }, undefined, 2);
-  await fs.promises.writeFile(lastRunReportFile, lastRunReport);
-}
 
 export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
   const [project] = filterProjects(config.projects, config.cliProjectFilter);

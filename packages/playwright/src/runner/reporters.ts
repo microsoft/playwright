@@ -47,7 +47,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     null: EmptyReporter,
     html: HtmlReporter,
     markdown: MarkdownReporter,
-    lastrun: LastRunReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
@@ -78,6 +77,12 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     else if (mode !== 'merge')
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
+
+  if (!isTestServer && (mode === 'test' || mode === 'merge')) {
+    // If we are not in the test server, always add a last-run reporter.
+    reporters.push(new LastRunReporter(runOptions));
+  }
+
   return reporters;
 }
 

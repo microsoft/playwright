@@ -37,7 +37,7 @@ const testCases = {
 };
 
 test('report lastrun info', async ({ runInlineTest }) => {
-  const result = await runInlineTest(testCases, { reporter: 'lastrun' });
+  const result = await runInlineTest(testCases, { });
   expect(result.exitCode).toBe(1);
   const lastRunFilename = test.info().outputPath('.last-run.json');
   const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -49,7 +49,7 @@ test('report lastrun info', async ({ runInlineTest }) => {
 test('keep test-ids consistent when re-run', async ({ runInlineTest }) => {
   let lastRun: LastRunReport;
   {
-    const result = await runInlineTest(testCases, { reporter: 'lastrun' });
+    const result = await runInlineTest(testCases, { });
     expect(result.exitCode).toBe(1);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const currentRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -58,7 +58,7 @@ test('keep test-ids consistent when re-run', async ({ runInlineTest }) => {
     lastRun = currentRun;
   }
   {
-    const result = await runInlineTest(testCases, { reporter: 'lastrun' });
+    const result = await runInlineTest(testCases, { });
     expect(result.exitCode).toBe(1);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const currentRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -76,7 +76,6 @@ test('keep test-ids consistent when merging reports', async ({ runInlineTest, me
     ...testCases,
     'playwright.config.ts': `module.exports = {
       reporter: [
-        ['lastrun'],
         ['blob', { outputDir: 'blob-report' }],
       ]
     };`,
@@ -103,7 +102,7 @@ test('keep test-ids consistent when merging reports', async ({ runInlineTest, me
     const reportFiles = await fs.promises.readdir(reportDir);
     reportFiles.sort();
     expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
-    const result = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'lastrun'] });
+    const result = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' });
     expect(result.exitCode).toBe(0);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -124,7 +123,7 @@ test('keep existing test-ids when test files are modified', async ({ runInlineTe
           expect(1 + 1).toBe(2);
         });
       `
-    }, { reporter: 'lastrun' });
+    }, { });
     expect(result.exitCode).toBe(0);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -147,7 +146,7 @@ test('keep existing test-ids when test files are modified', async ({ runInlineTe
           expect(1 + 1).toBe(2);
         });
       `
-    }, { reporter: 'lastrun' });
+    }, { });
     expect(result.exitCode).toBe(0);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -167,7 +166,7 @@ test('ensure same tests in different files have distinct test-ids', async ({ run
           expect(1 + 1).toBe(2);
         });
       `
-    }, { reporter: 'lastrun' }, {}, { additionalArgs: ['a.test.js'] });
+    }, { }, {}, { additionalArgs: ['a.test.js'] });
     expect(result.exitCode).toBe(0);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
@@ -183,7 +182,7 @@ test('ensure same tests in different files have distinct test-ids', async ({ run
           expect(1 + 1).toBe(2);
         });
       `
-    }, { reporter: 'lastrun' }, {}, { additionalArgs: ['b.test.js'] });
+    }, { }, {}, { additionalArgs: ['b.test.js'] });
     expect(result.exitCode).toBe(0);
     const lastRunFilename = test.info().outputPath('.last-run.json');
     const lastRun = JSON.parse(await fs.promises.readFile(lastRunFilename, 'utf8')) as LastRunReport;
