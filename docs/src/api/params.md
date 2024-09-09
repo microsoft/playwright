@@ -370,11 +370,17 @@ Query parameters to be sent with the URL.
 
 ## csharp-fetch-option-params
 * langs: csharp
-- `params` <[Object]<[string], [Serializable]>|[string]>
+- `params` <[Object]<[string], [Serializable]>>
 
 Query parameters to be sent with the URL.
 
-## java-csharp-fetch-params
+## csharp-fetch-option-paramsString
+* langs: csharp
+- `paramsString` <[string]>
+
+Query parameters to be sent with the URL.
+
+## java-fetch-option-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
