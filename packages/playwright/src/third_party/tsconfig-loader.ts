@@ -53,9 +53,13 @@ export interface LoadedTsConfig {
 }
 
 export function loadTsConfig(configPath: string): LoadedTsConfig[] {
-  const references: LoadedTsConfig[] = [];
-  const config = innerLoadTsConfig(configPath, references);
-  return [config, ...references];
+  try {
+    const references: LoadedTsConfig[] = [];
+    const config = innerLoadTsConfig(configPath, references);
+    return [config, ...references];
+  } catch (e) {
+    throw new Error(`Failed to load tsconfig file at ${configPath}:\n${e.message}`);
+  }
 }
 
 function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
