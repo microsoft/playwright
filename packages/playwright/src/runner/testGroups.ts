@@ -217,7 +217,7 @@ function filterForShardRoundRobin(
     return group.tests.reduce((sum, test) => sum + Math.max(1, lastRunInfo.testDurations?.[test.id] || averageDuration), 0);
   };
 
-  // We sort the test groups by the number of tests in descending order.
+  // We sort the test groups by group duration in descending order.
   const sortedTestGroups = testGroups.slice().sort((a, b) => weight(b) - weight(a));
 
   // Then we add each group to the shard with the smallest number of tests.
