@@ -364,7 +364,7 @@ Query parameters to be sent with the URL.
 
 ## python-fetch-option-params
 * langs: python
-- `params` <[Object]<[string], [string]|[float]|[boolean]>>
+- `params` <[Object]<[string], [string]|[float]|[boolean]>|[string]>
 
 Query parameters to be sent with the URL.
 
@@ -374,7 +374,13 @@ Query parameters to be sent with the URL.
 
 Query parameters to be sent with the URL.
 
-## java-csharp-fetch-params
+## csharp-fetch-option-paramsString
+* langs: csharp
+- `paramsString` <[string]>
+
+Query parameters to be sent with the URL.
+
+## java-fetch-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
