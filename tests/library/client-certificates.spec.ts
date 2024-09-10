@@ -76,15 +76,6 @@ const test = base.extend<TestOptions>({
   },
 });
 
-test.use({
-  launchOptions: async ({ launchOptions }, use) => {
-    await use({
-      ...launchOptions,
-      proxy: { server: 'per-context' }
-    });
-  }
-});
-
 const kDummyFileName = __filename;
 const kValidationSubTests: [BrowserContextOptions, string][] = [
   [{ clientCertificates: [{ origin: 'test' }] }, 'None of cert, key, passphrase or pfx is specified'],

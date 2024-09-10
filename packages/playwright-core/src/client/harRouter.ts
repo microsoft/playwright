@@ -98,7 +98,7 @@ export class HarRouter {
   }
 
   async [Symbol.asyncDispose]() {
-    await this.dispose();
+    this.dispose();
   }
 
   dispose() {
