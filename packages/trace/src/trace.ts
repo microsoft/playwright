@@ -53,6 +53,7 @@ export type ScreencastFrameTraceEvent = {
   width: number,
   height: number,
   timestamp: number,
+  frameSwapWallTime?: number,
 };
 
 export type BeforeActionTraceEvent = {

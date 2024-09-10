@@ -53,7 +53,7 @@ export class VideoRecorder {
   private constructor(page: Page, ffmpegPath: string, progress: Progress) {
     this._progress = progress;
     this._ffmpegPath = ffmpegPath;
-    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.timestamp));
+    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
   }
 
   private async _launch(options: types.PageScreencastOptions) {
