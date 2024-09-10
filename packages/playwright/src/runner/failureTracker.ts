@@ -31,8 +31,12 @@ export class FailureTracker {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (result.status === 'skipped')
+      return;
+    if (result.status !== test.expectedStatus)
       ++this._failureCount;
+    else
+      this._failureCount -= result.retry;
   }
 
   onWorkerError() {
