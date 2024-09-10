@@ -145,9 +145,6 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
-  async onExit() {
-  }
-
   printsToStdio() {
     return false;
   }

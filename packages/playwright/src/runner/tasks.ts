@@ -159,7 +159,7 @@ export function createTaskRunnerForClearCache(config: FullConfigInternal, report
 function createReportBeginTask(): Task<TestRun> {
   return {
     setup: async (reporter, { rootSuite }) => {
-      reporter.onBegin(rootSuite!);
+      reporter.onBegin?.(rootSuite!);
     },
     teardown: async ({}) => {},
   };

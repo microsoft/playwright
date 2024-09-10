@@ -198,17 +198,17 @@ export class Dispatcher {
     worker.on('stdOut', (params: TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stdout.push(chunk);
-      this._reporter.onStdOut(chunk, test, result);
+      this._reporter.onStdOut?.(chunk, test, result);
     });
     worker.on('stdErr', (params: TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stderr.push(chunk);
-      this._reporter.onStdErr(chunk, test, result);
+      this._reporter.onStdErr?.(chunk, test, result);
     });
     worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
       this._failureTracker.onWorkerError();
       for (const error of params.fatalErrors)
-        this._reporter.onError(error);
+        this._reporter.onError?.(error);
     });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
@@ -257,7 +257,7 @@ class JobDispatcher {
     result.parallelIndex = this._parallelIndex;
     result.workerIndex = this._workerIndex;
     result.startTime = new Date(params.startWallTime);
-    this._reporter.onTestBegin(test, result);
+    this._reporter.onTestBegin?.(test, result);
     this._currentlyRunning = { test, result };
   }
 
@@ -323,7 +323,7 @@ class JobDispatcher {
     };
     steps.set(params.stepId, step);
     (parentStep || result).steps.push(step);
-    this._reporter.onStepBegin(test, result, step);
+    this._reporter.onStepBegin?.(test, result, step);
   }
 
   private _onStepEnd(params: StepEndPayload) {
@@ -335,14 +335,14 @@ class JobDispatcher {
     const { result, steps, test } = data;
     const step = steps.get(params.stepId);
     if (!step) {
-      this._reporter.onStdErr('Internal error: step end without step begin: ' + params.stepId, test, result);
+      this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
       return;
     }
     step.duration = params.wallTime - step.startTime.getTime();
     if (params.error)
       step.error = params.error;
     steps.delete(params.stepId);
-    this._reporter.onStepEnd(test, result, step);
+    this._reporter.onStepEnd?.(test, result, step);
   }
 
   private _onAttach(params: AttachmentPayload) {
@@ -368,7 +368,7 @@ class JobDispatcher {
       result = runData.result;
     } else {
       result = test._appendTestResult();
-      this._reporter.onTestBegin(test, result);
+      this._reporter.onTestBegin?.(test, result);
     }
     result.errors = [...errors];
     result.error = result.errors[0];
@@ -392,7 +392,7 @@ class JobDispatcher {
       // Let's just fail the test run.
       this._failureTracker.onWorkerError();
       for (const error of errors)
-        this._reporter.onError(error);
+        this._reporter.onError?.(error);
     }
   }
 
@@ -526,7 +526,7 @@ class JobDispatcher {
     if (allTestsSkipped && !this._failureTracker.hasReachedMaxFailures()) {
       for (const test of this._job.tests) {
         const result = test._appendTestResult();
-        this._reporter.onTestBegin(test, result);
+        this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
       }
@@ -540,13 +540,13 @@ class JobDispatcher {
   }
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
-    this._reporter.onTestEnd(test, result);
+    this._reporter.onTestEnd?.(test, result);
     const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
     this._failureTracker.onTestEnd(test, result);
     if (this._failureTracker.hasReachedMaxFailures()) {
       this._stopCallback();
       if (!hadMaxFailures)
-        this._reporter.onError({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
+        this._reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
     }
   }
 }
