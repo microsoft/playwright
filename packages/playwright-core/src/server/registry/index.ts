@@ -354,7 +354,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
-type BidiChannel = 'bidi-firefox-stable' | 'bidi-chrome-canary' | 'bidi-chrome-stable';
+type BidiChannel = 'bidi-firefox-stable' | 'bidi-firefox-beta' | 'bidi-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
@@ -525,11 +525,22 @@ export class Registry {
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
     }));
 
-    this._executables.push(this._createBidiChannel('bidi-firefox-stable', {
-      'linux': '/usr/bin/firefox',
-      'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
-      'win32': '\\Mozilla Firefox\\firefox.exe',
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\core\\firefox.exe',
     }));
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-beta', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\core\\firefox.exe',
+    }));
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-nightly', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox Nightly.app/Contents/MacOS/firefox',
+      'win32': '\\firefox\\firefox.exe',
+    }));
+
     this._executables.push(this._createBidiChannel('bidi-chrome-stable', {
       'linux': '/opt/google/chrome/chrome',
       'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -540,6 +551,21 @@ export class Registry {
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));
+    this._executables.push({
+      type: 'browser',
+      name: 'bidi-chromium',
+      browserName: 'bidi',
+      directory: chromium.dir,
+      executablePath: () => chromiumExecutable,
+      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
+      installType: 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      downloadURLs: this._downloadURLs(chromium),
+      browserVersion: chromium.browserVersion,
+      _install: () => this._downloadExecutable(chromium, chromiumExecutable),
+      _dependencyGroup: 'chromium',
+      _isHermeticInstallation: true,
+    });
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
@@ -687,6 +713,48 @@ export class Registry {
       installType: install ? 'install-script' : 'none',
       _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: false,
+      _install: install,
+    };
+  }
+
+  private _createBidiFirefoxChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
+      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
+      if (!suffix) {
+        if (shouldThrow)
+          throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        return undefined;
+      }
+      const folder = path.resolve('firefox');
+      let channelName = 'stable';
+      if (name.includes('beta'))
+        channelName = 'beta';
+      else if (name.includes('nightly'))
+        channelName = 'nightly';
+      const installedVersions = fs.readdirSync(folder);
+      const found = installedVersions.filter(e => e.includes(channelName));
+      if (found.length === 1)
+        return path.join(folder, found[0], suffix);
+      if (found.length > 1) {
+        if (shouldThrow)
+          throw new Error(`Multiple Firefox installations found for channel '${name}': ${found.join(', ')}`);
+        else
+          return undefined;
+      }
+      if (shouldThrow)
+        throw new Error(`Cannot find Firefox installation for channel '${name}' under ${folder}`);
+      return undefined;
+    };
+    return {
+      type: 'channel',
+      name,
+      browserName: 'bidi',
+      directory: undefined,
+      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
+      installType: 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      _isHermeticInstallation: true,
       _install: install,
     };
   }
