@@ -66,6 +66,12 @@ export function transformObject(value: any, mapping: (v: any) => { result: any }
       result.push(transformObject(item, mapping));
     return result;
   }
+  if (value?.__pw_type === 'jsx' && typeof value.type === 'function') {
+    throw new Error([
+      'JSX component was not able to get resolved.',
+      'Make sure to define components outside of your test file.'
+    ].join('\n'));
+  }
   const result2: any = {};
   for (const [key, prop] of Object.entries(value))
     result2[key] = transformObject(prop, mapping);
